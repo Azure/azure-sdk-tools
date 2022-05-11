@@ -1,11 +1,9 @@
+import astroid
 import logging
 import inspect
-import ast
-import io
-import importlib
-import operator
 
 from ._base_node import NodeEntityBase
+from ._data_class_node import DataClassNode
 from ._class_node import ClassNode
 from ._function_node import FunctionNode
 from apistub import Navigation, Kind, NavigationTag
@@ -42,7 +40,18 @@ class ModuleNode(NodeEntityBase):
                 continue
 
             if inspect.isclass(member_obj):
-                class_node = ClassNode(
+                class_type = ClassNode
+                try:
+                    # see if a class is annotated as a dataclass
+                    node = astroid.extract_node(inspect.getsource(member_obj))
+                    if node.decorators:
+                        for item in node.decorators.nodes:
+                            if getattr(item, "name", None) == "dataclass":
+                                class_type = DataClassNode
+                                break
+                except:
+                    pass
+                class_node = class_type(
                     name=name,
                     namespace=self.namespace,
                     parent_node=self,
@@ -53,7 +62,7 @@ class ModuleNode(NodeEntityBase):
                 self.node_index.add(key, class_node)
                 self.child_nodes.append(class_node)
             elif inspect.isroutine(member_obj):
-                func_node = FunctionNode(self.namespace, self, member_obj, True)
+                func_node = FunctionNode(self.namespace, self, obj=member_obj, is_module_level=True)
                 key = "{0}.{1}".format(self.namespace, func_node.name)
                 self.node_index.add(key, func_node)
                 self.child_nodes.append(func_node)
@@ -111,8 +120,3 @@ class ModuleNode(NodeEntityBase):
                 child_nav.tags = NavigationTag(Kind.type_enum if c.is_enum else Kind.type_class)
                 navigation.add_child(child_nav)
             return navigation
-
-
-    def print_errors(self):
-        for c in self.child_nodes:
-            c.print_errors()

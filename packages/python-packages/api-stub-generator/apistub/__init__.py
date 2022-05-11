@@ -1,10 +1,11 @@
 import os
+
 from ._version import VERSION
 from ._stub_generator import StubGenerator
 from ._token import Token
 from ._token_kind import TokenKind
 from ._apiview import ApiView, Navigation, NavigationTag, Kind
-from ._diagnostic import Diagnostic
+from ._diagnostic import Diagnostic, DiagnosticLevel
 
 __version__ = VERSION
 
@@ -17,6 +18,7 @@ __all__ = [
     "NavigationTag",
     "Kind",
     "Diagnostic",
+    "DiagnosticLevel",
 ]
 
 
@@ -34,5 +36,3 @@ def console_entry_point():
         )
     with open(out_file_path, "w") as json_file:
         json_file.write(json_tokens)
-
-

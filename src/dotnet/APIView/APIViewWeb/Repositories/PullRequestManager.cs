@@ -294,6 +294,8 @@ namespace APIViewWeb.Repositories
                 {
                     // If baseline review was already created and if APIs in current commit doesn't match any of the revisions in generated review then create new baseline using main branch and compare again.
                     // If APIs are still different, find the diff against latest baseline.
+                    // Save previsously generated revision ID to be reused when refreshing review to use new baseline
+                    var prevRevisionId = review.Revisions.Last().RevisionId;
                     review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel, true);
                     review.ReviewId = pullRequestModel.ReviewId;
                     if (await IsReviewSame(review, renderedCodeFile))
@@ -303,6 +305,9 @@ namespace APIViewWeb.Repositories
                         stringBuilder.Append($"API changes are not detected in this pull request for `{codeFile.PackageName}`");
                         return stringBuilder.ToString();
                     }
+                    // Update revision ID to previous revision ID so existing comments linked to previous revision 
+                    // will not become invalid. Similarly previously generated link will still be valid.
+                    newRevision.RevisionId = prevRevisionId;
                 }
 
                 var diffUrl = REVIEW_DIFF_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", review.ReviewId).Replace("{NewRevision}", review.Revisions.Last().RevisionId);

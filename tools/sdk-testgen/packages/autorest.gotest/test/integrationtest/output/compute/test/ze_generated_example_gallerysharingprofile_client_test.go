@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -23,17 +23,15 @@ func ExampleGallerySharingProfileClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewGallerySharingProfileClient("<subscription-id>", cred, nil)
+	client, err := test.NewGallerySharingProfileClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
+		"myResourceGroup",
+		"myGalleryName",
 		test.SharingUpdate{
 			Groups: []*test.SharingProfileGroup{
 				{
@@ -49,15 +47,13 @@ func ExampleGallerySharingProfileClient_BeginUpdate() {
 				}},
 			OperationType: to.Ptr(test.SharingUpdateOperationTypesAdd),
 		},
-		&test.GallerySharingProfileClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res

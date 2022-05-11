@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -21,27 +21,24 @@ func ExampleSSHPublicKeysClient_Create() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	client, err := test.NewSSHPublicKeysClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Create(ctx,
-		"<resource-group-name>",
-		"<ssh-public-key-name>",
+		"myResourceGroup",
+		"mySshPublicKeyName",
 		test.SSHPublicKeyResource{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("westus"),
 			Properties: &test.SSHPublicKeyResourceProperties{
-				PublicKey: to.Ptr("<public-key>"),
+				PublicKey: to.Ptr("{ssh-rsa public key}"),
 			},
 		},
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -52,21 +49,18 @@ func ExampleSSHPublicKeysClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	client, err := test.NewSSHPublicKeysClient("{subscriptionId}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<ssh-public-key-name>",
+		"myResourceGroup",
+		"mySshPublicKeyName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -77,21 +71,18 @@ func ExampleSSHPublicKeysClient_GenerateKeyPair() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	client, err := test.NewSSHPublicKeysClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.GenerateKeyPair(ctx,
-		"<resource-group-name>",
-		"<ssh-public-key-name>",
+		"myResourceGroup",
+		"mySshPublicKeyName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res

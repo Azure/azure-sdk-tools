@@ -56,34 +56,40 @@ namespace APIViewWeb
                 if (IsNuget(originalName))
                 {
                     archive = new ZipArchive(stream, ZipArchiveMode.Read, true);
-                    foreach (var entry in archive.Entries)
+
+                    var nuspecEntry = archive.Entries.Single(entry => IsNuspec(entry.Name));
+
+                    var dllEntries = archive.Entries.Where(entry => IsDll(entry.Name)).ToArray();
+
+                    var dllEntry = dllEntries.First();
+                    if (dllEntries.Length > 1)
                     {
-                        if (IsDll(entry.Name))
-                        {
-                            dllStream = entry.Open();
-                            var docEntry = archive.GetEntry(Path.ChangeExtension(entry.FullName, ".xml"));
-                            if (docEntry != null)
-                            {
-                                docStream = docEntry.Open();
-                            }
-                        }
-                        else if (IsNuspec(entry.Name))
-                        {
-                            using var nuspecStream = entry.Open();
-                            var document = XDocument.Load(nuspecStream);
-                            var dependencyElements = document.Descendants().Where(e => e.Name.LocalName == "dependency");
-                            dependencies = new List<DependencyInfo>();
-                            dependencies.AddRange(
-                                    dependencyElements.Select(dependency => new DependencyInfo(
-                                            dependency.Attribute("id").Value,
-                                                dependency.Attribute("version").Value)));
-                            // filter duplicates and sort
-                            dependencies = dependencies
-                                .GroupBy(d => d.Name)
-                                .Select(d => d.First())
-                                .OrderBy(d => d.Name).ToList();
-                        }
+                        // If there are multiple dlls in the nupkg (e.g. Cosmos), try to find the first that matches the nuspec name, but
+                        // fallback to just using the first one.
+                        dllEntry = dllEntries.FirstOrDefault(
+                            dll => Path.GetFileNameWithoutExtension(nuspecEntry.Name)
+                                .Equals(Path.GetFileNameWithoutExtension(dll.Name), StringComparison.OrdinalIgnoreCase)) ?? dllEntry;
                     }
+
+                    dllStream = dllEntry.Open();
+                    var docEntry = archive.GetEntry(Path.ChangeExtension(dllEntry.FullName, ".xml"));
+                    if (docEntry != null)
+                    {
+                        docStream = docEntry.Open();
+                    }
+                    using var nuspecStream = nuspecEntry.Open();
+                    var document = XDocument.Load(nuspecStream);
+                    var dependencyElements = document.Descendants().Where(e => e.Name.LocalName == "dependency");
+                    dependencies = new List<DependencyInfo>();
+                    dependencies.AddRange(
+                            dependencyElements.Select(dependency => new DependencyInfo(
+                                    dependency.Attribute("id").Value,
+                                        dependency.Attribute("version").Value)));
+                    // filter duplicates and sort
+                    dependencies = dependencies
+                        .GroupBy(d => d.Name)
+                        .Select(d => d.First())
+                        .OrderBy(d => d.Name).ToList();
                 }
 
                 var assemblySymbol = CompilationFactory.GetCompilation(dllStream, docStream);
@@ -91,7 +97,7 @@ namespace APIViewWeb
                 {
                     return Task.FromResult(GetDummyReviewCodeFile(originalName, dependencies));
                 }
-                
+
                 return Task.FromResult(new CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies));
             }
             finally

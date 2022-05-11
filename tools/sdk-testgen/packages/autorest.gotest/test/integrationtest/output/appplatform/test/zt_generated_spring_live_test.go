@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -246,7 +246,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Services_CreateOrUpdate
-	servicesClientCreateOrUpdateResponse, err := servicesClient.BeginCreateOrUpdate(testsuite.ctx,
+	servicesClientCreateOrUpdateResponsePoller, err := servicesClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.ServiceResource{
@@ -260,9 +260,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, servicesClientCreateOrUpdateResponse)
+	_, err = testutil.PollForTest(ctx, servicesClientCreateOrUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Services_Get
@@ -273,7 +273,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Services_Update
-	servicesClientUpdateResponse, err := servicesClient.BeginUpdate(testsuite.ctx,
+	servicesClientUpdateResponsePoller, err := servicesClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.ServiceResource{
@@ -286,9 +286,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, servicesClientUpdateResponse)
+	_, err = testutil.PollForTest(ctx, servicesClientUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Services_DisableTestEndpoint
@@ -326,7 +326,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	certificatesClient, err := test.NewCertificatesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
 	certificateName := "asc-certificate"
-	certificatesClientCreateOrUpdateResponse, err := certificatesClient.BeginCreateOrUpdate(testsuite.ctx,
+	certificatesClientCreateOrUpdateResponsePoller, err := certificatesClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		certificateName,
@@ -336,9 +336,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				VaultURI:         to.Ptr("https://integration-test-prod.vault.azure.net/"),
 			},
 		},
-		&test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, certificatesClientCreateOrUpdateResponse)
+	_, err = testutil.PollForTest(ctx, certificatesClientCreateOrUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Certificates_Get
@@ -351,16 +351,19 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Certificates_List
-	certificatesClientListPager := certificatesClient.List(testsuite.resourceGroupName,
+	certificatesClientNewListPager := certificatesClient.NewListPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		nil)
-	for certificatesClientListPager.More() {
+	for certificatesClientNewListPager.More() {
+		_, err := certificatesClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step ConfigServers_Validate
 	configServersClient, err := test.NewConfigServersClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	configServersClientValidateResponse, err := configServersClient.BeginValidate(testsuite.ctx,
+	configServersClientValidateResponsePoller, err := configServersClient.BeginValidate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.ConfigServerSettings{
@@ -371,13 +374,13 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				URI: to.Ptr("https://github.com/VSChina/asc-config-server-test-public.git"),
 			},
 		},
-		&test.ConfigServersClientBeginValidateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, configServersClientValidateResponse)
+	_, err = testutil.PollForTest(ctx, configServersClientValidateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step ConfigServers_UpdatePut
-	configServersClientUpdatePutResponse, err := configServersClient.BeginUpdatePut(testsuite.ctx,
+	configServersClientUpdatePutResponsePoller, err := configServersClient.BeginUpdatePut(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.ConfigServerResource{
@@ -392,13 +395,13 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, configServersClientUpdatePutResponse)
+	_, err = testutil.PollForTest(ctx, configServersClientUpdatePutResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step ConfigServers_UpdatePatch
-	configServersClientUpdatePatchResponse, err := configServersClient.BeginUpdatePatch(testsuite.ctx,
+	configServersClientUpdatePatchResponsePoller, err := configServersClient.BeginUpdatePatch(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.ConfigServerResource{
@@ -410,9 +413,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, configServersClientUpdatePatchResponse)
+	_, err = testutil.PollForTest(ctx, configServersClientUpdatePatchResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step ConfigServers_Get
@@ -425,7 +428,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	// From step MonitoringSettings_UpdatePut
 	monitoringSettingsClient, err := test.NewMonitoringSettingsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	monitoringSettingsClientUpdatePutResponse, err := monitoringSettingsClient.BeginUpdatePut(testsuite.ctx,
+	monitoringSettingsClientUpdatePutResponsePoller, err := monitoringSettingsClient.BeginUpdatePut(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.MonitoringSettingResource{
@@ -435,9 +438,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, monitoringSettingsClientUpdatePutResponse)
+	_, err = testutil.PollForTest(ctx, monitoringSettingsClientUpdatePutResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step MonitoringSettings_Get
@@ -448,7 +451,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step MonitoringSettings_UpdatePatch
-	monitoringSettingsClientUpdatePatchResponse, err := monitoringSettingsClient.BeginUpdatePatch(testsuite.ctx,
+	monitoringSettingsClientUpdatePatchResponsePoller, err := monitoringSettingsClient.BeginUpdatePatch(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.MonitoringSettingResource{
@@ -456,15 +459,15 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				AppInsightsSamplingRate: to.Ptr[float64](100),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, monitoringSettingsClientUpdatePatchResponse)
+	_, err = testutil.PollForTest(ctx, monitoringSettingsClientUpdatePatchResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Apps_Create
 	appsClient, err := test.NewAppsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	appsClientCreateOrUpdateResponse, err := appsClient.BeginCreateOrUpdate(testsuite.ctx,
+	appsClientCreateOrUpdateResponsePoller, err := appsClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -483,9 +486,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				Public:               to.Ptr(false),
 			},
 		},
-		&test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, appsClientCreateOrUpdateResponse)
+	_, err = testutil.PollForTest(ctx, appsClientCreateOrUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Apps_Get
@@ -500,7 +503,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	deploymentsClient, err := test.NewDeploymentsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
 	deploymentName := "default"
-	deploymentsClientCreateOrUpdateResponse, err := deploymentsClient.BeginCreateOrUpdate(testsuite.ctx,
+	deploymentsClientCreateOrUpdateResponsePoller, err := deploymentsClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -529,9 +532,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, deploymentsClientCreateOrUpdateResponse)
+	_, err = testutil.PollForTest(ctx, deploymentsClientCreateOrUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Deployments_Get
@@ -545,7 +548,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Apps_Update_ActiveDeployment
-	appsClientUpdateResponse, err := appsClient.BeginUpdate(testsuite.ctx,
+	appsClientUpdateResponsePoller, err := appsClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -559,13 +562,13 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				ActiveDeploymentName: to.Ptr("default"),
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, appsClientUpdateResponse)
+	_, err = testutil.PollForTest(ctx, appsClientUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Apps_Update_Disk
-	appsClientUpdateResponse, err = appsClient.BeginUpdate(testsuite.ctx,
+	appsClientUpdateResponsePoller, err = appsClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -586,23 +589,26 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				},
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, appsClientUpdateResponse)
+	_, err = testutil.PollForTest(ctx, appsClientUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Apps_List
-	appsClientListPager := appsClient.List(testsuite.resourceGroupName,
+	appsClientNewListPager := appsClient.NewListPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		nil)
-	for appsClientListPager.More() {
+	for appsClientNewListPager.More() {
+		_, err := appsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Bindings_Create
 	bindingsClient, err := test.NewBindingsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
 	bindingName := "mysql-binding"
-	bindingsClientCreateOrUpdateResponse, err := bindingsClient.BeginCreateOrUpdate(testsuite.ctx,
+	bindingsClientCreateOrUpdateResponsePoller, err := bindingsClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -617,14 +623,14 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				ResourceID: to.Ptr("/subscriptions/b46590cb-a111-4b84-935f-c305aaf1f424/resourceGroups/mary-west/providers/Microsoft.DBforMySQL/servers/fake-sql"),
 			},
 		},
-		&test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, bindingsClientCreateOrUpdateResponse)
+	_, err = testutil.PollForTest(ctx, bindingsClientCreateOrUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Bindings_Update
 	bindingName = "mysql-binding"
-	bindingsClientUpdateResponse, err := bindingsClient.BeginUpdate(testsuite.ctx,
+	bindingsClientUpdateResponsePoller, err := bindingsClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -639,9 +645,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				ResourceID: to.Ptr("/subscriptions/" + testsuite.subscriptionId + "/resourceGroups/" + testsuite.resourceGroupName + "/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
 			},
 		},
-		&test.BindingsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, bindingsClientUpdateResponse)
+	_, err = testutil.PollForTest(ctx, bindingsClientUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Bindings_Get
@@ -655,23 +661,26 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Bindings_List
-	bindingsClientListPager := bindingsClient.List(testsuite.resourceGroupName,
+	bindingsClientNewListPager := bindingsClient.NewListPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		nil)
-	for bindingsClientListPager.More() {
+	for bindingsClientNewListPager.More() {
+		_, err := bindingsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Bindings_Delete
 	bindingName = "mysql-binding"
-	bindingsClientDeleteResponse, err := bindingsClient.BeginDelete(testsuite.ctx,
+	bindingsClientDeleteResponsePoller, err := bindingsClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		bindingName,
-		&test.BindingsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, bindingsClientDeleteResponse)
+	_, err = testutil.PollForTest(ctx, bindingsClientDeleteResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Apps_ValidateDomain
@@ -689,7 +698,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	customDomainsClient, err := test.NewCustomDomainsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
 	domainName := testsuite.dnsCname + "." + testsuite.customDomainName
-	customDomainsClientCreateOrUpdateResponse, err := customDomainsClient.BeginCreateOrUpdate(testsuite.ctx,
+	customDomainsClientCreateOrUpdateResponsePoller, err := customDomainsClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -699,14 +708,14 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				CertName: to.Ptr("asc-certificate"),
 			},
 		},
-		&test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, customDomainsClientCreateOrUpdateResponse)
+	_, err = testutil.PollForTest(ctx, customDomainsClientCreateOrUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step CustomDomains_Update
 	domainName = testsuite.dnsCname + "." + testsuite.customDomainName
-	customDomainsClientUpdateResponse, err := customDomainsClient.BeginUpdate(testsuite.ctx,
+	customDomainsClientUpdateResponsePoller, err := customDomainsClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -716,9 +725,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				CertName: to.Ptr("asc-certificate"),
 			},
 		},
-		&test.CustomDomainsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, customDomainsClientUpdateResponse)
+	_, err = testutil.PollForTest(ctx, customDomainsClientUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step CustomDomains_Get
@@ -732,11 +741,14 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step CustomDomains_List
-	customDomainsClientListPager := customDomainsClient.List(testsuite.resourceGroupName,
+	customDomainsClientNewListPager := customDomainsClient.NewListPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		nil)
-	for customDomainsClientListPager.More() {
+	for customDomainsClientNewListPager.More() {
+		_, err := customDomainsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Apps_GetResourceUploadUrl
@@ -812,7 +824,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 
 	// From step Deployments_CreateOrUpdate
 	deploymentName = "blue"
-	deploymentsClientCreateOrUpdateResponse, err = deploymentsClient.BeginCreateOrUpdate(testsuite.ctx,
+	deploymentsClientCreateOrUpdateResponsePoller, err = deploymentsClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -841,13 +853,13 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, deploymentsClientCreateOrUpdateResponse)
+	_, err = testutil.PollForTest(ctx, deploymentsClientCreateOrUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Apps_Update
-	appsClientUpdateResponse, err = appsClient.BeginUpdate(testsuite.ctx,
+	appsClientUpdateResponsePoller, err = appsClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -861,45 +873,45 @@ func (testsuite *SpringTestSuite) TestSpring() {
 				ActiveDeploymentName: to.Ptr("blue"),
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, appsClientUpdateResponse)
+	_, err = testutil.PollForTest(ctx, appsClientUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Deployments_Restart
 	deploymentName = "blue"
-	deploymentsClientRestartResponse, err := deploymentsClient.BeginRestart(testsuite.ctx,
+	deploymentsClientRestartResponsePoller, err := deploymentsClient.BeginRestart(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		deploymentName,
-		&test.DeploymentsClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, deploymentsClientRestartResponse)
+	_, err = testutil.PollForTest(ctx, deploymentsClientRestartResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Deployments_Stop
 	deploymentName = "blue"
-	deploymentsClientStopResponse, err := deploymentsClient.BeginStop(testsuite.ctx,
+	deploymentsClientStopResponsePoller, err := deploymentsClient.BeginStop(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		deploymentName,
-		&test.DeploymentsClientBeginStopOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, deploymentsClientStopResponse)
+	_, err = testutil.PollForTest(ctx, deploymentsClientStopResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Deployments_Start
 	deploymentName = "blue"
-	deploymentsClientStartResponse, err := deploymentsClient.BeginStart(testsuite.ctx,
+	deploymentsClientStartResponsePoller, err := deploymentsClient.BeginStart(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		deploymentName,
-		&test.DeploymentsClientBeginStartOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, deploymentsClientStartResponse)
+	_, err = testutil.PollForTest(ctx, deploymentsClientStartResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Deployments_GetLogFileUrl
@@ -913,98 +925,116 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Deployments_List
-	deploymentsClientListPager := deploymentsClient.List(testsuite.resourceGroupName,
+	deploymentsClientNewListPager := deploymentsClient.NewListPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		&test.DeploymentsClientListOptions{Version: []string{}})
-	for deploymentsClientListPager.More() {
+	for deploymentsClientNewListPager.More() {
+		_, err := deploymentsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Deployments_ListForCluster
-	deploymentsClientListForClusterPager := deploymentsClient.ListForCluster(testsuite.resourceGroupName,
+	deploymentsClientNewListForClusterPager := deploymentsClient.NewListForClusterPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
-	for deploymentsClientListForClusterPager.More() {
+	for deploymentsClientNewListForClusterPager.More() {
+		_, err := deploymentsClientNewListForClusterPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Services_List
-	servicesClientListPager := servicesClient.List(testsuite.resourceGroupName,
+	servicesClientNewListPager := servicesClient.NewListPager(testsuite.resourceGroupName,
 		nil)
-	for servicesClientListPager.More() {
+	for servicesClientNewListPager.More() {
+		_, err := servicesClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Services_ListBySubscription
-	servicesClientListBySubscriptionPager := servicesClient.ListBySubscription(nil)
-	for servicesClientListBySubscriptionPager.More() {
+	servicesClientNewListBySubscriptionPager := servicesClient.NewListBySubscriptionPager(nil)
+	for servicesClientNewListBySubscriptionPager.More() {
+		_, err := servicesClientNewListBySubscriptionPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Deployments_Delete
 	deploymentName = "blue"
-	deploymentsClientDeleteResponse, err := deploymentsClient.BeginDelete(testsuite.ctx,
+	deploymentsClientDeleteResponsePoller, err := deploymentsClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		deploymentName,
-		&test.DeploymentsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, deploymentsClientDeleteResponse)
+	_, err = testutil.PollForTest(ctx, deploymentsClientDeleteResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step CustomDomains_Delete
 	domainName = testsuite.dnsCname + "." + testsuite.customDomainName
-	customDomainsClientDeleteResponse, err := customDomainsClient.BeginDelete(testsuite.ctx,
+	customDomainsClientDeleteResponsePoller, err := customDomainsClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		domainName,
-		&test.CustomDomainsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, customDomainsClientDeleteResponse)
+	_, err = testutil.PollForTest(ctx, customDomainsClientDeleteResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Apps_Delete
 	testsuite.appName = "app01"
-	appsClientDeleteResponse, err := appsClient.BeginDelete(testsuite.ctx,
+	appsClientDeleteResponsePoller, err := appsClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
-		&test.AppsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, appsClientDeleteResponse)
+	_, err = testutil.PollForTest(ctx, appsClientDeleteResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Certificates_Delete
 	certificateName = "asc-certificate"
-	certificatesClientDeleteResponse, err := certificatesClient.BeginDelete(testsuite.ctx,
+	certificatesClientDeleteResponsePoller, err := certificatesClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		certificateName,
-		&test.CertificatesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, certificatesClientDeleteResponse)
+	_, err = testutil.PollForTest(ctx, certificatesClientDeleteResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Services_Delete
-	servicesClientDeleteResponse, err := servicesClient.BeginDelete(testsuite.ctx,
+	servicesClientDeleteResponsePoller, err := servicesClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
-		&test.ServicesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, servicesClientDeleteResponse)
+	_, err = testutil.PollForTest(ctx, servicesClientDeleteResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Skus_List
 	sKUsClient, err := test.NewSKUsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	sKUsClientListPager := sKUsClient.List(nil)
-	for sKUsClientListPager.More() {
+	sKUsClientNewListPager := sKUsClient.NewListPager(nil)
+	for sKUsClientNewListPager.More() {
+		_, err := sKUsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Operations_List
 	operationsClient, err := test.NewOperationsClient(testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	operationsClientListPager := operationsClient.List(nil)
-	for operationsClientListPager.More() {
+	operationsClientNewListPager := operationsClient.NewListPager(nil)
+	for operationsClientNewListPager.More() {
+		_, err := operationsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 }
 

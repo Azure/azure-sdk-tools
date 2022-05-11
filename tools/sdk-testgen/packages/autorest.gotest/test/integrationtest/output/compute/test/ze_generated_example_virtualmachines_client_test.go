@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -19,25 +19,22 @@ import (
 )
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json
-func ExampleVirtualMachinesClient_ListByLocation() {
+func ExampleVirtualMachinesClient_NewListByLocationPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscriptionId}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.ListByLocation("<location>",
+	pager := client.NewListByLocationPager("eastus",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -51,19 +48,17 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
+		"myResourceGroup",
+		"myVM",
 		test.VirtualMachine{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
 					VMSize: to.Ptr(test.VirtualMachineSizeTypesStandardD2SV3),
@@ -71,16 +66,16 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
 						{
-							ID: to.Ptr("<id>"),
+							ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &test.NetworkInterfaceReferenceProperties{
 								Primary: to.Ptr(true),
 							},
 						}},
 				},
 				OSProfile: &test.OSProfile{
-					AdminPassword: to.Ptr("<admin-password>"),
-					AdminUsername: to.Ptr("<admin-username>"),
-					ComputerName:  to.Ptr("<computer-name>"),
+					AdminPassword: to.Ptr("{your-password}"),
+					AdminUsername: to.Ptr("{your-username}"),
+					ComputerName:  to.Ptr("myVM"),
 					LinuxConfiguration: &test.LinuxConfiguration{
 						PatchSettings: &test.LinuxPatchSettings{
 							AssessmentMode: to.Ptr(test.LinuxPatchAssessmentModeImageDefault),
@@ -90,13 +85,13 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 				},
 				StorageProfile: &test.StorageProfile{
 					ImageReference: &test.ImageReference{
-						Offer:     to.Ptr("<offer>"),
-						Publisher: to.Ptr("<publisher>"),
-						SKU:       to.Ptr("<sku>"),
-						Version:   to.Ptr("<version>"),
+						Offer:     to.Ptr("UbuntuServer"),
+						Publisher: to.Ptr("Canonical"),
+						SKU:       to.Ptr("16.04-LTS"),
+						Version:   to.Ptr("latest"),
 					},
 					OSDisk: &test.OSDisk{
-						Name:         to.Ptr("<name>"),
+						Name:         to.Ptr("myVMosdisk"),
 						Caching:      to.Ptr(test.CachingTypesReadWrite),
 						CreateOption: to.Ptr(test.DiskCreateOptionTypesFromImage),
 						ManagedDisk: &test.ManagedDiskParameters{
@@ -106,15 +101,13 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -125,17 +118,15 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
+		"myResourceGroup",
+		"myVM",
 		test.VirtualMachineUpdate{
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
@@ -144,16 +135,16 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
 						{
-							ID: to.Ptr("<id>"),
+							ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &test.NetworkInterfaceReferenceProperties{
 								Primary: to.Ptr(true),
 							},
 						}},
 				},
 				OSProfile: &test.OSProfile{
-					AdminPassword: to.Ptr("<admin-password>"),
-					AdminUsername: to.Ptr("<admin-username>"),
-					ComputerName:  to.Ptr("<computer-name>"),
+					AdminPassword: to.Ptr("{your-password}"),
+					AdminUsername: to.Ptr("{your-username}"),
+					ComputerName:  to.Ptr("myVM"),
 				},
 				StorageProfile: &test.StorageProfile{
 					DataDisks: []*test.DataDisk{
@@ -170,13 +161,13 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 							ToBeDetached: to.Ptr(false),
 						}},
 					ImageReference: &test.ImageReference{
-						Offer:     to.Ptr("<offer>"),
-						Publisher: to.Ptr("<publisher>"),
-						SKU:       to.Ptr("<sku>"),
-						Version:   to.Ptr("<version>"),
+						Offer:     to.Ptr("WindowsServer"),
+						Publisher: to.Ptr("MicrosoftWindowsServer"),
+						SKU:       to.Ptr("2016-Datacenter"),
+						Version:   to.Ptr("latest"),
 					},
 					OSDisk: &test.OSDisk{
-						Name:         to.Ptr("<name>"),
+						Name:         to.Ptr("myVMosdisk"),
 						Caching:      to.Ptr(test.CachingTypesReadWrite),
 						CreateOption: to.Ptr(test.DiskCreateOptionTypesFromImage),
 						ManagedDisk: &test.ManagedDiskParameters{
@@ -186,15 +177,13 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -205,28 +194,22 @@ func ExampleVirtualMachinesClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
-		&test.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
-			ResumeToken: "",
-		})
+		"myResourceGroup",
+		"myVM",
+		&test.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -235,21 +218,18 @@ func ExampleVirtualMachinesClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
+		"myResourceGroup",
+		"myVM",
 		&test.VirtualMachinesClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -260,21 +240,18 @@ func ExampleVirtualMachinesClient_InstanceView() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.InstanceView(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
+		"myResourceGroup",
+		"myVM",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -285,45 +262,39 @@ func ExampleVirtualMachinesClient_Generalize() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	_, err = client.Generalize(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
+		"myResourceGroup",
+		"myVMName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json
-func ExampleVirtualMachinesClient_ListAvailableSizes() {
+func ExampleVirtualMachinesClient_NewListAvailableSizesPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.ListAvailableSizes("<resource-group-name>",
-		"<vm-name>",
+	pager := client.NewListAvailableSizesPager("myResourceGroup",
+		"myVmName",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -337,26 +308,22 @@ func ExampleVirtualMachinesClient_BeginReapply() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginReapply(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
-		&test.VirtualMachinesClientBeginReapplyOptions{ResumeToken: ""})
+		"ResourceGroup",
+		"VMName",
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -365,30 +332,25 @@ func ExampleVirtualMachinesClient_BeginReimage() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginReimage(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
+		"myResourceGroup",
+		"myVMName",
 		&test.VirtualMachinesClientBeginReimageOptions{Parameters: &test.VirtualMachineReimageParameters{
 			TempDisk: to.Ptr(true),
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -397,21 +359,18 @@ func ExampleVirtualMachinesClient_RetrieveBootDiagnosticsData() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.RetrieveBootDiagnosticsData(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
+		"ResourceGroup",
+		"VMName",
 		&test.VirtualMachinesClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Ptr[int32](60)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -422,21 +381,18 @@ func ExampleVirtualMachinesClient_SimulateEviction() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	_, err = client.SimulateEviction(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
+		"ResourceGroup",
+		"VMName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 }
 
@@ -445,26 +401,22 @@ func ExampleVirtualMachinesClient_BeginAssessPatches() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginAssessPatches(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
-		&test.VirtualMachinesClientBeginAssessPatchesOptions{ResumeToken: ""})
+		"myResourceGroupName",
+		"myVMName",
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -475,19 +427,17 @@ func ExampleVirtualMachinesClient_BeginInstallPatches() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginInstallPatches(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
+		"myResourceGroupName",
+		"myVMName",
 		test.VirtualMachineInstallPatchesParameters{
-			MaximumDuration: to.Ptr("<maximum-duration>"),
+			MaximumDuration: to.Ptr("PT4H"),
 			RebootSetting:   to.Ptr(test.VMGuestPatchRebootSettingIfRequired),
 			WindowsParameters: &test.WindowsParameters{
 				ClassificationsToInclude: []*test.VMGuestPatchClassificationWindows{
@@ -496,15 +446,13 @@ func ExampleVirtualMachinesClient_BeginInstallPatches() {
 				MaxPatchPublishDate: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-11-19T02:36:43.0539904+00:00"); return t }()),
 			},
 		},
-		&test.VirtualMachinesClientBeginInstallPatchesOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -515,29 +463,25 @@ func ExampleVirtualMachinesClient_BeginRunCommand() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachinesClient("24fb23e3-6ba3-41f0-9b6e-e41131d5d61e", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginRunCommand(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
+		"crptestar98131",
+		"vm3036",
 		test.RunCommandInput{
-			CommandID: to.Ptr("<command-id>"),
+			CommandID: to.Ptr("RunPowerShellScript"),
 		},
-		&test.VirtualMachinesClientBeginRunCommandOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res

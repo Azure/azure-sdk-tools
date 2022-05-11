@@ -6,11 +6,28 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
+import abc
 from azure.core import CaseInsensitiveEnumMeta
-from dataclasses import dataclass
+from collections.abc import Sequence
 from enum import Enum, EnumMeta
-from six import with_metaclass
-from typing import Any, TypedDict, Union
+import functools
+from typing import Any, overload, TypedDict, Union, Optional, Generic, TypeVar
+
+
+def my_decorator(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        pass
+    return wrapper
+
+
+def another_decorator(value):
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            return value
+        return wrapper
+    return decorator
 
 
 class PublicCaseInsensitiveEnumMeta(EnumMeta):
@@ -36,17 +53,10 @@ class DocstringClass:
         :type another: str
         :param some_class: Some kind of class type, defaults to :py:class:`apistubgen.test.models.FakeObject`.
         :type some_class: class
+        :return: Some string.
         :rtype: str
         """
         return f"{value} {another} {some_class}"
-
-
-class PetEnumPy2Metaclass(with_metaclass(CaseInsensitiveEnumMeta, str, Enum)):
-    """A test enum for Py2 way of doing case-insensitive enum
-    """
-    DOG = "dog"
-    CAT = "cat"
-    DEFAULT = "cat"
 
 
 class PetEnumPy3Metaclass(str, Enum, metaclass = CaseInsensitiveEnumMeta):
@@ -57,7 +67,7 @@ class PetEnumPy3Metaclass(str, Enum, metaclass = CaseInsensitiveEnumMeta):
     DEFAULT = "cat"
 
 
-class PetEnum(str, Enum, metaclass=PublicCaseInsensitiveEnumMeta):
+class PetEnumPy3MetaclassAlt(str, Enum, metaclass=PublicCaseInsensitiveEnumMeta):
     """A test enum
     """
     DOG = "dog"
@@ -65,15 +75,16 @@ class PetEnum(str, Enum, metaclass=PublicCaseInsensitiveEnumMeta):
     DEFAULT = "cat"
 
 
+# pylint:disable=docstring-missing-param
 class FakeObject(object):
     """Fake Object
 
     :ivar str name: Name
     :ivar int age: Age
     :ivar union: Union
-    :vartype union: Union[bool, PetEnum]
+    :vartype union: Union[bool, PetEnumPy3MetaclassAlt]
     """
-    def __init__(self, name: str, age: int, union: Union[bool, PetEnum]):
+    def __init__(self, name: str, age: int, union: Union[bool, PetEnumPy3MetaclassAlt]):
         self.name = name
         self.age = age
         self.union = union
@@ -86,24 +97,16 @@ class FakeObject(object):
     }
 
 
+class FakeError(object):
+    pass
+
+
 FakeTypedDict = TypedDict(
     'FakeTypedDict',
     name=str,
     age=int,
-    union=Union[bool, FakeObject, PetEnum]
+    union=Union[bool, FakeObject, PetEnumPy3MetaclassAlt]
 )
-
-
-@dataclass
-class FakeInventoryItemDataClass:
-    """Class for testing @dataclass
-    """
-    name: str
-    unit_price: float
-    quantity_on_hand: int = 0
-
-    def total_cost(self, **kwargs) -> float:
-        return self.unit_price * self.quantity_on_hand
 
 
 class PublicPrivateClass:
@@ -143,13 +146,118 @@ class RequiredKwargObject:
 
 class ObjectWithDefaults:
 
-    def __init__(self, name: str = "Bob", age: int = 21, is_awesome: bool = True, pet: PetEnum = PetEnum.DOG):
+    def __init__(self, name: str = "Bob", age: int = 21, is_awesome: bool = True, pet: PetEnumPy3MetaclassAlt = PetEnumPy3MetaclassAlt.DOG):
         self.name = name
         self.age = age
         self.is_awesome = is_awesome
         self.pet = pet
 
+
 class SomePoorlyNamedObject:
 
     def __init__(self, name: str):
         self.name = name
+
+
+class SomeAwesomelyNamedObject(SomePoorlyNamedObject):
+    pass
+
+
+class SomethingWithOverloads:
+
+    @overload
+    def double(self, input: int = 1, *, test: bool = False, **kwargs) -> int:
+        ...
+
+    @overload
+    def double(self, input: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]:
+        ...
+
+    def double(self, input: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]:
+        if isinstance(input, Sequence):
+            return [i * 2 for i in input]
+        return input * 2
+
+    @overload
+    def something(self, id: str, *args, **kwargs) -> str:
+        ...
+
+    @overload
+    def something(self, id: int, *args, **kwargs) -> str:
+        ...
+
+    def something(self, id: int | str, *args, **kwargs) -> str:
+        return str(id)
+
+
+class SomethingWithDecorators:
+
+    @my_decorator
+    async def name_async(self):
+        pass
+
+    @my_decorator
+    def name_sync(self):
+        pass
+
+    @another_decorator("Test")
+    async def complex_decorator_async(self):
+        pass
+
+    @another_decorator("Test")
+    def complex_decorator_sync(self):
+        pass
+
+
+# pylint:disable=docstring-missing-return
+class SomethingWithProperties:
+
+    @property
+    def py3_property(self) -> Optional[str]:
+        pass
+
+    @property
+    def py2_property(self):
+        # type: () -> Optional[str]
+        pass
+
+    @property
+    def docstring_property(self):
+        """ Property
+
+        :rtype: Optional[str]
+        """
+        pass
+
+# pylint:disable=docstring-missing-rtype
+class _SomeAbstractBase(abc.ABC):
+    """ Some abstract base class. """
+
+    @property
+    @abc.abstractmethod
+    def say_hello(self) -> str:
+        """ A method to say hello. """
+        ...
+
+class SomeImplementationClass(_SomeAbstractBase):
+
+    def say_hello(self) -> str:
+        return "Hello!"
+
+
+T = TypeVar('T')
+
+class GenericStack(Generic[T]):
+    def __init__(self) -> None:
+        # Create an empty list with items of type T
+        self.items: list[T] = []
+
+    def push(self, item: T) -> None:
+        self.items.append(item)
+
+    def pop(self) -> T:
+        return self.items.pop()
+
+    def empty(self) -> bool:
+        return not self.items
+

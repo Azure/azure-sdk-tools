@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -23,48 +23,42 @@ func ExampleSignalRClient_CheckNameAvailability() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.CheckNameAvailability(ctx,
-		"<location>",
+		"eastus",
 		test.NameAvailabilityParameters{
-			Name: to.Ptr("<name>"),
-			Type: to.Ptr("<type>"),
+			Name: to.Ptr("mySignalRService"),
+			Type: to.Ptr("Microsoft.SignalRService/SignalR"),
 		},
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json
-func ExampleSignalRClient_ListBySubscription() {
+func ExampleSignalRClient_NewListBySubscriptionPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.ListBySubscription(nil)
+	pager := client.NewListBySubscriptionPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -74,25 +68,22 @@ func ExampleSignalRClient_ListBySubscription() {
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json
-func ExampleSignalRClient_ListByResourceGroup() {
+func ExampleSignalRClient_NewListByResourceGroupPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.ListByResourceGroup("<resource-group-name>",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -106,21 +97,18 @@ func ExampleSignalRClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<resource-name>",
+		"myResourceGroup",
+		"mySignalRService",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -131,19 +119,17 @@ func ExampleSignalRClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<resource-name>",
+		"myResourceGroup",
+		"mySignalRService",
 		test.ResourceInfo{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("eastus"),
 			Tags: map[string]*string{
 				"key1": to.Ptr("value1"),
 			},
@@ -163,22 +149,22 @@ func ExampleSignalRClient_BeginCreateOrUpdate() {
 					{
 						Flag:       to.Ptr(test.FeatureFlagsServiceMode),
 						Properties: map[string]*string{},
-						Value:      to.Ptr("<value>"),
+						Value:      to.Ptr("Serverless"),
 					},
 					{
 						Flag:       to.Ptr(test.FeatureFlagsEnableConnectivityLogs),
 						Properties: map[string]*string{},
-						Value:      to.Ptr("<value>"),
+						Value:      to.Ptr("True"),
 					},
 					{
 						Flag:       to.Ptr(test.FeatureFlagsEnableMessagingLogs),
 						Properties: map[string]*string{},
-						Value:      to.Ptr("<value>"),
+						Value:      to.Ptr("False"),
 					},
 					{
 						Flag:       to.Ptr(test.FeatureFlagsEnableLiveTrace),
 						Properties: map[string]*string{},
-						Value:      to.Ptr("<value>"),
+						Value:      to.Ptr("False"),
 					}},
 				NetworkACLs: &test.SignalRNetworkACLs{
 					DefaultAction: to.Ptr(test.ACLActionDeny),
@@ -186,14 +172,14 @@ func ExampleSignalRClient_BeginCreateOrUpdate() {
 						{
 							Allow: []*test.SignalRRequestType{
 								to.Ptr(test.SignalRRequestTypeServerConnection)},
-							Name: to.Ptr("<name>"),
+							Name: to.Ptr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
 							to.Ptr(test.SignalRRequestTypeClientConnection)},
 					},
 				},
-				PublicNetworkAccess: to.Ptr("<public-network-access>"),
+				PublicNetworkAccess: to.Ptr("Enabled"),
 				TLS: &test.SignalRTLSSettings{
 					ClientCertEnabled: to.Ptr(false),
 				},
@@ -203,31 +189,29 @@ func ExampleSignalRClient_BeginCreateOrUpdate() {
 							Auth: &test.UpstreamAuthSettings{
 								Type: to.Ptr(test.UpstreamAuthTypeManagedIdentity),
 								ManagedIdentity: &test.ManagedIdentitySettings{
-									Resource: to.Ptr("<resource>"),
+									Resource: to.Ptr("api://example"),
 								},
 							},
-							CategoryPattern: to.Ptr("<category-pattern>"),
-							EventPattern:    to.Ptr("<event-pattern>"),
-							HubPattern:      to.Ptr("<hub-pattern>"),
-							URLTemplate:     to.Ptr("<urltemplate>"),
+							CategoryPattern: to.Ptr("*"),
+							EventPattern:    to.Ptr("connect,disconnect"),
+							HubPattern:      to.Ptr("*"),
+							URLTemplate:     to.Ptr("https://example.com/chat/api/connect"),
 						}},
 				},
 			},
 			SKU: &test.ResourceSKU{
-				Name:     to.Ptr("<name>"),
+				Name:     to.Ptr("Standard_S1"),
 				Capacity: to.Ptr[int32](1),
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -238,26 +222,22 @@ func ExampleSignalRClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<resource-name>",
-		&test.SignalRClientBeginDeleteOptions{ResumeToken: ""})
+		"myResourceGroup",
+		"mySignalRService",
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -266,19 +246,17 @@ func ExampleSignalRClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<resource-name>",
+		"myResourceGroup",
+		"mySignalRService",
 		test.ResourceInfo{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("eastus"),
 			Tags: map[string]*string{
 				"key1": to.Ptr("value1"),
 			},
@@ -298,22 +276,22 @@ func ExampleSignalRClient_BeginUpdate() {
 					{
 						Flag:       to.Ptr(test.FeatureFlagsServiceMode),
 						Properties: map[string]*string{},
-						Value:      to.Ptr("<value>"),
+						Value:      to.Ptr("Serverless"),
 					},
 					{
 						Flag:       to.Ptr(test.FeatureFlagsEnableConnectivityLogs),
 						Properties: map[string]*string{},
-						Value:      to.Ptr("<value>"),
+						Value:      to.Ptr("True"),
 					},
 					{
 						Flag:       to.Ptr(test.FeatureFlagsEnableMessagingLogs),
 						Properties: map[string]*string{},
-						Value:      to.Ptr("<value>"),
+						Value:      to.Ptr("False"),
 					},
 					{
 						Flag:       to.Ptr(test.FeatureFlagsEnableLiveTrace),
 						Properties: map[string]*string{},
-						Value:      to.Ptr("<value>"),
+						Value:      to.Ptr("False"),
 					}},
 				NetworkACLs: &test.SignalRNetworkACLs{
 					DefaultAction: to.Ptr(test.ACLActionDeny),
@@ -321,14 +299,14 @@ func ExampleSignalRClient_BeginUpdate() {
 						{
 							Allow: []*test.SignalRRequestType{
 								to.Ptr(test.SignalRRequestTypeServerConnection)},
-							Name: to.Ptr("<name>"),
+							Name: to.Ptr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
 							to.Ptr(test.SignalRRequestTypeClientConnection)},
 					},
 				},
-				PublicNetworkAccess: to.Ptr("<public-network-access>"),
+				PublicNetworkAccess: to.Ptr("Enabled"),
 				TLS: &test.SignalRTLSSettings{
 					ClientCertEnabled: to.Ptr(false),
 				},
@@ -338,31 +316,29 @@ func ExampleSignalRClient_BeginUpdate() {
 							Auth: &test.UpstreamAuthSettings{
 								Type: to.Ptr(test.UpstreamAuthTypeManagedIdentity),
 								ManagedIdentity: &test.ManagedIdentitySettings{
-									Resource: to.Ptr("<resource>"),
+									Resource: to.Ptr("api://example"),
 								},
 							},
-							CategoryPattern: to.Ptr("<category-pattern>"),
-							EventPattern:    to.Ptr("<event-pattern>"),
-							HubPattern:      to.Ptr("<hub-pattern>"),
-							URLTemplate:     to.Ptr("<urltemplate>"),
+							CategoryPattern: to.Ptr("*"),
+							EventPattern:    to.Ptr("connect,disconnect"),
+							HubPattern:      to.Ptr("*"),
+							URLTemplate:     to.Ptr("https://example.com/chat/api/connect"),
 						}},
 				},
 			},
 			SKU: &test.ResourceSKU{
-				Name:     to.Ptr("<name>"),
+				Name:     to.Ptr("Standard_S1"),
 				Capacity: to.Ptr[int32](1),
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -373,21 +349,18 @@ func ExampleSignalRClient_ListKeys() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.ListKeys(ctx,
-		"<resource-group-name>",
-		"<resource-name>",
+		"myResourceGroup",
+		"mySignalRService",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -398,29 +371,25 @@ func ExampleSignalRClient_BeginRegenerateKey() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginRegenerateKey(ctx,
-		"<resource-group-name>",
-		"<resource-name>",
+		"myResourceGroup",
+		"mySignalRService",
 		test.RegenerateKeyParameters{
 			KeyType: to.Ptr(test.KeyTypePrimary),
 		},
-		&test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -429,25 +398,21 @@ func ExampleSignalRClient_BeginRestart() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginRestart(ctx,
-		"<resource-group-name>",
-		"<resource-name>",
-		&test.SignalRClientBeginRestartOptions{ResumeToken: ""})
+		"myResourceGroup",
+		"mySignalRService",
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }

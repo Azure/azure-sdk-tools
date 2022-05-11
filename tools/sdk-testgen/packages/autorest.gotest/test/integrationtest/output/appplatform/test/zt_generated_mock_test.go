@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -10,10 +10,7 @@ package test_test
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"testing"
 
 	"encoding/json"
@@ -26,34 +23,64 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/testutil"
+	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/http2"
 )
 
-var (
-	ctx      context.Context
-	options  arm.ClientOptions
-	cred     azcore.TokenCredential
-	err      error
-	mockHost string
-)
+type MockTestSuite struct {
+	suite.Suite
 
-func TestServices_Get(t *testing.T) {
+	cred    azcore.TokenCredential
+	options arm.ClientOptions
+}
+
+func (testsuite *MockTestSuite) SetupSuite() {
+	mockHost := testutil.GetEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
+
+	tr := &http.Transport{}
+	err := http2.ConfigureTransport(tr)
+	testsuite.Require().NoError(err, "Failed to configure http2 transport")
+	tr.TLSClientConfig.InsecureSkipVerify = true
+	client := &http.Client{Transport: tr}
+
+	testsuite.cred = &MockCredential{}
+
+	testsuite.options = arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Logging: policy.LogOptions{
+				IncludeBody: true,
+			},
+			Transport: client,
+			Cloud: cloud.Configuration{
+				Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
+					cloud.ResourceManager: {
+						Audience: mockHost,
+						Endpoint: mockHost,
+					},
+				},
+			},
+		},
+	}
+}
+
+func TestMockTest(t *testing.T) {
+	suite.Run(t, new(MockTestSuite))
+}
+
+func (testsuite *MockTestSuite) TestServices_Get() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_Get"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myservice",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Get.json")
 	// Response check
 	exampleRes := test.ServiceResource{
 		Name:     to.Ptr("myservice"),
@@ -107,20 +134,18 @@ func TestServices_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ServiceResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ServiceResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestServices_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestServices_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_CreateOrUpdate"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -135,14 +160,10 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.ServiceResource{
 		Name:     to.Ptr("myservice"),
@@ -196,18 +217,15 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ServiceResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ServiceResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_CreateOrUpdate_VNetInjection"},
 	})
-	client, err = test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -230,14 +248,10 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json")
 	// Response check
 	exampleRes = test.ServiceResource{
 		Name:     to.Ptr("myservice"),
@@ -295,43 +309,35 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ServiceResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ServiceResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestServices_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestServices_Delete() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_Delete"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
-		&test.ServicesClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json")
 }
 
-func TestServices_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestServices_Update() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_Update"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -346,14 +352,10 @@ func TestServices_Update(t *testing.T) {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json")
 	// Response check
 	exampleRes := test.ServiceResource{
 		Name:     to.Ptr("myservice"),
@@ -407,27 +409,23 @@ func TestServices_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ServiceResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ServiceResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestServices_ListTestKeys(t *testing.T) {
+func (testsuite *MockTestSuite) TestServices_ListTestKeys() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_ListTestKeys"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.ListTestKeys(ctx,
 		"myResourceGroup",
 		"myservice",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json")
 	// Response check
 	exampleRes := test.Keys{
 		Enabled:               to.Ptr(true),
@@ -439,20 +437,18 @@ func TestServices_ListTestKeys(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Keys) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Keys)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestServices_RegenerateTestKey(t *testing.T) {
+func (testsuite *MockTestSuite) TestServices_RegenerateTestKey() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_RegenerateTestKey"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.RegenerateTestKey(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -460,9 +456,7 @@ func TestServices_RegenerateTestKey(t *testing.T) {
 			KeyType: to.Ptr(test.TestKeyTypePrimary),
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json")
 	// Response check
 	exampleRes := test.Keys{
 		Enabled:               to.Ptr(true),
@@ -474,46 +468,38 @@ func TestServices_RegenerateTestKey(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Keys) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Keys)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestServices_DisableTestEndpoint(t *testing.T) {
+func (testsuite *MockTestSuite) TestServices_DisableTestEndpoint() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_DisableTestEndpoint.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_DisableTestEndpoint"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	_, err = client.DisableTestEndpoint(ctx,
 		"myResourceGroup",
 		"myservice",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_DisableTestEndpoint.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_DisableTestEndpoint.json")
 }
 
-func TestServices_EnableTestEndpoint(t *testing.T) {
+func (testsuite *MockTestSuite) TestServices_EnableTestEndpoint() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_EnableTestEndpoint.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_EnableTestEndpoint"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.EnableTestEndpoint(ctx,
 		"myResourceGroup",
 		"myservice",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_EnableTestEndpoint.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_EnableTestEndpoint.json")
 	// Response check
 	exampleRes := test.Keys{
 		Enabled:               to.Ptr(true),
@@ -525,20 +511,18 @@ func TestServices_EnableTestEndpoint(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Keys) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Keys)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_EnableTestEndpoint.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_EnableTestEndpoint.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestServices_CheckNameAvailability(t *testing.T) {
+func (testsuite *MockTestSuite) TestServices_CheckNameAvailability() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_CheckNameAvailability"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.CheckNameAvailability(ctx,
 		"eastus",
 		test.NameAvailabilityParameters{
@@ -546,9 +530,7 @@ func TestServices_CheckNameAvailability(t *testing.T) {
 			Type: to.Ptr("Microsoft.AppPlatform/Spring"),
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json")
 	// Response check
 	exampleRes := test.NameAvailability{
 		Message:       to.Ptr("The name is already used."),
@@ -558,27 +540,22 @@ func TestServices_CheckNameAvailability(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.NameAvailability) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.NameAvailability)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestServices_ListBySubscription(t *testing.T) {
+func (testsuite *MockTestSuite) TestServices_ListBySubscription() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_ListBySubscription"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListBySubscription(nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListBySubscriptionPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json")
 		// Response check
 		pagerExampleRes := test.ServiceResourceList{
 			Value: []*test.ServiceResource{
@@ -635,29 +612,24 @@ func TestServices_ListBySubscription(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ServiceResourceList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ServiceResourceList)
-			t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestServices_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestServices_List() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_List"},
 	})
-	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myResourceGroup",
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json")
 		// Response check
 		pagerExampleRes := test.ServiceResourceList{
 			Value: []*test.ServiceResource{
@@ -714,28 +686,24 @@ func TestServices_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ServiceResourceList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ServiceResourceList)
-			t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestConfigServers_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestConfigServers_Get() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"ConfigServers_Get"},
 	})
-	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myservice",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Get.json")
 	// Response check
 	exampleRes := test.ConfigServerResource{
 		Name: to.Ptr("default"),
@@ -756,20 +724,18 @@ func TestConfigServers_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ConfigServerResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ConfigServerResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestConfigServers_UpdatePut(t *testing.T) {
+func (testsuite *MockTestSuite) TestConfigServers_UpdatePut() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"ConfigServers_UpdatePut"},
 	})
-	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdatePut(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -785,14 +751,10 @@ func TestConfigServers_UpdatePut(t *testing.T) {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json")
 	// Response check
 	exampleRes := test.ConfigServerResource{
 		Name: to.Ptr("default"),
@@ -813,20 +775,18 @@ func TestConfigServers_UpdatePut(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ConfigServerResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ConfigServerResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestConfigServers_UpdatePatch(t *testing.T) {
+func (testsuite *MockTestSuite) TestConfigServers_UpdatePatch() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"ConfigServers_UpdatePatch"},
 	})
-	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdatePatch(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -842,14 +802,10 @@ func TestConfigServers_UpdatePatch(t *testing.T) {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json")
 	// Response check
 	exampleRes := test.ConfigServerResource{
 		Name: to.Ptr("default"),
@@ -870,20 +826,18 @@ func TestConfigServers_UpdatePatch(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ConfigServerResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ConfigServerResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestConfigServers_Validate(t *testing.T) {
+func (testsuite *MockTestSuite) TestConfigServers_Validate() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"ConfigServers_Validate"},
 	})
-	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginValidate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -895,14 +849,10 @@ func TestConfigServers_Validate(t *testing.T) {
 				URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
 			},
 		},
-		&test.ConfigServersClientBeginValidateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json")
 	// Response check
 	exampleRes := test.ConfigServerSettingsValidateResult{
 		IsValid: to.Ptr(true),
@@ -910,27 +860,23 @@ func TestConfigServers_Validate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ConfigServerSettingsValidateResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ConfigServerSettingsValidateResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestMonitoringSettings_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestMonitoringSettings_Get() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"MonitoringSettings_Get"},
 	})
-	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myservice",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json")
 	// Response check
 	exampleRes := test.MonitoringSettingResource{
 		Name: to.Ptr("default"),
@@ -949,20 +895,18 @@ func TestMonitoringSettings_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.MonitoringSettingResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.MonitoringSettingResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestMonitoringSettings_UpdatePut(t *testing.T) {
+func (testsuite *MockTestSuite) TestMonitoringSettings_UpdatePut() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"MonitoringSettings_UpdatePut"},
 	})
-	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdatePut(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -973,14 +917,10 @@ func TestMonitoringSettings_UpdatePut(t *testing.T) {
 				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json")
 	// Response check
 	exampleRes := test.MonitoringSettingResource{
 		Name: to.Ptr("default"),
@@ -999,20 +939,18 @@ func TestMonitoringSettings_UpdatePut(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.MonitoringSettingResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.MonitoringSettingResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestMonitoringSettings_UpdatePatch(t *testing.T) {
+func (testsuite *MockTestSuite) TestMonitoringSettings_UpdatePatch() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"MonitoringSettings_UpdatePatch"},
 	})
-	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdatePatch(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -1023,14 +961,10 @@ func TestMonitoringSettings_UpdatePatch(t *testing.T) {
 				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json")
 	// Response check
 	exampleRes := test.MonitoringSettingResource{
 		Name: to.Ptr("default"),
@@ -1049,28 +983,24 @@ func TestMonitoringSettings_UpdatePatch(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.MonitoringSettingResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.MonitoringSettingResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestApps_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestApps_Get() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_Get"},
 	})
-	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		&test.AppsClientGetOptions{SyncStatus: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Get.json")
 	// Response check
 	exampleRes := test.AppResource{
 		Name: to.Ptr("myapp"),
@@ -1104,20 +1034,18 @@ func TestApps_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.AppResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.AppResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestApps_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestApps_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_CreateOrUpdate"},
 	})
-	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -1140,14 +1068,10 @@ func TestApps_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.AppResource{
 		Name: to.Ptr("myapp"),
@@ -1181,44 +1105,36 @@ func TestApps_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.AppResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.AppResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestApps_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestApps_Delete() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_Delete"},
 	})
-	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
-		&test.AppsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json")
 }
 
-func TestApps_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestApps_Update() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_Update"},
 	})
-	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -1244,14 +1160,10 @@ func TestApps_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json")
 	// Response check
 	exampleRes := test.AppResource{
 		Name: to.Ptr("myapp"),
@@ -1285,29 +1197,24 @@ func TestApps_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.AppResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.AppResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestApps_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestApps_List() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_List"},
 	})
-	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myResourceGroup",
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json")
 		// Response check
 		pagerExampleRes := test.AppResourceCollection{
 			Value: []*test.AppResource{
@@ -1344,21 +1251,19 @@ func TestApps_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.AppResourceCollection) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.AppResourceCollection)
-			t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestApps_ValidateDomain(t *testing.T) {
+func (testsuite *MockTestSuite) TestApps_ValidateDomain() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_ValidateDomain.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_ValidateDomain"},
 	})
-	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.ValidateDomain(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -1367,9 +1272,7 @@ func TestApps_ValidateDomain(t *testing.T) {
 			Name: to.Ptr("mydomain.io"),
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_ValidateDomain.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_ValidateDomain.json")
 	// Response check
 	exampleRes := test.CustomDomainValidateResult{
 		IsValid: to.Ptr(false),
@@ -1378,29 +1281,25 @@ func TestApps_ValidateDomain(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CustomDomainValidateResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CustomDomainValidateResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_ValidateDomain.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_ValidateDomain.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestBindings_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestBindings_Get() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Bindings_Get"},
 	})
-	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mybinding",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Get.json")
 	// Response check
 	exampleRes := test.BindingResource{
 		Name: to.Ptr("mybinding"),
@@ -1422,20 +1321,18 @@ func TestBindings_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.BindingResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.BindingResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestBindings_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestBindings_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Bindings_CreateOrUpdate"},
 	})
-	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -1451,14 +1348,10 @@ func TestBindings_CreateOrUpdate(t *testing.T) {
 				ResourceID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
 			},
 		},
-		&test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.BindingResource{
 		Name: to.Ptr("mybinding"),
@@ -1480,45 +1373,37 @@ func TestBindings_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.BindingResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.BindingResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestBindings_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestBindings_Delete() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Bindings_Delete"},
 	})
-	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mybinding",
-		&test.BindingsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json")
 }
 
-func TestBindings_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestBindings_Update() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Bindings_Update"},
 	})
-	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -1533,14 +1418,10 @@ func TestBindings_Update(t *testing.T) {
 				Key: to.Ptr("xxxx"),
 			},
 		},
-		&test.BindingsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json")
 	// Response check
 	exampleRes := test.BindingResource{
 		Name: to.Ptr("mybinding"),
@@ -1562,30 +1443,25 @@ func TestBindings_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.BindingResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.BindingResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestBindings_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestBindings_List() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Bindings_List"},
 	})
-	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myResourceGroup",
+	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		"myapp",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json")
 		// Response check
 		pagerExampleRes := test.BindingResourceCollection{
 			Value: []*test.BindingResource{
@@ -1610,29 +1486,25 @@ func TestBindings_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.BindingResourceCollection) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.BindingResourceCollection)
-			t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestCertificates_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestCertificates_Get() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Certificates_Get"},
 	})
-	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myservice",
 		"mycertificate",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Get.json")
 	// Response check
 	exampleRes := test.CertificateResource{
 		Name: to.Ptr("mycertificate"),
@@ -1657,20 +1529,18 @@ func TestCertificates_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CertificateResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CertificateResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCertificates_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestCertificates_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Certificates_CreateOrUpdate"},
 	})
-	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -1682,14 +1552,10 @@ func TestCertificates_CreateOrUpdate(t *testing.T) {
 				VaultURI:         to.Ptr("https://myvault.vault.azure.net"),
 			},
 		},
-		&test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.CertificateResource{
 		Name: to.Ptr("mycertificate"),
@@ -1714,53 +1580,42 @@ func TestCertificates_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CertificateResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CertificateResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCertificates_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestCertificates_Delete() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Certificates_Delete"},
 	})
-	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
 		"mycertificate",
-		&test.CertificatesClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json")
 }
 
-func TestCertificates_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestCertificates_List() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Certificates_List"},
 	})
-	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myResourceGroup",
+	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myResourceGroup",
 		"myService",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json")
 		// Response check
 		pagerExampleRes := test.CertificateResourceCollection{
 			Value: []*test.CertificateResource{
@@ -1788,30 +1643,26 @@ func TestCertificates_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.CertificateResourceCollection) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.CertificateResourceCollection)
-			t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestCustomDomains_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestCustomDomains_Get() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"CustomDomains_Get"},
 	})
-	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydomain.com",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Get.json")
 	// Response check
 	exampleRes := test.CustomDomainResource{
 		Name: to.Ptr("mydomain.com"),
@@ -1826,20 +1677,18 @@ func TestCustomDomains_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CustomDomainResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CustomDomainResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCustomDomains_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestCustomDomains_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"CustomDomains_CreateOrUpdate"},
 	})
-	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -1851,14 +1700,10 @@ func TestCustomDomains_CreateOrUpdate(t *testing.T) {
 				Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
 			},
 		},
-		&test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.CustomDomainResource{
 		Name: to.Ptr("mydomain.com"),
@@ -1873,45 +1718,37 @@ func TestCustomDomains_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CustomDomainResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CustomDomainResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCustomDomains_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestCustomDomains_Delete() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"CustomDomains_Delete"},
 	})
-	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydomain.com",
-		&test.CustomDomainsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json")
 }
 
-func TestCustomDomains_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestCustomDomains_Update() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"CustomDomains_Update"},
 	})
-	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -1923,14 +1760,10 @@ func TestCustomDomains_Update(t *testing.T) {
 				Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
 			},
 		},
-		&test.CustomDomainsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json")
 	// Response check
 	exampleRes := test.CustomDomainResource{
 		Name: to.Ptr("mydomain.com"),
@@ -1945,30 +1778,25 @@ func TestCustomDomains_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CustomDomainResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CustomDomainResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCustomDomains_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestCustomDomains_List() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"CustomDomains_List"},
 	})
-	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myResourceGroup",
+	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		"myapp",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json")
 		// Response check
 		pagerExampleRes := test.CustomDomainResourceCollection{
 			Value: []*test.CustomDomainResource{
@@ -1986,30 +1814,26 @@ func TestCustomDomains_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.CustomDomainResourceCollection) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.CustomDomainResourceCollection)
-			t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDeployments_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestDeployments_Get() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Get"},
 	})
-	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydeployment",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Get.json")
 	// Response check
 	exampleRes := test.DeploymentResource{
 		Name: to.Ptr("mydeployment"),
@@ -2052,20 +1876,18 @@ func TestDeployments_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DeploymentResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DeploymentResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDeployments_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestDeployments_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_CreateOrUpdate"},
 	})
-	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -2090,14 +1912,10 @@ func TestDeployments_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.DeploymentResource{
 		Name: to.Ptr("mydeployment"),
@@ -2140,45 +1958,37 @@ func TestDeployments_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DeploymentResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DeploymentResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDeployments_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestDeployments_Delete() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Delete"},
 	})
-	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json")
 }
 
-func TestDeployments_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestDeployments_Update() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Update"},
 	})
-	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myservice",
@@ -2194,14 +2004,10 @@ func TestDeployments_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.DeploymentsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json")
 	// Response check
 	exampleRes := test.DeploymentResource{
 		Name: to.Ptr("mydeployment"),
@@ -2244,30 +2050,25 @@ func TestDeployments_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DeploymentResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DeploymentResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDeployments_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestDeployments_List() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_List"},
 	})
-	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myResourceGroup",
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		"myapp",
 		&test.DeploymentsClientListOptions{Version: []string{}})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json")
 		// Response check
 		pagerExampleRes := test.DeploymentResourceCollection{
 			Value: []*test.DeploymentResource{
@@ -2313,30 +2114,25 @@ func TestDeployments_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.DeploymentResourceCollection) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.DeploymentResourceCollection)
-			t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDeployments_ListForCluster(t *testing.T) {
+func (testsuite *MockTestSuite) TestDeployments_ListForCluster() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_ListForCluster"},
 	})
-	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListForCluster("myResourceGroup",
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListForClusterPager("myResourceGroup",
 		"myservice",
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json")
 		// Response check
 		pagerExampleRes := test.DeploymentResourceCollection{
 			Value: []*test.DeploymentResource{
@@ -2382,103 +2178,80 @@ func TestDeployments_ListForCluster(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.DeploymentResourceCollection) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.DeploymentResourceCollection)
-			t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDeployments_Start(t *testing.T) {
+func (testsuite *MockTestSuite) TestDeployments_Start() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Start"},
 	})
-	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginStart(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginStartOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json")
 }
 
-func TestDeployments_Stop(t *testing.T) {
+func (testsuite *MockTestSuite) TestDeployments_Stop() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Stop"},
 	})
-	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginStop(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginStopOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json")
 }
 
-func TestDeployments_Restart(t *testing.T) {
+func (testsuite *MockTestSuite) TestDeployments_Restart() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Restart"},
 	})
-	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginRestart(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginRestartOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json")
 }
 
-func TestOperations_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestOperations_List() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Operations_List"},
 	})
-	client, err := test.NewOperationsClient(cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List(nil)
+	client, err := test.NewOperationsClient(testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json")
 		// Response check
 		pagerExampleRes := test.AvailableOperations{
 			Value: []*test.OperationDetail{
@@ -2498,26 +2271,22 @@ func TestOperations_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.AvailableOperations) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.AvailableOperations)
-			t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestRuntimeVersions_ListRuntimeVersions(t *testing.T) {
+func (testsuite *MockTestSuite) TestRuntimeVersions_ListRuntimeVersions() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/RuntimeVersions_ListRuntimeVersions.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"RuntimeVersions_ListRuntimeVersions"},
 	})
-	client, err := test.NewRuntimeVersionsClient(cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewRuntimeVersionsClient(testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.ListRuntimeVersions(ctx,
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/RuntimeVersions_ListRuntimeVersions.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/RuntimeVersions_ListRuntimeVersions.json")
 	// Response check
 	exampleRes := test.AvailableRuntimeVersions{
 		Value: []*test.SupportedRuntimeVersion{
@@ -2540,27 +2309,22 @@ func TestRuntimeVersions_ListRuntimeVersions(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.AvailableRuntimeVersions) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.AvailableRuntimeVersions)
-		t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/RuntimeVersions_ListRuntimeVersions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/RuntimeVersions_ListRuntimeVersions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSKUs_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestSKUs_List() {
+	ctx := context.Background()
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Skus_List"},
 	})
-	client, err := test.NewSKUsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List(nil)
+	client, err := test.NewSKUsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json")
 		// Response check
 		pagerExampleRes := test.ResourceSKUCollection{
 			Value: []*test.ResourceSKU{
@@ -2588,59 +2352,9 @@ func TestSKUs_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ResourceSKUCollection) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ResourceSKUCollection)
-			t.Fatalf("Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
-}
-
-// TestMain will exec each test
-func TestMain(m *testing.M) {
-	setUp()
-	retCode := m.Run() // exec test and this returns an exit code to pass to os
-	tearDown()
-	os.Exit(retCode)
-}
-
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
-
-func setUp() {
-	ctx = context.Background()
-	mockHost = getEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
-
-	tr := &http.Transport{}
-	if err := http2.ConfigureTransport(tr); err != nil {
-		fmt.Printf("Failed to configure http2 transport: %v", err)
-	}
-	tr.TLSClientConfig.InsecureSkipVerify = true
-	client := &http.Client{Transport: tr}
-
-	cred = &MockCredential{}
-
-	options = arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Logging: policy.LogOptions{
-				IncludeBody: true,
-			},
-			Transport: client,
-			Cloud: cloud.Configuration{
-				Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
-					cloud.ResourceManager: {
-						Audience: mockHost,
-						Endpoint: mockHost,
-					},
-				},
-			},
-		},
-	}
-}
-
-func tearDown() {
-
 }
 
 type MockCredential struct {

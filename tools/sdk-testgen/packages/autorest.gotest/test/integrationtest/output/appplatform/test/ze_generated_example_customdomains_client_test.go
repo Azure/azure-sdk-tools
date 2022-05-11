@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -23,23 +23,20 @@ func ExampleCustomDomainsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<domain-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydomain.com",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -50,34 +47,30 @@ func ExampleCustomDomainsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<domain-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydomain.com",
 		test.CustomDomainResource{
 			Properties: &test.CustomDomainProperties{
-				CertName:   to.Ptr("<cert-name>"),
-				Thumbprint: to.Ptr("<thumbprint>"),
+				CertName:   to.Ptr("mycert"),
+				Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
 			},
 		},
-		&test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -88,28 +81,24 @@ func ExampleCustomDomainsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<domain-name>",
-		&test.CustomDomainsClientBeginDeleteOptions{ResumeToken: ""})
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydomain.com",
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -118,61 +107,54 @@ func ExampleCustomDomainsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<domain-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydomain.com",
 		test.CustomDomainResource{
 			Properties: &test.CustomDomainProperties{
-				CertName:   to.Ptr("<cert-name>"),
-				Thumbprint: to.Ptr("<thumbprint>"),
+				CertName:   to.Ptr("mycert"),
+				Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
 			},
 		},
-		&test.CustomDomainsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json
-func ExampleCustomDomainsClient_List() {
+func ExampleCustomDomainsClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List("<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
+	pager := client.NewListPager("myResourceGroup",
+		"myservice",
+		"myapp",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item

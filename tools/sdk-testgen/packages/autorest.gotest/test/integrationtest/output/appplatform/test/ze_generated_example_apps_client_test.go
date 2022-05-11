@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -23,22 +23,19 @@ func ExampleAppsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewAppsClient("<subscription-id>", cred, nil)
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
 		&test.AppsClientGetOptions{SyncStatus: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -49,45 +46,41 @@ func ExampleAppsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewAppsClient("<subscription-id>", cred, nil)
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
 		test.AppResource{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("eastus"),
 			Properties: &test.AppResourceProperties{
-				ActiveDeploymentName: to.Ptr("<active-deployment-name>"),
+				ActiveDeploymentName: to.Ptr("mydeployment1"),
 				EnableEndToEndTLS:    to.Ptr(false),
-				Fqdn:                 to.Ptr("<fqdn>"),
+				Fqdn:                 to.Ptr("myapp.mydomain.com"),
 				HTTPSOnly:            to.Ptr(false),
 				PersistentDisk: &test.PersistentDisk{
-					MountPath: to.Ptr("<mount-path>"),
+					MountPath: to.Ptr("/mypersistentdisk"),
 					SizeInGB:  to.Ptr[int32](2),
 				},
 				Public: to.Ptr(true),
 				TemporaryDisk: &test.TemporaryDisk{
-					MountPath: to.Ptr("<mount-path>"),
+					MountPath: to.Ptr("/mytemporarydisk"),
 					SizeInGB:  to.Ptr[int32](2),
 				},
 			},
 		},
-		&test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -98,27 +91,23 @@ func ExampleAppsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewAppsClient("<subscription-id>", cred, nil)
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		&test.AppsClientBeginDeleteOptions{ResumeToken: ""})
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -127,74 +116,67 @@ func ExampleAppsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewAppsClient("<subscription-id>", cred, nil)
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
 				Type: to.Ptr(test.ManagedIdentityTypeSystemAssigned),
 			},
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("eastus"),
 			Properties: &test.AppResourceProperties{
-				ActiveDeploymentName: to.Ptr("<active-deployment-name>"),
+				ActiveDeploymentName: to.Ptr("mydeployment1"),
 				EnableEndToEndTLS:    to.Ptr(false),
-				Fqdn:                 to.Ptr("<fqdn>"),
+				Fqdn:                 to.Ptr("myapp.mydomain.com"),
 				HTTPSOnly:            to.Ptr(false),
 				PersistentDisk: &test.PersistentDisk{
-					MountPath: to.Ptr("<mount-path>"),
+					MountPath: to.Ptr("/mypersistentdisk"),
 					SizeInGB:  to.Ptr[int32](2),
 				},
 				Public: to.Ptr(true),
 				TemporaryDisk: &test.TemporaryDisk{
-					MountPath: to.Ptr("<mount-path>"),
+					MountPath: to.Ptr("/mytemporarydisk"),
 					SizeInGB:  to.Ptr[int32](2),
 				},
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json
-func ExampleAppsClient_List() {
+func ExampleAppsClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewAppsClient("<subscription-id>", cred, nil)
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List("<resource-group-name>",
-		"<service-name>",
+	pager := client.NewListPager("myResourceGroup",
+		"myservice",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -208,25 +190,22 @@ func ExampleAppsClient_ValidateDomain() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewAppsClient("<subscription-id>", cred, nil)
+	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.ValidateDomain(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
 		test.CustomDomainValidatePayload{
-			Name: to.Ptr("<name>"),
+			Name: to.Ptr("mydomain.io"),
 		},
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res

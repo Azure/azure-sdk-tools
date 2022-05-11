@@ -1,7 +1,9 @@
+import astroid
 import logging
 import inspect
 from enum import Enum
 import operator
+from typing import List
 
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._function_node import FunctionNode
@@ -54,10 +56,9 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, allow_list=None):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
-        self.errors = []
         # This is the name obtained by NodeEntityBase from __name__.
         # We must preserve it to detect the mismatch and issue a warning.
         self._name = self.name
@@ -66,6 +67,7 @@ class ClassNode(NodeEntityBase):
         self.full_name = self.namespace_id
         self.implements = []
         self.pkg_root_namespace = pkg_root_namespace
+        self._allow_list = allow_list or []
         self._inspect()
         self._set_abc_implements()
         self._sort_elements()
@@ -100,9 +102,7 @@ class ClassNode(NodeEntityBase):
         # Method or Function member should only be included if it is defined in same package.
         # So this check will filter any methods defined in parent class if parent class is in non-azure package
         # for e.g. as_dict method in msrest
-        if not (
-            inspect.ismethod(func_obj) or inspect.isfunction(func_obj)
-        ) or inspect.isbuiltin(func_obj):
+        if not (inspect.ismethod(func_obj) or inspect.isfunction(func_obj)):
             return False
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
@@ -134,9 +134,33 @@ class ClassNode(NodeEntityBase):
                 )
             )
 
+    """ Uses AST parsing to look for @overload decorated functions
+        because inspect cannot see these. Note that this will not
+        find overloads for module-level functions.
+    """
+    def _parse_overloads(self) -> List[FunctionNode]:
+        overload_nodes = []
+        try:
+            class_node = astroid.parse(inspect.getsource(self.obj)).body[0]
+        except:
+            return []
+        functions = [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]
+        for func in functions:
+            if not func.decorators:
+                continue
+            for node in func.decorators.nodes:
+                try:
+                    if node.name == "overload":
+                        overload_node = FunctionNode(self.namespace, self, node=func)
+                        overload_nodes.append(overload_node)
+                except AttributeError:
+                    continue
+        return overload_nodes
+
     def _inspect(self):
         # Inspect current class and it's members recursively
         logging.debug("Inspecting class {}".format(self.full_name))
+
         # get base classes
         self.base_class_names = self._get_base_classes()
         # Check if Enum is in Base class hierarchy
@@ -156,19 +180,19 @@ class ClassNode(NodeEntityBase):
                 members = inspect.getmembers(self.obj)
         else:
             members = inspect.getmembers(self.obj)
+
+        overloads = self._parse_overloads()
         for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
             elif self._should_include_function(child_obj):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
-                    try:
-                        self.child_nodes.append(
-                            FunctionNode(self.namespace, self, child_obj)
-                        )
-                    except OSError:
-                        # Don't create entries for things that don't have source
-                        pass
+                    func_node = FunctionNode(self.namespace, self, obj=child_obj)
+                    func_overloads = [x for x in overloads if x.name == func_node.name]
+                    for overload in func_overloads:
+                        self.child_nodes.append(overload)
+                    self.child_nodes.append(func_node)
             elif name == "__annotations__":
                 for (item_name, item_type) in child_obj.items():
                     if item_name.startswith("_"):
@@ -188,14 +212,27 @@ class ClassNode(NodeEntityBase):
 
             if self.is_enum and isinstance(child_obj, self.obj):
                 self.child_nodes.append(
-                    EnumNode(name=name, namespace=self.namespace, parent_node=self, obj=child_obj)
+                    EnumNode(
+                        name=name,
+                        namespace=self.namespace,
+                        parent_node=self,
+                        obj=child_obj
+                    )
+                )
+            elif inspect.isclass(child_obj):
+                self.child_nodes.append(
+                    ClassNode(
+                        name=child_obj.name,
+                        namespace=self.namespace,
+                        parent_node=self,
+                        obj=child_obj,
+                        pkg_root_namespace=self.pkg_root_namespace
+                    )
                 )
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):
                     # Add instance properties
-                    self.child_nodes.append(
-                        PropertyNode(self.namespace, self, name, child_obj)
-                    )
+                    self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj))
             else:
                 self._handle_class_variable(child_obj, name, value=str(child_obj))
 
@@ -234,39 +271,35 @@ class ClassNode(NodeEntityBase):
     def _get_base_classes(self):
         # Find base classes
         base_classes = []
-        if hasattr(self.obj, "__bases__"):
-            for cl in [c for c in self.obj.__bases__ if c is not object]:
-                # Show module level name for internal types to show any generated internal types
-                if cl.__module__.startswith("azure"):
-                    base_classes.append("{0}.{1}".format(cl.__module__, cl.__name__))
-                else:
-                    base_classes.append(cl.__name__)
+        bases = getattr(self.obj, "__orig_bases__", None) or getattr(self.obj, "__bases__", None) or []
+        for cl in [c for c in bases if c is not object]:
+            base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes
 
     def generate_tokens(self, apiview):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """
-        logging.info("Processing class {}".format(self.parent_node.namespace_id))
+        logging.info(f"Processing class {self.namespace_id}")
         # Generate class name line
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
         apiview.add_keyword("class", False, True)
-        apiview.add_text(self.namespace_id, self.full_name, add_cross_language_id=True)
-        if self._name != self.name:
-            apiview.add_diagnostic(f"Alias '{self.name}' does not match __name__ '{self._name}'.", self.namespace_id)
+        apiview.add_text(self.full_name, definition_id=self.namespace_id, add_cross_language_id=True)
+        for err in self.pylint_errors:
+            err.generate_tokens(apiview, self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:
             apiview.add_punctuation("(")
-            self._generate_token_for_collection(self.base_class_names, apiview)
+            self._generate_tokens_for_collection(self.base_class_names, apiview)
             apiview.add_punctuation(")")
         apiview.add_punctuation(":")
 
         # Add any ABC implementation list
         if self.implements:
             apiview.add_keyword("implements", True, True)
-            self._generate_token_for_collection(self.implements, apiview)
+            self._generate_tokens_for_collection(self.implements, apiview)
         apiview.add_newline()
 
         # Generate token for child nodes
@@ -292,25 +325,11 @@ class ClassNode(NodeEntityBase):
         apiview.end_group()
 
 
-    def _generate_token_for_collection(self, values, apiview):
+    def _generate_tokens_for_collection(self, values, apiview):
         # Helper method to concatenate list of values and generate tokens
         list_len = len(values)
-        for index in range(list_len):
-            apiview.add_type(values[index], self.namespace_id)
+        for (idx, value) in enumerate(values):
+            apiview.add_type(value, self.namespace_id)
             # Add punctuation between types
-            if index < list_len - 1:
+            if idx < list_len - 1:
                 apiview.add_punctuation(",", False, True)
-
-
-    def print_errors(self):
-        has_error = False
-        # Check if atleast one error is present in child nodes
-        for c in self.child_nodes:
-            if hasattr(c, "errors") and c.errors:
-                has_error = True
-                break
-        if has_error:
-            print("-"*150)
-            print("class {}".format(self.full_name))
-            for c in self.child_nodes:
-                c.print_errors()

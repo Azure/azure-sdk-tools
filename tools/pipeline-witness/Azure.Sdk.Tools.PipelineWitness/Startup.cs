@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net.NetworkInformation;
-using System.Text;
 
 using Azure.Cosmos;
 using Azure.Sdk.Tools.PipelineWitness;
@@ -9,14 +6,15 @@ using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.TestResults.WebApi;
+using Microsoft.ApplicationInsights.Extensibility;
+using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
+using Microsoft.Extensions.Azure;
 
 [assembly: FunctionsStartup(typeof(Startup))]
 
@@ -30,6 +28,12 @@ namespace Azure.Sdk.Tools.PipelineWitness
             return websiteResourceGroupEnvironmentVariable;
         }
 
+        private string GetAzureWebJobsStorageEnvironmentVariable()
+        {
+            var value = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+            return value;
+        }
+
         private string GetBuildBlobStorageEnvironmentVariable()
         {
             var environmentVariable = Environment.GetEnvironmentVariable("BUILD_BLOB_STORAGE_URI");
@@ -40,6 +44,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         {
             var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
             var buildBlobStorageUri = GetBuildBlobStorageEnvironmentVariable();
+            var azureWebJobStorageConnectionString = GetAzureWebJobsStorageEnvironmentVariable();
 
             builder.Services.AddAzureClients(builder =>
             {
@@ -47,6 +52,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 builder.AddSecretClient(keyVaultUri);
 
                 builder.AddBlobServiceClient(new Uri(buildBlobStorageUri));
+                builder.AddQueueServiceClient(azureWebJobStorageConnectionString)
+                    .ConfigureOptions(o => o.MessageEncoding = Storage.Queues.QueueMessageEncoding.Base64);
             });
 
             builder.Services.AddSingleton<CosmosClient>(provider =>
@@ -112,6 +119,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, AzureArtifactsServiceUnavailableClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
+            builder.Services.AddTransient<ITelemetryInitializer, NotFoundTelemetryInitializer>();
+            builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer<Startup>>();
+            builder.Services.Configure<PipelineWitnessSettings>(builder.GetContext().Configuration);
         }
     }
 }

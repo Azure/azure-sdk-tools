@@ -13,7 +13,9 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Stress Test Secrets](#stress-test-secrets)
      * [Stress Test File Share](#stress-test-file-share)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
-     * [Helm Chart Dependencies](#helm-chart-dependencies)
+     * [Helm Chart File](#helm-chart-file)
+        * [Customize Docker Build](#customize-docker-build)
+     * [Manifest Special Fields](#manifest-special-fields)
      * [Job Manifest](#job-manifest)
      * [Chaos Manifest](#chaos-manifest)
      * [Scenarios and values.yaml](#scenarios-and-valuesyaml)
@@ -170,7 +172,7 @@ The basic layout for a stress test is the following (see [`examples/stress_deplo
 
 ```
 <stress test root directory>
-    Dockerfile                          # A Dockerfile for building the stress test image
+    Dockerfile                          # A Dockerfile for building the stress test image. Custom dockerfile names are also supported.
     stress-test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
 
     Chart.yaml                          # A YAML file containing information about the helm chart and its dependencies
@@ -270,7 +272,7 @@ output RESOURCE_GROUP string = resourceGroup().name
 output AZURE_CLIENT_OID string = testApplicationOid
 ```
 
-### Helm Chart Dependencies
+### Helm Chart File
 
 The `<chart root>/Chart.yaml` file should look something like below. It must include the `stress-test-addons` dependency and the included annotations:
 
@@ -283,13 +285,41 @@ appVersion: v0.1
 annotations:
   stressTest: 'true'  # enable auto-discovery of this test via `find-all-stress-packages.ps1`
   namespace: <your stress test namespace, e.g. python>
+  dockerbuilddir: <OPTIONAL: custom docker build directory when dependencies are located in a parent directory>
+  dockerfile: <OPTIONAL: custom dockerfile path when file is not named Dockerfile>
   <optional key/value annotations for filtering>
 
 dependencies:
 - name: stress-test-addons
-  version: 0.1.6
+  version: 0.1.16
   repository: https://stresstestcharts.blob.core.windows.net/helm/
 ```
+
+The `stress-test-addons` dependency is a [helm library chart](https://helm.sh/docs/topics/library_charts/), which
+pre-defines a lot of the kubernetes config boilerplate needed to configure stress tests correctly.
+
+#### Customize Docker Build
+
+To customize the docker build behavior, update the following fields in `Chart.yaml`:
+
+- `annotations.dockerbuilddir` - docker build can only reference files within its build directory context. To run the docker build from a higher level context, e.g. to include file dependencies in other locations, set this value.
+- `annotations.dockerfile` - If a stress test directory has multiple dockerfiles that need to be used for different purposes, you can customize which one to build with this field.
+
+### Manifest Special Fields
+
+For kubernetes manifests in the stress test helm chart `templates` directory that are wrapped by any of the
+`stress-test-addons` (see [examples](#job-manifest)[below](#chaos-manifest)) templates, several special helper fields
+are made available in the template context.
+
+- `{{ .Values.image }}`
+  - The docker image published by the stress test deploy script
+- `{{ .Stress.Scenario }}`
+  - If using [Scenarios](#scenarios-and-valuesyaml), this value maps to the individual scenario for which a
+    template is being generated.
+- `{{ .Stress.ResourceGroupName }}`
+  - If deploying live resources for a test job, the name of the resource group.
+  - This can also be useful for pairing up template values with resource names. The resource group name will be generated based
+    on the deployment and scenario values, and can also be referenced for naming resources in the bicep/ARM template via `resourceGroup().name`.
 
 ### Job Manifest
 
@@ -329,9 +359,7 @@ spec:
 ### Chaos Manifest
 
 The most common way of configuring stress against test jobs is via [Chaos Mesh](https://chaos-mesh.org/).
-
 Any chaos experiment manifests can be placed in the `<stress test directory>/templates/`.
-
 Chaos experiments can be targeted against test jobs via namespace and label selectors.
 
 Given a pod metadata like:
@@ -353,6 +381,35 @@ selector:
     chaos: "true"
   namespaces:
     - {{ .Release.Namespace }}
+```
+
+In the example below, the "stress-test-addons.chaos-wrapper.tpl" template is used, which will contain 
+[special fields](#manifest-special-fields) useful for correlating chaos targets with individual test jobs and pods.
+
+```
+{{- include "stress-test-addons.chaos-wrapper.tpl" (list . "stress.azservicebus-network") -}}
+{{- define "stress.azservicebus-network" -}}
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+spec:
+  action: loss
+  direction: to
+  externalTargets:
+    # Maps to the service bus resource cname, provided the resource group name, provided
+    # the service bus namespace uses the resource group name as its name in the bicep template
+    - "{{ .Stress.ResourceGroupName }}.servicebus.windows.net"
+  mode: one
+  selector:
+    labelSelectors:
+      # Maps to the test pod, provided it also sets a testInstance label of {{ .Stress.ResourceGroupName }}
+      testInstance: {{ .Stress.ResourceGroupName }}
+      chaos: "true"
+    namespaces:
+      - {{ .Release.Namespace }}
+  loss:
+    loss: "100"
+    correlation: "100"
+{{- end -}}
 ```
 
 For more detailed examples, see:
@@ -382,7 +439,7 @@ src/
 The pod command in the job manifest could be configured to run a variable file name:
 
 ```
-command: ["node", "app/{{ .Scenario }}.js"]
+command: ["node", "app/{{ .Stress.Scenario }}.js"]
 ```
 
 In order to accomplish this, add the scenarios list to `values.yaml`

@@ -1,9 +1,26 @@
+import astroid
 from inspect import Parameter
 import re
 
-keyword_regex = re.compile(r"<(class|enum) '([a-zA-Z._]+)'>")
-forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")
+from ._pylint_parser import PylintParser
+
+keyword_regex = re.compile(r"<(class|enum) '([\w.]+)'>")
+forward_ref_regex = re.compile(r"ForwardRef\('([\w.]+)'\)")
 name_regex = re.compile(r"([^[]*)")
+
+
+# Monkey patch NodeNG's as_string method
+def as_string(self, preserve_quotes=False) -> str:
+    """Get the source code that this node represents."""
+    value =  astroid.nodes.as_string.AsStringVisitor()(self)
+    if not preserve_quotes:
+        # strip any exterior quotes
+        for char in ["'", '"']:
+            value = value.replace(char, "")
+    return value
+
+astroid.NodeNG.as_string = as_string
+
 
 class NodeEntityBase:
     """This is the base class for all node types
@@ -24,7 +41,8 @@ class NodeEntityBase:
             self.name = obj.__name__
         self.display_name = self.name
         self.child_nodes = []
-        self.errors = []
+        self.pylint_errors = []
+        PylintParser.match_items(obj)
 
     def generate_id(self):
         """Generates ID for current object using parent object's ID and name
@@ -39,19 +57,30 @@ class NodeEntityBase:
         :param ApiView: apiview
         """
         if self.child_nodes:
-            apiview.add_text("", self.display_name)
+            apiview.add_text(self.display_name)
             apiview.begin_group()
             for c in self.child_nodes:
                 c.generate_tokens(apiview)
             apiview.end_group()
 
+    def generate_diagnostics(self):
+        self.pylint_errors = PylintParser.get_items(self.obj)
+        for child in self.child_nodes or []:
+            child.generate_diagnostics()
 
-def get_qualified_name(obj, namespace):
+def get_qualified_name(obj, namespace: str) -> str:
     """Generate and return fully qualified name of object with module name for internal types.
        If module name is not available for the object then it will return name
     :param: obj
         Parameter object of type class, function or enum
     """
+    module_name = getattr(obj, "__module__", "")
+
+    if module_name.startswith("astroid"):
+        return obj.as_string()
+    elif module_name == "types":
+        return str(obj)
+
     if obj is Parameter.empty:
         return None
 
@@ -60,10 +89,6 @@ def get_qualified_name(obj, namespace):
         name = getattr(obj, "__name__")
     elif hasattr(obj, "__qualname__"):
         name = getattr(obj, "__qualname__")
-
-    module_name = ""
-    if hasattr(obj, "__module__"):
-        module_name = getattr(obj, "__module__")
 
     wrap_optional = False
     args = []

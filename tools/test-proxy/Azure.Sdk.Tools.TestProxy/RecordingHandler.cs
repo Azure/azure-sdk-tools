@@ -25,15 +25,16 @@ namespace Azure.Sdk.Tools.TestProxy
     public class RecordingHandler
     {
         #region constructor and common variables
-        public string CurrentBranch = "master";
-        public string RepoPath;
+        public bool HandleRedirects = true;
+        public string ContextDirectory;
+
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
         private const string SkipRecordingRequestResponse = "request-response";
 
         public RecordingHandler(string targetDirectory)
         {
-            RepoPath = targetDirectory;
+            ContextDirectory = targetDirectory;
 
             SetDefaultExtensions();
         }
@@ -43,6 +44,7 @@ namespace Azure.Sdk.Tools.TestProxy
         private static readonly string[] s_excludedRequestHeaders = new string[] {
             // Only applies to request between client and proxy
             // TODO, we need to handle this properly, there are tests that actually test proxy functionality.
+            "Host",
             "Proxy-Connection",
         };
 
@@ -63,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region recording functionality
-        public void StopRecording(string sessionId, IDictionary<string, string> variables = null)
+        public void StopRecording(string sessionId, IDictionary<string, string> variables = null, bool saveRecording = true)
         {
             if (!RecordingSessions.TryRemove(sessionId, out var fileAndSession))
             {
@@ -85,30 +87,34 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            if (String.IsNullOrEmpty(file))
+            if (saveRecording)
             {
-                if (!InMemorySessions.TryAdd(sessionId, session))
+                if (String.IsNullOrEmpty(file))
                 {
-                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new in-memory session under id {sessionId}.");
+                    if (!InMemorySessions.TryAdd(sessionId, session))
+                    {
+                        throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new in-memory session under id {sessionId}.");
+                    }
                 }
-            }
-            else
-            {
-                var targetPath = GetRecordingPath(file);
-
-                // Create directories above file if they don't already exist
-                var directory = Path.GetDirectoryName(targetPath);
-                if (!String.IsNullOrEmpty(directory))
+                else
                 {
-                    Directory.CreateDirectory(directory);
-                }
+                    var targetPath = GetRecordingPath(file);
 
-                using var stream = System.IO.File.Create(targetPath);
-                var options = new JsonWriterOptions { Indented = true };
-                var writer = new Utf8JsonWriter(stream, options);
-                session.Session.Serialize(writer);
-                writer.Flush();
-                stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+                    // Create directories above file if they don't already exist
+                    var directory = Path.GetDirectoryName(targetPath);
+                    if (!String.IsNullOrEmpty(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+
+                    using var stream = System.IO.File.Create(targetPath);
+                    var options = new JsonWriterOptions { Indented = true };
+                    var writer = new Utf8JsonWriter(stream, options);
+                    session.Session.Serialize(writer);
+                    writer.Flush();
+                    stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+
+                }
             }
         }
 
@@ -125,7 +131,7 @@ namespace Azure.Sdk.Tools.TestProxy
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
-        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
+        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient redirectlessClient, HttpClient redirectableClient)
         {
             await DebugLogger.LogRequestDetailsAsync(incomingRequest);
 
@@ -137,11 +143,18 @@ namespace Azure.Sdk.Tools.TestProxy
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
-            var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
 
-            var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
-            var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
+            HttpResponseMessage upstreamResponse = null;
 
+
+            if (HandleRedirects)
+            {
+                upstreamResponse = await redirectableClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+            }
+            else
+            {
+                upstreamResponse = await redirectlessClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+            }
 
             byte[] body = Array.Empty<byte>();
 
@@ -186,7 +199,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        private static EntryRecordMode GetRecordMode(HttpRequest request)
+        public static EntryRecordMode GetRecordMode(HttpRequest request)
         {
             EntryRecordMode mode = EntryRecordMode.Record;
             if (request.Headers.TryGetValue(SkipRecordingHeaderKey, out var values))
@@ -291,9 +304,12 @@ namespace Azure.Sdk.Tools.TestProxy
                         );
                     }
                 }
-            }
 
-            upstreamRequest.Headers.Host = upstreamRequest.RequestUri.Host;
+                if(header.Key == "x-recording-upstream-host-header")
+                {
+                    upstreamRequest.Headers.Host = header.Value;
+                }
+            }
 
             return upstreamRequest;
         }
@@ -437,6 +453,77 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region common functions
+        public void SetRecordingOptions(IDictionary<string, object> options = null)
+        {
+            if (options != null)
+            {
+                if (options.Keys.Count == 0)
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, "At least one key is expected in the body being passed to SetRecordingOptions.");
+                }
+
+                if (options.TryGetValue("HandleRedirects", out var handleRedirectsObj))
+                {
+                    var handleRedirectsString = $"{handleRedirectsObj}";
+
+                    if (bool.TryParse(handleRedirectsString, out var handleRedirectsBool))
+                    {
+                        HandleRedirects = handleRedirectsBool;
+                    }
+                    else if (handleRedirectsString.Equals("0", StringComparison.OrdinalIgnoreCase))
+                    {
+                        HandleRedirects = false;
+                    }
+                    else if (handleRedirectsString.Equals("1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        HandleRedirects = true;
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"The value of key \"HandleRedirects\" MUST be castable to a valid boolean value. Unparsable Value: \"{handleRedirectsString}\".");
+                    }
+                }
+
+                if (options.TryGetValue("ContextDirectory", out var sourceDirectoryObj))
+                {
+                    var newSourceDirectory = sourceDirectoryObj.ToString();
+
+                    if (!string.IsNullOrWhiteSpace(newSourceDirectory))
+                    {
+                        SetRecordingDirectory(newSourceDirectory);
+                    }
+                }
+            }
+            else
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.");
+            }
+        }
+
+        public void SetRecordingDirectory(string targetDirectory)
+        {
+            try
+            {
+                // Given that it is perfectly valid to pass a directory that does not yet exist, we cannot get the file attributes to "properly"
+                // determine if an incoming path is a valid one via <attr>.HasFlag(FileAttributes.Directory). We can shorthand this by checking
+                // for a file extension.
+                if (Path.GetExtension(targetDirectory) != String.Empty)
+                {
+                    targetDirectory = Path.GetDirectoryName(targetDirectory);
+                }
+                
+                if (!String.IsNullOrEmpty(targetDirectory))
+                {
+                    Directory.CreateDirectory(targetDirectory);
+                }
+                ContextDirectory = targetDirectory;
+            }
+            catch (Exception ex)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable set proxy context to target directory \"{targetDirectory}\". Unhandled exception was: \"{ex.Message}\".");
+            }
+        }
+
         public void AddSanitizerToRecording(string recordingId, RecordedTestSanitizer sanitizer)
         {
             if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
@@ -593,7 +680,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (!Path.IsPathFullyQualified(file))
             {
-                path = Path.Join(RepoPath, file);
+                path = Path.Join(ContextDirectory, file);
             }
 
             return (path + (!path.EndsWith(".json") ? ".json" : String.Empty));

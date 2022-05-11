@@ -135,36 +135,36 @@ jobs:
     parameters:
       WorkingDirectory: $(Pipeline.Workspace)/$(RepositoryName)
   - script: |
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project public --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention ci --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(PublicOptions)
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project public --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention ci --agentpool Hosted --branch refs/heads/$(DefaultBranch) --set-managed-variables --patvar PATVAR --debug $(PublicOptions)
     displayName: 'Generate public pipelines for: $(RepositoryName)'
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
   - script: |
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention up --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(InternalOptions) $(TestOptions)
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention up --agentpool Hosted --branch refs/heads/$(DefaultBranch) --set-managed-variables --patvar PATVAR --debug $(InternalOptions) $(TestOptions)
     displayName: 'Generate internal pipelines for: $(RepositoryName)'
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
   - script: |
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention tests --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(TestOptions)
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention tests --agentpool Hosted --branch refs/heads/$(DefaultBranch) --set-managed-variables --patvar PATVAR --debug $(TestOptions)
     displayName: 'Generate test pipelines for: $(RepositoryName)'
     condition: and(succeeded(), ne(variables['TestOptions'],''))
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
   - script: |
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention testsweekly --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(TestOptions)
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention testsweekly --agentpool Hosted --branch refs/heads/$(DefaultBranch) --set-managed-variables --patvar PATVAR --debug $(TestOptions)
     displayName: 'Generate weekly test pipelines (multi-cloud) for: $(RepositoryName)'
     condition: and(succeeded(), ne(variables['TestOptions'],''))
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
   - script: |
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention upweekly --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(InternalOptions) $(TestOptions)
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention upweekly --agentpool Hosted --branch refs/heads/$(DefaultBranch) --set-managed-variables --patvar PATVAR --debug $(InternalOptions) $(TestOptions)
     displayName: 'Generate weekly unified test pipelines (multi-cloud) for: $(RepositoryName)'
     condition: and(succeeded(), ne(variables['GenerateUnifiedWeekly'],''))
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
 
   # - script: |
-  #     pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix)-pr --devopspath "\$(Prefix)\pr" --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName)-pr --convention ci --agentpool Hosted --branch refs/heads/ $(DefaultBranch) --patvar PATVAR --debug
+  #     pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix)-pr --devopspath "\$(Prefix)\pr" --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName)-pr --convention ci --agentpool Hosted --branch refs/heads/ $(DefaultBranch) --set-managed-variables --patvar PATVAR --debug
   #   displayName: 'Generate internal pipelines for: $(RepositoryName)-pr'
   #   env:
   #     PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)

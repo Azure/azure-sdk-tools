@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -10,10 +10,7 @@ package test_test
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"testing"
 
 	"encoding/json"
@@ -26,31 +23,63 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/testutil"
+	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/http2"
 )
 
-var (
-	ctx      context.Context
-	options  arm.ClientOptions
-	cred     azcore.TokenCredential
-	err      error
-	mockHost string
-)
+type MockTestSuite struct {
+	suite.Suite
 
-func TestOperations_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+	cred    azcore.TokenCredential
+	options arm.ClientOptions
 }
 
-func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) SetupSuite() {
+	mockHost := testutil.GetEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
+
+	tr := &http.Transport{}
+	err := http2.ConfigureTransport(tr)
+	testsuite.Require().NoError(err, "Failed to configure http2 transport")
+	tr.TLSClientConfig.InsecureSkipVerify = true
+	client := &http.Client{Transport: tr}
+
+	testsuite.cred = &MockCredential{}
+
+	testsuite.options = arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Logging: policy.LogOptions{
+				IncludeBody: true,
+			},
+			Transport: client,
+			Cloud: cloud.Configuration{
+				Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
+					cloud.ResourceManager: {
+						Audience: mockHost,
+						Endpoint: mockHost,
+					},
+				},
+			},
+		},
+	}
+}
+
+func TestMockTest(t *testing.T) {
+	suite.Run(t, new(MockTestSuite))
+}
+
+func (testsuite *MockTestSuite) TestOperations_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
+}
+
+func (testsuite *MockTestSuite) TestAvailabilitySets_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an availability set."},
 	})
-	client, err := test.NewAvailabilitySetsClient("1", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewAvailabilitySetsClient("1", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.CreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myAvailabilitySet",
@@ -65,9 +94,7 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 			},
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json")
 	// Response check
 	exampleRes := test.AvailabilitySet{
 		Name:     to.Ptr("myAvailabilitySet"),
@@ -85,39 +112,34 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.AvailabilitySet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.AvailabilitySet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestAvailabilitySets_Update(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestAvailabilitySets_Update() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestAvailabilitySets_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestAvailabilitySets_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestAvailabilitySets_Get(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestAvailabilitySets_Get() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestAvailabilitySets_ListBySubscription(t *testing.T) {
+func (testsuite *MockTestSuite) TestAvailabilitySets_ListBySubscription() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List availability sets in a subscription."},
 	})
-	client, err := test.NewAvailabilitySetsClient("{subscriptionId}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListBySubscription(&test.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.Ptr("Faked for test: +ge+2020, %3E2012")})
+	client, err := test.NewAvailabilitySetsClient("{subscriptionId}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListBySubscriptionPager(&test.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.Ptr("Faked for test: +ge+2020, %3E2012")})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json")
 		// Response check
 		pagerExampleRes := test.AvailabilitySetListResult{
 			Value: []*test.AvailabilitySet{
@@ -193,29 +215,27 @@ func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.AvailabilitySetListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.AvailabilitySetListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestAvailabilitySets_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestAvailabilitySets_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestAvailabilitySets_ListAvailableSizes(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestAvailabilitySets_ListAvailableSizes() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestProximityPlacementGroups_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or Update a proximity placement group."},
 	})
-	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.CreateOrUpdate(ctx,
 		"myResourceGroup",
 		"$(resourceName)",
@@ -226,9 +246,7 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 			},
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json")
 	// Response check
 	exampleRes := test.ProximityPlacementGroup{
 		Name:     to.Ptr("myProximityPlacementGroup"),
@@ -242,20 +260,18 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestProximityPlacementGroups_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestProximityPlacementGroups_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
-	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Update(ctx,
 		"myResourceGroup",
 		"myProximityPlacementGroup",
@@ -265,9 +281,7 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 			},
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json")
 	// Response check
 	exampleRes := test.ProximityPlacementGroup{
 		Name:     to.Ptr("myProximityPlacementGroup"),
@@ -281,46 +295,38 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestProximityPlacementGroups_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestProximityPlacementGroups_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
-	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	_, err = client.Delete(ctx,
 		"myResourceGroup",
 		"$(resourceName)",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json")
 }
 
-func TestProximityPlacementGroups_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestProximityPlacementGroups_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
-	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myProximityPlacementGroup",
 		&test.ProximityPlacementGroupsClientGetOptions{IncludeColocationStatus: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json")
 	// Response check
 	exampleRes := test.ProximityPlacementGroup{
 		Name:     to.Ptr("myProximityPlacementGroup"),
@@ -346,27 +352,22 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
+func (testsuite *MockTestSuite) TestProximityPlacementGroups_ListBySubscription() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
-	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListBySubscription(nil)
+	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListBySubscriptionPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json")
 		// Response check
 		pagerExampleRes := test.ProximityPlacementGroupListResult{
 			Value: []*test.ProximityPlacementGroup{
@@ -395,29 +396,24 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ProximityPlacementGroupListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ProximityPlacementGroupListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
+func (testsuite *MockTestSuite) TestProximityPlacementGroups_ListByResourceGroup() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
-	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	client, err := test.NewProximityPlacementGroupsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json")
 		// Response check
 		pagerExampleRes := test.ProximityPlacementGroupListResult{
 			Value: []*test.ProximityPlacementGroup{
@@ -446,21 +442,19 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ProximityPlacementGroupListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ProximityPlacementGroupListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestDedicatedHostGroups_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHostGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a dedicated host group."},
 	})
-	client, err := test.NewDedicatedHostGroupsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDedicatedHostGroupsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.CreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDedicatedHostGroup",
@@ -477,9 +471,7 @@ func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 				to.Ptr("1")},
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHostGroup.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHostGroup.json")
 	// Response check
 	exampleRes := test.DedicatedHostGroup{
 		Name:     to.Ptr("myDedicatedHostGroup"),
@@ -499,35 +491,31 @@ func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DedicatedHostGroup) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DedicatedHostGroup)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDedicatedHostGroups_Update(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestDedicatedHostGroups_Update() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestDedicatedHostGroups_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestDedicatedHostGroups_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestDedicatedHostGroups_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestDedicatedHostGroups_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a dedicated host group."},
 	})
-	client, err := test.NewDedicatedHostGroupsClient("{subscriptionId}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDedicatedHostGroupsClient("{subscriptionId}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myDedicatedHostGroup",
 		&test.DedicatedHostGroupsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json")
 	// Response check
 	exampleRes := test.DedicatedHostGroup{
 		Name:     to.Ptr("myDedicatedHostGroup"),
@@ -599,28 +587,26 @@ func TestDedicatedHostGroups_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DedicatedHostGroup) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DedicatedHostGroup)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDedicatedHostGroups_ListByResourceGroup(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestDedicatedHostGroups_ListByResourceGroup() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestDedicatedHostGroups_ListBySubscription(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestDedicatedHostGroups_ListBySubscription() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestDedicatedHosts_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a dedicated host ."},
 	})
-	client, err := test.NewDedicatedHostsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDedicatedHostsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDedicatedHostGroup",
@@ -637,14 +623,10 @@ func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 				Name: to.Ptr("DSv3-Type1"),
 			},
 		},
-		&test.DedicatedHostsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json")
 	// Response check
 	exampleRes := test.DedicatedHost{
 		Name:     to.Ptr("myDedicatedHost"),
@@ -666,36 +648,32 @@ func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DedicatedHost) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DedicatedHost)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDedicatedHosts_Update(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestDedicatedHosts_Update() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestDedicatedHosts_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestDedicatedHosts_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestDedicatedHosts_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestDedicatedHosts_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a dedicated host."},
 	})
-	client, err := test.NewDedicatedHostsClient("{subscriptionId}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDedicatedHostsClient("{subscriptionId}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myDedicatedHostGroup",
 		"myHost",
 		&test.DedicatedHostsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json")
 	// Response check
 	exampleRes := test.DedicatedHost{
 		Name:     to.Ptr("myHost"),
@@ -742,32 +720,30 @@ func TestDedicatedHosts_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DedicatedHost) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DedicatedHost)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDedicatedHosts_ListByHostGroup(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestDedicatedHosts_ListByHostGroup() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestSSHPublicKeys_ListBySubscription(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestSSHPublicKeys_ListBySubscription() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestSSHPublicKeys_ListByResourceGroup(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestSSHPublicKeys_ListByResourceGroup() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestSSHPublicKeys_Create(t *testing.T) {
+func (testsuite *MockTestSuite) TestSSHPublicKeys_Create() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a new SSH public key resource."},
 	})
-	client, err := test.NewSSHPublicKeysClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewSSHPublicKeysClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Create(ctx,
 		"myResourceGroup",
 		"mySshPublicKeyName",
@@ -778,9 +754,7 @@ func TestSSHPublicKeys_Create(t *testing.T) {
 			},
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json")
 	// Response check
 	exampleRes := test.SSHPublicKeyResource{
 		Name:     to.Ptr("mySshPublicKeyName"),
@@ -793,35 +767,31 @@ func TestSSHPublicKeys_Create(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SSHPublicKeyResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSSHPublicKeys_Update(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestSSHPublicKeys_Update() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestSSHPublicKeys_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestSSHPublicKeys_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestSSHPublicKeys_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestSSHPublicKeys_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get an ssh public key."},
 	})
-	client, err := test.NewSSHPublicKeysClient("{subscriptionId}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewSSHPublicKeysClient("{subscriptionId}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"mySshPublicKeyName",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json")
 	// Response check
 	exampleRes := test.SSHPublicKeyResource{
 		Name:     to.Ptr("mySshPublicKeyName"),
@@ -837,27 +807,23 @@ func TestSSHPublicKeys_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SSHPublicKeyResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
+func (testsuite *MockTestSuite) TestSSHPublicKeys_GenerateKeyPair() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Generate an SSH key pair."},
 	})
-	client, err := test.NewSSHPublicKeysClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewSSHPublicKeysClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.GenerateKeyPair(ctx,
 		"myResourceGroup",
 		"mySshPublicKeyName",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json")
 	// Response check
 	exampleRes := test.SSHPublicKeyGenerateKeyPairResult{
 		ID:         to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/SshPublicKeys/mySshPublicKeyName"),
@@ -867,96 +833,91 @@ func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyGenerateKeyPairResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SSHPublicKeyGenerateKeyPairResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineExtensionImages_Get(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineExtensionImages_Get() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineExtensionImages_ListTypes(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineExtensionImages_ListTypes() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineExtensionImages_ListVersions(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineExtensionImages_ListVersions() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineExtensions_CreateOrUpdate(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineExtensions_CreateOrUpdate() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineExtensions_Update(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineExtensions_Update() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineExtensions_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineExtensions_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineExtensions_Get(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineExtensions_Get() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineExtensions_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineExtensions_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImages_Get(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineImages_Get() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImages_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineImages_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImages_ListOffers(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineImages_ListOffers() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImages_ListPublishers(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineImages_ListPublishers() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImagesEdgeZone_Get(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineImagesEdgeZone_Get() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImagesEdgeZone_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineImagesEdgeZone_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImagesEdgeZone_ListOffers(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineImagesEdgeZone_ListOffers() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImagesEdgeZone_ListPublishers(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineImagesEdgeZone_ListPublishers() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestUsage_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestUsage_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_ListByLocation(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_ListByLocation() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all the virtual machines under the specified subscription for the specified location."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscriptionId}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByLocation("eastus",
+	client, err := test.NewVirtualMachinesClient("{subscriptionId}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByLocationPager("eastus",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json")
 		// Response check
 		pagerExampleRes := test.VirtualMachineListResult{
 			Value: []*test.VirtualMachine{
@@ -1074,25 +1035,23 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.VirtualMachineListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.VirtualMachineListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestVirtualMachines_Capture(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachines_Capture() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch setting assessmentMode of ImageDefault."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -1140,14 +1099,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json")
 	// Response check
 	exampleRes := test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -1203,18 +1158,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch setting patchMode of ImageDefault."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -1262,14 +1214,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -1325,18 +1273,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch settings patchMode and assessmentMode set to AutomaticByPlatform."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -1385,14 +1330,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -1449,18 +1390,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with Uefi Settings of secureBoot and vTPM."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -1509,14 +1447,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -1577,18 +1511,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with UserData"},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vm-name}",
@@ -1637,14 +1568,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				UserData: to.Ptr("RXhhbXBsZSBVc2VyRGF0YQ=="),
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("{vm-name}"),
@@ -1704,18 +1631,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with network interface configuration"},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -1777,14 +1701,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -1838,18 +1758,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting assessmentMode of ImageDefault."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -1898,14 +1815,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -1962,18 +1875,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of AutomaticByOS."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2022,14 +1932,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -2086,18 +1992,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of AutomaticByPlatform and enableHotpatching set to true."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2147,14 +2050,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -2212,18 +2111,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of Manual."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2272,14 +2168,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -2336,18 +2228,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with patch settings patchMode and assessmentMode set to AutomaticByPlatform."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2397,14 +2286,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -2462,18 +2347,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a custom-image vm from an unmanaged generalized os image."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vm-name}",
@@ -2513,14 +2395,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -2571,18 +2449,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a platform-image vm with unmanaged os and data disks."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vm-name}",
@@ -2641,14 +2516,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -2722,18 +2593,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a custom image."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2772,14 +2640,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -2830,18 +2694,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a generalized shared image."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2880,14 +2741,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -2938,18 +2795,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a specialized shared image."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2983,14 +2837,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -3033,18 +2883,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm in a Virtual Machine Scale Set with customer assigned platformFaultDomain."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3090,14 +2937,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -3155,18 +2998,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm in an availability set."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3211,14 +3051,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -3275,18 +3111,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with DiskEncryptionSet resource id in the os disk and data disk."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3354,14 +3187,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -3440,18 +3269,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with Host Encryption using encryptionAtHost property."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3501,14 +3327,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -3570,18 +3392,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with Scheduled Events Profile"},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3635,14 +3454,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -3708,18 +3523,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with a marketplace image plan."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3766,14 +3578,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -3832,18 +3640,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with an extensions time budget."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3892,14 +3697,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -3960,18 +3761,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with boot diagnostics."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4019,14 +3817,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -4086,18 +3880,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with empty data disks."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4150,14 +3941,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -4229,18 +4016,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk provisioning in Cache disk using placement property."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4291,14 +4075,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -4361,18 +4141,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk provisioning in Resource disk using placement property."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4423,14 +4200,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -4493,18 +4266,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4554,14 +4324,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -4623,18 +4389,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with managed boot diagnostics."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4681,14 +4444,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -4747,18 +4506,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with password authentication."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4800,14 +4556,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -4861,18 +4613,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with premium storage."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4914,14 +4663,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -4975,18 +4720,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ssh authentication."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -5037,14 +4779,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -5104,20 +4842,18 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachines_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a VM by detaching data disk"},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -5171,14 +4907,10 @@ func TestVirtualMachines_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json")
 	// Response check
 	exampleRes := test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -5252,18 +4984,15 @@ func TestVirtualMachines_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a VM by force-detaching data disk"},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -5318,14 +5047,10 @@ func TestVirtualMachines_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -5400,52 +5125,40 @@ func TestVirtualMachines_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachines_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Force delete a VM"},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myVM",
-		&test.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
-			ResumeToken: "",
-		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json: %v", err)
-	}
+		&test.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json")
 }
 
-func TestVirtualMachines_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a Virtual Machine."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myVM",
 		&test.VirtualMachinesClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json")
 	// Response check
 	exampleRes := test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -5555,25 +5268,20 @@ func TestVirtualMachines_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine placed on a dedicated host group through automatic placement"},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myVM",
 		&test.VirtualMachinesClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
 		Name:     to.Ptr("myVM"),
@@ -5632,27 +5340,23 @@ func TestVirtualMachines_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachine)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachines_InstanceView(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_InstanceView() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Virtual Machine Instance View."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.InstanceView(ctx,
 		"myResourceGroup",
 		"myVM",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json")
 	// Response check
 	exampleRes := test.VirtualMachineInstanceView{
 		BootDiagnostics: &test.BootDiagnosticsInstanceView{
@@ -5778,25 +5482,20 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstanceView) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineInstanceView)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceViewAutoPlacedOnDedicatedHostGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get instance view of a virtual machine placed on a dedicated host group through automatic placement."},
 	})
-	client, err = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err = client.InstanceView(ctx,
 		"myResourceGroup",
 		"myVM",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceViewAutoPlacedOnDedicatedHostGroup.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceViewAutoPlacedOnDedicatedHostGroup.json")
 	// Response check
 	exampleRes = test.VirtualMachineInstanceView{
 		AssignedHost: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/hostGroups/myHostGroup/hosts/myHost"),
@@ -5842,64 +5541,55 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstanceView) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineInstanceView)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceViewAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceViewAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachines_ConvertToManagedDisks(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachines_ConvertToManagedDisks() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_Deallocate(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachines_Deallocate() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_Generalize(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_Generalize() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GeneralizeVirtualMachine.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Generalize a Virtual Machine."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	_, err = client.Generalize(ctx,
 		"myResourceGroup",
 		"myVMName",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GeneralizeVirtualMachine.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GeneralizeVirtualMachine.json")
 }
 
-func TestVirtualMachines_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachines_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_ListAll(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachines_ListAll() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_ListAvailableSizes() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all available virtual machine sizes to which the specified virtual machine can be resized"},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListAvailableSizes("myResourceGroup",
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListAvailableSizesPager("myResourceGroup",
 		"myVmName",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json")
 		// Response check
 		pagerExampleRes := test.VirtualMachineSizeListResult{
 			Value: []*test.VirtualMachineSize{
@@ -5923,94 +5613,77 @@ func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.VirtualMachineSizeListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.VirtualMachineSizeListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestVirtualMachines_PowerOff(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachines_PowerOff() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_Reapply(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_Reapply() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reapply the state of a virtual machine."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginReapply(ctx,
 		"ResourceGroup",
 		"VMName",
-		&test.VirtualMachinesClientBeginReapplyOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json")
 }
 
-func TestVirtualMachines_Restart(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachines_Restart() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_Start(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachines_Start() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_Redeploy(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachines_Redeploy() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_Reimage(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_Reimage() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reimage a Virtual Machine."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginReimage(ctx,
 		"myResourceGroup",
 		"myVMName",
 		&test.VirtualMachinesClientBeginReimageOptions{Parameters: &test.VirtualMachineReimageParameters{
 			TempDisk: to.Ptr(true),
 		},
-			ResumeToken: "",
 		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json")
 }
 
-func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_RetrieveBootDiagnosticsData() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"RetrieveBootDiagnosticsData of a virtual machine."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.RetrieveBootDiagnosticsData(ctx,
 		"ResourceGroup",
 		"VMName",
 		&test.VirtualMachinesClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Ptr[int32](60)})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json")
 	// Response check
 	exampleRes := test.RetrieveBootDiagnosticsDataResult{
 		ConsoleScreenshotBlobURI: to.Ptr("https://storageuri/vm.screenshot.bmp?{sasKey}"),
@@ -6019,54 +5692,44 @@ func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RetrieveBootDiagnosticsDataResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RetrieveBootDiagnosticsDataResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachines_PerformMaintenance(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachines_PerformMaintenance() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachines_SimulateEviction(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_SimulateEviction() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVM.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Simulate Eviction a virtual machine."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	_, err = client.SimulateEviction(ctx,
 		"ResourceGroup",
 		"VMName",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVM.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVM.json")
 }
 
-func TestVirtualMachines_AssessPatches(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_AssessPatches() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Assess patch state of a virtual machine."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginAssessPatches(ctx,
 		"myResourceGroupName",
 		"myVMName",
-		&test.VirtualMachinesClientBeginAssessPatchesOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json")
 	// Response check
 	exampleRes := test.VirtualMachineAssessPatchesResult{
 		AssessmentActivityID: to.Ptr("68f8b292-dfc2-4646-9781-33cc88631968"),
@@ -6106,20 +5769,18 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineAssessPatchesResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineAssessPatchesResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachines_InstallPatches(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_InstallPatches() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Install patch state of a virtual machine."},
 	})
-	client, err := test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginInstallPatches(ctx,
 		"myResourceGroupName",
 		"myVMName",
@@ -6133,14 +5794,10 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 				MaxPatchPublishDate: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-11-19T02:36:43.0539904+00:00"); return t }()),
 			},
 		},
-		&test.VirtualMachinesClientBeginInstallPatchesOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json")
 	// Response check
 	exampleRes := test.VirtualMachineInstallPatchesResult{
 		ExcludedPatchCount:        to.Ptr[int32](0),
@@ -6176,34 +5833,28 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstallPatchesResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineInstallPatchesResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachines_RunCommand(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachines_RunCommand() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineRunCommand"},
 	})
-	client, err := test.NewVirtualMachinesClient("24fb23e3-6ba3-41f0-9b6e-e41131d5d61e", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachinesClient("24fb23e3-6ba3-41f0-9b6e-e41131d5d61e", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginRunCommand(ctx,
 		"crptestar98131",
 		"vm3036",
 		test.RunCommandInput{
 			CommandID: to.Ptr("RunPowerShellScript"),
 		},
-		&test.VirtualMachinesClientBeginRunCommandOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json")
 	// Response check
 	exampleRes := test.RunCommandResult{
 		Value: []*test.InstanceViewStatus{
@@ -6223,28 +5874,23 @@ func TestVirtualMachines_RunCommand(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RunCommandResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RunCommandResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_ListByLocation() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all the VM scale sets under the specified subscription for the specified location."},
 	})
-	client, err := test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByLocation("eastus",
+	client, err := test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByLocationPager("eastus",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json")
 		// Response check
 		pagerExampleRes := test.VirtualMachineScaleSetListResult{
 			Value: []*test.VirtualMachineScaleSet{
@@ -6402,21 +6048,19 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.VirtualMachineScaleSetListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.VirtualMachineScaleSetListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a custom-image scale set from an unmanaged generalized os image."},
 	})
-	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -6465,14 +6109,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -6543,18 +6183,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a platform-image scale set with unmanaged os disks."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -6617,14 +6254,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -6699,18 +6332,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a custom image."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -6766,14 +6396,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -6844,18 +6470,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a generalized shared image."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -6911,14 +6534,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -6989,18 +6608,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a specialized shared image."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7051,14 +6667,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -7121,18 +6733,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with DiskEncryptionSet resource in os disk and data disk."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7204,14 +6813,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -7298,18 +6903,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Fpga Network Interfaces."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7385,14 +6987,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -7485,18 +7083,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Host Encryption using encryptionAtHost property."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7563,14 +7158,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -7653,18 +7244,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Uefi Settings of secureBoot and vTPM."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7730,14 +7318,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -7819,18 +7403,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with a marketplace image plan."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7894,14 +7475,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -7981,18 +7558,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with an azure application gateway."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8055,14 +7629,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -8141,18 +7711,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with an azure load balancer."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8225,14 +7792,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -8315,18 +7878,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with automatic repairs enabled"},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8389,14 +7949,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -8475,18 +8031,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with boot diagnostics."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8551,14 +8104,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -8639,18 +8188,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with empty data disks on each vm."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8721,14 +8267,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -8823,18 +8365,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ephemeral os disks using placement property."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8902,14 +8441,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -8993,18 +8528,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ephemeral os disks."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9067,14 +8599,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 			},
 			SKU: &test.SKU{},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -9157,18 +8685,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with extension time budget."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9247,14 +8772,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -9349,18 +8870,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with managed boot diagnostics."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9424,14 +8942,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -9511,18 +9025,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with password authentication."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9581,14 +9092,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -9663,18 +9170,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with premium storage."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9733,14 +9237,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -9815,18 +9315,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ssh authentication."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9894,14 +9391,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -9982,18 +9475,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with terminate scheduled events enabled."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -10058,14 +9548,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -10146,18 +9632,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with userData."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -10217,14 +9700,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -10305,18 +9784,15 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with virtual machines in different zones."},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -10390,14 +9866,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				to.Ptr("1"),
 				to.Ptr("3")},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("{vmss-name}"),
@@ -10496,56 +9968,44 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSets_Update(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_Update() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Force Delete a VM scale set."},
 	})
-	client, err := test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
-		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
-			ResumeToken: "",
-		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json: %v", err)
-	}
+		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json")
 }
 
-func TestVirtualMachineScaleSets_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine scale set placed on a dedicated host group through automatic placement."},
 	})
-	client, err := test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
 		&test.VirtualMachineScaleSetsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSet{
 		Name:     to.Ptr("myVirtualMachineScaleSet"),
@@ -10628,25 +10088,20 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine scale set with UserData"},
 	})
-	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewVirtualMachineScaleSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
 		&test.VirtualMachineScaleSetsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
 		Name:     to.Ptr("myVirtualMachineScaleSet"),
@@ -10730,92 +10185,90 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSets_Deallocate(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_Deallocate() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_DeleteInstances(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_DeleteInstances() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_GetInstanceView(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_GetInstanceView() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_ListAll(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_ListAll() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_GetOSUpgradeHistory(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_GetOSUpgradeHistory() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_PowerOff(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_PowerOff() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_Restart(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_Restart() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_Start(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_Start() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_Redeploy(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_Redeploy() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_PerformMaintenance(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_PerformMaintenance() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_UpdateInstances(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_UpdateInstances() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_Reimage(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_Reimage() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_ReimageAll(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_ReimageAll() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_ForceRecoveryServiceFabricPlatformUpdateDomainWalk(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_ForceRecoveryServiceFabricPlatformUpdateDomainWalk() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_ConvertToSinglePlacementGroup(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_ConvertToSinglePlacementGroup() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_SetOrchestrationServiceState(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_SetOrchestrationServiceState() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineSizes_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineSizes_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestImages_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a blob with DiskEncryptionSet resource."},
 	})
-	client, err := test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -10834,14 +10287,10 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json")
 	// Response check
 	exampleRes := test.Image{
 		Name:     to.Ptr("myImage"),
@@ -10867,18 +10316,15 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a blob."},
 	})
-	client, err = test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -10895,14 +10341,10 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json")
 	// Response check
 	exampleRes = test.Image{
 		Name:     to.Ptr("myImage"),
@@ -10926,18 +10368,15 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a managed disk with DiskEncryptionSet resource."},
 	})
-	client, err = test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -10958,14 +10397,10 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json")
 	// Response check
 	exampleRes = test.Image{
 		Name:     to.Ptr("myImage"),
@@ -10993,18 +10428,15 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a managed disk."},
 	})
-	client, err = test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11023,14 +10455,10 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json")
 	// Response check
 	exampleRes = test.Image{
 		Name:     to.Ptr("myImage"),
@@ -11056,18 +10484,15 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a snapshot with DiskEncryptionSet resource."},
 	})
-	client, err = test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11088,14 +10513,10 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json")
 	// Response check
 	exampleRes = test.Image{
 		Name:     to.Ptr("myImage"),
@@ -11123,18 +10544,15 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a snapshot."},
 	})
-	client, err = test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11153,14 +10571,10 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json")
 	// Response check
 	exampleRes = test.Image{
 		Name:     to.Ptr("myImage"),
@@ -11186,18 +10600,15 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from an existing virtual machine."},
 	})
-	client, err = test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11209,14 +10620,10 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json")
 	// Response check
 	exampleRes = test.Image{
 		Name:     to.Ptr("myImage"),
@@ -11245,18 +10652,15 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a blob."},
 	})
-	client, err = test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11278,14 +10682,10 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json")
 	// Response check
 	exampleRes = test.Image{
 		Name:     to.Ptr("myImage"),
@@ -11313,18 +10713,15 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a managed disk."},
 	})
-	client, err = test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11350,14 +10747,10 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json")
 	// Response check
 	exampleRes = test.Image{
 		Name:     to.Ptr("myImage"),
@@ -11389,18 +10782,15 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a snapshot."},
 	})
-	client, err = test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11426,14 +10816,10 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json")
 	// Response check
 	exampleRes = test.Image{
 		Name:     to.Ptr("myImage"),
@@ -11465,20 +10851,18 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestImages_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestImages_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Updates tags of an Image."},
 	})
-	client, err := test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11493,14 +10877,10 @@ func TestImages_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json")
 	// Response check
 	exampleRes := test.Image{
 		Name:     to.Ptr("myImage"),
@@ -11545,31 +10925,27 @@ func TestImages_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestImages_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestImages_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestImages_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestImages_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a virtual machine image."},
 	})
-	client, err := test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myImage",
 		&test.ImagesClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json")
 	// Response check
 	exampleRes := test.Image{
 		Name:     to.Ptr("myImage"),
@@ -11611,28 +10987,23 @@ func TestImages_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Image) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Image)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestImages_ListByResourceGroup(t *testing.T) {
+func (testsuite *MockTestSuite) TestImages_ListByResourceGroup() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all virtual machine images in a resource group."},
 	})
-	client, err := test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	client, err := test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json")
 		// Response check
 		pagerExampleRes := test.ImageListResult{
 			Value: []*test.Image{
@@ -11675,28 +11046,23 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ImageListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ImageListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestImages_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestImages_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInASubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all virtual machine images in a subscription."},
 	})
-	client, err := test.NewImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List(nil)
+	client, err := test.NewImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInASubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInASubscription.json")
 		// Response check
 		pagerExampleRes := test.ImageListResult{
 			Value: []*test.Image{
@@ -11739,21 +11105,19 @@ func TestImages_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ImageListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ImageListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestRestorePointCollections_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateARestorePointCollection.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a restore point collection."},
 	})
-	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.CreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myRpc",
@@ -11769,9 +11133,7 @@ func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 			},
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateARestorePointCollection.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateARestorePointCollection.json")
 	// Response check
 	exampleRes := test.RestorePointCollection{
 		Name:     to.Ptr("myRpc"),
@@ -11793,35 +11155,31 @@ func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RestorePointCollection)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateARestorePointCollection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateARestorePointCollection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestRestorePointCollections_Update(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestRestorePointCollections_Update() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestRestorePointCollections_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestRestorePointCollections_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestRestorePointCollections_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestRestorePointCollections_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a restore point collection (but not the restore points contained in the restore point collection)"},
 	})
-	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myRpc",
 		&test.RestorePointCollectionsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json")
 	// Response check
 	exampleRes := test.RestorePointCollection{
 		Name:     to.Ptr("myRpc"),
@@ -11843,25 +11201,20 @@ func TestRestorePointCollections_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RestorePointCollection)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a restore point collection, including the restore points contained in the restore point collection"},
 	})
-	client, err = test.NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewRestorePointCollectionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"rpcName",
 		&test.RestorePointCollectionsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json")
 	// Response check
 	exampleRes = test.RestorePointCollection{
 		Name:     to.Ptr("rpcName"),
@@ -11949,28 +11302,23 @@ func TestRestorePointCollections_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RestorePointCollection)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestRestorePointCollections_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestRestorePointCollections_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Gets the list of restore point collections in a resource group."},
 	})
-	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myResourceGroup",
+	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json")
 		// Response check
 		pagerExampleRes := test.RestorePointCollectionListResult{
 			Value: []*test.RestorePointCollection{
@@ -12012,28 +11360,23 @@ func TestRestorePointCollections_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.RestorePointCollectionListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.RestorePointCollectionListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestRestorePointCollections_ListAll(t *testing.T) {
+func (testsuite *MockTestSuite) TestRestorePointCollections_ListAll() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInASubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Gets the list of restore point collections in a subscription"},
 	})
-	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListAll(nil)
+	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListAllPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInASubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInASubscription.json")
 		// Response check
 		pagerExampleRes := test.RestorePointCollectionListResult{
 			Value: []*test.RestorePointCollection{
@@ -12075,21 +11418,19 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.RestorePointCollectionListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.RestorePointCollectionListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestRestorePoints_Create(t *testing.T) {
+func (testsuite *MockTestSuite) TestRestorePoints_Create() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a restore point"},
 	})
-	client, err := test.NewRestorePointsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewRestorePointsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreate(ctx,
 		"myResourceGroup",
 		"rpcName",
@@ -12100,38 +11441,30 @@ func TestRestorePoints_Create(t *testing.T) {
 					ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vm8768_disk2_fe6ffde4f69b491ca33fb984d5bcd89f"),
 				}},
 		},
-		&test.RestorePointsClientBeginCreateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json")
 }
 
-func TestRestorePoints_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestRestorePoints_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestRestorePoints_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestRestorePoints_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a restore point"},
 	})
-	client, err := test.NewRestorePointsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewRestorePointsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"rpcName",
 		"rpName",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json")
 	// Response check
 	exampleRes := test.RestorePoint{
 		Name:            to.Ptr("rpName"),
@@ -12201,75 +11534,67 @@ func TestRestorePoints_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RestorePoint) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RestorePoint)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetExtensions_CreateOrUpdate(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetExtensions_CreateOrUpdate() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetExtensions_Update(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetExtensions_Update() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetExtensions_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetExtensions_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetExtensions_Get(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetExtensions_Get() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetExtensions_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetExtensions_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetRollingUpgrades_Cancel(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetRollingUpgrades_Cancel() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetRollingUpgrades_StartOSUpgrade(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetRollingUpgrades_StartOSUpgrade() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetRollingUpgrades_StartExtensionUpgrade(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetRollingUpgrades_StartExtensionUpgrade() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Start an extension rolling upgrade."},
 	})
-	client, err := test.NewVirtualMachineScaleSetRollingUpgradesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetRollingUpgradesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginStartExtensionUpgrade(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
-		&test.VirtualMachineScaleSetRollingUpgradesClientBeginStartExtensionUpgradeOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json")
 }
 
-func TestVirtualMachineScaleSetRollingUpgrades_GetLatest(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetRollingUpgrades_GetLatest() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create VirtualMachineScaleSet VM extension."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -12309,14 +11634,10 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 				TypeHandlerVersion: to.Ptr("1.2"),
 			},
 		},
-		&test.VirtualMachineScaleSetVMExtensionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSetVMExtension{
 		ID:   to.Ptr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/extensions/myVMExtension"),
@@ -12336,20 +11657,18 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMExtensions_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update VirtualMachineScaleSet VM extension."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -12366,14 +11685,10 @@ func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 				TypeHandlerVersion: to.Ptr("1.2"),
 			},
 		},
-		&test.VirtualMachineScaleSetVMExtensionsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSetVMExtension{
 		ID:   to.Ptr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/extensions/myVMExtension"),
@@ -12393,54 +11708,44 @@ func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetVMExtensions_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMExtensions_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete VirtualMachineScaleSet VM extension."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
 		"0",
 		"myVMExtension",
-		&test.VirtualMachineScaleSetVMExtensionsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json")
 }
 
-func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMExtensions_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get VirtualMachineScaleSet VM extension."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
 		"0",
 		"myVMExtension",
 		&test.VirtualMachineScaleSetVMExtensionsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSetVMExtension{
 		ID:   to.Ptr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/extensions/myVMExtension"),
@@ -12460,28 +11765,24 @@ func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMExtensions_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List extensions in Vmss instance."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.List(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
 		"0",
 		&test.VirtualMachineScaleSetVMExtensionsClientListOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSetVMExtensionsListResult{
 		Value: []*test.VirtualMachineScaleSetVMExtension{
@@ -12519,70 +11820,58 @@ func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtensionsListResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtensionsListResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetVMs_Reimage(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_Reimage() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMs_ReimageAll(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_ReimageAll() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMs_Deallocate(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_Deallocate() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMs_Update(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_Update() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMs_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Force Delete a virtual machine from a VM scale set."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
 		"0",
-		&test.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
-			ResumeToken: "",
-		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json: %v", err)
-	}
+		&test.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json")
 }
 
-func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get VM scale set VM with UserData"},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		"0",
 		&test.VirtualMachineScaleSetVMsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSetVM{
 		Name:     to.Ptr("{vmss-vm-name}"),
@@ -12701,28 +11990,24 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVM) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVM)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_GetInstanceView() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get instance view of a virtual machine from a VM scale set placed on a dedicated host group through automatic placement."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.GetInstanceView(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
 		"0",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSetVMInstanceView{
 		AssignedHost: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/hostGroups/myHostGroup/hosts/myHost"),
@@ -12766,48 +12051,44 @@ func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMInstanceView) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMInstanceView)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetVMs_List(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_List() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMs_PowerOff(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_PowerOff() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMs_Restart(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_Restart() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMs_Start(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_Start() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMs_Redeploy(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_Redeploy() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"RetrieveBootDiagnosticsData of a virtual machine."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.RetrieveBootDiagnosticsData(ctx,
 		"ResourceGroup",
 		"myvmScaleSet",
 		"0",
 		&test.VirtualMachineScaleSetVMsClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Ptr[int32](60)})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json")
 	// Response check
 	exampleRes := test.RetrieveBootDiagnosticsDataResult{
 		ConsoleScreenshotBlobURI: to.Ptr("https://storageuri/myvmScaleSetinstance.screenshot.bmp?{saskey}"),
@@ -12816,44 +12097,38 @@ func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RetrieveBootDiagnosticsDataResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RetrieveBootDiagnosticsDataResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetVMs_PerformMaintenance(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_PerformMaintenance() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSetVMs_SimulateEviction(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_SimulateEviction() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Simulate Eviction a virtual machine."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	_, err = client.SimulateEviction(ctx,
 		"ResourceGroup",
 		"VmScaleSetName",
 		"InstanceId",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json")
 }
 
-func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_RunCommand() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineScaleSetVMs_RunCommand"},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginRunCommand(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
@@ -12863,14 +12138,10 @@ func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 			Script: []*string{
 				to.Ptr("# Test multi-line string\r\nWrite-Host Hello World!")},
 		},
-		&test.VirtualMachineScaleSetVMsClientBeginRunCommandOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json")
 	// Response check
 	exampleRes := test.RunCommandResult{
 		Value: []*test.InstanceViewStatus{
@@ -12890,20 +12161,18 @@ func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RunCommandResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RunCommandResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
+func (testsuite *MockTestSuite) TestLogAnalytics_ExportRequestRateByInterval() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Export logs which contain all Api requests made to Compute Resource Provider within the given time period broken down by intervals."},
 	})
-	client, err := test.NewLogAnalyticsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewLogAnalyticsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginExportRequestRateByInterval(ctx,
 		"westus",
 		test.RequestRateByIntervalInput{
@@ -12913,14 +12182,10 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 			ToTime:              to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
 			IntervalLength:      to.Ptr(test.IntervalInMinsFiveMins),
 		},
-		&test.LogAnalyticsClientBeginExportRequestRateByIntervalOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json")
 	// Response check
 	exampleRes := test.LogAnalyticsOperationResult{
 		Properties: &test.LogAnalyticsOutput{
@@ -12930,20 +12195,18 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.LogAnalyticsOperationResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.LogAnalyticsOperationResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
+func (testsuite *MockTestSuite) TestLogAnalytics_ExportThrottledRequests() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Export logs which contain all throttled Api requests made to Compute Resource Provider within the given time period."},
 	})
-	client, err := test.NewLogAnalyticsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewLogAnalyticsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginExportThrottledRequests(ctx,
 		"westus",
 		test.ThrottledRequestsInput{
@@ -12955,14 +12218,10 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 			GroupByUserAgent:           to.Ptr(false),
 			ToTime:                     to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
 		},
-		&test.LogAnalyticsClientBeginExportThrottledRequestsOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json")
 	// Response check
 	exampleRes := test.LogAnalyticsOperationResult{
 		Properties: &test.LogAnalyticsOutput{
@@ -12972,28 +12231,23 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.LogAnalyticsOperationResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.LogAnalyticsOperationResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineRunCommands_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineRunCommands_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineRunCommandList"},
 	})
-	client, err := test.NewVirtualMachineRunCommandsClient("subid", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("SoutheastAsia",
+	client, err := test.NewVirtualMachineRunCommandsClient("subid", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("SoutheastAsia",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json")
 		// Response check
 		pagerExampleRes := test.RunCommandListResult{
 			Value: []*test.RunCommandDocumentBase{
@@ -13071,28 +12325,24 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.RunCommandListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.RunCommandListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestVirtualMachineRunCommands_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineRunCommands_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineRunCommandGet"},
 	})
-	client, err := test.NewVirtualMachineRunCommandsClient("24fb23e3-6ba3-41f0-9b6e-e41131d5d61e", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineRunCommandsClient("24fb23e3-6ba3-41f0-9b6e-e41131d5d61e", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"SoutheastAsia",
 		"RunPowerShellScript",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json")
 	// Response check
 	exampleRes := test.RunCommandDocument{
 		Description: to.Ptr("Custom multiline PowerShell script should be defined in script property. Optional parameters can be set in parameters property."),
@@ -13121,20 +12371,18 @@ func TestVirtualMachineRunCommands_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RunCommandDocument) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RunCommandDocument)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineRunCommands_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a run command."},
 	})
-	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -13160,14 +12408,10 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 				TimeoutInSeconds: to.Ptr[int32](3600),
 			},
 		},
-		&test.VirtualMachineRunCommandsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json")
 	// Response check
 	exampleRes := test.VirtualMachineRunCommand{
 		Name:     to.Ptr("myRunCommand"),
@@ -13200,20 +12444,18 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineRunCommands_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineRunCommands_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a run command."},
 	})
-	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -13225,14 +12467,10 @@ func TestVirtualMachineRunCommands_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachineRunCommandsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json")
 	// Response check
 	exampleRes := test.VirtualMachineRunCommand{
 		Name:     to.Ptr("myRunCommand"),
@@ -13265,52 +12503,42 @@ func TestVirtualMachineRunCommands_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineRunCommands_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineRunCommands_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a run command."},
 	})
-	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myVM",
 		"myRunCommand",
-		&test.VirtualMachineRunCommandsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json")
 }
 
-func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineRunCommands_GetByVirtualMachine() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a run command."},
 	})
-	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.GetByVirtualMachine(ctx,
 		"myResourceGroup",
 		"myVM",
 		"myRunCommand",
 		&test.VirtualMachineRunCommandsClientGetByVirtualMachineOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json")
 	// Response check
 	exampleRes := test.VirtualMachineRunCommand{
 		Name:     to.Ptr("myRunCommand"),
@@ -13343,29 +12571,24 @@ func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineRunCommands_ListByVirtualMachine() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List run commands in a Virtual Machine."},
 	})
-	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByVirtualMachine("myResourceGroup",
+	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByVirtualMachinePager("myResourceGroup",
 		"myVM",
 		&test.VirtualMachineRunCommandsClientListByVirtualMachineOptions{Expand: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json")
 		// Response check
 		pagerExampleRes := test.VirtualMachineRunCommandsListResult{
 			Value: []*test.VirtualMachineRunCommand{
@@ -13401,21 +12624,19 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.VirtualMachineRunCommandsListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.VirtualMachineRunCommandsListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create VirtualMachineScaleSet VM run command."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -13442,14 +12663,10 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 				TimeoutInSeconds: to.Ptr[int32](3600),
 			},
 		},
-		&test.VirtualMachineScaleSetVMRunCommandsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json")
 	// Response check
 	exampleRes := test.VirtualMachineRunCommand{
 		Name:     to.Ptr("myRunCommand"),
@@ -13478,20 +12695,18 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMRunCommands_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update VirtualMachineScaleSet VM run command."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -13504,14 +12719,10 @@ func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachineScaleSetVMRunCommandsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json")
 	// Response check
 	exampleRes := test.VirtualMachineRunCommand{
 		Name:     to.Ptr("myRunCommand"),
@@ -13544,54 +12755,44 @@ func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetVMRunCommands_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMRunCommands_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete VirtualMachineScaleSet VM run command."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
 		"0",
 		"myRunCommand",
-		&test.VirtualMachineScaleSetVMRunCommandsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json")
 }
 
-func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMRunCommands_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get VirtualMachineScaleSet VM run commands."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
 		"0",
 		"myRunCommand",
 		&test.VirtualMachineScaleSetVMRunCommandsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json")
 	// Response check
 	exampleRes := test.VirtualMachineRunCommand{
 		Name:     to.Ptr("myRunCommand"),
@@ -13624,30 +12825,25 @@ func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMRunCommands_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List run commands in Vmss instance."},
 	})
-	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myResourceGroup",
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myResourceGroup",
 		"myvmScaleSet",
 		"0",
 		&test.VirtualMachineScaleSetVMRunCommandsClientListOptions{Expand: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json")
 		// Response check
 		pagerExampleRes := test.VirtualMachineRunCommandsListResult{
 			Value: []*test.VirtualMachineRunCommand{
@@ -13679,28 +12875,23 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.VirtualMachineRunCommandsListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.VirtualMachineRunCommandsListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestResourceSKUs_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestResourceSKUs_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all available Resource SKUs"},
 	})
-	client, err := test.NewResourceSKUsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List(&test.ResourceSKUsClientListOptions{Filter: nil})
+	client, err := test.NewResourceSKUsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager(&test.ResourceSKUsClientListOptions{Filter: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json")
 		// Response check
 		pagerExampleRes := test.ResourceSKUsResult{
 			Value: []*test.ResourceSKU{
@@ -13873,7 +13064,7 @@ func TestResourceSKUs_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ResourceSKUsResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ResourceSKUsResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
@@ -13881,18 +13072,12 @@ func TestResourceSKUs_List(t *testing.T) {
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all available Resource SKUs for the specified region"},
 	})
-	client, err = test.NewResourceSKUsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager = client.List(&test.ResourceSKUsClientListOptions{Filter: to.Ptr("location eq 'westus'")})
+	client, err = test.NewResourceSKUsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager = client.NewListPager(&test.ResourceSKUsClientListOptions{Filter: to.Ptr("location eq 'westus'")})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkusForARegion.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkusForARegion.json")
 		// Response check
 		pagerExampleRes := test.ResourceSKUsResult{
 			Value: []*test.ResourceSKU{
@@ -14065,21 +13250,19 @@ func TestResourceSKUs_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ResourceSKUsResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ResourceSKUsResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkusForARegion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkusForARegion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDisks_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk and associate with disk access resource."},
 	})
-	client, err := test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14094,14 +13277,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				NetworkAccessPolicy: to.Ptr(test.NetworkAccessPolicyAllowPrivate),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json")
 	// Response check
 	exampleRes := test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14119,18 +13298,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk and associate with disk encryption set."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14146,14 +13322,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14172,18 +13344,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by copying a snapshot."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14196,14 +13365,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14219,18 +13384,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by importing an unmanaged blob from a different subscription."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14244,14 +13406,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14268,18 +13426,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by importing an unmanaged blob from the same subscription."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14292,14 +13447,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14315,18 +13466,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk from a platform image."},
 	})
-	client, err = test.NewDisksClient("{subscriptionId}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscriptionId}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14342,14 +13490,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				OSType: to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14374,18 +13518,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk from an existing managed disk in the same or different subscription."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk2",
@@ -14398,14 +13539,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk2"),
@@ -14421,18 +13558,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk with security profile"},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14451,14 +13585,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14480,18 +13610,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk with ssd zrs account type."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14507,14 +13634,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				Name: to.Ptr(test.DiskStorageAccountTypesPremiumZRS),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14534,18 +13657,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed upload disk."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14558,14 +13678,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14581,18 +13697,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an empty managed disk in extended location."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14609,14 +13722,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				DiskSizeGB: to.Ptr[int32](200),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14636,18 +13745,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an empty managed disk."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14660,14 +13766,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				DiskSizeGB: to.Ptr[int32](200),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14683,18 +13785,15 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an ultra managed disk with logicalSectorSize 512E"},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14711,14 +13810,10 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				Name: to.Ptr(test.DiskStorageAccountTypesUltraSSDLRS),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14739,20 +13834,18 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDisks_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestDisks_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a bursting enabled managed disk."},
 	})
-	client, err := test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14762,14 +13855,10 @@ func TestDisks_Update(t *testing.T) {
 				DiskSizeGB:      to.Ptr[int32](1024),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json")
 	// Response check
 	exampleRes := test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14786,18 +13875,15 @@ func TestDisks_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to add purchase plan."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14811,14 +13897,10 @@ func TestDisks_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14849,18 +13931,15 @@ func TestDisks_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to add supportsHibernation."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14869,14 +13948,10 @@ func TestDisks_Update(t *testing.T) {
 				SupportsHibernation: to.Ptr(true),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14900,18 +13975,15 @@ func TestDisks_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to change tier."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14920,14 +13992,10 @@ func TestDisks_Update(t *testing.T) {
 				Tier: to.Ptr("P30"),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14943,18 +14011,15 @@ func TestDisks_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to disable bursting."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14963,14 +14028,10 @@ func TestDisks_Update(t *testing.T) {
 				BurstingEnabled: to.Ptr(false),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -14985,18 +14046,15 @@ func TestDisks_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update managed disk to remove disk access resource association."},
 	})
-	client, err = test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -15005,14 +14063,10 @@ func TestDisks_Update(t *testing.T) {
 				NetworkAccessPolicy: to.Ptr(test.NetworkAccessPolicyAllowAll),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json")
 	// Response check
 	exampleRes = test.Disk{
 		Name:     to.Ptr("myDisk"),
@@ -15029,27 +14083,23 @@ func TestDisks_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDisks_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestDisks_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a managed disk."},
 	})
-	client, err := test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myManagedDisk",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json")
 	// Response check
 	exampleRes := test.Disk{
 		Name:     to.Ptr("myManagedDisk"),
@@ -15111,32 +14161,27 @@ func TestDisks_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Disk) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Disk)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDisks_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestDisks_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestDisks_ListByResourceGroup(t *testing.T) {
+func (testsuite *MockTestSuite) TestDisks_ListByResourceGroup() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all managed disks in a resource group."},
 	})
-	client, err := test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	client, err := test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json")
 		// Response check
 		pagerExampleRes := test.DiskList{
 			Value: []*test.Disk{
@@ -15246,28 +14291,23 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.DiskList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.DiskList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDisks_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestDisks_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all managed disks in a subscription."},
 	})
-	client, err := test.NewDisksClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List(nil)
+	client, err := test.NewDisksClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json")
 		// Response check
 		pagerExampleRes := test.DiskList{
 			Value: []*test.Disk{
@@ -15377,29 +14417,27 @@ func TestDisks_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.DiskList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.DiskList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDisks_GrantAccess(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestDisks_GrantAccess() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestDisks_RevokeAccess(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestDisks_RevokeAccess() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestSnapshots_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestSnapshots_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot by importing an unmanaged blob from a different subscription."},
 	})
-	client, err := test.NewSnapshotsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewSnapshotsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"mySnapshot1",
@@ -15413,14 +14451,10 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.SnapshotsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json")
 	// Response check
 	exampleRes := test.Snapshot{
 		Name:     to.Ptr("mySnapshot1"),
@@ -15437,18 +14471,15 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Snapshot)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot by importing an unmanaged blob from the same subscription."},
 	})
-	client, err = test.NewSnapshotsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewSnapshotsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"mySnapshot1",
@@ -15461,14 +14492,10 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.SnapshotsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json")
 	// Response check
 	exampleRes = test.Snapshot{
 		Name:     to.Ptr("mySnapshot1"),
@@ -15484,18 +14511,15 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Snapshot)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot from an existing snapshot in the same or a different subscription."},
 	})
-	client, err = test.NewSnapshotsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewSnapshotsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"mySnapshot2",
@@ -15508,14 +14532,10 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.SnapshotsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json")
 	// Response check
 	exampleRes = test.Snapshot{
 		Name:     to.Ptr("mySnapshot2"),
@@ -15531,31 +14551,27 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Snapshot)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSnapshots_Update(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestSnapshots_Update() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestSnapshots_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestSnapshots_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a snapshot."},
 	})
-	client, err := test.NewSnapshotsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewSnapshotsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"mySnapshot",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json")
 	// Response check
 	exampleRes := test.Snapshot{
 		Name:     to.Ptr("mySnapshot"),
@@ -15609,32 +14625,27 @@ func TestSnapshots_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Snapshot)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSnapshots_Delete(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestSnapshots_Delete() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestSnapshots_ListByResourceGroup(t *testing.T) {
+func (testsuite *MockTestSuite) TestSnapshots_ListByResourceGroup() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all snapshots in a resource group."},
 	})
-	client, err := test.NewSnapshotsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	client, err := test.NewSnapshotsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json")
 		// Response check
 		pagerExampleRes := test.SnapshotList{
 			Value: []*test.Snapshot{
@@ -15683,28 +14694,23 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.SnapshotList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.SnapshotList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSnapshots_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestSnapshots_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInASubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all snapshots in a subscription."},
 	})
-	client, err := test.NewSnapshotsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List(nil)
+	client, err := test.NewSnapshotsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInASubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInASubscription.json")
 		// Response check
 		pagerExampleRes := test.SnapshotList{
 			Value: []*test.Snapshot{
@@ -15795,29 +14801,27 @@ func TestSnapshots_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.SnapshotList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.SnapshotList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSnapshots_GrantAccess(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestSnapshots_GrantAccess() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestSnapshots_RevokeAccess(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestSnapshots_RevokeAccess() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskEncryptionSets_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a disk encryption set with key vault from a different subscription."},
 	})
-	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -15833,14 +14837,10 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 				EncryptionType: to.Ptr(test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json")
 	// Response check
 	exampleRes := test.DiskEncryptionSet{
 		Name:     to.Ptr("myDiskEncryptionSet"),
@@ -15859,18 +14859,15 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a disk encryption set."},
 	})
-	client, err = test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDiskEncryptionSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -15889,14 +14886,10 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 				EncryptionType: to.Ptr(test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json")
 	// Response check
 	exampleRes = test.DiskEncryptionSet{
 		Name:     to.Ptr("myDiskEncryptionSet"),
@@ -15918,20 +14911,18 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDiskEncryptionSets_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskEncryptionSets_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Succeeded"},
 	})
-	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -15947,14 +14938,10 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				RotationToLatestKeyVersionEnabled: to.Ptr(true),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json")
 	// Response check
 	exampleRes := test.DiskEncryptionSet{
 		Name:     to.Ptr("myDiskEncryptionSet"),
@@ -15977,18 +14964,15 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Updating"},
 	})
-	client, err = test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDiskEncryptionSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -16004,14 +14988,10 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				RotationToLatestKeyVersionEnabled: to.Ptr(true),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json")
 	// Response check
 	exampleRes = test.DiskEncryptionSet{
 		Name:     to.Ptr("myDiskEncryptionSet"),
@@ -16038,18 +15018,15 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set."},
 	})
-	client, err = test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDiskEncryptionSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -16068,14 +15045,10 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				"project":    to.Ptr("Encryption"),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json")
 	// Response check
 	exampleRes = test.DiskEncryptionSet{
 		Name:     to.Ptr("myDiskEncryptionSet"),
@@ -16102,27 +15075,23 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDiskEncryptionSets_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskEncryptionSets_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a disk encryption set."},
 	})
-	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json")
 	// Response check
 	exampleRes := test.DiskEncryptionSet{
 		Name:     to.Ptr("myDiskEncryptionSet"),
@@ -16151,51 +15120,40 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDiskEncryptionSets_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskEncryptionSets_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a disk encryption set."},
 	})
-	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
-		&test.DiskEncryptionSetsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json")
 }
 
-func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskEncryptionSets_ListByResourceGroup() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk encryption sets in a resource group."},
 	})
-	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json")
 		// Response check
 		pagerExampleRes := test.DiskEncryptionSetList{
 			Value: []*test.DiskEncryptionSet{
@@ -16251,28 +15209,23 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.DiskEncryptionSetList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.DiskEncryptionSetList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDiskEncryptionSets_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskEncryptionSets_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk encryption sets in a subscription."},
 	})
-	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List(nil)
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json")
 		// Response check
 		pagerExampleRes := test.DiskEncryptionSetList{
 			Value: []*test.DiskEncryptionSet{
@@ -16328,30 +15281,25 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.DiskEncryptionSetList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.DiskEncryptionSetList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskEncryptionSets_ListAssociatedResources() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all resources that are encrypted with this disk encryption set."},
 	})
-	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListAssociatedResources("myResourceGroup",
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListAssociatedResourcesPager("myResourceGroup",
 		"myDiskEncryptionSet",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json")
 		// Response check
 		pagerExampleRes := test.ResourceURIList{
 			Value: []*string{
@@ -16361,35 +15309,29 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ResourceURIList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ResourceURIList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a disk access resource."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
 		test.DiskAccess{
 			Location: to.Ptr("West US"),
 		},
-		&test.DiskAccessesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json")
 	// Response check
 	exampleRes := test.DiskAccess{
 		Name:     to.Ptr("myDiskAccess"),
@@ -16404,20 +15346,18 @@ func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskAccess)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDiskAccesses_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk access resource."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -16427,14 +15367,10 @@ func TestDiskAccesses_Update(t *testing.T) {
 				"project":    to.Ptr("PrivateEndpoints"),
 			},
 		},
-		&test.DiskAccessesClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json")
 	// Response check
 	exampleRes := test.DiskAccess{
 		Name:     to.Ptr("myDiskAccess"),
@@ -16449,27 +15385,23 @@ func TestDiskAccesses_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskAccess)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDiskAccesses_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a disk access resource with private endpoints."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json")
 	// Response check
 	exampleRes := test.DiskAccess{
 		Name:     to.Ptr("myDiskAccess"),
@@ -16505,25 +15437,20 @@ func TestDiskAccesses_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskAccess)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccess.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a disk access resource."},
 	})
-	client, err = test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccess.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccess.json")
 	// Response check
 	exampleRes = test.DiskAccess{
 		Name:     to.Ptr("myDiskAccess"),
@@ -16542,51 +15469,40 @@ func TestDiskAccesses_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskAccess)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDiskAccesses_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a disk access resource."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
-		&test.DiskAccessesClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json")
 }
 
-func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_ListByResourceGroup() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk access resources in a resource group."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json")
 		// Response check
 		pagerExampleRes := test.DiskAccessList{
 			Value: []*test.DiskAccess{
@@ -16639,28 +15555,23 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.DiskAccessList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.DiskAccessList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDiskAccesses_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk access resources in a subscription."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List(nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json")
 		// Response check
 		pagerExampleRes := test.DiskAccessList{
 			Value: []*test.DiskAccess{
@@ -16713,28 +15624,24 @@ func TestDiskAccesses_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.DiskAccessList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.DiskAccessList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_GetPrivateLinkResources() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all possible private link resources under disk access resource."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.GetPrivateLinkResources(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json")
 	// Response check
 	exampleRes := test.PrivateLinkResourceListResult{
 		Value: []*test.PrivateLinkResource{
@@ -16754,20 +15661,18 @@ func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.PrivateLinkResourceListResult) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.PrivateLinkResourceListResult)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_UpdateAPrivateEndpointConnection() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Approve a Private Endpoint Connection under a disk access resource."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdateAPrivateEndpointConnection(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -16780,14 +15685,10 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 				},
 			},
 		},
-		&test.DiskAccessesClientBeginUpdateAPrivateEndpointConnectionOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json")
 	// Response check
 	exampleRes := test.PrivateEndpointConnection{
 		Name: to.Ptr("myPrivateEndpointConnectionName"),
@@ -16808,28 +15709,24 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_GetAPrivateEndpointConnection() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a private endpoint connection under a disk access resource."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.GetAPrivateEndpointConnection(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
 		"myPrivateEndpointConnection",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json")
 	// Response check
 	exampleRes := test.PrivateEndpointConnection{
 		Name: to.Ptr("myPrivateEndpointConnection"),
@@ -16850,53 +15747,42 @@ func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDiskAccesses_DeleteAPrivateEndpointConnection(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_DeleteAPrivateEndpointConnection() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a private endpoint connection under a disk access resource."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDeleteAPrivateEndpointConnection(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
 		"myPrivateEndpointConnection",
-		&test.DiskAccessesClientBeginDeleteAPrivateEndpointConnectionOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json")
 }
 
-func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskAccesses_ListPrivateEndpointConnections() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a private endpoint connection under a disk access resource."},
 	})
-	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListPrivateEndpointConnections("myResourceGroup",
+	client, err := test.NewDiskAccessesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPrivateEndpointConnectionsPager("myResourceGroup",
 		"myDiskAccess",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json")
 		// Response check
 		pagerExampleRes := test.PrivateEndpointConnectionListResult{
 			Value: []*test.PrivateEndpointConnection{
@@ -16920,30 +15806,26 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.PrivateEndpointConnectionListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.PrivateEndpointConnectionListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestDiskRestorePoint_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskRestorePoint_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get an incremental disk restorePoint resource."},
 	})
-	client, err := test.NewDiskRestorePointClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewDiskRestorePointClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"rpc",
 		"vmrp",
 		"TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json")
 	// Response check
 	exampleRes := test.DiskRestorePoint{
 		Name: to.Ptr("TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745"),
@@ -16960,30 +15842,25 @@ func TestDiskRestorePoint_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.DiskRestorePoint) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.DiskRestorePoint)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
+func (testsuite *MockTestSuite) TestDiskRestorePoint_ListByRestorePoint() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get an incremental disk restorePoint resource."},
 	})
-	client, err := test.NewDiskRestorePointClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByRestorePoint("myResourceGroup",
+	client, err := test.NewDiskRestorePointClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByRestorePointPager("myResourceGroup",
 		"rpc",
 		"vmrp",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json")
 		// Response check
 		pagerExampleRes := test.DiskRestorePointList{
 			Value: []*test.DiskRestorePoint{
@@ -17003,21 +15880,19 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.DiskRestorePointList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.DiskRestorePointList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestGalleries_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleries_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery with sharing profile."},
 	})
-	client, err := test.NewGalleriesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleriesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17030,14 +15905,10 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleriesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json")
 	// Response check
 	exampleRes := test.Gallery{
 		Name:     to.Ptr("myGalleryName"),
@@ -17056,18 +15927,15 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Gallery) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Gallery)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery."},
 	})
-	client, err = test.NewGalleriesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleriesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17077,14 +15945,10 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 				Description: to.Ptr("This is the gallery description."),
 			},
 		},
-		&test.GalleriesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json")
 	// Response check
 	exampleRes = test.Gallery{
 		Name:     to.Ptr("myGalleryName"),
@@ -17100,20 +15964,18 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Gallery) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Gallery)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleries_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleries_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery."},
 	})
-	client, err := test.NewGalleriesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleriesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17122,14 +15984,10 @@ func TestGalleries_Update(t *testing.T) {
 				Description: to.Ptr("This is the gallery description."),
 			},
 		},
-		&test.GalleriesClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json")
 	// Response check
 	exampleRes := test.Gallery{
 		Name:     to.Ptr("myGalleryName"),
@@ -17145,27 +16003,23 @@ func TestGalleries_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Gallery) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Gallery)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleries_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleries_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery with select permissions."},
 	})
-	client, err := test.NewGalleriesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleriesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		&test.GalleriesClientGetOptions{Select: to.Ptr(test.SelectPermissionsPermissions)})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json")
 	// Response check
 	exampleRes := test.Gallery{
 		Name:     to.Ptr("myGalleryName"),
@@ -17191,25 +16045,20 @@ func TestGalleries_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Gallery) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Gallery)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
-	client, err = test.NewGalleriesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleriesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		&test.GalleriesClientGetOptions{Select: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json")
 	// Response check
 	exampleRes = test.Gallery{
 		Name:     to.Ptr("myGalleryName"),
@@ -17225,51 +16074,40 @@ func TestGalleries_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.Gallery) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.Gallery)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleries_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleries_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery."},
 	})
-	client, err := test.NewGalleriesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleriesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
-		&test.GalleriesClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json")
 }
 
-func TestGalleries_ListByResourceGroup(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleries_ListByResourceGroup() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List galleries in a resource group."},
 	})
-	client, err := test.NewGalleriesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	client, err := test.NewGalleriesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json")
 		// Response check
 		pagerExampleRes := test.GalleryList{
 			Value: []*test.Gallery{
@@ -17289,28 +16127,23 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.GalleryList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.GalleryList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestGalleries_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleries_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List galleries in a subscription."},
 	})
-	client, err := test.NewGalleriesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List(nil)
+	client, err := test.NewGalleriesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json")
 		// Response check
 		pagerExampleRes := test.GalleryList{
 			Value: []*test.Gallery{
@@ -17330,21 +16163,19 @@ func TestGalleries_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.GalleryList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.GalleryList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestGalleryImages_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryImages_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery image."},
 	})
-	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17362,14 +16193,10 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json")
 	// Response check
 	exampleRes := test.GalleryImage{
 		Name:     to.Ptr("myGalleryImageName"),
@@ -17389,20 +16216,18 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImage)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryImages_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryImages_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery image."},
 	})
-	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17419,14 +16244,10 @@ func TestGalleryImages_Update(t *testing.T) {
 				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryImagesClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json")
 	// Response check
 	exampleRes := test.GalleryImage{
 		Name:     to.Ptr("myGalleryImageName"),
@@ -17446,28 +16267,24 @@ func TestGalleryImages_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImage)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryImages_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryImages_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image."},
 	})
-	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json")
 	// Response check
 	exampleRes := test.GalleryImage{
 		Name:     to.Ptr("myGalleryImageName"),
@@ -17487,53 +16304,42 @@ func TestGalleryImages_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImage)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryImages_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryImages_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery image."},
 	})
-	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
-		&test.GalleryImagesClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json")
 }
 
-func TestGalleryImages_ListByGallery(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryImages_ListByGallery() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery images in a gallery."},
 	})
-	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByGallery("myResourceGroup",
+	client, err := test.NewGalleryImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByGalleryPager("myResourceGroup",
 		"myGalleryName",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json")
 		// Response check
 		pagerExampleRes := test.GalleryImageList{
 			Value: []*test.GalleryImage{
@@ -17556,21 +16362,19 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.GalleryImageList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.GalleryImageList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryImageVersions_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using VM as source."},
 	})
-	client, err := test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17626,14 +16430,10 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json")
 	// Response check
 	exampleRes := test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -17704,18 +16504,15 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using managed image as source."},
 	})
-	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17771,14 +16568,10 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -17849,18 +16642,15 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using mix of disks and snapshots as a source."},
 	})
-	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17919,14 +16709,10 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -17992,18 +16778,15 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using shared image as source."},
 	})
-	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18059,14 +16842,10 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -18137,18 +16916,15 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using snapshots as a source."},
 	})
-	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18207,14 +16983,10 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -18280,18 +17052,15 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using vhd as a source."},
 	})
-	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18342,14 +17111,10 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -18405,20 +17170,18 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryImageVersions_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryImageVersions_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple Gallery Image Version (Managed Image as source)."},
 	})
-	client, err := test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18445,14 +17208,10 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json")
 	// Response check
 	exampleRes := test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -18505,18 +17264,15 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple Gallery Image Version without source id."},
 	})
-	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18539,14 +17295,10 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 				StorageProfile: &test.GalleryImageVersionStorageProfile{},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -18599,29 +17351,25 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryImageVersions_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryImageVersions_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with replication status."},
 	})
-	client, err := test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
 		&test.GalleryImageVersionsClientGetOptions{Expand: to.Ptr(test.ReplicationStatusTypesReplicationStatus)})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json")
 	// Response check
 	exampleRes := test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -18694,27 +17442,22 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with snapshots as a source."},
 	})
-	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
 		&test.GalleryImageVersionsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -18766,27 +17509,22 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with vhd as a source."},
 	})
-	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
 		&test.GalleryImageVersionsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -18842,27 +17580,22 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version."},
 	})
-	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
 		&test.GalleryImageVersionsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -18919,55 +17652,44 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryImageVersions_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryImageVersions_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery image version."},
 	})
-	client, err := test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
-		&test.GalleryImageVersionsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json")
 }
 
-func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryImageVersions_ListByGalleryImage() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery image versions in a gallery image definition."},
 	})
-	client, err := test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByGalleryImage("myResourceGroup",
+	client, err := test.NewGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByGalleryImagePager("myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json")
 		// Response check
 		pagerExampleRes := test.GalleryImageVersionList{
 			Value: []*test.GalleryImageVersion{
@@ -19027,21 +17749,19 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.GalleryImageVersionList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.GalleryImageVersionList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryApplications_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery Application."},
 	})
-	client, err := test.NewGalleryApplicationsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryApplicationsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -19056,14 +17776,10 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 				SupportedOSType:     to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryApplicationsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json")
 	// Response check
 	exampleRes := test.GalleryApplication{
 		Name:     to.Ptr("myGalleryApplicationName"),
@@ -19081,20 +17797,18 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryApplication)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryApplications_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryApplications_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery Application."},
 	})
-	client, err := test.NewGalleryApplicationsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryApplicationsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -19108,14 +17822,10 @@ func TestGalleryApplications_Update(t *testing.T) {
 				SupportedOSType:     to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryApplicationsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json")
 	// Response check
 	exampleRes := test.GalleryApplication{
 		Name:     to.Ptr("myGalleryApplicationName"),
@@ -19133,28 +17843,24 @@ func TestGalleryApplications_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryApplication)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryApplications_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryApplications_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery Application."},
 	})
-	client, err := test.NewGalleryApplicationsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryApplicationsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryApplicationName",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json")
 	// Response check
 	exampleRes := test.GalleryApplication{
 		Name:     to.Ptr("myGalleryApplicationName"),
@@ -19170,53 +17876,42 @@ func TestGalleryApplications_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryApplication)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryApplications_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryApplications_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery Application."},
 	})
-	client, err := test.NewGalleryApplicationsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryApplicationsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryApplicationName",
-		&test.GalleryApplicationsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json")
 }
 
-func TestGalleryApplications_ListByGallery(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryApplications_ListByGallery() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery Applications in a gallery."},
 	})
-	client, err := test.NewGalleryApplicationsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByGallery("myResourceGroup",
+	client, err := test.NewGalleryApplicationsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByGalleryPager("myResourceGroup",
 		"myGalleryName",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json")
 		// Response check
 		pagerExampleRes := test.GalleryApplicationList{
 			Value: []*test.GalleryApplication{
@@ -19235,21 +17930,19 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.GalleryApplicationList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.GalleryApplicationList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryApplicationVersions_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery Application Version."},
 	})
-	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -19278,14 +17971,10 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryApplicationVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json")
 	// Response check
 	exampleRes := test.GalleryApplicationVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -19320,20 +18009,18 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryApplicationVersions_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryApplicationVersions_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery Application Version."},
 	})
-	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -19361,14 +18048,10 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryApplicationVersionsClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json")
 	// Response check
 	exampleRes := test.GalleryApplicationVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -19403,29 +18086,25 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryApplicationVersions_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryApplicationVersions_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery Application Version with replication status."},
 	})
-	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryApplicationName",
 		"1.0.0",
 		&test.GalleryApplicationVersionsClientGetOptions{Expand: to.Ptr(test.ReplicationStatusTypesReplicationStatus)})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json")
 	// Response check
 	exampleRes := test.GalleryApplicationVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -19468,27 +18147,22 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery Application Version."},
 	})
-	client, err = test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGalleryApplicationVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryApplicationName",
 		"1.0.0",
 		&test.GalleryApplicationVersionsClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json")
 	// Response check
 	exampleRes = test.GalleryApplicationVersion{
 		Name:     to.Ptr("1.0.0"),
@@ -19523,55 +18197,44 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestGalleryApplicationVersions_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryApplicationVersions_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery Application Version."},
 	})
-	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryApplicationName",
 		"1.0.0",
-		&test.GalleryApplicationVersionsClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json")
 }
 
-func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
+func (testsuite *MockTestSuite) TestGalleryApplicationVersions_ListByGalleryApplication() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery Application Versions in a gallery Application Definition."},
 	})
-	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListByGalleryApplication("myResourceGroup",
+	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListByGalleryApplicationPager("myResourceGroup",
 		"myGalleryName",
 		"myGalleryApplicationName",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json")
 		// Response check
 		pagerExampleRes := test.GalleryApplicationVersionList{
 			Value: []*test.GalleryApplicationVersion{
@@ -19609,21 +18272,19 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.GalleryApplicationVersionList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.GalleryApplicationVersionList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestGallerySharingProfile_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestGallerySharingProfile_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Add sharing id to the sharing profile of a gallery."},
 	})
-	client, err := test.NewGallerySharingProfileClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewGallerySharingProfileClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -19642,14 +18303,10 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 				}},
 			OperationType: to.Ptr(test.SharingUpdateOperationTypesAdd),
 		},
-		&test.GallerySharingProfileClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json")
 	// Response check
 	exampleRes := test.SharingUpdate{
 		Groups: []*test.SharingProfileGroup{
@@ -19669,32 +18326,25 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SharingUpdate)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"reset sharing profile of a gallery."},
 	})
-	client, err = test.NewGallerySharingProfileClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewGallerySharingProfileClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		test.SharingUpdate{
 			OperationType: to.Ptr(test.SharingUpdateOperationTypesReset),
 		},
-		&test.GallerySharingProfileClientBeginUpdateOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json")
 	// Response check
 	exampleRes = test.SharingUpdate{
 		OperationType: to.Ptr(test.SharingUpdateOperationTypesReset),
@@ -19702,28 +18352,23 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SharingUpdate)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSharedGalleries_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestSharedGalleries_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleries.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
-	client, err := test.NewSharedGalleriesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myLocation",
+	client, err := test.NewSharedGalleriesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myLocation",
 		&test.SharedGalleriesClientListOptions{SharedTo: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleries.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleries.json")
 		// Response check
 		pagerExampleRes := test.SharedGalleryList{
 			Value: []*test.SharedGallery{
@@ -19738,28 +18383,24 @@ func TestSharedGalleries_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.SharedGalleryList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.SharedGalleryList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleries.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleries.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSharedGalleries_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestSharedGalleries_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGallery.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
-	client, err := test.NewSharedGalleriesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewSharedGalleriesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myLocation",
 		"galleryUniqueName",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGallery.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGallery.json")
 	// Response check
 	exampleRes := test.SharedGallery{
 		Name:     to.Ptr("myGalleryName"),
@@ -19771,29 +18412,24 @@ func TestSharedGalleries_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.SharedGallery) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SharedGallery)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSharedGalleryImages_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestSharedGalleryImages_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
-	client, err := test.NewSharedGalleryImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myLocation",
+	client, err := test.NewSharedGalleryImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myLocation",
 		"galleryUniqueName",
 		&test.SharedGalleryImagesClientListOptions{SharedTo: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json")
 		// Response check
 		pagerExampleRes := test.SharedGalleryImageList{
 			Value: []*test.SharedGalleryImage{
@@ -19818,29 +18454,25 @@ func TestSharedGalleryImages_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.SharedGalleryImageList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.SharedGalleryImageList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSharedGalleryImages_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestSharedGalleryImages_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
-	client, err := test.NewSharedGalleryImagesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewSharedGalleryImagesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myLocation",
 		"galleryUniqueName",
 		"myGalleryImageName",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json")
 	// Response check
 	exampleRes := test.SharedGalleryImage{
 		Name:     to.Ptr("myGalleryImageName"),
@@ -19862,30 +18494,25 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.SharedGalleryImage) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SharedGalleryImage)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSharedGalleryImageVersions_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestSharedGalleryImageVersions_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImageVersions.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
-	client, err := test.NewSharedGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("myLocation",
+	client, err := test.NewSharedGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("myLocation",
 		"galleryUniqueName",
 		"myGalleryImageName",
 		&test.SharedGalleryImageVersionsClientListOptions{SharedTo: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImageVersions.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImageVersions.json")
 		// Response check
 		pagerExampleRes := test.SharedGalleryImageVersionList{
 			Value: []*test.SharedGalleryImageVersion{
@@ -19904,30 +18531,26 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.SharedGalleryImageVersionList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.SharedGalleryImageVersionList)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImageVersions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImageVersions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSharedGalleryImageVersions_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestSharedGalleryImageVersions_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImageVersion.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
-	client, err := test.NewSharedGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewSharedGalleryImageVersionsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myLocation",
 		"galleryUniqueName",
 		"myGalleryImageName",
 		"myGalleryImageVersionName",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImageVersion.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImageVersion.json")
 	// Response check
 	exampleRes := test.SharedGalleryImageVersion{
 		Name:     to.Ptr("myGalleryImageVersionName"),
@@ -19943,52 +18566,42 @@ func TestSharedGalleryImageVersions_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.SharedGalleryImageVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SharedGalleryImageVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServiceRoleInstances_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete Cloud Service Role Instance"},
 	})
-	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServiceRoleInstancesClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json")
 }
 
-func TestCloudServiceRoleInstances_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Role Instance"},
 	})
-	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
 		&test.CloudServiceRoleInstancesClientGetOptions{Expand: nil})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json")
 	// Response check
 	exampleRes := test.RoleInstance{
 		Name:     to.Ptr("{roleInstance-name}"),
@@ -20011,28 +18624,24 @@ func TestCloudServiceRoleInstances_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RoleInstance) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RoleInstance)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_GetInstanceView() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Instance View of Cloud Service Role Instance"},
 	})
-	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.GetInstanceView(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json")
 	// Response check
 	exampleRes := test.RoleInstanceView{
 		PlatformFaultDomain:  to.Ptr[int32](0),
@@ -20049,29 +18658,24 @@ func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.RoleInstanceView) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.RoleInstanceView)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServiceRoleInstances_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Role Instances in a Cloud Service"},
 	})
-	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("ConstosoRG",
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("ConstosoRG",
 		"{cs-name}",
 		&test.CloudServiceRoleInstancesClientListOptions{Expand: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json")
 		// Response check
 		pagerExampleRes := test.RoleInstanceListResult{
 			Value: []*test.RoleInstance{
@@ -20151,105 +18755,83 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.RoleInstanceListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.RoleInstanceListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestCloudServiceRoleInstances_Restart(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_Restart() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Restart Cloud Service Role Instance"},
 	})
-	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginRestart(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServiceRoleInstancesClientBeginRestartOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json")
 }
 
-func TestCloudServiceRoleInstances_Reimage(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_Reimage() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reimage Cloud Service Role Instance"},
 	})
-	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginReimage(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServiceRoleInstancesClientBeginReimageOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json")
 }
 
-func TestCloudServiceRoleInstances_Rebuild(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_Rebuild() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Rebuild Cloud Service Role Instance"},
 	})
-	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginRebuild(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServiceRoleInstancesClientBeginRebuildOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json")
 }
 
-func TestCloudServiceRoleInstances_GetRemoteDesktopFile(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
+func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_GetRemoteDesktopFile() {
+	testsuite.T().Skip("Warning: No test steps for this operation!")
 }
 
-func TestCloudServiceRoles_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceRoles_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Role"},
 	})
-	client, err := test.NewCloudServiceRolesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServiceRolesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"{role-name}",
 		"ConstosoRG",
 		"{cs-name}",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json")
 	// Response check
 	exampleRes := test.CloudServiceRole{
 		Name:     to.Ptr("{role-name}"),
@@ -20268,29 +18850,24 @@ func TestCloudServiceRoles_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CloudServiceRole) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CloudServiceRole)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServiceRoles_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceRoles_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Roles in a Cloud Service"},
 	})
-	client, err := test.NewCloudServiceRolesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("ConstosoRG",
+	client, err := test.NewCloudServiceRolesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("ConstosoRG",
 		"{cs-name}",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json")
 		// Response check
 		pagerExampleRes := test.CloudServiceRoleListResult{
 			Value: []*test.CloudServiceRole{
@@ -20326,21 +18903,19 @@ func TestCloudServiceRoles_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.CloudServiceRoleListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.CloudServiceRoleListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestCloudServices_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Multiple Roles"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -20388,15 +18963,10 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: to.Ptr(test.CloudServiceUpgradeModeAuto),
 			},
 		},
-			ResumeToken: "",
 		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json")
 	// Response check
 	exampleRes := test.CloudService{
 		Name:     to.Ptr("{cs-name}"),
@@ -20453,18 +19023,15 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CloudService) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CloudService)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role"},
 	})
-	client, err = test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -20504,15 +19071,10 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: to.Ptr(test.CloudServiceUpgradeModeAuto),
 			},
 		},
-			ResumeToken: "",
 		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json")
 	// Response check
 	exampleRes = test.CloudService{
 		Name:     to.Ptr("{cs-name}"),
@@ -20561,18 +19123,15 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CloudService) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CloudService)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role and Certificate from Key Vault"},
 	})
-	client, err = test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -20624,15 +19183,10 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: to.Ptr(test.CloudServiceUpgradeModeAuto),
 			},
 		},
-			ResumeToken: "",
 		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json")
 	// Response check
 	exampleRes = test.CloudService{
 		Name:     to.Ptr("{cs-name}"),
@@ -20690,18 +19244,15 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CloudService) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CloudService)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role and RDP Extension"},
 	})
-	client, err = test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err = test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -20755,15 +19306,10 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: to.Ptr(test.CloudServiceUpgradeModeAuto),
 			},
 		},
-			ResumeToken: "",
 		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json")
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json")
 	// Response check
 	exampleRes = test.CloudService{
 		Name:     to.Ptr("{cs-name}"),
@@ -20828,20 +19374,18 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CloudService) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CloudService)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServices_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_Update() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update existing Cloud Service to add tags"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -20850,15 +19394,10 @@ func TestCloudServices_Update(t *testing.T) {
 				"Documentation": to.Ptr("RestAPI"),
 			},
 		},
-			ResumeToken: "",
 		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json")
 	// Response check
 	exampleRes := test.CloudService{
 		Name:     to.Ptr("{cs-name}"),
@@ -20917,50 +19456,40 @@ func TestCloudServices_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CloudService) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CloudService)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServices_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_Delete() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete Cloud Service"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServicesClientBeginDeleteOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json")
 }
 
-func TestCloudServices_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_Get() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service with Multiple Roles and RDP Extension"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"ConstosoRG",
 		"{cs-name}",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json")
 	// Response check
 	exampleRes := test.CloudService{
 		Name:     to.Ptr("{cs-name}"),
@@ -21032,27 +19561,23 @@ func TestCloudServices_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CloudService) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CloudService)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServices_GetInstanceView(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_GetInstanceView() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Instance View with Multiple Roles"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.GetInstanceView(ctx,
 		"ConstosoRG",
 		"{cs-name}",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json")
 	// Response check
 	exampleRes := test.CloudServiceInstanceView{
 		PrivateIDs: []*string{
@@ -21100,27 +19625,22 @@ func TestCloudServices_GetInstanceView(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.CloudServiceInstanceView) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.CloudServiceInstanceView)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServices_ListAll(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_ListAll() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Services in a Subscription"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListAll(nil)
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListAllPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json")
 		// Response check
 		pagerExampleRes := test.CloudServiceListResult{
 			Value: []*test.CloudService{
@@ -21195,29 +19715,24 @@ func TestCloudServices_ListAll(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.CloudServiceListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.CloudServiceListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestCloudServices_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_List() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Services in a Resource Group"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.List("ConstosoRG",
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListPager("ConstosoRG",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json")
 		// Response check
 		pagerExampleRes := test.CloudServiceListResult{
 			Value: []*test.CloudService{
@@ -21292,67 +19807,53 @@ func TestCloudServices_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.CloudServiceListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.CloudServiceListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestCloudServices_Start(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_Start() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Start Cloud Service"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginStart(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServicesClientBeginStartOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json")
 }
 
-func TestCloudServices_PowerOff(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_PowerOff() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Stop or PowerOff Cloud Service"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginPowerOff(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServicesClientBeginPowerOffOptions{ResumeToken: ""})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json: %v", err)
-	}
+		nil)
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json")
 }
 
-func TestCloudServices_Restart(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_Restart() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Restart Cloud Service Role Instances"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginRestart(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -21361,27 +19862,20 @@ func TestCloudServices_Restart(t *testing.T) {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json")
 }
 
-func TestCloudServices_Reimage(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_Reimage() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reimage Cloud Service Role Instances"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginReimage(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -21390,27 +19884,20 @@ func TestCloudServices_Reimage(t *testing.T) {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json")
 }
 
-func TestCloudServices_Rebuild(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_Rebuild() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Rebuild Cloud Service Role Instances"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginRebuild(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -21419,27 +19906,20 @@ func TestCloudServices_Rebuild(t *testing.T) {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json")
 }
 
-func TestCloudServices_DeleteInstances(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServices_DeleteInstances() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete Cloud Service Role Instances"},
 	})
-	client, err := test.NewCloudServicesClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDeleteInstances(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -21448,61 +19928,44 @@ func TestCloudServices_DeleteInstances(t *testing.T) {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json")
 }
 
-func TestCloudServicesUpdateDomain_WalkUpdateDomain(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServicesUpdateDomain_WalkUpdateDomain() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update Cloud Service to specified Domain"},
 	})
-	client, err := test.NewCloudServicesUpdateDomainClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesUpdateDomainClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginWalkUpdateDomain(ctx,
 		"ConstosoRG",
 		"{cs-name}",
 		1,
-		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil,
-			ResumeToken: "",
-		})
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json: %v", err)
-	}
+		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil})
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json")
 }
 
-func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServicesUpdateDomain_GetUpdateDomain() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Update Domain"},
 	})
-	client, err := test.NewCloudServicesUpdateDomainClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServicesUpdateDomainClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.GetUpdateDomain(ctx,
 		"ConstosoRG",
 		"{cs-name}",
 		1,
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json")
 	// Response check
 	exampleRes := test.UpdateDomain{
 		Name: to.Ptr("1"),
@@ -21511,29 +19974,24 @@ func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.UpdateDomain) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.UpdateDomain)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServicesUpdateDomain_ListUpdateDomains() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Update Domains in Cloud Service"},
 	})
-	client, err := test.NewCloudServicesUpdateDomainClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListUpdateDomains("ConstosoRG",
+	client, err := test.NewCloudServicesUpdateDomainClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListUpdateDomainsPager("ConstosoRG",
 		"{cs-name}",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json")
 		// Response check
 		pagerExampleRes := test.UpdateDomainListResult{
 			Value: []*test.UpdateDomain{
@@ -21549,28 +20007,24 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.UpdateDomainListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.UpdateDomainListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceOperatingSystems_GetOSVersion() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service OS Version"},
 	})
-	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.GetOSVersion(ctx,
 		"westus2",
 		"WA-GUEST-OS-3.90_202010-02",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json")
 	// Response check
 	exampleRes := test.OSVersion{
 		Name:     to.Ptr("WA-GUEST-OS-3.90_202010-02"),
@@ -21589,28 +20043,23 @@ func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.OSVersion) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.OSVersion)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceOperatingSystems_ListOSVersions() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Service OS Versions in a subscription"},
 	})
-	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListOSVersions("westus2",
+	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListOSVersionsPager("westus2",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json")
 		// Response check
 		pagerExampleRes := test.OSVersionListResult{
 			Value: []*test.OSVersion{
@@ -21646,28 +20095,24 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.OSVersionListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.OSVersionListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceOperatingSystems_GetOSFamily() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service OS Family"},
 	})
-	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
+	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.GetOSFamily(ctx,
 		"westus2",
 		"3",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json")
 	// Response check
 	exampleRes := test.OSFamily{
 		Name:     to.Ptr("3"),
@@ -21689,28 +20134,23 @@ func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.OSFamily) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.OSFamily)
-		t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
+func (testsuite *MockTestSuite) TestCloudServiceOperatingSystems_ListOSFamilies() {
+	ctx := context.Background()
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Service OS Families in a subscription"},
 	})
-	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-		return
-	}
-	pager := client.ListOSFamilies("westus2",
+	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+	pager := client.NewListOSFamiliesPager("westus2",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json")
 		// Response check
 		pagerExampleRes := test.OSFamilyListResult{
 			Value: []*test.OSFamily{
@@ -21752,59 +20192,9 @@ func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.OSFamilyListResult) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.OSFamilyListResult)
-			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
-}
-
-// TestMain will exec each test
-func TestMain(m *testing.M) {
-	setUp()
-	retCode := m.Run() // exec test and this returns an exit code to pass to os
-	tearDown()
-	os.Exit(retCode)
-}
-
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
-
-func setUp() {
-	ctx = context.Background()
-	mockHost = getEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
-
-	tr := &http.Transport{}
-	if err := http2.ConfigureTransport(tr); err != nil {
-		fmt.Printf("Failed to configure http2 transport: %v", err)
-	}
-	tr.TLSClientConfig.InsecureSkipVerify = true
-	client := &http.Client{Transport: tr}
-
-	cred = &MockCredential{}
-
-	options = arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Logging: policy.LogOptions{
-				IncludeBody: true,
-			},
-			Transport: client,
-			Cloud: cloud.Configuration{
-				Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
-					cloud.ResourceManager: {
-						Audience: mockHost,
-						Endpoint: mockHost,
-					},
-				},
-			},
-		},
-	}
-}
-
-func tearDown() {
-
 }
 
 type MockCredential struct {

@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -103,7 +103,7 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_CreateOrUpdate
-	signalRClientCreateOrUpdateResponse, err := signalRClient.BeginCreateOrUpdate(testsuite.ctx,
+	signalRClientCreateOrUpdateResponsePoller, err := signalRClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
 		test.ResourceInfo{
@@ -183,9 +183,9 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, signalRClientCreateOrUpdateResponse)
+	_, err = testutil.PollForTest(ctx, signalRClientCreateOrUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_Get
@@ -196,7 +196,7 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_Update
-	signalRClientUpdateResponse, err := signalRClient.BeginUpdate(testsuite.ctx,
+	signalRClientUpdateResponsePoller, err := signalRClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
 		test.ResourceInfo{
@@ -276,9 +276,9 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, signalRClientUpdateResponse)
+	_, err = testutil.PollForTest(ctx, signalRClientUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_ListKeys
@@ -289,58 +289,70 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_RegenerateKey
-	signalRClientRegenerateKeyResponse, err := signalRClient.BeginRegenerateKey(testsuite.ctx,
+	signalRClientRegenerateKeyResponsePoller, err := signalRClient.BeginRegenerateKey(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
 		test.RegenerateKeyParameters{
 			KeyType: to.Ptr(test.KeyTypePrimary),
 		},
-		&test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, signalRClientRegenerateKeyResponse)
+	_, err = testutil.PollForTest(ctx, signalRClientRegenerateKeyResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_Restart
-	signalRClientRestartResponse, err := signalRClient.BeginRestart(testsuite.ctx,
+	signalRClientRestartResponsePoller, err := signalRClient.BeginRestart(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
-		&test.SignalRClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, signalRClientRestartResponse)
+	_, err = testutil.PollForTest(ctx, signalRClientRestartResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Usages_List
 	usagesClient, err := test.NewUsagesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	usagesClientListPager := usagesClient.List(testsuite.location,
+	usagesClientNewListPager := usagesClient.NewListPager(testsuite.location,
 		nil)
-	for usagesClientListPager.More() {
+	for usagesClientNewListPager.More() {
+		_, err := usagesClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step SignalR_ListByResourceGroup
-	signalRClientListByResourceGroupPager := signalRClient.ListByResourceGroup(testsuite.resourceGroupName,
+	signalRClientNewListByResourceGroupPager := signalRClient.NewListByResourceGroupPager(testsuite.resourceGroupName,
 		nil)
-	for signalRClientListByResourceGroupPager.More() {
+	for signalRClientNewListByResourceGroupPager.More() {
+		_, err := signalRClientNewListByResourceGroupPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step SignalR_ListBySubscription
-	signalRClientListBySubscriptionPager := signalRClient.ListBySubscription(nil)
-	for signalRClientListBySubscriptionPager.More() {
+	signalRClientNewListBySubscriptionPager := signalRClient.NewListBySubscriptionPager(nil)
+	for signalRClientNewListBySubscriptionPager.More() {
+		_, err := signalRClientNewListBySubscriptionPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Operations_List
 	operationsClient, err := test.NewOperationsClient(testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	operationsClientListPager := operationsClient.List(nil)
-	for operationsClientListPager.More() {
+	operationsClientNewListPager := operationsClient.NewListPager(nil)
+	for operationsClientNewListPager.More() {
+		_, err := operationsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step SignalR_Delete
-	signalRClientDeleteResponse, err := signalRClient.BeginDelete(testsuite.ctx,
+	signalRClientDeleteResponsePoller, err := signalRClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
-		&test.SignalRClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, signalRClientDeleteResponse)
+	_, err = testutil.PollForTest(ctx, signalRClientDeleteResponsePoller)
 	testsuite.Require().NoError(err)
 }

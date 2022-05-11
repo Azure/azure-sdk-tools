@@ -6,29 +6,51 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
+# pylint: disable=wrong-import-position
 from ._models import (
-    DocstringClass, FakeInventoryItemDataClass, FakeObject, FakeTypedDict,
-    ObjectWithDefaults,
-    PetEnum,
-    PetEnumPy2Metaclass,
+    DocstringClass,
+    FakeError,
+    FakeObject,
+    FakeTypedDict,
+    GenericStack,
     PetEnumPy3Metaclass,
+    PetEnumPy3MetaclassAlt,
     PublicCaseInsensitiveEnumMeta,
-    PublicPrivateClass, RequiredKwargObject,
-    SomePoorlyNamedObject as SomeAwesomelyNamedObject
+    PublicPrivateClass,
+    RequiredKwargObject,
+    SomeAwesomelyNamedObject,
+    SomeImplementationClass,
+    SomethingWithDecorators,
+    SomethingWithOverloads,
+    SomethingWithProperties
+)
+from ._dataclasses import (
+    DataClassSimple,
+    DataClassWithFields,
+    DataClassDynamic,
+    DataClassWithKeywordOnly,
+    DataClassWithPostInit
 )
 
-
 __all__ = (
+    "DataClassSimple",
+    "DataClassWithFields",
+    "DataClassDynamic",
+    "DataClassWithKeywordOnly",
+    "DataClassWithPostInit",
     "DocstringClass",
-    "FakeInventoryItemDataClass",
+    "FakeError",
     "FakeObject",
     "FakeTypedDict",
-    "ObjectWithDefaults",
-    "PetEnum",
-    "PetEnumPy2Metaclass",
+    "GenericStack",
     "PetEnumPy3Metaclass",
+    "PetEnumPy3MetaclassAlt",
     "PublicCaseInsensitiveEnumMeta",
     "PublicPrivateClass",
     "RequiredKwargObject",
-    "SomeAwesomelyNamedObject"
+    "SomeAwesomelyNamedObject",
+    "SomeImplementationClass",
+    "SomethingWithDecorators",
+    "SomethingWithOverloads",
+    "SomethingWithProperties"
 )

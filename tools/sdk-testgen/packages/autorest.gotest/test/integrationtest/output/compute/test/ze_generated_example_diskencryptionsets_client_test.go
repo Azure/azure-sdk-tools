@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -23,38 +23,34 @@ func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskEncryptionSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<disk-encryption-set-name>",
+		"myResourceGroup",
+		"myDiskEncryptionSet",
 		test.DiskEncryptionSet{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 			Identity: &test.EncryptionSetIdentity{
 				Type: to.Ptr(test.DiskEncryptionSetIdentityTypeSystemAssigned),
 			},
 			Properties: &test.EncryptionSetProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
-					KeyURL: to.Ptr("<key-url>"),
+					KeyURL: to.Ptr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/{key}"),
 				},
 				EncryptionType: to.Ptr(test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -65,38 +61,34 @@ func ExampleDiskEncryptionSetsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskEncryptionSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<disk-encryption-set-name>",
+		"myResourceGroup",
+		"myDiskEncryptionSet",
 		test.DiskEncryptionSetUpdate{
 			Identity: &test.EncryptionSetIdentity{
 				Type: to.Ptr(test.DiskEncryptionSetIdentityTypeSystemAssigned),
 			},
 			Properties: &test.DiskEncryptionSetUpdateProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
-					KeyURL: to.Ptr("<key-url>"),
+					KeyURL: to.Ptr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/keyVersion1"),
 				},
 				EncryptionType:                    to.Ptr(test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey),
 				RotationToLatestKeyVersionEnabled: to.Ptr(true),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -107,21 +99,18 @@ func ExampleDiskEncryptionSetsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskEncryptionSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<disk-encryption-set-name>",
+		"myResourceGroup",
+		"myDiskEncryptionSet",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -132,49 +121,42 @@ func ExampleDiskEncryptionSetsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskEncryptionSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<disk-encryption-set-name>",
-		&test.DiskEncryptionSetsClientBeginDeleteOptions{ResumeToken: ""})
+		"myResourceGroup",
+		"myDiskEncryptionSet",
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json
-func ExampleDiskEncryptionSetsClient_ListByResourceGroup() {
+func ExampleDiskEncryptionSetsClient_NewListByResourceGroupPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskEncryptionSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.ListByResourceGroup("<resource-group-name>",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -184,24 +166,21 @@ func ExampleDiskEncryptionSetsClient_ListByResourceGroup() {
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json
-func ExampleDiskEncryptionSetsClient_List() {
+func ExampleDiskEncryptionSetsClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskEncryptionSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -211,26 +190,23 @@ func ExampleDiskEncryptionSetsClient_List() {
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json
-func ExampleDiskEncryptionSetsClient_ListAssociatedResources() {
+func ExampleDiskEncryptionSetsClient_NewListAssociatedResourcesPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskEncryptionSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskEncryptionSetsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.ListAssociatedResources("<resource-group-name>",
-		"<disk-encryption-set-name>",
+	pager := client.NewListAssociatedResourcesPager("myResourceGroup",
+		"myDiskEncryptionSet",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item

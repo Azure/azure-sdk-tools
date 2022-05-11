@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -23,40 +23,36 @@ func ExampleGalleryImagesClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-image-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryImageName",
 		test.GalleryImage{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 			Properties: &test.GalleryImageProperties{
 				HyperVGeneration: to.Ptr(test.HyperVGenerationV1),
 				Identifier: &test.GalleryImageIdentifier{
-					Offer:     to.Ptr("<offer>"),
-					Publisher: to.Ptr("<publisher>"),
-					SKU:       to.Ptr("<sku>"),
+					Offer:     to.Ptr("myOfferName"),
+					Publisher: to.Ptr("myPublisherName"),
+					SKU:       to.Ptr("mySkuName"),
 				},
 				OSState: to.Ptr(test.OperatingSystemStateTypesGeneralized),
 				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -67,39 +63,35 @@ func ExampleGalleryImagesClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-image-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryImageName",
 		test.GalleryImageUpdate{
 			Properties: &test.GalleryImageProperties{
 				HyperVGeneration: to.Ptr(test.HyperVGenerationV1),
 				Identifier: &test.GalleryImageIdentifier{
-					Offer:     to.Ptr("<offer>"),
-					Publisher: to.Ptr("<publisher>"),
-					SKU:       to.Ptr("<sku>"),
+					Offer:     to.Ptr("myOfferName"),
+					Publisher: to.Ptr("myPublisherName"),
+					SKU:       to.Ptr("mySkuName"),
 				},
 				OSState: to.Ptr(test.OperatingSystemStateTypesGeneralized),
 				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryImagesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -110,22 +102,19 @@ func ExampleGalleryImagesClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-image-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryImageName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -136,51 +125,44 @@ func ExampleGalleryImagesClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-image-name>",
-		&test.GalleryImagesClientBeginDeleteOptions{ResumeToken: ""})
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryImageName",
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json
-func ExampleGalleryImagesClient_ListByGallery() {
+func ExampleGalleryImagesClient_NewListByGalleryPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.ListByGallery("<resource-group-name>",
-		"<gallery-name>",
+	pager := client.NewListByGalleryPager("myResourceGroup",
+		"myGalleryName",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item

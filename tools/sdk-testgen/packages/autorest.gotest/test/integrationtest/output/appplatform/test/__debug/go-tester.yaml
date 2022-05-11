@@ -20391,7 +20391,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -20412,8 +20412,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               nil
             opName: Get
             operation: *ref_780
@@ -20649,7 +20649,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -20719,26 +20719,24 @@ testModel:
               Tier: to.Ptr("Standard"),
               },
               },
-              &test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               test.ServiceResource{
-              Location: to.Ptr("<location>"),
+              Location: to.Ptr("eastus"),
               Tags: map[string]*string{
               "key1": to.Ptr("value1"),
               },
               Properties: &test.ClusterResourceProperties{
               },
               SKU: &test.SKU{
-              Name: to.Ptr("<name>"),
-              Tier: to.Ptr("<tier>"),
+              Name: to.Ptr("S0"),
+              Tier: to.Ptr("Standard"),
               },
               },
-              &test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_807
             operationGroup: *ref_781
@@ -21282,7 +21280,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -21384,33 +21382,31 @@ testModel:
               Tier: to.Ptr("Standard"),
               },
               },
-              &test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               test.ServiceResource{
-              Location: to.Ptr("<location>"),
+              Location: to.Ptr("eastus"),
               Tags: map[string]*string{
               "key1": to.Ptr("value1"),
               },
               Properties: &test.ClusterResourceProperties{
               NetworkProfile: &test.NetworkProfile{
-              AppNetworkResourceGroup: to.Ptr("<app-network-resource-group>"),
-              AppSubnetID: to.Ptr("<app-subnet-id>"),
-              ServiceCidr: to.Ptr("<service-cidr>"),
-              ServiceRuntimeNetworkResourceGroup: to.Ptr("<service-runtime-network-resource-group>"),
-              ServiceRuntimeSubnetID: to.Ptr("<service-runtime-subnet-id>"),
+              AppNetworkResourceGroup: to.Ptr("my-app-network-rg"),
+              AppSubnetID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork/subnets/apps"),
+              ServiceCidr: to.Ptr("10.8.0.0/16,10.244.0.0/16,10.245.0.1/16"),
+              ServiceRuntimeNetworkResourceGroup: to.Ptr("my-service-runtime-network-rg"),
+              ServiceRuntimeSubnetID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork/subnets/serviceRuntime"),
               },
               },
               SKU: &test.SKU{
-              Name: to.Ptr("<name>"),
-              Tier: to.Ptr("<tier>"),
+              Name: to.Ptr("S0"),
+              Tier: to.Ptr("Standard"),
               },
               },
-              &test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_807
             operationGroup: *ref_781
@@ -22016,7 +22012,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -22034,14 +22030,12 @@ testModel:
               ctx,
               "myResourceGroup",
               "myservice",
-              &test.ServicesClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              &test.ServicesClientBeginDeleteOptions{ResumeToken: "",
-              }
+              "myResourceGroup",
+              "myservice",
+              nil
             opName: BeginDelete
             operation: *ref_818
             operationGroup: *ref_781
@@ -22072,7 +22066,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -22142,26 +22136,24 @@ testModel:
               Tier: to.Ptr("Standard"),
               },
               },
-              &test.ServicesClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               test.ServiceResource{
-              Location: to.Ptr("<location>"),
+              Location: to.Ptr("eastus"),
               Tags: map[string]*string{
               "key1": to.Ptr("value1"),
               },
               Properties: &test.ClusterResourceProperties{
               },
               SKU: &test.SKU{
-              Name: to.Ptr("<name>"),
-              Tier: to.Ptr("<tier>"),
+              Name: to.Ptr("S0"),
+              Tier: to.Ptr("Standard"),
               },
               },
-              &test.ServicesClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_823
             operationGroup: *ref_781
@@ -22554,7 +22546,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -22575,8 +22567,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               nil
             opName: ListTestKeys
             operation: *ref_829
@@ -22640,7 +22632,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -22674,8 +22666,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               test.RegenerateTestKeyRequestPayload{
               KeyType: to.Ptr(test.TestKeyTypePrimary),
               },
@@ -22742,7 +22734,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -22763,8 +22755,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               nil
             opName: DisableTestEndpoint
             operation: *ref_844
@@ -22793,7 +22785,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -22814,8 +22806,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               nil
             opName: EnableTestEndpoint
             operation: *ref_847
@@ -22879,7 +22871,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -22912,10 +22904,10 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<location>",
+              "eastus",
               test.NameAvailabilityParameters{
-              Name: to.Ptr("<name>"),
-              Type: to.Ptr("<type>"),
+              Name: to.Ptr("myservice"),
+              Type: to.Ptr("Microsoft.AppPlatform/Spring"),
               },
               nil
             opName: CheckNameAvailability
@@ -22970,14 +22962,14 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_861
             methodParameters: []
             methodParametersOutput: nil
             methodParametersPlaceholderOutput: nil
-            opName: ListBySubscription
+            opName: NewListBySubscriptionPager
             operation: *ref_858
             operationGroup: *ref_781
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json
@@ -23221,7 +23213,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_865
@@ -23235,9 +23227,9 @@ testModel:
               "myResourceGroup",
               nil
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
+              "myResourceGroup",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_863
             operationGroup: *ref_781
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json
@@ -23481,7 +23473,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -23502,8 +23494,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               nil
             opName: Get
             operation: *ref_868
@@ -23611,7 +23603,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -23676,26 +23668,24 @@ testModel:
               },
               },
               },
-              &test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               test.ConfigServerResource{
               Properties: &test.ConfigServerProperties{
               ConfigServer: &test.ConfigServerSettings{
               GitProperty: &test.ConfigServerGitProperty{
-              Label: to.Ptr("<label>"),
+              Label: to.Ptr("master"),
               SearchPaths: []*string{
               to.Ptr("/")},
-              URI: to.Ptr("<uri>"),
+              URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
               },
               },
               },
               },
-              &test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdatePut
             operation: *ref_882
             operationGroup: *ref_869
@@ -23864,7 +23854,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -23929,26 +23919,24 @@ testModel:
               },
               },
               },
-              &test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               test.ConfigServerResource{
               Properties: &test.ConfigServerProperties{
               ConfigServer: &test.ConfigServerSettings{
               GitProperty: &test.ConfigServerGitProperty{
-              Label: to.Ptr("<label>"),
+              Label: to.Ptr("master"),
               SearchPaths: []*string{
               to.Ptr("/")},
-              URI: to.Ptr("<uri>"),
+              URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
               },
               },
               },
               },
-              &test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdatePatch
             operation: *ref_888
             operationGroup: *ref_869
@@ -24118,7 +24106,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -24169,22 +24157,20 @@ testModel:
               URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
               },
               },
-              &test.ConfigServersClientBeginValidateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               test.ConfigServerSettings{
               GitProperty: &test.ConfigServerGitProperty{
-              Label: to.Ptr("<label>"),
+              Label: to.Ptr("master"),
               SearchPaths: []*string{
               to.Ptr("/")},
-              URI: to.Ptr("<uri>"),
+              URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
               },
               },
-              &test.ConfigServersClientBeginValidateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginValidate
             operation: *ref_895
             operationGroup: *ref_869
@@ -24235,7 +24221,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -24256,8 +24242,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               nil
             opName: Get
             operation: *ref_902
@@ -24360,7 +24346,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -24408,21 +24394,19 @@ testModel:
               TraceEnabled: to.Ptr(true),
               },
               },
-              &test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               test.MonitoringSettingResource{
               Properties: &test.MonitoringSettingProperties{
-              AppInsightsInstrumentationKey: to.Ptr("<app-insights-instrumentation-key>"),
+              AppInsightsInstrumentationKey: to.Ptr("00000000-0000-0000-0000-000000000000"),
               AppInsightsSamplingRate: to.Ptr[float64](10),
               TraceEnabled: to.Ptr(true),
               },
               },
-              &test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdatePut
             operation: *ref_915
             operationGroup: *ref_903
@@ -24583,7 +24567,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -24631,21 +24615,19 @@ testModel:
               TraceEnabled: to.Ptr(true),
               },
               },
-              &test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               test.MonitoringSettingResource{
               Properties: &test.MonitoringSettingProperties{
-              AppInsightsInstrumentationKey: to.Ptr("<app-insights-instrumentation-key>"),
+              AppInsightsInstrumentationKey: to.Ptr("00000000-0000-0000-0000-000000000000"),
               AppInsightsSamplingRate: to.Ptr[float64](10),
               TraceEnabled: to.Ptr(true),
               },
               },
-              &test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdatePatch
             operation: *ref_921
             operationGroup: *ref_903
@@ -24807,7 +24789,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -24835,9 +24817,9 @@ testModel:
               }
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
               &test.AppsClientGetOptions{SyncStatus: nil,
               }
             opName: Get
@@ -25010,7 +24992,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -25117,33 +25099,31 @@ testModel:
               },
               },
               },
-              &test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
               test.AppResource{
-              Location: to.Ptr("<location>"),
+              Location: to.Ptr("eastus"),
               Properties: &test.AppResourceProperties{
-              ActiveDeploymentName: to.Ptr("<active-deployment-name>"),
+              ActiveDeploymentName: to.Ptr("mydeployment1"),
               EnableEndToEndTLS: to.Ptr(false),
-              Fqdn: to.Ptr("<fqdn>"),
+              Fqdn: to.Ptr("myapp.mydomain.com"),
               HTTPSOnly: to.Ptr(false),
               PersistentDisk: &test.PersistentDisk{
-              MountPath: to.Ptr("<mount-path>"),
+              MountPath: to.Ptr("/mypersistentdisk"),
               SizeInGB: to.Ptr[int32](2),
               },
               Public: to.Ptr(true),
               TemporaryDisk: &test.TemporaryDisk{
-              MountPath: to.Ptr("<mount-path>"),
+              MountPath: to.Ptr("/mytemporarydisk"),
               SizeInGB: to.Ptr[int32](2),
               },
               },
               },
-              &test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_955
             operationGroup: *ref_929
@@ -25539,7 +25519,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -25563,15 +25543,13 @@ testModel:
               "myResourceGroup",
               "myservice",
               "myapp",
-              &test.AppsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              &test.AppsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              nil
             opName: BeginDelete
             operation: *ref_962
             operationGroup: *ref_929
@@ -25602,7 +25580,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -25725,36 +25703,34 @@ testModel:
               },
               },
               },
-              &test.AppsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
               test.AppResource{
               Identity: &test.ManagedIdentityProperties{
               Type: to.Ptr(test.ManagedIdentityTypeSystemAssigned),
               },
-              Location: to.Ptr("<location>"),
+              Location: to.Ptr("eastus"),
               Properties: &test.AppResourceProperties{
-              ActiveDeploymentName: to.Ptr("<active-deployment-name>"),
+              ActiveDeploymentName: to.Ptr("mydeployment1"),
               EnableEndToEndTLS: to.Ptr(false),
-              Fqdn: to.Ptr("<fqdn>"),
+              Fqdn: to.Ptr("myapp.mydomain.com"),
               HTTPSOnly: to.Ptr(false),
               PersistentDisk: &test.PersistentDisk{
-              MountPath: to.Ptr("<mount-path>"),
+              MountPath: to.Ptr("/mypersistentdisk"),
               SizeInGB: to.Ptr[int32](2),
               },
               Public: to.Ptr(true),
               TemporaryDisk: &test.TemporaryDisk{
-              MountPath: to.Ptr("<mount-path>"),
+              MountPath: to.Ptr("/mytemporarydisk"),
               SizeInGB: to.Ptr[int32](2),
               },
               },
               },
-              &test.AppsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_967
             operationGroup: *ref_929
@@ -26039,7 +26015,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_976
@@ -26059,10 +26035,10 @@ testModel:
               "myservice",
               nil
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_973
             operationGroup: *ref_929
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json
@@ -26242,7 +26218,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -26269,9 +26245,9 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
               nil
             opName: GetResourceUploadURL
             operation: *ref_980
@@ -26325,7 +26301,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -26365,11 +26341,11 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
               test.CustomDomainValidatePayload{
-              Name: to.Ptr("<name>"),
+              Name: to.Ptr("mydomain.io"),
               },
               nil
             opName: ValidateDomain
@@ -26419,7 +26395,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -26452,10 +26428,10 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<binding-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mybinding",
               nil
             opName: Get
             operation: *ref_997
@@ -26573,7 +26549,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -26654,26 +26630,24 @@ testModel:
               ResourceID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
               },
               },
-              &test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<binding-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mybinding",
               test.BindingResource{
               Properties: &test.BindingResourceProperties{
               BindingParameters: map[string]interface{}{
               "apiType": "SQL",
               "databaseName": "db1",
               },
-              Key: to.Ptr("<key>"),
-              ResourceID: to.Ptr("<resource-id>"),
+              Key: to.Ptr("xxxx"),
+              ResourceID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
               },
               },
-              &test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_1014
             operationGroup: *ref_998
@@ -26931,7 +26905,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -26961,16 +26935,14 @@ testModel:
               "myservice",
               "myapp",
               "mybinding",
-              &test.BindingsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<binding-name>",
-              &test.BindingsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mybinding",
+              nil
             opName: BeginDelete
             operation: *ref_1022
             operationGroup: *ref_998
@@ -27001,7 +26973,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -27077,25 +27049,23 @@ testModel:
               Key: to.Ptr("xxxx"),
               },
               },
-              &test.BindingsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<binding-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mybinding",
               test.BindingResource{
               Properties: &test.BindingResourceProperties{
               BindingParameters: map[string]interface{}{
               "apiType": "SQL",
               "databaseName": "db1",
               },
-              Key: to.Ptr("<key>"),
+              Key: to.Ptr("xxxx"),
               },
               },
-              &test.BindingsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_1028
             operationGroup: *ref_998
@@ -27284,7 +27254,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_1038
@@ -27310,11 +27280,11 @@ testModel:
               "myapp",
               nil
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_1035
             operationGroup: *ref_998
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json
@@ -27440,7 +27410,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -27467,9 +27437,9 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<certificate-name>",
+              "myResourceGroup",
+              "myservice",
+              "mycertificate",
               nil
             opName: Get
             operation: *ref_1042
@@ -27599,7 +27569,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -27653,22 +27623,20 @@ testModel:
               VaultURI: to.Ptr("https://myvault.vault.azure.net"),
               },
               },
-              &test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<certificate-name>",
+              "myResourceGroup",
+              "myservice",
+              "mycertificate",
               test.CertificateResource{
               Properties: &test.CertificateProperties{
-              CertVersion: to.Ptr("<cert-version>"),
-              KeyVaultCertName: to.Ptr("<key-vault-cert-name>"),
-              VaultURI: to.Ptr("<vault-uri>"),
+              CertVersion: to.Ptr("08a219d06d874795a96db47e06fbb01e"),
+              KeyVaultCertName: to.Ptr("mycert"),
+              VaultURI: to.Ptr("https://myvault.vault.azure.net"),
               },
               },
-              &test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_1060
             operationGroup: *ref_1043
@@ -27956,7 +27924,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -27980,15 +27948,13 @@ testModel:
               "myResourceGroup",
               "myservice",
               "mycertificate",
-              &test.CertificatesClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<certificate-name>",
-              &test.CertificatesClientBeginDeleteOptions{ResumeToken: "",
-              }
+              "myResourceGroup",
+              "myservice",
+              "mycertificate",
+              nil
             opName: BeginDelete
             operation: *ref_1067
             operationGroup: *ref_1043
@@ -28019,7 +27985,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_1074
@@ -28039,10 +28005,10 @@ testModel:
               "myService",
               nil
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myService",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_1070
             operationGroup: *ref_1043
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json
@@ -28184,7 +28150,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -28217,10 +28183,10 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<domain-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydomain.com",
               nil
             opName: Get
             operation: *ref_1079
@@ -28306,7 +28272,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -28361,22 +28327,20 @@ testModel:
               Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
               },
               },
-              &test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<domain-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydomain.com",
               test.CustomDomainResource{
               Properties: &test.CustomDomainProperties{
-              CertName: to.Ptr("<cert-name>"),
-              Thumbprint: to.Ptr("<thumbprint>"),
+              CertName: to.Ptr("mycert"),
+              Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
               },
               },
-              &test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_1091
             operationGroup: *ref_1080
@@ -28552,7 +28516,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -28582,16 +28546,14 @@ testModel:
               "myservice",
               "myapp",
               "mydomain.com",
-              &test.CustomDomainsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<domain-name>",
-              &test.CustomDomainsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydomain.com",
+              nil
             opName: BeginDelete
             operation: *ref_1099
             operationGroup: *ref_1080
@@ -28622,7 +28584,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -28677,22 +28639,20 @@ testModel:
               Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
               },
               },
-              &test.CustomDomainsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<domain-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydomain.com",
               test.CustomDomainResource{
               Properties: &test.CustomDomainProperties{
-              CertName: to.Ptr("<cert-name>"),
-              Thumbprint: to.Ptr("<thumbprint>"),
+              CertName: to.Ptr("mycert"),
+              Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
               },
               },
-              &test.CustomDomainsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_1105
             operationGroup: *ref_1080
@@ -28824,7 +28784,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_1116
@@ -28850,11 +28810,11 @@ testModel:
               "myapp",
               nil
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_1112
             operationGroup: *ref_1080
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json
@@ -28952,7 +28912,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -28985,10 +28945,10 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<deployment-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydeployment",
               nil
             opName: Get
             operation: *ref_1121
@@ -29195,7 +29155,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -29308,14 +29268,13 @@ testModel:
               },
               },
               },
-              &test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<deployment-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydeployment",
               test.DeploymentResource{
               Properties: &test.DeploymentResourceProperties{
               DeploymentSettings: &test.DeploymentSettings{
@@ -29323,20 +29282,19 @@ testModel:
               EnvironmentVariables: map[string]*string{
               "env": to.Ptr("test"),
               },
-              JvmOptions: to.Ptr("<jvm-options>"),
+              JvmOptions: to.Ptr("-Xms1G -Xmx3G"),
               MemoryInGB: to.Ptr[int32](3),
               RuntimeVersion: to.Ptr(test.RuntimeVersionJava8),
               },
               Source: &test.UserSourceInfo{
               Type: to.Ptr(test.UserSourceTypeSource),
-              ArtifactSelector: to.Ptr("<artifact-selector>"),
-              RelativePath: to.Ptr("<relative-path>"),
-              Version: to.Ptr("<version>"),
+              ArtifactSelector: to.Ptr("sub-module-1"),
+              RelativePath: to.Ptr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
+              Version: to.Ptr("1.0"),
               },
               },
               },
-              &test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_1152
             operationGroup: *ref_1122
@@ -29819,7 +29777,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -29849,16 +29807,14 @@ testModel:
               "myservice",
               "myapp",
               "mydeployment",
-              &test.DeploymentsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<deployment-name>",
-              &test.DeploymentsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydeployment",
+              nil
             opName: BeginDelete
             operation: *ref_1160
             operationGroup: *ref_1122
@@ -29889,7 +29845,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -29965,26 +29921,24 @@ testModel:
               },
               },
               },
-              &test.DeploymentsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<deployment-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydeployment",
               test.DeploymentResource{
               Properties: &test.DeploymentResourceProperties{
               Source: &test.UserSourceInfo{
               Type: to.Ptr(test.UserSourceTypeSource),
-              ArtifactSelector: to.Ptr("<artifact-selector>"),
-              RelativePath: to.Ptr("<relative-path>"),
-              Version: to.Ptr("<version>"),
+              ArtifactSelector: to.Ptr("sub-module-1"),
+              RelativePath: to.Ptr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
+              Version: to.Ptr("1.0"),
               },
               },
               },
-              &test.DeploymentsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_1166
             operationGroup: *ref_1122
@@ -30330,7 +30284,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_1176
@@ -30357,12 +30311,12 @@ testModel:
               &test.DeploymentsClientListOptions{Version: []string{},
               }
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
               &test.DeploymentsClientListOptions{Version: []string{},
               }
-            opName: List
+            opName: NewListPager
             operation: *ref_1173
             operationGroup: *ref_1122
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json
@@ -30577,7 +30531,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_1181
@@ -30598,11 +30552,11 @@ testModel:
               &test.DeploymentsClientListForClusterOptions{Version: []string{},
               }
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
-              "<service-name>",
+              "myResourceGroup",
+              "myservice",
               &test.DeploymentsClientListForClusterOptions{Version: []string{},
               }
-            opName: ListForCluster
+            opName: NewListForClusterPager
             operation: *ref_1179
             operationGroup: *ref_1122
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json
@@ -30817,7 +30771,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -30847,16 +30801,14 @@ testModel:
               "myservice",
               "myapp",
               "mydeployment",
-              &test.DeploymentsClientBeginStartOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<deployment-name>",
-              &test.DeploymentsClientBeginStartOptions{ResumeToken: "",
-              }
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydeployment",
+              nil
             opName: BeginStart
             operation: *ref_1186
             operationGroup: *ref_1122
@@ -30887,7 +30839,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -30917,16 +30869,14 @@ testModel:
               "myservice",
               "myapp",
               "mydeployment",
-              &test.DeploymentsClientBeginStopOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<deployment-name>",
-              &test.DeploymentsClientBeginStopOptions{ResumeToken: "",
-              }
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydeployment",
+              nil
             opName: BeginStop
             operation: *ref_1192
             operationGroup: *ref_1122
@@ -30957,7 +30907,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -30987,16 +30937,14 @@ testModel:
               "myservice",
               "myapp",
               "mydeployment",
-              &test.DeploymentsClientBeginRestartOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<deployment-name>",
-              &test.DeploymentsClientBeginRestartOptions{ResumeToken: "",
-              }
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydeployment",
+              nil
             opName: BeginRestart
             operation: *ref_1198
             operationGroup: *ref_1122
@@ -31027,7 +30975,7 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -31060,10 +31008,10 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<service-name>",
-              "<app-name>",
-              "<deployment-name>",
+              "myResourceGroup",
+              "myservice",
+              "myapp",
+              "mydeployment",
               nil
             opName: GetLogFileURL
             operation: *ref_1204
@@ -31114,7 +31062,7 @@ testModel:
             methodParameters: []
             methodParametersOutput: nil
             methodParametersPlaceholderOutput: nil
-            opName: List
+            opName: NewListPager
             operation: *ref_1207
             operationGroup: *ref_1208
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json
@@ -31325,14 +31273,14 @@ testModel:
                   language: *ref_777
                 parameter: *ref_281
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_1248
             methodParameters: []
             methodParametersOutput: nil
             methodParametersPlaceholderOutput: nil
-            opName: List
+            opName: NewListPager
             operation: *ref_1230
             operationGroup: *ref_1231
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json
@@ -32125,8 +32073,7 @@ testModel:
                   Tier: to.Ptr("Standard"),
                   },
                   },
-                  &test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_807
                 operationGroup: *ref_781
@@ -32798,8 +32745,7 @@ testModel:
                   Tier: to.Ptr("Standard"),
                   },
                   },
-                  &test.ServicesClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_823
                 operationGroup: *ref_781
@@ -33559,8 +33505,7 @@ testModel:
                   VaultURI: to.Ptr("https://integration-test-prod.vault.azure.net/"),
                   },
                   },
-                  &test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_1060
                 operationGroup: *ref_1043
@@ -33890,7 +33835,7 @@ testModel:
                   resourceGroupName,
                   serviceName,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_1070
                 operationGroup: *ref_1043
                 originalFile: ''
@@ -34122,8 +34067,7 @@ testModel:
                   URI: to.Ptr("https://github.com/VSChina/asc-config-server-test-public.git"),
                   },
                   },
-                  &test.ConfigServersClientBeginValidateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginValidate
                 operation: *ref_895
                 operationGroup: *ref_869
@@ -34265,8 +34209,7 @@ testModel:
                   },
                   },
                   },
-                  &test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdatePut
                 operation: *ref_882
                 operationGroup: *ref_869
@@ -34471,8 +34414,7 @@ testModel:
                   },
                   },
                   },
-                  &test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdatePatch
                 operation: *ref_888
                 operationGroup: *ref_869
@@ -34807,8 +34749,7 @@ testModel:
                   TraceEnabled: to.Ptr(true),
                   },
                   },
-                  &test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdatePut
                 operation: *ref_915
                 operationGroup: *ref_903
@@ -35120,8 +35061,7 @@ testModel:
                   AppInsightsSamplingRate: to.Ptr[float64](100),
                   },
                   },
-                  &test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdatePatch
                 operation: *ref_921
                 operationGroup: *ref_903
@@ -35331,8 +35271,7 @@ testModel:
                   Public: to.Ptr(false),
                   },
                   },
-                  &test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_955
                 operationGroup: *ref_929
@@ -35890,8 +35829,7 @@ testModel:
                   Tier: to.Ptr("Standard"),
                   },
                   },
-                  &test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_1152
                 operationGroup: *ref_1122
@@ -36533,8 +36471,7 @@ testModel:
                   ActiveDeploymentName: to.Ptr("default"),
                   },
                   },
-                  &test.AppsClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_967
                 operationGroup: *ref_929
@@ -36859,8 +36796,7 @@ testModel:
                   },
                   },
                   },
-                  &test.AppsClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_967
                 operationGroup: *ref_929
@@ -37113,7 +37049,7 @@ testModel:
                   resourceGroupName,
                   serviceName,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_973
                 operationGroup: *ref_929
                 originalFile: ''
@@ -37406,8 +37342,7 @@ testModel:
                   ResourceID: to.Ptr("/subscriptions/b46590cb-a111-4b84-935f-c305aaf1f424/resourceGroups/mary-west/providers/Microsoft.DBforMySQL/servers/fake-sql"),
                   },
                   },
-                  &test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_1014
                 operationGroup: *ref_998
@@ -37655,8 +37590,7 @@ testModel:
                   ResourceID: to.Ptr("/subscriptions/" + subscriptionId + "/resourceGroups/" + resourceGroupName + "/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
                   },
                   },
-                  &test.BindingsClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_1028
                 operationGroup: *ref_998
@@ -38045,7 +37979,7 @@ testModel:
                   serviceName,
                   appName,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_1035
                 operationGroup: *ref_998
                 originalFile: ''
@@ -38239,8 +38173,7 @@ testModel:
                   serviceName,
                   appName,
                   bindingName,
-                  &test.BindingsClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_1022
                 operationGroup: *ref_998
@@ -38458,8 +38391,7 @@ testModel:
                   CertName: to.Ptr("asc-certificate"),
                   },
                   },
-                  &test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_1091
                 operationGroup: *ref_1080
@@ -38620,8 +38552,7 @@ testModel:
                   CertName: to.Ptr("asc-certificate"),
                   },
                   },
-                  &test.CustomDomainsClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_1105
                 operationGroup: *ref_1080
@@ -38903,7 +38834,7 @@ testModel:
                   serviceName,
                   appName,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_1112
                 operationGroup: *ref_1080
                 originalFile: ''
@@ -39322,8 +39253,7 @@ testModel:
                   Tier: to.Ptr("Standard"),
                   },
                   },
-                  &test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_1152
                 operationGroup: *ref_1122
@@ -39678,8 +39608,7 @@ testModel:
                   ActiveDeploymentName: to.Ptr("blue"),
                   },
                   },
-                  &test.AppsClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_967
                 operationGroup: *ref_929
@@ -39929,8 +39858,7 @@ testModel:
                   serviceName,
                   appName,
                   deploymentName,
-                  &test.DeploymentsClientBeginRestartOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginRestart
                 operation: *ref_1198
                 operationGroup: *ref_1122
@@ -40016,8 +39944,7 @@ testModel:
                   serviceName,
                   appName,
                   deploymentName,
-                  &test.DeploymentsClientBeginStopOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginStop
                 operation: *ref_1192
                 operationGroup: *ref_1122
@@ -40103,8 +40030,7 @@ testModel:
                   serviceName,
                   appName,
                   deploymentName,
-                  &test.DeploymentsClientBeginStartOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginStart
                 operation: *ref_1186
                 operationGroup: *ref_1122
@@ -40289,7 +40215,7 @@ testModel:
                   appName,
                   &test.DeploymentsClientListOptions{Version: []string{},
                   }
-                opName: List
+                opName: NewListPager
                 operation: *ref_1173
                 operationGroup: *ref_1122
                 originalFile: ''
@@ -40575,7 +40501,7 @@ testModel:
                   serviceName,
                   &test.DeploymentsClientListForClusterOptions{Version: []string{},
                   }
-                opName: ListForCluster
+                opName: NewListForClusterPager
                 operation: *ref_1179
                 operationGroup: *ref_1122
                 originalFile: ''
@@ -40854,7 +40780,7 @@ testModel:
                 methodParametersOutput: |-
                   resourceGroupName,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_863
                 operationGroup: *ref_781
                 originalFile: ''
@@ -41160,7 +41086,7 @@ testModel:
                 isPageable: *ref_861
                 methodParameters: []
                 methodParametersOutput: nil
-                opName: ListBySubscription
+                opName: NewListBySubscriptionPager
                 operation: *ref_858
                 operationGroup: *ref_781
                 originalFile: ''
@@ -41489,8 +41415,7 @@ testModel:
                   serviceName,
                   appName,
                   deploymentName,
-                  &test.DeploymentsClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_1160
                 operationGroup: *ref_1122
@@ -41576,8 +41501,7 @@ testModel:
                   serviceName,
                   appName,
                   domainName,
-                  &test.CustomDomainsClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_1099
                 operationGroup: *ref_1080
@@ -41657,8 +41581,7 @@ testModel:
                   resourceGroupName,
                   serviceName,
                   appName,
-                  &test.AppsClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_962
                 operationGroup: *ref_929
@@ -41737,8 +41660,7 @@ testModel:
                   resourceGroupName,
                   serviceName,
                   certificateName,
-                  &test.CertificatesClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_1067
                 operationGroup: *ref_1043
@@ -41811,8 +41733,7 @@ testModel:
                   ctx,
                   resourceGroupName,
                   serviceName,
-                  &test.ServicesClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_818
                 operationGroup: *ref_781
@@ -41865,7 +41786,7 @@ testModel:
                 isPageable: *ref_1248
                 methodParameters: []
                 methodParametersOutput: nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_1230
                 operationGroup: *ref_1231
                 originalFile: ''
@@ -42030,7 +41951,7 @@ testModel:
                 isPageable: *ref_1222
                 methodParameters: []
                 methodParametersOutput: nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_1207
                 operationGroup: *ref_1208
                 originalFile: ''

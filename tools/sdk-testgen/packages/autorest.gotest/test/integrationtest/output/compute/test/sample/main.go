@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -136,7 +136,7 @@ func microsoftSignalrserviceBasicCrudSample() {
 		panic(err)
 	}
 	fakeStepVar := "signalrswaggertest6"
-	virtualMachinesClientCreateOrUpdateResponse, err := virtualMachinesClient.BeginCreateOrUpdate(ctx,
+	virtualMachinesClientCreateOrUpdateResponsePoller, err := virtualMachinesClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		"myVM",
 		test.VirtualMachine{
@@ -185,11 +185,11 @@ func microsoftSignalrserviceBasicCrudSample() {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = virtualMachinesClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = virtualMachinesClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}

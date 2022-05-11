@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -43,9 +44,10 @@ namespace Azure.Sdk.Tools.TestProxy
         /// </summary>
         /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
         /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
-        /// <param name="version">Flag. Invoke to get the version of the tool.</param>
+        /// <param name="dump">Flag. Pass to dump configuration values before starting the application.</param>
+        /// <param name="version">Flag. Pass to get the version of the tool.</param>
         /// <param name="args">Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider.</param>
-        public static void Main(bool insecure = false, string storageLocation = null, bool version = false, string[] args = null)
+        public static void Main(bool insecure = false, string storageLocation = null, bool dump = false, bool version = false, string[] args = null)
         {
             if (version)
             {
@@ -87,21 +89,28 @@ namespace Azure.Sdk.Tools.TestProxy
                         loggingBuilder.AddDebug();
                         loggingBuilder.AddEventSourceLogger();
                     })
+                    .ConfigureKestrel(options =>
+                    {
+                        options.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1);
+                    })
                 );
 
             var app = host.Build();
 
-            app.Run();
-
-            var config = app.Services?.GetService<IConfiguration>();
-            if (config != null)
+            if (dump)
             {
+                var config = app.Services?.GetService<IConfiguration>();
                 Console.WriteLine("Dumping Resolved Configuration Values:");
-                foreach (var c in config.AsEnumerable())
+                if (config != null)
                 {
-                    Console.WriteLine(c.Key + " = " + c.Value);
+                    foreach (var c in config.AsEnumerable())
+                    {
+                        Console.WriteLine(c.Key + " = " + c.Value);
+                    }
                 }
             }
+
+            app.Run();
 
             statusThreadCts.Cancel();
             statusThread.Join();

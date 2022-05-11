@@ -196,7 +196,8 @@ export async function publishSourceCode(
         if (packageFolder && fs.existsSync(packageFolder)) {
             for (const filePath of getFileListInPackageFolder(packageFolder)) {
                 if (fs.existsSync(path.join(packageFolder, filePath))) {
-                    child_process.execSync(`mkdir -p ${artifactDir}/${language}/${packageName}`, {
+                    const fileDir = path.dirname(filePath);
+                    child_process.execSync(`mkdir -p ${artifactDir}/${language}/${packageName}/${fileDir}`, {
                         encoding: 'utf8',
                     });
                     child_process.execSync(

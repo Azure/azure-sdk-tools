@@ -25,11 +25,11 @@ func ExampleVirtualMachineRunCommandsClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("subid", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListPager("<location>",
+	pager := client.NewListPager("SoutheastAsia",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -50,13 +50,13 @@ func ExampleVirtualMachineRunCommandsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("24fb23e3-6ba3-41f0-9b6e-e41131d5d61e", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<location>",
-		"<command-id>",
+		"SoutheastAsia",
+		"RunPowerShellScript",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -72,31 +72,31 @@ func ExampleVirtualMachineRunCommandsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
-		"<run-command-name>",
+		"myResourceGroup",
+		"myVM",
+		"myRunCommand",
 		test.VirtualMachineRunCommand{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 			Properties: &test.VirtualMachineRunCommandProperties{
 				AsyncExecution: to.Ptr(false),
 				Parameters: []*test.RunCommandInputParameter{
 					{
-						Name:  to.Ptr("<name>"),
-						Value: to.Ptr("<value>"),
+						Name:  to.Ptr("param1"),
+						Value: to.Ptr("value1"),
 					},
 					{
-						Name:  to.Ptr("<name>"),
-						Value: to.Ptr("<value>"),
+						Name:  to.Ptr("param2"),
+						Value: to.Ptr("value2"),
 					}},
-				RunAsPassword: to.Ptr("<run-as-password>"),
-				RunAsUser:     to.Ptr("<run-as-user>"),
+				RunAsPassword: to.Ptr("<runAsPassword>"),
+				RunAsUser:     to.Ptr("user1"),
 				Source: &test.VirtualMachineRunCommandScriptSource{
-					Script: to.Ptr("<script>"),
+					Script: to.Ptr("Write-Host Hello World!"),
 				},
 				TimeoutInSeconds: to.Ptr[int32](3600),
 			},
@@ -120,18 +120,18 @@ func ExampleVirtualMachineRunCommandsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
-		"<run-command-name>",
+		"myResourceGroup",
+		"myVM",
+		"myRunCommand",
 		test.VirtualMachineRunCommandUpdate{
 			Properties: &test.VirtualMachineRunCommandProperties{
 				Source: &test.VirtualMachineRunCommandScriptSource{
-					Script: to.Ptr("<script>"),
+					Script: to.Ptr("Write-Host Script Source Updated!"),
 				},
 			},
 		},
@@ -154,14 +154,14 @@ func ExampleVirtualMachineRunCommandsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
-		"<run-command-name>",
+		"myResourceGroup",
+		"myVM",
+		"myRunCommand",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -179,14 +179,14 @@ func ExampleVirtualMachineRunCommandsClient_GetByVirtualMachine() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.GetByVirtualMachine(ctx,
-		"<resource-group-name>",
-		"<vm-name>",
-		"<run-command-name>",
+		"myResourceGroup",
+		"myVM",
+		"myRunCommand",
 		&test.VirtualMachineRunCommandsClientGetByVirtualMachineOptions{Expand: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -202,12 +202,12 @@ func ExampleVirtualMachineRunCommandsClient_NewListByVirtualMachinePager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListByVirtualMachinePager("<resource-group-name>",
-		"<vm-name>",
+	pager := client.NewListByVirtualMachinePager("myResourceGroup",
+		"myVM",
 		&test.VirtualMachineRunCommandsClientListByVirtualMachineOptions{Expand: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

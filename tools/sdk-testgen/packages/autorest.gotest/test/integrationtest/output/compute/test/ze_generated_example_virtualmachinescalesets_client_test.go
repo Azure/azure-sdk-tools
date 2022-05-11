@@ -25,11 +25,11 @@ func ExampleVirtualMachineScaleSetsClient_NewListByLocationPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListByLocationPager("<location>",
+	pager := client.NewListByLocationPager("eastus",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -58,7 +58,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		test.VirtualMachineScaleSet{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("westus"),
 			Properties: &test.VirtualMachineScaleSetProperties{
 				Overprovision: to.Ptr(true),
 				UpgradePolicy: &test.UpgradePolicy{
@@ -68,15 +68,15 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 					NetworkProfile: &test.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*test.VirtualMachineScaleSetNetworkConfiguration{
 							{
-								Name: to.Ptr("<name>"),
+								Name: to.Ptr("{vmss-name}"),
 								Properties: &test.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.Ptr(true),
 									IPConfigurations: []*test.VirtualMachineScaleSetIPConfiguration{
 										{
-											Name: to.Ptr("<name>"),
+											Name: to.Ptr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &test.APIEntityReference{
-													ID: to.Ptr("<id>"),
+													ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/{existing-virtual-network-name}/subnets/{existing-subnet-name}"),
 												},
 											},
 										}},
@@ -85,17 +85,17 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 							}},
 					},
 					OSProfile: &test.VirtualMachineScaleSetOSProfile{
-						AdminPassword:      to.Ptr("<admin-password>"),
-						AdminUsername:      to.Ptr("<admin-username>"),
-						ComputerNamePrefix: to.Ptr("<computer-name-prefix>"),
+						AdminPassword:      to.Ptr("{your-password}"),
+						AdminUsername:      to.Ptr("{your-username}"),
+						ComputerNamePrefix: to.Ptr("{vmss-name}"),
 					},
 					StorageProfile: &test.VirtualMachineScaleSetStorageProfile{
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
-							Name:         to.Ptr("<name>"),
+							Name:         to.Ptr("osDisk"),
 							Caching:      to.Ptr(test.CachingTypesReadWrite),
 							CreateOption: to.Ptr(test.DiskCreateOptionTypesFromImage),
 							Image: &test.VirtualHardDisk{
-								URI: to.Ptr("<uri>"),
+								URI: to.Ptr("http://{existing-storage-account-name}.blob.core.windows.net/{existing-container-name}/{existing-generalized-os-image-blob-name}.vhd"),
 							},
 						},
 					},
@@ -121,13 +121,13 @@ func ExampleVirtualMachineScaleSetsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
+		"myResourceGroup",
+		"myvmScaleSet",
 		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -145,13 +145,13 @@ func ExampleVirtualMachineScaleSetsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
+		"myResourceGroup",
+		"myVirtualMachineScaleSet",
 		&test.VirtualMachineScaleSetsClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)

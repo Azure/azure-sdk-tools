@@ -25,15 +25,15 @@ func ExampleBindingsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewBindingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<binding-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mybinding",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -49,23 +49,23 @@ func ExampleBindingsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewBindingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<binding-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mybinding",
 		test.BindingResource{
 			Properties: &test.BindingResourceProperties{
 				BindingParameters: map[string]interface{}{
 					"apiType":      "SQL",
 					"databaseName": "db1",
 				},
-				Key:        to.Ptr("<key>"),
-				ResourceID: to.Ptr("<resource-id>"),
+				Key:        to.Ptr("xxxx"),
+				ResourceID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
 			},
 		},
 		nil)
@@ -87,15 +87,15 @@ func ExampleBindingsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewBindingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<binding-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mybinding",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -113,22 +113,22 @@ func ExampleBindingsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewBindingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<binding-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mybinding",
 		test.BindingResource{
 			Properties: &test.BindingResourceProperties{
 				BindingParameters: map[string]interface{}{
 					"apiType":      "SQL",
 					"databaseName": "db1",
 				},
-				Key: to.Ptr("<key>"),
+				Key: to.Ptr("xxxx"),
 			},
 		},
 		nil)
@@ -150,13 +150,13 @@ func ExampleBindingsClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewBindingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListPager("<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
+	pager := client.NewListPager("myResourceGroup",
+		"myservice",
+		"myapp",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

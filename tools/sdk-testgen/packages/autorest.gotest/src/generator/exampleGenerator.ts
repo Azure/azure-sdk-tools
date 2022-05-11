@@ -5,9 +5,8 @@
 
 import { BaseCodeGenerator } from './baseGenerator';
 import { Config } from '../common/constant';
-import { ExampleModel, ExampleValue, MockTestDefinitionModel } from '@autorest/testmodeler/dist/src/core/model';
+import { ExampleModel, MockTestDefinitionModel } from '@autorest/testmodeler/dist/src/core/model';
 import { GoExampleModel } from '../common/model';
-import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestDataRender } from './mockTestGenerator';
 import { getAPIParametersSig, getClientParametersSig } from '../util/codegenBridge';
 
@@ -16,14 +15,6 @@ export class ExampleDataRender extends MockTestDataRender {
         const op = example.operation;
         example.methodParametersPlaceholderOutput = this.toParametersOutput(getAPIParametersSig(op), example.methodParameters);
         example.clientParametersPlaceholderOutput = this.toParametersOutput(getClientParametersSig(example.operationGroup), example.clientParameters);
-    }
-
-    protected getRawValue(exampleValue: ExampleValue) {
-        let rawValue = exampleValue.rawValue;
-        if (this.getLanguageName(exampleValue.schema) === 'string' && exampleValue.language) {
-            rawValue = '<' + Helper.toKebabCase(this.getLanguageName(exampleValue)) + '>';
-        }
-        return rawValue;
     }
 }
 

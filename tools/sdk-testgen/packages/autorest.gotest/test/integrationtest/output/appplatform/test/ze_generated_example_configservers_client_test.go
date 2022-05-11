@@ -25,13 +25,13 @@ func ExampleConfigServersClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -47,21 +47,21 @@ func ExampleConfigServersClient_BeginUpdatePut() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdatePut(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		test.ConfigServerResource{
 			Properties: &test.ConfigServerProperties{
 				ConfigServer: &test.ConfigServerSettings{
 					GitProperty: &test.ConfigServerGitProperty{
-						Label: to.Ptr("<label>"),
+						Label: to.Ptr("master"),
 						SearchPaths: []*string{
 							to.Ptr("/")},
-						URI: to.Ptr("<uri>"),
+						URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
 					},
 				},
 			},
@@ -85,21 +85,21 @@ func ExampleConfigServersClient_BeginUpdatePatch() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdatePatch(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		test.ConfigServerResource{
 			Properties: &test.ConfigServerProperties{
 				ConfigServer: &test.ConfigServerSettings{
 					GitProperty: &test.ConfigServerGitProperty{
-						Label: to.Ptr("<label>"),
+						Label: to.Ptr("master"),
 						SearchPaths: []*string{
 							to.Ptr("/")},
-						URI: to.Ptr("<uri>"),
+						URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
 					},
 				},
 			},
@@ -123,19 +123,19 @@ func ExampleConfigServersClient_BeginValidate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginValidate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		test.ConfigServerSettings{
 			GitProperty: &test.ConfigServerGitProperty{
-				Label: to.Ptr("<label>"),
+				Label: to.Ptr("master"),
 				SearchPaths: []*string{
 					to.Ptr("/")},
-				URI: to.Ptr("<uri>"),
+				URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
 			},
 		},
 		nil)

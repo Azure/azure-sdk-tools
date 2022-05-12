@@ -1,4 +1,4 @@
-name: Clean up when closed
+git name: Clean up when closed
 
 # only trigger on pull request closed events
 on:

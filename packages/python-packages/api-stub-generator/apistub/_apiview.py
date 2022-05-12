@@ -33,7 +33,7 @@ class ApiView:
         path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
         while os.path.split(path)[1]:
             dirname = os.path.split(path)[1]
-            if dirname == "api-stub-generator":
+            if dirname == "apistub":
                 return path
             else:
                 path = os.path.split(path)[0]

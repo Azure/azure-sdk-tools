@@ -71,14 +71,7 @@ class SignatureModel: Tokenizable {
             async = nil
         }
 
-        switch sig.throwsKind {
-        case .throwing:
-            throwing = "throws"
-        case .nothrowing:
-            throwing = nil
-        case .rethrowing:
-            throwing = "rethrow"
-        }
+        throwing = sig.throwsKind.textDescription
 
         parameters = [ParameterModel]()
         sig.parameterList.forEach { param in
@@ -91,9 +84,9 @@ class SignatureModel: Tokenizable {
         }
     }
 
-    init(params: [FunctionSignature.Parameter], result: Type?, resultAttributes: Attributes?) {
+    init(params: [FunctionSignature.Parameter], result: Type?, resultAttributes: Attributes?, throwsKind: ThrowsKind?) {
         async = nil
-        throwing = nil
+        throwing = throwsKind?.textDescription
         if let resultType = result {
             self.result = resultType.toTokenizable()!
         }

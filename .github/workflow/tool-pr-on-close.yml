@@ -1,0 +1,20 @@
+name: Clean up when closed
+
+# only trigger on pull request closed events
+on:
+  pull_request:
+    types: [ closed ]
+
+jobs:
+  close_job:
+    # this job will only run if the PR has been closed without being merged
+    if: github.event.pull_request.merged == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run
+        env:
+          GITHUB_PAYLOAD: ${{ toJson(github.event) }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git rev-parse --abbrev-ref HEAD
+          echo "$GITHUB_PAYLOAD" > ./github_payload.json

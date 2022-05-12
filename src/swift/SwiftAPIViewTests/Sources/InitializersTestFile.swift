@@ -24,13 +24,15 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
 
-extension ThrowsKind: Tokenizable {
-    func tokenize(apiview a: APIViewModel) {
-        let throwString = self.textDescription
-        guard throwString != "" else { return }
-        a.keyword(throwString, prefixSpace: true, postfixSpace: true)
-    }
+class InitializersTestClass {
+
+    // Throwing initializer
+
+    init(withThrowable: String) throws {}
+
+    // Failable initializer
+
+    init?(withFailable: String) {}
 }

@@ -31,7 +31,7 @@ class SignatureModel: Tokenizable {
 
     var parameters: [ParameterModel]
     var async: String?
-    var throwing: String?
+    var throwing: ThrowsKind?
     var result: TypeModel?
 
     struct ParameterModel: Tokenizable {
@@ -70,9 +70,7 @@ class SignatureModel: Tokenizable {
         case .notasync:
             async = nil
         }
-
-        throwing = sig.throwsKind.textDescription
-
+        throwing = sig.throwsKind
         parameters = [ParameterModel]()
         sig.parameterList.forEach { param in
             parameters.append(ParameterModel(from: param))
@@ -86,7 +84,7 @@ class SignatureModel: Tokenizable {
 
     init(params: [FunctionSignature.Parameter], result: Type?, resultAttributes: Attributes?, throwsKind: ThrowsKind?) {
         async = nil
-        throwing = throwsKind?.textDescription
+        throwing = throwsKind
         if let resultType = result {
             self.result = resultType.toTokenizable()!
         }
@@ -109,9 +107,7 @@ class SignatureModel: Tokenizable {
         if let async = async {
             a.keyword(async, postfixSpace: true)
         }
-        if let throwing = throwing {
-            a.keyword(throwing, postfixSpace: true)
-        }
+        throwing?.tokenize(apiview: a)
         if let result = result {
             a.punctuation("->", prefixSpace: true, postfixSpace: true)
             result.tokenize(apiview: a)

@@ -1,6 +1,9 @@
 # Release History
 
-## Version 0.3.0 (Unreleased)
+## Version 0.3.1 (2022-05-12)
+Fixed issue where pylintrc file was not included in the distribution.
+
+## Version 0.3.0 (2022-05-11)
 Added support for @overloads decorators.
 Added limited support for @dataclass annotation. See known issues here (https://github.com/Azure/azure-sdk-tools/issues/3161)
 Added support for positional-only arguments.

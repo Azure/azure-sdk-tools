@@ -29,6 +29,14 @@ depending on the requirements for the domain
 .PARAMETER OutputLocation
 Output location for unified reference yml file
 
+.PARAMETER TenantId
+The aad tenant id/object id for ms.author.
+
+.PARAMETER ClientId
+The add client id/application id for ms.author.
+
+.PARAMETER ClientSecret
+The client secret of add app for ms.author.
 #>
 
 param(
@@ -36,10 +44,22 @@ param(
   [string] $DocRepoLocation,
 
   [Parameter(Mandatory = $true)]
-  [string] $OutputLocation
+  [string] $OutputLocation,
+
+  [Parameter(Mandatory = $false)]
+  [string]$TenantId,
+
+  [Parameter(Mandatory = $false)]
+  [string]$ClientId,
+
+  [Parameter(Mandatory = $false)]
+  [string]$ClientSecret,
+
+  [switch]$EnableServiceReadmeGen
 )
 . $PSScriptRoot/common.ps1
 . $PSScriptRoot/Helpers/PSModule-Helpers.ps1
+. $PSScriptRoot/Helpers/Metadata-Helpers.ps1
 
 Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module
 
@@ -93,6 +113,111 @@ function GetPackageLookup($packageList) {
   }
 
   return $packageLookup
+}
+
+function create-metadata-table($readmePath, $moniker, $msService, $clientTableLink, $mgmtTableLink, $clientExists, $mgmtExists, $serviceName)
+{
+  New-Item -Path $readmePath -Force
+  $lang = $LanguageDisplayName
+  $langTitle = "Azure $serviceName SDK for $lang"
+  $header = GenerateDocsMsMetadata -language $lang -serviceName $serviceName `
+    -tenantId $TenantId -clientId $ClientId -clientSecret $ClientSecret `
+    -msService $msService
+  Add-Content -Path $readmePath -Value $header
+
+  # Add tables, seperate client and mgmt.
+  $readmeHeader = "# $langTitle - $moniker"
+  Add-Content -Path $readmePath -Value $readmeHeader
+  if ($clientExists) {
+    $clientTable = "## Client packages - $moniker`r`n"
+    $clientTable += "[!INCLUDE [client-packages]($clientTableLink)]`r`n"
+    Add-Content -Path $readmePath -Value $clientTable
+  }
+  if ($mgmtExists) {
+    $mgmtTable = "## Management packages - $moniker`r`n"
+    $mgmtTable += "[!INCLUDE [mgmt-packages]($mgmtTableLink)]`r`n"
+    Add-Content -Path $readmePath -Value $mgmtTable -NoNewline
+  }
+}
+
+# Update the metadata table on attributes: author, ms.author, ms.service
+function update-metadata-table($readmePath, $serviceName, $msService)
+{
+  $readmeContent = Get-Content -Path $readmePath -Raw
+  $null = $readmeContent -match "---`n*(?<metadata>(.*`n)*)---`n*(?<content>(.*`n)*)"
+  $metadataTable = $Matches["metadata"]
+  $metadataTable = ConvertFrom-StringData -StringData $metadataTable -Delimiter ':'
+  if (!$metadataTable) {
+    return
+  }
+  $restContent = $Matches["content"]
+  $serviceBaseName = $serviceName.ToLower().Replace(' ', '').Replace('/', '-')
+  $author = GetPrimaryCodeOwner -TargetDirectory "/sdk/$serviceBaseName/"
+  if (!$author) {
+    LogError "Cannot fetch the author from CODEOWNER file."
+    exit 1
+  }
+  $metadataTable["author"] = $author
+  $msauthor = GetMsAliasFromGithub -TenantId $tenantId -ClientId $clientId -ClientSecret $clientSecret -GithubUser $author   
+  if (!$msauthor) {
+    LogError "No ms.author found for $author. "
+    $msauthor = $author
+  }
+  $metadataTable["ms.author"] = $msauthor
+  $metadataTable["ms.service"] =  $msService
+  $metadataString = ""
+  $metadataTable.Keys | ForEach-Object {$metadataString += ($_ + ": " + $metadataTable[$_] + "`r`n")}
+  Set-Content -Path $readmePath -Value "---`n$metadataString---`n$restContent" -NoNewline
+}
+
+function generate-markdown-table($readmePath, $packageInfo) {
+  $content = "| Reference | Package | Source |`r`n|---|---|---|`r`n" 
+  # Here is the table, the versioned value will
+  foreach ($pkg in $packageInfo) {
+    $repositoryLink = $RepositoryUri
+    $packageLevelReame = &$GetPackageLevelReadmeFn -packageMetadata $pkg
+    $referenceLink = "$packageLevelReame-readme"
+    $githubLink = $GithubUri
+    if ($pkg.PSObject.Members.Name -contains "FileMetadata") {
+      $githubLink = "$GithubUri/blob/main/$($pkg.FileMetadata.DirectoryPath)"
+    }
+    $line = "|[$($pkg.DisplayName)]($referenceLink)|[$($pkg.Package)]($repositoryLink/$($pkg.Package))|[Github]($githubLink)|`r`n"
+    $content += $line
+  }
+  Set-Content -Path $readmePath -Value $content -NoNewline
+}
+
+function generate-service-level-readme($readmeBaseName, $pathPrefix, $clientPackageInfo, $mgmtPackageInfo, $serviceName) {
+  # Add ability to override
+  # Fetch the service readme name
+  $monikers = @("latest", "preview")
+
+  $msService = GetDocsMsService -clientPackageInfo $clientPackageInfo -mgmtPackageInfo $mgmtPackageInfo -serviceName $serviceName
+  for($i=0; $i -lt $monikers.Length; $i++) {
+    $absolutePath = "$DocRepoLocation/$pathPrefix/$($monikers[$i])/"
+    $serviceReadme = "$readmeBaseName.md"
+    $clientIndexReadme  = "$readmeBaseName-client-index.md"
+    $mgmtIndexReadme  = "$readmeBaseName-mgmt-index.md"
+    $clientExists = $false
+    $mgmtExists = $false
+    if ($clientPackageInfo) {
+      $clientExists = $true
+      generate-markdown-table -readmePath "$absolutePath$clientIndexReadme" -packageInfo $clientPackageInfo
+    }
+    if ($mgmtPackageInfo) {
+      $mgmtExists = $true
+      generate-markdown-table -readmePath "$absolutePath$mgmtIndexReadme" -packageInfo $mgmtPackageInfo
+    }
+    if (!(Test-Path "$absolutePath$serviceReadme")) {
+      create-metadata-table -readmePath "$absolutePath$serviceReadme" -moniker $monikers[$i] -msService $msService `
+        -clientExists $clientExists -mgmtExists $mgmtExists `
+        -clientTableLink "$clientIndexReadme" -mgmtTableLink "$mgmtIndexReadme" `
+        -serviceName $serviceName
+    }
+    else {
+      update-metadata-table -readmePath "$absolutePath$serviceReadme" -serviceName $serviceName -msService $msService
+    }
+  } 
 }
 
 $onboardedPackages = &$GetOnboardedDocsMsPackagesFn `
@@ -208,9 +333,15 @@ foreach ($service in $serviceNameList) {
   }
 
   $serviceReadmeBaseName = $service.ToLower().Replace(' ', '-').Replace('/', '-')
+  $hrefPrefix = "docs-ref-services"
+
+  if($EnableServiceReadmeGen) {
+    generate-service-level-readme -readmeBaseName $serviceReadmeBaseName -pathPrefix $hrefPrefix `
+    -clientPackageInfo $clientPackages -mgmtPackageInfo $mgmtPackages -serviceName $service
+  }
   $serviceTocEntry = [PSCustomObject]@{
     name            = $service;
-    href            = "~/docs-ref-services/{moniker}/$serviceReadmeBaseName.md"
+    href            = "~/$hrefPrefix/{moniker}/$serviceReadmeBaseName.md"
     landingPageType = 'Service'
     items           = @($packageItems)
   }
@@ -302,4 +433,4 @@ if (Test-Path "Function:$UpdateDocsMsTocFn") {
 }
 
 $outputYaml = ConvertTo-Yaml $output
-Set-Content -Path $OutputLocation -Value $outputYaml
+Set-Content -Path $OutputLocation -Value $outputYaml -NoNewline

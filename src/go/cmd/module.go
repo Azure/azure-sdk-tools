@@ -31,7 +31,8 @@ func NewModule(dir string) (*Module, error) {
 		baseSDKPath = filepath.Join(before, "sdk")
 		baseImportPath = "github.com/Azure/azure-sdk-for-go/sdk/"
 	} else {
-		fmt.Println(dir + " isn't part of the Azure SDK for Go. Output may be incomplete or inaccurate.")
+		baseSDKPath = filepath.Dir(dir)
+		baseImportPath = strings.ReplaceAll(baseSDKPath, string(filepath.Separator), "/")
 	}
 	m := Module{Name: filepath.Base(dir), packages: map[string]*Pkg{}}
 
@@ -77,20 +78,29 @@ func NewModule(dir string) (*Module, error) {
 					if _, after, found := strings.Cut(impPath, "azure-sdk-for-go/sdk/"); found {
 						path := filepath.Join(baseSDKPath, after)
 						pkg, err := NewPkg(path, after)
-						if err != nil {
-							fmt.Printf("couldn't parse %s: %v", impPath, err)
-							continue
+						if err == nil {
+							pkg.Index()
+							externalPackages[impPath] = pkg
+							source = pkg
+						} else {
+							fmt.Printf("couldn't parse %s: %v\n", impPath, err)
 						}
-						pkg.Index()
-						externalPackages[impPath] = pkg
-						source = pkg
 					}
 				}
 			}
 
+			level := DiagnosticLevelInfo
+			originalName := qn
+			if _, after, found := strings.Cut(qn, m.Name); found {
+				originalName = strings.TrimPrefix(after, "/")
+			} else {
+				// this type is defined in another module
+				level = DiagnosticLevelWarning
+			}
+
 			var t TokenMaker
 			if source == nil {
-				t = p.c.addSimpleType(*p, alias, p.Name(), qn)
+				t = p.c.addSimpleType(*p, alias, p.Name(), originalName)
 			} else if def, ok := source.types[typeName]; ok {
 				switch n := def.n.Type.(type) {
 				case *ast.InterfaceType:
@@ -100,22 +110,17 @@ func NewModule(dir string) (*Module, error) {
 				case *ast.Ident:
 					t = p.c.addSimpleType(*p, alias, p.Name(), def.n.Type.(*ast.Ident).Name)
 				default:
-					fmt.Printf("unexpected node type %T", def.n.Type)
+					fmt.Printf("unexpected node type %T\n", def.n.Type)
+					t = p.c.addSimpleType(*p, alias, p.Name(), originalName)
 				}
 			} else {
 				fmt.Println("found no definition for " + qn)
 			}
 			if t != nil {
-				path := strings.TrimPrefix(qn, baseImportPath)
-				level := DiagnosticLevelInfo
-				if !strings.Contains(path, m.Name) {
-					// this type is defined in another module
-					level = DiagnosticLevelWarning
-				}
 				p.diagnostics = append(p.diagnostics, Diagnostic{
 					Level:    level,
 					TargetID: t.ID(),
-					Text:     aliasFor + path,
+					Text:     aliasFor + originalName,
 				})
 			}
 		}

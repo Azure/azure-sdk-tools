@@ -134,11 +134,11 @@ namespace APIViewWeb.Pages.Assemblies
 
             bool? isApproved = null;
             // Resolve Approval State
-            if (state.Contains("Approved") && !state.Contains("Pending"))
+            if (status.Contains("Approved") && !status.Contains("Pending"))
             {
                 isApproved = true;
             }
-            else if (!state.Contains("Approved") && state.Contains("Pending"))
+            else if (!status.Contains("Approved") && status.Contains("Pending"))
             {
                 isApproved = false;
             }

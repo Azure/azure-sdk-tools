@@ -171,7 +171,7 @@ namespace APIViewWeb
 
             if (isApproved != null)
             {
-                queryStringBuilder.Append(" AND ARRAY_SLICE(r.Revisions, -1).IsApproved = @isApproved");
+                queryStringBuilder.Append(" AND ARRAY_SLICE(r.Revisions, -1)[0].IsApproved = @isApproved");
             }
 
             // First get the total count to help with paging

@@ -22,9 +22,6 @@ type Module struct {
 
 	// packages maps import paths to packages
 	packages map[string]*Pkg
-
-	// path is the module's path on disk
-	path string
 }
 
 // NewModule indexes an Azure SDK module's ASTs. dir must be under azure-sdk-for-go/sdk.
@@ -36,7 +33,7 @@ func NewModule(dir string) (*Module, error) {
 	} else {
 		fmt.Println(dir + " isn't part of the Azure SDK for Go. Output may be incomplete or inaccurate.")
 	}
-	m := Module{Name: filepath.Base(dir), packages: map[string]*Pkg{}, path: dir}
+	m := Module{Name: filepath.Base(dir), packages: map[string]*Pkg{}}
 
 	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {

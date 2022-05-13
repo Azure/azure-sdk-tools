@@ -111,7 +111,7 @@
   }
 
   // Update content of dropdown on page load
-  $(document).on('ready', function() {
+  $(document).ready(function() {
     updateFilterDropDown(tagFilter, "tags");
     updateFilterDropDown(languageFilter, "languages");
     addPaginationEventHandlers();

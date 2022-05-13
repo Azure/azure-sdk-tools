@@ -57,11 +57,12 @@ func NewPkg(dir, moduleName string) (*Pkg, error) {
 		typeAliases: map[string]string{},
 		types:       map[string]typeDef{},
 	}
-	if _, after, found := strings.Cut(dir, moduleName); found {
+	if _, after, found := strings.Cut(dir, filepath.Clean(moduleName)); found {
 		pk.relName = moduleName
 		if after != "" {
 			pk.relName += after
 		}
+		pk.relName = strings.ReplaceAll(pk.relName, "\\", "/")
 	} else {
 		return nil, errors.New(dir + " isn't part of module " + moduleName)
 	}

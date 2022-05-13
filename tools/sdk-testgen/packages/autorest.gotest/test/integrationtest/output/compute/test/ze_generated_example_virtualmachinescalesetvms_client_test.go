@@ -25,14 +25,14 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
+		"myResourceGroup",
+		"myvmScaleSet",
+		"0",
 		&test.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -50,14 +50,14 @@ func ExampleVirtualMachineScaleSetVMsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
+		"myResourceGroup",
+		"{vmss-name}",
+		"0",
 		&test.VirtualMachineScaleSetVMsClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -73,14 +73,14 @@ func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.GetInstanceView(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
+		"myResourceGroup",
+		"myVirtualMachineScaleSet",
+		"0",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -96,14 +96,14 @@ func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.RetrieveBootDiagnosticsData(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
+		"ResourceGroup",
+		"myvmScaleSet",
+		"0",
 		&test.VirtualMachineScaleSetVMsClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Ptr[int32](60)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -119,14 +119,14 @@ func ExampleVirtualMachineScaleSetVMsClient_SimulateEviction() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	_, err = client.SimulateEviction(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
+		"ResourceGroup",
+		"VmScaleSetName",
+		"InstanceId",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -140,16 +140,16 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginRunCommand() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginRunCommand(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
+		"myResourceGroup",
+		"myVirtualMachineScaleSet",
+		"0",
 		test.RunCommandInput{
-			CommandID: to.Ptr("<command-id>"),
+			CommandID: to.Ptr("RunPowerShellScript"),
 			Script: []*string{
 				to.Ptr("# Test multi-line string\r\nWrite-Host Hello World!")},
 		},

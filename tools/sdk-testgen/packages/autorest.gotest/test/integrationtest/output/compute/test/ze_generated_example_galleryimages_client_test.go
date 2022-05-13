@@ -25,22 +25,22 @@ func ExampleGalleryImagesClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-image-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryImageName",
 		test.GalleryImage{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 			Properties: &test.GalleryImageProperties{
 				HyperVGeneration: to.Ptr(test.HyperVGenerationV1),
 				Identifier: &test.GalleryImageIdentifier{
-					Offer:     to.Ptr("<offer>"),
-					Publisher: to.Ptr("<publisher>"),
-					SKU:       to.Ptr("<sku>"),
+					Offer:     to.Ptr("myOfferName"),
+					Publisher: to.Ptr("myPublisherName"),
+					SKU:       to.Ptr("mySkuName"),
 				},
 				OSState: to.Ptr(test.OperatingSystemStateTypesGeneralized),
 				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
@@ -65,21 +65,21 @@ func ExampleGalleryImagesClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-image-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryImageName",
 		test.GalleryImageUpdate{
 			Properties: &test.GalleryImageProperties{
 				HyperVGeneration: to.Ptr(test.HyperVGenerationV1),
 				Identifier: &test.GalleryImageIdentifier{
-					Offer:     to.Ptr("<offer>"),
-					Publisher: to.Ptr("<publisher>"),
-					SKU:       to.Ptr("<sku>"),
+					Offer:     to.Ptr("myOfferName"),
+					Publisher: to.Ptr("myPublisherName"),
+					SKU:       to.Ptr("mySkuName"),
 				},
 				OSState: to.Ptr(test.OperatingSystemStateTypesGeneralized),
 				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
@@ -104,14 +104,14 @@ func ExampleGalleryImagesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-image-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryImageName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -127,14 +127,14 @@ func ExampleGalleryImagesClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-image-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryImageName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -152,12 +152,12 @@ func ExampleGalleryImagesClient_NewListByGalleryPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListByGalleryPager("<resource-group-name>",
-		"<gallery-name>",
+	pager := client.NewListByGalleryPager("myResourceGroup",
+		"myGalleryName",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

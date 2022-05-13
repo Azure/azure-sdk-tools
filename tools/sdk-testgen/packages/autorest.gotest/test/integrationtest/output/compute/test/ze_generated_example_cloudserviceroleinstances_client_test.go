@@ -24,14 +24,14 @@ func ExampleCloudServiceRoleInstancesClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<role-instance-name>",
-		"<resource-group-name>",
-		"<cloud-service-name>",
+		"{roleInstance-name}",
+		"ConstosoRG",
+		"{cs-name}",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -49,14 +49,14 @@ func ExampleCloudServiceRoleInstancesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<role-instance-name>",
-		"<resource-group-name>",
-		"<cloud-service-name>",
+		"{roleInstance-name}",
+		"ConstosoRG",
+		"{cs-name}",
 		&test.CloudServiceRoleInstancesClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -72,14 +72,14 @@ func ExampleCloudServiceRoleInstancesClient_GetInstanceView() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.GetInstanceView(ctx,
-		"<role-instance-name>",
-		"<resource-group-name>",
-		"<cloud-service-name>",
+		"{roleInstance-name}",
+		"ConstosoRG",
+		"{cs-name}",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -95,12 +95,12 @@ func ExampleCloudServiceRoleInstancesClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListPager("<resource-group-name>",
-		"<cloud-service-name>",
+	pager := client.NewListPager("ConstosoRG",
+		"{cs-name}",
 		&test.CloudServiceRoleInstancesClientListOptions{Expand: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -121,14 +121,14 @@ func ExampleCloudServiceRoleInstancesClient_BeginRestart() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginRestart(ctx,
-		"<role-instance-name>",
-		"<resource-group-name>",
-		"<cloud-service-name>",
+		"{roleInstance-name}",
+		"ConstosoRG",
+		"{cs-name}",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -146,14 +146,14 @@ func ExampleCloudServiceRoleInstancesClient_BeginReimage() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginReimage(ctx,
-		"<role-instance-name>",
-		"<resource-group-name>",
-		"<cloud-service-name>",
+		"{roleInstance-name}",
+		"ConstosoRG",
+		"{cs-name}",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -171,14 +171,14 @@ func ExampleCloudServiceRoleInstancesClient_BeginRebuild() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginRebuild(ctx,
-		"<role-instance-name>",
-		"<resource-group-name>",
-		"<cloud-service-name>",
+		"{roleInstance-name}",
+		"ConstosoRG",
+		"{cs-name}",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)

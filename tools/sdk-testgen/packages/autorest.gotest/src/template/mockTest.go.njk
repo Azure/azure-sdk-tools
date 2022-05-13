@@ -9,8 +9,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"runtime/debug"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -18,151 +16,37 @@ import (
     "github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
     "github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/testutil"
+	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/http2"
 )
 {{imports}}
 
-var (
-	ctx            context.Context
-    options        arm.ClientOptions
-	cred           azcore.TokenCredential
-	err            error
-	mockHost       string
-)
+type MockTestSuite struct {
+	suite.Suite
 
-{% for exampleGroup in exampleGroups %}
-{% if exampleGroup.operation.language.default.name == exampleGroup.operation.language.go.name %}
-func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operation.language.go.name}}(t *testing.T) {
-{%- for example in exampleGroup.examples %}
-    // From example {{example.originalFile}}
-	{%- if sendExampleId %}
-	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
-        "example-id": {"{{example.name.split('\\').join('\\\\').split('"').join('\\"')}}"},
-    })
-	{%- endif %}
-	{%- if loop.first %}
-	client, err := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
-    if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
-    {%- else %}
-    client, err = {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
-    {%- endif %}
-	{%- if example.returnInfo.length == 2 %}
-        {%- if example.isLRO %}
-            poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
-        {%- else %}
-            {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
-        {%- endif %}
-        if err != nil {
-            t.Fatalf("Failed to get result for example {{example.originalFile}}: %v", err)
-        }
-        {%- if example.isLRO %}
-            {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
-            if err != nil {
-                t.Fatalf("Failed to get LRO result for example {{example.originalFile}}: %v", err)
-            }
-        {%- endif %}
-    {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
-        pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
-        for pager.More() {
-            {% if example.checkResponse and verifyResponse%}nextResult{% else %}_{% endif %}, err := pager.NextPage(ctx)
-            if err != nil {
-                t.Fatalf("Failed to advance page for example {{example.originalFile}}: %v", err)
-                break
-            }
-            {%- if example.checkResponse and verifyResponse%}
-            // Response check
-            pagerExampleRes := {{example.responseOutput}}
-            if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %}) {
-                exampleResJson, _ := json.Marshal(pagerExampleRes)
-                mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %})
-                t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
-            }
-            {%- endif %}
-        }
-    {%- else %}
-        client.{{example.opName}}({{example.methodParametersOutput}})
-    {%- endif %}
-
-    {%- if example.isLRO and example.isPageable and example.checkResponse %}
-        for res.More() {
-            {% if example.checkResponse and verifyResponse%}nextResult{% else %}_{% endif %}, err := res.NextPage(ctx)
-            if err != nil {
-                t.Fatalf("Failed to advance page for example {{example.originalFile}}: %v", err)
-                break
-            }
-            {%- if example.checkResponse and verifyResponse%}
-            // Response check
-            pagerExampleRes := {{example.responseOutput}}
-            if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %}) {
-                exampleResJson, _ := json.Marshal(pagerExampleRes)
-                mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %})
-                t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
-            }
-            {%- endif %}
-        }
-    {%- endif %}
-        
-    {%- if example.checkResponse and not example.isPageable and verifyResponse%}
-        // Response check
-        exampleRes {%- if loop.first %}:{% endif %}= {{example.responseOutput}}
-        if !reflect.DeepEqual(exampleRes, {% if example.responseTypePointer %}*{% endif %}res{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %}) {
-            exampleResJson, _ := json.Marshal(exampleRes)
-            mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %})
-            t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
-        }
-    {%- endif %}
-    {%- if not loop.last %}
-
-    {% endif %}
-{%- endfor %}
-{%- if exampleGroup.examples|length <=0 %}
-	t.Skip("Warning: No test steps for this operation!")
-{%- endif %}
-}
-{%- endif %}
-{% endfor %}
-
-// TestMain will exec each test
-func TestMain(m *testing.M) {
-	setUp()
-	retCode := m.Run() // exec test and this returns an exit code to pass to os
-	tearDown()
-	os.Exit(retCode)
+	cred              azcore.TokenCredential
+	options           arm.ClientOptions
 }
 
-func getEnv(key, fallback string) string {
-    if value, ok := os.LookupEnv(key); ok {
-        return value
-    }
-    return fallback
-}
-
-func setUp() {
-	ctx = context.Background()
-	mockHost = getEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
+func (testsuite *MockTestSuite) SetupSuite() {
+	mockHost := testutil.GetEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
 
 	tr := &http.Transport{}
-	if err := http2.ConfigureTransport(tr); err != nil {
-		fmt.Printf("Failed to configure http2 transport: %v", err)
-	}
+	err := http2.ConfigureTransport(tr)
+	testsuite.Require().NoError(err, "Failed to configure http2 transport")
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
-	
-    cred = &MockCredential{}
 
-	options = arm.ClientOptions{
+	testsuite.cred = &MockCredential{}
+
+	testsuite.options = arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
 			Logging: policy.LogOptions{
 				IncludeBody: true,
 			},
 			Transport: client,
-            Cloud: cloud.Configuration{
+			Cloud: cloud.Configuration{
 				Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
 					cloud.ResourceManager: {
 						Audience: mockHost,
@@ -174,9 +58,94 @@ func setUp() {
 	}
 }
 
-func tearDown() {
-
+func TestMockTest(t *testing.T) {
+	suite.Run(t, new(MockTestSuite))
 }
+
+{% for exampleGroup in exampleGroups %}
+{% if exampleGroup.operation.language.default.name == exampleGroup.operation.language.go.name %}
+func (testsuite *MockTestSuite) Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operation.language.go.name}}() {
+{%- if exampleGroup.examples|length <=0 %}
+	testsuite.T().Skip("Warning: No test steps for this operation!")
+{%- else -%}
+    ctx := context.Background()
+{%- endif %}
+{%- for example in exampleGroup.examples %}
+    // From example {{example.originalFile}}
+	{%- if sendExampleId %}
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
+        "example-id": {"{{example.name.split('\\').join('\\\\').split('"').join('\\"')}}"},
+    })
+	{%- endif %}
+	{%- if loop.first %}
+	client, err := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}testsuite.cred, &testsuite.options)
+    testsuite.Require().NoError(err, "Failed to create client")
+    {%- else %}
+    client, err = {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
+    {%- endif %}
+	{%- if example.returnInfo.length == 2 %}
+        {%- if example.isLRO %}
+            poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+        {%- else %}
+            {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+        {%- endif %}
+        testsuite.Require().NoError(err, "Failed to get result for example {{example.originalFile}}")
+        {%- if example.isLRO %}
+            {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
+            testsuite.Require().NoError(err, "Failed to get LRO result for example {{example.originalFile}}")
+        {%- endif %}
+    {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
+        pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+        for pager.More() {
+            {% if example.checkResponse and verifyResponse%}nextResult{% else %}_{% endif %}, err := pager.NextPage(ctx)
+            testsuite.Require().NoError(err, "Failed to advance page for example {{example.originalFile}}")
+            {%- if example.checkResponse and verifyResponse%}
+            // Response check
+            pagerExampleRes := {{example.responseOutput}}
+            if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %}) {
+                exampleResJson, _ := json.Marshal(pagerExampleRes)
+                mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %})
+                testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+            }
+            {%- endif %}
+        }
+    {%- else %}
+        client.{{example.opName}}({{example.methodParametersOutput}})
+    {%- endif %}
+
+    {%- if example.isLRO and example.isPageable and example.checkResponse %}
+        for res.More() {
+            {% if example.checkResponse and verifyResponse%}nextResult{% else %}_{% endif %}, err := res.NextPage(ctx)
+            testsuite.Require().NoError(err, "Failed to advance page for example {{example.originalFile}}")
+            {%- if example.checkResponse and verifyResponse%}
+            // Response check
+            pagerExampleRes := {{example.responseOutput}}
+            if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %}) {
+                exampleResJson, _ := json.Marshal(pagerExampleRes)
+                mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %})
+                testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+            }
+            {%- endif %}
+        }
+    {%- endif %}
+        
+    {%- if example.checkResponse and not example.isPageable and verifyResponse%}
+        // Response check
+        exampleRes {%- if loop.first %}:{% endif %}= {{example.responseOutput}}
+        if !reflect.DeepEqual(exampleRes, {% if example.responseTypePointer %}*{% endif %}res{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %}) {
+            exampleResJson, _ := json.Marshal(exampleRes)
+            mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %})
+            testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+        }
+    {%- endif %}
+    {%- if not loop.last %}
+
+    {% endif %}
+{%- endfor %}
+}
+{%- endif %}
+{% endfor %}
 
 type MockCredential struct {
 }

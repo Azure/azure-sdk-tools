@@ -10,7 +10,6 @@
 from ._models import (
     DocstringClass,
     FakeError,
-    FakeInventoryItemDataClass,
     FakeObject,
     FakeTypedDict,
     GenericStack,
@@ -19,17 +18,28 @@ from ._models import (
     PublicCaseInsensitiveEnumMeta,
     PublicPrivateClass,
     RequiredKwargObject,
+    SomeAwesomelyNamedObject,
     SomeImplementationClass,
-    SomePoorlyNamedObject as SomeAwesomelyNamedObject,
     SomethingWithDecorators,
     SomethingWithOverloads,
     SomethingWithProperties
 )
+from ._dataclasses import (
+    DataClassSimple,
+    DataClassWithFields,
+    DataClassDynamic,
+    DataClassWithKeywordOnly,
+    DataClassWithPostInit
+)
 
 __all__ = (
+    "DataClassSimple",
+    "DataClassWithFields",
+    "DataClassDynamic",
+    "DataClassWithKeywordOnly",
+    "DataClassWithPostInit",
     "DocstringClass",
     "FakeError",
-    "FakeInventoryItemDataClass",
     "FakeObject",
     "FakeTypedDict",
     "GenericStack",

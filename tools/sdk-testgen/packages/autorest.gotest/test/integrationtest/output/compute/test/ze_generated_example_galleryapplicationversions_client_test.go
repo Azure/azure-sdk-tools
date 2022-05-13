@@ -25,17 +25,17 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-application-name>",
-		"<gallery-application-version-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryApplicationName",
+		"1.0.0",
 		test.GalleryApplicationVersion{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 			Properties: &test.GalleryApplicationVersionProperties{
 				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
@@ -43,16 +43,16 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 					StorageAccountType: to.Ptr(test.StorageAccountTypeStandardLRS),
 					TargetRegions: []*test.TargetRegion{
 						{
-							Name:                 to.Ptr("<name>"),
+							Name:                 to.Ptr("West US"),
 							RegionalReplicaCount: to.Ptr[int32](1),
 							StorageAccountType:   to.Ptr(test.StorageAccountTypeStandardLRS),
 						}},
 					ManageActions: &test.UserArtifactManage{
-						Install: to.Ptr("<install>"),
-						Remove:  to.Ptr("<remove>"),
+						Install: to.Ptr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
+						Remove:  to.Ptr("del C:\\package "),
 					},
 					Source: &test.UserArtifactSource{
-						MediaLink: to.Ptr("<media-link>"),
+						MediaLink: to.Ptr("https://mystorageaccount.blob.core.windows.net/mycontainer/package.zip?{sasKey}"),
 					},
 				},
 			},
@@ -76,15 +76,15 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-application-name>",
-		"<gallery-application-version-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryApplicationName",
+		"1.0.0",
 		test.GalleryApplicationVersionUpdate{
 			Properties: &test.GalleryApplicationVersionProperties{
 				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
@@ -93,16 +93,16 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 					StorageAccountType: to.Ptr(test.StorageAccountTypeStandardLRS),
 					TargetRegions: []*test.TargetRegion{
 						{
-							Name:                 to.Ptr("<name>"),
+							Name:                 to.Ptr("West US"),
 							RegionalReplicaCount: to.Ptr[int32](1),
 							StorageAccountType:   to.Ptr(test.StorageAccountTypeStandardLRS),
 						}},
 					ManageActions: &test.UserArtifactManage{
-						Install: to.Ptr("<install>"),
-						Remove:  to.Ptr("<remove>"),
+						Install: to.Ptr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
+						Remove:  to.Ptr("del C:\\package "),
 					},
 					Source: &test.UserArtifactSource{
-						MediaLink: to.Ptr("<media-link>"),
+						MediaLink: to.Ptr("https://mystorageaccount.blob.core.windows.net/mycontainer/package.zip?{sasKey}"),
 					},
 				},
 			},
@@ -126,15 +126,15 @@ func ExampleGalleryApplicationVersionsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-application-name>",
-		"<gallery-application-version-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryApplicationName",
+		"1.0.0",
 		&test.GalleryApplicationVersionsClientGetOptions{Expand: to.Ptr(test.ReplicationStatusTypesReplicationStatus)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -150,15 +150,15 @@ func ExampleGalleryApplicationVersionsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-application-name>",
-		"<gallery-application-version-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryApplicationName",
+		"1.0.0",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -176,13 +176,13 @@ func ExampleGalleryApplicationVersionsClient_NewListByGalleryApplicationPager() 
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListByGalleryApplicationPager("<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-application-name>",
+	pager := client.NewListByGalleryApplicationPager("myResourceGroup",
+		"myGalleryName",
+		"myGalleryApplicationName",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

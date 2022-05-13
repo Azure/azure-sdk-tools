@@ -315,17 +315,26 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 	usagesClientNewListPager := usagesClient.NewListPager(testsuite.location,
 		nil)
 	for usagesClientNewListPager.More() {
+		_, err := usagesClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step SignalR_ListByResourceGroup
 	signalRClientNewListByResourceGroupPager := signalRClient.NewListByResourceGroupPager(testsuite.resourceGroupName,
 		nil)
 	for signalRClientNewListByResourceGroupPager.More() {
+		_, err := signalRClientNewListByResourceGroupPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step SignalR_ListBySubscription
 	signalRClientNewListBySubscriptionPager := signalRClient.NewListBySubscriptionPager(nil)
 	for signalRClientNewListBySubscriptionPager.More() {
+		_, err := signalRClientNewListBySubscriptionPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Operations_List
@@ -333,6 +342,9 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 	testsuite.Require().NoError(err)
 	operationsClientNewListPager := operationsClient.NewListPager(nil)
 	for operationsClientNewListPager.More() {
+		_, err := operationsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step SignalR_Delete

@@ -25,21 +25,21 @@ func ExampleImagesClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<image-name>",
+		"myResourceGroup",
+		"myImage",
 		test.Image{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 			Properties: &test.ImageProperties{
 				StorageProfile: &test.ImageStorageProfile{
 					OSDisk: &test.ImageOSDisk{
-						BlobURI: to.Ptr("<blob-uri>"),
+						BlobURI: to.Ptr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 						DiskEncryptionSet: &test.DiskEncryptionSetParameters{
-							ID: to.Ptr("<id>"),
+							ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 						},
 						OSState: to.Ptr(test.OperatingSystemStateTypesGeneralized),
 						OSType:  to.Ptr(test.OperatingSystemTypesLinux),
@@ -66,13 +66,13 @@ func ExampleImagesClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<image-name>",
+		"myResourceGroup",
+		"myImage",
 		test.ImageUpdate{
 			Tags: map[string]*string{
 				"department": to.Ptr("HR"),
@@ -80,7 +80,7 @@ func ExampleImagesClient_BeginUpdate() {
 			Properties: &test.ImageProperties{
 				HyperVGeneration: to.Ptr(test.HyperVGenerationTypesV1),
 				SourceVirtualMachine: &test.SubResource{
-					ID: to.Ptr("<id>"),
+					ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
 				},
 			},
 		},
@@ -103,13 +103,13 @@ func ExampleImagesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<image-name>",
+		"myResourceGroup",
+		"myImage",
 		&test.ImagesClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -125,11 +125,11 @@ func ExampleImagesClient_NewListByResourceGroupPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListByResourceGroupPager("<resource-group-name>",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -150,7 +150,7 @@ func ExampleImagesClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewImagesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}

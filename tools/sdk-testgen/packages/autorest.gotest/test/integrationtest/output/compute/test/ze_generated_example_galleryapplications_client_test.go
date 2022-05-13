@@ -25,21 +25,21 @@ func ExampleGalleryApplicationsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-application-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryApplicationName",
 		test.GalleryApplication{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 			Properties: &test.GalleryApplicationProperties{
-				Description:         to.Ptr("<description>"),
-				Eula:                to.Ptr("<eula>"),
-				PrivacyStatementURI: to.Ptr("<privacy-statement-uri>"),
-				ReleaseNoteURI:      to.Ptr("<release-note-uri>"),
+				Description:         to.Ptr("This is the gallery application description."),
+				Eula:                to.Ptr("This is the gallery application EULA."),
+				PrivacyStatementURI: to.Ptr("myPrivacyStatementUri}"),
+				ReleaseNoteURI:      to.Ptr("myReleaseNoteUri"),
 				SupportedOSType:     to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
@@ -62,20 +62,20 @@ func ExampleGalleryApplicationsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-application-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryApplicationName",
 		test.GalleryApplicationUpdate{
 			Properties: &test.GalleryApplicationProperties{
-				Description:         to.Ptr("<description>"),
-				Eula:                to.Ptr("<eula>"),
-				PrivacyStatementURI: to.Ptr("<privacy-statement-uri>"),
-				ReleaseNoteURI:      to.Ptr("<release-note-uri>"),
+				Description:         to.Ptr("This is the gallery application description."),
+				Eula:                to.Ptr("This is the gallery application EULA."),
+				PrivacyStatementURI: to.Ptr("myPrivacyStatementUri}"),
+				ReleaseNoteURI:      to.Ptr("myReleaseNoteUri"),
 				SupportedOSType:     to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
@@ -98,14 +98,14 @@ func ExampleGalleryApplicationsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-application-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryApplicationName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -121,14 +121,14 @@ func ExampleGalleryApplicationsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
-		"<gallery-application-name>",
+		"myResourceGroup",
+		"myGalleryName",
+		"myGalleryApplicationName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -146,12 +146,12 @@ func ExampleGalleryApplicationsClient_NewListByGalleryPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListByGalleryPager("<resource-group-name>",
-		"<gallery-name>",
+	pager := client.NewListByGalleryPager("myResourceGroup",
+		"myGalleryName",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

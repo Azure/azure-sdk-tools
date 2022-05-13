@@ -10,10 +10,7 @@ package test_test
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"testing"
 
 	"encoding/json"
@@ -26,33 +23,63 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/testutil"
+	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/http2"
 )
 
-var (
-	ctx      context.Context
-	options  arm.ClientOptions
-	cred     azcore.TokenCredential
-	err      error
-	mockHost string
-)
+type MockTestSuite struct {
+	suite.Suite
 
-func TestOperations_List(t *testing.T) {
+	cred    azcore.TokenCredential
+	options arm.ClientOptions
+}
+
+func (testsuite *MockTestSuite) SetupSuite() {
+	mockHost := testutil.GetEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
+
+	tr := &http.Transport{}
+	err := http2.ConfigureTransport(tr)
+	testsuite.Require().NoError(err, "Failed to configure http2 transport")
+	tr.TLSClientConfig.InsecureSkipVerify = true
+	client := &http.Client{Transport: tr}
+
+	testsuite.cred = &MockCredential{}
+
+	testsuite.options = arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Logging: policy.LogOptions{
+				IncludeBody: true,
+			},
+			Transport: client,
+			Cloud: cloud.Configuration{
+				Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
+					cloud.ResourceManager: {
+						Audience: mockHost,
+						Endpoint: mockHost,
+					},
+				},
+			},
+		},
+	}
+}
+
+func TestMockTest(t *testing.T) {
+	suite.Run(t, new(MockTestSuite))
+}
+
+func (testsuite *MockTestSuite) TestOperations_List() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Operations_List"},
 	})
-	client, err := test.NewOperationsClient(cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewOperationsClient(testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json")
 		// Response check
 		pagerExampleRes := test.OperationList{
 			Value: []*test.Operation{
@@ -71,20 +98,19 @@ func TestOperations_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.OperationList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.OperationList)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSignalR_CheckNameAvailability(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalR_CheckNameAvailability() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_CheckNameAvailability"},
 	})
-	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.CheckNameAvailability(ctx,
 		"eastus",
 		test.NameAvailabilityParameters{
@@ -92,9 +118,7 @@ func TestSignalR_CheckNameAvailability(t *testing.T) {
 			Type: to.Ptr("Microsoft.SignalRService/SignalR"),
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json")
 	// Response check
 	exampleRes := test.NameAvailability{
 		Message:       to.Ptr("The name is already taken. Please try a different name."),
@@ -104,26 +128,22 @@ func TestSignalR_CheckNameAvailability(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.NameAvailability) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.NameAvailability)
-		t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSignalR_ListBySubscription(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalR_ListBySubscription() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_ListBySubscription"},
 	})
-	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	pager := client.NewListBySubscriptionPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json")
 		// Response check
 		pagerExampleRes := test.ResourceInfoList{
 			Value: []*test.ResourceInfo{
@@ -243,28 +263,24 @@ func TestSignalR_ListBySubscription(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ResourceInfoList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ResourceInfoList)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSignalR_ListByResourceGroup(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalR_ListByResourceGroup() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_ListByResourceGroup"},
 	})
-	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json")
 		// Response check
 		pagerExampleRes := test.ResourceInfoList{
 			Value: []*test.ResourceInfo{
@@ -384,27 +400,24 @@ func TestSignalR_ListByResourceGroup(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.ResourceInfoList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.ResourceInfoList)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSignalR_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalR_Get() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Get"},
 	})
-	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"mySignalRService",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json")
 	// Response check
 	exampleRes := test.ResourceInfo{
 		Name:     to.Ptr("mySignalRService"),
@@ -521,19 +534,18 @@ func TestSignalR_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ResourceInfo) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ResourceInfo)
-		t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSignalR_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalR_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_CreateOrUpdate"},
 	})
-	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"mySignalRService",
@@ -615,13 +627,9 @@ func TestSignalR_CreateOrUpdate(t *testing.T) {
 			},
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.ResourceInfo{
 		Name:     to.Ptr("mySignalRService"),
@@ -738,41 +746,35 @@ func TestSignalR_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ResourceInfo) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ResourceInfo)
-		t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSignalR_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalR_Delete() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Delete"},
 	})
-	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"mySignalRService",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json")
 }
 
-func TestSignalR_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalR_Update() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Update"},
 	})
-	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"mySignalRService",
@@ -854,13 +856,9 @@ func TestSignalR_Update(t *testing.T) {
 			},
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json")
 	// Response check
 	exampleRes := test.ResourceInfo{
 		Name:     to.Ptr("mySignalRService"),
@@ -977,44 +975,40 @@ func TestSignalR_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.ResourceInfo) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.ResourceInfo)
-		t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSignalR_ListKeys(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalR_ListKeys() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_ListKeys"},
 	})
-	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.ListKeys(ctx,
 		"myResourceGroup",
 		"mySignalRService",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json")
 	// Response check
 	exampleRes := test.SignalRKeys{}
 	if !reflect.DeepEqual(exampleRes, res.SignalRKeys) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SignalRKeys)
-		t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSignalR_RegenerateKey(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalR_RegenerateKey() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_RegenerateKey"},
 	})
-	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginRegenerateKey(ctx,
 		"myResourceGroup",
 		"mySignalRService",
@@ -1022,54 +1016,41 @@ func TestSignalR_RegenerateKey(t *testing.T) {
 			KeyType: to.Ptr(test.KeyTypePrimary),
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json")
 }
 
-func TestSignalR_Restart(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalR_Restart() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Restart"},
 	})
-	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginRestart(ctx,
 		"myResourceGroup",
 		"mySignalRService",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json")
 }
 
-func TestUsages_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestUsages_List() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Usages_List"},
 	})
-	client, err := test.NewUsagesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewUsagesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	pager := client.NewListPager("eastus",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json")
 		// Response check
 		pagerExampleRes := test.SignalRUsageList{
 			Value: []*test.SignalRUsage{
@@ -1097,29 +1078,25 @@ func TestUsages_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.SignalRUsageList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.SignalRUsageList)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSignalRPrivateEndpointConnections_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalRPrivateEndpointConnections_List() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_List"},
 	})
-	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	pager := client.NewListPager("myResourceGroup",
 		"mySignalRService",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json")
 		// Response check
 		pagerExampleRes := test.PrivateEndpointConnectionList{
 			Value: []*test.PrivateEndpointConnection{
@@ -1150,28 +1127,25 @@ func TestSignalRPrivateEndpointConnections_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.PrivateEndpointConnectionList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.PrivateEndpointConnectionList)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSignalRPrivateEndpointConnections_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalRPrivateEndpointConnections_Get() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_Get"},
 	})
-	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
 		"myResourceGroup",
 		"mySignalRService",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json")
 	// Response check
 	exampleRes := test.PrivateEndpointConnection{
 		Name: to.Ptr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
@@ -1199,19 +1173,18 @@ func TestSignalRPrivateEndpointConnections_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
-		t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSignalRPrivateEndpointConnections_Update(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalRPrivateEndpointConnections_Update() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_Update"},
 	})
-	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Update(ctx,
 		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
 		"myResourceGroup",
@@ -1228,9 +1201,7 @@ func TestSignalRPrivateEndpointConnections_Update(t *testing.T) {
 			},
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json")
 	// Response check
 	exampleRes := test.PrivateEndpointConnection{
 		Name: to.Ptr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
@@ -1258,51 +1229,42 @@ func TestSignalRPrivateEndpointConnections_Update(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
-		t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSignalRPrivateEndpointConnections_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalRPrivateEndpointConnections_Delete() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_Delete"},
 	})
-	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
 		"myResourceGroup",
 		"mySignalRService",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json")
 }
 
-func TestSignalRPrivateLinkResources_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalRPrivateLinkResources_List() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateLinkResources_List"},
 	})
-	client, err := test.NewSignalRPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	pager := client.NewListPager("myResourceGroup",
 		"mySignalRService",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json")
 		// Response check
 		pagerExampleRes := test.PrivateLinkResourceList{
 			Value: []*test.PrivateLinkResource{
@@ -1331,29 +1293,25 @@ func TestSignalRPrivateLinkResources_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.PrivateLinkResourceList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.PrivateLinkResourceList)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSignalRSharedPrivateLinkResources_List(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalRSharedPrivateLinkResources_List() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRSharedPrivateLinkResources_List"},
 	})
-	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	pager := client.NewListPager("myResourceGroup",
 		"mySignalRService",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json: %v", err)
-			break
-		}
+		testsuite.Require().NoError(err, "Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json")
 		// Response check
 		pagerExampleRes := test.SharedPrivateLinkResourceList{
 			Value: []*test.SharedPrivateLinkResource{
@@ -1373,28 +1331,25 @@ func TestSignalRSharedPrivateLinkResources_List(t *testing.T) {
 		if !reflect.DeepEqual(pagerExampleRes, nextResult.SharedPrivateLinkResourceList) {
 			exampleResJson, _ := json.Marshal(pagerExampleRes)
 			mockResJson, _ := json.Marshal(nextResult.SharedPrivateLinkResourceList)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
-func TestSignalRSharedPrivateLinkResources_Get(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalRSharedPrivateLinkResources_Get() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRSharedPrivateLinkResources_Get"},
 	})
-	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	res, err := client.Get(ctx,
 		"upstream",
 		"myResourceGroup",
 		"mySignalRService",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json")
 	// Response check
 	exampleRes := test.SharedPrivateLinkResource{
 		Name: to.Ptr("upstream"),
@@ -1411,19 +1366,18 @@ func TestSignalRSharedPrivateLinkResources_Get(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.SharedPrivateLinkResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SharedPrivateLinkResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSignalRSharedPrivateLinkResources_CreateOrUpdate(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalRSharedPrivateLinkResources_CreateOrUpdate() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRSharedPrivateLinkResources_CreateOrUpdate"},
 	})
-	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"upstream",
 		"myResourceGroup",
@@ -1436,13 +1390,9 @@ func TestSignalRSharedPrivateLinkResources_CreateOrUpdate(t *testing.T) {
 			},
 		},
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json")
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.SharedPrivateLinkResource{
 		Name: to.Ptr("upstream"),
@@ -1459,81 +1409,26 @@ func TestSignalRSharedPrivateLinkResources_CreateOrUpdate(t *testing.T) {
 	if !reflect.DeepEqual(exampleRes, res.SharedPrivateLinkResource) {
 		exampleResJson, _ := json.Marshal(exampleRes)
 		mockResJson, _ := json.Marshal(res.SharedPrivateLinkResource)
-		t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 	}
 }
 
-func TestSignalRSharedPrivateLinkResources_Delete(t *testing.T) {
+func (testsuite *MockTestSuite) TestSignalRSharedPrivateLinkResources_Delete() {
+	ctx := context.Background()
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json
 	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRSharedPrivateLinkResources_Delete"},
 	})
-	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
-	if err != nil {
-		log.Fatalf("failed to create client: %v", err)
-	}
+	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", testsuite.cred, &testsuite.options)
+	testsuite.Require().NoError(err, "Failed to create client")
 	poller, err := client.BeginDelete(ctx,
 		"upstream",
 		"myResourceGroup",
 		"mySignalRService",
 		nil)
-	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json: %v", err)
-	}
+	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json")
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json: %v", err)
-	}
-}
-
-// TestMain will exec each test
-func TestMain(m *testing.M) {
-	setUp()
-	retCode := m.Run() // exec test and this returns an exit code to pass to os
-	tearDown()
-	os.Exit(retCode)
-}
-
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
-
-func setUp() {
-	ctx = context.Background()
-	mockHost = getEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
-
-	tr := &http.Transport{}
-	if err := http2.ConfigureTransport(tr); err != nil {
-		fmt.Printf("Failed to configure http2 transport: %v", err)
-	}
-	tr.TLSClientConfig.InsecureSkipVerify = true
-	client := &http.Client{Transport: tr}
-
-	cred = &MockCredential{}
-
-	options = arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Logging: policy.LogOptions{
-				IncludeBody: true,
-			},
-			Transport: client,
-			Cloud: cloud.Configuration{
-				Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
-					cloud.ResourceManager: {
-						Audience: mockHost,
-						Endpoint: mockHost,
-					},
-				},
-			},
-		},
-	}
-}
-
-func tearDown() {
-
+	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json")
 }
 
 type MockCredential struct {

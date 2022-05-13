@@ -25,13 +25,13 @@ func ExampleServicesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -47,22 +47,22 @@ func ExampleServicesClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		test.ServiceResource{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("eastus"),
 			Tags: map[string]*string{
 				"key1": to.Ptr("value1"),
 			},
 			Properties: &test.ClusterResourceProperties{},
 			SKU: &test.SKU{
-				Name: to.Ptr("<name>"),
-				Tier: to.Ptr("<tier>"),
+				Name: to.Ptr("S0"),
+				Tier: to.Ptr("Standard"),
 			},
 		},
 		nil)
@@ -84,13 +84,13 @@ func ExampleServicesClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -108,22 +108,22 @@ func ExampleServicesClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		test.ServiceResource{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("eastus"),
 			Tags: map[string]*string{
 				"key1": to.Ptr("value1"),
 			},
 			Properties: &test.ClusterResourceProperties{},
 			SKU: &test.SKU{
-				Name: to.Ptr("<name>"),
-				Tier: to.Ptr("<tier>"),
+				Name: to.Ptr("S0"),
+				Tier: to.Ptr("Standard"),
 			},
 		},
 		nil)
@@ -145,13 +145,13 @@ func ExampleServicesClient_ListTestKeys() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.ListTestKeys(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -167,13 +167,13 @@ func ExampleServicesClient_RegenerateTestKey() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.RegenerateTestKey(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		test.RegenerateTestKeyRequestPayload{
 			KeyType: to.Ptr(test.TestKeyTypePrimary),
 		},
@@ -192,13 +192,13 @@ func ExampleServicesClient_DisableTestEndpoint() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	_, err = client.DisableTestEndpoint(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -212,13 +212,13 @@ func ExampleServicesClient_EnableTestEndpoint() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.EnableTestEndpoint(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -234,15 +234,15 @@ func ExampleServicesClient_CheckNameAvailability() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.CheckNameAvailability(ctx,
-		"<location>",
+		"eastus",
 		test.NameAvailabilityParameters{
-			Name: to.Ptr("<name>"),
-			Type: to.Ptr("<type>"),
+			Name: to.Ptr("myservice"),
+			Type: to.Ptr("Microsoft.AppPlatform/Spring"),
 		},
 		nil)
 	if err != nil {
@@ -259,7 +259,7 @@ func ExampleServicesClient_NewListBySubscriptionPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
@@ -283,11 +283,11 @@ func ExampleServicesClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListPager("<resource-group-name>",
+	pager := client.NewListPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

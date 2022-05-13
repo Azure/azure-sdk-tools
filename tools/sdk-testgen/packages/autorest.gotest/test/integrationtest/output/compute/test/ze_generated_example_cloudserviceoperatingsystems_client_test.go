@@ -22,13 +22,13 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.GetOSVersion(ctx,
-		"<location>",
-		"<os-version-name>",
+		"westus2",
+		"WA-GUEST-OS-3.90_202010-02",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -44,11 +44,11 @@ func ExampleCloudServiceOperatingSystemsClient_NewListOSVersionsPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListOSVersionsPager("<location>",
+	pager := client.NewListOSVersionsPager("westus2",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -69,13 +69,13 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.GetOSFamily(ctx,
-		"<location>",
-		"<os-family-name>",
+		"westus2",
+		"3",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -91,11 +91,11 @@ func ExampleCloudServiceOperatingSystemsClient_NewListOSFamiliesPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListOSFamiliesPager("<location>",
+	pager := client.NewListOSFamiliesPager("westus2",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

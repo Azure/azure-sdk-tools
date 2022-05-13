@@ -77,10 +77,11 @@ class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
         case let .willSetDidSetBlock(ident, typeAnno, expression, _):
             // the willSetDidSet block is irrelevant from an API perspective
             // so we ignore it.
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil)]
-            guard expression == nil else {
-                SharedLogger.fail("Expression not implemented. Please contact the SDK team.")
+            var defaultValue: String? = nil
+            if let literalExpression = expression as? LiteralExpression {
+                defaultValue = literalExpression.textDescription
             }
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: defaultValue)]
         }
         // Since we preserve these on a single line, base the line ID on the first name
         lineId = identifier(forName: initializers.first!.name, withPrefix: parent.definitionId)

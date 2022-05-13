@@ -358,6 +358,11 @@ func springSample() {
 		serviceName,
 		nil)
 	for certificatesClientNewListPagerPager.More() {
+		_, err := certificatesClientNewListPagerPager.NextPage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 
 	// From step ConfigServers_Validate
@@ -651,6 +656,11 @@ func springSample() {
 		serviceName,
 		nil)
 	for appsClientNewListPagerPager.More() {
+		_, err := appsClientNewListPagerPager.NextPage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 
 	// From step Bindings_Create
@@ -727,6 +737,11 @@ func springSample() {
 		appName,
 		nil)
 	for bindingsClientNewListPagerPager.More() {
+		_, err := bindingsClientNewListPagerPager.NextPage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 
 	// From step Bindings_Delete
@@ -822,6 +837,11 @@ func springSample() {
 		appName,
 		nil)
 	for customDomainsClientNewListPagerPager.More() {
+		_, err := customDomainsClientNewListPagerPager.NextPage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 
 	// From step Apps_GetResourceUploadUrl
@@ -1026,6 +1046,11 @@ func springSample() {
 		appName,
 		&test.DeploymentsClientListOptions{Version: []string{}})
 	for deploymentsClientNewListPagerPager.More() {
+		_, err := deploymentsClientNewListPagerPager.NextPage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 
 	// From step Deployments_ListForCluster
@@ -1033,17 +1058,32 @@ func springSample() {
 		serviceName,
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
 	for deploymentsClientNewListForClusterPagerPager.More() {
+		_, err := deploymentsClientNewListForClusterPagerPager.NextPage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 
 	// From step Services_List
 	servicesClientNewListPagerPager := servicesClient.NewListPager(resourceGroupName,
 		nil)
 	for servicesClientNewListPagerPager.More() {
+		_, err := servicesClientNewListPagerPager.NextPage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 
 	// From step Services_ListBySubscription
 	servicesClientNewListBySubscriptionPagerPager := servicesClient.NewListBySubscriptionPager(nil)
 	for servicesClientNewListBySubscriptionPagerPager.More() {
+		_, err := servicesClientNewListBySubscriptionPagerPager.NextPage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 
 	// From step Deployments_Delete
@@ -1128,6 +1168,11 @@ func springSample() {
 	}
 	sKUsClientNewListPagerPager := sKUsClient.NewListPager(nil)
 	for sKUsClientNewListPagerPager.More() {
+		_, err := sKUsClientNewListPagerPager.NextPage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 
 	// From step Operations_List
@@ -1137,6 +1182,11 @@ func springSample() {
 	}
 	operationsClientNewListPagerPager := operationsClient.NewListPager(nil)
 	for operationsClientNewListPagerPager.More() {
+		_, err := operationsClientNewListPagerPager.NextPage(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 }
 

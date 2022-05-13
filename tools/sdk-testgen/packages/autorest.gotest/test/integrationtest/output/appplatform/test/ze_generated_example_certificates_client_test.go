@@ -25,14 +25,14 @@ func ExampleCertificatesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<certificate-name>",
+		"myResourceGroup",
+		"myservice",
+		"mycertificate",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -48,19 +48,19 @@ func ExampleCertificatesClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<certificate-name>",
+		"myResourceGroup",
+		"myservice",
+		"mycertificate",
 		test.CertificateResource{
 			Properties: &test.CertificateProperties{
-				CertVersion:      to.Ptr("<cert-version>"),
-				KeyVaultCertName: to.Ptr("<key-vault-cert-name>"),
-				VaultURI:         to.Ptr("<vault-uri>"),
+				CertVersion:      to.Ptr("08a219d06d874795a96db47e06fbb01e"),
+				KeyVaultCertName: to.Ptr("mycert"),
+				VaultURI:         to.Ptr("https://myvault.vault.azure.net"),
 			},
 		},
 		nil)
@@ -82,14 +82,14 @@ func ExampleCertificatesClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<certificate-name>",
+		"myResourceGroup",
+		"myservice",
+		"mycertificate",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -107,12 +107,12 @@ func ExampleCertificatesClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListPager("<resource-group-name>",
-		"<service-name>",
+	pager := client.NewListPager("myResourceGroup",
+		"myService",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

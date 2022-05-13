@@ -25,15 +25,15 @@ func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<disk-access-name>",
+		"myResourceGroup",
+		"myDiskAccess",
 		test.DiskAccess{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 		},
 		nil)
 	if err != nil {
@@ -54,13 +54,13 @@ func ExampleDiskAccessesClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<disk-access-name>",
+		"myResourceGroup",
+		"myDiskAccess",
 		test.DiskAccessUpdate{
 			Tags: map[string]*string{
 				"department": to.Ptr("Development"),
@@ -86,13 +86,13 @@ func ExampleDiskAccessesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<disk-access-name>",
+		"myResourceGroup",
+		"myDiskAccess",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -108,13 +108,13 @@ func ExampleDiskAccessesClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<disk-access-name>",
+		"myResourceGroup",
+		"myDiskAccess",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -132,11 +132,11 @@ func ExampleDiskAccessesClient_NewListByResourceGroupPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListByResourceGroupPager("<resource-group-name>",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -157,7 +157,7 @@ func ExampleDiskAccessesClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
@@ -181,13 +181,13 @@ func ExampleDiskAccessesClient_GetPrivateLinkResources() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.GetPrivateLinkResources(ctx,
-		"<resource-group-name>",
-		"<disk-access-name>",
+		"myResourceGroup",
+		"myDiskAccess",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -203,18 +203,18 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdateAPrivateEndpointConnection(ctx,
-		"<resource-group-name>",
-		"<disk-access-name>",
-		"<private-endpoint-connection-name>",
+		"myResourceGroup",
+		"myDiskAccess",
+		"myPrivateEndpointConnection",
 		test.PrivateEndpointConnection{
 			Properties: &test.PrivateEndpointConnectionProperties{
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
-					Description: to.Ptr("<description>"),
+					Description: to.Ptr("Approving myPrivateEndpointConnection"),
 					Status:      to.Ptr(test.PrivateEndpointServiceConnectionStatusApproved),
 				},
 			},
@@ -238,14 +238,14 @@ func ExampleDiskAccessesClient_GetAPrivateEndpointConnection() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.GetAPrivateEndpointConnection(ctx,
-		"<resource-group-name>",
-		"<disk-access-name>",
-		"<private-endpoint-connection-name>",
+		"myResourceGroup",
+		"myDiskAccess",
+		"myPrivateEndpointConnection",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -261,14 +261,14 @@ func ExampleDiskAccessesClient_BeginDeleteAPrivateEndpointConnection() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDeleteAPrivateEndpointConnection(ctx,
-		"<resource-group-name>",
-		"<disk-access-name>",
-		"<private-endpoint-connection-name>",
+		"myResourceGroup",
+		"myDiskAccess",
+		"myPrivateEndpointConnection",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -286,12 +286,12 @@ func ExampleDiskAccessesClient_NewListPrivateEndpointConnectionsPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskAccessesClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListPrivateEndpointConnectionsPager("<resource-group-name>",
-		"<disk-access-name>",
+	pager := client.NewListPrivateEndpointConnectionsPager("myResourceGroup",
+		"myDiskAccess",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

@@ -15,6 +15,7 @@
 		0A34D5C627FF40A3008A76A6 /* SwiftAPIViewTests.h in Headers */ = {isa = PBXBuildFile; fileRef = 0A34D5BF27FF40A2008A76A6 /* SwiftAPIViewTests.h */; };
 		0A34D5C727FF40A3008A76A6 /* OperatorTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A34D5C027FF40A2008A76A6 /* OperatorTestFile.swift */; };
 		0A34D5C927FF40AF008A76A6 /* FunctionsTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A34D5C827FF40AF008A76A6 /* FunctionsTestFile.swift */; };
+		0A35C20028298ED0008C99AD /* PropertiesTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A35C1FF28298ED0008C99AD /* PropertiesTestFile.swift */; };
 		0A8407B627F4B2F400801E60 /* SwiftAPIViewTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A8407AD27F4B2F300801E60 /* SwiftAPIViewTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -37,6 +38,7 @@
 		0A34D5BF27FF40A2008A76A6 /* SwiftAPIViewTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SwiftAPIViewTests.h; sourceTree = "<group>"; };
 		0A34D5C027FF40A2008A76A6 /* OperatorTestFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OperatorTestFile.swift; sourceTree = "<group>"; };
 		0A34D5C827FF40AF008A76A6 /* FunctionsTestFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionsTestFile.swift; sourceTree = "<group>"; };
+		0A35C1FF28298ED0008C99AD /* PropertiesTestFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesTestFile.swift; sourceTree = "<group>"; };
 		0A8407AD27F4B2F300801E60 /* SwiftAPIViewTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftAPIViewTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A8407B527F4B2F400801E60 /* SwiftAPIViewTestsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftAPIViewTestsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -69,6 +71,7 @@
 				0A34D5C827FF40AF008A76A6 /* FunctionsTestFile.swift */,
 				0A34D5BE27FF40A2008A76A6 /* GenericsTestFile.swift */,
 				0A34D5C027FF40A2008A76A6 /* OperatorTestFile.swift */,
+				0A35C1FF28298ED0008C99AD /* PropertiesTestFile.swift */,
 				0A34D5BD27FF40A2008A76A6 /* ProtocolTestFile.swift */,
 				0A34D5BF27FF40A2008A76A6 /* SwiftAPIViewTests.h */,
 			);
@@ -202,6 +205,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0A35C20028298ED0008C99AD /* PropertiesTestFile.swift in Sources */,
 				0A34D5C227FF40A3008A76A6 /* AttributesTestFile.swift in Sources */,
 				0A34D5C727FF40A3008A76A6 /* OperatorTestFile.swift in Sources */,
 				0A34D5C327FF40A3008A76A6 /* EnumerationsTestFile.swift in Sources */,

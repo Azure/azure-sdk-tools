@@ -23,15 +23,15 @@ func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewAvailabilitySetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewAvailabilitySetsClient("1", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.CreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<availability-set-name>",
+		"myResourceGroup",
+		"myAvailabilitySet",
 		test.AvailabilitySet{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("westus"),
 			AdditionalProperties: map[string]*string{
 				"anyProperty": to.Ptr("fakeValue"),
 			},
@@ -55,11 +55,11 @@ func ExampleAvailabilitySetsClient_NewListBySubscriptionPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewAvailabilitySetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewAvailabilitySetsClient("{subscriptionId}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListBySubscriptionPager(&test.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.Ptr("<expand>")})
+	pager := client.NewListBySubscriptionPager(&test.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.Ptr("Faked for test: +ge+2020, %3E2012")})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {

@@ -7,9 +7,8 @@
   const stateFilter = $( '#state-filter-bootstraps-select' );
   const statusFilter = $( '#status-filter-bootstraps-select' );
   const typeFilter = $( '#type-filter-bootstraps-select' );
-
-  const searchBox = $('#reviews-table-search-box');
-  const searchContext = $('.review-name') as any;
+  const searchBox = $( '#reviews-table-search-box' );
+  const resetButton = $( '#reset-filter-button' );
 
   // Enable tooltip
   (<any>$('[data-toggle="tooltip"]')).tooltip();
@@ -102,12 +101,15 @@
   function filterReviews(){
     // highlight matching text using mark.js framework and hide rows that don't match
     const searchText = (searchBox.val() as string).toUpperCase();
+    const searchContext = $('.review-name') as any;
     searchContext.closest('tr').removeClass('hidden-row').unmark();
-    searchContext.mark(searchText, {
-      done: function () {
-        searchContext.not(':has(mark)').closest('tr').addClass('hidden-row');
-      }
-    });
+    if(searchText) {
+      searchContext.mark(searchText, {
+        done: function () {
+          searchContext.not(':has(mark)').closest('tr').addClass('hidden-row');
+        }
+      });
+    }
   }
 
   // Update content of dropdown on page load
@@ -135,5 +137,19 @@
     {
       updateListedReviews({ search : searchBox.val() as string });
     }
+  });
+
+  searchBox.on('input', function(e) {
+    setTimeout(filterReviews, 300);
+  });
+
+  resetButton.on('click', function(e) {
+    (<any>languageFilter).selectpicker('deselectAll');
+    (<any>tagFilter).selectpicker('deselectAll');
+    (<any>stateFilter).selectpicker('deselectAll');
+    (<any>statusFilter).selectpicker('deselectAll');
+    (<any>typeFilter).selectpicker('deselectAll');
+    searchBox.val('');
+    updateListedReviews();
   });
 });

@@ -70,6 +70,9 @@ export class ResultPublisherDBCGConfig {
     sdkRepo: string;
     codegenRepo: string;
     triggerType: string;
+    tag?: string;
+    owner?: string;
+    codePR?: string;
 }
 
 export const resultPublisherDBCGConfig = convict<ResultPublisherDBCGConfig>({
@@ -156,6 +159,24 @@ export const resultPublisherDBCGConfig = convict<ResultPublisherDBCGConfig>({
         default: '',
         env: 'TRIGGER_TYPE',
         format: ['ad-hoc', 'ci', 'release'],
+    },
+    tag: {
+        default: null,
+        evn: 'TAG',
+        nullable: true,
+        format: String,
+    },
+    owner: {
+        default: null,
+        evn: 'OWNER',
+        nullable: true,
+        format: String,
+    },
+    codePR: {
+        default: null,
+        evn: 'OWNER',
+        nullable: true,
+        format: String,
     },
 });
 

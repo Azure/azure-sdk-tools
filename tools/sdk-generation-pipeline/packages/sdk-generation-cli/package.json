@@ -26,8 +26,8 @@
     "bin": {
         "getRepoName": "dist/getRepoNameCli.js",
         "generateResult": "dist/generateResultCli.js",
-        "resultPublisher": "dist/resultPublisherCli.js",
-        "artifactUploader": "dist/artifactUploaderCli.js"
+        "publishResult": "dist/publishResultCli.js",
+        "uploadArtifact": "dist/uploadArtifactCli.js"
     },
     "dependencies": {
         "@azure/storage-blob": "^12.8.0",

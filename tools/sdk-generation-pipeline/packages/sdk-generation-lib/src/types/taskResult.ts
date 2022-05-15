@@ -1,6 +1,6 @@
-import { GenerateAndBuildOutput } from '../types/taskInputAndOuputSchemaTypes/GenerateAndBuildOutput';
-import { InitOutput } from '../types/taskInputAndOuputSchemaTypes/InitOutput';
-import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
+import { GenerateAndBuildOutput } from './taskInputAndOuputSchemaTypes/GenerateAndBuildOutput';
+import { InitOutput } from './taskInputAndOuputSchemaTypes/InitOutput';
+import { TestOutput } from './taskInputAndOuputSchemaTypes/TestOutput';
 import { getTaskBasicConfig, TaskBasicConfig } from './taskBasicConfig';
 import * as fs from 'fs';
 import { Column, Entity, ObjectIdColumn } from 'typeorm';

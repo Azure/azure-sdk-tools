@@ -3,22 +3,22 @@ import * as fs from 'fs';
 import { Connection, createConnection } from 'typeorm';
 import {
     AzureSDKTaskName,
+    BlobBasicContext,
     CodeGeneration,
     CompletedEvent,
     InProgressEvent,
     logger,
+    MongoConnectContext,
     publishEvent,
     QueuedEvent,
     requireJsonc,
+    ResultBlobPublisher,
+    ResultDBPublisher,
     SDKPipelineStatus,
-    sendSdkGenerationToDB,
-    sendSdkTaskResultToDB,
     StorageType,
     TaskResult,
-    TaskResultEntity,
     Trigger,
     UnifiedPipelineTrigger,
-    uploadLogsAndResult,
 } from '@azure-tools/sdk-generation-lib';
 
 import {
@@ -30,25 +30,42 @@ import {
     ResultPublisherDBResultConfig,
     resultPublisherEventHubConfig,
     ResultPublisherEventHubConfig,
-} from './cliSchema/resultPublisherConfig';
+} from './cliSchema/publishResultConfig';
 
 async function publishBlob() {
     resultPublisherBlobConfig.validate();
     const config: ResultPublisherBlobConfig = resultPublisherBlobConfig.getProperties();
-    await uploadLogsAndResult(
-        config.logsAndResultPath,
-        config.pipelineBuildId,
-        config.taskName as AzureSDKTaskName,
-        config.sdkGenerationName,
-        config.azureStorageBlobSasUrl,
-        config.azureBlobContainerName
-    );
+    const context: BlobBasicContext = {
+        pipelineBuildId: config.pipelineBuildId,
+        sdkGenerationName: config.sdkGenerationName,
+        azureStorageBlobSasUrl: config.azureStorageBlobSasUrl,
+        azureBlobContainerName: config.azureBlobContainerName,
+    };
+    const resultBlobPublisher: ResultBlobPublisher = new ResultBlobPublisher(context);
+    await resultBlobPublisher.uploadLogsAndResult(config.logsAndResultPath, config.taskName as AzureSDKTaskName);
 }
 
-async function publishDB(pipelineStatus: SDKPipelineStatus) {
-    resultPublisherDBCGConfig.validate();
-    const config: ResultPublisherDBCGConfig = resultPublisherDBCGConfig.getProperties();
-    const mongoDbConnection: Connection = await createConnection({
+function initCodegen(config: ResultPublisherDBCGConfig, pipelineStatus: SDKPipelineStatus): CodeGeneration {
+    const cg: CodeGeneration = new CodeGeneration();
+    cg.name = config.sdkGenerationName;
+    cg.service = config.service;
+    cg.serviceType = config.serviceType;
+    cg.tag = config.tag;
+    cg.sdk = config.language;
+    cg.swaggerRepo = config.swaggerRepo;
+    cg.sdkRepo = config.sdkRepo;
+    cg.codegenRepo = config.codegenRepo;
+    cg.owner = config.owner ? config.owner : '';
+    cg.type = config.triggerType;
+    cg.status = pipelineStatus;
+    cg.lastPipelineBuildID = config.pipelineBuildId;
+    cg.swaggerPR = config.swaggerRepo;
+
+    return cg;
+}
+
+function initMongoConnectContext(config: ResultPublisherDBCGConfig): MongoConnectContext {
+    const mongoConnectContext: MongoConnectContext = {
         name: 'mongodb',
         type: 'mongodb',
         host: config.mongodb.server,
@@ -59,22 +76,20 @@ async function publishDB(pipelineStatus: SDKPipelineStatus) {
         ssl: config.mongodb.ssl,
         synchronize: true,
         logging: true,
-        entities: [TaskResultEntity, CodeGeneration],
-    });
+    };
 
-    await sendSdkGenerationToDB(
-        mongoDbConnection,
-        config.pipelineBuildId,
-        config.sdkGenerationName,
-        config.service,
-        config.serviceType,
-        config.language,
-        config.swaggerRepo,
-        config.sdkRepo,
-        config.codegenRepo,
-        config.triggerType,
-        pipelineStatus
-    );
+    return mongoConnectContext;
+}
+
+async function publishDB(pipelineStatus: SDKPipelineStatus) {
+    resultPublisherDBCGConfig.validate();
+    const config: ResultPublisherDBCGConfig = resultPublisherDBCGConfig.getProperties();
+    const publisher: ResultDBPublisher = new ResultDBPublisher();
+    const cg: CodeGeneration = initCodegen(config, pipelineStatus);
+    const mongoConnectContext: MongoConnectContext = initMongoConnectContext(config);
+
+    await publisher.connectDB(mongoConnectContext);
+    await publisher.sendSdkGenerationToDB(cg);
 
     if (pipelineStatus === 'completed') {
         resultPublisherDBResultConfig.validate();
@@ -90,15 +105,13 @@ async function publishDB(pipelineStatus: SDKPipelineStatus) {
             }
         }
 
-        await sendSdkTaskResultToDB(resultConfig.pipelineBuildId, mongoDbConnection, taskResults);
+        await publisher.sendSdkTaskResultToDB(resultConfig.pipelineBuildId, taskResults);
     }
 
-    await mongoDbConnection.close();
+    await publisher.close();
 }
 
-async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
-    resultPublisherEventHubConfig.validate();
-    const config: ResultPublisherEventHubConfig = resultPublisherEventHubConfig.getProperties();
+function getTrigger(config: ResultPublisherEventHubConfig): any {
     let trigger: any = undefined;
     if (
         config.pipelineTriggerSource &&
@@ -116,9 +129,18 @@ async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
             unifiedPipelineTaskKey: config.unifiedPipelineTaskKey,
             unifiedPipelineSubTaskKey: config.unifiedPipelineSubTaskKey,
         } as UnifiedPipelineTrigger;
-    } else {
+    } else if (config.triggerName) {
         trigger = { name: config.triggerName } as Trigger;
+    } else {
+        throw new Error(`Both UnifiedPipelineTrigger and Trigger ard invalid!`);
     }
+    return trigger;
+}
+
+async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
+    resultPublisherEventHubConfig.validate();
+    const config: ResultPublisherEventHubConfig = resultPublisherEventHubConfig.getProperties();
+    let trigger: any = getTrigger(config);
 
     switch (pipelineStatus) {
         case 'queued':

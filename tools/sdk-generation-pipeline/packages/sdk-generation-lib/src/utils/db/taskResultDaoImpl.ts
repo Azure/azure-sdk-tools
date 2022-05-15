@@ -29,7 +29,7 @@ export class TaskResultDaoImpl implements TaskResultDao {
                 pipelineBuildId: pipelineBuildId,
                 taskResult: taskResult,
             },
-            { upsert: true },
+            { upsert: true }
         );
     }
 }

@@ -17,7 +17,7 @@ export async function executeTask(
     taskName: AzureSDKTaskName,
     runScriptOptions: RunOptions,
     cwd: string,
-    inputJson?: GenerateAndBuildInput | MockTestInput | LiveTestInput,
+    inputJson?: GenerateAndBuildInput | MockTestInput | LiveTestInput
 ): Promise<{ taskResult: TaskResult; output: InitOutput | GenerateAndBuildOutput | TestOutput | undefined }> {
     const inputJsonPath = '/tmp/input.json';
     const outputJsonPath = '/tmp/output.json';
@@ -41,12 +41,26 @@ export async function executeTask(
     if (fs.existsSync(outputJsonPath)) {
         const outputJson = requireJsonc(outputJsonPath);
         return {
-            taskResult: createTaskResult("", taskName, execResult, config.pipeFullLog, runScriptOptions.logFilter, outputJson),
+            taskResult: createTaskResult(
+                '',
+                taskName,
+                execResult,
+                config.pipeFullLog,
+                runScriptOptions.logFilter,
+                outputJson
+            ),
             output: outputJson,
         };
     } else {
         return {
-            taskResult: createTaskResult("", taskName, execResult, config.pipeFullLog, runScriptOptions.logFilter, undefined),
+            taskResult: createTaskResult(
+                '',
+                taskName,
+                execResult,
+                config.pipeFullLog,
+                runScriptOptions.logFilter,
+                undefined
+            ),
             output: undefined,
         };
     }

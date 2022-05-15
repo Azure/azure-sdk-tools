@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
 import {
-    AzureBlobClient,
+    ArtifactBlobUploader,
+    ArtifactBlobUploaderContext,
+    ArtifactPipelineUploader,
+    ArtifactPipelineUploaderContext,
     GenerateAndBuildOutput,
     getGenerateAndBuildOutput,
     logger,
-    publishArtifacts,
-    publishSourceCode,
     requireJsonc,
-    uploadArtifacts,
-    uploadSourceCode,
 } from '@azure-tools/sdk-generation-lib';
 
 import {
@@ -17,7 +16,7 @@ import {
     UploadBlobConfig,
     uploadPipelineArtifactConfig,
     UploadPipelineArtifactConfig,
-} from './cliSchema/artifactUploaderConfig';
+} from './cliSchema/uploadArtifactConfig';
 
 async function main() {
     const args = parseArgs(process.argv);
@@ -31,17 +30,19 @@ async function main() {
                 throw new Error(`generateAndBuildOutputFile:${config.generateAndBuildOutputFile} isn's exist!`);
             }
 
-            const azureBlobClient = new AzureBlobClient(config.azureStorageBlobSasUrl, config.azureBlobContainerName);
+            const blobContext: ArtifactBlobUploaderContext = {
+                azureStorageBlobSasUrl: config.azureStorageBlobSasUrl,
+                azureBlobContainerName: config.azureBlobContainerName,
+                language: config.language,
+                pipelineBuildId: config.pipelineBuildId,
+            };
+            const artifactBlobUploader: ArtifactBlobUploader = new ArtifactBlobUploader(blobContext);
             const generateAndBuildOutputJson: GenerateAndBuildOutput = getGenerateAndBuildOutput(
                 requireJsonc(config.generateAndBuildOutputFile)
             );
-            await uploadSourceCode(
-                azureBlobClient,
-                config.language,
-                config.pipelineBuildId,
-                generateAndBuildOutputJson
-            );
-            await uploadArtifacts(azureBlobClient, config.language, config.pipelineBuildId, generateAndBuildOutputJson);
+
+            await artifactBlobUploader.uploadSourceCode(generateAndBuildOutputJson);
+            await artifactBlobUploader.uploadArtifacts(generateAndBuildOutputJson);
             break;
         case 'pipelineArtifact':
             uploadPipelineArtifactConfig.validate();
@@ -50,19 +51,17 @@ async function main() {
                 throw new Error(`generateAndBuildOutputFile:${artifactConfig.generateAndBuildOutputFile} isn's exist!`);
             }
 
+            const pipelineContext: ArtifactPipelineUploaderContext = {
+                artifactDir: artifactConfig.artifactDir,
+                language: artifactConfig.language,
+            };
+            const artifactPipelineUploader: ArtifactPipelineUploader = new ArtifactPipelineUploader(pipelineContext);
             const pipelineGenerateAndBuildOutputJson: GenerateAndBuildOutput = getGenerateAndBuildOutput(
                 requireJsonc(artifactConfig.generateAndBuildOutputFile)
             );
-            await publishSourceCode(
-                artifactConfig.artifactDir,
-                artifactConfig.language,
-                pipelineGenerateAndBuildOutputJson
-            );
-            await publishArtifacts(
-                artifactConfig.artifactDir,
-                artifactConfig.language,
-                pipelineGenerateAndBuildOutputJson
-            );
+
+            await artifactPipelineUploader.publishSourceCode(pipelineGenerateAndBuildOutputJson);
+            await artifactPipelineUploader.publishArtifacts(pipelineGenerateAndBuildOutputJson);
             break;
         default:
             throw new Error(`unknown upload type ${uploadTypt}!`);

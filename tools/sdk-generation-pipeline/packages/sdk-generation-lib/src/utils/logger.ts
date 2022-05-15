@@ -1,5 +1,5 @@
 import * as winston from 'winston';
-import {getTaskBasicConfig, TaskBasicConfig} from "../types/taskBasicConfig";
+import { getTaskBasicConfig, TaskBasicConfig } from '../types/taskBasicConfig';
 
 function getLogger() {
     const config: TaskBasicConfig = getTaskBasicConfig.getProperties();
@@ -13,7 +13,7 @@ function getLogger() {
             cmderr: 8, // Command stdout
             info: 15,
             endsection: 20,
-            debug: 50
+            debug: 50,
         },
         colors: {
             error: 'red',
@@ -24,12 +24,12 @@ function getLogger() {
             section: 'magenta bold',
             endsection: 'magenta bold',
             command: 'cyan bold',
-            debug: 'blue'
-        }
-    }
+            debug: 'blue',
+        },
+    };
 
     const logger = winston.createLogger({
-        levels: sdkAutoLogLevels.levels
+        levels: sdkAutoLogLevels.levels,
     });
 
     type WinstonInfo = {
@@ -39,43 +39,47 @@ function getLogger() {
         storeLog?: boolean;
     };
 
-    logger.add(new winston.transports.File({
-        level: 'info',
-        filename: config.pipeFullLog,
-        options: { flags: 'w' },
-        format: winston.format.combine(
-            winston.format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
-            winston.format.printf((info: WinstonInfo) => {
-                const msg = `${info.timestamp} ${info.level} \t${info.message}`;
-                return msg;
-            })
-        )
-    }));
+    logger.add(
+        new winston.transports.File({
+            level: 'info',
+            filename: config.pipeFullLog,
+            options: { flags: 'w' },
+            format: winston.format.combine(
+                winston.format.timestamp({ format: 'YYYY-MM-DD hh:mm:ss' }),
+                winston.format.printf((info: WinstonInfo) => {
+                    const msg = `${info.timestamp} ${info.level} \t${info.message}`;
+                    return msg;
+                })
+            ),
+        })
+    );
 
-    logger.add(new winston.transports.Console({
-        level: 'endsection',
-        format: winston.format.combine(
-            winston.format.colorize({ colors: sdkAutoLogLevels.colors }),
-            winston.format.timestamp({ format: 'YYYY-MM-DD hh:mm:ss' }),
-            winston.format.printf((info: WinstonInfo) => {
-                const {level} = info;
-                let msg = `${info.timestamp} ${info.level} \t${info.message}`;
-                switch (level) {
-                    case 'error':
-                    case 'debug':
-                    case 'command':
-                        msg = `##[${level}] ${msg}`;
-                    case 'warn':
-                        msg = `##[warning] ${msg}`;
-                    case 'section':
-                        msg = `##[group] ${info.message}`;
-                    case 'endsection':
-                        msg = `##[endgroup] ${info.message}`;
-                }
-                return msg;
-            })
-        )
-    }))
+    logger.add(
+        new winston.transports.Console({
+            level: 'endsection',
+            format: winston.format.combine(
+                winston.format.colorize({ colors: sdkAutoLogLevels.colors }),
+                winston.format.timestamp({ format: 'YYYY-MM-DD hh:mm:ss' }),
+                winston.format.printf((info: WinstonInfo) => {
+                    const { level } = info;
+                    let msg = `${info.timestamp} ${info.level} \t${info.message}`;
+                    switch (level) {
+                        case 'error':
+                        case 'debug':
+                        case 'command':
+                            msg = `##[${level}] ${msg}`;
+                        case 'warn':
+                            msg = `##[warning] ${msg}`;
+                        case 'section':
+                            msg = `##[group] ${info.message}`;
+                        case 'endsection':
+                            msg = `##[endgroup] ${info.message}`;
+                    }
+                    return msg;
+                })
+            ),
+        })
+    );
     return logger;
 }
 

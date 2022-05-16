@@ -568,7 +568,7 @@ func (testsuite *MockTestSuite) SetupSuite() {
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
 
-	testsuite.cred = &MockCredential{}
+	testsuite.cred = &testutil.FakeCredential{}
 
 	testsuite.options = arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
@@ -818,14 +818,7 @@ func (testsuite *MockTestSuite) TestOperations_List() {ctx := context.Background
             testsuite.Require().NoError(err, \\"Failed to advance page for example specification/agrifood/resource-manager/Microsoft.AgFoodPlatform/preview/2020-05-12-preview/examples/Operations_List.json\\")
         }
 }
-
-
-type MockCredential struct {
-}
-
-func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
-	return &azcore.AccessToken{Token: \\"MockToken\\", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
-}",
+",
 }
 `;
 

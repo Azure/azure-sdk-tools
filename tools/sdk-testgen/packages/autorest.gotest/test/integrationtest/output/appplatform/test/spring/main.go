@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -241,7 +240,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = servicesClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = servicesClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -273,7 +272,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = servicesClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = servicesClientUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -337,7 +336,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = certificatesClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = certificatesClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -385,7 +384,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = configServersClientValidateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = configServersClientValidateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -410,7 +409,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = configServersClientUpdatePutResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = configServersClientUpdatePutResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -432,7 +431,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = configServersClientUpdatePatchResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = configServersClientUpdatePatchResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -465,7 +464,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = monitoringSettingsClientUpdatePutResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = monitoringSettingsClientUpdatePutResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -492,7 +491,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = monitoringSettingsClientUpdatePatchResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = monitoringSettingsClientUpdatePatchResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -525,7 +524,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -579,7 +578,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -615,7 +614,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -646,7 +645,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -688,7 +687,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = bindingsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = bindingsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -714,7 +713,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = bindingsClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = bindingsClientUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -755,7 +754,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = bindingsClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = bindingsClientDeleteResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -793,7 +792,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = customDomainsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = customDomainsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -814,7 +813,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = customDomainsClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = customDomainsClientUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -951,7 +950,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -975,7 +974,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -991,7 +990,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientRestartResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientRestartResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1007,7 +1006,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientStopResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientStopResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1023,7 +1022,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientStartResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientStartResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1097,7 +1096,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientDeleteResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1113,7 +1112,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = customDomainsClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = customDomainsClientDeleteResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1128,7 +1127,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientDeleteResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1143,7 +1142,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = certificatesClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = certificatesClientDeleteResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1156,7 +1155,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = servicesClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = servicesClientDeleteResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1282,7 +1281,7 @@ func deleteResourceGroup() error {
 	if err != nil {
 		panic(err)
 	}
-	_, err = pollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = pollerResponse.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1311,7 +1310,7 @@ func createDeployment(deploymentName string, deployment *armresources.Deployment
 	if err != nil {
 		panic(err)
 	}
-	res, err := poller.PollUntilDone(ctx, 10*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}

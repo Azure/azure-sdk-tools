@@ -189,7 +189,7 @@ func microsoftSignalrserviceBasicCrudSample() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = virtualMachinesClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
+	_, err = virtualMachinesClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -235,7 +235,7 @@ func deleteResourceGroup() error {
 	if err != nil {
 		panic(err)
 	}
-	_, err = pollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = pollerResponse.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -264,7 +264,7 @@ func createDeployment(deploymentName string, deployment *armresources.Deployment
 	if err != nil {
 		panic(err)
 	}
-	res, err := poller.PollUntilDone(ctx, 10*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	if err != nil {
 		panic(err)
 	}

@@ -15,7 +15,6 @@ import (
 
 	"encoding/json"
 	"reflect"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
@@ -44,7 +43,7 @@ func (testsuite *MockTestSuite) SetupSuite() {
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
 
-	testsuite.cred = &MockCredential{}
+	testsuite.cred = &testutil.FakeCredential{}
 
 	testsuite.options = arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
@@ -162,7 +161,7 @@ func (testsuite *MockTestSuite) TestServices_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.ServiceResource{
@@ -250,7 +249,7 @@ func (testsuite *MockTestSuite) TestServices_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json")
 	// Response check
 	exampleRes = test.ServiceResource{
@@ -326,7 +325,7 @@ func (testsuite *MockTestSuite) TestServices_Delete() {
 		"myservice",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json")
 }
 
@@ -354,7 +353,7 @@ func (testsuite *MockTestSuite) TestServices_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json")
 	// Response check
 	exampleRes := test.ServiceResource{
@@ -753,7 +752,7 @@ func (testsuite *MockTestSuite) TestConfigServers_UpdatePut() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json")
 	// Response check
 	exampleRes := test.ConfigServerResource{
@@ -804,7 +803,7 @@ func (testsuite *MockTestSuite) TestConfigServers_UpdatePatch() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json")
 	// Response check
 	exampleRes := test.ConfigServerResource{
@@ -851,7 +850,7 @@ func (testsuite *MockTestSuite) TestConfigServers_Validate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json")
 	// Response check
 	exampleRes := test.ConfigServerSettingsValidateResult{
@@ -919,7 +918,7 @@ func (testsuite *MockTestSuite) TestMonitoringSettings_UpdatePut() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json")
 	// Response check
 	exampleRes := test.MonitoringSettingResource{
@@ -963,7 +962,7 @@ func (testsuite *MockTestSuite) TestMonitoringSettings_UpdatePatch() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json")
 	// Response check
 	exampleRes := test.MonitoringSettingResource{
@@ -1070,7 +1069,7 @@ func (testsuite *MockTestSuite) TestApps_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.AppResource{
@@ -1123,7 +1122,7 @@ func (testsuite *MockTestSuite) TestApps_Delete() {
 		"myapp",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json")
 }
 
@@ -1162,7 +1161,7 @@ func (testsuite *MockTestSuite) TestApps_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json")
 	// Response check
 	exampleRes := test.AppResource{
@@ -1350,7 +1349,7 @@ func (testsuite *MockTestSuite) TestBindings_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.BindingResource{
@@ -1392,7 +1391,7 @@ func (testsuite *MockTestSuite) TestBindings_Delete() {
 		"mybinding",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json")
 }
 
@@ -1420,7 +1419,7 @@ func (testsuite *MockTestSuite) TestBindings_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json")
 	// Response check
 	exampleRes := test.BindingResource{
@@ -1554,7 +1553,7 @@ func (testsuite *MockTestSuite) TestCertificates_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.CertificateResource{
@@ -1598,7 +1597,7 @@ func (testsuite *MockTestSuite) TestCertificates_Delete() {
 		"mycertificate",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json")
 }
 
@@ -1702,7 +1701,7 @@ func (testsuite *MockTestSuite) TestCustomDomains_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.CustomDomainResource{
@@ -1737,7 +1736,7 @@ func (testsuite *MockTestSuite) TestCustomDomains_Delete() {
 		"mydomain.com",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json")
 }
 
@@ -1762,7 +1761,7 @@ func (testsuite *MockTestSuite) TestCustomDomains_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json")
 	// Response check
 	exampleRes := test.CustomDomainResource{
@@ -1914,7 +1913,7 @@ func (testsuite *MockTestSuite) TestDeployments_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.DeploymentResource{
@@ -1977,7 +1976,7 @@ func (testsuite *MockTestSuite) TestDeployments_Delete() {
 		"mydeployment",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json")
 }
 
@@ -2006,7 +2005,7 @@ func (testsuite *MockTestSuite) TestDeployments_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json")
 	// Response check
 	exampleRes := test.DeploymentResource{
@@ -2198,7 +2197,7 @@ func (testsuite *MockTestSuite) TestDeployments_Start() {
 		"mydeployment",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json")
 }
 
@@ -2217,7 +2216,7 @@ func (testsuite *MockTestSuite) TestDeployments_Stop() {
 		"mydeployment",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json")
 }
 
@@ -2236,7 +2235,7 @@ func (testsuite *MockTestSuite) TestDeployments_Restart() {
 		"mydeployment",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json")
 }
 
@@ -2355,11 +2354,4 @@ func (testsuite *MockTestSuite) TestSKUs_List() {
 			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
-}
-
-type MockCredential struct {
-}
-
-func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
-	return &azcore.AccessToken{Token: "MockToken", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
 }

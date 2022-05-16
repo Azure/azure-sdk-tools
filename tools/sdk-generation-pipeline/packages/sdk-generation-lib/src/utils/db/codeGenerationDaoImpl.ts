@@ -17,7 +17,7 @@ export class CodeGenerationDaoImpl implements CodeGenerationDao {
 
     public async submitCodeGeneration(codegen: CodeGeneration): Promise<void> {
         // findOneAndReplace will not trigger BeforeInsert and BeforeUpdate event, so validate here
-        codegen.validate();
+        await codegen.validate();
         try {
             await this.repo.findOneAndReplace({ name: codegen.name }, codegen, { upsert: true });
         } catch (e) {

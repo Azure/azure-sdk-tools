@@ -21,7 +21,10 @@ async function initDaoTest() {
     });
 }
 
-beforeAll(initDaoTest);
+beforeAll(async (done) => {
+    await initDaoTest();
+    done();
+});
 
 test('dao test submitCodeGeneration and getCodeGenerationByName1', async () => {
     const cg: CodeGeneration = new CodeGeneration();
@@ -141,11 +144,11 @@ test('dao test submitCodeGeneration and getCodeGenerationByName3', async () => {
 
     await codeGenerationDao.deleteCodeGenerationByName(cg.name);
     cg.name = null;
+
     // one codeGen can't submit twice, unless delete the first one
     // class-validator throw a array(not an error) and jest can't catch it, so use toBeTruthy
-    await expect(codeGenerationDao.submitCodeGeneration(cg)).rejects.toBeTruthy();
+    await expect(codeGenerationDao.submitCodeGeneration(cg)).rejects.toThrow();
     cg.name = 'test1c';
-
     // next cases check columns which can't be null
     await codeGenerationDao.deleteCodeGenerationByName(cg.name);
     cg.service = null;
@@ -427,4 +430,7 @@ async function destroyDaoTest() {
     await mongoDbConnection.close();
 }
 
-afterAll(destroyDaoTest);
+afterAll(async (done) => {
+    await destroyDaoTest();
+    done();
+});

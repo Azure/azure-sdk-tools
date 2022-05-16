@@ -6,7 +6,11 @@ export class CodeGeneration {
     @BeforeInsert()
     @BeforeUpdate()
     async validate() {
-        await validateOrReject(this);
+        try {
+            await validateOrReject(this);
+        } catch (e) {
+            throw new Error(JSON.stringify(e, null, 2));
+        }
     }
     @ObjectIdColumn()
     id: number;

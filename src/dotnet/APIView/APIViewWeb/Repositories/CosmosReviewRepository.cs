@@ -130,7 +130,7 @@ namespace APIViewWeb
         }
 
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount)> GetReviewsAsync(
-            List<string> search, List<string> languages, List<string> tags, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy)
+            List<string> search, List<string> languages, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy)
         {
             (IEnumerable<ReviewModel> Reviews, int TotalCount) result = (Reviews: new List<ReviewModel>(), TotalCount: 0);
 
@@ -149,13 +149,6 @@ namespace APIViewWeb
             {
                 var languagesAsQueryStr = ArrayToQueryString<string>(languages);
                 queryStringBuilder.Append($" AND r.Revisions[0].Files[0].Language IN {languagesAsQueryStr}");
-            }
-
-            // Tags are ServiceNames for now.
-            if (tags != null && tags.Count > 0)
-            {
-                var tagsAsQueryStr = ArrayToQueryString<string>(tags);
-                queryStringBuilder.Append($" AND (r.ServiceName IN {tagsAsQueryStr} OR r.PackageDisplayName IN {tagsAsQueryStr})");
             }
 
             if (isClosed != null)

@@ -43,7 +43,7 @@ export class DockerContext {
             this.mode = "generateCodesInLocal";
             this.validateSpecRepo();
             this.validateReadmeMdPath();
-            this.validatesdk();
+            this.validateSdk();
         } else {
             this.logger.info('Preparing environment to generate codes in pipeline');
             this.mode = 'generateCodesInPipeline';
@@ -69,7 +69,7 @@ export class DockerContext {
         }
     }
 
-    private validatesdk() {
+    private validateSdk() {
         const supportedSdk = Object.keys(sdkToRepoMap);
         const unSupportedSdk: string[] = [];
         for (const sdk of this.sdk) {

@@ -41,6 +41,7 @@ RUN bash ./dotnet-install.sh
 RUN bash ./dotnet-install.sh -c 3.1
 ENV DOTNET_ROOT=/root/.dotnet PATH=$PATH:/root/.dotnet
 RUN rm /dotnet-install.sh
+RUN apt-get install -y dotnet-sdk-6.0
 
 # install git
 RUN add-apt-repository ppa:git-core/ppa -y && apt update && apt upgrade -y && apt install git -y
@@ -49,14 +50,23 @@ RUN git config --global credential.helper store && git config --global core.file
 # install depended packages
 RUN pip3 install --upgrade wheel PyYAML requests
 RUN npm install -g typescript
+RUN npm install -g rush
 RUN npm install -g autorest
 
 RUN mkdir "/mock-host" && cd /mock-host && npm install @azure-tools/mock-service-host
 
+# install vscode code server and extensions
+COPY scripts/install-vscode-server.sh /install-vscode-server.sh
+RUN sh /install-vscode-server.sh
+
+# install docker because it's required by test proxy
+RUN curl -fsSL https://test.docker.com -o test-docker.sh && sh test-docker.sh
+
 COPY packages/sdk-generation-cli/*.tgz /pack.tgz
 RUN npm install -g /pack.tgz
 
-COPY entrypoint.sh /entrypoint.sh
-COPY rerun-tasks /usr/bin/rerun-tasks
+COPY scripts/entrypoint.sh /entrypoint.sh
+COPY scripts/rerun-tasks /usr/bin/rerun-tasks
+COPY scripts/change-owner.sh /change-owner.sh
 
 ENTRYPOINT ["bash", "/entrypoint.sh"]

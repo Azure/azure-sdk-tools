@@ -13,4 +13,4 @@ About the schemas of input/output of each task, please refer to [schemas](../tas
 # DOCKER IMAGE LAYERS
 The docker image will be based on Ubuntu, and it also contains all the development environment for different languages of sdk. So the overall structure of layers is the following:
 
-![layer](docker-image-layers.drawio.png)
+![layer](images/docker-image-layers.drawio.png)

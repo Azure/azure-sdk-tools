@@ -2,7 +2,12 @@ We provide a docker image, which can be used to generate code, run mock test. Th
 development, and running in pipeline.
 
 This document only describes the usages of docker image, if you want to get more information about the design details of
-docker, please go to [design specs of docker image]().
+docker, please go to [design specs of docker image](docker-image-design.md).
+
+# Prerequisites
+Please run the command by using wsl docker if you are using Windows machine because:
+1. The docker container will request your local file system frequently, and wsl docker is much faster than running it in Windows directly.
+2. Local `docker.sock` is mounted because you will need to run docker inside the docker container to use test proxy to record your request and response to Azure.
 
 # Docker IMAGE COMMANDS
 
@@ -18,7 +23,7 @@ The docker image will be used in different scenarios:
 Command
 
 ```shell
-docker run -it -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir docker.image:latest --readme={relative_readme} --sdk={sdk_to_generate}
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir docker.image:latest --readme={relative_readme} --sdk={sdk_to_generate}
 ```
 
 Parameter description:
@@ -32,10 +37,10 @@ Parameter description:
 
 Example Command:
 ```shell
-docker run -it -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir docker.image:latest --readme="specification/agrifood/resource-manager/readme.md" --sdk=js,java
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir docker.image:latest --readme="specification/agrifood/resource-manager/readme.md" --sdk=js,java
 ```
 
-After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can use vscode to connect to the docker container for further grow up development. (About how to connect vscode to docker container, please refer to this [MS doc](https://code.visualstudio.com/docs/remote/containers) or [this doc](./vscode-connect-docker-container.md) for simplicity.)
+After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can open your browser and request `http://127.0.0.1:8080/?folder=/work-dir` for further grow up development.
 If you want to re-generate codes after grow up development or changing swagger, please run command in docker container:
 ```shell
 rerun-tasks -readme={relative_readme} --sdk={sdk_to_generate}
@@ -64,21 +69,22 @@ Parameter description:
 
 Then run docker commands to do grow up development:
 ```shell
-docker run -it -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir docker.image:latest
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir docker.image:latest --readme={relative_readme}
 ```
 Parameter description:
 
-| Parameter                | Description                                                                                                                                                             | Example                         |
-|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------|
-| { local_spec_repo_path } | Optional. If you want to change the swagger and re-generate codes, you need to mount the swagger repo. If you only want to do grow up development, no need to mount it. | /home/test/azure-rest-api-specs |
-| { local_work_folder }    | Required. It's used to point to the work folder, which stores all sdk repositories.                                                                                     | /home/test/work-dir             |
+| Parameter                | Description                                                                                                                                                                                           | Example                                           |
+|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
+| { local_spec_repo_path } | Optional. If you want to change the swagger and re-generate codes, you need to mount the swagger repo. If you only want to do grow up development, no need to mount it.                               | /home/test/azure-rest-api-specs                   |
+| { local_work_folder }    | Required. It's used to point to the work folder, which stores all sdk repositories.                                                                                                                   | /home/test/work-dir                               |
+| { relative_readme }      | Optional. It's used to specify the readme.md file and docker image uses it to start mock server. it's the relative path from {path_to_local_spec_repo}. If not specified, mock server will not start. | specification/agrifood/resource-manager/readme.md |
 
 Example Command:
 ```shell
-docker run -it -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir docker.image:latest
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir docker.image:latest
 ```
 
-After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can use vscode to connect to the docker container for further grow up development. (About how to connect vscode to docker container, please refer to this [MS doc](https://code.visualstudio.com/docs/remote/containers) or [this doc](./vscode-connect-docker-container.md) for simplicity.)
+After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can open your browser and request `http://127.0.0.1:8080/?folder=/work-dir` for further grow up development.
 If you want to re-generate codes after grow up development or changing swagger, please run command in docker container:
 ```shell
 rerun-tasks -readme={relative_readme} --sdk={sdk_to_generate}
@@ -95,7 +101,7 @@ Before running docker command, pipeline must prepare the spec repo and sdk repo.
 Command:
 
 ```shell
-docker run -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {output_folder_path}:/tmp/output docker.image:latest --readme={relative_readme}
+docker run -v /var/run/docker.sock:/var/run/docker.sock -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {output_folder_path}:/tmp/output docker.image:latest --readme={relative_readme}
 ```
 
 Parameter description:
@@ -108,7 +114,7 @@ Parameter description:
 
 Example Command:
 ```shell
-docker run -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output docker.image:latest --readme=specification/agrifood/resource-manager/readme.md
+docker run -v /var/run/docker.sock:/var/run/docker.sock -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output docker.image:latest --readme=specification/agrifood/resource-manager/readme.md
 ```
 
 After running the command in pipeline, docker will execute tasks automatically. Also, there will be output files generated, which will be used by pipeline's other job, such as upload codes, parsing logs.

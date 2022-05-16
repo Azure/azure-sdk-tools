@@ -599,6 +599,11 @@ mark {
     text-overflow: ellipsis;
 }
 
+#reviews-table-search-container {
+    min-width: 100px;
+    max-width: 40vw;
+}
+
 .bottom-right-floating {
     position:fixed;
     z-index: 10;

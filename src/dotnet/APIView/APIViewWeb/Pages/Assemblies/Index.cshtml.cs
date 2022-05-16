@@ -35,29 +35,18 @@ namespace APIViewWeb.Pages.Assemblies
             int CurrentPage, int? PreviousPage, int? NextPage) PagedResults { get; set; }
 
         public async Task OnGetAsync(
-            List<string> search = null, List<string> languages=null, List<string> tags=null, List<string> state =null,
+            List<string> search = null, List<string> languages=null, List<string> state =null,
             List<string> status =null, List<string> type =null, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            await RunGetRequest(search, languages, tags, state, status, type, pageNo, pageSize, sortField);
+            await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
         }
 
         public async Task<PartialViewResult> OnGetReviewsPartialAsync(
-            List<string> search = null, List<string> languages = null, List<string> tags = null, List<string> state = null,
+            List<string> search = null, List<string> languages = null, List<string> state = null,
             List<string> status = null, List<string> type = null, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            await RunGetRequest(search, languages, tags, state, status, type, pageNo, pageSize, sortField);
+            await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
             return Partial("_ReviewsPartial", PagedResults);
-        }
-
-        public async Task<PartialViewResult> OnGetReviewsTagsAsync(List<string> selectedTags=null)
-        {
-            var serviceNames = await _manager.GetReviewProprtiesAsync("ServiceName");
-            var packageDisplayNames = await _manager.GetReviewProprtiesAsync("PackageDisplayName");
-            ReviewsProperties.Tags.All = serviceNames.Concat(packageDisplayNames);
-
-            selectedTags = selectedTags.Select(x => HttpUtility.UrlDecode(x)).ToList();
-            ReviewsProperties.Tags.Selected = selectedTags;
-            return Partial("_SelectPickerPartial", ReviewsProperties.Tags);
         }
 
         public async Task<PartialViewResult> OnGetReviewsLanguagesAsync(List<string> selectedLanguages = null)
@@ -89,12 +78,11 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage();
         }
 
-        private async Task RunGetRequest(List<string> search, List<string> languages, List<string> tags,
+        private async Task RunGetRequest(List<string> search, List<string> languages,
             List<string> state, List<string> status, List<string> type, int pageNo, int pageSize, string sortField)
         {
             search = search.Select(x => HttpUtility.UrlDecode(x)).ToList();
             languages = languages.Select(x => HttpUtility.UrlDecode(x)).ToList();
-            tags = tags.Select(x => HttpUtility.UrlDecode(x)).ToList();
             state = state.Select(x => HttpUtility.UrlDecode(x)).ToList();
             status = status.Select(x => HttpUtility.UrlDecode(x)).ToList();
             type = type.Select(x => HttpUtility.UrlDecode(x)).ToList();
@@ -148,13 +136,12 @@ namespace APIViewWeb.Pages.Assemblies
             }
             var offset = (pageNo - 1) * pageSize;
 
-            PagedResults = await _manager.GetPagedReviewsAsync(search, languages, tags, isClosed, filterTypes, isApproved, offset, pageSize, sortField);
+            PagedResults = await _manager.GetPagedReviewsAsync(search, languages, isClosed, filterTypes, isApproved, offset, pageSize, sortField);
         }
     }
 
     public class ReviewsProperties 
     {
-        public (IEnumerable<string> All, IEnumerable<string> Selected) Tags = (All : new List<string>(), Selected: new List<string>());
         public (IEnumerable<string> All, IEnumerable<string> Selected) Languages = (All: new List<string>(), Selected: new List<string>());
         public (IEnumerable<string> All, IEnumerable<string> Selected) State = (All: new List<string> { "Open", "Closed" }, Selected: new List<string>());
         public (IEnumerable<string> All, IEnumerable<string> Selected) Status = (All: new List<string> { "Approved", "Pending" }, Selected: new List<string>());

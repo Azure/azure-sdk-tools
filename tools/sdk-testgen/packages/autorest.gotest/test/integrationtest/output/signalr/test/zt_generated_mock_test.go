@@ -44,7 +44,7 @@ func (testsuite *MockTestSuite) SetupSuite() {
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
 
-	testsuite.cred = &MockCredential{}
+	testsuite.cred = &testutil.FakeCredential{}
 
 	testsuite.options = arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
@@ -628,7 +628,7 @@ func (testsuite *MockTestSuite) TestSignalR_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.ResourceInfo{
@@ -763,7 +763,7 @@ func (testsuite *MockTestSuite) TestSignalR_Delete() {
 		"mySignalRService",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json")
 }
 
@@ -857,7 +857,7 @@ func (testsuite *MockTestSuite) TestSignalR_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json")
 	// Response check
 	exampleRes := test.ResourceInfo{
@@ -1017,7 +1017,7 @@ func (testsuite *MockTestSuite) TestSignalR_RegenerateKey() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json")
 }
 
@@ -1034,7 +1034,7 @@ func (testsuite *MockTestSuite) TestSignalR_Restart() {
 		"mySignalRService",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json")
 }
 
@@ -1247,7 +1247,7 @@ func (testsuite *MockTestSuite) TestSignalRPrivateEndpointConnections_Delete() {
 		"mySignalRService",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json")
 }
 
@@ -1391,7 +1391,7 @@ func (testsuite *MockTestSuite) TestSignalRSharedPrivateLinkResources_CreateOrUp
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json")
 	// Response check
 	exampleRes := test.SharedPrivateLinkResource{
@@ -1427,13 +1427,6 @@ func (testsuite *MockTestSuite) TestSignalRSharedPrivateLinkResources_Delete() {
 		"mySignalRService",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json")
-}
-
-type MockCredential struct {
-}
-
-func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
-	return &azcore.AccessToken{Token: "MockToken", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
 }

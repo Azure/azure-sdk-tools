@@ -44,7 +44,7 @@ func (testsuite *MockTestSuite) SetupSuite() {
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
 
-	testsuite.cred = &MockCredential{}
+	testsuite.cred = &testutil.FakeCredential{}
 
 	testsuite.options = arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
@@ -625,7 +625,7 @@ func (testsuite *MockTestSuite) TestDedicatedHosts_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json")
 	// Response check
 	exampleRes := test.DedicatedHost{
@@ -1101,7 +1101,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json")
 	// Response check
 	exampleRes := test.VirtualMachine{
@@ -1216,7 +1216,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -1332,7 +1332,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -1449,7 +1449,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -1570,7 +1570,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -1703,7 +1703,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -1817,7 +1817,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -1934,7 +1934,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -2052,7 +2052,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -2170,7 +2170,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -2288,7 +2288,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -2397,7 +2397,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -2518,7 +2518,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -2642,7 +2642,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -2743,7 +2743,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -2839,7 +2839,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -2939,7 +2939,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -3053,7 +3053,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -3189,7 +3189,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -3329,7 +3329,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -3456,7 +3456,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -3580,7 +3580,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -3699,7 +3699,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -3819,7 +3819,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -3943,7 +3943,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -4077,7 +4077,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -4202,7 +4202,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -4326,7 +4326,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -4446,7 +4446,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -4558,7 +4558,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -4665,7 +4665,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -4781,7 +4781,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -4909,7 +4909,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json")
 	// Response check
 	exampleRes := test.VirtualMachine{
@@ -5049,7 +5049,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json")
 	// Response check
 	exampleRes = test.VirtualMachine{
@@ -5142,7 +5142,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_Delete() {
 		"myVM",
 		&test.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json")
 }
 
@@ -5635,7 +5635,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_Reapply() {
 		"VMName",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json")
 }
 
@@ -5667,7 +5667,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_Reimage() {
 		},
 		})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json")
 }
 
@@ -5728,7 +5728,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_AssessPatches() {
 		"myVMName",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json")
 	// Response check
 	exampleRes := test.VirtualMachineAssessPatchesResult{
@@ -5796,7 +5796,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_InstallPatches() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json")
 	// Response check
 	exampleRes := test.VirtualMachineInstallPatchesResult{
@@ -5853,7 +5853,7 @@ func (testsuite *MockTestSuite) TestVirtualMachines_RunCommand() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json")
 	// Response check
 	exampleRes := test.RunCommandResult{
@@ -6111,7 +6111,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSet{
@@ -6256,7 +6256,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -6398,7 +6398,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -6536,7 +6536,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -6669,7 +6669,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -6815,7 +6815,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -6989,7 +6989,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -7160,7 +7160,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -7320,7 +7320,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -7477,7 +7477,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -7631,7 +7631,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -7794,7 +7794,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -7951,7 +7951,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -8106,7 +8106,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -8269,7 +8269,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -8443,7 +8443,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -8601,7 +8601,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -8774,7 +8774,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -8944,7 +8944,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -9094,7 +9094,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -9239,7 +9239,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -9393,7 +9393,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -9550,7 +9550,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -9702,7 +9702,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -9868,7 +9868,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json")
 	// Response check
 	exampleRes = test.VirtualMachineScaleSet{
@@ -9989,7 +9989,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSets_Delete() {
 		"myvmScaleSet",
 		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json")
 }
 
@@ -10289,7 +10289,7 @@ func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json")
 	// Response check
 	exampleRes := test.Image{
@@ -10343,7 +10343,7 @@ func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json")
 	// Response check
 	exampleRes = test.Image{
@@ -10399,7 +10399,7 @@ func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json")
 	// Response check
 	exampleRes = test.Image{
@@ -10457,7 +10457,7 @@ func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json")
 	// Response check
 	exampleRes = test.Image{
@@ -10515,7 +10515,7 @@ func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json")
 	// Response check
 	exampleRes = test.Image{
@@ -10573,7 +10573,7 @@ func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json")
 	// Response check
 	exampleRes = test.Image{
@@ -10622,7 +10622,7 @@ func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json")
 	// Response check
 	exampleRes = test.Image{
@@ -10684,7 +10684,7 @@ func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json")
 	// Response check
 	exampleRes = test.Image{
@@ -10749,7 +10749,7 @@ func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json")
 	// Response check
 	exampleRes = test.Image{
@@ -10818,7 +10818,7 @@ func (testsuite *MockTestSuite) TestImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json")
 	// Response check
 	exampleRes = test.Image{
@@ -10879,7 +10879,7 @@ func (testsuite *MockTestSuite) TestImages_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json")
 	// Response check
 	exampleRes := test.Image{
@@ -11443,7 +11443,7 @@ func (testsuite *MockTestSuite) TestRestorePoints_Create() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json")
 }
 
@@ -11579,7 +11579,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSetRollingUpgrades_StartE
 		"{vmss-name}",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json")
 }
 
@@ -11636,7 +11636,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMExtensions_CreateOrU
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSetVMExtension{
@@ -11687,7 +11687,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMExtensions_Update() 
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json")
 	// Response check
 	exampleRes := test.VirtualMachineScaleSetVMExtension{
@@ -11727,7 +11727,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMExtensions_Delete() 
 		"myVMExtension",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json")
 }
 
@@ -11854,7 +11854,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_Delete() {
 		"0",
 		&test.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json")
 }
 
@@ -12140,7 +12140,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMs_RunCommand() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json")
 	// Response check
 	exampleRes := test.RunCommandResult{
@@ -12184,7 +12184,7 @@ func (testsuite *MockTestSuite) TestLogAnalytics_ExportRequestRateByInterval() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json")
 	// Response check
 	exampleRes := test.LogAnalyticsOperationResult{
@@ -12220,7 +12220,7 @@ func (testsuite *MockTestSuite) TestLogAnalytics_ExportThrottledRequests() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json")
 	// Response check
 	exampleRes := test.LogAnalyticsOperationResult{
@@ -12410,7 +12410,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineRunCommands_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json")
 	// Response check
 	exampleRes := test.VirtualMachineRunCommand{
@@ -12469,7 +12469,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineRunCommands_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json")
 	// Response check
 	exampleRes := test.VirtualMachineRunCommand{
@@ -12521,7 +12521,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineRunCommands_Delete() {
 		"myRunCommand",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json")
 }
 
@@ -12665,7 +12665,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMRunCommands_CreateOr
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json")
 	// Response check
 	exampleRes := test.VirtualMachineRunCommand{
@@ -12721,7 +12721,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMRunCommands_Update()
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json")
 	// Response check
 	exampleRes := test.VirtualMachineRunCommand{
@@ -12774,7 +12774,7 @@ func (testsuite *MockTestSuite) TestVirtualMachineScaleSetVMRunCommands_Delete()
 		"myRunCommand",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json")
 }
 
@@ -13279,7 +13279,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json")
 	// Response check
 	exampleRes := test.Disk{
@@ -13324,7 +13324,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13367,7 +13367,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13408,7 +13408,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13449,7 +13449,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13492,7 +13492,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13541,7 +13541,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13587,7 +13587,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13636,7 +13636,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13680,7 +13680,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13724,7 +13724,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13768,7 +13768,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13812,7 +13812,7 @@ func (testsuite *MockTestSuite) TestDisks_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13857,7 +13857,7 @@ func (testsuite *MockTestSuite) TestDisks_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json")
 	// Response check
 	exampleRes := test.Disk{
@@ -13899,7 +13899,7 @@ func (testsuite *MockTestSuite) TestDisks_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13950,7 +13950,7 @@ func (testsuite *MockTestSuite) TestDisks_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -13994,7 +13994,7 @@ func (testsuite *MockTestSuite) TestDisks_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -14030,7 +14030,7 @@ func (testsuite *MockTestSuite) TestDisks_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -14065,7 +14065,7 @@ func (testsuite *MockTestSuite) TestDisks_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json")
 	// Response check
 	exampleRes = test.Disk{
@@ -14453,7 +14453,7 @@ func (testsuite *MockTestSuite) TestSnapshots_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json")
 	// Response check
 	exampleRes := test.Snapshot{
@@ -14494,7 +14494,7 @@ func (testsuite *MockTestSuite) TestSnapshots_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json")
 	// Response check
 	exampleRes = test.Snapshot{
@@ -14534,7 +14534,7 @@ func (testsuite *MockTestSuite) TestSnapshots_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json")
 	// Response check
 	exampleRes = test.Snapshot{
@@ -14839,7 +14839,7 @@ func (testsuite *MockTestSuite) TestDiskEncryptionSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json")
 	// Response check
 	exampleRes := test.DiskEncryptionSet{
@@ -14888,7 +14888,7 @@ func (testsuite *MockTestSuite) TestDiskEncryptionSets_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json")
 	// Response check
 	exampleRes = test.DiskEncryptionSet{
@@ -14940,7 +14940,7 @@ func (testsuite *MockTestSuite) TestDiskEncryptionSets_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json")
 	// Response check
 	exampleRes := test.DiskEncryptionSet{
@@ -14990,7 +14990,7 @@ func (testsuite *MockTestSuite) TestDiskEncryptionSets_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json")
 	// Response check
 	exampleRes = test.DiskEncryptionSet{
@@ -15047,7 +15047,7 @@ func (testsuite *MockTestSuite) TestDiskEncryptionSets_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json")
 	// Response check
 	exampleRes = test.DiskEncryptionSet{
@@ -15137,7 +15137,7 @@ func (testsuite *MockTestSuite) TestDiskEncryptionSets_Delete() {
 		"myDiskEncryptionSet",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json")
 }
 
@@ -15330,7 +15330,7 @@ func (testsuite *MockTestSuite) TestDiskAccesses_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json")
 	// Response check
 	exampleRes := test.DiskAccess{
@@ -15369,7 +15369,7 @@ func (testsuite *MockTestSuite) TestDiskAccesses_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json")
 	// Response check
 	exampleRes := test.DiskAccess{
@@ -15486,7 +15486,7 @@ func (testsuite *MockTestSuite) TestDiskAccesses_Delete() {
 		"myDiskAccess",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json")
 }
 
@@ -15687,7 +15687,7 @@ func (testsuite *MockTestSuite) TestDiskAccesses_UpdateAPrivateEndpointConnectio
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json")
 	// Response check
 	exampleRes := test.PrivateEndpointConnection{
@@ -15765,7 +15765,7 @@ func (testsuite *MockTestSuite) TestDiskAccesses_DeleteAPrivateEndpointConnectio
 		"myPrivateEndpointConnection",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json")
 }
 
@@ -15907,7 +15907,7 @@ func (testsuite *MockTestSuite) TestGalleries_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json")
 	// Response check
 	exampleRes := test.Gallery{
@@ -15947,7 +15947,7 @@ func (testsuite *MockTestSuite) TestGalleries_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json")
 	// Response check
 	exampleRes = test.Gallery{
@@ -15986,7 +15986,7 @@ func (testsuite *MockTestSuite) TestGalleries_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json")
 	// Response check
 	exampleRes := test.Gallery{
@@ -16091,7 +16091,7 @@ func (testsuite *MockTestSuite) TestGalleries_Delete() {
 		"myGalleryName",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json")
 }
 
@@ -16195,7 +16195,7 @@ func (testsuite *MockTestSuite) TestGalleryImages_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json")
 	// Response check
 	exampleRes := test.GalleryImage{
@@ -16246,7 +16246,7 @@ func (testsuite *MockTestSuite) TestGalleryImages_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json")
 	// Response check
 	exampleRes := test.GalleryImage{
@@ -16322,7 +16322,7 @@ func (testsuite *MockTestSuite) TestGalleryImages_Delete() {
 		"myGalleryImageName",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json")
 }
 
@@ -16432,7 +16432,7 @@ func (testsuite *MockTestSuite) TestGalleryImageVersions_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json")
 	// Response check
 	exampleRes := test.GalleryImageVersion{
@@ -16570,7 +16570,7 @@ func (testsuite *MockTestSuite) TestGalleryImageVersions_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
@@ -16711,7 +16711,7 @@ func (testsuite *MockTestSuite) TestGalleryImageVersions_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
@@ -16844,7 +16844,7 @@ func (testsuite *MockTestSuite) TestGalleryImageVersions_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
@@ -16985,7 +16985,7 @@ func (testsuite *MockTestSuite) TestGalleryImageVersions_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
@@ -17113,7 +17113,7 @@ func (testsuite *MockTestSuite) TestGalleryImageVersions_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
@@ -17210,7 +17210,7 @@ func (testsuite *MockTestSuite) TestGalleryImageVersions_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json")
 	// Response check
 	exampleRes := test.GalleryImageVersion{
@@ -17297,7 +17297,7 @@ func (testsuite *MockTestSuite) TestGalleryImageVersions_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json")
 	// Response check
 	exampleRes = test.GalleryImageVersion{
@@ -17671,7 +17671,7 @@ func (testsuite *MockTestSuite) TestGalleryImageVersions_Delete() {
 		"1.0.0",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json")
 }
 
@@ -17778,7 +17778,7 @@ func (testsuite *MockTestSuite) TestGalleryApplications_CreateOrUpdate() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json")
 	// Response check
 	exampleRes := test.GalleryApplication{
@@ -17824,7 +17824,7 @@ func (testsuite *MockTestSuite) TestGalleryApplications_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json")
 	// Response check
 	exampleRes := test.GalleryApplication{
@@ -17894,7 +17894,7 @@ func (testsuite *MockTestSuite) TestGalleryApplications_Delete() {
 		"myGalleryApplicationName",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json")
 }
 
@@ -17973,7 +17973,7 @@ func (testsuite *MockTestSuite) TestGalleryApplicationVersions_CreateOrUpdate() 
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json")
 	// Response check
 	exampleRes := test.GalleryApplicationVersion{
@@ -18050,7 +18050,7 @@ func (testsuite *MockTestSuite) TestGalleryApplicationVersions_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json")
 	// Response check
 	exampleRes := test.GalleryApplicationVersion{
@@ -18216,7 +18216,7 @@ func (testsuite *MockTestSuite) TestGalleryApplicationVersions_Delete() {
 		"1.0.0",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json")
 }
 
@@ -18305,7 +18305,7 @@ func (testsuite *MockTestSuite) TestGallerySharingProfile_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json")
 	// Response check
 	exampleRes := test.SharingUpdate{
@@ -18343,7 +18343,7 @@ func (testsuite *MockTestSuite) TestGallerySharingProfile_Update() {
 		},
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json")
 	// Response check
 	exampleRes = test.SharingUpdate{
@@ -18584,7 +18584,7 @@ func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_Delete() {
 		"{cs-name}",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json")
 }
 
@@ -18774,7 +18774,7 @@ func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_Restart() {
 		"{cs-name}",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json")
 }
 
@@ -18792,7 +18792,7 @@ func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_Reimage() {
 		"{cs-name}",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json")
 }
 
@@ -18810,7 +18810,7 @@ func (testsuite *MockTestSuite) TestCloudServiceRoleInstances_Rebuild() {
 		"{cs-name}",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json")
 }
 
@@ -18965,7 +18965,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 		},
 		})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json")
 	// Response check
 	exampleRes := test.CloudService{
@@ -19073,7 +19073,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 		},
 		})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json")
 	// Response check
 	exampleRes = test.CloudService{
@@ -19185,7 +19185,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 		},
 		})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json")
 	// Response check
 	exampleRes = test.CloudService{
@@ -19308,7 +19308,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 		},
 		})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json")
-	res, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json")
 	// Response check
 	exampleRes = test.CloudService{
@@ -19396,7 +19396,7 @@ func (testsuite *MockTestSuite) TestCloudServices_Update() {
 		},
 		})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json")
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json")
 	// Response check
 	exampleRes := test.CloudService{
@@ -19473,7 +19473,7 @@ func (testsuite *MockTestSuite) TestCloudServices_Delete() {
 		"{cs-name}",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json")
 }
 
@@ -19825,7 +19825,7 @@ func (testsuite *MockTestSuite) TestCloudServices_Start() {
 		"{cs-name}",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json")
 }
 
@@ -19842,7 +19842,7 @@ func (testsuite *MockTestSuite) TestCloudServices_PowerOff() {
 		"{cs-name}",
 		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json")
 }
 
@@ -19864,7 +19864,7 @@ func (testsuite *MockTestSuite) TestCloudServices_Restart() {
 		},
 		})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json")
 }
 
@@ -19886,7 +19886,7 @@ func (testsuite *MockTestSuite) TestCloudServices_Reimage() {
 		},
 		})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json")
 }
 
@@ -19908,7 +19908,7 @@ func (testsuite *MockTestSuite) TestCloudServices_Rebuild() {
 		},
 		})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json")
 }
 
@@ -19930,7 +19930,7 @@ func (testsuite *MockTestSuite) TestCloudServices_DeleteInstances() {
 		},
 		})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json")
 }
 
@@ -19948,7 +19948,7 @@ func (testsuite *MockTestSuite) TestCloudServicesUpdateDomain_WalkUpdateDomain()
 		1,
 		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil})
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json")
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json")
 }
 
@@ -20195,11 +20195,4 @@ func (testsuite *MockTestSuite) TestCloudServiceOperatingSystems_ListOSFamilies(
 			testsuite.Failf("Failed to validate response", "Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
-}
-
-type MockCredential struct {
-}
-
-func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
-	return &azcore.AccessToken{Token: "MockToken", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
 }

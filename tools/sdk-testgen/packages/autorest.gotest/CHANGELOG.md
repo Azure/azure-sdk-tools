@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Mon, 25 Apr 2022 08:06:55 GMT and should not be manually modified.
+This log was last generated on Mon, 16 May 2022 01:46:35 GMT and should not be manually modified.
+
+## 4.0.0
+Mon, 16 May 2022 01:46:35 GMT
+
+### Breaking changes
+
+- Align test code with GA core lib.
 
 ## 3.1.2
 Mon, 25 Apr 2022 08:06:55 GMT

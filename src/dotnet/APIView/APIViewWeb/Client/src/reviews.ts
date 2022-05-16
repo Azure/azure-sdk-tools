@@ -7,6 +7,7 @@
   const statusFilter = $( '#status-filter-bootstraps-select' );
   const typeFilter = $( '#type-filter-bootstraps-select' );
   const searchBox = $( '#reviews-table-search-box' );
+  const searchButton = $( '#reviews-search-button' );
   const resetButton = $( '#reset-filter-button' );
 
   // Enable tooltip
@@ -135,6 +136,10 @@
 
   searchBox.on('input', function(e) {
     setTimeout(filterReviews, 300);
+  });
+
+  searchButton.on('click', function() {
+    updateListedReviews({ search : searchBox.val() as string });
   });
 
   resetButton.on('click', function(e) {

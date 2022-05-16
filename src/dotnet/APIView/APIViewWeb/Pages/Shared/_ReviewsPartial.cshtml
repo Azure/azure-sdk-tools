@@ -59,7 +59,7 @@
                                 <a class="review-name align-middle" asp-page="./Review" asp-route-id="@review.ReviewId">@review.DisplayName.Substring(0, @truncationIndex)</a>
                                 @if (review.IsApproved == true)
                                 {
-                                    <span class="badge badge-pill badge-success ml-1 p-1"><i class="fas fa-check-circle"></i> APPROVED</span>
+                                    <i class="fas fa-check-circle text-success ml-2"></i>
                                 }
                             </td>
                             <td class="align-middle border-left pl-3">

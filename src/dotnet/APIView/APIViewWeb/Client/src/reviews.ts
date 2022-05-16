@@ -3,7 +3,6 @@
   const defaultPageSize = 50;
   const reviewsFilterPartial = $( '#reviews-filter-partial' );
   const languageFilter = $( '#language-filter-bootstraps-select' );
-  const tagFilter = $( '#tags-filter-bootstraps-select' );
   const stateFilter = $( '#state-filter-bootstraps-select' );
   const statusFilter = $( '#status-filter-bootstraps-select' );
   const typeFilter = $( '#type-filter-bootstraps-select' );
@@ -30,10 +29,6 @@
 
     languageFilter.children(":selected").each(function() {
       uri = uri + '&languages=' + encodeURIComponent(`${$(this).val()}`);
-    });
-
-    tagFilter.children(":selected").each(function() {
-      uri = uri + '&tags=' + encodeURIComponent(`${$(this).val()}`);
     });
     
     stateFilter.children(":selected").each(function() {
@@ -114,14 +109,13 @@
 
   // Update content of dropdown on page load
   $(document).ready(function() {
-    updateFilterDropDown(tagFilter, "tags");
     updateFilterDropDown(languageFilter, "languages");
     addPaginationEventHandlers();
   });
 
 
   // Update when any dropdown is changed
-  [languageFilter, tagFilter, stateFilter, statusFilter, typeFilter].forEach(function(value, index) {
+  [languageFilter, stateFilter, statusFilter, typeFilter].forEach(function(value, index) {
     value.on('hidden.bs.select', function() {
       updateListedReviews();
     });
@@ -145,7 +139,6 @@
 
   resetButton.on('click', function(e) {
     (<any>languageFilter).selectpicker('deselectAll');
-    (<any>tagFilter).selectpicker('deselectAll');
     (<any>stateFilter).selectpicker('deselectAll');
     (<any>statusFilter).selectpicker('deselectAll');
     (<any>typeFilter).selectpicker('deselectAll');

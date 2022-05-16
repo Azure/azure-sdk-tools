@@ -37,7 +37,7 @@
             var {{resVariable}} {{packageName}}.{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Response
             {%- endif %}
             {%- endif %}
-            {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err = {{pollerVariable}}.PollUntilDone(ctx, 10*time.Second)
+            {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err = {{pollerVariable}}.PollUntilDone(ctx, nil)
             if err != nil {
                 panic(err)
             }

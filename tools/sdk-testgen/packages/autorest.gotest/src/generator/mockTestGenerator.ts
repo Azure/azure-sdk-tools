@@ -58,7 +58,6 @@ export class MockTestDataRender extends BaseDataRender {
         if (isLROOperation(op as any)) {
             example.opName = 'Begin' + example.opName;
             example.isLRO = true;
-            this.context.importManager.add('time');
             example.pollerType = example.operation.language.go.responseEnv.language.go.name;
         } else {
             example.isLRO = false;

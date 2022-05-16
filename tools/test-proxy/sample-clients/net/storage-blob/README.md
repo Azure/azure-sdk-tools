@@ -9,4 +9,5 @@ Invocation Steps:
 kaging/azure-sdk-for-net/nuget/v3/index.json --version 1.0.0-dev*`
 - Run the test proxy `test-proxy`
 - Open the [sln](./Azure.Sdk.Tools.TestProxy.HttpPipelineSample.sln) in a compatible Visual Studio. It has been tested in VS2019/VS2022.
+  - In the debugging configuration, set environment variable `STORAGE_CONNECTION_STRING` to a valid blob storage connection string.
 - Run the application

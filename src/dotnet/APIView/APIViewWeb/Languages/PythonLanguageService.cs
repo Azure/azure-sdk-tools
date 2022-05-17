@@ -31,7 +31,7 @@ namespace APIViewWeb
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
             return $" -m apistub --pkg-path {originalName} --temp-path {tempDirectory}" +
-                $" --out-path {jsonPath} --hide-report";
+                $" --out-path {jsonPath}";
         }
 
         private string GetPythonVirtualEnv(string tempDirectory)

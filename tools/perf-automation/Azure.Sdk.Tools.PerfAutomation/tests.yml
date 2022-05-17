@@ -72,6 +72,10 @@ Services:
         azure-storage-file-share: 12.12.1
         azure-storage-file-datalake: 12.9.0
         reactor-core: 3.4.14
+      - azure-storage-blob: 12.16.1
+        azure-storage-file-share: 12.12.2
+        azure-storage-file-datalake: 12.9.1
+        reactor-core: 3.4.17
       - azure-storage-blob: 12.17.0-beta.1
         azure-storage-file-share: 12.13.0-beta.1
         azure-storage-file-datalake: 12.10.0-beta.1

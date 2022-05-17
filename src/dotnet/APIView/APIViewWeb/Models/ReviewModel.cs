@@ -73,7 +73,6 @@ namespace APIViewWeb
             }
         }
 
-        [JsonIgnore]
         public DateTime LastUpdated => Revisions.LastOrDefault()?.CreationDate ?? CreationDate;
 
         [JsonIgnore]

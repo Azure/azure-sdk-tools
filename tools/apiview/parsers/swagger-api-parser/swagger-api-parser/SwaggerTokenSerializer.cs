@@ -557,7 +557,7 @@ namespace swagger_api_parser
             /// <param name="navigationIdPrefix"></param>
             /// <param name="scopeStart"></param>
             /// <param name="scopeEnd"></param>
-            private void Visit(JsonElement element, SwaggerTree nav = null, string navigationIdPrefix = "", string scopeStart = "{", string scopeEnd = "}")
+            private void Visit(JsonElement element, SwaggerTree nav = null, string navigationIdPrefix = "", string scopeStart = "{ ", string scopeEnd = " }")
             {
                 switch (element.ValueKind)
                 {
@@ -588,7 +588,7 @@ namespace swagger_api_parser
             /// <param name="navigationIdPrefix"></param>
             /// <param name="scopeStart"></param>
             /// <param name="scopeEnd"></param>
-            private void VisitObject(JsonElement obj, SwaggerTree nav, string navigationIdPrefix, string scopeStart = "{ ", string scopeEnd = " }")
+            private void VisitObject(JsonElement obj, SwaggerTree nav, string navigationIdPrefix, string scopeStart = "{", string scopeEnd = "}")
             {
                 bool multiLine = !FitsOnOneLine(obj);
 
@@ -606,12 +606,6 @@ namespace swagger_api_parser
                     // Generate the listing for each property
                     foreach (JsonProperty property in values)
                     {
-                        if (fencepost.RequiresSeparator)
-                        {
-                            _writer.Write(CodeFileTokenKind.Punctuation, ", ");
-                            if (multiLine) { _writer.WriteLine(); }
-                        }
-
                         Boolean IsCurObjCollapsible()
                         {
                             bool isPathScope = nav is {Text: "paths" or "x-ms-paths"};
@@ -620,12 +614,9 @@ namespace swagger_api_parser
                             bool isMethodParameters = nav is {Parent: {IsPath: true}} && property.Name == "parameters";
                             bool isXmsExamples = nav is {Parent: {IsPath: true}} && property.Name == "x-ms-examples";
                             bool isResponses = nav is {Text: "responses"};
-                            return isPathScope || isMethod || isDefinition || isMethodParameters || isResponses|| isXmsExamples;
-                        }
-
-                        if (property.Name == "parameters")
-                        {
-                            Console.WriteLine("parameters");
+                            bool isParameters = nav is {Text: "parameters"};
+                            bool isSecurityDefinitions = nav is {Text: "securityDefinitions"};
+                            return isPathScope || isDefinition || isParameters || isSecurityDefinitions;
                         }
 
                         // Add the property to the current path
@@ -666,23 +657,26 @@ namespace swagger_api_parser
                         // Visit the value
                         if (isCollapsible)
                         {
-                            this._writer.Write(CodeFileTokenKind.Newline, null);
+                            _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
+                            this._writer.WriteLine();
                             this._writer.Write(CodeFileTokenKind.FoldableContentStart, null);
-                            if (property.Value.ValueKind == JsonValueKind.Array)
+                            Visit(property.Value, next, navigationIdPrefix);
+                            if (property.Name != values.Last().Name)
                             {
-                                VisitArray(property.Value, next, navigationIdPrefix, "", "");
+                                _writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                                if (multiLine) { _writer.WriteLine();}
                             }
-                            else
-                            {
-                                Visit(property.Value, next, navigationIdPrefix, "", "");
-                            }
-
                             this._writer.Write(CodeFileTokenKind.FoldableContentEnd, null);
                         }
                         else
                         {
                             _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
                             Visit(property.Value, next, navigationIdPrefix);
+                            if (property.Name != values.Last().Name)
+                            {
+                                _writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                                if (multiLine) { _writer.WriteLine(); }
+                            }
                         }
 
                         // Make $refs linked

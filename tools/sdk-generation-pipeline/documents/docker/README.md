@@ -5,9 +5,7 @@ This document only describes the usages of docker image, if you want to get more
 docker, please go to [design specs of docker image](docker-image-design.md).
 
 # Prerequisites
-Please run the command by using wsl docker if you are using Windows machine because:
-1. The docker container will request your local file system frequently, and wsl docker is much faster than running it in Windows directly.
-2. Local `docker.sock` is mounted because you will need to run docker inside the docker container to use test proxy to record your request and response to Azure.
+Suggest to run the command by using wsl docker if you are using Windows machine because the docker container will request your local file system frequently, and wsl docker is much faster than running it in Windows directly.
 
 # Docker IMAGE COMMANDS
 
@@ -23,7 +21,7 @@ The docker image will be used in different scenarios:
 Command
 
 ```shell
-docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir docker.image:latest --readme={relative_readme} --sdk={sdk_to_generate}
+docker run -it --privileged  -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir docker.image:latest --readme={relative_readme} --sdk={sdk_to_generate}
 ```
 
 Parameter description:
@@ -37,7 +35,7 @@ Parameter description:
 
 Example Command:
 ```shell
-docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir docker.image:latest --readme="specification/agrifood/resource-manager/readme.md" --sdk=js,java
+docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir docker.image:latest --readme="specification/agrifood/resource-manager/readme.md" --sdk=js,java
 ```
 
 After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can open your browser and request `http://127.0.0.1:8080/?folder=/work-dir` for further grow up development.
@@ -69,7 +67,7 @@ Parameter description:
 
 Then run docker commands to do grow up development:
 ```shell
-docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir docker.image:latest --readme={relative_readme}
+docker run -it --privileged  -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir docker.image:latest --readme={relative_readme}
 ```
 Parameter description:
 
@@ -81,7 +79,7 @@ Parameter description:
 
 Example Command:
 ```shell
-docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir docker.image:latest
+docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir docker.image:latest
 ```
 
 After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can open your browser and request `http://127.0.0.1:8080/?folder=/work-dir` for further grow up development.
@@ -101,7 +99,7 @@ Before running docker command, pipeline must prepare the spec repo and sdk repo.
 Command:
 
 ```shell
-docker run -v /var/run/docker.sock:/var/run/docker.sock -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {output_folder_path}:/tmp/output docker.image:latest --readme={relative_readme}
+docker run --privileged  -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {output_folder_path}:/tmp/output docker.image:latest --readme={relative_readme}
 ```
 
 Parameter description:

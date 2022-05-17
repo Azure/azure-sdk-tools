@@ -50,17 +50,23 @@ RUN git config --global credential.helper store && git config --global core.file
 # install depended packages
 RUN pip3 install --upgrade wheel PyYAML requests
 RUN npm install -g typescript
-RUN npm install -g rush
+RUN npm install -g @microsoft/rush
 RUN npm install -g autorest
 
 RUN mkdir "/mock-host" && cd /mock-host && npm install @azure-tools/mock-service-host
+
+# install chrome
+RUN curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y ./google-chrome-stable_current_amd64.deb
+RUN rm google-chrome-stable_current_amd64.deb
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
 # install vscode code server and extensions
 COPY scripts/install-vscode-server.sh /install-vscode-server.sh
 RUN sh /install-vscode-server.sh
 
 # install docker because it's required by test proxy
-RUN curl -fsSL https://test.docker.com -o test-docker.sh && sh test-docker.sh
+RUN curl -fsSL https://test.docker.com -o docker.sh && sh docker.sh
 
 COPY packages/sdk-generation-cli/*.tgz /pack.tgz
 RUN npm install -g /pack.tgz

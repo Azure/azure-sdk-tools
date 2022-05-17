@@ -36,7 +36,7 @@ if ( $confirmation -match "[yY]" ) {
     # index.yaml must be kept up to date, otherwise when helm generates the file, it will not
     # merge it with previous entries, and those packages will become inaccessible as they are no
     # longer index.
-    echo "COMMIT CHANGES MADE TO 'index.yaml'"
+    Write-Host "COMMIT CHANGES MADE TO 'index.yaml'"
 } else {
-    echo "Abort uploading files $files."
+    Write-Host "Abort uploading files $files."
 }

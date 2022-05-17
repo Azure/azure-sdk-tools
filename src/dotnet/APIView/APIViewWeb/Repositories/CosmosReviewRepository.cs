@@ -179,7 +179,7 @@ namespace APIViewWeb
                 result.TotalCount = (await countFeedIterator.ReadNextAsync()).SingleOrDefault();
             }
 
-            queryStringBuilder.Append($" ORDER BY r.{orderBy}, r.Revisions.CreationDate DESC");
+            queryStringBuilder.Append($" ORDER BY r.{orderBy}");
             queryStringBuilder.Append(" OFFSET @offset LIMIT @limit");
 
             var reviews = new List<ReviewModel>();

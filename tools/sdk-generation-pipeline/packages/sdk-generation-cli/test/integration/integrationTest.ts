@@ -28,7 +28,7 @@ async function prepareRepo(currentPath: string, repoName: string) {
             stdio: 'inherit'
         });
     }
-    execSync(`git checkout . && git clean -fd`, {
+    execSync(`git restore --staged . && git restore . && git checkout . && git clean -fd`, {
         cwd: path.join(tmpFolder, repoName),
         stdio: 'inherit'
     });

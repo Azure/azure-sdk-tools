@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,7 +19,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestFuncDecl(t *testing.T) {
-	err := CreateAPIView("./testdata/test_funcDecl/", "./output/")
+	err := CreateAPIView(filepath.Clean("testdata/test_funcDecl"), "output")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +47,7 @@ func TestFuncDecl(t *testing.T) {
 }
 
 func TestInterface(t *testing.T) {
-	err := CreateAPIView("./testdata/test_interface/", "./output/")
+	err := CreateAPIView(filepath.Clean("testdata/test_interface"), "output")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +75,7 @@ func TestInterface(t *testing.T) {
 }
 
 func TestStruct(t *testing.T) {
-	err := CreateAPIView("./testdata/test_struct/", "./output/")
+	err := CreateAPIView(filepath.Clean("testdata/test_struct"), "output")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +103,7 @@ func TestStruct(t *testing.T) {
 }
 
 func TestConst(t *testing.T) {
-	err := CreateAPIView("./testdata/test_const/", "./output/")
+	err := CreateAPIView(filepath.Clean("testdata/test_const"), "output")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -130,7 +131,7 @@ func TestConst(t *testing.T) {
 }
 
 func TestSubpackage(t *testing.T) {
-	review, err := createReview("./testdata/test_subpackage")
+	review, err := createReview(filepath.Clean("testdata/test_subpackage"))
 	require.NoError(t, err)
 	require.Equal(t, "Go", review.Language)
 	require.Equal(t, "test_subpackage", review.Name)
@@ -147,7 +148,9 @@ func TestSubpackage(t *testing.T) {
 	require.Equal(t, 22, len(seen))
 	// 10 exports - 4 methods = 6 nav links expected
 	require.Equal(t, 2, len(review.Navigation))
+	expectedPackages := []string{"test_subpackage", "test_subpackage/subpackage"}
 	for _, nav := range review.Navigation {
+		require.Contains(t, expectedPackages, nav.Text)
 		require.Equal(t, 6, len(nav.ChildItems))
 		for _, item := range nav.ChildItems {
 			require.Contains(t, seen, item.NavigationId)
@@ -156,7 +159,7 @@ func TestSubpackage(t *testing.T) {
 }
 
 func TestDiagnostics(t *testing.T) {
-	review, err := createReview("./testdata/test_diagnostics")
+	review, err := createReview(filepath.Clean("testdata/test_diagnostics"))
 	require.NoError(t, err)
 	require.Equal(t, "Go", review.Language)
 	require.Equal(t, "test_diagnostics", review.Name)
@@ -165,7 +168,7 @@ func TestDiagnostics(t *testing.T) {
 		switch target := diagnostic.TargetID; target {
 		case "test_diagnostics.Alias":
 			require.Equal(t, DiagnosticLevelInfo, diagnostic.Level)
-			require.Equal(t, aliasFor+"test_diagnostics/internal.InternalStruct", diagnostic.Text)
+			require.Equal(t, aliasFor+"internal.InternalStruct", diagnostic.Text)
 		case "test_diagnostics.ExportedStruct":
 			require.Equal(t, DiagnosticLevelError, diagnostic.Level)
 			require.Equal(t, diagnostic.Text, embedsUnexportedStruct+"unexportedStruct")
@@ -179,6 +182,46 @@ func TestDiagnostics(t *testing.T) {
 			t.Fatal("unexpected target " + target)
 		}
 	}
-	require.Equal(t, embedsUnexportedStruct+"unexportedStruct", review.Diagnostics[0].Text)
-	require.Equal(t, DiagnosticLevelError, review.Diagnostics[0].Level)
+}
+
+func TestExternalDefinitionHoisting(t *testing.T) {
+	priorValue := sdkDirName
+	sdkDirName = "testdata"
+	defer func() { sdkDirName = priorValue }()
+
+	review, err := createReview(filepath.Clean("testdata/test_external_alias_exporter"))
+	require.NoError(t, err)
+	require.Equal(t, "Go", review.Language)
+	require.Equal(t, 1, len(review.Diagnostics))
+	require.Equal(t, DiagnosticLevelWarning, review.Diagnostics[0].Level)
+	require.Equal(t, aliasFor+"github.com/Azure/azure-sdk-for-go/sdk/test_external_alias_source.Foo", review.Diagnostics[0].Text)
+	require.Equal(t, 1, len(review.Navigation))
+	require.Equal(t, "test_external_alias_exporter", review.Navigation[0].Text)
+	for _, token := range review.Tokens {
+		if token.Value == "Bar" {
+			return
+		}
+	}
+	t.Fatal("review doesn't contain the aliased struct's definition")
+}
+
+func TestInternalDefinitionHoisting(t *testing.T) {
+	priorValue := sdkDirName
+	sdkDirName = "testdata"
+	defer func() { sdkDirName = priorValue }()
+
+	review, err := createReview(filepath.Clean("testdata/test_alias_export"))
+	require.NoError(t, err)
+	require.Equal(t, "Go", review.Language)
+	require.Equal(t, 1, len(review.Diagnostics))
+	require.Equal(t, DiagnosticLevelInfo, review.Diagnostics[0].Level)
+	require.Equal(t, aliasFor+"internal/exported.Foo", review.Diagnostics[0].Text)
+	require.Equal(t, 1, len(review.Navigation))
+	require.Equal(t, "test_alias_export", review.Navigation[0].Text)
+	for _, token := range review.Tokens {
+		if token.Value == "Bar" {
+			return
+		}
+	}
+	t.Fatal("review doesn't contain the aliased struct's definition")
 }

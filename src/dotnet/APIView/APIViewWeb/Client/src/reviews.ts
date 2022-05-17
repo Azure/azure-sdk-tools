@@ -16,7 +16,7 @@
   // Computes the uri string using the values of search, pagination and various filters
   // Invokes partial page update to list of reviews using ajax
   // Updates the uri displayed on the client
-  function updateListedReviews({ pageNo = 1, pageSize = defaultPageSize, sortField = "Name", search = "" } = {})
+  function updateListedReviews({ pageNo = 1, pageSize = defaultPageSize, search = "" } = {})
   {
     var uri = '?handler=reviewspartial';
 
@@ -46,7 +46,6 @@
 
     uri = uri + '&pageNo=' + encodeURIComponent(pageNo);
     uri = uri + '&pageSize=' + encodeURIComponent(pageSize);
-    uri = uri + '&sortField=' + encodeURIComponent(sortField);
     uri = encodeURI(uri);
 
     $.ajax({
@@ -94,20 +93,6 @@
     });
   }
 
-  function filterReviews(){
-    // highlight matching text using mark.js framework and hide rows that don't match
-    const searchText = (searchBox.val() as string).toUpperCase();
-    const searchContext = $('.review-name') as any;
-    searchContext.closest('tr').removeClass('hidden-row').unmark();
-    if(searchText) {
-      searchContext.mark(searchText, {
-        done: function () {
-          searchContext.not(':has(mark)').closest('tr').addClass('hidden-row');
-        }
-      });
-    }
-  }
-
   // Update content of dropdown on page load
   $(document).ready(function() {
     updateFilterDropDown(languageFilter, "languages");
@@ -122,20 +107,14 @@
     });
   });
 
-  // If already populated from navigating back, filter again
-  if (searchBox.val()) {
-    filterReviews();
-  }
-
   searchBox.on('keypress', function(e) {
-    if (e.key == "Enter" && searchBox.val() != null)
+    var searchQuery = searchBox.val() as string;
+    if (searchQuery.length >= 3 || e.key == "Enter" )
     {
-      updateListedReviews({ search : searchBox.val() as string });
+      setTimeout(function() {
+        updateListedReviews({ search : searchQuery });
+      }, 1000);
     }
-  });
-
-  searchBox.on('input', function(e) {
-    setTimeout(filterReviews, 300);
   });
 
   searchButton.on('click', function() {
@@ -144,7 +123,7 @@
 
   resetButton.on('click', function(e) {
     (<any>languageFilter).selectpicker('deselectAll');
-    (<any>stateFilter).selectpicker('deselectAll');
+    (<any>stateFilter).selectpicker('deselectAll').selectpicker('val', 'Open');
     (<any>statusFilter).selectpicker('deselectAll');
     (<any>typeFilter).selectpicker('deselectAll');
     searchBox.val('');

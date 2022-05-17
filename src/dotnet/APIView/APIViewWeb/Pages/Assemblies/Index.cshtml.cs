@@ -88,10 +88,25 @@ namespace APIViewWeb.Pages.Assemblies
             type = type.Select(x => HttpUtility.UrlDecode(x)).ToList();
 
             // Update selected properties
-            ReviewsProperties.State.Selected = state;
-            ReviewsProperties.Status.Selected = status;
-            ReviewsProperties.Type.Selected = type;
+            if (state.Count() > 0)
+            {
+                ReviewsProperties.State.Selected = state;
+            }
+            else 
+            {
+                state = ReviewsProperties.State.Selected.ToList();
+            }
 
+            if (status.Count() > 0)
+            {
+                ReviewsProperties.Status.Selected = status;
+            }
+
+            if (type.Count() > 0)
+            {
+                ReviewsProperties.Type.Selected = type;
+            }
+            
             bool? isClosed = null;
             // Resolve isClosed value
             if (state.Contains("Open") && !state.Contains("Closed"))
@@ -143,7 +158,7 @@ namespace APIViewWeb.Pages.Assemblies
     public class ReviewsProperties 
     {
         public (IEnumerable<string> All, IEnumerable<string> Selected) Languages = (All: new List<string>(), Selected: new List<string>());
-        public (IEnumerable<string> All, IEnumerable<string> Selected) State = (All: new List<string> { "Open", "Closed" }, Selected: new List<string>());
+        public (IEnumerable<string> All, IEnumerable<string> Selected) State = (All: new List<string> { "Open", "Closed" }, Selected: new List<string> { "Open" });
         public (IEnumerable<string> All, IEnumerable<string> Selected) Status = (All: new List<string> { "Approved", "Pending" }, Selected: new List<string>());
         public (IEnumerable<string> All, IEnumerable<string> Selected) Type = (All: new List<string> { "Manual", "Automatic", "PullRequest" }, Selected: new List<string>());
     }

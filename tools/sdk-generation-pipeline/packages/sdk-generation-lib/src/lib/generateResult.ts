@@ -120,6 +120,7 @@ export function createTaskResult(
                 fail: 0,
                 apiCoverage: 0,
                 codeCoverage: 0,
+                result: taskExeResult,
                 ...commonResult,
             };
         }
@@ -130,6 +131,7 @@ export function createTaskResult(
             fail: testOutput.fail,
             apiCoverage: testOutput.apiCoverage,
             codeCoverage: testOutput.codeCoverage,
+            result: taskExeResult,
             ...commonResult,
         };
         return testTaskResult;

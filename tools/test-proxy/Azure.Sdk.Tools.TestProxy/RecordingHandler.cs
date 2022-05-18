@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
+using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -31,12 +32,22 @@ namespace Azure.Sdk.Tools.TestProxy
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
         private const string SkipRecordingRequestResponse = "request-response";
+        private IAssetsStore _store;
 
-        public RecordingHandler(string targetDirectory)
+        public RecordingHandler(string targetDirectory, IAssetsStore store = null)
         {
             ContextDirectory = targetDirectory;
 
             SetDefaultExtensions();
+
+            if (store != null)
+            {
+                _store = store;
+            }
+            else
+            {
+                _store = new NullStore();
+            }
         }
 
         private static readonly RecordedTestSanitizer defaultSanitizer = new RecordedTestSanitizer();

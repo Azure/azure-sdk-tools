@@ -11,6 +11,6 @@ jobs:
     name: Handle ${{ github.event_name }} ${{ github.event.action }} event
     runs-on: ubuntu-latest
     steps:
-      - uses: benbp/azure-sdk-actions@test
+      - uses: azure/azure-sdk-actions@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

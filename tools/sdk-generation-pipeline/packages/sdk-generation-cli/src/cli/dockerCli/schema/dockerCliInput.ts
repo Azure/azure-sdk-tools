@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-export class DockerCliConfig {
+export class DockerCliInput {
     readmeMdPath: string;
     tag: string;
     sdk: string;
@@ -14,7 +14,7 @@ export class DockerCliConfig {
     dockerLogger: string;
 }
 
-export const dockerCliConfig = convict<DockerCliConfig>({
+export const dockerCliInput = convict<DockerCliInput>({
     readmeMdPath: {
         default: '',
         env: 'README_MD_PATH',

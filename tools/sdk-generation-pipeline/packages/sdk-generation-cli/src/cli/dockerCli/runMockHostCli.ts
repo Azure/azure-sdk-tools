@@ -4,8 +4,8 @@ import { spawn } from "child_process";
 import * as path from "path";
 import { Logger } from "winston";
 import { initializeLogger } from "@azure-tools/sdk-generation-lib";
-import { dockerCliConfig, DockerCliConfig } from "./schema/dockerCliConfig";
-import { dockerMockHostConfig, DockerMockHostConfig } from "./schema/mockHostCliSchema";
+import { dockerCliInput, DockerCliInput } from "./schema/dockerCliInput";
+import { dockerMockHostInput, DockerMockHostInput } from "./schema/mockHostCliInput";
 
 export type DockerMockHostContext = {
     readmeMdPath?: string;
@@ -14,8 +14,8 @@ export type DockerMockHostContext = {
     logger: Logger;
 }
 
-export function initializeDockerMockHostContext(inputParams: DockerMockHostConfig & DockerCliConfig) {
-    const dockerMockHostConfigProperties = dockerMockHostConfig.getProperties();
+export function initializeDockerMockHostContext(inputParams: DockerMockHostInput & DockerCliInput) {
+    const dockerMockHostConfigProperties = dockerMockHostInput.getProperties();
     const dockerMockHostContext: DockerMockHostContext = {
         readmeMdPath: inputParams.readmeMdPath,
         specRepo: inputParams.specRepo,
@@ -26,9 +26,9 @@ export function initializeDockerMockHostContext(inputParams: DockerMockHostConfi
 }
 
 export function runMockHost() {
-    const inputParams: DockerMockHostConfig & DockerCliConfig = {
-        ...dockerCliConfig.getProperties(),
-        ...dockerMockHostConfig.getProperties()
+    const inputParams: DockerMockHostInput & DockerCliInput = {
+        ...dockerCliInput.getProperties(),
+        ...dockerMockHostInput.getProperties()
     }
     const context = initializeDockerMockHostContext(inputParams);
     if (!context.readmeMdPath) {

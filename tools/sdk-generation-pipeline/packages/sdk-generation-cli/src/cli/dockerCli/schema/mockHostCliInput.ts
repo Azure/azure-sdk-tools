@@ -3,12 +3,12 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-export class DockerMockHostConfig {
+export class DockerMockHostInput {
     mockHostLogger: string;
     mockHostPath: string;
 }
 
-export const dockerMockHostConfig = convict<DockerMockHostConfig>({
+export const dockerMockHostInput = convict<DockerMockHostInput>({
     mockHostLogger: {
         default: 'mock-host.log',
         env: 'MOCK_HOST_LOGGER',

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import { DockerCliConfig, dockerCliConfig } from "./schema/dockerCliConfig";
+import { DockerCliInput, dockerCliInput } from "./schema/dockerCliInput";
 import { generateCodesInLocal } from "./core/generateCodesInLocal";
 import { generateCodesInPipeline } from "./core/generateCodesInPipeline";
 import { growUp } from "./core/growUp";
 import { DockerContext } from "./core/DockerContext";
 
 async function main() {
-    const inputParams: DockerCliConfig = dockerCliConfig.getProperties();
+    const inputParams: DockerCliInput = dockerCliInput.getProperties();
     const context: DockerContext = new DockerContext();
     context.initialize(inputParams);
 

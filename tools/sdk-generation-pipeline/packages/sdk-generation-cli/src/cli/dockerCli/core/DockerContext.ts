@@ -1,5 +1,5 @@
 import { Logger } from "winston";
-import { DockerCliConfig } from "../schema/dockerCliConfig";
+import { DockerCliInput } from "../schema/dockerCliInput";
 import { initializeLogger } from "@azure-tools/sdk-generation-lib";
 import path from "path";
 import fs from "fs";
@@ -22,7 +22,7 @@ export class DockerContext {
     * 2. local: grow up
     * 3. pipeline: generate codes
     * */
-    public initialize(inputParams: DockerCliConfig) {
+    public initialize(inputParams: DockerCliInput) {
         this.readmeMdPath = inputParams.readmeMdPath;
         this.tag = inputParams.tag;
         this.sdk = inputParams.sdk?.split(',').map(e => e.trim()).filter(e => e.length > 0);

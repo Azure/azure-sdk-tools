@@ -1,4 +1,4 @@
-import { dockerTaskEngineConfig } from "../schema/dockerTaskEngineConfig";
+import { dockerTaskEngineConfig } from "../schema/dockerTaskEngineInput";
 import {
     addFileLog,
     CodegenToSdkConfig,

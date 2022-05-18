@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
-import { Connection, createConnection } from 'typeorm';
 import {
     AzureSDKTaskName,
     BlobBasicContext,
@@ -9,32 +8,31 @@ import {
     InProgressEvent,
     logger,
     MongoConnectContext,
-    publishEvent,
     QueuedEvent,
     requireJsonc,
     ResultBlobPublisher,
+    ResultEventhubPublisher,
     ResultDBPublisher,
     SDKPipelineStatus,
     StorageType,
     TaskResult,
     Trigger,
-    UnifiedPipelineTrigger,
 } from '@azure-tools/sdk-generation-lib';
 
 import {
-    resultPublisherBlobConfig,
-    ResultPublisherBlobConfig,
-    resultPublisherDBCGConfig,
-    ResultPublisherDBCGConfig,
-    resultPublisherDBResultConfig,
-    ResultPublisherDBResultConfig,
-    resultPublisherEventHubConfig,
-    ResultPublisherEventHubConfig,
+    resultPublisherBlobInput,
+    ResultPublisherBlobInput,
+    resultPublisherDBCGInput,
+    ResultPublisherDBCGInput,
+    resultPublisherDBResultInput,
+    ResultPublisherDBResultInput,
+    resultPublisherEventHubInput,
+    ResultPublisherEventHubInput,
 } from './cliSchema/publishResultConfig';
 
 async function publishBlob() {
-    resultPublisherBlobConfig.validate();
-    const config: ResultPublisherBlobConfig = resultPublisherBlobConfig.getProperties();
+    resultPublisherBlobInput.validate();
+    const config: ResultPublisherBlobInput = resultPublisherBlobInput.getProperties();
     const context: BlobBasicContext = {
         pipelineBuildId: config.pipelineBuildId,
         sdkGenerationName: config.sdkGenerationName,
@@ -45,7 +43,7 @@ async function publishBlob() {
     await resultBlobPublisher.uploadLogsAndResult(config.logsAndResultPath, config.taskName as AzureSDKTaskName);
 }
 
-function initCodegen(config: ResultPublisherDBCGConfig, pipelineStatus: SDKPipelineStatus): CodeGeneration {
+function initCodegen(config: ResultPublisherDBCGInput, pipelineStatus: SDKPipelineStatus): CodeGeneration {
     const cg: CodeGeneration = new CodeGeneration();
     cg.name = config.sdkGenerationName;
     cg.service = config.service;
@@ -64,7 +62,7 @@ function initCodegen(config: ResultPublisherDBCGConfig, pipelineStatus: SDKPipel
     return cg;
 }
 
-function initMongoConnectContext(config: ResultPublisherDBCGConfig): MongoConnectContext {
+function initMongoConnectContext(config: ResultPublisherDBCGInput): MongoConnectContext {
     const mongoConnectContext: MongoConnectContext = {
         name: 'mongodb',
         type: 'mongodb',
@@ -82,8 +80,8 @@ function initMongoConnectContext(config: ResultPublisherDBCGConfig): MongoConnec
 }
 
 async function publishDB(pipelineStatus: SDKPipelineStatus) {
-    resultPublisherDBCGConfig.validate();
-    const config: ResultPublisherDBCGConfig = resultPublisherDBCGConfig.getProperties();
+    resultPublisherDBCGInput.validate();
+    const config: ResultPublisherDBCGInput = resultPublisherDBCGInput.getProperties();
     const publisher: ResultDBPublisher = new ResultDBPublisher();
     const cg: CodeGeneration = initCodegen(config, pipelineStatus);
     const mongoConnectContext: MongoConnectContext = initMongoConnectContext(config);
@@ -92,8 +90,8 @@ async function publishDB(pipelineStatus: SDKPipelineStatus) {
     await publisher.sendSdkGenerationToDB(cg);
 
     if (pipelineStatus === 'completed') {
-        resultPublisherDBResultConfig.validate();
-        const resultConfig: ResultPublisherDBResultConfig = resultPublisherDBResultConfig.getProperties();
+        resultPublisherDBResultInput.validate();
+        const resultConfig: ResultPublisherDBResultInput = resultPublisherDBResultInput.getProperties();
         const taskResultsPathArray = JSON.parse(resultConfig.taskResultsPath);
         const taskResults: TaskResult[] = [];
 
@@ -111,47 +109,29 @@ async function publishDB(pipelineStatus: SDKPipelineStatus) {
     await publisher.close();
 }
 
-function getTrigger(config: ResultPublisherEventHubConfig): any {
-    let trigger: any = undefined;
-    if (
-        config.pipelineTriggerSource &&
-        config.pullRequestNumber &&
-        config.headSha &&
-        config.unifiedPipelineBuildId &&
-        config.unifiedPipelineTaskKey
-    ) {
-        trigger = {
-            name: config.triggerName,
-            source: config.pipelineTriggerSource,
-            pullRequestNumber: config.pullRequestNumber,
-            headSha: config.headSha,
-            unifiedPipelineBuildId: config.unifiedPipelineBuildId,
-            unifiedPipelineTaskKey: config.unifiedPipelineTaskKey,
-            unifiedPipelineSubTaskKey: config.unifiedPipelineSubTaskKey,
-        } as UnifiedPipelineTrigger;
-    } else if (config.triggerName) {
-        trigger = { name: config.triggerName } as Trigger;
-    } else {
-        throw new Error(`Both UnifiedPipelineTrigger and Trigger ard invalid!`);
-    }
+function getTrigger(config: ResultPublisherEventHubInput): Trigger {
+    let trigger: Trigger = JSON.parse(config.trigger);
+
     return trigger;
 }
 
 async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
-    resultPublisherEventHubConfig.validate();
-    const config: ResultPublisherEventHubConfig = resultPublisherEventHubConfig.getProperties();
-    let trigger: any = getTrigger(config);
+    resultPublisherEventHubInput.validate();
+    const config: ResultPublisherEventHubInput = resultPublisherEventHubInput.getProperties();
+    let trigger: Trigger = getTrigger(config);
+
+    const publisher: ResultEventhubPublisher = new ResultEventhubPublisher(config.eventHubConnectionString);
 
     switch (pipelineStatus) {
         case 'queued':
-            await publishEvent(config.eventHubConnectionString, {
+            await publisher.publishEvent({
                 status: 'queued',
                 trigger: trigger,
                 pipelineBuildId: config.pipelineBuildId,
             } as QueuedEvent);
             break;
         case 'in_progress':
-            await publishEvent(config.eventHubConnectionString, {
+            await publisher.publishEvent({
                 status: 'in_progress',
                 trigger: trigger,
                 pipelineBuildId: config.pipelineBuildId,
@@ -162,7 +142,7 @@ async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
                 throw new Error(`Invalid completed event parameter!`);
             }
             const taskResult: TaskResult = requireJsonc(config.resultPath);
-            await publishEvent(config.eventHubConnectionString, {
+            await publisher.publishEvent({
                 status: 'completed',
                 trigger: trigger,
                 pipelineBuildId: config.pipelineBuildId,
@@ -171,6 +151,7 @@ async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
             } as CompletedEvent);
             break;
     }
+    await publisher.close();
 }
 
 async function main() {

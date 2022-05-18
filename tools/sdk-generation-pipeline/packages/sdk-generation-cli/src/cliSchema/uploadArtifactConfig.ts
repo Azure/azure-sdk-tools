@@ -1,12 +1,8 @@
-import * as convict from 'convict';
+import convict from 'convict';
 
-const stringMustHaveLength = (value: string) => {
-    if (value.length === 0) {
-        throw new Error('must not be empty');
-    }
-};
+import { assertNullOrEmpty } from '../utils/validator';
 
-export class UploadBlobConfig {
+export class UploadBlobInput {
     generateAndBuildOutputFile: string;
     pipelineBuildId: string;
     language: string;
@@ -14,54 +10,53 @@ export class UploadBlobConfig {
     azureBlobContainerName: string;
 }
 
-export const uploadBlobConfig = convict<UploadBlobConfig>({
+export const uploadBlobInput = convict<UploadBlobInput>({
     generateAndBuildOutputFile: {
-        default: '',
-        format: stringMustHaveLength,
+        default: null,
+        format: assertNullOrEmpty,
         env: 'GENERATE_AND_BUILD_OUTPUTFILE',
     },
     pipelineBuildId: {
-        default: '',
+        default: null,
         env: 'PIPELINE_BUILDID',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     language: {
-        default: '',
+        default: null,
         env: 'LANGUAGE',
         format: ['js', 'python', 'go', 'net', 'java'],
     },
     azureStorageBlobSasUrl: {
-        default: '',
+        default: null,
         env: 'AZURE_STORAGE_BLOB_SAS_URL',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     azureBlobContainerName: {
         default: 'sdk-generation',
         env: 'AZURE_BLOB_CONTAINER_NAME',
-        nullable: true,
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
 });
 
-export class UploadPipelineArtifactConfig {
+export class UploadPipelineArtifactInput {
     generateAndBuildOutputFile: string;
     artifactDir: string;
     language: string;
 }
 
-export const uploadPipelineArtifactConfig = convict<UploadPipelineArtifactConfig>({
+export const uploadPipelineArtifactInput = convict<UploadPipelineArtifactInput>({
     generateAndBuildOutputFile: {
-        default: '',
-        format: stringMustHaveLength,
+        default: null,
+        format: assertNullOrEmpty,
         env: 'GENERATE_AND_BUILD_OUTPUTFILE',
     },
     artifactDir: {
-        default: '',
+        default: null,
         env: 'ARTIFACT_DIR',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     language: {
-        default: '',
+        default: null,
         env: 'LANGUAGE',
         format: ['js', 'python', 'go', 'net', 'java'],
     },

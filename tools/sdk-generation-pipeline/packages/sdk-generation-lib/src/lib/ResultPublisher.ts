@@ -108,17 +108,24 @@ export class ResultBlobPublisher {
     }
 }
 
-export async function publishEvent(
-    eventHubConnectionString: string,
-    event: PipelineRunEvent,
-    partitionKey?: string
-): Promise<void> {
-    try {
-        const producer = new EventHubProducer(eventHubConnectionString);
-        await producer.send([JSON.stringify(event)], partitionKey);
-        await producer.close();
-    } catch (e) {
-        logger.error('Failed to send pipeline result:', JSON.stringify(event), e);
-        throw e;
+export class ResultEventhubPublisher {
+    private producer: EventHubProducer;
+
+    constructor(eventHubConnectionString: string) {
+        this.producer = new EventHubProducer(eventHubConnectionString);
+    }
+
+    public async publishEvent(event: PipelineRunEvent, partitionKey?: string): Promise<void> {
+        try {
+            await this.producer.send([JSON.stringify(event)], partitionKey);
+        } catch (e) {
+            await this.producer.close();
+            logger.error('Failed to send pipeline result:', JSON.stringify(event), e);
+            throw e;
+        }
+    }
+
+    public async close() {
+        await this.producer.close();
     }
 }

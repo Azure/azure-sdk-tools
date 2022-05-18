@@ -12,7 +12,7 @@
     "emitDecoratorMetadata": true,
     "strictNullChecks": false,
     "declaration": true,
-    "esModuleInterop": false
+    "esModuleInterop": true
   },
   "exclude": [
     "node_modules",

@@ -1,14 +1,10 @@
-import * as convict from 'convict';
+#!/usr/bin/env node
+import convict from 'convict';
 
 import { ServiceType } from '@azure-tools/sdk-generation-lib';
+import { assertNullOrEmpty } from '../utils/validator';
 
-const stringMustHaveLength = (value: string) => {
-    if (value.length === 0) {
-        throw new Error('must not be empty');
-    }
-};
-
-export class ResultPublisherBlobConfig {
+export class ResultPublisherBlobInput {
     logsAndResultPath: string;
     pipelineBuildId: string;
     taskName: string;
@@ -17,42 +13,40 @@ export class ResultPublisherBlobConfig {
     azureBlobContainerName: string;
 }
 
-export const resultPublisherBlobConfig = convict<ResultPublisherBlobConfig>({
+export const resultPublisherBlobInput = convict<ResultPublisherBlobInput>({
     logsAndResultPath: {
-        default: '',
-        format: stringMustHaveLength,
+        default: null,
+        format: assertNullOrEmpty,
         env: 'LOGS_AND_RESULT_PATH',
     },
     pipelineBuildId: {
-        default: '',
+        default: null,
         env: 'PIPELINE_BUILDID',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     taskName: {
-        default: '',
+        default: null,
         env: 'TASK_NAME',
         format: String,
     },
     sdkGenerationName: {
-        default: '',
+        default: null,
         env: 'SDKGENERATION_NAME',
-        nullable: true,
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     azureStorageBlobSasUrl: {
-        default: '',
+        default: null,
         env: 'AZURE_STORAGE_BLOB_SAS_URL',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     azureBlobContainerName: {
         default: 'sdk-generation',
         env: 'AZURE_BLOB_CONTAINER_NAME',
-        nullable: true,
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
 });
 
-export class ResultPublisherDBCGConfig {
+export class ResultPublisherDBCGInput {
     mongodb: {
         server: string;
         port: number;
@@ -75,88 +69,87 @@ export class ResultPublisherDBCGConfig {
     codePR?: string;
 }
 
-export const resultPublisherDBCGConfig = convict<ResultPublisherDBCGConfig>({
+export const resultPublisherDBCGInput = convict<ResultPublisherDBCGInput>({
     mongodb: {
         server: {
             doc: 'The host used to connect db',
-            default: '',
-            env: 'sdkGenerationMongoDbHost',
-            format: stringMustHaveLength,
+            default: null,
+            env: 'SDKGENERATION_MONGODB_HOST',
+            format: assertNullOrEmpty,
         },
         port: {
             doc: 'The port used to connect db',
             default: 10225,
-            env: 'sdkGenerationMongoDbPort',
+            env: 'SDKGENERATION_MONGODB_PORT',
             format: Number,
         },
         database: {
             doc: 'The database used to connect db',
-            default: '',
-            env: 'sdkGenerationMongoDbDatabase',
-            format: stringMustHaveLength,
+            default: null,
+            env: 'SDKGENERATION_MONGODB_DATABASE',
+            format: assertNullOrEmpty,
         },
         username: {
             doc: 'The username used to connect db',
-            default: '',
-            env: 'sdkGenerationMongoDbUsername',
-            format: stringMustHaveLength,
+            default: null,
+            env: 'SDKGENERATION_MONGODB_USERNAME',
+            format: assertNullOrEmpty,
         },
         password: {
             doc: 'The password used to connect db',
-            default: '',
-            env: 'sdkGenerationMongoDbPassword',
-            format: stringMustHaveLength,
+            default: null,
+            env: 'SDKGENERATION_MONGODB_PASSWORD',
+            format: assertNullOrEmpty,
         },
         ssl: {
             doc: 'Whether used ssl to connect db',
             default: true,
-            env: 'sdkGenerationMongoDbSsl',
+            env: 'SDKGENERATION_MONGODB_SSL',
             format: Boolean,
         },
     },
     pipelineBuildId: {
-        default: '',
+        default: null,
         env: 'PIPELINE_BUILDID',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     sdkGenerationName: {
-        default: '',
+        default: null,
         env: 'SDKGENERATION_NAME',
-        nullable: true,
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     service: {
-        default: '',
+        default: null,
         env: 'SERVICE',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     serviceType: {
-        default: '',
+        default: null,
         env: 'SERVICETYPE',
         format: ['data-plane', 'resource-manager'],
     },
     language: {
-        default: '',
+        default: null,
         env: 'LANGUAGE',
         format: ['js', 'python', 'go', 'net', 'java'],
     },
     swaggerRepo: {
-        default: '',
+        default: null,
         env: 'SWAGGER_REPO',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     sdkRepo: {
-        default: '',
+        default: null,
         env: 'SDK_REPO',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     codegenRepo: {
-        default: '',
+        default: null,
         env: 'CODEGEN_REPO',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     triggerType: {
-        default: '',
+        default: null,
         env: 'TRIGGER_TYPE',
         format: ['ad-hoc', 'ci', 'release'],
     },
@@ -180,7 +173,7 @@ export const resultPublisherDBCGConfig = convict<ResultPublisherDBCGConfig>({
     },
 });
 
-export class ResultPublisherDBResultConfig {
+export class ResultPublisherDBResultInput {
     mongodb: {
         server: string;
         port: number;
@@ -193,140 +186,98 @@ export class ResultPublisherDBResultConfig {
     taskResultsPath: string;
 }
 
-export const resultPublisherDBResultConfig = convict<ResultPublisherDBResultConfig>({
+export const resultPublisherDBResultInput = convict<ResultPublisherDBResultInput>({
     mongodb: {
         server: {
             doc: 'The host used to connect db',
-            default: '',
-            env: 'sdkGenerationMongoDbHost',
-            format: stringMustHaveLength,
+            default: null,
+            env: 'SDKGENERATION_MONGODB_HOST',
+            format: assertNullOrEmpty,
         },
         port: {
             doc: 'The port used to connect db',
             default: 10225,
-            env: 'sdkGenerationMongoDbPort',
+            env: 'SDKGENERATION_MONGODB_PORT',
             format: Number,
         },
         database: {
             doc: 'The database used to connect db',
-            default: '',
-            env: 'sdkGenerationMongoDbDatabase',
-            format: stringMustHaveLength,
+            default: null,
+            env: 'SDKGENERATION_MONGODB_DATABASE',
+            format: assertNullOrEmpty,
         },
         username: {
             doc: 'The username used to connect db',
-            default: '',
-            env: 'sdkGenerationMongoDbUsername',
-            format: stringMustHaveLength,
+            default: null,
+            env: 'SDKGENERATION_MONGODB_USERNAME',
+            format: assertNullOrEmpty,
         },
         password: {
             doc: 'The password used to connect db',
-            default: '',
-            env: 'sdkGenerationMongoDbPassword',
-            format: stringMustHaveLength,
+            default: null,
+            env: 'SDKGENERATION_MONGODB_PASSWORD',
+            format: assertNullOrEmpty,
         },
         ssl: {
             doc: 'Whether used ssl to connect db',
             default: true,
-            env: 'sdkGenerationMongoDbSsl',
+            env: 'SDKGENERATION_MONGODB_SSL',
             format: Boolean,
         },
     },
     pipelineBuildId: {
-        default: '',
+        default: null,
         env: 'PIPELINE_BUILDID',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     taskResultsPath: {
-        default: '',
+        default: null,
         env: 'TASK_RESULTS_PATH',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
 });
 
-export class ResultPublisherEventHubConfig {
+export class ResultPublisherEventHubInput {
     eventHubConnectionString: string;
     partitionKey?: string;
     pipelineBuildId: string;
-    triggerName: string; // the agent, e.g. UnifiedPipeline, Release, individual
-    pipelineTriggerSource?: string; // e.g. github, openapi_hub
-    pullRequestNumber?: string; // the pull request number if it is triggerred by pr
-    headSha?: string; // the CI commit
-    unifiedPipelineBuildId?: string; // a unique build id unified pipeline assigned for each completed pipeline build id
-    unifiedPipelineTaskKey?: string; // a unified pipeline task key, e.g. LintDiff, Semantic
-    unifiedPipelineSubTaskKey?: string; // sub task key, for dynamic generated sub task message
+    trigger: string;
     logPath?: string;
     resultPath?: string;
 }
 
-export const resultPublisherEventHubConfig = convict<ResultPublisherEventHubConfig>({
+export const resultPublisherEventHubInput = convict<ResultPublisherEventHubInput>({
     eventHubConnectionString: {
-        default: '',
+        default: null,
         env: 'EVENTHUB_SAS_URL',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     partitionKey: {
-        default: '',
+        default: null,
         env: 'PARTITIONKEY',
         nullable: true,
         format: String,
     },
     pipelineBuildId: {
-        default: '',
+        default: null,
         env: 'PIPELINE_BUILDID',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
-    triggerName: {
-        default: '',
-        env: 'TRIGGER_NAME',
-        format: ['UnifiedPipeline', 'Release', 'individual'],
-    },
-    pipelineTriggerSource: {
+    trigger: {
         default: null,
-        env: 'PIPELINE_TRIGGER_SOURCE',
-        nullable: true,
-        format: ['github', 'openapi_hub'],
-    },
-    pullRequestNumber: {
-        default: null,
-        env: 'PULLREQUEST_NUMBER',
-        nullable: true,
-        format: stringMustHaveLength,
-    },
-    headSha: {
-        default: null,
-        env: 'HEAD_SHA',
-        nullable: true,
-        format: stringMustHaveLength,
-    },
-    unifiedPipelineBuildId: {
-        default: null,
-        env: 'UNIFIED_PIPELINE_BUILDID',
-        nullable: true,
-        format: stringMustHaveLength,
-    },
-    unifiedPipelineTaskKey: {
-        default: null,
-        env: 'UNIFIED_PIPELINE_TASKKEY',
-        nullable: true,
-        format: stringMustHaveLength,
-    },
-    unifiedPipelineSubTaskKey: {
-        default: null,
-        env: 'UNIFIED_PIPELINE_SUBTASKKEY',
-        nullable: true,
-        format: stringMustHaveLength,
+        env: 'TRIGGER',
+        format: assertNullOrEmpty,
     },
     logPath: {
         default: null,
         env: 'LOG_PATH',
         nullable: true,
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     resultPath: {
         default: null,
         env: 'RESULT_PATH',
         nullable: true,
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
 });

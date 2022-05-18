@@ -11,15 +11,16 @@ import {
     TaskOutput,
 } from '@azure-tools/sdk-generation-lib';
 
-import { generateResultCliConfig, GenerateResultCliConfig } from './cliSchema/generateResultCliConfig';
+import { generateResultCliInput, GenerateResultCliInput } from './cliSchema/generateResultCliConfig';
 
-generateResultCliConfig.validate();
-const config: GenerateResultCliConfig = generateResultCliConfig.getProperties();
+generateResultCliInput.validate();
+const config: GenerateResultCliInput = generateResultCliInput.getProperties();
 
 async function main() {
     let taskOutputObj: TaskOutput = undefined;
     let logFilter: LogFilter = undefined;
     let taskResult: TaskResult = undefined;
+    let exeResult: PipelineResult = undefined;
 
     if (!Object.values(AzureSDKTaskName).includes(config.taskName as AzureSDKTaskName)) {
         throw new Error(`invalid taskName` + config.taskName);
@@ -37,39 +38,27 @@ async function main() {
     }
 
     if (config.exeResult) {
-        taskResult = createTaskResult(
-            config.pipelineBuildId,
-            config.taskName as AzureSDKTaskName,
-            config.exeResult as PipelineResult,
-            config.logfile,
-            logFilter,
-            taskOutputObj
-        );
+        exeResult = config.exeResult as PipelineResult;
     } else if (config.dockerResultFile && fs.existsSync(config.dockerResultFile)) {
         const dockerTaskResult = JSON.parse(fs.readFileSync(config.dockerResultFile, 'utf-8'));
-        if (dockerTaskResult[config.taskName] && dockerTaskResult[config.taskName].includes('skipped')) {
+        if (!dockerTaskResult[config.taskName] || dockerTaskResult[config.taskName].includes('skipped')) {
             console.log(config.taskName + `skipped`);
             return;
         } else {
-            taskResult = createTaskResult(
-                config.pipelineBuildId,
-                config.taskName as AzureSDKTaskName,
-                dockerTaskResult[config.taskName],
-                config.logfile,
-                logFilter,
-                taskOutputObj
-            );
+            exeResult = dockerTaskResult[config.taskName];
         }
     } else {
-        taskResult = createTaskResult(
-            config.pipelineBuildId,
-            config.taskName as AzureSDKTaskName,
-            undefined,
-            config.logfile,
-            logFilter,
-            taskOutputObj
-        );
+        throw new Error(config.dockerResultFile + `don't exist!`);
     }
+
+    taskResult = createTaskResult(
+        config.pipelineBuildId,
+        config.taskName as AzureSDKTaskName,
+        exeResult,
+        config.logfile,
+        logFilter,
+        taskOutputObj
+    );
 
     fs.writeFileSync(config.resultOutputPath, JSON.stringify(taskResult, null, 2), {
         encoding: 'utf-8',

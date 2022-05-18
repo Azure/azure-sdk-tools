@@ -12,10 +12,10 @@ import {
 } from '@azure-tools/sdk-generation-lib';
 
 import {
-    uploadBlobConfig,
-    UploadBlobConfig,
-    uploadPipelineArtifactConfig,
-    UploadPipelineArtifactConfig,
+    uploadBlobInput,
+    UploadBlobInput,
+    uploadPipelineArtifactInput,
+    UploadPipelineArtifactInput,
 } from './cliSchema/uploadArtifactConfig';
 
 async function main() {
@@ -24,8 +24,8 @@ async function main() {
 
     switch (uploadTypt) {
         case 'blob':
-            uploadBlobConfig.validate();
-            const config: UploadBlobConfig = uploadBlobConfig.getProperties();
+            uploadBlobInput.validate();
+            const config: UploadBlobInput = uploadBlobInput.getProperties();
             if (!fs.existsSync(config.generateAndBuildOutputFile)) {
                 throw new Error(`generateAndBuildOutputFile:${config.generateAndBuildOutputFile} isn's exist!`);
             }
@@ -45,8 +45,8 @@ async function main() {
             await artifactBlobUploader.uploadArtifacts(generateAndBuildOutputJson);
             break;
         case 'pipelineArtifact':
-            uploadPipelineArtifactConfig.validate();
-            const artifactConfig: UploadPipelineArtifactConfig = uploadPipelineArtifactConfig.getProperties();
+            uploadPipelineArtifactInput.validate();
+            const artifactConfig: UploadPipelineArtifactInput = uploadPipelineArtifactInput.getProperties();
             if (!fs.existsSync(artifactConfig.generateAndBuildOutputFile)) {
                 throw new Error(`generateAndBuildOutputFile:${artifactConfig.generateAndBuildOutputFile} isn's exist!`);
             }

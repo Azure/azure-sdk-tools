@@ -1,13 +1,13 @@
 import { SDKPipelineStatus } from './commonType';
 import { TaskResult } from './taskResult';
 
-export type Trigger = {
+export type CommonTrigger = {
     name: string; // the agent, e.g. UnifiedPipeline, Release, individual
 };
 
 export type PipelineTriggerSource = 'github' | 'openapi_hub';
 
-export type UnifiedPipelineTrigger = Trigger & {
+export type UnifiedPipelineTrigger = CommonTrigger & {
     source: PipelineTriggerSource;
     pullRequestNumber: string; // the pull request number if it is triggerred by pr
     headSha: string; // the CI commit
@@ -16,8 +16,10 @@ export type UnifiedPipelineTrigger = Trigger & {
     unifiedPipelineSubTaskKey?: string; // sub task key, for dynamic generated sub task message
 };
 
+export type Trigger = CommonTrigger | UnifiedPipelineTrigger;
+
 export type PipelineRun = {
-    trigger: Trigger | UnifiedPipelineTrigger;
+    trigger: Trigger;
     pipelineBuildId: string; // the id of the record for the completed azure pipeline build.
     status: SDKPipelineStatus;
 };

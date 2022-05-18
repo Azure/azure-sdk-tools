@@ -1,12 +1,8 @@
-import * as convict from 'convict';
+import convict from 'convict';
 
-const stringMustHaveLength = (value: string) => {
-    if (value.length === 0) {
-        throw new Error('must not be empty!');
-    }
-};
+import { assertNullOrEmpty } from '../utils/validator';
 
-export class GenerateResultCliConfig {
+export class GenerateResultCliInput {
     pipelineBuildId: string;
     logfile: string;
     logFilterStr?: string;
@@ -17,25 +13,25 @@ export class GenerateResultCliConfig {
     dockerResultFile?: string;
 }
 
-export const generateResultCliConfig = convict<GenerateResultCliConfig>({
+export const generateResultCliInput = convict<GenerateResultCliInput>({
     pipelineBuildId: {
-        default: '',
-        format: stringMustHaveLength,
+        default: null,
+        format: assertNullOrEmpty,
         env: 'PIPELINE_BUILDID',
     },
     logfile: {
-        default: '',
+        default: null,
         env: 'LOG_FILE',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     logFilterStr: {
-        default: '',
+        default: null,
         env: 'LOG_FILTERSTR',
         nullable: true,
         format: String,
     },
     taskName: {
-        default: '',
+        default: null,
         env: 'TASK_NAME',
         format: ['init', 'generateAndBuild', 'mockTest', 'liveTest'],
     },
@@ -46,18 +42,18 @@ export const generateResultCliConfig = convict<GenerateResultCliConfig>({
         format: ['success', 'failure', 'timed_out'],
     },
     taskOutputPath: {
-        default: '',
+        default: null,
         env: 'TASK_OUTPUT_PATH',
         nullable: true,
         format: String,
     },
     resultOutputPath: {
-        default: '',
+        default: null,
         env: 'RESULT_OUTPUT_PATH',
-        format: stringMustHaveLength,
+        format: assertNullOrEmpty,
     },
     dockerResultFile: {
-        default: '',
+        default: null,
         env: 'DOCKER_RESULT_FILE',
         nullable: true,
         format: String,

@@ -102,6 +102,28 @@ Services:
       PackageVersions:
       - azure-storage-blobs: source
 
+- Service: core
+  Languages:
+    Java:
+      Project: sdk/storage/azure-storage-perf
+      PrimaryPackage: azure-core
+      PackageVersions: &java-storage-package-versions
+      - azure-storage-blob: 12.16.1
+        azure-storage-file-share: 12.12.2
+        azure-storage-file-datalake: 12.9.1
+        azure-core: 1.28.0
+        azure-core-http-netty: 1.12.0
+        reactor-core: 3.4.17
+      - azure-storage-blob: 12.16.1
+        azure-storage-file-share: 12.12.2
+        azure-storage-file-datalake: 12.9.1
+        azure-core: source
+        azure-core-http-netty: source
+        reactor-core: 3.4.17
+      AdditionalArguments: &java-additional-arguments
+        warmup: 15
+        duration: 15
+
   Tests:
   - Test: download
     Arguments: &storage-sizes

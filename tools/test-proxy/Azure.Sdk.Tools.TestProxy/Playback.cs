@@ -3,7 +3,9 @@
 
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -13,8 +15,14 @@ namespace Azure.Sdk.Tools.TestProxy
     [Route("[controller]/[action]")]
     public sealed class Playback : ControllerBase
     {
+        private readonly ILogger _logger;
         private readonly RecordingHandler _recordingHandler;
-        public Playback(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
+
+        public Playback(RecordingHandler recordingHandler, ILoggerFactory loggerFactory)
+        {
+            _recordingHandler = recordingHandler;
+            _logger = loggerFactory.CreateLogger<Playback>();
+        }
 
         [HttpPost]
         public async Task Start()
@@ -44,6 +52,30 @@ namespace Azure.Sdk.Tools.TestProxy
 
             _recordingHandler.StopPlayback(id, purgeMemoryStore: shouldPurgeRecording);
         }
+
+
+        [HttpPost]
+        public async Task Reset([FromBody()] IDictionary<string, object> options = null)
+        {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+
+            // TODO: handle errors
+            var pathToAssets = options["AssetsJsonLocation"].ToString();
+
+            _recordingHandler.Store.Reset(pathToAssets, _recordingHandler.ContextDirectory);
+        }
+
+        [HttpPost]
+        public async Task Restore([FromBody()] IDictionary<string, object> options = null)
+        {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+
+            // TODO: handle errors
+            var pathToAssets = options["AssetsJsonLocation"].ToString();
+
+            _recordingHandler.Store.Restore(pathToAssets, _recordingHandler.ContextDirectory);
+        }
+
 
         public async Task HandleRequest()
         {

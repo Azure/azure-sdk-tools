@@ -17,7 +17,6 @@ namespace Azure.Sdk.Tools.TestProxy
     public sealed class Record : ControllerBase
     {
         private readonly ILogger _logger;
-
         private readonly RecordingHandler _recordingHandler;
 
         private static readonly HttpClient RedirectableClient = Startup.Insecure ?
@@ -53,6 +52,19 @@ namespace Azure.Sdk.Tools.TestProxy
 
             _recordingHandler.StartRecording(file, Response);
         }
+
+
+        [HttpPost]
+        public async Task Save([FromBody()] IDictionary<string, object> options = null)
+        {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+
+            // TODO: handle errors
+            var pathToAssets = options["AssetsJsonLocation"].ToString();
+
+            _recordingHandler.Store.Save(pathToAssets, _recordingHandler.ContextDirectory);
+        }
+
 
         [HttpPost]
         [AllowEmptyBody]

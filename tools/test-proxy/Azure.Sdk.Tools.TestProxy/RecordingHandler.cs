@@ -32,9 +32,9 @@ namespace Azure.Sdk.Tools.TestProxy
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
         private const string SkipRecordingRequestResponse = "request-response";
-        private AssetsStore _store;
+        public IAssetsStore Store;
 
-        public RecordingHandler(string targetDirectory, AssetsStore store = null)
+        public RecordingHandler(string targetDirectory, IAssetsStore store = null)
         {
             ContextDirectory = targetDirectory;
 
@@ -42,11 +42,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (store != null)
             {
-                _store = store;
+                Store = store;
             }
             else
             {
-                _store = new NullStore();
+                Store = new NullStore();
             }
         }
 

@@ -4,15 +4,15 @@ using System.Net;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
-    public class NullStore : AssetsStore
+    public class NullStore : IAssetsStore
     {
-        public override void Save(AssetsConfiguration assetsConfig, string contextPath) {}
+        public void Save(string assetsJsonPath, string contextPath) {}
 
-        public override void Restore(AssetsConfiguration assetsConfig, string contextPath) {}
+        public void Restore(string assetsJsonPath, string contextPath) {}
 
-        public override void Reset(AssetsConfiguration assetsConfig, string contextPath) {}
+        public void Reset(string assetsJsonPath, string contextPath) {}
 
-        public override AssetsConfiguration ParseConfigurationFile(string assetsJsonPath)
+        public AssetsConfiguration ParseConfigurationFile(string assetsJsonPath)
         {
             if (!File.Exists(assetsJsonPath)) {
                 throw new HttpException(HttpStatusCode.BadRequest, $"The provided assets json path of \"{assetsJsonPath}\" does not exist.");

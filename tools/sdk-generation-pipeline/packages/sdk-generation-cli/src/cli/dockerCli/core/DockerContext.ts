@@ -9,7 +9,7 @@ export class DockerContext {
     mode: 'generateCodesInLocal' | 'growUp' | 'generateCodesInPipeline';
     readmeMdPath?: string;
     tag?: string;
-    sdk: string[];
+    sdkList: string[];
     specRepo?: string;
     workDir?: string;
     sdkRepo?: string;
@@ -25,7 +25,7 @@ export class DockerContext {
     public initialize(inputParams: DockerCliInput) {
         this.readmeMdPath = inputParams.readmeMdPath;
         this.tag = inputParams.tag;
-        this.sdk = inputParams.sdk?.split(',').map(e => e.trim()).filter(e => e.length > 0);
+        this.sdkList = inputParams.sdkList?.split(',').map(e => e.trim()).filter(e => e.length > 0);
         this.specRepo = inputParams.specRepo;
         this.workDir = inputParams.workDir;
         this.sdkRepo = inputParams.sdkRepo;
@@ -33,7 +33,7 @@ export class DockerContext {
 
         this.logger = initializeLogger(path.join(inputParams.resultOutputFolder, inputParams.dockerLogger), 'docker');
 
-        if (this.sdk?.length === 0 && fs.existsSync(this.workDir)) {
+        if (this.sdkList?.length === 0 && fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to do grow up development');
             this.mode = 'growUp';
             this.validateSpecRepo();
@@ -72,7 +72,7 @@ export class DockerContext {
     private validateSdk() {
         const supportedSdk = Object.keys(sdkToRepoMap);
         const unSupportedSdk: string[] = [];
-        for (const sdk of this.sdk) {
+        for (const sdk of this.sdkList) {
             if (!supportedSdk.includes(sdk)) {
                 unSupportedSdk.push(sdk);
             }

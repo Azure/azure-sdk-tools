@@ -6,7 +6,7 @@ dotenv.config();
 export class DockerCliInput {
     readmeMdPath: string;
     tag: string;
-    sdk: string;
+    sdkList: string;
     specRepo: string;
     workDir: string;
     sdkRepo: string;
@@ -29,7 +29,7 @@ export const dockerCliInput = convict<DockerCliInput>({
         format: String,
         doc: 'The tag used to generated codes. If not defined, default tag will be used'
     },
-    sdk: {
+    sdkList: {
         default: '',
         env: 'SDK',
         arg: 'sdk',

@@ -27,9 +27,9 @@ export async function cloneRepoIfNotExist(context: DockerContext, sdkRepos: stri
 }
 
 export async function generateCodesInLocal(dockerContext: DockerContext) {
-    const sdkRepos: string[] = dockerContext.sdk.map(ele => sdkToRepoMap[ele]);
+    const sdkRepos: string[] = dockerContext.sdkList.map(ele => sdkToRepoMap[ele]);
     await cloneRepoIfNotExist(dockerContext, sdkRepos);
-    for (const sdk of dockerContext.sdk) {
+    for (const sdk of dockerContext.sdkList) {
         dockerContext.sdkRepo = path.join(dockerContext.workDir, sdkToRepoMap[sdk]);
         const dockerTaskEngineContext = initializeDockerTaskEngineContext(dockerContext);
         await runTaskEngine(dockerTaskEngineContext);
@@ -37,12 +37,12 @@ export async function generateCodesInLocal(dockerContext: DockerContext) {
 
     const generatedCodesPath: Map<string, Set<string>> = new Map();
 
-    for (const sdk of dockerContext.sdk) {
+    for (const sdk of dockerContext.sdkList) {
         generatedCodesPath[sdk] = await getChangedPackageDirectory(path.join(dockerContext.workDir, sdkToRepoMap[sdk]));
     }
 
-    dockerContext.logger.info(`Finish generating sdk for ${dockerContext.sdk.join(', ')}.`);
-    for (const sdk of dockerContext.sdk) {
+    dockerContext.logger.info(`Finish generating sdk for ${dockerContext.sdkList.join(', ')}.`);
+    for (const sdk of dockerContext.sdkList) {
         if (generatedCodesPath[sdk].size > 0) {
             dockerContext.logger.info(`You can find generated ${sdk} codes in:`);
             generatedCodesPath[sdk].forEach(ele => {

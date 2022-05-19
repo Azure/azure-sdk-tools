@@ -15,7 +15,7 @@ describe('task engine', () => {
         dockerContext.initialize({
             readmeMdPath: 'specification/agrifood/resource-manager/readme.md',
             tag: '',
-            sdk: '',
+            sdkList: '',
             specRepo: path.join(tmpFolder, 'spec-repo'),
             workDir: '/work-dir',
             sdkRepo: path.join(tmpFolder, 'sdk-repo'),

@@ -1,12 +1,10 @@
 import { initializeLogger } from "@azure-tools/sdk-generation-lib";
 import { existsSync } from "fs";
 import * as path from "path";
-import { runTaskEngine } from "../../dist/cli/dockerCli/core/dockerTaskEngine";
 import { DockerContext } from "../../src/cli/dockerCli/core/DockerContext";
 import {
     DockerTaskEngineContext,
-    initializeDockerTaskEngineContext
-} from "../../src/cli/dockerCli/core/dockerTaskEngine";
+} from "../../src/cli/dockerCli/core/DockerTaskEngineContext";
 
 describe('task engine', () => {
     it('should initialize a DockerTaskEngineContext by DockerContext', async () => {
@@ -22,8 +20,8 @@ describe('task engine', () => {
             resultOutputFolder: path.join(tmpFolder, 'output'),
             dockerLogger: 'docker.log'
         });
-
-        const dockerTaskEngineContext: DockerTaskEngineContext = initializeDockerTaskEngineContext(dockerContext);
+        const dockerTaskEngineContext = new DockerTaskEngineContext();
+        dockerTaskEngineContext.initialize(dockerContext);
         expect(dockerTaskEngineContext.configFilePath).toBe('eng/codegen_to_sdk_config.json');
         expect(dockerTaskEngineContext.initOutput).toBe(path.join(tmpFolder, 'output', 'initOutput.json'));
         expect(dockerTaskEngineContext.generateAndBuildInputJson).toBe(path.join(tmpFolder, 'output', 'generateAndBuildInput.json'));
@@ -39,29 +37,30 @@ describe('task engine', () => {
     it('should run tasks', async () => {
         jest.setTimeout(999999);
         const tmpFolder = path.join(path.resolve('.'), 'test', 'unit', 'tmp');
-        const dockerTaskEngineContext: DockerTaskEngineContext = {
-            sdkRepo: path.join(tmpFolder, 'sdk-repo'),
-            taskResultJsonPath: path.join(tmpFolder, 'output', 'taskResults.json'),
-            logger: initializeLogger(path.join(tmpFolder, 'docker.log'), 'docker', true),
-            configFilePath: 'eng/codegen_to_sdk_config.json',
-            initOutput: path.join(tmpFolder, 'output', 'initOutput.json'),
-            generateAndBuildInputJson: path.join(tmpFolder, 'output', 'generateAndBuildInput.json'),
-            generateAndBuildOutputJson: path.join(tmpFolder, 'output', 'generateAndBuildOutputJson.json'),
-            mockTestInputJson: path.join(tmpFolder, 'output', 'mockTestInput.json'),
-            mockTestOutputJson: path.join(tmpFolder, 'output', 'mockTestOutput.json'),
-            initTaskLog: path.join(tmpFolder, 'output', 'init-task.log'),
-            generateAndBuildTaskLog: path.join(tmpFolder, 'output', 'generate-and-build-task.log'),
-            mockTestTaskLog: path.join(tmpFolder, 'output', 'mock-test-task.log'),
-            readmeMdPath: 'specification/agrifood/resource-manager/readme.md',
-            specRepo: {
-                repoPath: path.join(tmpFolder, 'spec-repo'),
-                headSha: '11111',
-                headRef: '11111',
-                repoHttpsUrl: 'https://github.com/Azure/azure-rest-api-specs'
-            },
-            changeOwner: false
-        }
-        await runTaskEngine(dockerTaskEngineContext);
+        const dockerTaskEngineContext = new DockerTaskEngineContext();
+
+        dockerTaskEngineContext.sdkRepo = path.join(tmpFolder, 'sdk-repo');
+        dockerTaskEngineContext.taskResultJsonPath = path.join(tmpFolder, 'output', 'taskResults.json');
+        dockerTaskEngineContext.logger = initializeLogger(path.join(tmpFolder, 'docker.log'), 'docker', true);
+        dockerTaskEngineContext.configFilePath = 'eng/codegen_to_sdk_config.json';
+        dockerTaskEngineContext.initOutput = path.join(tmpFolder, 'output', 'initOutput.json');
+        dockerTaskEngineContext.generateAndBuildInputJson = path.join(tmpFolder, 'output', 'generateAndBuildInput.json');
+        dockerTaskEngineContext.generateAndBuildOutputJson = path.join(tmpFolder, 'output', 'generateAndBuildOutputJson.json');
+        dockerTaskEngineContext.mockTestInputJson = path.join(tmpFolder, 'output', 'mockTestInput.json');
+        dockerTaskEngineContext.mockTestOutputJson = path.join(tmpFolder, 'output', 'mockTestOutput.json');
+        dockerTaskEngineContext.initTaskLog = path.join(tmpFolder, 'output', 'init-task.log');
+        dockerTaskEngineContext.generateAndBuildTaskLog = path.join(tmpFolder, 'output', 'generate-and-build-task.log');
+        dockerTaskEngineContext.mockTestTaskLog = path.join(tmpFolder, 'output', 'mock-test-task.log');
+        dockerTaskEngineContext.readmeMdPath = 'specification/agrifood/resource-manager/readme.md';
+        dockerTaskEngineContext.specRepo = {
+            repoPath: path.join(tmpFolder, 'spec-repo'),
+            headSha: '11111',
+            headRef: '11111',
+            repoHttpsUrl: 'https://github.com/Azure/azure-rest-api-specs'
+        };
+        dockerTaskEngineContext.changeOwner = false;
+
+        await dockerTaskEngineContext.runTaskEngine();
         expect(existsSync(dockerTaskEngineContext.initTaskLog)).toBe(true);
         expect(existsSync(dockerTaskEngineContext.generateAndBuildInputJson)).toBe(true);
         expect(existsSync(dockerTaskEngineContext.generateAndBuildOutputJson)).toBe(true);

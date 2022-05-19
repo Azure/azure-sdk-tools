@@ -1,6 +1,6 @@
 import * as child_process from "child_process";
 import { execSync } from "child_process";
-import simpleGit, { SimpleGit } from 'simple-git';
+import * as os from 'os';
 
 export function getFileListInPackageFolder(packageFolder: string) {
     child_process.execSync('git add .', {encoding: "utf8", cwd: packageFolder});
@@ -28,12 +28,10 @@ export function disableFileMode(sdkRepo: string) {
 }
 
 export async function getChangedPackageDirectory(repo: string): Promise<Set<string>> {
-    const git: SimpleGit = simpleGit({baseDir: repo});
     const changedPackageDirectories: Set<string> = new Set<string>();
-    const gitStatus = await git.status();
-    const files = gitStatus.files;
-    for (const file of files) {
-        const filePath = file.path;
+    const gitLsFiles = execSync(`git ls-files -mdo --exclude-standard`, {encoding: "utf8", cwd: repo});
+    const files = gitLsFiles.split(os.EOL);
+    for (const filePath of files) {
         if (filePath.match(/sdk\/[^\/0-9]*\/.*/)) {
             const packageDirectory = /sdk\/[^\/0-9]*\/[^\/]*/.exec(filePath);
             if (packageDirectory) {

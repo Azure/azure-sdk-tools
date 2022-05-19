@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { DockerContext } from "./core/DockerContext";
-import { generateCodesInLocal } from "./core/generateCodesInLocal";
-import { generateCodesInPipeline } from "./core/generateCodesInPipeline";
-import { growUp } from "./core/growUp";
+import { GenerateCodesInLocalJob } from './core/GenerateCodesInLocalJob';
+import { GenerateCodesInPipelineJob } from "./core/GenerateCodesInPipelineJob";
+import { GrowUpJob } from "./core/GrowUpJob";
 import { DockerCliInput, dockerCliInput } from "./schema/dockerCliInput";
 
 async function main() {
@@ -10,17 +10,24 @@ async function main() {
     const context: DockerContext = new DockerContext();
     context.initialize(inputParams);
 
+    let executeJob: GenerateCodesInLocalJob | GrowUpJob | GenerateCodesInPipelineJob;
+
     switch (context.mode) {
         case "generateCodesInLocal":
-            await generateCodesInLocal(context);
+            executeJob = new GenerateCodesInLocalJob(context);
             break;
         case "growUp":
-            await growUp(context);
+            executeJob = new GrowUpJob(context);
             break;
         case "generateCodesInPipeline":
-            await generateCodesInPipeline(context);
+            executeJob = new GenerateCodesInPipelineJob(context);
             break;
     }
+
+    if (!!executeJob) {
+        await executeJob.execute();
+    }
+
 }
 
 main().catch(e => {

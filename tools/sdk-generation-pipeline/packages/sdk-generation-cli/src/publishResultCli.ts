@@ -8,6 +8,7 @@ import {
     InProgressEvent,
     logger,
     MongoConnectContext,
+    PipelineRunEvent,
     QueuedEvent,
     requireJsonc,
     ResultBlobPublisher,
@@ -121,42 +122,58 @@ function getTrigger(config: ResultPublisherEventHubInput): Trigger {
     return trigger;
 }
 
+function getTaskResults(taskResultsPath: string): TaskResult[] {
+    const taskResultsPathArray = JSON.parse(taskResultsPath);
+    const taskResults: TaskResult[] = [];
+    for (const taskResultPath of taskResultsPathArray) {
+        if (fs.existsSync(taskResultPath)) {
+            taskResults.push(requireJsonc(taskResultPath));
+        } else {
+            logger.warn(`${taskResultPath} isn't exist, skip.`);
+        }
+    }
+    return taskResults;
+}
+
 async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
     resultPublisherEventHubInput.validate();
     const config: ResultPublisherEventHubInput = resultPublisherEventHubInput.getProperties();
-    let trigger: Trigger = getTrigger(config);
-
+    const trigger: Trigger = getTrigger(config);
+    let event: PipelineRunEvent = undefined;
     const publisher: ResultEventhubPublisher = new ResultEventhubPublisher(config.eventHubConnectionString);
 
     switch (pipelineStatus) {
         case 'queued':
-            await publisher.publishEvent({
+            event = {
                 status: 'queued',
                 trigger: trigger,
                 pipelineBuildId: config.pipelineBuildId,
-            } as QueuedEvent);
+            } as QueuedEvent;
             break;
         case 'in_progress':
-            await publisher.publishEvent({
+            event = {
                 status: 'in_progress',
                 trigger: trigger,
                 pipelineBuildId: config.pipelineBuildId,
-            } as InProgressEvent);
+            } as InProgressEvent;
             break;
         case 'completed':
-            if (!config.resultPath || !config.logPath || !fs.existsSync(config.resultPath)) {
+            if (!config.resultsPath || !config.logPath) {
                 throw new Error(`Invalid completed event parameter!`);
             }
-            const taskResult: TaskResult = requireJsonc(config.resultPath);
-            await publisher.publishEvent({
+
+            const taskResults: TaskResult[] = getTaskResults(config.resultsPath);
+            const taskTotalResult: TaskResult = publisher.generateTotalResult(taskResults, config.pipelineBuildId);
+            event = {
                 status: 'completed',
                 trigger: trigger,
                 pipelineBuildId: config.pipelineBuildId,
                 logPath: config.logPath,
-                result: taskResult,
-            } as CompletedEvent);
+                result: taskTotalResult,
+            } as CompletedEvent;
             break;
     }
+    await publisher.publishEvent(event);
     await publisher.close();
 }
 

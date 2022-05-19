@@ -243,7 +243,7 @@ export class ResultPublisherEventHubInput {
     pipelineBuildId: string;
     trigger: string;
     logPath?: string;
-    resultPath?: string;
+    resultsPath?: string;
 }
 
 export const resultPublisherEventHubInput = convict<ResultPublisherEventHubInput>({
@@ -272,12 +272,13 @@ export const resultPublisherEventHubInput = convict<ResultPublisherEventHubInput
         default: null,
         env: 'LOG_PATH',
         nullable: true,
-        format: assertNullOrEmpty,
+        format: String,
     },
-    resultPath: {
+    resultsPath: {
+        doc: 'task result files array',
         default: null,
-        env: 'RESULT_PATH',
+        env: 'RESULTS_PATH',
         nullable: true,
-        format: assertNullOrEmpty,
+        format: String,
     },
 });

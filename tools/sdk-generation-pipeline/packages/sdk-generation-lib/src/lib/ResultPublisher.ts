@@ -125,6 +125,35 @@ export class ResultEventhubPublisher {
         }
     }
 
+    public generateTotalResult(taskResults: TaskResult[], pipelineBuildId: string): TaskResult {
+        const totalResult: TaskResult = {
+            name: 'total',
+            pipelineBuildId: pipelineBuildId,
+            result: 'success',
+            errorCount: 0,
+            messages: [],
+        };
+
+        if (taskResults.length === 0) {
+            totalResult.result = 'failure';
+            return totalResult;
+        }
+
+        for (const taskResult of taskResults) {
+            if (taskResult.result !== 'success') {
+                totalResult.result = taskResult.result;
+            }
+            totalResult.errorCount += taskResult.errorCount;
+            if (taskResult.messages) {
+                for (const msg of taskResult.messages) {
+                    totalResult.messages.push(msg);
+                }
+            }
+        }
+
+        return totalResult;
+    }
+
     public async close() {
         await this.producer.close();
     }

@@ -15,7 +15,7 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly ReviewManager _manager;
         private readonly UserPreferenceCache _preferenceCache;
         public const int _defaultPageSize = 50;
-        public const string _defaultSortField = "Name";
+        public const string _defaultSortField = "LastUpdated";
 
         public IndexPageModel(ReviewManager manager, UserPreferenceCache preferenceCache)
         {

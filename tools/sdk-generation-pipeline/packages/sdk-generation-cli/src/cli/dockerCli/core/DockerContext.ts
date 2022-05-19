@@ -1,9 +1,9 @@
+import { initializeLogger } from "@azure-tools/sdk-generation-lib";
+import fs from "fs";
+import path from "path";
 import { Logger } from "winston";
 import { DockerCliInput } from "../schema/dockerCliInput";
-import { initializeLogger } from "@azure-tools/sdk-generation-lib";
-import path from "path";
-import fs from "fs";
-import { sdkToRepoMap } from "./generateCodesInLocal";
+import { sdkToRepoMap } from './constants';
 
 export class DockerContext {
     mode: 'generateCodesInLocal' | 'growUp' | 'generateCodesInPipeline';

@@ -1,7 +1,7 @@
-import * as path from "path";
-import { existsSync, mkdirSync } from "fs";
 import { execSync } from "child_process";
 import commandLineArgs from "command-line-args";
+import { existsSync, mkdirSync } from "fs";
+import * as path from "path";
 import * as process from "process";
 
 const repoCommitId = {

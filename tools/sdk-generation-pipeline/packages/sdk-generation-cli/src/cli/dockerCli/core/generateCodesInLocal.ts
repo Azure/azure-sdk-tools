@@ -1,18 +1,11 @@
+import { spawn } from "child_process";
 import { existsSync } from "fs";
 import * as path from "path";
-import { spawn } from "child_process";
+import { getChangedPackageDirectory } from "../../../utils/git";
+import { sdkToRepoMap } from './constants';
+import { DockerContext } from "./DockerContext";
 import { initializeDockerTaskEngineContext, runTaskEngine } from "./dockerTaskEngine";
 import { doNotExitDockerContainer } from "./doNotExitDockerContainer";
-import { DockerContext } from "./DockerContext";
-import { getChangedPackageDirectory } from "../../../utils/git";
-
-export const sdkToRepoMap = {
-    js: 'azure-sdk-for-js',
-    python: 'azure-sdk-for-python',
-    go: 'azure-sdk-for-go',
-    java: 'azure-sdk-for-java',
-    '.net': 'azure-sdk-for-net'
-}
 
 export async function cloneRepoIfNotExist(context: DockerContext, sdkRepos: string[]) {
     for (const sdkRepo of sdkRepos) {

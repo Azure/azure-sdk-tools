@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
+import { logger } from "@azure-tools/sdk-generation-lib";
 // Licensed under the MIT License. See License in the project root for license information.
 import { BlobServiceClient } from '@azure/storage-blob';
-import {logger} from "@azure-tools/sdk-generation-lib";
 
 export class AzureBlobClient {
   private blobServiceClient: BlobServiceClient;

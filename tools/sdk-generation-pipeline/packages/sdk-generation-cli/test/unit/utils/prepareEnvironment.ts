@@ -1,6 +1,6 @@
+import { execSync } from "child_process";
 import { existsSync, mkdirSync } from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
 
 function mkdirTmpFolderIfNotExist(tmpFolder: string) {
     if (!existsSync(tmpFolder)) {

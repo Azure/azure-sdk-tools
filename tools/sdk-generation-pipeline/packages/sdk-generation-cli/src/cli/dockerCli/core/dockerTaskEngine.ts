@@ -1,4 +1,3 @@
-import { dockerTaskEngineConfig } from "../schema/dockerTaskEngineInput";
 import {
     addFileLog,
     CodegenToSdkConfig,
@@ -17,12 +16,13 @@ import {
     runScript,
     StringMap
 } from "@azure-tools/sdk-generation-lib";
-import * as path from "path";
+import { execSync } from "child_process";
 import * as fs from "fs";
 import { writeFileSync } from "fs";
-import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from "../../../utils/git";
+import * as path from "path";
 import { Logger } from "winston";
-import { execSync } from "child_process";
+import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from "../../../utils/git";
+import { dockerTaskEngineConfig } from "../schema/dockerTaskEngineInput";
 import { DockerContext } from "./DockerContext";
 
 export type DockerTaskEngineContext = {

@@ -1,6 +1,6 @@
-import {TaskResult} from "@azure-tools/sdk-generation-lib/dist/types/taskResult";
-import * as https from "https";
+import { TaskResult } from "@azure-tools/sdk-generation-lib/dist/types/taskResult";
 import * as fs from "fs";
+import * as https from "https";
 
 const axios = require('axios')
 

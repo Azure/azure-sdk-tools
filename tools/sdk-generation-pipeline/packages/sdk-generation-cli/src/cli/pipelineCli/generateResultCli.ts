@@ -1,6 +1,13 @@
 #!/usr/bin/env node
+import {
+    AzureSDKTaskName,
+    createTaskResult,
+    LogFilter,
+    logger,
+    TaskOutput,
+    TaskResult
+} from '@azure-tools/sdk-generation-lib';
 import * as fs from 'fs';
-import { createTaskResult, AzureSDKTaskName, TaskResult, TaskOutput, LogFilter, logger } from '@azure-tools/sdk-generation-lib';
 
 function printHelp() {
     console.log('usage: generateResult --pipelineBuildId --logfile --taskname --resultOutputPath');

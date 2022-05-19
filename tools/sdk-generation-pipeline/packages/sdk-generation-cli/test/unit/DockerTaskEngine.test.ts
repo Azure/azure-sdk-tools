@@ -1,9 +1,12 @@
-import { DockerTaskEngineContext, initializeDockerTaskEngineContext } from "../../src/cli/dockerCli/core/dockerTaskEngine";
-import { DockerContext } from "../../src/cli/dockerCli/core/DockerContext";
-import * as path from "path";
 import { initializeLogger } from "@azure-tools/sdk-generation-lib";
-import { runTaskEngine } from "../../dist/cli/dockerCli/core/dockerTaskEngine";
 import { existsSync } from "fs";
+import * as path from "path";
+import { runTaskEngine } from "../../dist/cli/dockerCli/core/dockerTaskEngine";
+import { DockerContext } from "../../src/cli/dockerCli/core/DockerContext";
+import {
+    DockerTaskEngineContext,
+    initializeDockerTaskEngineContext
+} from "../../src/cli/dockerCli/core/dockerTaskEngine";
 
 describe('task engine', () => {
     it('should initialize a DockerTaskEngineContext by DockerContext', async () => {

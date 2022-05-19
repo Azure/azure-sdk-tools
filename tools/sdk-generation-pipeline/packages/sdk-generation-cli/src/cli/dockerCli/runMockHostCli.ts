@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
+import { initializeLogger } from "@azure-tools/sdk-generation-lib";
 import { spawn } from "child_process";
 import * as path from "path";
 import { Logger } from "winston";
-import { initializeLogger } from "@azure-tools/sdk-generation-lib";
 import { dockerCliInput, DockerCliInput } from "./schema/dockerCliInput";
 import { dockerMockHostInput, DockerMockHostInput } from "./schema/mockHostCliInput";
 

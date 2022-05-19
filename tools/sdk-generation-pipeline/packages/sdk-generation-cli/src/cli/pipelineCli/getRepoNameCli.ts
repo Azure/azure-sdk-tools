@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import {logger} from '@azure-tools/sdk-generation-lib';
+import { logger } from '@azure-tools/sdk-generation-lib';
 import * as path from "path";
 
 async function main(repoKey: string, repoUrl: string) {

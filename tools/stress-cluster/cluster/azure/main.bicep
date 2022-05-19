@@ -102,7 +102,8 @@ var appInsightsInstrumentationKeySecretName = 'appInsightsInstrumentationKey-${r
 var appInsightsInstrumentationKeySecretValue = 'APPINSIGHTS_INSTRUMENTATIONKEY=${appInsights.outputs.instrumentationKey}\n'
 var appInsightsConnectionStringSecretName = 'appInsightsConnectionString-${resourceSuffix}'
 // Value is in dotenv format as it will be appended to stress test container dotenv files
-var appInsightsConnectionStringSecretValue = 'APPLICATIONINSIGHTS_CONNECTION_STRING=${appInsights.outputs.connectionString}\n'
+// Include double quotes since the connection string contains semicolons, which causes problems when sourcing the file
+var appInsightsConnectionStringSecretValue = 'APPLICATIONINSIGHTS_CONNECTION_STRING="${appInsights.outputs.connectionString}"\n'
 
 // Storage account information used for kubernetes fileshare volume mounting via the azure files csi driver
 // See https://docs.microsoft.com/en-us/azure/aks/azure-files-volume#create-a-kubernetes-secret

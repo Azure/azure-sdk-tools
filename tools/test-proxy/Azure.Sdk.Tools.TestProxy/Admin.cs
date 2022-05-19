@@ -108,6 +108,11 @@ namespace Azure.Sdk.Tools.TestProxy
             _recordingHandler.SetRecordingOptions(options);
         }
 
+        [HttpPost]
+        public async Task Save()
+        {
+        }
+
         public object GetSanitizer(string name, JsonDocument body)
         {
             return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, new HashSet<string>() { "value" }, documentBody: body);

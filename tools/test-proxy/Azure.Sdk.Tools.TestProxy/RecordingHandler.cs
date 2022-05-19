@@ -32,9 +32,9 @@ namespace Azure.Sdk.Tools.TestProxy
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
         private const string SkipRecordingRequestResponse = "request-response";
-        private IAssetsStore _store;
+        private AssetsStore _store;
 
-        public RecordingHandler(string targetDirectory, IAssetsStore store = null)
+        public RecordingHandler(string targetDirectory, AssetsStore store = null)
         {
             ContextDirectory = targetDirectory;
 
@@ -504,11 +504,32 @@ namespace Azure.Sdk.Tools.TestProxy
                         SetRecordingDirectory(newSourceDirectory);
                     }
                 }
+
+                if (options.TryGetValue("AssetsStore", out var assetsStoreObj))
+                {
+                    var newAssetsStoreIdentifier = assetsStoreObj.ToString();
+
+                    // TODO: implement this
+                    if (!string.IsNullOrWhiteSpace(newAssetsStoreIdentifier))
+                    {
+                        SetAssetsStore(newAssetsStoreIdentifier);
+                    }
+                }
+
             }
             else
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.");
             }
+        }
+
+        public void SetAssetsStore(string assetsStoreId)
+        {
+            // TODO
+            // check local assembly
+            // check provided remote assembly lookup point
+
+            _store = new GitStore();
         }
 
         public void SetRecordingDirectory(string targetDirectory)

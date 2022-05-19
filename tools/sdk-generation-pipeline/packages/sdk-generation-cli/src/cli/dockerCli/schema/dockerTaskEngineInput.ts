@@ -22,7 +22,7 @@ export class DockerTaskEngineInput {
     changeOwner: boolean;
 }
 
-export const dockerTaskEngineConfig = convict<DockerTaskEngineInput>({
+export const dockerTaskEngineInput = convict<DockerTaskEngineInput>({
     configFilePath: {
         default: 'eng/codegen_to_sdk_config.json',
         env: 'CONFIG_FILE_PATH',

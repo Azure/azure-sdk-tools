@@ -22,7 +22,7 @@ import { writeFileSync } from "fs";
 import * as path from "path";
 import { Logger } from "winston";
 import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from "../../../utils/git";
-import { dockerTaskEngineConfig } from "../schema/dockerTaskEngineInput";
+import { dockerTaskEngineInput } from "../schema/dockerTaskEngineInput";
 import { DockerContext } from "./DockerContext";
 
 export type DockerTaskEngineContext = {
@@ -59,7 +59,7 @@ export function initializeDockerTaskEngineContext(dockerContext: DockerContext):
     // before execute task engine, safe spec repos and sdk repos because they may be owned by others
     safeDirectory(dockerContext.specRepo);
     safeDirectory(dockerContext.sdkRepo);
-    const dockerTaskEngineConfigProperties = dockerTaskEngineConfig.getProperties();
+    const dockerTaskEngineConfigProperties = dockerTaskEngineInput.getProperties();
     const dockerTaskEngineContext: DockerTaskEngineContext = {
         logger: dockerContext.logger,
         configFilePath: dockerTaskEngineConfigProperties.configFilePath,

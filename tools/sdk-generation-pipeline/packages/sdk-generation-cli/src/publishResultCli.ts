@@ -110,7 +110,13 @@ async function publishDB(pipelineStatus: SDKPipelineStatus) {
 }
 
 function getTrigger(config: ResultPublisherEventHubInput): Trigger {
-    let trigger: Trigger = JSON.parse(config.trigger);
+    let trigger: Trigger;
+    try {
+        trigger = JSON.parse(config.trigger);
+    } catch (error) {
+        logger.error(`Wrong json format:` + config.trigger);
+        throw new Error(error);
+    }
 
     return trigger;
 }

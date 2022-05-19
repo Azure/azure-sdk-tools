@@ -107,14 +107,11 @@
     });
   });
 
-  searchBox.on('keypress', function(e) {
+  searchBox.on('input', function(e) {
     var searchQuery = searchBox.val() as string;
-    if (searchQuery.length >= 3 || e.key == "Enter" )
-    {
-      setTimeout(function() {
-        updateListedReviews({ search : searchQuery });
-      }, 1000);
-    }
+    setTimeout(function() {
+      updateListedReviews({ search : searchQuery });
+    }, 1000);
   });
 
   searchButton.on('click', function() {

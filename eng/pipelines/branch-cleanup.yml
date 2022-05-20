@@ -51,7 +51,7 @@ jobs:
             arguments: >
               -RepoId ${{ repo }} 
               -CentralRepoId "Azure/azure-sdk-tools"\
-              -CentralPRRegex "^sync-eng/common.*-(?<PrNumber>\d+)-.*$"
+              -CentralPRRegex "^sync-eng/common.*-(?<PrNumber>\d+).*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
       - ${{ each repo in parameters.SDKPrivate }}:

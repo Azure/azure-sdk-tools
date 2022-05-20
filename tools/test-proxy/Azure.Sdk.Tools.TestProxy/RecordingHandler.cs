@@ -26,31 +26,15 @@ namespace Azure.Sdk.Tools.TestProxy
     public class RecordingHandler
     {
         #region constructor and common variables
-        public bool HandleRedirects = true;
         public string ContextDirectory;
+        public bool HandleRedirects = true;
 
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
         private const string SkipRecordingRequestResponse = "request-response";
+
         public IAssetsStore Store;
-
-        public RecordingHandler(string targetDirectory, IAssetsStore store = null)
-        {
-            ContextDirectory = targetDirectory;
-
-            SetDefaultExtensions();
-
-            if (store != null)
-            {
-                Store = store;
-            }
-            else
-            {
-                Store = new NullStore();
-            }
-        }
-
-        private static readonly RecordedTestSanitizer defaultSanitizer = new RecordedTestSanitizer();
+        public StoreResolver Resolver;
 
         private static readonly string[] s_excludedRequestHeaders = new string[] {
             // Only applies to request between client and proxy
@@ -73,6 +57,32 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public readonly ConcurrentDictionary<string, ModifiableRecordSession> PlaybackSessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
+
+        public RecordingHandler(string targetDirectory, IAssetsStore store = null, StoreResolver storeResolver = null)
+        {
+            ContextDirectory = targetDirectory;
+
+            SetDefaultExtensions();
+
+            if (store == null)
+            {
+                Store = new NullStore();
+            }
+            else
+            {
+                Store = store;
+            }
+
+            if (storeResolver == null)
+            {
+                // with no additional directory load context
+                Resolver = new StoreResolver(String.Empty);
+            }
+            else
+            {
+                Resolver = storeResolver;
+            }
+        }
         #endregion
 
         #region recording functionality
@@ -463,7 +473,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         #endregion
 
-        #region common functions
+        #region SetRecordingOptions and store functionality
         public void SetRecordingOptions(IDictionary<string, object> options = null)
         {
             if (options != null)
@@ -525,11 +535,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public void SetAssetsStore(string assetsStoreId)
         {
-            // TODO
-            // check local assembly
-            // check provided remote assembly lookup point
-
-            _store = new GitStore();
+            Store = Resolver.ResolveStore(assetsStoreId);
         }
 
         public void SetRecordingDirectory(string targetDirectory)
@@ -543,7 +549,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     targetDirectory = Path.GetDirectoryName(targetDirectory);
                 }
-                
+
                 if (!String.IsNullOrEmpty(targetDirectory))
                 {
                     Directory.CreateDirectory(targetDirectory);
@@ -555,7 +561,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"Unable set proxy context to target directory \"{targetDirectory}\". Unhandled exception was: \"{ex.Message}\".");
             }
         }
+        #endregion
 
+        #region utility and common-use functions
         public void AddSanitizerToRecording(string recordingId, RecordedTestSanitizer sanitizer)
         {
             if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))

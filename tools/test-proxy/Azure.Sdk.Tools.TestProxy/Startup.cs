@@ -16,6 +16,7 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Azure.Sdk.Tools.TestProxy.Store;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -30,6 +31,8 @@ namespace Azure.Sdk.Tools.TestProxy
         public Startup(IConfiguration configuration) { }
 
         public static string TargetLocation;
+        public static string TargetPlugin;
+        public static string AssemblyDirectory;
 
         private static string resolveRepoLocation(string storageLocation = null)
         {
@@ -45,9 +48,11 @@ namespace Azure.Sdk.Tools.TestProxy
         /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
         /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
         /// <param name="dump">Flag. Pass to dump configuration values before starting the application.</param>
+        /// <param name="storagePlugin">Does the user have a preference as to a default startup plugin? Defaults to "No plugin" currently.</param>
+        /// <param name="assemblyDirectory">If the user has defined a custom storage extension, they should place their DLL in a directory and said directory to this argument.</param>
         /// <param name="version">Flag. Pass to get the version of the tool.</param>
         /// <param name="args">Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider.</param>
-        public static void Main(bool insecure = false, string storageLocation = null, bool dump = false, bool version = false, string[] args = null)
+        public static void Main(bool insecure = false, string storageLocation = null, bool dump = false, string storagePlugin = null, string assemblyDirectory = null, bool version = false, string[] args = null)
         {
             if (version)
             {
@@ -67,6 +72,8 @@ namespace Azure.Sdk.Tools.TestProxy
             var statusThreadCts = new CancellationTokenSource();
 
             TargetLocation = resolveRepoLocation(storageLocation);
+            TargetPlugin = storagePlugin;
+            AssemblyDirectory = assemblyDirectory;
 
             var statusThread = PrintStatus(
                 () => $"[{DateTime.UtcNow.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
@@ -136,7 +143,17 @@ namespace Azure.Sdk.Tools.TestProxy
             });
             services.AddControllersWithViews();
             services.AddRazorPages();
-            services.AddSingleton<RecordingHandler>(new RecordingHandler(TargetLocation));
+
+            var resolver = new StoreResolver(TargetLocation);
+            var store = resolver.ResolveStore(TargetPlugin);
+
+            var singleTonRecordingHandler = new RecordingHandler(
+                TargetLocation,
+                store: store,
+                storeResolver: resolver
+            );
+
+            services.AddSingleton<RecordingHandler>(singleTonRecordingHandler);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)

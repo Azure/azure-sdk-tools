@@ -1,6 +1,7 @@
 using System.IO;
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Net;
+using System;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -8,14 +9,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     {
         public void Save(string pathToAssetsJson, string contextPath) {
             var config = ParseConfigurationFile(pathToAssetsJson);
+
+            throw new NotImplementedException();
         }
 
         public void Restore(string pathToAssetsJson, string contextPath) {
             var config = ParseConfigurationFile(pathToAssetsJson);
+
+            throw new NotImplementedException();
         }
 
         public void Reset(string pathToAssetsJson, string contextPath) {
             var config = ParseConfigurationFile(pathToAssetsJson);
+
+            throw new NotImplementedException();
         }
 
         public GitAssetsConfiguration ParseConfigurationFile(string assetsJsonPath)

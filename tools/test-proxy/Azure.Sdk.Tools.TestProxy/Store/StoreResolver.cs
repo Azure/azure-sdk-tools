@@ -36,12 +36,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         private Assembly LoadAssembly(string path)
         {
-            return null;
+            throw new NotImplementedException();
         }
 
-        private Type CheckAssemblyForStore(string storeName, Assembly inputAssembly)
+        private Type GetTypeFromAssembly(string storeName, Assembly inputAssembly)
         {
-            throw new NotImplementedException();
+            foreach(var type in inputAssembly.GetTypes()) {
+                if (type.Name.ToLowerInvariant().Contains(storeName.ToLowerInvariant()))
+                {
+                    return type;
+                }
+            }
+
+            return null;
         }
 
         private string[] GetAssembliesFromFolder(string folder)
@@ -58,22 +65,52 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public IAssetsStore ResolveStore(string storeName, string additionalAssemblyDirectory)
         {
+            if (!File.Exists(additionalAssemblyDirectory))
+            {
+                throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"Provided directory {additionalAssemblyDirectory} does not exist.");
+            }
+
+            var assemblyDirectories = new string[AssemblyDirectories.Length + 1];
+            AssemblyDirectories.CopyTo(assemblyDirectories, 0);
+            assemblyDirectories[assemblyDirectories.Length] = additionalAssemblyDirectory;
+
+            return ResolveStore(storeName, assemblyDirectories);
+        }
+
+
+        /// <summary>
+        /// Used to resolve the store given a name and an additional assembly directory.
+        /// </summary>
+        /// <param name="storeName"></param>
+        /// <returns></returns>
+        public IAssetsStore ResolveStore(string storeName)
+        {
+            return ResolveStore(storeName, AssemblyDirectories);
+        }
+
+        private IAssetsStore ResolveStore(string storeName, string[] assemblyDirectories)
+        {
+            if (String.IsNullOrWhiteSpace(storeName))
+            {
+                throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"Unable to load a backing store without a valid input value. Test-Proxy saw value \"{(storeName == null ? "null" : storeName)}\"");
+            }
+
             // first check if the type is present in executing assembly
             var invokingAssembly = Assembly.GetExecutingAssembly();
+            var storeType = GetTypeFromAssembly(storeName, invokingAssembly);
 
-            var storeType = CheckAssemblyForStore(storeName, invokingAssembly);
-
+            // then we will only do the heavy lifting of multiple assemblies if we HAVE to
             if (storeType == null)
             {
-                foreach(var assemblyDirectory in AssemblyDirectories)
+                foreach (var assemblyDirectory in assemblyDirectories)
                 {
                     var assemblyFiles = GetAssembliesFromFolder(assemblyDirectory);
 
-                    foreach(var assemblyFile in assemblyFiles)
+                    foreach (var assemblyFile in assemblyFiles)
                     {
-                        storeType = CheckAssemblyForStore(storeName, LoadAssembly(assemblyFile));
+                        storeType = GetTypeFromAssembly(storeName, LoadAssembly(assemblyFile));
 
-                        if(storeType != null)
+                        if (storeType != null)
                         {
                             break;
                         }
@@ -90,7 +127,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 throw new HttpException(
                     System.Net.HttpStatusCode.BadRequest,
-                    $"Unable to load the specified IAssetStore class {storeName}. Looked in invoking assembly as well as additional directories: [{String.Join(",", AssemblyDirectories)}]"
+                    $"Unable to load the specified IAssetStore class {storeName}. Looked in invoking assembly as well as additional directories: [{String.Join(",", assemblyDirectories)}]"
                 );
             }
 
@@ -104,20 +141,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 throw new HttpException(
                     System.Net.HttpStatusCode.BadRequest,
-                    $"Unable to create an instance of type {storeType.Name}. This name was generated from input {storeName}. The invoking assembly and directories [{String.Join(",", AssemblyDirectories)}] were queried for this type."
+                    $"Unable to create an instance of type {storeType.Name}. This name was generated from input {storeName}. The invoking assembly and directories [{String.Join(",", assemblyDirectories)}] were queried for this type."
+                    + $"Visible Exception is \"{e.Message}\"."
                 );
             }
-        }
-
-        /// <summary>
-        /// Used to resolve the store given a name and an additional assembly directory.
-        /// </summary>
-        /// <param name="storeName"></param>
-        /// <returns></returns>
-        public IAssetsStore ResolveStore(string storeName)
-        {
-            // TODO: implement
-            return new NullStore();
         }
     }
 }

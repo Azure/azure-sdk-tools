@@ -74,11 +74,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (!String.IsNullOrWhiteSpace(command))
             {
-                if (!File.Exists(assetsJsonPath))
-                {
-                    throw new Exception($"Unable to launch a storage activity against the assets json path provided. The file \"{assetsJsonPath}\" does not exist.");
-                }
-
                 switch (command.ToLowerInvariant())
                 {
                     case "save":
@@ -93,7 +88,6 @@ namespace Azure.Sdk.Tools.TestProxy
                     default:
                         throw new Exception($"One must provide a valid value for argument \"command\". \"{command}\" is not a valid option.");
                 }
-                    
             }
 
             _insecure = insecure;

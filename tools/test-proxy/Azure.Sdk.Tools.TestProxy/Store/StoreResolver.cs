@@ -24,7 +24,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             AssemblyDirectories = assemblyDirectories;
         }
 
-        public StoreResolver(string assemblyDirectory)
+        public StoreResolver()
+        {
+            AssemblyDirectories = new string[] {};
+        }
+
+        public StoreResolver(string assemblyDirectory = null)
         {
             if (!File.Exists(assemblyDirectory))
             {
@@ -99,7 +104,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             var invokingAssembly = Assembly.GetExecutingAssembly();
             var storeType = GetTypeFromAssembly(storeName, invokingAssembly);
 
-            // then we will only do the heavy lifting of multiple assemblies if we HAVE to
+            // then we will only do the heavy lifting of multiple assembly loads if we HAVE to
             if (storeType == null)
             {
                 foreach (var assemblyDirectory in assemblyDirectories)

@@ -64,23 +64,16 @@ namespace Azure.Sdk.Tools.TestProxy
 
             SetDefaultExtensions();
 
+            Store = store;
             if (store == null)
             {
                 Store = new NullStore();
             }
-            else
-            {
-                Store = store;
-            }
 
-            if (storeResolver == null)
+            Resolver = storeResolver;
+            if (Resolver == null)
             {
-                // with no additional directory load context
-                Resolver = new StoreResolver(String.Empty);
-            }
-            else
-            {
-                Resolver = storeResolver;
+                Resolver = new StoreResolver();
             }
         }
         #endregion

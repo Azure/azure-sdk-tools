@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { DockerContext } from "./core/DockerContext";
-import { GenerateCodesInLocalJob } from './core/GenerateCodesInLocalJob';
-import { GenerateCodesInPipelineJob } from "./core/GenerateCodesInPipelineJob";
-import { GrowUpJob } from "./core/GrowUpJob";
+import { GenerateCodesInLocalJob } from './core/jobs/GenerateCodesInLocalJob';
+import { GenerateCodesInPipelineJob } from "./core/jobs/GenerateCodesInPipelineJob";
+import { GrowUpJob } from "./core/jobs/GrowUpJob";
 import { DockerCliInput, dockerCliInput } from "./schema/dockerCliInput";
 
 async function main() {

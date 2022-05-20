@@ -1,10 +1,10 @@
 import { spawn } from "child_process";
 import { existsSync } from "fs";
 import * as path from "path";
-import { getChangedPackageDirectory } from "../../../utils/git";
-import { sdkToRepoMap } from './constants';
-import { DockerContext } from "./DockerContext";
-import { DockerTaskEngineContext } from './DockerTaskEngineContext';
+import { getChangedPackageDirectory } from "../../../../utils/git";
+import { sdkToRepoMap } from '../constants';
+import { DockerContext } from "../DockerContext";
+import { DockerTaskEngineContext } from '../DockerTaskEngineContext';
 import { BaseJob } from './BaseJob';
 
 export class GenerateCodesInLocalJob extends BaseJob{

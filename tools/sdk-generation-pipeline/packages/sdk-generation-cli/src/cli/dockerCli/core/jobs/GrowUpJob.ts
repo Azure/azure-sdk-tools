@@ -1,4 +1,4 @@
-import { DockerContext } from "./DockerContext";
+import { DockerContext } from "../DockerContext";
 import { BaseJob } from './BaseJob';
 
 export class GrowUpJob extends BaseJob {

@@ -24,6 +24,10 @@ import { Logger } from "winston";
 import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from "../../../utils/git";
 import { dockerTaskEngineInput } from "../schema/dockerTaskEngineInput";
 import { DockerContext } from "./DockerContext";
+import { GenerateAndBuildTask } from './tasks/GenerateAndBuildTask';
+import { InitTask } from './tasks/InitTask';
+import { MockTestTask } from './tasks/MockTestTask';
+import { SDKGenerationTaskBase } from './tasks/SDKGenerationTaskBase';
 
 export class DockerTaskEngineContext {
     logger: Logger;
@@ -110,151 +114,44 @@ export class DockerTaskEngineContext {
         this.logger.info(`Finish running task engine in ${path.basename(this.sdkRepo)}`);
     }
 
-    public async getTaskToRun(): Promise<string[]> {
+    public async getTaskToRun(): Promise<SDKGenerationTaskBase[]> {
         const codegenToSdkConfig: CodegenToSdkConfig = getCodegenToSdkConfig(requireJsonc(path.join(this.sdkRepo, this.configFilePath)));
         this.logger.info(`Get codegen_to_sdk_config.json`);
         this.logger.info(JSON.stringify(codegenToSdkConfig, undefined, 2));
-        const tasksToRun: string[] = [];
-        for (const task of Object.keys(codegenToSdkConfig)) {
-            tasksToRun.push(task);
-            if (!this.taskResults) {
-                this.taskResults = {};
+        const tasksToRun: SDKGenerationTaskBase[] = [];
+        for (const taskName of Object.keys(codegenToSdkConfig)) {
+            let task: SDKGenerationTaskBase;
+            switch (taskName) {
+                case 'init':
+                    task = new InitTask(this);
+                    break;
+                case 'generateAndBuild':
+                    task = new GenerateAndBuildTask(this);
+                    break;
+                case 'mockTest':
+                    task = new MockTestTask(this);
+                    break;
             }
-            this.taskResults[task] = 'skipped';
+
+            if (!!task) {
+                tasksToRun.push(task);
+                if (!this.taskResults) {
+                    this.taskResults = {};
+                }
+                this.taskResults[taskName] = 'skipped';
+            }
         }
-        this.logger.info(`Get tasks to run: ${tasksToRun.join(', ')}`);
+        tasksToRun.sort((a, b) => a.order - b.order);
+        this.logger.info(`Get tasks to run: ${tasksToRun.map(task => task.taskType).join(',')}`);
         return tasksToRun;
-    }
-
-    public async runInitTask() {
-        const initTask = getTask(path.join(this.sdkRepo, this.configFilePath), 'init');
-        if (!initTask) {
-            throw `Init task is ${initTask}`;
-        }
-        const initOptions = initTask as InitOptions;
-        const runOptions = initOptions.initScript;
-        addFileLog(this.logger, this.initTaskLog, 'init');
-        const executeResult = await runScript(runOptions, {
-            cwd: path.resolve(this.sdkRepo),
-            args: [this.initOutput],
-            customizedLogger: this.logger
-        });
-        removeFileLog(this.logger, 'init');
-        this.taskResults['init'] = executeResult === 'succeeded'? 'success' : 'failure';
-        if (executeResult === 'failed') {
-            throw `Execute init script failed.`
-        }
-        if (fs.existsSync(this.initOutput)) {
-            const initOutputJson = initOutput(requireJsonc(this.initOutput));
-            this.logger.info(`Get ${path.basename(this.initOutput)}:`);
-            this.logger.info(JSON.stringify(initOutputJson, undefined, 2));
-
-            if (initOutputJson?.envs) {
-                this.envs = initOutputJson.envs;
-            }
-        }
-    }
-
-    public async runGenerateAndBuildTask() {
-        const generateAndBuildTask = getTask(path.join(this.sdkRepo, this.configFilePath), 'generateAndBuild');
-        if (!generateAndBuildTask) {
-            throw `Generate and build task is ${generateAndBuildTask}`;
-        }
-        const generateAndBuildOptions = generateAndBuildTask as GenerateAndBuildOptions;
-        const runOptions = generateAndBuildOptions.generateAndBuildScript;
-        const readmeMdAbsolutePath = path.join(this.specRepo.repoPath, this.readmeMdPath);
-        const specRepoPath = this.specRepo.repoPath.includes('specification') ? this.specRepo.repoPath : path.join(this.specRepo.repoPath, 'specification');
-        const relatedReadmeMdFileRelativePath = path.relative(specRepoPath, readmeMdAbsolutePath);
-        const inputContent: GenerateAndBuildInput = {
-            specFolder: specRepoPath,
-            headSha: this.specRepo.headSha,
-            headRef: this.specRepo.headRef,
-            repoHttpsUrl: this.specRepo.repoHttpsUrl,
-            relatedReadmeMdFile: relatedReadmeMdFileRelativePath,
-            serviceType: this.serviceType
-        };
-        const inputJson = JSON.stringify(inputContent, undefined, 2)
-        this.logger.info(`Get ${path.basename(this.generateAndBuildInputJson)}:`);
-        this.logger.info(inputJson);
-        fs.writeFileSync(this.generateAndBuildInputJson, inputJson, {encoding: 'utf-8'});
-        addFileLog(this.logger, this.generateAndBuildTaskLog, 'generateAndBuild');
-        const executeResult = await runScript(runOptions, {
-            cwd: path.resolve(this.sdkRepo),
-            args: [this.generateAndBuildInputJson, this.generateAndBuildOutputJson],
-            envs: this.envs,
-            customizedLogger: this.logger
-        });
-        removeFileLog(this.logger, 'generateAndBuild');
-        this.taskResults['generateAndBuild'] = executeResult === 'succeeded'? 'success' : 'failure';
-        if (executeResult === 'failed') {
-            throw `Execute generateAndBuild script failed.`
-        }
-        if (fs.existsSync(this.generateAndBuildOutputJson)) {
-            const generateAndBuildOutputJson = getGenerateAndBuildOutput(requireJsonc(this.generateAndBuildOutputJson));
-            this.logger.info(`Get ${path.basename(this.generateAndBuildOutputJson)}:`);
-            this.logger.info(JSON.stringify(generateAndBuildOutputJson, undefined, 2));
-            const packageFolders: string[] = [];
-            for (const p of generateAndBuildOutputJson.packages) {
-                packageFolders.push(p.packageFolder);
-            }
-            this.packageFolders = packageFolders;
-        }
-    }
-
-    public async runMockTestTask() {
-        const mockTestTask = getTask(path.join(this.sdkRepo, this.configFilePath), 'mockTest');
-        if (!mockTestTask) {
-            throw `Init task is ${mockTestTask}`;
-        }
-        const mockTestOptions = mockTestTask as MockTestOptions;
-        const runOptions = mockTestOptions.mockTestScript;
-        for (const packageFolder of this.packageFolders) {
-            this.logger.info(`Run MockTest for ${packageFolder}`);
-
-            const inputContent: MockTestInput = {
-                packageFolder: path.join(this.sdkRepo, packageFolder),
-                mockServerHost: this.mockServerHost
-            };
-            const inputJson = JSON.stringify(inputContent, undefined, 2)
-            const formattedPackageName = packageFolder.replace(/[^a-zA-z0-9]/g, '-');
-            const mockTestInputJsonPath = this.packageFolders.length > 1? this.mockTestInputJson.replace('.json', `${formattedPackageName}.json`) : this.mockTestInputJson;
-            const mockTestOutputJsonPath = this.packageFolders.length > 1? this.mockTestOutputJson.replace('.json', `${formattedPackageName}.json`) : this.mockTestOutputJson;
-            const mockTestTaskLogPath = this.packageFolders.length > 1? this.mockTestTaskLog.replace('task.log', `${formattedPackageName}-task.log`) : this.mockTestTaskLog;
-            fs.writeFileSync(mockTestInputJsonPath, inputJson, {encoding: 'utf-8'});
-            this.logger.info(`Get ${path.basename(mockTestInputJsonPath)}:`);
-            this.logger.info(inputJson);
-            addFileLog(this.logger, mockTestTaskLogPath, `mockTest_${formattedPackageName}`);
-            const executeResult = await runScript(runOptions, {
-                cwd: path.resolve(this.sdkRepo),
-                args: [mockTestInputJsonPath, mockTestOutputJsonPath],
-                envs: this.envs,
-                customizedLogger: this.logger
-            });
-            this.taskResults['mockTest'] = executeResult === 'succeeded' && this.taskResults['mockTest'] !== 'failure'? 'success' : 'failure';
-            removeFileLog(this.logger, `mockTest_${formattedPackageName}`);
-            if (fs.existsSync(mockTestOutputJsonPath)) {
-                const mockTestOutputJson = getTestOutput(requireJsonc(mockTestOutputJsonPath))
-                this.logger.info(`Get ${path.basename(mockTestOutputJsonPath)}:`);
-                this.logger.info(JSON.stringify(mockTestOutputJson, undefined, 2));
-            }
-            if (this.taskResults['mockTest'] === 'failure') {
-                throw new Error('Run Mock Test Failed');
-            }
-        }
     }
 
     public async runTaskEngine() {
         await this.beforeRunTaskEngine();
         try {
-            const tasksToRun: string[] = await this.getTaskToRun();
-            if (tasksToRun.includes('init')) {
-                await this.runInitTask();
-            }
-            if (tasksToRun.includes('generateAndBuild')) {
-                await this.runGenerateAndBuildTask();
-            }
-            if (tasksToRun.includes('mockTest')) {
-                await this.runMockTestTask();
+            const tasksToRun: SDKGenerationTaskBase[] = await this.getTaskToRun();
+            for (const task of tasksToRun) {
+                await task.execute();
             }
         } finally {
             await this.afterRunTaskEngine();

@@ -28,23 +28,28 @@ export type MongoConnectContext = {
 
 export class ResultDBPublisher {
     private connection: Connection;
+    private context: MongoConnectContext;
+
+    constructor(conetxt: MongoConnectContext) {
+        this.context = conetxt;
+    }
 
     public async close() {
         await this.connection.close();
     }
 
-    public async connectDB(context: MongoConnectContext) {
+    public async connectDB() {
         this.connection = await createConnection({
             name: 'mongodb',
             type: 'mongodb',
-            host: context.host,
-            port: context.port,
-            username: context.username,
-            password: context.password,
-            database: context.database,
-            ssl: context.ssl,
-            synchronize: context.synchronize,
-            logging: context.logging,
+            host: this.context.host,
+            port: this.context.port,
+            username: this.context.username,
+            password: this.context.password,
+            database: this.context.database,
+            ssl: this.context.ssl,
+            synchronize: this.context.synchronize,
+            logging: this.context.logging,
             entities: [TaskResultEntity, CodeGeneration],
         });
     }
@@ -123,35 +128,6 @@ export class ResultEventhubPublisher {
             logger.error('Failed to send pipeline result:', JSON.stringify(event), e);
             throw e;
         }
-    }
-
-    public generateTotalResult(taskResults: TaskResult[], pipelineBuildId: string): TaskResult {
-        const totalResult: TaskResult = {
-            name: 'total',
-            pipelineBuildId: pipelineBuildId,
-            result: 'success',
-            errorCount: 0,
-            messages: [],
-        };
-
-        if (taskResults.length === 0) {
-            totalResult.result = 'failure';
-            return totalResult;
-        }
-
-        for (const taskResult of taskResults) {
-            if (taskResult.result !== 'success') {
-                totalResult.result = taskResult.result;
-            }
-            totalResult.errorCount += taskResult.errorCount;
-            if (taskResult.messages) {
-                for (const msg of taskResult.messages) {
-                    totalResult.messages.push(msg);
-                }
-            }
-        }
-
-        return totalResult;
     }
 
     public async close() {

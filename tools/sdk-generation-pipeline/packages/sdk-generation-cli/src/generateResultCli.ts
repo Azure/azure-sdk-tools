@@ -42,13 +42,12 @@ async function main() {
     } else if (config.dockerResultFile && fs.existsSync(config.dockerResultFile)) {
         const dockerTaskResult = JSON.parse(fs.readFileSync(config.dockerResultFile, 'utf-8'));
         if (!dockerTaskResult[config.taskName] || dockerTaskResult[config.taskName].includes('skipped')) {
-            console.log(config.taskName + `skipped`);
             return;
         } else {
             exeResult = dockerTaskResult[config.taskName];
         }
     } else {
-        throw new Error(config.dockerResultFile + `don't exist!`);
+        throw new Error(`exeResult is not provided.`);
     }
 
     taskResult = createTaskResult(

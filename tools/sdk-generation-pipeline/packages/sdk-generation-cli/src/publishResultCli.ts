@@ -5,6 +5,7 @@ import {
     BlobBasicContext,
     CodeGeneration,
     CompletedEvent,
+    generateTotalResult,
     InProgressEvent,
     logger,
     MongoConnectContext,
@@ -23,8 +24,8 @@ import {
 import {
     resultPublisherBlobInput,
     ResultPublisherBlobInput,
-    resultPublisherDBCGInput,
-    ResultPublisherDBCGInput,
+    resultPublisherDBCodeGenerationInput,
+    ResultPublisherDBCodeGenerationInput,
     resultPublisherDBResultInput,
     ResultPublisherDBResultInput,
     resultPublisherEventHubInput,
@@ -44,7 +45,7 @@ async function publishBlob() {
     await resultBlobPublisher.uploadLogsAndResult(config.logsAndResultPath, config.taskName as AzureSDKTaskName);
 }
 
-function initCodegen(config: ResultPublisherDBCGInput, pipelineStatus: SDKPipelineStatus): CodeGeneration {
+function initCodegen(config: ResultPublisherDBCodeGenerationInput, pipelineStatus: SDKPipelineStatus): CodeGeneration {
     const cg: CodeGeneration = new CodeGeneration();
     cg.name = config.sdkGenerationName;
     cg.service = config.service;
@@ -63,7 +64,7 @@ function initCodegen(config: ResultPublisherDBCGInput, pipelineStatus: SDKPipeli
     return cg;
 }
 
-function initMongoConnectContext(config: ResultPublisherDBCGInput): MongoConnectContext {
+function initMongoConnectContext(config: ResultPublisherDBCodeGenerationInput): MongoConnectContext {
     const mongoConnectContext: MongoConnectContext = {
         name: 'mongodb',
         type: 'mongodb',
@@ -81,13 +82,13 @@ function initMongoConnectContext(config: ResultPublisherDBCGInput): MongoConnect
 }
 
 async function publishDB(pipelineStatus: SDKPipelineStatus) {
-    resultPublisherDBCGInput.validate();
-    const config: ResultPublisherDBCGInput = resultPublisherDBCGInput.getProperties();
-    const publisher: ResultDBPublisher = new ResultDBPublisher();
+    resultPublisherDBCodeGenerationInput.validate();
+    const config: ResultPublisherDBCodeGenerationInput = resultPublisherDBCodeGenerationInput.getProperties();
     const cg: CodeGeneration = initCodegen(config, pipelineStatus);
     const mongoConnectContext: MongoConnectContext = initMongoConnectContext(config);
+    const publisher: ResultDBPublisher = new ResultDBPublisher(mongoConnectContext);
 
-    await publisher.connectDB(mongoConnectContext);
+    await publisher.connectDB();
     await publisher.sendSdkGenerationToDB(cg);
 
     if (pipelineStatus === 'completed') {
@@ -163,7 +164,7 @@ async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
             }
 
             const taskResults: TaskResult[] = getTaskResults(config.resultsPath);
-            const taskTotalResult: TaskResult = publisher.generateTotalResult(taskResults, config.pipelineBuildId);
+            const taskTotalResult: TaskResult = generateTotalResult(taskResults, config.pipelineBuildId);
             event = {
                 status: 'completed',
                 trigger: trigger,
@@ -172,6 +173,8 @@ async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
                 result: taskTotalResult,
             } as CompletedEvent;
             break;
+        default:
+            throw new Error(`Unsupported status: ` + (pipelineStatus as string));
     }
     await publisher.publishEvent(event);
     await publisher.close();

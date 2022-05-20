@@ -111,3 +111,32 @@ export function saveTaskResult() {
     const config: TaskBasicConfig = getTaskBasicConfig.getProperties();
     fs.writeFileSync(config.pipeLog, JSON.stringify(taskResult, null, 2), { encoding: 'utf-8' });
 }
+
+export function generateTotalResult(taskResults: TaskResult[], pipelineBuildId: string): TaskResult {
+    const totalResult: TaskResult = {
+        name: 'total',
+        pipelineBuildId: pipelineBuildId,
+        result: 'success',
+        errorCount: 0,
+        messages: [],
+    };
+
+    if (taskResults.length === 0) {
+        totalResult.result = 'failure';
+        return totalResult;
+    }
+
+    for (const taskResult of taskResults) {
+        if (taskResult.result !== 'success') {
+            totalResult.result = taskResult.result;
+        }
+        totalResult.errorCount += taskResult.errorCount;
+        if (taskResult.messages) {
+            for (const msg of taskResult.messages) {
+                totalResult.messages.push(msg);
+            }
+        }
+    }
+
+    return totalResult;
+}

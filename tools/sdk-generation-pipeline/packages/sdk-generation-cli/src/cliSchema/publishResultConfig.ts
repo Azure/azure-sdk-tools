@@ -46,7 +46,7 @@ export const resultPublisherBlobInput = convict<ResultPublisherBlobInput>({
     },
 });
 
-export class ResultPublisherDBCGInput {
+export class ResultPublisherDBCodeGenerationInput {
     mongodb: {
         server: string;
         port: number;
@@ -69,7 +69,7 @@ export class ResultPublisherDBCGInput {
     codePR?: string;
 }
 
-export const resultPublisherDBCGInput = convict<ResultPublisherDBCGInput>({
+export const resultPublisherDBCodeGenerationInput = convict<ResultPublisherDBCodeGenerationInput>({
     mongodb: {
         server: {
             doc: 'The host used to connect db',
@@ -125,7 +125,7 @@ export const resultPublisherDBCGInput = convict<ResultPublisherDBCGInput>({
     },
     serviceType: {
         default: null,
-        env: 'SERVICETYPE',
+        env: 'SERVICE_TYPE',
         format: ['data-plane', 'resource-manager'],
     },
     language: {

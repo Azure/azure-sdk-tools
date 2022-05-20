@@ -37,27 +37,3 @@ export const uploadBlobInput = convict<UploadBlobInput>({
         format: assertNullOrEmpty,
     },
 });
-
-export class UploadPipelineArtifactInput {
-    generateAndBuildOutputFile: string;
-    artifactDir: string;
-    language: string;
-}
-
-export const uploadPipelineArtifactInput = convict<UploadPipelineArtifactInput>({
-    generateAndBuildOutputFile: {
-        default: null,
-        format: assertNullOrEmpty,
-        env: 'GENERATE_AND_BUILD_OUTPUTFILE',
-    },
-    artifactDir: {
-        default: null,
-        env: 'ARTIFACT_DIR',
-        format: assertNullOrEmpty,
-    },
-    language: {
-        default: null,
-        env: 'LANGUAGE',
-        format: ['js', 'python', 'go', 'net', 'java'],
-    },
-});

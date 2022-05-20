@@ -51,7 +51,7 @@ jobs:
             arguments: >
               -RepoId ${{ repo }} 
               -CentralRepoId "Azure/azure-sdk-tools"\
-              -CentralPRRegex "^sync-eng/common.*-(?<PrNumber>\d+).*$"
+              -BranchRegex "^sync-eng/common.*-(?<PrNumber>\d+).*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
       - ${{ each repo in parameters.SDKPrivate }}:
@@ -66,7 +66,7 @@ jobs:
             arguments: >
               -RepoId ${{ repo }}
               -CentralRepoId "Azure/azure-rest-api-specs-pr"\
-              -CentralPRRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
+              -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
       - ${{ each repo in parameters.DailyBranchRepos }}:
@@ -79,7 +79,7 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoId ${{ repo }}
-              -CentralPRRegex "^daily"
+              -BranchRegex "^daily"
               -LastCommitOlderThan ((Get-Date).AddDays(-7))
               -AuthToken $(azuresdk-github-pat) 
               -WhatIf:$${{parameters.WhatIfPreference}}

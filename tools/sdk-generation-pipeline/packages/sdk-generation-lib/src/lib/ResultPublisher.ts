@@ -55,8 +55,8 @@ export class ResultDBPublisher {
     }
 
     public async sendSdkTaskResultToDB(pipelineBuildId: string, taskResults: TaskResult[]) {
-        if (pipelineBuildId === undefined) {
-            throw new Error('pipelineBuildId is empty!');
+        if (!pipelineBuildId) {
+            throw new Error('Invalid pipelineBuildId!');
         }
 
         const taskResultDao: TaskResultDao = new TaskResultDaoImpl(this.connection);

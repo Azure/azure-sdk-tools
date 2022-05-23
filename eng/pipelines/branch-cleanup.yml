@@ -41,7 +41,7 @@ jobs:
     steps:
       - ${{ each repo in parameters.Repos }}:
         - task: PowerShell@2
-          displayName: Clean Up Sync Common Branches
+          displayName: Clean Up ${{ repo }} Sync Common Branches
           condition: succeededOrFailed()
           continueOnError: true
           inputs:

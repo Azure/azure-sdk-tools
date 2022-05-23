@@ -183,6 +183,7 @@ export class Coordinator {
                 ? await this.findLROGet(req)
                 : null
             const example = await this.responseGenerator.generate(
+                this.liveValidator,
                 result.operationMatch.operation,
                 this.config,
                 liveRequest,

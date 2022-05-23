@@ -94,12 +94,7 @@ describe('mockForExample: ', () => {
             example,
             specItem as SpecItem,
             { info: { version: '2020-01-01' } },
-            'fakeRp',
-            {
-                method: 'put',
-                url:
-                    'https://localhost:8443/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/policies/policyId'
-            }
+            'fakeRp'
         )
 
         assert.strictEqual(example.responses['200'].body.test, undefined)

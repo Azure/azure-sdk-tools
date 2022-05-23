@@ -1,5 +1,6 @@
 import * as _ from 'lodash'
 import * as fs from 'fs'
+import * as oav from 'oav'
 import * as path from 'path'
 import { AjvSchemaValidator } from 'oav/dist/lib/swaggerValidator/ajvSchemaValidator'
 import {
@@ -21,7 +22,7 @@ import { applyGlobalTransformers, applySpecTransformers } from 'oav/dist/lib/tra
 import { discriminatorTransformer } from 'oav/dist/lib/transform/discriminatorTransformer'
 import { injectable } from 'inversify'
 import { inversifyGetInstance } from 'oav/dist/lib/inversifyUtils'
-import { isNullOrUndefined, removeNullValueKey } from '../common/utils'
+import { isNullOrUndefined, logger, removeNullValueKey } from '../common/utils'
 import { resolveNestedDefinitionTransformer } from 'oav/dist/lib/transform/resolveNestedDefinitionTransformer'
 import SwaggerMocker from './oav/swaggerMocker'
 
@@ -228,7 +229,29 @@ export class ResponseGenerator {
         }
     }
 
+    private validateExampleResponse(
+        liveValidator: oav.LiveValidator,
+        liveRequest: LiveRequest,
+        example: SwaggerExample
+    ) {
+        for (const statusCode in example.responses) {
+            // exception will raise if is not valid example responses
+            liveValidator.validateLiveResponse(
+                {
+                    statusCode: statusCode,
+                    headers: example.responses[statusCode].headers,
+                    body: example.responses[statusCode].body
+                },
+                {
+                    url: liveRequest.url,
+                    method: liveRequest.method
+                }
+            )
+        }
+    }
+
     public async generate(
+        liveValidator: oav.LiveValidator,
         operation: Operation,
         config: Config,
         liveRequest: LiveRequest,
@@ -254,7 +277,14 @@ export class ResponseGenerator {
             example = this.loadExample(specFile, specItem, exampleId, liveRequest, lroCallback)
             this.validateRequestByExample(example, liveRequest, specItem)
         } else {
-            this.swaggerMocker.mockForExample(example, specItem, spec, 'unknown', liveRequest)
+            try {
+                example = this.loadExample(specFile, specItem, exampleId, liveRequest, lroCallback)
+                this.validateExampleResponse(liveValidator, liveRequest, example)
+            } catch (err) {
+                logger.error(`Failed to use example response, will mock response. Error:${err}`)
+                this.swaggerMocker.mockForExample(example, specItem, spec, 'unknown')
+            }
+            this.swaggerMocker.patchExampleResponses(example, specItem, spec, liveRequest)
         }
         if (config.enableExampleGeneration) {
             const params = this.genExampleParameters(specItem, liveRequest)
@@ -283,7 +313,7 @@ export class ResponseGenerator {
     private loadExample(
         specFile: string,
         specItem: SpecItem,
-        exampleId: string,
+        exampleId: string | undefined, // load any example if exampleId is undefined
         liveRequest: LiveRequest,
         lroCallback: string | null
     ): SwaggerExample {
@@ -310,8 +340,13 @@ export class ResponseGenerator {
                 allExamples = { ...this.lroExamplesMap.get(urlWithCallback), ...allExamples }
             }
         }
+        if (!allExamples) {
+            throw new ExampleNotFound(exampleId)
+        }
 
-        if (!allExamples || !Object.prototype.hasOwnProperty.call(allExamples, exampleId)) {
+        if (exampleId === undefined) {
+            exampleId = Object.keys(allExamples).sort()[0]
+        } else if (!Object.prototype.hasOwnProperty.call(allExamples, exampleId)) {
             throw new ExampleNotFound(exampleId)
         }
 

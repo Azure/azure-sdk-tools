@@ -65,7 +65,7 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoId ${{ repo }}
-              -CentralRepoId "Azure/azure-rest-api-specs-pr"\
+              -CentralRepoId "Azure/azure-rest-api-specs-pr"
               -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}

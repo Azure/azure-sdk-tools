@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import { DockerContext } from "./core/DockerContext";
+import { DockerContext } from './core/DockerContext';
 import { GenerateCodesInLocalJob } from './core/jobs/GenerateCodesInLocalJob';
-import { GenerateCodesInPipelineJob } from "./core/jobs/GenerateCodesInPipelineJob";
-import { GrowUpJob } from "./core/jobs/GrowUpJob";
-import { DockerCliInput, dockerCliInput } from "./schema/dockerCliInput";
+import { GenerateCodesInPipelineJob } from './core/jobs/GenerateCodesInPipelineJob';
+import { GrowUpJob } from './core/jobs/GrowUpJob';
+import { DockerCliInput, dockerCliInput } from './schema/dockerCliInput';
 
 async function main() {
     const inputParams: DockerCliInput = dockerCliInput.getProperties();
@@ -13,26 +13,25 @@ async function main() {
     let executeJob: GenerateCodesInLocalJob | GrowUpJob | GenerateCodesInPipelineJob;
 
     switch (context.mode) {
-        case "generateCodesInLocal":
-            executeJob = new GenerateCodesInLocalJob(context);
-            break;
-        case "growUp":
-            executeJob = new GrowUpJob(context);
-            break;
-        case "generateCodesInPipeline":
-            executeJob = new GenerateCodesInPipelineJob(context);
-            break;
+    case 'generateCodesInLocal':
+        executeJob = new GenerateCodesInLocalJob(context);
+        break;
+    case 'growUp':
+        executeJob = new GrowUpJob(context);
+        break;
+    case 'generateCodesInPipeline':
+        executeJob = new GenerateCodesInPipelineJob(context);
+        break;
     }
 
     if (!!executeJob) {
         await executeJob.execute();
     }
-
 }
 
-main().catch(e => {
-    console.error("\x1b[31m", e.toString());
-    console.error("\x1b[31m", e.message);
-    console.error("\x1b[31m", e.stack);
+main().catch((e) => {
+    console.error('\x1b[31m', e.toString());
+    console.error('\x1b[31m', e.message);
+    console.error('\x1b[31m', e.stack);
     process.exit(1);
-})
+});

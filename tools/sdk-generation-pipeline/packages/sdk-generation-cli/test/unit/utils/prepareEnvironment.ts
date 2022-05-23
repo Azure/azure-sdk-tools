@@ -1,6 +1,6 @@
-import { execSync } from "child_process";
-import { existsSync, mkdirSync } from "fs";
-import * as path from "path";
+import { execSync } from 'child_process';
+import { existsSync, mkdirSync } from 'fs';
+import * as path from 'path';
 
 function mkdirTmpFolderIfNotExist(tmpFolder: string) {
     if (!existsSync(tmpFolder)) {
@@ -52,6 +52,6 @@ async function main() {
     mkdirResultOutputFolderIfNotExist(tmpFolder);
 }
 
-main().catch(e => {
+main().catch((e) => {
     console.log(e);
-})
+});

@@ -1,8 +1,8 @@
-import { execSync } from "child_process";
-import commandLineArgs from "command-line-args";
-import { existsSync, mkdirSync } from "fs";
-import * as path from "path";
-import * as process from "process";
+import { execSync } from 'child_process';
+import commandLineArgs from 'command-line-args';
+import { existsSync, mkdirSync } from 'fs';
+import * as path from 'path';
+import * as process from 'process';
 
 const repoCommitId = {
     'azure-rest-api-specs': '0baca05c851c1749e92beb0d2134cd958827dd54',
@@ -11,13 +11,13 @@ const repoCommitId = {
     'azure-sdk-for-python': '53f66170cc47739204cedfe0a46989290c047c98',
     'azure-sdk-for-go': '241bdb849ce431e1a5e398a5649cde93149ee374',
     'azure-sdk-for-net': 'e9db0733a642d50c34101339f74fdc487599d824'
-}
+};
 
 const defaultImageName = 'sdkgeneration.azurecr.io/sdk-generation:v1.0';
-const integrationBranch = 'sdkgeneration-integration-test'
+const integrationBranch = 'sdkgeneration-integration-test';
 
 async function prepareRepo(currentPath: string, repoName: string) {
-    const tmpFolder = path.join(currentPath, 'tmp')
+    const tmpFolder = path.join(currentPath, 'tmp');
     if (!existsSync(tmpFolder)) {
         mkdirSync(tmpFolder);
     }
@@ -56,6 +56,7 @@ async function prepareRepo(currentPath: string, repoName: string) {
 
 async function runDocker(currentPath: string, sdkRepoName: string, dockerImage: string) {
     const tmpFolder = path.join(currentPath, 'tmp');
+    // eslint-disable-next-line max-len
     execSync(`docker run -v ${path.join(tmpFolder, 'azure-rest-api-specs')}:/spec-repo -v ${path.join(tmpFolder, sdkRepoName)}:/sdk-repo ${dockerImage} --readme=specification/agrifood/resource-manager/readme.md`, {
         stdio: 'inherit'
     });
@@ -79,7 +80,7 @@ export async function main(options: any) {
         options['docker-image'] = defaultImageName;
     }
     if (!options['sdk-repo']) {
-        options['sdk-repo'] = Object.keys(repoCommitId).filter(ele => ele !== 'azure-rest-api-specs').join(',');
+        options['sdk-repo'] = Object.keys(repoCommitId).filter((ele) => ele !== 'azure-rest-api-specs').join(',');
     }
     await prepareRepo(currentPath, 'azure-rest-api-specs');
     for (const sdkRepo of options['sdk-repo'].split(',')) {
@@ -89,12 +90,12 @@ export async function main(options: any) {
 }
 
 const optionDefinitions = [
-    {name: 'docker-image', type: String},
-    {name: 'sdk-repo', type: String},
+    { name: 'docker-image', type: String },
+    { name: 'sdk-repo', type: String }
 ];
 const options = commandLineArgs(optionDefinitions);
 
-main(options).catch(err => {
+main(options).catch((err) => {
     console.log(err);
     process.exit(1);
 });

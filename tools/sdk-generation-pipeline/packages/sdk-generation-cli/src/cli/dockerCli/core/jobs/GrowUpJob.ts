@@ -1,4 +1,4 @@
-import { DockerContext } from "../DockerContext";
+import { DockerContext } from '../DockerContext';
 import { BaseJob } from './BaseJob';
 
 export class GrowUpJob extends BaseJob {
@@ -10,7 +10,7 @@ export class GrowUpJob extends BaseJob {
     }
 
     public async execute() {
-        this.context.logger.info(`Please use vscode to connect this container.`)
+        this.context.logger.info(`Please use vscode to connect this container.`);
         this.doNotExitDockerContainer();
     }
 }

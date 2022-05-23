@@ -1,8 +1,8 @@
-import { DockerContext } from "../DockerContext";
-import { DockerTaskEngineContext } from "../DockerTaskEngineContext";
+import { DockerContext } from '../DockerContext';
+import { DockerTaskEngineContext } from '../DockerTaskEngineContext';
 import { BaseJob } from './BaseJob';
 
-export class GenerateCodesInPipelineJob extends BaseJob{
+export class GenerateCodesInPipelineJob extends BaseJob {
     context: DockerContext;
 
     constructor(context: DockerContext) {

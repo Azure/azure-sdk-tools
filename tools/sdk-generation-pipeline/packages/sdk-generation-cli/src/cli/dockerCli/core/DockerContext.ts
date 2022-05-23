@@ -1,8 +1,9 @@
-import { initializeLogger } from "@azure-tools/sdk-generation-lib";
-import fs from "fs";
-import path from "path";
-import { Logger } from "winston";
-import { DockerCliInput } from "../schema/dockerCliInput";
+import { initializeLogger } from '@azure-tools/sdk-generation-lib';
+import fs from 'fs';
+import path from 'path';
+import { Logger } from 'winston';
+
+import { DockerCliInput } from '../schema/dockerCliInput';
 import { sdkToRepoMap } from './constants';
 
 export class DockerContext {
@@ -25,7 +26,7 @@ export class DockerContext {
     public initialize(inputParams: DockerCliInput) {
         this.readmeMdPath = inputParams.readmeMdPath;
         this.tag = inputParams.tag;
-        this.sdkList = inputParams.sdkList?.split(',').map(e => e.trim()).filter(e => e.length > 0);
+        this.sdkList = inputParams.sdkList?.split(',').map((e) => e.trim()).filter((e) => e.length > 0);
         this.specRepo = inputParams.specRepo;
         this.workDir = inputParams.workDir;
         this.sdkRepo = inputParams.sdkRepo;
@@ -40,7 +41,7 @@ export class DockerContext {
             this.validateWorkDir();
         } else if (fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to generate codes and do grow up development in local');
-            this.mode = "generateCodesInLocal";
+            this.mode = 'generateCodesInLocal';
             this.validateSpecRepo();
             this.validateReadmeMdPath();
             this.validateSdk();

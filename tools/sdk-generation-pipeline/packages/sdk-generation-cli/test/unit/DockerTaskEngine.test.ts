@@ -1,10 +1,11 @@
-import { initializeLogger } from "@azure-tools/sdk-generation-lib";
-import { existsSync } from "fs";
-import * as path from "path";
-import { DockerContext } from "../../src/cli/dockerCli/core/DockerContext";
+import { initializeLogger } from '@azure-tools/sdk-generation-lib';
+import { existsSync } from 'fs';
+import * as path from 'path';
+
+import { DockerContext } from '../../src/cli/dockerCli/core/DockerContext';
 import {
-    DockerTaskEngineContext,
-} from "../../src/cli/dockerCli/core/DockerTaskEngineContext";
+    DockerTaskEngineContext
+} from '../../src/cli/dockerCli/core/DockerTaskEngineContext';
 import { SDKGenerationTaskBase } from '../../src/cli/dockerCli/core/tasks/SDKGenerationTaskBase';
 
 describe('task engine', () => {

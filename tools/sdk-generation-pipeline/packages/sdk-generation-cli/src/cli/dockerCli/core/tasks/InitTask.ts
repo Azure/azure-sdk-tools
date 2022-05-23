@@ -1,13 +1,15 @@
 import {
     addFileLog,
     getTask,
-    InitOptions, initOutput,
+    InitOptions,
+    initOutput,
     removeFileLog,
     requireJsonc,
     runScript
 } from '@azure-tools/sdk-generation-lib';
 import fs from 'fs';
 import path from 'path';
+
 import { DockerTaskEngineContext } from '../DockerTaskEngineContext';
 import { SDKGenerationTaskBase, TaskType } from './SDKGenerationTaskBase';
 
@@ -25,7 +27,7 @@ export class InitTask implements SDKGenerationTaskBase {
     public async execute() {
         const initTask = getTask(path.join(this.context.sdkRepo, this.context.configFilePath), 'init');
         if (!initTask) {
-            throw `Init task is ${initTask}`;
+            throw new Error(`Init task is ${initTask}`);
         }
         const initOptions = initTask as InitOptions;
         const runOptions = initOptions.initScript;
@@ -38,7 +40,7 @@ export class InitTask implements SDKGenerationTaskBase {
         removeFileLog(this.context.logger, 'init');
         this.context.taskResults['init'] = executeResult === 'succeeded'? 'success' : 'failure';
         if (executeResult === 'failed') {
-            throw `Execute init script failed.`
+            throw new Error(`Execute init script failed.`);
         }
         if (fs.existsSync(this.context.initOutput)) {
             const initOutputJson = initOutput(requireJsonc(this.context.initOutput));
@@ -50,5 +52,4 @@ export class InitTask implements SDKGenerationTaskBase {
             }
         }
     }
-
 }

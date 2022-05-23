@@ -21,7 +21,7 @@ async function main() {
     const logfile = args['logfile'];
     const logFilterStr = args['logFilter'];
     const taskname = args['taskname'];
-    const exeResult = args['taskExeResult']
+    const exeResult = args['taskExeResult'];
     const taskOutput = args['taskOutput'];
     const resultOutputPath = args['resultOutputPath'];
     let taskOutputObj: TaskOutput = undefined;
@@ -47,7 +47,7 @@ async function main() {
         printHelp();
         throw new Error(`Task execute result is empty`);
     }
-    
+
     if (resultOutputPath === undefined) {
         printHelp();
         throw new Error(`resultOutputPath is empty`);

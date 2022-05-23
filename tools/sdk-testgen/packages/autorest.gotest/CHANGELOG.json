@@ -2,6 +2,18 @@
   "name": "@autorest/gotest",
   "entries": [
     {
+      "version": "4.0.1",
+      "tag": "@autorest/gotest_v4.0.1",
+      "date": "Mon, 23 May 2022 07:05:43 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix module import problem when SDK version bigger than v1."
+          }
+        ]
+      }
+    },
+    {
       "version": "4.0.0",
       "tag": "@autorest/gotest_v4.0.0",
       "date": "Mon, 16 May 2022 01:46:35 GMT",

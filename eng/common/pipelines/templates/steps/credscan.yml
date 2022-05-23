@@ -9,6 +9,12 @@ parameters:
   ServiceDirectory: ''
 
 steps:
+- task: PowerShell@2
+  displayName: Check case insensitive duplicate files
+  inputs:
+    pwsh: true
+    filePath: "eng/common/scripts/check-case-insensitive-duplication.ps1"
+
 - pwsh: |
     if ("$(Build.Reason)" -eq 'PullRequest') {
       $changedFiles = & "eng/common/scripts/get-changedfiles.ps1"

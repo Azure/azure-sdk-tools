@@ -8,6 +8,8 @@ jobs:
         inputs:
           versionSpec: '3.6'
 
+      - template: /eng/common/pipelines/templates/steps/mashup-doc-index.yml
+
       - pwsh: |
           Invoke-WebRequest -Uri "https://github.com/dotnet/docfx/releases/download/v2.43.2/docfx.zip" `
           -OutFile "docfx.zip" | Wait-Process; Expand-Archive -Path "docfx.zip" -DestinationPath ./docfx

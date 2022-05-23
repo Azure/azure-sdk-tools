@@ -5,6 +5,7 @@ import { DockerContext } from "../../src/cli/dockerCli/core/DockerContext";
 import {
     DockerTaskEngineContext,
 } from "../../src/cli/dockerCli/core/DockerTaskEngineContext";
+import { SDKGenerationTaskBase } from '../../src/cli/dockerCli/core/tasks/SDKGenerationTaskBase';
 
 describe('task engine', () => {
     it('should initialize a DockerTaskEngineContext by DockerContext', async () => {
@@ -32,6 +33,17 @@ describe('task engine', () => {
         expect(dockerTaskEngineContext.generateAndBuildTaskLog).toBe(path.join(tmpFolder, 'output', 'generate-and-build-task.log'));
         expect(dockerTaskEngineContext.mockTestTaskLog).toBe(path.join(tmpFolder, 'output', 'mock-test-task.log'));
         expect(dockerTaskEngineContext.readmeMdPath).toBe('specification/agrifood/resource-manager/readme.md');
+    });
+
+    it('should get task list', async () => {
+        const tmpFolder = path.join(path.resolve('.'), 'test', 'unit', 'tmp');
+        const dockerTaskEngineContext = new DockerTaskEngineContext();
+        dockerTaskEngineContext.sdkRepo = path.join(tmpFolder, 'sdk-repo');
+        dockerTaskEngineContext.configFilePath = 'eng/codegen_to_sdk_config.json';
+        const tasksToRun: SDKGenerationTaskBase[] = await dockerTaskEngineContext.getTaskToRun();
+        expect(tasksToRun.length).toEqual(2);
+        expect(tasksToRun[0].taskType).toEqual('InitTask');
+        expect(tasksToRun[1].taskType).toEqual('GenerateAndBuildTask');
     });
 
     it('should run tasks', async () => {

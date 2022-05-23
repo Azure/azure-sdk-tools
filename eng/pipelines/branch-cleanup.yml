@@ -50,7 +50,7 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoId ${{ repo }} 
-              -CentralRepoId "Azure/azure-sdk-tools"\
+              -CentralRepoId "Azure/azure-sdk-tools"
               -BranchRegex "^sync-eng/common.*-(?<PrNumber>\d+).*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}

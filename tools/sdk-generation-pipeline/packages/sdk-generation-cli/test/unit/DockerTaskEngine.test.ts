@@ -40,6 +40,7 @@ describe('task engine', () => {
         const dockerTaskEngineContext = new DockerTaskEngineContext();
         dockerTaskEngineContext.sdkRepo = path.join(tmpFolder, 'sdk-repo');
         dockerTaskEngineContext.configFilePath = 'eng/codegen_to_sdk_config.json';
+        dockerTaskEngineContext.logger = initializeLogger(path.join(tmpFolder, 'docker.log'), 'docker', true);
         const tasksToRun: SDKGenerationTaskBase[] = await dockerTaskEngineContext.getTaskToRun();
         expect(tasksToRun.length).toEqual(2);
         expect(tasksToRun[0].taskType).toEqual('InitTask');

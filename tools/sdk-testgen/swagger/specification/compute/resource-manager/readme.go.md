@@ -33,6 +33,7 @@ module-name: sdk/compute/armcompute
 module: github.com/Azure/azure-sdk-for-go/$(module-name)
 output-folder: $(go-sdk-folder)/$(module-name)
 azure-arm: true
+module-version: 0.1.0
 
 directive:
   - from: disk.json

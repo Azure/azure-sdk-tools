@@ -71,7 +71,7 @@ jobs:
               -WhatIf:$${{parameters.WhatIfPreference}}
       - ${{ each repo in parameters.DailyBranchRepos }}:
         - task: PowerShell@2
-          displayName: Clean Up Docs Daily Branches
+          displayName: Clean Up ${{ repo }} Docs Daily Branches
           condition: succeededOrFailed()
           inputs:
             pwsh: true

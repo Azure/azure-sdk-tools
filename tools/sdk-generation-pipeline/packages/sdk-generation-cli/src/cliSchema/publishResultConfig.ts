@@ -262,17 +262,20 @@ export const resultPublisherEventHubInput = convict<ResultPublisherEventHubInput
         default: null,
         env: 'PIPELINE_BUILDID',
         format: assertNullOrEmpty,
+        arg: 'buildId',
     },
     trigger: {
         default: null,
         env: 'TRIGGER',
         format: assertNullOrEmpty,
+        arg: 'trigger',
     },
     logPath: {
         default: null,
         env: 'LOG_PATH',
         nullable: true,
         format: String,
+        arg: 'logPath',
     },
     resultsPath: {
         doc: 'task result files array',
@@ -280,5 +283,6 @@ export const resultPublisherEventHubInput = convict<ResultPublisherEventHubInput
         env: 'RESULTS_PATH',
         nullable: true,
         format: String,
+        arg: 'resultsPath',
     },
 });

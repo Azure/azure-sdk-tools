@@ -6,7 +6,7 @@ import { InitOutput } from '../types/taskInputAndOuputSchemaTypes/InitOutput';
 import { LiveTestInput } from '../types/taskInputAndOuputSchemaTypes/LiveTestInput';
 import { MockTestInput } from '../types/taskInputAndOuputSchemaTypes/MockTestInput';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
-import { PipelineResult, setTaskResult, taskResult, TaskResult } from '../types/taskResult';
+import { TaskResultStatus, TaskResult } from '../types/taskResult';
 import { requireJsonc } from '../utils/requireJsonc';
 import { runScript } from './runScript';
 import * as fs from 'fs';
@@ -34,9 +34,9 @@ export async function executeTask(
         cwd: cwd,
         args: args,
     });
-    let execResult: PipelineResult = 'success';
+    let execResult: TaskResultStatus = TaskResultStatus.success;
     if (result === 'failed') {
-        execResult = 'failure';
+        execResult = TaskResultStatus.failure;
     }
     if (fs.existsSync(outputJsonPath)) {
         const outputJson = requireJsonc(outputJsonPath);

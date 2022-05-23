@@ -2,45 +2,58 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { getArtifactFilesInput, GetArtifactFilesInput } from './cliSchema/getArtifactFilesCliConfig';
+import { prepareArtifactFilesInput, PrepareArtifactFilesInput } from './cliSchema/prepareArtifactFilesCliConfig';
 import {
     GenerateAndBuildOutput,
     getGenerateAndBuildOutput,
     logger,
     requireJsonc,
     SDK,
+    TaskResultStatus,
 } from '@azure-tools/sdk-generation-lib';
 import { getFileListInPackageFolder } from './utils/git';
 
-async function getSourceCode(generateAndBuildOutput: GenerateAndBuildOutput, language: string, artifactDir: string) {
+function copyFile(filePath: string, targetDir: string) {
+    const fileDir = path.dirname(filePath);
+    fs.mkdirSync(`${targetDir}/${fileDir}`, { recursive: true });
+    fs.copyFileSync(`${filePath}`, `${targetDir}/${filePath}`);
+}
+
+async function prepareSourceCode(
+    generateAndBuildOutput: GenerateAndBuildOutput,
+    language: string,
+    artifactDir: string
+) {
     for (const p of generateAndBuildOutput.packages) {
         const result = p.result;
-        if (result === 'failed') {
+        if (result === TaskResultStatus.failure) {
             logger.warn(`Build ${p.packageName} failed, skipped it`);
             continue;
         }
         const packageName = p.packageName;
-        const packageFolder = p.packageFolder;
+        const packagePaths = p.path;
 
-        if (packageFolder && fs.existsSync(packageFolder)) {
-            for (const filePath of getFileListInPackageFolder(packageFolder)) {
-                if (fs.existsSync(path.join(packageFolder, filePath))) {
-                    const fileDir = path.dirname(filePath);
-                    fs.mkdirSync(`${artifactDir}/${language}/${packageName}/${fileDir}`, { recursive: true });
-                    fs.copyFileSync(
-                        `${path.join(packageFolder, filePath)}`,
-                        `${artifactDir}/${language}/${packageName}/${filePath}`
-                    );
+        for (const packagePath of packagePaths) {
+            if (!fs.existsSync(packagePath)) {
+                logger.warn(`${packagePath} isn't exist`);
+                continue;
+            }
+
+            if (fs.lstatSync(packagePath).isDirectory()) {
+                for (const filePath of getFileListInPackageFolder(packagePath)) {
+                    copyFile(`${path.join(packagePath, filePath)}`, `${artifactDir}/${language}/${packageName}`);
                 }
+            } else {
+                copyFile(packagePath, `${artifactDir}/${language}/${packageName}`);
             }
         }
     }
 }
 
-async function getArtifacts(generateAndBuildOutput: GenerateAndBuildOutput, language: string, artifactDir: string) {
+async function prepareArtifacts(generateAndBuildOutput: GenerateAndBuildOutput, language: string, artifactDir: string) {
     for (const p of generateAndBuildOutput.packages) {
         const result = p.result;
-        if (result === 'failed') {
+        if (result === TaskResultStatus.failure) {
             logger.warn(`Build ${p.packageName} failed, skipped it`);
             continue;
         }
@@ -58,7 +71,7 @@ async function getArtifacts(generateAndBuildOutput: GenerateAndBuildOutput, lang
     }
 }
 
-function validateInput(config: GetArtifactFilesInput) {
+function validateInput(config: PrepareArtifactFilesInput) {
     if (!fs.existsSync(config.generateAndBuildOutputFile)) {
         throw new Error(`generateAndBuildOutputFile:${config.generateAndBuildOutputFile} isn's exist!`);
     }
@@ -71,16 +84,16 @@ function validateInput(config: GetArtifactFilesInput) {
 }
 
 async function main() {
-    getArtifactFilesInput.validate();
-    const config: GetArtifactFilesInput = getArtifactFilesInput.getProperties();
+    prepareArtifactFilesInput.validate();
+    const config: PrepareArtifactFilesInput = prepareArtifactFilesInput.getProperties();
 
     validateInput(config);
     const generateAndBuildOutput: GenerateAndBuildOutput = getGenerateAndBuildOutput(
         requireJsonc(config.generateAndBuildOutputFile)
     );
 
-    await getSourceCode(generateAndBuildOutput, config.language, config.artifactDir);
-    await getArtifacts(generateAndBuildOutput, config.language, config.artifactDir);
+    await prepareSourceCode(generateAndBuildOutput, config.language, config.artifactDir);
+    await prepareArtifacts(generateAndBuildOutput, config.language, config.artifactDir);
 }
 
 main().catch((e) => {

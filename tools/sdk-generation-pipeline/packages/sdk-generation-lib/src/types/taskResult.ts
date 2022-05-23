@@ -17,7 +17,10 @@ export class TaskResultEntity {
     taskResult: TaskResult;
 }
 
-export type PipelineResult = 'success' | 'failure' | 'time_out';
+export enum TaskResultStatus {
+    success = 'success',
+    failure = 'failure',
+}
 
 export type Extra = {
     [key: string]: any;
@@ -61,7 +64,7 @@ export type MessageRecord = ResultMessageRecord | RawMessageRecord | MarkdownMes
 export type TaskResultCommon = {
     name: string;
     pipelineBuildId: string;
-    result?: PipelineResult;
+    result?: TaskResultStatus;
     errorCount?: number;
     warningCount?: number;
     logUrl?: string;
@@ -98,7 +101,7 @@ export function setTaskResult(config: TaskBasicConfig, taskName: string) {
     taskResult = {
         name: taskName,
         pipelineBuildId: '',
-        result: 'success',
+        result: TaskResultStatus.success,
         errorCount: 0,
         warningCount: 0,
     };
@@ -116,18 +119,18 @@ export function generateTotalResult(taskResults: TaskResult[], pipelineBuildId: 
     const totalResult: TaskResult = {
         name: 'total',
         pipelineBuildId: pipelineBuildId,
-        result: 'success',
+        result: TaskResultStatus.success,
         errorCount: 0,
         messages: [],
     };
 
     if (taskResults.length === 0) {
-        totalResult.result = 'failure';
+        totalResult.result = TaskResultStatus.failure;
         return totalResult;
     }
 
     for (const taskResult of taskResults) {
-        if (taskResult.result !== 'success') {
+        if (taskResult.result !== TaskResultStatus.success) {
             totalResult.result = taskResult.result;
         }
         totalResult.errorCount += taskResult.errorCount;

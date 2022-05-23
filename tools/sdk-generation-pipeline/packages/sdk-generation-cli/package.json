@@ -28,7 +28,7 @@
         "generateResult": "dist/generateResultCli.js",
         "publishResult": "dist/publishResultCli.js",
         "uploadArtifact": "dist/uploadArtifactCli.js",
-        "getArtifactFiles": "dist/getArtifactFilesCli.js"
+        "prepareArtifactFiles": "dist/prepareArtifactFilesCli.js"
     },
     "dependencies": {
         "@azure/storage-blob": "^12.8.0",

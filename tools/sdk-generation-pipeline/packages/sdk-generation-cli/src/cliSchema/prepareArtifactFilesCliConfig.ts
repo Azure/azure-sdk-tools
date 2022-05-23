@@ -2,13 +2,13 @@ import convict from 'convict';
 
 import { assertNullOrEmpty } from '../utils/validator';
 
-export class GetArtifactFilesInput {
+export class PrepareArtifactFilesInput {
     generateAndBuildOutputFile: string;
     artifactDir: string;
     language: string;
 }
 
-export const getArtifactFilesInput = convict<GetArtifactFilesInput>({
+export const prepareArtifactFilesInput = convict<PrepareArtifactFilesInput>({
     generateAndBuildOutputFile: {
         default: null,
         format: assertNullOrEmpty,

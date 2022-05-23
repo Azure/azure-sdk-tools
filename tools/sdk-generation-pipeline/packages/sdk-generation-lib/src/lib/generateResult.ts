@@ -2,12 +2,12 @@ import { AzureSDKTaskName } from '../types/commonType';
 import { LogFilter } from '../types/taskInputAndOuputSchemaTypes/CodegenToSdkConfig';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
 import {
-    PipelineResult,
     TaskResultCommon,
     MessageRecord,
     RawMessageRecord,
     TaskOutput,
     TaskResult,
+    TaskResultStatus,
     TestTaskResult,
 } from '../types/taskResult';
 import { logger } from '../utils/logger';
@@ -94,13 +94,13 @@ export function parseGenerateLog(
 export function createTaskResult(
     pipelineBuildId: string,
     taskname: AzureSDKTaskName,
-    taskExeResult: PipelineResult,
+    taskExeResult: TaskResultStatus,
     logfile: string,
     logFilter: LogFilter,
     taskOutput: TaskOutput
 ): TaskResult {
     let commonResult: TaskResultCommon = undefined;
-    if (taskExeResult === 'success') {
+    if (taskExeResult === TaskResultStatus.success) {
         commonResult = {
             name: taskname,
             pipelineBuildId: pipelineBuildId,

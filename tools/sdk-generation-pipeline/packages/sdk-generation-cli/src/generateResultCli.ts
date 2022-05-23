@@ -5,9 +5,9 @@ import {
     createTaskResult,
     LogFilter,
     logger,
-    PipelineResult,
     requireJsonc,
     TaskResult,
+    TaskResultStatus,
     TaskOutput,
 } from '@azure-tools/sdk-generation-lib';
 
@@ -20,7 +20,7 @@ async function main() {
     let taskOutputObj: TaskOutput = undefined;
     let logFilter: LogFilter = undefined;
     let taskResult: TaskResult = undefined;
-    let exeResult: PipelineResult = undefined;
+    let exeResult: TaskResultStatus = undefined;
 
     if (!Object.values(AzureSDKTaskName).includes(config.taskName as AzureSDKTaskName)) {
         throw new Error(`invalid taskName` + config.taskName);
@@ -38,7 +38,7 @@ async function main() {
     }
 
     if (config.exeResult) {
-        exeResult = config.exeResult as PipelineResult;
+        exeResult = config.exeResult as TaskResultStatus;
     } else if (config.dockerResultFile && fs.existsSync(config.dockerResultFile)) {
         const dockerTaskResult = JSON.parse(fs.readFileSync(config.dockerResultFile, 'utf-8'));
         if (!dockerTaskResult[config.taskName] || dockerTaskResult[config.taskName].includes('skipped')) {

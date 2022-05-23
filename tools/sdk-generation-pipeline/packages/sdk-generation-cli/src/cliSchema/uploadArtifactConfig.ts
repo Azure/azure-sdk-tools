@@ -20,6 +20,7 @@ export const uploadBlobInput = convict<UploadBlobInput>({
         default: null,
         env: 'PIPELINE_BUILDID',
         format: assertNullOrEmpty,
+        arg: 'buildId',
     },
     language: {
         default: null,

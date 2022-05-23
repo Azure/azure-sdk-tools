@@ -18,11 +18,13 @@ export const generateResultCliInput = convict<GenerateResultCliInput>({
         default: null,
         format: assertNullOrEmpty,
         env: 'PIPELINE_BUILDID',
+        arg: 'buildId',
     },
     logfile: {
         default: null,
         env: 'LOG_FILE',
         format: assertNullOrEmpty,
+        arg: 'logfile',
     },
     logFilterStr: {
         default: null,
@@ -34,28 +36,32 @@ export const generateResultCliInput = convict<GenerateResultCliInput>({
         default: null,
         env: 'TASK_NAME',
         format: ['init', 'generateAndBuild', 'mockTest', 'liveTest'],
+        arg: 'taskName',
     },
     exeResult: {
         default: null,
         env: 'EXE_RESULT',
         nullable: true,
-        format: ['success', 'failure', 'timed_out'],
+        format: ['success', 'failure'],
     },
     taskOutputPath: {
         default: null,
         env: 'TASK_OUTPUT_PATH',
         nullable: true,
         format: String,
+        arg: 'taskOutputPath',
     },
     resultOutputPath: {
         default: null,
         env: 'RESULT_OUTPUT_PATH',
         format: assertNullOrEmpty,
+        arg: 'resultOutputPath',
     },
     dockerResultFile: {
         default: null,
         env: 'DOCKER_RESULT_FILE',
         nullable: true,
         format: String,
+        arg: 'dockerResultFile',
     },
 });

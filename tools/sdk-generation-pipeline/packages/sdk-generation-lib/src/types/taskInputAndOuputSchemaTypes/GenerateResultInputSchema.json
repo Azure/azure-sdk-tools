@@ -23,7 +23,7 @@
         "taskExeResult": {
             // Task result string
             "type": "string",
-            "enum": ["success", "failure", "timed_out"]
+            "enum": ["success", "failure"]
         },
         "taskOutput": {
             // Task result additional object in string.

@@ -111,6 +111,18 @@ Services:
       - azure-storage-blob: 12.16.1
         azure-storage-file-share: 12.12.2
         azure-storage-file-datalake: 12.9.1
+        azure-core: 1.26.0
+        azure-core-http-netty: 1.11.8
+        reactor-core: 3.4.17
+      - azure-storage-blob: 12.16.1
+        azure-storage-file-share: 12.12.2
+        azure-storage-file-datalake: 12.9.1
+        azure-core: 1.27.0
+        azure-core-http-netty: 1.11.9
+        reactor-core: 3.4.17
+      - azure-storage-blob: 12.16.1
+        azure-storage-file-share: 12.12.2
+        azure-storage-file-datalake: 12.9.1
         azure-core: 1.28.0
         azure-core-http-netty: 1.12.0
         reactor-core: 3.4.17

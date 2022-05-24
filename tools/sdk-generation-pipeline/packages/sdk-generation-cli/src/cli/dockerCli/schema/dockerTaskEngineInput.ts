@@ -102,13 +102,13 @@ export const dockerTaskEngineInput = convict<DockerTaskEngineInput>({
         doc: 'The relative path to init-task.log. It will concat with resultOutputFolder'
     },
     generateAndBuildTaskLog: {
-        default: 'generate-and-build-task.log',
+        default: 'generateAndBuild-task.log',
         env: 'GENERATE_AND_BUILD_TASK_LOG',
         format: String,
         doc: 'The relative path to generate-and-build-task.log. It will concat with resultOutputFolder'
     },
     mockTestTaskLog: {
-        default: 'mock-test-task.log',
+        default: 'mockTest-task.log',
         env: 'MOCK_TEST_TASK_LOG',
         format: String,
         doc: 'The relative path to mock-test-task.log. It will concat with resultOutputFolder'

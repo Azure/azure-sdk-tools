@@ -41,15 +41,14 @@ namespace APIViewWeb.HostedServices
             {
                 try
                 {
-                    await _reviewManager.UpdateReviewBackground();
-                    //return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                    //await _reviewManager.UpdateReviewBackground();
+                    await ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
                 }
                 catch(Exception ex)
                 {
                     _telemetryClient.TrackException(ex);
                 }
             }
-            //return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken stoppingToken)

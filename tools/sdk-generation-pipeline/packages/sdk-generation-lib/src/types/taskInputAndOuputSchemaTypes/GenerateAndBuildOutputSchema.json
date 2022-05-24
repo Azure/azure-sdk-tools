@@ -19,8 +19,8 @@
                 "result": {
                     // Status of package. By default it's succeeded.
                     "type": "string",
-                    "enum": ["failure", "success"],
-                    "default": "success"
+                    "enum": ["failed", "succeeded"],
+                    "default": "succeeded"
                 },
                 "path": {
                     // List of package content paths.

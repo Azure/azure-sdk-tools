@@ -135,12 +135,12 @@ namespace APIViewWeb.Repositories
                 });
             }
 
-            if (review.PackageName != null && review.PackageDisplayName == null)
+            /*if (review.PackageName != null && review.PackageDisplayName == null)
             {
                 var p = await _packageNameManager.GetPackageDetails(review.PackageName);
                 review.PackageDisplayName = p?.DisplayName;
                 review.ServiceName = p?.ServiceName;
-            }
+            }*/
 
             return review;
         }
@@ -221,12 +221,12 @@ namespace APIViewWeb.Repositories
 
             review.Revisions.Add(revision);
 
-            if (review.PackageName != null)
+            /*if (review.PackageName != null)
             {
                 var p = await _packageNameManager.GetPackageDetails(review.PackageName);
                 review.PackageDisplayName = p?.DisplayName ?? review.PackageDisplayName;
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
-            }
+            }*/
 
             // auto subscribe revision creation user
             await _notificationManager.SubscribeAsync(review, user);

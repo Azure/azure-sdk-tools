@@ -31,6 +31,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public StoreResolver(string assemblyDirectory = null)
         {
+            if (assemblyDirectory == null)
+            {
+                AssemblyDirectories = new string[] { };
+                return;
+            }
+
             if (!File.Exists(assemblyDirectory))
             {
                 throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"Provided directory {assemblyDirectory} does not exist.");
@@ -46,7 +52,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         private Type GetTypeFromAssembly(string storeName, Assembly inputAssembly)
         {
-            foreach(var type in inputAssembly.GetTypes()) {
+            var allTypes = inputAssembly.GetTypes().ToList();
+
+            foreach (var type in allTypes) {
                 if (type.Name.ToLowerInvariant().Contains(storeName.ToLowerInvariant()))
                 {
                     return type;

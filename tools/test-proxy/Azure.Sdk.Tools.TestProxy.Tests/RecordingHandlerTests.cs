@@ -759,6 +759,48 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
             Assert.StartsWith(errorText, assertion.Message);
         }
+
+
+        [Theory]
+        [InlineData("hellothere", "generalkenobi")]
+        [InlineData("", "")]
+        public void TestSetRecordingOptionsHandlesValidStoreTypes(params string[] relativePaths)
+        {
+            var relativePath = Path.Combine(relativePaths);
+            var testDirectory = Path.GetTempPath();
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(testDirectory);
+            testDirectory = Path.Combine(testDirectory, relativePath);
+            var body = $"{{ \"ContextDirectory\": \"{testDirectory.Replace("\\", "/")}\"}}";
+
+            var httpContext = new DefaultHttpContext();
+            Dictionary<string, object> inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+
+            testRecordingHandler.SetRecordingOptions(inputBody);
+
+            Assert.Equal(new Uri(testDirectory), new Uri(testRecordingHandler.ContextDirectory));
+        }
+
+        [Theory]
+        [InlineData("{ \"ContextDirectory\": \":/repo/\0\"}", "Unable set proxy context to target directory")]
+        public void TestSetRecordingOptionsThrowsOnInvalidStoreTypes(string body, string errorText)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            Dictionary<string, object> inputBody = null;
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+            }
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+
+            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+            Assert.StartsWith(errorText, assertion.Message);
+        }
     }
 
     internal class MockHttpHandler : HttpMessageHandler

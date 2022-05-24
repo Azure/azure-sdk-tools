@@ -512,7 +512,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     var newAssetsStoreIdentifier = assetsStoreObj.ToString();
 
-                    // TODO: implement this
                     if (!string.IsNullOrWhiteSpace(newAssetsStoreIdentifier))
                     {
                         SetAssetsStore(newAssetsStoreIdentifier);
@@ -698,7 +697,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 Matcher = new RecordMatcher();
             }
         }
-
 
         public string GetRecordingPath(string file)
         {

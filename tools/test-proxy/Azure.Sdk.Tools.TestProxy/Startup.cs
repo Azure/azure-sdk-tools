@@ -31,7 +31,6 @@ namespace Azure.Sdk.Tools.TestProxy
         public Startup(IConfiguration configuration) { }
 
         public static string TargetLocation;
-        public static string TargetPlugin;
         public static StoreResolver Resolver;
         public static IAssetsStore DefaultStore;
 
@@ -163,9 +162,6 @@ namespace Azure.Sdk.Tools.TestProxy
             });
             services.AddControllersWithViews();
             services.AddRazorPages();
-
-            
-            var store = Resolver.ResolveStore(TargetPlugin);
 
             var singleTonRecordingHandler = new RecordingHandler(
                 TargetLocation,

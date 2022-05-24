@@ -17,7 +17,7 @@ namespace APIViewWeb
     {
         public override string Name { get; } = "Python";
         public override string Extension { get; } = ".whl";
-        public override string VersionString { get; } = "0.2.11";
+        public override string VersionString { get; } = "0.3.1";
 
         private readonly string _pythonExecutablePath;
         public override string ProcessName => _pythonExecutablePath;
@@ -31,7 +31,7 @@ namespace APIViewWeb
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
             return $" -m apistub --pkg-path {originalName} --temp-path {tempDirectory}" +
-                $" --out-path {jsonPath} --hide-report";
+                $" --out-path {jsonPath}";
         }
 
         private string GetPythonVirtualEnv(string tempDirectory)

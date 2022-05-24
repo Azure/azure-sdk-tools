@@ -137,7 +137,7 @@ namespace APIViewWeb.Repositories
 
             if (review.PackageName != null && review.PackageDisplayName == null)
             {
-                var p = _packageNameManager.GetPackageDetails(review.PackageName);
+                var p = await _packageNameManager.GetPackageDetails(review.PackageName);
                 review.PackageDisplayName = p?.DisplayName;
                 review.ServiceName = p?.ServiceName;
             }
@@ -223,7 +223,7 @@ namespace APIViewWeb.Repositories
 
             if (review.PackageName != null)
             {
-                var p = _packageNameManager.GetPackageDetails(review.PackageName);
+                var p = await _packageNameManager.GetPackageDetails(review.PackageName);
                 review.PackageDisplayName = p?.DisplayName ?? review.PackageDisplayName;
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
             }

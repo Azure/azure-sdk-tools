@@ -41,7 +41,7 @@ namespace APIViewWeb.HostedServices
             {
                 try
                 {
-                    _reviewManager.UpdateReviewBackground();
+                    await _reviewManager.UpdateReviewBackground();
                     //return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
                 }
                 catch(Exception ex)
@@ -49,7 +49,7 @@ namespace APIViewWeb.HostedServices
                     _telemetryClient.TrackException(ex);
                 }
             }
-            return Task.CompletedTask;
+            //return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken stoppingToken)

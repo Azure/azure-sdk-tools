@@ -35,14 +35,14 @@ namespace APIViewWeb.HostedServices
             }
         }
 
-        public Task StartAsync(CancellationToken stoppingToken)
+        public async Task StartAsync(CancellationToken stoppingToken)
         {
             if (!_isDisabled)
             {
                 try
                 {
                     _reviewManager.UpdateReviewBackground();
-                    return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                    //return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
                 }
                 catch(Exception ex)
                 {

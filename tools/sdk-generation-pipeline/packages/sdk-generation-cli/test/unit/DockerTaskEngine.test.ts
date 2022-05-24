@@ -31,8 +31,8 @@ describe('task engine', () => {
         expect(dockerTaskEngineContext.mockTestInputJson).toBe(path.join(tmpFolder, 'output', 'mockTestInput.json'));
         expect(dockerTaskEngineContext.mockTestOutputJson).toBe(path.join(tmpFolder, 'output', 'mockTestOutput.json'));
         expect(dockerTaskEngineContext.initTaskLog).toBe(path.join(tmpFolder, 'output', 'init-task.log'));
-        expect(dockerTaskEngineContext.generateAndBuildTaskLog).toBe(path.join(tmpFolder, 'output', 'generate-and-build-task.log'));
-        expect(dockerTaskEngineContext.mockTestTaskLog).toBe(path.join(tmpFolder, 'output', 'mock-test-task.log'));
+        expect(dockerTaskEngineContext.generateAndBuildTaskLog).toBe(path.join(tmpFolder, 'output', 'generateAndBuild-task.log'));
+        expect(dockerTaskEngineContext.mockTestTaskLog).toBe(path.join(tmpFolder, 'output', 'mockTest-task.log'));
         expect(dockerTaskEngineContext.readmeMdPath).toBe('specification/agrifood/resource-manager/readme.md');
     });
 

@@ -24,14 +24,6 @@ namespace swagger_api_parser
 
     public class Operation
     {
-        // [JsonConstructor]
-        // public Operation(Operation methodValue)
-        // {
-        //     this.description = methodValue.description;
-        //     this.operationId = methodValue.operationId;
-        //     this.responses = new Dictionary<string, Response>(methodValue.responses);
-        //     this.parameters = new List<Parameter>(methodValue.parameters);
-        // }
 
         public string description { get; set; }
         public string operationId { get; set; }

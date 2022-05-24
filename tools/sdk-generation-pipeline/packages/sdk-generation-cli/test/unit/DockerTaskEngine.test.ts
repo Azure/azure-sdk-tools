@@ -63,8 +63,8 @@ describe('task engine', () => {
         dockerTaskEngineContext.mockTestInputJson = path.join(tmpFolder, 'output', 'mockTestInput.json');
         dockerTaskEngineContext.mockTestOutputJson = path.join(tmpFolder, 'output', 'mockTestOutput.json');
         dockerTaskEngineContext.initTaskLog = path.join(tmpFolder, 'output', 'init-task.log');
-        dockerTaskEngineContext.generateAndBuildTaskLog = path.join(tmpFolder, 'output', 'generate-and-build-task.log');
-        dockerTaskEngineContext.mockTestTaskLog = path.join(tmpFolder, 'output', 'mock-test-task.log');
+        dockerTaskEngineContext.generateAndBuildTaskLog = path.join(tmpFolder, 'output', 'generateAndBuild-task.log');
+        dockerTaskEngineContext.mockTestTaskLog = path.join(tmpFolder, 'output', 'mockTest-task.log');
         dockerTaskEngineContext.readmeMdPath = 'specification/agrifood/resource-manager/readme.md';
         dockerTaskEngineContext.specRepo = {
             repoPath: path.join(tmpFolder, 'spec-repo'),

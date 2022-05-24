@@ -13,16 +13,19 @@ export const prepareArtifactFilesInput = convict<PrepareArtifactFilesInput>({
         default: null,
         format: assertNullOrEmpty,
         env: 'GENERATE_AND_BUILD_OUTPUTFILE',
+        arg: 'generateAndBuildOutputFile',
     },
     artifactDir: {
         doc: 'The dir to publish artifact',
         default: null,
         env: 'ARTIFACT_DIR',
         format: assertNullOrEmpty,
+        arg: 'artifactDir',
     },
     language: {
         default: null,
         env: 'LANGUAGE',
         format: ['js', 'python', 'go', 'net', 'java'],
+        arg: 'language',
     },
 });

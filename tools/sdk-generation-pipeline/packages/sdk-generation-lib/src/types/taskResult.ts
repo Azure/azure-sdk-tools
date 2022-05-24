@@ -18,8 +18,8 @@ export class TaskResultEntity {
 }
 
 export enum TaskResultStatus {
-    success = 'success',
-    failure = 'failure',
+    success = 'succeeded',
+    failure = 'failed',
 }
 
 export type Extra = {

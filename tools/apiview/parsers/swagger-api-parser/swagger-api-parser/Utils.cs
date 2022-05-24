@@ -151,5 +151,16 @@ namespace swagger_api_parser
 
             return newRoot;
         }
+
+        public static string GetOperationIdPrefix(string operationId)
+        {
+            return operationId.Split("_")[0];
+        }
+
+        public static string GetOperationIdAction(string operationId)
+        {
+            var items =  operationId.Split("_");
+            return items.Length < 2 ? "" : items[1];
+        }
     }
 }

@@ -25,5 +25,8 @@
     <ItemGroup>
       <ProjectReference Include="..\swagger-api-parser.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <Content Include="fixtures/**" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
 
 </Project>

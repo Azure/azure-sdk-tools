@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 {
     public class GitStore : IAssetsStore
     {
-        public void Save(string pathToAssetsJson, string contextPath) {
+        public void Push(string pathToAssetsJson, string contextPath) {
             var config = ParseConfigurationFile(pathToAssetsJson);
 
             throw new NotImplementedException();

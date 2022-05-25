@@ -56,11 +56,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
 
         [HttpPost]
-        public async Task Save([FromBody()] IDictionary<string, object> options = null)
+        public async Task Push([FromBody()] IDictionary<string, object> options = null)
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
-            _recordingHandler.Store.Save(pathToAssets, _recordingHandler.ContextDirectory);
+            _recordingHandler.Store.Push(pathToAssets, _recordingHandler.ContextDirectory);
         }
 
         [HttpPost]

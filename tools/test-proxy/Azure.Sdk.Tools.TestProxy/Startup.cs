@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 switch (command.ToLowerInvariant())
                 {
                     case "save":
-                        DefaultStore.Save(assetsJsonPath, TargetLocation);
+                        DefaultStore.Push(assetsJsonPath, TargetLocation);
                         break;
                     case "restore":
                         DefaultStore.Restore(assetsJsonPath, TargetLocation);

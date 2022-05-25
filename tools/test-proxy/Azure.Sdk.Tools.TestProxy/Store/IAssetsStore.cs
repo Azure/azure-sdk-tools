@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <param name="contextPath"></param>
-        public abstract void Save(string pathToAssetsJson, string contextPath);
+        public abstract void Push(string pathToAssetsJson, string contextPath);
 
         /// <summary>
         /// Given a configuration, pull any remote resources down into the provided contextPath.

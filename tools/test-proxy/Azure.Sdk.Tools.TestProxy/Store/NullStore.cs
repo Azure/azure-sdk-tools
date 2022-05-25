@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 {
     public class NullStore : IAssetsStore
     {
-        public void Save(string assetsJsonPath, string contextPath) {}
+        public void Push(string assetsJsonPath, string contextPath) {}
 
         public void Restore(string assetsJsonPath, string contextPath) {}
 

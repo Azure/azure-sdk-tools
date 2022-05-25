@@ -163,27 +163,3 @@ export async function getInputFromCommandWithDefaultValue(parameter: string, def
     }
 }
 
-export function getServicePrintName(packageName: string) {
-    packageName = packageName.replace('azure-rest/', '');
-    const parts = packageName.split(/[^a-zA-z]/);
-    for (let i = 0; i < parts.length; i++) {
-        parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].substring(1);
-    }
-    return parts.join(' ');
-}
-
-export function getServiceNameFromPackagePath(packagePath: string) {
-    const match = /.*[\/\\]sdk[\/\\]([a-zA-Z0-9-]+)[\/\\]/.exec(packagePath);
-    if (!match || match.length !== 2) {
-        throw new Error(`Cannot find service name from packagePath ${packagePath}`);
-    }
-    return match[1];
-}
-
-export function getClientName(packagePath: string) {
-    if (fs.existsSync(path.join(packagePath, 'swagger', 'README.md'))) {
-        const readme = getConfigFromReadmeMd(path.join(packagePath, 'swagger', 'README.md'));
-        return readme?.title;
-    }
-    return undefined;
-}

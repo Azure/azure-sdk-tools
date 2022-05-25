@@ -3,8 +3,10 @@ import { execSync } from 'child_process';
 import * as os from 'os';
 
 export function getFileListInPackageFolder(packageFolder: string) {
-    childProcess.execSync('git add .', { encoding: 'utf8', cwd: packageFolder });
-    const files = childProcess.execSync('git ls-files', { encoding: 'utf8', cwd: packageFolder }).trim().split('\n');
+    const files = child_process
+        .execSync('git ls-files -cmo --exclude-standard', { encoding: 'utf8', cwd: packageFolder })
+        .trim()
+        .split('\n');
 
     return files;
 }

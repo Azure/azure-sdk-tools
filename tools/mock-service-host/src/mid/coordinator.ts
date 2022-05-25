@@ -366,7 +366,7 @@ export class Coordinator {
                             const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
                             if (result) {
                                 ;[code, ret] = result
-                                this.setAsyncHeader(res, lroCallback)
+                                this.setLocationHeader(res, lroCallback)
                             } else {
                                 // if no 200 response, throw exception
                                 throw new WrongExampleResponse()
@@ -416,7 +416,11 @@ export class Coordinator {
     private setStatusToSuccess(ret: any) {
         // set status to succeed to stop polling
         if (ret) {
-            ret.status = 'Succeeded'
+            try {
+                ret['status'] = 'Succeeded'
+            } catch (err) {
+                // no object return, do nothing
+            }
         } else {
             ret = { status: 'Succeeded' }
         }

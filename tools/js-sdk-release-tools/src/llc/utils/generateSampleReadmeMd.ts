@@ -14,7 +14,7 @@ async function writeReadmeMd(packageName: string, packagePath: string, options: 
 package-name: "${packageName}"
 title: ${options.title}
 description: ${options.description}
-generate-metadata: false
+generate-metadata: true
 license-header: MICROSOFT_MIT_NO_VERSION
 output-folder: ../
 source-code-folder-path: ./src

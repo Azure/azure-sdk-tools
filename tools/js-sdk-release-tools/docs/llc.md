@@ -40,22 +40,21 @@ Which resource provider do you want to store your package in sdk folder? Please 
 
 You need to provide following information. You can refer to [README.md](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/purview/purview-catalog-rest/swagger/README.md) as an example.
 
-| parameter | description |
-| ----- | ---- |
-| service-name | The folder name under [sdk](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk). If the service name you provided is not under [sdk](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk), we will create a new one for you. |
-| package-name | The package name of the sdk, which should be in format @azure-rest/xxxxx |
-| title | The title of the sdk. |
-| description | The description of the sdk. |
-| input-file | The swagger files to generate sdk. If you have multi input files, please use semicolons to separate. |
-| package-version | The sdk version you want to generate. |
-| credential-scopes | The credential scopes of your service. |
+| parameter         | description                                                                                                                                                                                                                           |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| service-name      | The folder name under [sdk](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk). If the service name you provided is not under [sdk](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk), we will create a new one for you. |
+| package-name      | The package name of the sdk, which should be in format @azure-rest/xxxxx                                                                                                                                                              |
+| title             | The title of the sdk.                                                                                                                                                                                                                 |
+| description       | The description of the sdk.                                                                                                                                                                                                           |
+| input-file        | The swagger files to generate sdk. If you have multi input files, please use semicolons to separate.                                                                                                                                  |
+| package-version   | The sdk version you want to generate.                                                                                                                                                                                                 |
+| credential-scopes | The credential scopes of your service.                                                                                                                                                                                                |
 
 You also can provide the information when running command `rlc-code-gen`, such as `rlc-code-gen --package-name=<your package name> --title=<your title> --description=<your description>`.
 
 ##### Step 3. The tool will generate codes and build generated codes automatically. Finally, you can get RLC codes.
 
    - If you want to write test, please start from sample test from `test` folder.
-   - If you want to write sample, please start from `sample.env`, `sample-dev` folder and `samples` folder.
 
 Please refer to [template](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/template/template) as a good start.
 
@@ -66,16 +65,8 @@ Also, you need to know what the tool does:
 #### Generate Codes:
 1. Generate `swagger/README.md`
 2. Generate source code by codegen
-3. Generate tsConfig.json
-4. Generate package.json
-5. Generate rollup.config.js
-6. Generate api-extractor.json
-7. Generate .eslintrc.json
-8. Generate LICENSE
-9. Generate test (a sample test)
-10. Generate sample (sample-dev and sample.env, will include more in the future)
-11. Add/update ci.yml
-12. Update rush.json
+3. Add/update ci.yml
+4. Update rush.json
 #### Build Codes:
 1. Run `rush update`
 2. Run `rush build -t <your package name>`

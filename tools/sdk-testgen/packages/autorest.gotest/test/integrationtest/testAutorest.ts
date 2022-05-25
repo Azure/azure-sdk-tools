@@ -23,7 +23,7 @@ async function compare(dir1: string, dir2: string) {
 async function runAutorest(readmePath: string, extraOption: string[]) {
     const cmd =
         path.join(`${__dirname}`, '..', '..' + '/node_modules', '.bin', 'autorest') +
-        ' --version=3.7.3 --testmodeler.generate-mock-test --testmodeler.generate-sdk-example --testmodeler.generate-scenario-test --testmodeler.generate-sdk-sample --use=' +
+        ' --version=3.7.3 --generate-sdk=false --testmodeler.generate-mock-test --testmodeler.generate-sdk-example --testmodeler.generate-scenario-test --testmodeler.generate-sdk-sample --use=' +
         path.join(`${__dirname}`, '..', '..', '..', 'autorest.testmodeler') +
         ' --use=' +
         path.join(`${__dirname}`, '..', '..') +
@@ -46,7 +46,7 @@ async function runAutorest(readmePath: string, extraOption: string[]) {
     });
 }
 function getExtraOption(outputFolder: string) {
-    return [`--output-folder=${outputFolder}`, '--use=@autorest/go@latest', '--file-prefix="zz_generated_"', '--track2', '--go', '--debug', '--module-version=0.1.0'];
+    return [`--output-folder=${outputFolder}`, '--use=@autorest/go@latest', '--file-prefix="zz_generated_"', '--track2', '--go', '--debug'];
 }
 
 async function runSingleTest(swaggerDir: string, rp: string, extraOption: string[], outputFolder: string, tempOutputFolder: string): Promise<boolean> {
@@ -103,10 +103,12 @@ describe('Run autorest and compare the output', () => {
             console.log('Start Processing: ' + rp);
 
             // Remove tmpoutput
-            const outputFolder = path.join(outputDir, rp, 'test');
-            const tempOutputFolder = path.join(tempoutputDir, rp, 'test');
+            const outputFolder = path.join(outputDir, rp, `arm${rp}`);
+            const tempOutputFolder = path.join(tempoutputDir, rp, `arm${rp}`);
             Helper.deleteFolderRecursive(tempOutputFolder);
             fs.mkdirSync(tempOutputFolder, { recursive: true });
+            // TODO: Need to add go.mod and make sure all the generated code can build and vet
+            // fs.copyFileSync(path.join(outputDir, rp, `arm${rp}`, 'go.mod'), path.join(tempoutputDir, rp, `arm${rp}`, 'go.mod'));
 
             const test = runSingleTest(swaggerDir, rp, getExtraOption(tempOutputFolder), outputFolder, tempOutputFolder);
             allTests.push(test);

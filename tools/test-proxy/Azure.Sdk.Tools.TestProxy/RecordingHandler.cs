@@ -506,6 +506,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         SetRecordingDirectory(newSourceDirectory);
                     }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value to the key \"ContextDirectory\" in the recording options dictionary.");
+                    }
                 }
 
                 if (options.TryGetValue("AssetsStore", out var assetsStoreObj))
@@ -515,6 +519,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     if (!string.IsNullOrWhiteSpace(newAssetsStoreIdentifier))
                     {
                         SetAssetsStore(newAssetsStoreIdentifier);
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value to the key \"AssetsStore\" in the recording options dictionary.");
                     }
                 }
 

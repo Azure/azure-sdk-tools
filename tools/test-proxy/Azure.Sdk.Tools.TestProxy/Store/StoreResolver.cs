@@ -55,7 +55,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             var allTypes = inputAssembly.GetTypes().ToList();
 
             foreach (var type in allTypes) {
-                if (type.Name.ToLowerInvariant().Contains(storeName.ToLowerInvariant()))
+                if (type.FullName.ToLowerInvariant().Contains(storeName.ToLowerInvariant()))
                 {
                     return type;
                 }

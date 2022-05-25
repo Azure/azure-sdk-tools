@@ -762,32 +762,31 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
 
         [Theory]
-        [InlineData("hellothere", "generalkenobi")]
-        [InlineData("", "")]
-        public void TestSetRecordingOptionsHandlesValidStoreTypes(params string[] relativePaths)
+        [InlineData("{ \"AssetsStore\": \"NullStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.NullStore\"}")]
+        public void TestSetRecordingOptionsHandlesValidStoreTypes(string body)
         {
-            var relativePath = Path.Combine(relativePaths);
-            var testDirectory = Path.GetTempPath();
-
-            RecordingHandler testRecordingHandler = new RecordingHandler(testDirectory);
-            testDirectory = Path.Combine(testDirectory, relativePath);
-            var body = $"{{ \"ContextDirectory\": \"{testDirectory.Replace("\\", "/")}\"}}";
-
-            var httpContext = new DefaultHttpContext();
-            Dictionary<string, object> inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
-
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.Store = null;
+            Dictionary<string, object> inputBody = null;
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+            }
             testRecordingHandler.SetRecordingOptions(inputBody);
 
-            Assert.Equal(new Uri(testDirectory), new Uri(testRecordingHandler.ContextDirectory));
+            Assert.NotNull(testRecordingHandler.Store);
         }
 
         [Theory]
-        [InlineData("{ \"ContextDirectory\": \":/repo/\0\"}", "Unable set proxy context to target directory")]
+        [InlineData("{ \"AssetsStore\": \"NonExistent\"}", "Unable to load the specified IAssetStore class NonExistent.")]
+        [InlineData("{ \"AssetsStore\": \"\"}", "Users must provide a valid value to the key \"AssetsStore\"")]
+        [InlineData("{ \"AssetsStore\": \"GitAssetsConfiguration\"}", "Unable to create an instance of type GitAssetsConfiguration")]
         public void TestSetRecordingOptionsThrowsOnInvalidStoreTypes(string body, string errorText)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var httpContext = new DefaultHttpContext();
-
             Dictionary<string, object> inputBody = null;
             if (!string.IsNullOrWhiteSpace(body))
             {

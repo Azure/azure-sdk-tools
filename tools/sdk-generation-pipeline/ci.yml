@@ -67,6 +67,11 @@ stages:
 
         - script: |
             rushx lint
+          displayName: 'Lint @azure-tools/sdk-generation-lib'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
+
+        - script: |
+            rushx lint
           displayName: 'Lint @azure-tools/sdk-generation-cli'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
 

@@ -47,14 +47,13 @@ namespace Azure.Sdk.Tools.TestProxy
         /// </summary>
         /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
         /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
-        /// <param name="storagePlugin">Does the user have a preference as to a default startup plugin? Defaults to "No plugin" currently.</param>
-        /// <param name="assemblyDirectory">If the user has defined a custom storage extension, they should place their DLL in a directory and said directory to this argument.</param>
+        /// <param name="storagePlugin">Does the user have a preference as to a default storage plugin? Defaults to "No plugin" currently.</param>
         /// <param name="command">A specific test-proxy action to be carried out. Supported options: ["Save", "Restore", "Reset"]</param>
         /// <param name="assetsJsonPath">Only required if a "command" value is present. This should be a path to a valid assets.json within a language repository.</param>
         /// <param name="dump">Flag. Pass to dump configuration values before starting the application.</param>
         /// <param name="version">Flag. Pass to get the version of the tool.</param>
         /// <param name="args">Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider.</param>
-        public static void Main(bool insecure = false, string storageLocation = null, string storagePlugin = null, string assemblyDirectory = null, string command = null, string assetsJsonPath = null, bool dump = false, bool version = false, string[] args = null)
+        public static void Main(bool insecure = false, string storageLocation = null, string storagePlugin = null, string command = null, string assetsJsonPath = null, bool dump = false, bool version = false, string[] args = null)
         {
             if (version)
             {
@@ -68,7 +67,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             TargetLocation = resolveRepoLocation(storageLocation);
-            Resolver = new StoreResolver(assemblyDirectory);
+            Resolver = new StoreResolver();
             DefaultStore = Resolver.ResolveStore(storagePlugin ?? "NullStore");
 
             if (!String.IsNullOrWhiteSpace(command))
@@ -163,13 +162,13 @@ namespace Azure.Sdk.Tools.TestProxy
             services.AddControllersWithViews();
             services.AddRazorPages();
 
-            var singleTonRecordingHandler = new RecordingHandler(
+            var singletonRecordingHandler = new RecordingHandler(
                 TargetLocation,
                 store: DefaultStore,
                 storeResolver: Resolver
             );
 
-            services.AddSingleton<RecordingHandler>(singleTonRecordingHandler);
+            services.AddSingleton<RecordingHandler>(singletonRecordingHandler);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)

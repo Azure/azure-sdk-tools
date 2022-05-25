@@ -11,7 +11,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace APIViewWeb.HostedServices
 {
-    public class ReviewBackgroundHostedService : IHostedService, IDisposable
+    public class ReviewBackgroundHostedService : BackgroundService
     {
         private readonly bool _isDisabled;
         private readonly ReviewManager _reviewManager;
@@ -35,29 +35,21 @@ namespace APIViewWeb.HostedServices
             }
         }
 
-        public Task StartAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             if (!_isDisabled)
             {
                 try
                 {
-                    _reviewManager.UpdateReviewBackground();
-                    return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                    await _reviewManager.UpdateReviewBackground();
+                    await ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _telemetryClient.TrackException(ex);
                 }
             }
-            return Task.CompletedTask;
         }
-
-        public Task StopAsync(CancellationToken stoppingToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose(){}
 
         private async Task ArchiveInactiveReviews(CancellationToken stoppingToken, int archiveAfter)
         {

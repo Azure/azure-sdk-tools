@@ -1,81 +1,70 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
-import { createTaskResult, AzureSDKTaskName, TaskResult, TaskOutput, LogFilter, logger } from '@azure-tools/sdk-generation-lib';
+import {
+    AzureSDKTaskName,
+    createTaskResult,
+    LogFilter,
+    logger,
+    requireJsonc,
+    TaskResult,
+    TaskResultStatus,
+    TaskOutput,
+} from '@azure-tools/sdk-generation-lib';
 
-function printHelp() {
-    console.log('usage: generateResult --pipelineBuildId --logfile --taskname --resultOutputPath');
-    console.log('                      [--taskOutput] [--logFilter]\n');
-    console.log('taskname: must be one of [Init, GenerateAndBuild, MockTest, LiveTest]');
-}
+import { generateResultCliInput, GenerateResultCliInput } from './cliSchema/generateResultCliConfig';
+
+generateResultCliInput.validate();
+const config: GenerateResultCliInput = generateResultCliInput.getProperties();
 
 async function main() {
-    const args = parseArgs(process.argv);
-    const pipelineBuildId = args['pipelineBuildId'];
-    const logfile = args['logfile'];
-    const logFilterStr = args['logFilter'];
-    const taskname = args['taskname'];
-    const exeResult = args['taskExeResult']
-    const taskOutput = args['taskOutput'];
-    const resultOutputPath = args['resultOutputPath'];
     let taskOutputObj: TaskOutput = undefined;
     let logFilter: LogFilter = undefined;
+    let taskResult: TaskResult = undefined;
+    let exeResult: TaskResultStatus = undefined;
 
-    if (pipelineBuildId === undefined) {
-        printHelp();
-        throw new Error(`pipelineBuildId is empty`);
-    }
-    if (logfile === undefined) {
-        printHelp();
-        throw new Error(`logfile is empty`);
-    }
-    if (taskname === undefined) {
-        printHelp();
-        throw new Error(`taskname is empty`);
-    } else if (Object.values(AzureSDKTaskName).includes(taskname)) {
-        printHelp();
-        throw new Error(`invalid taskname`);
+    if (!Object.values(AzureSDKTaskName).includes(config.taskName as AzureSDKTaskName)) {
+        throw new Error(`invalid taskName` + config.taskName);
     }
 
-    if (exeResult === undefined) {
-        printHelp();
-        throw new Error(`Task execute result is empty`);
-    }
-    
-    if (resultOutputPath === undefined) {
-        printHelp();
-        throw new Error(`resultOutputPath is empty`);
-    }
-    if (taskOutput !== undefined) {
-        taskOutputObj = JSON.parse(taskOutput);
-    }
-    if (logFilterStr !== undefined) {
-        logFilter = JSON.parse(logFilterStr);
+    if (!config.exeResult && !config.dockerResultFile) {
+        throw new Error(`Task execute result and dockerResultFile is empty`);
     }
 
-    const taskResult: TaskResult = createTaskResult(pipelineBuildId, taskname, exeResult, logfile, logFilter, taskOutputObj);
+    if (config.taskOutputPath && fs.existsSync(config.taskOutputPath)) {
+        taskOutputObj = requireJsonc(config.taskOutputPath);
+    }
+    if (config.logFilterStr) {
+        logFilter = JSON.parse(config.logFilterStr);
+    }
 
-    fs.writeFileSync(resultOutputPath, JSON.stringify(taskResult, null, 2), { encoding: 'utf-8' });
+    if (config.exeResult) {
+        exeResult = config.exeResult as TaskResultStatus;
+    } else if (config.dockerResultFile && fs.existsSync(config.dockerResultFile)) {
+        const dockerTaskResult = JSON.parse(fs.readFileSync(config.dockerResultFile, 'utf-8'));
+        if (!dockerTaskResult[config.taskName] || dockerTaskResult[config.taskName].includes('skipped')) {
+            return;
+        } else {
+            exeResult = dockerTaskResult[config.taskName];
+        }
+    } else {
+        throw new Error(`exeResult is not provided.`);
+    }
+
+    taskResult = createTaskResult(
+        config.pipelineBuildId,
+        config.taskName as AzureSDKTaskName,
+        exeResult,
+        config.logfile,
+        logFilter,
+        taskOutputObj
+    );
+
+    fs.writeFileSync(config.resultOutputPath, JSON.stringify(taskResult, null, 2), {
+        encoding: 'utf-8',
+    });
     console.log('Generate Success !!!');
 
     return;
-}
-
-/**
- * Parse a list of command line arguments.
- * @param argv List of cli args(process.argv)
- */
-const flagRegex = /^--([^=:]+)([=:](.+))?$/;
-export function parseArgs(argv: string[]) {
-    const result: any = {};
-    for (const arg of argv) {
-        const match = flagRegex.exec(arg);
-        if (match) {
-            const key = match[1];
-            const rawValue = match[3];
-            result[key] = rawValue;
-        }
-    }
-    return result;
 }
 
 main().catch((e) => {
@@ -83,4 +72,3 @@ main().catch((e) => {
     ${e.stack}`);
     process.exit(1);
 });
-

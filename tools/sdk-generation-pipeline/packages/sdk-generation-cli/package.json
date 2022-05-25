@@ -1,48 +1,54 @@
 {
-  "name": "@azure-tools/sdk-generation-cli",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "rimraf dist && tsc",
-    "prepack": "npm run build",
-    "pack": "npm pack 2>&1"
-  },
-  "author": "Microsoft",
-  "license": "MIT",
-  "files": [
-    "dist/**/*.js",
-    "dist/**/*.json",
-    "dist/**/*.js.map",
-    "dist/**/*.d.ts",
-    "dist/**/*.d.ts.map",
-    "dist/**/*.handlebars",
-    "LICENSE",
-    "README.md"
-  ],
-  "bin": {
-    "getRepoName": "dist/getRepoNameCli.js",
-    "getTasksToRun": "dist/getTasksToRunCli.js",
-    "runInitTask": "dist/runInitTaskCli.js",
-    "runGenerateAndBuildTask": "dist/runGenerateAndBuildTaskCli.js",
-    "runMockTestTask": "dist/runMockTestTaskCli.js",
-    "runLiveTestTask": "dist/runLiveTestTaskCli.js",
-    "publishLog": "dist/publishLogCli.js",
-    "generateResult": "dist/generateResultCli.js"
-  },
-  "dependencies": {
-    "@azure/storage-blob": "^12.8.0",
-    "ajv": "^6.12.6",
-    "convict": "^6.2.2",
-    "@azure-tools/sdk-generation-lib": "^1.0.4",
-    "axios": "^0.24.0"
-  },
-  "bundledDependencies": [
-    "@azure-tools/sdk-generation-lib"
-  ],
-  "devDependencies": {
-    "@types/node": "^16.11.7",
-    "rimraf": "^3.0.2"
-  }
+    "name": "@azure-tools/sdk-generation-cli",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "rimraf dist && tsc",
+        "prepack": "npm run build",
+        "pack": "npm pack 2>&1",
+        "test:prepare-environment": "ts-node test/utils/prepareEnvironment.ts",
+        "test": "npm run test:prepare-environment && jest "
+    },
+    "author": "Microsoft",
+    "license": "MIT",
+    "files": [
+        "dist/**/*.js",
+        "dist/**/*.json",
+        "dist/**/*.js.map",
+        "dist/**/*.d.ts",
+        "dist/**/*.d.ts.map",
+        "dist/**/*.handlebars",
+        "LICENSE",
+        "README.md"
+    ],
+    "bin": {
+        "getRepoName": "dist/getRepoNameCli.js",
+        "generateResult": "dist/generateResultCli.js",
+        "publishResult": "dist/publishResultCli.js",
+        "uploadArtifact": "dist/uploadArtifactCli.js",
+        "prepareArtifactFiles": "dist/prepareArtifactFilesCli.js"
+    },
+    "dependencies": {
+        "@azure/storage-blob": "^12.8.0",
+        "@azure-tools/sdk-generation-lib": "^1.0.4",
+        "ajv": "^6.12.6",
+        "axios": "^0.24.0",
+        "convict": "^6.2.2",
+        "mongodb": "^3.6.10",
+        "typeorm": "^0.2.37"
+    },
+    "bundledDependencies": [
+        "@azure-tools/sdk-generation-lib"
+    ],
+    "devDependencies": {
+        "@types/jest": "^25.2.1",
+        "@types/node": "^16.11.7",
+        "jest": "~26.6.3",
+        "rimraf": "^3.0.2",
+        "ts-jest": "~26.5.4",
+        "ts-node": "~10.7.0",
+        "typescript": "~4.6.3"
+    }
 }

@@ -1,10 +1,26 @@
-import { GenerateAndBuildOutput } from '../types/taskInputAndOuputSchemaTypes/GenerateAndBuildOutput';
-import { InitOutput } from '../types/taskInputAndOuputSchemaTypes/InitOutput';
-import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
+import { GenerateAndBuildOutput } from './taskInputAndOuputSchemaTypes/GenerateAndBuildOutput';
+import { InitOutput } from './taskInputAndOuputSchemaTypes/InitOutput';
+import { TestOutput } from './taskInputAndOuputSchemaTypes/TestOutput';
 import { getTaskBasicConfig, TaskBasicConfig } from './taskBasicConfig';
 import * as fs from 'fs';
+import { Column, Entity, ObjectIdColumn } from 'typeorm';
 
-export type PipelineResult = 'success' | 'failure' | 'timed_out';
+@Entity('sdkGenerationResults')
+export class TaskResultEntity {
+    @ObjectIdColumn()
+    id: string;
+    @Column()
+    key: string;
+    @Column()
+    pipelineBuildId: string;
+    @Column()
+    taskResult: TaskResult;
+}
+
+export enum TaskResultStatus {
+    success = 'succeeded',
+    failure = 'failed',
+}
 
 export type Extra = {
     [key: string]: any;
@@ -48,7 +64,7 @@ export type MessageRecord = ResultMessageRecord | RawMessageRecord | MarkdownMes
 export type TaskResultCommon = {
     name: string;
     pipelineBuildId: string;
-    result?: PipelineResult;
+    result?: TaskResultStatus;
     errorCount?: number;
     warningCount?: number;
     logUrl?: string;
@@ -84,8 +100,8 @@ export type TaskOutput = InitOutput | GenerateAndBuildOutput | TestOutput | unde
 export function setTaskResult(config: TaskBasicConfig, taskName: string) {
     taskResult = {
         name: taskName,
-        pipelineBuildId: "",
-        result: 'success',
+        pipelineBuildId: '',
+        result: TaskResultStatus.success,
         errorCount: 0,
         warningCount: 0,
     };
@@ -97,4 +113,33 @@ export let testTaskResult: TestTaskResult;
 export function saveTaskResult() {
     const config: TaskBasicConfig = getTaskBasicConfig.getProperties();
     fs.writeFileSync(config.pipeLog, JSON.stringify(taskResult, null, 2), { encoding: 'utf-8' });
+}
+
+export function generateTotalResult(taskResults: TaskResult[], pipelineBuildId: string): TaskResult {
+    const totalResult: TaskResult = {
+        name: 'total',
+        pipelineBuildId: pipelineBuildId,
+        result: TaskResultStatus.success,
+        errorCount: 0,
+        messages: [],
+    };
+
+    if (taskResults.length === 0) {
+        totalResult.result = TaskResultStatus.failure;
+        return totalResult;
+    }
+
+    for (const taskResult of taskResults) {
+        if (taskResult.result !== TaskResultStatus.success) {
+            totalResult.result = taskResult.result;
+        }
+        totalResult.errorCount += taskResult.errorCount;
+        if (taskResult.messages) {
+            for (const msg of taskResult.messages) {
+                totalResult.messages.push(msg);
+            }
+        }
+    }
+
+    return totalResult;
 }

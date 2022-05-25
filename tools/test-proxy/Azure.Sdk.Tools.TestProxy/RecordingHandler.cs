@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
+using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -25,21 +26,15 @@ namespace Azure.Sdk.Tools.TestProxy
     public class RecordingHandler
     {
         #region constructor and common variables
-        public bool HandleRedirects = true;
         public string ContextDirectory;
+        public bool HandleRedirects = true;
 
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
         private const string SkipRecordingRequestResponse = "request-response";
 
-        public RecordingHandler(string targetDirectory)
-        {
-            ContextDirectory = targetDirectory;
-
-            SetDefaultExtensions();
-        }
-
-        private static readonly RecordedTestSanitizer defaultSanitizer = new RecordedTestSanitizer();
+        public IAssetsStore Store;
+        public StoreResolver Resolver;
 
         private static readonly string[] s_excludedRequestHeaders = new string[] {
             // Only applies to request between client and proxy
@@ -62,6 +57,25 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public readonly ConcurrentDictionary<string, ModifiableRecordSession> PlaybackSessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
+
+        public RecordingHandler(string targetDirectory, IAssetsStore store = null, StoreResolver storeResolver = null)
+        {
+            ContextDirectory = targetDirectory;
+
+            SetDefaultExtensions();
+
+            Store = store;
+            if (store == null)
+            {
+                Store = new NullStore();
+            }
+
+            Resolver = storeResolver;
+            if (Resolver == null)
+            {
+                Resolver = new StoreResolver();
+            }
+        }
         #endregion
 
         #region recording functionality
@@ -452,7 +466,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         #endregion
 
-        #region common functions
+        #region SetRecordingOptions and store functionality
         public void SetRecordingOptions(IDictionary<string, object> options = null)
         {
             if (options != null)
@@ -492,12 +506,36 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         SetRecordingDirectory(newSourceDirectory);
                     }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value to the key \"ContextDirectory\" in the recording options dictionary.");
+                    }
                 }
+
+                if (options.TryGetValue("AssetsStore", out var assetsStoreObj))
+                {
+                    var newAssetsStoreIdentifier = assetsStoreObj.ToString();
+
+                    if (!string.IsNullOrWhiteSpace(newAssetsStoreIdentifier))
+                    {
+                        SetAssetsStore(newAssetsStoreIdentifier);
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value to the key \"AssetsStore\" in the recording options dictionary.");
+                    }
+                }
+
             }
             else
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.");
             }
+        }
+
+        public void SetAssetsStore(string assetsStoreId)
+        {
+            Store = Resolver.ResolveStore(assetsStoreId);
         }
 
         public void SetRecordingDirectory(string targetDirectory)
@@ -511,7 +549,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     targetDirectory = Path.GetDirectoryName(targetDirectory);
                 }
-                
+
                 if (!String.IsNullOrEmpty(targetDirectory))
                 {
                     Directory.CreateDirectory(targetDirectory);
@@ -523,7 +561,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"Unable set proxy context to target directory \"{targetDirectory}\". Unhandled exception was: \"{ex.Message}\".");
             }
         }
+        #endregion
 
+        #region utility and common-use functions
         public void AddSanitizerToRecording(string recordingId, RecordedTestSanitizer sanitizer)
         {
             if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
@@ -665,7 +705,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 Matcher = new RecordMatcher();
             }
         }
-
 
         public string GetRecordingPath(string file)
         {

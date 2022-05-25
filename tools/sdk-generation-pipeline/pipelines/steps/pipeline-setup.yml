@@ -1,0 +1,56 @@
+parameters:
+  - name: sdk
+    type: string
+
+  - name: sdkRepoBaseBranch
+    type: string
+
+  - name: trigger
+    type: string
+
+steps:
+  - task: NodeTool@0
+    displayName: Specify Node Version
+    inputs:
+      versionSpec: 14.x
+
+  - bash: |
+      pwd
+      cd tools/sdk-generation-pipeline
+      npm install -g @microsoft/rush
+      rush update
+      rush build
+      cd packages/sdk-generation-cli
+      rushx pack
+      PACKAGE_TGZ=`ls azure-tools-sdk-generation-cli*.tgz`
+      npm install -g ${PACKAGE_TGZ}
+      npm install -g autorest
+      cd $(System.ArtifactsDirectory)
+      echo "mkdir for docker output"
+      mkdir -p /tmp/output
+      echo "mkdir for pipeline artifact"
+      mkdir -p logs
+      echo "##vso[task.setvariable variable=pipelineResult;]success"
+      publishResult \
+        --storageType=eventhub \
+        --pipelineStatus=queued \
+        --buildId="$(Build.BuildId)" \
+        --trigger='${{ parameters.trigger }}'
+      retVal=$?
+      if [ $retVal -ne 0 ]; then
+          echo "##vso[task.setvariable variable=pipelineResult;]failed"
+          exit 1
+      fi
+    displayName: Setup Pipeline Runtime Environment
+    env:
+      EVENTHUB_SAS_URL: $(EVENTHUB_SAS_URL)
+
+  - bash: |
+      #TODO: will support clone specific PR and commit
+      git clone --branch $(specRepoBranch) $(specRepoUrl)
+      downloadSdkRepoUrl=$(echo $(sdkRepoUrl) | sed "s#https://#https://$(REPO_OWNER):$(REPO_OWNER_ACCESSKEY)@#")
+      git clone --branch $(sdkRepoBaseBranch) ${downloadSdkRepoUrl}
+      getRepoName SPEC_REPO $(specRepoUrl)
+      getRepoName SDK_REPO $(sdkRepoUrl)
+    displayName: Repo pull
+    workingDirectory: ../

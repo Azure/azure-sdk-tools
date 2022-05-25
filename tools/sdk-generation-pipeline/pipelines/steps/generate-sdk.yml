@@ -1,0 +1,35 @@
+parameters:
+  - name: readmeFile
+    type: string
+
+  - name: trigger
+    type: string
+
+steps:
+  - bash: |
+      publishResult \
+        --storageType=eventhub \
+        --pipelineStatus=in_progress \
+        --buildId="$(Build.BuildId)" \
+        --trigger='${{ parameters.trigger }}'
+      retVal=$?
+      if [ $retVal -ne 0 ]; then
+          echo "##vso[task.setvariable variable=pipelineResult;]failed"
+          exit 1
+      fi
+    displayName: Publish status
+    env:
+      EVENTHUB_SAS_URL: $(EVENTHUB_SAS_URL)
+
+  - bash: |
+      docker run \
+        -v $(SPEC_REPO):/spec-repo \
+        -v $(SDK_REPO):/sdk-repo \
+        -v /tmp/output:/tmp/output \
+        $(DOCKER_IMAGE) \
+        --readme=${{ parameters.readmeFile }}
+      retVal=$?
+      if [ $retVal -ne 0 ]; then
+          echo "##vso[task.setvariable variable=pipelineResult;]failed"
+      fi
+    displayName: Generate sdk

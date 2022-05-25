@@ -250,6 +250,19 @@ export class ResponseGenerator {
         }
     }
 
+    public async loadSpecAndItem(
+        operation: Operation,
+        config: Config
+    ): Promise<[string, SwaggerSpec, SpecItem | undefined]> {
+        const specFile = this.getSpecFileByOperation(operation, config)
+        const spec = (await (this.jsonLoader.load(specFile) as unknown)) as SwaggerSpec
+        applySpecTransformers(spec, this.transformContext)
+        applyGlobalTransformers(this.transformContext)
+
+        const specItem = ResponseGenerator.getSpecItem(spec, operation.operationId as string)
+        return [specFile, spec, specItem]
+    }
+
     public async generate(
         liveValidator: oav.LiveValidator,
         operation: Operation,
@@ -257,12 +270,7 @@ export class ResponseGenerator {
         liveRequest: LiveRequest,
         lroCallback: string | null
     ) {
-        const specFile = this.getSpecFileByOperation(operation, config)
-        const spec = (await (this.jsonLoader.load(specFile) as unknown)) as SwaggerSpec
-        applySpecTransformers(spec, this.transformContext)
-        applyGlobalTransformers(this.transformContext)
-
-        const specItem = ResponseGenerator.getSpecItem(spec, operation.operationId as string)
+        const [specFile, spec, specItem] = await this.loadSpecAndItem(operation, config)
         if (!specItem) {
             throw Error(`operation ${operation.operationId} can't be found in ${specFile}`)
         }

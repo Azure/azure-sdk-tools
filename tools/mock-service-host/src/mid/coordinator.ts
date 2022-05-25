@@ -32,6 +32,7 @@ import {
 import { get_locations, get_tenants } from './specials'
 import { inject, injectable } from 'inversify'
 import _ from 'lodash'
+import e from 'express'
 
 export enum ValidatorStatus {
     NotInitialized = 'Validator not initialized',
@@ -177,11 +178,23 @@ export class Coordinator {
                 Constants.ErrorCodes.MultipleOperationsFound.name
         ) {
             const result = this.search(this.liveValidator.operationSearcher, validationRequest)
-            const lroCallback = result.operationMatch.operation[
-                AzureExtensions.XMsLongRunningOperation
-            ]
-                ? await this.findLROGet(req)
-                : null
+            let lroCallback: string | null = null
+            if (result.operationMatch.operation[AzureExtensions.XMsLongRunningOperation]) {
+                try {
+                    lroCallback = await this.findLROGet(req)
+                } catch (err) {
+                    if (err instanceof LroCallbackNotFound) {
+                        // degrade to non-lro if 1) no callback operation can be found and 2) there is 200 responses
+                        const [_1, _2, specItem] = await this.responseGenerator.loadSpecAndItem(
+                            result.operationMatch.operation,
+                            this.config
+                        )
+                        if (!('200' in (specItem?.content.responses || {}))) {
+                            throw err
+                        }
+                    }
+                }
+            }
             const example = await this.responseGenerator.generate(
                 this.liveValidator,
                 result.operationMatch.operation,

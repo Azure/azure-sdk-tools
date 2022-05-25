@@ -26,7 +26,7 @@ async function prepareSourceCode(
 ) {
     for (const p of generateAndBuildOutput.packages) {
         const result = p.result;
-        if (result === TaskResultStatus.failure) {
+        if (result === TaskResultStatus.Failure) {
             logger.warn(`Build ${p.packageName} failed, skipped it`);
             continue;
         }
@@ -53,7 +53,7 @@ async function prepareSourceCode(
 async function prepareArtifacts(generateAndBuildOutput: GenerateAndBuildOutput, language: string, artifactDir: string) {
     for (const p of generateAndBuildOutput.packages) {
         const result = p.result;
-        if (result === TaskResultStatus.failure) {
+        if (result === TaskResultStatus.Failure) {
             logger.warn(`Build ${p.packageName} failed, skipped it`);
             continue;
         }

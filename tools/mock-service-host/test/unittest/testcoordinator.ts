@@ -233,6 +233,49 @@ describe('generateResponse()', () => {
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type2/myType/new?api-version=20210701'
         expect(coordinator.findLROGet(liveRequest)).rejects.toThrow(LroCallbackNotFound)
     })
+
+    it("degrade to non-lro if can't find callback url", async () => {
+        const response = mockDefaultResponse()
+
+        // create resource user without create it's parent resource service
+        const fileName = path.join(__dirname, '..', 'testData', 'payloads', 'restore_service.json')
+        const pair: RequestResponsePair = require(fileName)
+        if (!pair.liveRequest.headers) {
+            pair.liveRequest.headers = {}
+        }
+        const request = mockRequest(pair.liveRequest)
+        await coordinator.generateResponse(request, response, statelessProfile)
+        expect(response).toMatchSnapshot()
+    })
+
+    it("return error if can't find callback url and there is no 200 response", async () => {
+        const response = mockDefaultResponse()
+
+        // create resource user without create it's parent resource service
+        const fileName = path.join(__dirname, '..', 'testData', 'payloads', 'backup_service.json')
+        const pair: RequestResponsePair = require(fileName)
+        if (!pair.liveRequest.headers) {
+            pair.liveRequest.headers = {}
+        }
+        const request = mockRequest(pair.liveRequest)
+        await expect(
+            coordinator.generateResponse(request, response, statelessProfile)
+        ).rejects.toThrow(LroCallbackNotFound)
+    })
+
+    it('Can mock resource type in list operation which has odd path pattern', async () => {
+        const response = mockDefaultResponse()
+
+        // create resource user without create it's parent resource service
+        const fileName = path.join(__dirname, '..', 'testData', 'payloads', 'list_groups.json')
+        const pair: RequestResponsePair = require(fileName)
+        if (!pair.liveRequest.headers) {
+            pair.liveRequest.headers = {}
+        }
+        const request = mockRequest(pair.liveRequest)
+        await coordinator.generateResponse(request, response, statelessProfile)
+        expect(response).toMatchSnapshot()
+    })
 })
 
 describe('genStatefulResponse()', () => {

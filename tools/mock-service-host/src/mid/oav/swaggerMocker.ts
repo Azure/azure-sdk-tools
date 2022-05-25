@@ -60,13 +60,6 @@ export default class SwaggerMocker {
         spec: any,
         liveRequest: LiveRequest
     ) {
-        if (liveRequest.headers?.accept?.endsWith('/json')) {
-            for (const statusCode in example.responses) {
-                if (!example.responses[statusCode].body) {
-                    example.responses[statusCode].body = {}
-                }
-            }
-        }
         this.patchResourceIdAndType(example.responses, liveRequest, specItem, spec)
         this.patchUserAssignedIdentities(example.responses, liveRequest)
     }

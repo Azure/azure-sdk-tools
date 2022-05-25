@@ -1,5 +1,66 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`generateResponse() Can mock resource type in list operation which has odd path pattern 1`] = `
+VirtualServerResponse {
+  "body": Object {
+    "nextLink": null,
+    "value": Array [
+      Object {
+        "id": "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/mockedserviceName/groups/mockName",
+        "name": "mockName",
+        "properties": Object {
+          "builtIn": true,
+          "description": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "displayName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "externalId": "aaaaaaaaaaaaaaaa",
+          "type": "custom",
+        },
+        "type": "Microsoft.ApiManagement/service/groups",
+      },
+    ],
+  },
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;
+
+exports[`generateResponse() degrade to non-lro if can't find callback url 1`] = `
+VirtualServerResponse {
+  "body": Object {
+    "etag": "AAAAAAAXX6Y=",
+    "id": "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/apimService1",
+    "location": "East Asia",
+    "name": "restore",
+    "properties": Object {
+      "createdAtUtc": "2015-09-22T01:50:34.7921566Z",
+      "gatewayUrl": "https://apimService1.azure-api.net",
+      "hostnameConfigurations": Array [],
+      "managementApiUrl": "https://apimService1.management.azure-api.net",
+      "portalUrl": "https://apimService1.portal.azure-api.net",
+      "provisioningState": "Succeeded",
+      "publicIPAddresses": Array [
+        "207.46.155.24",
+      ],
+      "publisherEmail": "admin@live.com",
+      "publisherName": "Contoso",
+      "scmUrl": "https://apimService1.scm.azure-api.net",
+      "targetProvisioningState": "",
+      "virtualNetworkType": "None",
+    },
+    "sku": Object {
+      "capacity": 1,
+      "name": "Premium",
+    },
+    "tags": Object {
+      "UID": "52ed5986-717b-45b4-b17c-3df8db372cff",
+    },
+    "type": "Microsoft.ApiManagement/serviceFaked/restore",
+  },
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;
+
 exports[`generateResponse() special rule of GET locations 1`] = `
 VirtualServerResponse {
   "body": Object {

@@ -32,7 +32,6 @@ import {
 import { get_locations, get_tenants } from './specials'
 import { inject, injectable } from 'inversify'
 import _ from 'lodash'
-import e from 'express'
 
 export enum ValidatorStatus {
     NotInitialized = 'Validator not initialized',
@@ -192,6 +191,8 @@ export class Coordinator {
                         if (!('200' in (specItem?.content.responses || {}))) {
                             throw err
                         }
+                    } else {
+                        throw err
                     }
                 }
             }

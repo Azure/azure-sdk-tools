@@ -21,4 +21,4 @@ const scriptRunningStateStrings = {
     warning: `Warning`
 };
 
-export type scriptRunningState = keyof typeof scriptRunningStateStrings;
+export type ScriptRunningState = keyof typeof scriptRunningStateStrings;

@@ -1,6 +1,7 @@
-import { createLogger, format, Logger, transports } from "winston";
-import { FileTransportInstance } from "winston/lib/winston/transports";
-import { getTaskBasicConfig } from "../types";
+import { createLogger, format, Logger, transports } from 'winston';
+import { FileTransportInstance } from 'winston/lib/winston/transports';
+
+import { getTaskBasicConfig } from '../types';
 
 const loggerLevels = {
     levels: {
@@ -19,7 +20,7 @@ const loggerLevels = {
         info: 'green',
         debug: 'blue'
     }
-}
+};
 
 type WinstonInfo = {
     level: keyof typeof loggerLevels.levels;
@@ -35,9 +36,9 @@ export function addFileLog(logger: Logger, logPath: string, taskName: string) {
     const fileTransportInstance = new transports.File({
         level: 'info',
         filename: logPath,
-        options: {flags: 'w'},
+        options: { flags: 'w' },
         format: format.combine(
-            format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
+            format.timestamp({ format: 'YYYY-MM-DD hh:mm:ss' }),
             format.printf((info: WinstonInfo) => {
                 const msg = `${info.timestamp} ${info.level} \t${info.message}`;
                 return msg;
@@ -66,8 +67,8 @@ export function initializeLogger(logPath: string, taskName: string, addConsoleLo
         logger.add(new transports.Console({
             level: 'info',
             format: format.combine(
-                format.colorize({colors: loggerLevels.colors}),
-                format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
+                format.colorize({ colors: loggerLevels.colors }),
+                format.timestamp({ format: 'YYYY-MM-DD hh:mm:ss' }),
                 format.printf((info: WinstonInfo) => {
                     const msg = `${info.timestamp} ${info.level} \t${info.message}`;
                     return msg;

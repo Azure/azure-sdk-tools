@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License in the project root for license information.
-import * as statsd from "hot-shots";
+import * as statsd from 'hot-shots';
 
 export enum Metrics {
-    Liveness = "liveness",
-    ApiCalls = "apiCalls",
-    InternalServerError = "InternalServerError",
-    BadRequest = "BadRequest",
-    NotFound = "NotFound",
-    Success = "success",
+    Liveness = 'liveness',
+    ApiCalls = 'apiCalls',
+    InternalServerError = 'InternalServerError',
+    BadRequest = 'BadRequest',
+    NotFound = 'NotFound',
+    Success = 'success',
 }
 
 export class MonitorClient {
@@ -17,7 +17,7 @@ export class MonitorClient {
         this.stats = new statsd.StatsD({
             host: host,
             port: port,
-            mock: mock,
+            mock: mock
         });
     }
 
@@ -45,7 +45,7 @@ export class MonitorClient {
         const stat = JSON.stringify({
             Namespace: serviceName,
             Metric: metric,
-            Dims: dims,
+            Dims: dims
         });
         this.stats.gauge(stat, value);
     }

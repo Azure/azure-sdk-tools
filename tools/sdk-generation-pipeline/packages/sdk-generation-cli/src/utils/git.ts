@@ -1,10 +1,8 @@
-import * as childProcess from 'child_process';
 import { execSync } from 'child_process';
 import * as os from 'os';
 
 export function getFileListInPackageFolder(packageFolder: string) {
-    const files = child_process
-        .execSync('git ls-files -cmo --exclude-standard', { encoding: 'utf8', cwd: packageFolder })
+    const files = execSync('git ls-files -cmo --exclude-standard', { encoding: 'utf8', cwd: packageFolder })
         .trim()
         .split('\n');
 

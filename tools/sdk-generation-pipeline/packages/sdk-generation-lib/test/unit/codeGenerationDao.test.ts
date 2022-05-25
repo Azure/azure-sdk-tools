@@ -1,8 +1,8 @@
 import { Connection, createConnection } from 'typeorm';
 
+import { CodeGeneration } from '../../src/types/codeGeneration';
 import { CodeGenerationDao } from '../../src/utils/db/codeGenerationDao';
 import { CodeGenerationDaoImpl } from '../../src/utils/db/codeGenerationDaoImpl';
-import { CodeGeneration } from '../../src/types/codeGeneration';
 
 let mongoDbConnection: Connection;
 
@@ -17,7 +17,7 @@ async function initDaoTest() {
         database: 'admin',
         synchronize: true,
         logging: true,
-        entities: [CodeGeneration],
+        entities: [CodeGeneration]
     });
 }
 

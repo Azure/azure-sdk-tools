@@ -30,6 +30,8 @@
       }],
       "object-curly-spacing": ["error", "always"],
       "simple-import-sort/imports": "error",
+      "new-cap": "off",
+      "valid-jsdoc": "off",
       "@typescript-eslint/naming-convention": [
         "error",
         {

@@ -1,7 +1,7 @@
 import { Connection, MongoRepository } from 'typeorm';
 
-import { CodeGenerationDao } from './codeGenerationDao';
 import { CodeGeneration } from '../../types/codeGeneration';
+import { CodeGenerationDao } from './codeGenerationDao';
 
 export class CodeGenerationDaoImpl implements CodeGenerationDao {
     private repo: MongoRepository<CodeGeneration>;
@@ -40,7 +40,7 @@ export class CodeGenerationDaoImpl implements CodeGenerationDao {
         await this.repo.delete(codegen);
     }
 
-    /*Get all code generations of an special onboard type. */
+    /* Get all code generations of an special onboard type. */
     public async listCodeGenerations(filters: any = undefined, filterCompleted = false): Promise<CodeGeneration[]> {
         let finalFilters: any;
         if (!filters) {
@@ -48,7 +48,7 @@ export class CodeGenerationDaoImpl implements CodeGenerationDao {
         }
         if (filterCompleted) {
             finalFilters = {
-                where: { $and: [{ status: { $ne: 'completed' } }, { status: { $ne: 'pipelineCompleted' } }, filters] },
+                where: { $and: [{ status: { $ne: 'completed' } }, { status: { $ne: 'pipelineCompleted' } }, filters] }
             };
         } else {
             finalFilters = filters;

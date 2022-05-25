@@ -1,17 +1,17 @@
 #!/usr/bin/env node
-import * as fs from 'fs';
-import * as path from 'path';
-
-import { prepareArtifactFilesInput, PrepareArtifactFilesInput } from './cliSchema/prepareArtifactFilesCliConfig';
 import {
     GenerateAndBuildOutput,
     getGenerateAndBuildOutput,
     logger,
     requireJsonc,
     SDK,
-    TaskResultStatus,
+    TaskResultStatus
 } from '@azure-tools/sdk-generation-lib';
-import { getFileListInPackageFolder } from './utils/git';
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { PrepareArtifactFilesInput, prepareArtifactFilesInput } from '../../cliSchema/prepareArtifactFilesCliConfig';
+import { getFileListInPackageFolder } from '../../utils/git';
 
 function copyFile(filePath: string, targetDir: string) {
     const fileDir = path.dirname(filePath);

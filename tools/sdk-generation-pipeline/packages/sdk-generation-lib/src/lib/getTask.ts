@@ -4,7 +4,7 @@ import {
     getCodegenToSdkConfig,
     InitOptions,
     LiveTestOptions,
-    MockTestOptions,
+    MockTestOptions
 } from '../types/taskInputAndOuputSchemaTypes/CodegenToSdkConfig';
 import { requireJsonc } from '../utils/requireJsonc';
 

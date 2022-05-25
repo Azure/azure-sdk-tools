@@ -1,6 +1,7 @@
+import * as path from 'path';
+
 import { requireJsonc } from '../../utils/requireJsonc';
 import { getTypeTransformer } from '../../utils/validator';
-import * as path from 'path';
 
 export const codegenToSdkConfigSchema = requireJsonc(path.join(__dirname, 'CodegenToSdkConfigSchema.json'));
 

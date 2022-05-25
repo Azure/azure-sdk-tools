@@ -44,7 +44,6 @@
     "axios": "^0.24.0",
     "dotenv": "^16.0.0",
     "winston": "~3.7.2",
-    "@types/convict": "^5.2.0",
     "command-line-args": "~5.2.1"
   },
   "bundledDependencies": [

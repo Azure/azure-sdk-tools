@@ -31,14 +31,10 @@ export async function executeTask(
         args.push(inputJsonPath);
     }
     args.push(outputJsonPath);
-    const result = await runScript(runScriptOptions, {
+    const execResult = await runScript(runScriptOptions, {
         cwd: cwd,
         args: args
     });
-    let execResult: TaskResultStatus = TaskResultStatus.Success;
-    if (result === 'failed') {
-        execResult = TaskResultStatus.Failure;
-    }
     if (fs.existsSync(outputJsonPath)) {
         const outputJson = requireJsonc(outputJsonPath);
         return {

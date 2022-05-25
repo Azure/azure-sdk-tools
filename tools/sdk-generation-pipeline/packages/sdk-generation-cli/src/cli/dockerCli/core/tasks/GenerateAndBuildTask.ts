@@ -3,7 +3,7 @@ import {
     GenerateAndBuildOptions,
     getGenerateAndBuildOutput,
     getTask, removeFileLog, requireJsonc,
-    runScript
+    runScript, TaskResultStatus
 } from '@azure-tools/sdk-generation-lib';
 import fs from 'fs';
 import path from 'path';
@@ -53,7 +53,7 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
             customizedLogger: this.context.logger
         });
         removeFileLog(this.context.logger, 'generateAndBuild');
-        this.context.taskResults['generateAndBuild'] = executeResult === 'succeeded'? 'success' : 'failure';
+        this.context.taskResults['generateAndBuild'] = executeResult;
         if (executeResult === 'failed') {
             throw new Error(`Execute generateAndBuild script failed.`);
         }

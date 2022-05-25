@@ -38,7 +38,7 @@ export class InitTask implements SDKGenerationTaskBase {
             customizedLogger: this.context.logger
         });
         removeFileLog(this.context.logger, 'init');
-        this.context.taskResults['init'] = executeResult === 'succeeded'? 'success' : 'failure';
+        this.context.taskResults['init'] = executeResult;
         if (executeResult === 'failed') {
             throw new Error(`Execute init script failed.`);
         }

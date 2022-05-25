@@ -11,10 +11,6 @@ export type RunOptions = {
     envs?: string[];
     logPrefix?: string;
     logFilter?: LogFilter;
-    exitWithNonZeroCode?: {
-        storeLog: boolean;
-        result: 'error' | 'warning' | 'ignore';
-    };
 };
 
 export type LogFilter = {

@@ -4,7 +4,7 @@ import {
     getTestOutput,
     MockTestInput,
     MockTestOptions, removeFileLog, requireJsonc,
-    runScript
+    runScript, TaskResultStatus
 } from '@azure-tools/sdk-generation-lib';
 import fs from 'fs';
 import path from 'path';
@@ -55,14 +55,14 @@ export class MockTestTask implements SDKGenerationTaskBase {
                 envs: this.context.envs,
                 customizedLogger: this.context.logger
             });
-            this.context.taskResults['mockTest'] = executeResult === 'succeeded' && this.context.taskResults['mockTest'] !== 'failure'? 'success' : 'failure';
+            this.context.taskResults['mockTest'] = executeResult === TaskResultStatus.Success && this.context.taskResults['mockTest'] !== TaskResultStatus.Failure? TaskResultStatus.Success : TaskResultStatus.Failure;
             removeFileLog(this.context.logger, `mockTest_${formattedPackageName}`);
             if (fs.existsSync(mockTestOutputJsonPath)) {
                 const mockTestOutputJson = getTestOutput(requireJsonc(mockTestOutputJsonPath));
                 this.context.logger.info(`Get ${path.basename(mockTestOutputJsonPath)}:`);
                 this.context.logger.info(JSON.stringify(mockTestOutputJson, undefined, 2));
             }
-            if (this.context.taskResults['mockTest'] === 'failure') {
+            if (this.context.taskResults['mockTest'] === TaskResultStatus.Failure) {
                 throw new Error('Run Mock Test Failed');
             }
         }

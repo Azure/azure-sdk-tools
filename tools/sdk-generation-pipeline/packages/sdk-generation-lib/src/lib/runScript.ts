@@ -4,8 +4,7 @@ import * as path from 'path';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
 
-import { StringMap } from '../types';
-import { ScriptRunningState } from '../types/scriptRunningState';
+import { StringMap, TaskResultStatus } from '../types';
 import { RunOptions } from '../types/taskInputAndOuputSchemaTypes/CodegenToSdkConfig';
 import { logger as globalLogger } from '../utils/logger';
 
@@ -41,12 +40,12 @@ export async function runScript(runOptions: RunOptions, options: {
     args?: string[];
     envs?: StringMap<string | boolean | number>;
     customizedLogger?: Logger;
-}): Promise<string> {
+}): Promise<TaskResultStatus> {
     if (!!options?.customizedLogger) {
         logger = options.customizedLogger;
     }
 
-    let executeResult: ScriptRunningState;
+    let executeResult: TaskResultStatus;
     const scriptCmd = runOptions.script;
     const scriptPath = runOptions.path.trim();
     const env = { ...process.env, PWD: path.resolve(options.cwd), ...options.envs };
@@ -92,31 +91,19 @@ export async function runScript(runOptions: RunOptions, options: {
             });
         });
         if (cmdRet.code === 0) {
-            executeResult = 'succeeded';
+            executeResult = TaskResultStatus.Success;
         } else {
-            executeResult = 'failed';
+            executeResult = TaskResultStatus.Failure;
         }
     } catch (e) {
         cmdRet.code = -1;
         logger.error(`${e.message}\n${e.stack}`);
-        executeResult = 'failed';
+        executeResult = TaskResultStatus.Failure;
     }
-    let storeLog = false;
-    if ((cmdRet.code !== 0 || cmdRet.signal !== null) && runOptions.exitWithNonZeroCode !== undefined) {
-        if (runOptions.exitWithNonZeroCode.storeLog) {
-            storeLog = true;
-        }
-        if (runOptions.exitWithNonZeroCode.result === 'error') {
-            executeResult = 'failed';
-        } else if (runOptions.exitWithNonZeroCode.result === 'warning') {
-            executeResult = 'warning';
-        }
+    if (cmdRet.code !== 0 || cmdRet.signal !== null) {
+        executeResult = TaskResultStatus.Failure;
         const message = `Script return with result [${executeResult}] code [${cmdRet.code}] signal [${cmdRet.signal}] cwd [${options.cwd}]: ${scriptPath}`;
-        if (runOptions.exitWithNonZeroCode.result === 'error') {
-            logger.error(message, { show: storeLog });
-        } else if (runOptions.exitWithNonZeroCode.result === 'warning') {
-            logger.warn(message, { show: storeLog });
-        }
+        logger.log('cmderr', message);
     }
     return executeResult;
 }

@@ -17,22 +17,22 @@ export const resultPublisherBlobInput = convict<ResultPublisherBlobInput>({
     logsAndResultPath: {
         default: null,
         format: assertNullOrEmpty,
-        env: 'LOGS_AND_RESULT_PATH',
+        arg: 'logsAndResultPath',
     },
     pipelineBuildId: {
         default: null,
-        env: 'PIPELINE_BUILDID',
         format: assertNullOrEmpty,
+        arg: 'buildId',
     },
     taskName: {
         default: null,
-        env: 'TASK_NAME',
         format: String,
+        arg: 'taskName',
     },
     sdkGenerationName: {
         default: null,
-        env: 'SDKGENERATION_NAME',
         format: assertNullOrEmpty,
+        arg: 'sdkGenerationName',
     },
     azureStorageBlobSasUrl: {
         default: null,
@@ -110,66 +110,66 @@ export const resultPublisherDBCodeGenerationInput = convict<ResultPublisherDBCod
     },
     pipelineBuildId: {
         default: null,
-        env: 'PIPELINE_BUILDID',
         format: assertNullOrEmpty,
+        arg: 'buildId',
     },
     sdkGenerationName: {
         default: null,
-        env: 'SDKGENERATION_NAME',
         format: assertNullOrEmpty,
+        arg: 'sdkGenerationName',
     },
     service: {
         default: null,
-        env: 'SERVICE',
         format: assertNullOrEmpty,
+        arg: 'service',
     },
     serviceType: {
         default: null,
-        env: 'SERVICE_TYPE',
         format: ['data-plane', 'resource-manager'],
+        arg: 'serviceType',
     },
     language: {
         default: null,
-        env: 'LANGUAGE',
         format: ['js', 'python', 'go', 'net', 'java'],
+        arg: 'language',
     },
     swaggerRepo: {
         default: null,
-        env: 'SWAGGER_REPO',
         format: assertNullOrEmpty,
+        arg: 'swaggerRepo',
     },
     sdkRepo: {
         default: null,
-        env: 'SDK_REPO',
         format: assertNullOrEmpty,
+        arg: 'sdkRepo',
     },
     codegenRepo: {
         default: null,
-        env: 'CODEGEN_REPO',
         format: assertNullOrEmpty,
+        arg: 'codegenRepo',
     },
     triggerType: {
         default: null,
-        env: 'TRIGGER_TYPE',
         format: ['ad-hoc', 'ci', 'release'],
+        arg: 'triggerType',
     },
     tag: {
         default: null,
-        evn: 'TAG',
         nullable: true,
         format: String,
+        arg: 'tag',
     },
     owner: {
         default: null,
-        evn: 'OWNER',
         nullable: true,
         format: String,
+        arg: 'owner',
     },
     codePR: {
         default: null,
-        evn: 'OWNER',
         nullable: true,
         format: String,
+        arg: 'codePR',
     },
 });
 
@@ -227,13 +227,13 @@ export const resultPublisherDBResultInput = convict<ResultPublisherDBResultInput
     },
     pipelineBuildId: {
         default: null,
-        env: 'PIPELINE_BUILDID',
         format: assertNullOrEmpty,
+        arg: 'buildId',
     },
     taskResultsPath: {
         default: null,
-        env: 'TASK_RESULTS_PATH',
         format: assertNullOrEmpty,
+        arg: 'taskResultsPath',
     },
 });
 
@@ -260,19 +260,16 @@ export const resultPublisherEventHubInput = convict<ResultPublisherEventHubInput
     },
     pipelineBuildId: {
         default: null,
-        env: 'PIPELINE_BUILDID',
         format: assertNullOrEmpty,
         arg: 'buildId',
     },
     trigger: {
         default: null,
-        env: 'TRIGGER',
         format: assertNullOrEmpty,
         arg: 'trigger',
     },
     logPath: {
         default: null,
-        env: 'LOG_PATH',
         nullable: true,
         format: String,
         arg: 'logPath',
@@ -280,7 +277,6 @@ export const resultPublisherEventHubInput = convict<ResultPublisherEventHubInput
     resultsPath: {
         doc: 'task result files array',
         default: null,
-        env: 'RESULTS_PATH',
         nullable: true,
         format: String,
         arg: 'resultsPath',

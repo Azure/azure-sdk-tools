@@ -14,18 +14,17 @@ export const uploadBlobInput = convict<UploadBlobInput>({
     generateAndBuildOutputFile: {
         default: null,
         format: assertNullOrEmpty,
-        env: 'GENERATE_AND_BUILD_OUTPUTFILE',
+        arg: 'generateAndBuildOutputFile',
     },
     pipelineBuildId: {
         default: null,
-        env: 'PIPELINE_BUILDID',
         format: assertNullOrEmpty,
         arg: 'buildId',
     },
     language: {
         default: null,
-        env: 'LANGUAGE',
         format: ['js', 'python', 'go', 'net', 'java'],
+        arg: 'language',
     },
     azureStorageBlobSasUrl: {
         default: null,

@@ -10,26 +10,39 @@
 from ._models import (
     DocstringClass,
     FakeError,
-    FakeInventoryItemDataClass,
     FakeObject,
     FakeTypedDict,
+    GenericStack,
     PetEnumPy3Metaclass,
     PetEnumPy3MetaclassAlt,
     PublicCaseInsensitiveEnumMeta,
-    PublicPrivateClass, RequiredKwargObject,
+    PublicPrivateClass,
+    RequiredKwargObject,
+    SomeAwesomelyNamedObject,
     SomeImplementationClass,
-    SomePoorlyNamedObject as SomeAwesomelyNamedObject,
     SomethingWithDecorators,
     SomethingWithOverloads,
     SomethingWithProperties
 )
+from ._dataclasses import (
+    DataClassSimple,
+    DataClassWithFields,
+    DataClassDynamic,
+    DataClassWithKeywordOnly,
+    DataClassWithPostInit
+)
 
 __all__ = (
+    "DataClassSimple",
+    "DataClassWithFields",
+    "DataClassDynamic",
+    "DataClassWithKeywordOnly",
+    "DataClassWithPostInit",
     "DocstringClass",
     "FakeError",
-    "FakeInventoryItemDataClass",
     "FakeObject",
     "FakeTypedDict",
+    "GenericStack",
     "PetEnumPy3Metaclass",
     "PetEnumPy3MetaclassAlt",
     "PublicCaseInsensitiveEnumMeta",

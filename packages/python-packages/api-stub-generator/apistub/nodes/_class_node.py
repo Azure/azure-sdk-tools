@@ -56,7 +56,7 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, allow_list=None):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         # This is the name obtained by NodeEntityBase from __name__.
@@ -67,6 +67,7 @@ class ClassNode(NodeEntityBase):
         self.full_name = self.namespace_id
         self.implements = []
         self.pkg_root_namespace = pkg_root_namespace
+        self._allow_list = allow_list or []
         self._inspect()
         self._set_abc_implements()
         self._sort_elements()
@@ -187,15 +188,11 @@ class ClassNode(NodeEntityBase):
             elif self._should_include_function(child_obj):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
-                    try:
-                        func_node = FunctionNode(self.namespace, self, obj=child_obj)
-                        func_overloads = [x for x in overloads if x.name == func_node.name]
-                        for overload in func_overloads:
-                            self.child_nodes.append(overload)
-                        self.child_nodes.append(func_node)
-                    except OSError:
-                        # Don't create entries for things that don't have source
-                        pass
+                    func_node = FunctionNode(self.namespace, self, obj=child_obj)
+                    func_overloads = [x for x in overloads if x.name == func_node.name]
+                    for overload in func_overloads:
+                        self.child_nodes.append(overload)
+                    self.child_nodes.append(func_node)
             elif name == "__annotations__":
                 for (item_name, item_type) in child_obj.items():
                     if item_name.startswith("_"):
@@ -274,13 +271,9 @@ class ClassNode(NodeEntityBase):
     def _get_base_classes(self):
         # Find base classes
         base_classes = []
-        if hasattr(self.obj, "__bases__"):
-            for cl in [c for c in self.obj.__bases__ if c is not object]:
-                # Show module level name for internal types to show any generated internal types
-                if cl.__module__.startswith("azure"):
-                    base_classes.append("{0}.{1}".format(cl.__module__, cl.__name__))
-                else:
-                    base_classes.append(cl.__name__)
+        bases = getattr(self.obj, "__orig_bases__", None) or getattr(self.obj, "__bases__", None) or []
+        for cl in [c for c in bases if c is not object]:
+            base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes
 
     def generate_tokens(self, apiview):

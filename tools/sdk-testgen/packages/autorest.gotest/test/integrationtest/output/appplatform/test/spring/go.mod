@@ -1,9 +1,0 @@
-module github.com/Azure/azure-sdk-for-go/sdk/resourcemanager//test/spring
-
-go 1.18
-
-require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.23.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.14.0
-	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v0.4.0
-)

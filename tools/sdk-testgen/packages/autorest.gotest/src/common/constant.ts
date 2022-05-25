@@ -9,6 +9,7 @@ export enum Config {
     parents = '__parents',
     outputFolder = 'output-folder',
     module = 'module',
+    moduleVersion = 'module-version',
     filePrefix = 'file-prefix',
     exampleFilePrefix = 'example-file-prefix',
     testFilePrefix = 'test-file-prefix',

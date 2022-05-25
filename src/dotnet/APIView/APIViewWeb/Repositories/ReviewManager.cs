@@ -137,7 +137,7 @@ namespace APIViewWeb.Repositories
 
             if (review.PackageName != null && review.PackageDisplayName == null)
             {
-                var p = _packageNameManager.GetPackageDetails(review.PackageName);
+                var p = await _packageNameManager.GetPackageDetails(review.PackageName);
                 review.PackageDisplayName = p?.DisplayName;
                 review.ServiceName = p?.ServiceName;
             }
@@ -160,6 +160,8 @@ namespace APIViewWeb.Repositories
                     {
                         var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
                         var languageService = GetLanguageService(file.Language);
+                        if (languageService == null)
+                            continue;
 
                         // file.Name property has been repurposed to store package name and version string
                         // This is causing issue when updating review using latest parser since it expects Name field as file name
@@ -221,7 +223,7 @@ namespace APIViewWeb.Repositories
 
             if (review.PackageName != null)
             {
-                var p = _packageNameManager.GetPackageDetails(review.PackageName);
+                var p = await _packageNameManager.GetPackageDetails(review.PackageName);
                 review.PackageDisplayName = p?.DisplayName ?? review.PackageDisplayName;
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
             }
@@ -319,7 +321,7 @@ namespace APIViewWeb.Repositories
 
         private LanguageService GetLanguageService(string language)
         {
-           return _languageServices.Single(service => service.Name == language);
+           return _languageServices.FirstOrDefault(service => service.Name == language);
         }
 
         private async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewModel reviewModel)
@@ -378,7 +380,7 @@ namespace APIViewWeb.Repositories
         {
             return review.Revisions
                .SelectMany(r => r.Files)
-               .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+               .Any(f => f.HasOriginal && GetLanguageService(f.Language)?.CanUpdate(f.VersionString) == true);
         }
 
         public async Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile)
@@ -525,7 +527,6 @@ namespace APIViewWeb.Repositories
         public async void UpdateReviewBackground()
         {
             var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
-            await SyncPackageDisplayServiceName(reviews);
             foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
@@ -542,28 +543,6 @@ namespace APIViewWeb.Repositories
                 finally
                 {
                     _telemetryClient.StopOperation(operation);
-                }
-            }
-        }
-
-        private async Task SyncPackageDisplayServiceName(IEnumerable<ReviewModel> reviews)
-        {
-            foreach (var review in reviews)
-            {
-                var newServiceName = review.ServiceName ?? "Other";
-                var newDisplayName = review.PackageDisplayName ?? "Other";
-                var pkg = _packageNameManager.GetPackageDetails(review.PackageName);
-                if (pkg != null)
-                {
-                    newServiceName = pkg.ServiceName;
-                    newDisplayName = pkg.DisplayName;
-                }
-
-                if (newServiceName != review.ServiceName || newDisplayName != review.PackageDisplayName)
-                {
-                    review.ServiceName = newServiceName;
-                    review.PackageDisplayName = newDisplayName;
-                    await _reviewsRepository.UpsertReviewAsync(review);
                 }
             }
         }

@@ -1,5 +1,12 @@
 # Change Log - @azure-tools/mock-service-host
 
+## 0.1.15
+2022-05-16
+
+### Patches
+
+- LRO mock priority problem
+
 ## 0.1.14
 2022-04-21
 

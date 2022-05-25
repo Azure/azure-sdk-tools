@@ -34,8 +34,8 @@
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",
     "ajv": "^6.12.6",
-    "convict": "^6.2.1",
-    "@azure-tools/sdk-generation-lib": "^1.0.2",
+    "convict": "^6.2.2",
+    "@azure-tools/sdk-generation-lib": "^1.0.4",
     "axios": "^0.24.0"
   },
   "bundledDependencies": [

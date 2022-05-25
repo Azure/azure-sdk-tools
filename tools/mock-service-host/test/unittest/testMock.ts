@@ -102,6 +102,8 @@ describe('mockForExample: ', () => {
             }
         )
 
+        assert.strictEqual(example.responses['200'].body.test, undefined)
+
         expect({
             requestResourceType: example.parameters.parameters.type,
             requestResourceId: example.parameters.parameters.id,

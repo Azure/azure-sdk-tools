@@ -102,8 +102,15 @@ class StubGenerator:
         self.filter_namespace = filter_namespace or ''
         if verbose:
             logging.getLogger().setLevel(logging.DEBUG)
+
+        # Extract package to temp directory if it is wheel or sdist
+        if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
+            self.wheel_path = self._extract_wheel()
+        else:
+            self.wheel_path = None
+
         if not skip_pylint:
-            PylintParser.parse(pkg_path)
+            PylintParser.parse(self.wheel_path or self.pkg_path)
 
     def _parse_arg(self, name):
         value = self._kwargs.get(name, None)
@@ -117,8 +124,7 @@ class StubGenerator:
     def generate_tokens(self):
         # Extract package to temp directory if it is wheel or sdist
         if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
-            logging.info("Extracting package to temp path")
-            pkg_root_path = self._extract_wheel()
+            pkg_root_path = self.wheel_path
             pkg_name, version = self._parse_pkg_name()
             namespace = self.get_module_root_name(pkg_root_path)
         else:

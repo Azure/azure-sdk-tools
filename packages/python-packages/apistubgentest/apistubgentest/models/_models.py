@@ -9,10 +9,9 @@
 import abc
 from azure.core import CaseInsensitiveEnumMeta
 from collections.abc import Sequence
-from dataclasses import dataclass
 from enum import Enum, EnumMeta
 import functools
-from typing import Any, overload, TypedDict, Union, Optional
+from typing import Any, overload, TypedDict, Union, Optional, Generic, TypeVar
 
 
 def my_decorator(fn):
@@ -110,18 +109,6 @@ FakeTypedDict = TypedDict(
 )
 
 
-@dataclass
-class FakeInventoryItemDataClass:
-    """Class for testing @dataclass
-    """
-    name: str
-    unit_price: float
-    quantity_on_hand: int = 0
-
-    def total_cost(self, **kwargs) -> float:
-        return self.unit_price * self.quantity_on_hand
-
-
 class PublicPrivateClass:
 
     public_var: str = "SOMEVAL"
@@ -170,6 +157,10 @@ class SomePoorlyNamedObject:
 
     def __init__(self, name: str):
         self.name = name
+
+
+class SomeAwesomelyNamedObject(SomePoorlyNamedObject):
+    pass
 
 
 class SomethingWithOverloads:
@@ -252,3 +243,21 @@ class SomeImplementationClass(_SomeAbstractBase):
 
     def say_hello(self) -> str:
         return "Hello!"
+
+
+T = TypeVar('T')
+
+class GenericStack(Generic[T]):
+    def __init__(self) -> None:
+        # Create an empty list with items of type T
+        self.items: list[T] = []
+
+    def push(self, item: T) -> None:
+        self.items.append(item)
+
+    def pop(self) -> T:
+        return self.items.pop()
+
+    def empty(self) -> bool:
+        return not self.items
+

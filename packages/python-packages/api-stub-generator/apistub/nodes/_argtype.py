@@ -1,6 +1,8 @@
 import astroid
 import inspect
 
+from ._base_node import get_qualified_name
+
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
 
@@ -61,6 +63,8 @@ class ArgType:
                     value = default.name
                 elif hasattr(default, "as_string"):
                     value = default.as_string()
+                elif inspect.isclass(default):
+                    value = get_qualified_name(default, apiview.namespace)
                 else:
                     value = str(default)
                 apiview.add_literal(value)

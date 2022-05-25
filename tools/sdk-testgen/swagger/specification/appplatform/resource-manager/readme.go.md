@@ -8,4 +8,5 @@ module-name: sdk/resourcemanager/appplatform/armappplatform
 module: github.com/Azure/azure-sdk-for-go/$(module-name)
 output-folder: $(go-sdk-folder)/$(module-name)
 azure-arm: true
+module-version: 2.0.0-beta.1
 ```

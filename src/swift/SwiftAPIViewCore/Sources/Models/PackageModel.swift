@@ -55,6 +55,8 @@ class PackageModel: Tokenizable, Linkable {
                         self.members.append(model)
                     }
                 }
+            case _ as CompilerControlStatement:
+                break
             default:
                 SharedLogger.fail("Unsupported statement type: \(statement)")
             }

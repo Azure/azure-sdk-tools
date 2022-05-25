@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using Azure.Sdk.Tools.TestProxy.Common;
 
@@ -158,6 +159,28 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     + $"Visible Exception is \"{e.Message}\"."
                 );
             }
+        }
+
+        public static string ParseAssetsJsonBody(IDictionary<string, object> options)
+        {
+            if (!options.ContainsKey("AssetsJsonLocation"))
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "Users provide the key AssetsJsonLocation within the JSON body sent to this endpoint.");
+            }
+
+            var value = options["AssetsJsonLocation"].ToString();
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"A valid value to key \"AssetsJsonLocation\" is required. Received null, whitespace, or nothing.");
+            }
+
+            if (System.IO.File.Exists(value))
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"When providing a path to the assets json, it must be locally resolvable. Input Value: \"{value}\".");
+            }
+
+            return value;
         }
     }
 }

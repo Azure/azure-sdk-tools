@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -59,8 +60,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
 
-            // TODO: handle errors
-            var pathToAssets = options["AssetsJsonLocation"].ToString();
+            var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
 
             _recordingHandler.Store.Reset(pathToAssets, _recordingHandler.ContextDirectory);
         }
@@ -70,8 +70,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
 
-            // TODO: handle errors
-            var pathToAssets = options["AssetsJsonLocation"].ToString();
+            var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
 
             _recordingHandler.Store.Restore(pathToAssets, _recordingHandler.ContextDirectory);
         }

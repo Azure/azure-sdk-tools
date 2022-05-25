@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -58,13 +59,9 @@ namespace Azure.Sdk.Tools.TestProxy
         public async Task Save([FromBody()] IDictionary<string, object> options = null)
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
-
-            // TODO: handle errors
-            var pathToAssets = options["AssetsJsonLocation"].ToString();
-
+            var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
             _recordingHandler.Store.Save(pathToAssets, _recordingHandler.ContextDirectory);
         }
-
 
         [HttpPost]
         [AllowEmptyBody]

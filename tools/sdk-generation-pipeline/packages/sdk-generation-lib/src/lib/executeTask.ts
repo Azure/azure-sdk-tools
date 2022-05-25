@@ -9,7 +9,7 @@ import { InitOutput } from '../types/taskInputAndOuputSchemaTypes/InitOutput';
 import { LiveTestInput } from '../types/taskInputAndOuputSchemaTypes/LiveTestInput';
 import { MockTestInput } from '../types/taskInputAndOuputSchemaTypes/MockTestInput';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
-import { TaskResult, TaskResultStatus } from '../types/taskResult';
+import { TaskResult } from '../types/taskResult';
 import { requireJsonc } from '../utils/requireJsonc';
 import { createTaskResult } from './generateResult';
 import { runScript } from './runScript';

@@ -274,7 +274,12 @@ describe('generateResponse()', () => {
         }
         const request = mockRequest(pair.liveRequest)
         await coordinator.generateResponse(request, response, statelessProfile)
-        expect(response).toMatchSnapshot()
+        const items = response.body.value as any
+        expect({
+            id: items[0].id,
+            type: items[0].type,
+            name: items[0].name
+        }).toMatchSnapshot()
     })
 })
 

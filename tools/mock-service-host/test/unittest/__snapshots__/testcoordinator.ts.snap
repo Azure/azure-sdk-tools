@@ -1,26 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`generateResponse() Can mock resource type in list operation which has odd path pattern 1`] = `
-VirtualServerResponse {
-  "body": Object {
-    "nextLink": null,
-    "value": Array [
-      Object {
-        "id": "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/mockedserviceName/groups/mockName",
-        "name": "mockName",
-        "properties": Object {
-          "builtIn": true,
-          "description": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-          "displayName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-          "externalId": "aaaaaaaaaaaaaaaa",
-          "type": "custom",
-        },
-        "type": "Microsoft.ApiManagement/service/groups",
-      },
-    ],
-  },
-  "headers": Object {},
-  "statusCode": "200",
+Object {
+  "id": "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/mockedserviceName/groups/mockName",
+  "name": "mockName",
+  "type": "Microsoft.ApiManagement/service/groups",
 }
 `;
 

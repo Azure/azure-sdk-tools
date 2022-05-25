@@ -30,9 +30,9 @@
   "bin": {
     "getRepoName": "dist/cli/pipelineCli/getRepoNameCli.js",
     "generateResult": "dist/cli/pipelineCli/generateResultCli.js",
-    "publishResult": "dist/publishResultCli.js",
-    "uploadArtifact": "dist/uploadArtifactCli.js",
-    "prepareArtifactFiles": "dist/prepareArtifactFilesCli.js",
+    "publishResult": "dist/cli/pipelineCli/publishResultCli.js",
+    "uploadArtifact": "dist/cli/pipelineCli/uploadArtifactCli.js",
+    "prepareArtifactFiles": "dist/cli/pipelineCli/prepareArtifactFilesCli.js",
     "docker-cli": "dist/cli/dockerCli/dockerCli.js",
     "run-mock-host": "dist/cli/dockerCli/runMockHostCli.js"
   },

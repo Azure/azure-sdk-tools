@@ -189,7 +189,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             playbackContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {

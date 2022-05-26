@@ -14,7 +14,7 @@ specifiers:
   axios: ^0.24.0
   class-validator: ^0.13.2
   colors: 1.4.0
-  convict: ^6.2.2
+  convict: ^6.2.3
   copyfiles: ^2.4.1
   hot-shots: ^8.5.2
   jest: ~26.6.3
@@ -43,7 +43,7 @@ dependencies:
   axios: 0.24.0
   class-validator: 0.13.2
   colors: 1.4.0
-  convict: 6.2.2
+  convict: 6.2.3
   copyfiles: 2.4.1
   hot-shots: 8.5.2
   jest: 26.6.3_ts-node@10.7.0
@@ -1727,8 +1727,8 @@ packages:
       safe-buffer: 5.1.2
     dev: false
 
-  /convict/6.2.2:
-    resolution: {integrity: sha512-3MsROJiEFN3BAzeFit1t87t7EUFzd44MNd13MLSikV2dsnDl7znwKgtYPPONtnDzxiDW0nBAsxVhSRNrjUrTTg==}
+  /convict/6.2.3:
+    resolution: {integrity: sha512-mTY04Qr7WrqiXifdeUYXr4/+Te4hPFWDvz6J2FVIKCLc2XBhq63VOSSYAKJ+unhZAYOAjmEdNswTOeHt7s++pQ==}
     engines: {node: '>=6'}
     dependencies:
       lodash.clonedeep: 4.5.0
@@ -5535,7 +5535,7 @@ packages:
     dev: false
 
   file:projects/sdk-generation-cli.tgz:
-    resolution: {integrity: sha512-G94ZRWLO/XxIQc76c6OKtUkB1mh5iM2gOKN+1nuY+iM9Z60G4izs5RiCsWhp/oLPiFHb1DyfR5PnC1+yyNSBtw==, tarball: file:projects/sdk-generation-cli.tgz}
+    resolution: {integrity: sha512-VfpS68fFGl9Q1vrmOnW9lFAcUB5JzTdhlX1Zg1uhdLYXS9YKTOJj7oVWxG7NngzE3R2yKKhAVjUr/dc8z1x7Vg==, tarball: file:projects/sdk-generation-cli.tgz}
     name: '@rush-temp/sdk-generation-cli'
     version: 0.0.0
     dependencies:
@@ -5544,7 +5544,7 @@ packages:
       '@types/node': 16.11.26
       ajv: 6.12.6
       axios: 0.24.0
-      convict: 6.2.2
+      convict: 6.2.3
       jest: 26.6.3_ts-node@10.7.0
       mongodb: 3.7.3
       rimraf: 3.0.2
@@ -5584,7 +5584,7 @@ packages:
     dev: false
 
   file:projects/sdk-generation-lib.tgz:
-    resolution: {integrity: sha512-nkxgTF12GluuPjsRMepSmbw6t2ttZl4DGF+TNK4dv+Sr5xsMwGr+OhICAyrqOcCzs6kiGcuERq4szBgOCT+yQw==, tarball: file:projects/sdk-generation-lib.tgz}
+    resolution: {integrity: sha512-Me7AZiHgYUUqn94pminjHGdoL2j7mNDcuWGKBJvo9ANm7vVJdfG70sNN0gBoPnSBX/+h9E+DZiW47EIkP8f0Ug==, tarball: file:projects/sdk-generation-lib.tgz}
     name: '@rush-temp/sdk-generation-lib'
     version: 0.0.0
     dependencies:
@@ -5598,7 +5598,7 @@ packages:
       ajv: 6.12.6
       class-validator: 0.13.2
       colors: 1.4.0
-      convict: 6.2.2
+      convict: 6.2.3
       copyfiles: 2.4.1
       hot-shots: 8.5.2
       jest: 26.6.3_ts-node@10.7.0

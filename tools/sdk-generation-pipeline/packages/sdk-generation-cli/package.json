@@ -35,7 +35,7 @@
         "@azure-tools/sdk-generation-lib": "^1.0.4",
         "ajv": "^6.12.6",
         "axios": "^0.24.0",
-        "convict": "^6.2.2",
+        "convict": "^6.2.3",
         "mongodb": "^3.6.10",
         "typeorm": "^0.2.37"
     },

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -17,7 +18,6 @@ namespace Azure.Sdk.Tools.TestProxy
     public sealed class Record : ControllerBase
     {
         private readonly ILogger _logger;
-
         private readonly RecordingHandler _recordingHandler;
 
         private static readonly HttpClient RedirectableClient = Startup.Insecure ?
@@ -52,6 +52,15 @@ namespace Azure.Sdk.Tools.TestProxy
             string file = await HttpRequestInteractions.GetBodyKey(Request, "x-recording-file", allowNulls: true);
 
             _recordingHandler.StartRecording(file, Response);
+        }
+
+
+        [HttpPost]
+        public async Task Push([FromBody()] IDictionary<string, object> options = null)
+        {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+            var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
+            _recordingHandler.Store.Push(pathToAssets, _recordingHandler.ContextDirectory);
         }
 
         [HttpPost]

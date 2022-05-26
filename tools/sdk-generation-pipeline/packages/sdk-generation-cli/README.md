@@ -29,15 +29,51 @@ getRepoName <variable-key> <repo-http-url>
 ```
 
 ### generateResult
-TODO
+Parse the logs produced by tasks, and generate a summarized task result in json format.   
+Usage:
+```shell
+generateResult \
+    --buildId=<build-id> \
+    --taskName=<task-name> \
+    --logfile=<task-log-path> \
+    --resultOutputPath=<path-to-generate-result-file> \
+    [--dockerResultFile=<all-tasks-result-path>] \
+    [--exeResult=<tasks-result-status>] \
+    [--taskOutputPath=<addition-object-path>] \
+    [--logFilterStr=<specify-filter-for-log>]
+```
 
 ### publishResult
-TODO
+Publish pipeline result to storage. [eventhub] is supported.   
+NOTE: will get eventhub connection string from environment, variable is [EVENTHUB_SAS_URL]   
+Usage:
+```shell
+publishResult \
+    --storageType=eventhub \
+    --pipelineStatus=<status> \
+    --buildId=<build-id> \
+    --trigger=<pipeline-trigger> \
+    --logPath=<log-path-of-full-log> \
+    --resultsPath=<task-result-path-arr>
+```
 
 ### uploadArtifact
-TODO
+Upload artifact to blob.   
+NOTE: will get blob connection string from environment, variable is [AZURE_STORAGE_BLOB_SAS_URL]   
+Usage:
+```shell
+uploadArtifact \
+    --generateAndBuildOutputFile=<generateAndBuildOutput-file-path> \
+    --buildId=<build-id> \
+    --language=<build-language>
+```
 
-### prepareArtifactFiles
-TODO
-
-
+### prepareArtifactFiles   
+Determine which files to upload, copy it to artifact directory.   
+Usage:
+```shell
+prepareArtifactFiles \
+    --artifactDir=<artifact-directory> \
+    --generateAndBuildOutputFile=<generateAndBuildOutput-file-path> \
+    --language=<build-language>
+```

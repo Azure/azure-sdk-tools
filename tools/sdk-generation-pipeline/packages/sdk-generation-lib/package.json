@@ -32,7 +32,7 @@
         "ajv": "^6.12.6",
         "class-validator": "^0.13.2",
         "colors": "1.4.0",
-        "convict": "^6.2.2",
+        "convict": "^6.2.3",
         "jsonc-parser": "^3.0.0",
         "hot-shots": "^8.5.2",
         "memory-fs": "^0.5.0",

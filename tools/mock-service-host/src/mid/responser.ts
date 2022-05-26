@@ -290,8 +290,9 @@ export class ResponseGenerator {
                 this.validateExampleResponse(liveValidator, liveRequest, example)
             } catch (err) {
                 logger.error(`Failed to use example response, will mock response. Error:${err}`)
-                this.swaggerMocker.mockForExample(example, specItem, spec, 'unknown', liveRequest)
+                this.swaggerMocker.mockForExample(example, specItem, spec, 'unknown')
             }
+            this.swaggerMocker.patchExampleResponses(example, specItem, spec, liveRequest)
         }
         if (config.enableExampleGeneration) {
             const params = this.genExampleParameters(specItem, liveRequest)

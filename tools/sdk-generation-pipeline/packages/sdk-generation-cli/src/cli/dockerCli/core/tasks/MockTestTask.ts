@@ -39,11 +39,11 @@ export class MockTestTask implements SDKGenerationTaskBase {
             };
             const inputJson = JSON.stringify(inputContent, undefined, 2);
             const formattedPackageName = packageFolder.replace(/[^a-zA-z0-9]/g, '-');
-            const mockTestInputJsonPath = this.context.packageFolders.length > 1?
+            const mockTestInputJsonPath = this.context.packageFolders.length > 1 ?
                 this.context.mockTestInputJson.replace('.json', `${formattedPackageName}.json`) : this.context.mockTestInputJson;
-            const mockTestOutputJsonPath = this.context.packageFolders.length > 1?
+            const mockTestOutputJsonPath = this.context.packageFolders.length > 1 ?
                 this.context.mockTestOutputJson.replace('.json', `${formattedPackageName}.json`) : this.context.mockTestOutputJson;
-            const mockTestTaskLogPath = this.context.packageFolders.length > 1?
+            const mockTestTaskLogPath = this.context.packageFolders.length > 1 ?
                 this.context.mockTestTaskLog.replace('task.log', `${formattedPackageName}-task.log`) : this.context.mockTestTaskLog;
             fs.writeFileSync(mockTestInputJsonPath, inputJson, { encoding: 'utf-8' });
             this.context.logger.info(`Get ${path.basename(mockTestInputJsonPath)}:`);
@@ -55,7 +55,9 @@ export class MockTestTask implements SDKGenerationTaskBase {
                 envs: this.context.envs,
                 customizedLogger: this.context.logger
             });
-            this.context.taskResults['mockTest'] = executeResult === TaskResultStatus.Success && this.context.taskResults['mockTest'] !== TaskResultStatus.Failure? TaskResultStatus.Success : TaskResultStatus.Failure;
+            this.context.taskResults['mockTest'] = executeResult === TaskResultStatus.Success &&
+            this.context.taskResults['mockTest'] !== TaskResultStatus.Failure ?
+                TaskResultStatus.Success : TaskResultStatus.Failure;
             removeFileLog(this.context.logger, `mockTest_${formattedPackageName}`);
             if (fs.existsSync(mockTestOutputJsonPath)) {
                 const mockTestOutputJson = getTestOutput(requireJsonc(mockTestOutputJsonPath));

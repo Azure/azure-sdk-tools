@@ -3,7 +3,7 @@ import {
     GenerateAndBuildOptions,
     getGenerateAndBuildOutput,
     getTask, removeFileLog, requireJsonc,
-    runScript, TaskResultStatus
+    runScript
 } from '@azure-tools/sdk-generation-lib';
 import fs from 'fs';
 import path from 'path';

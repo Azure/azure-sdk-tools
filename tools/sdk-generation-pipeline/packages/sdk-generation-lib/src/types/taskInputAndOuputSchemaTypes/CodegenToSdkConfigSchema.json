@@ -73,10 +73,9 @@
           "type": "string"
         },
         "envs": {
-          // Not Implemented
           // Extra environment variable to be passed to the script (except initScript).
           // By default the following envs will be passed:
-          // PATH, SHELL, PWD (current directory)
+          // PWD (current directory)
           "type": "array",
           "items": {
             "type": "string"

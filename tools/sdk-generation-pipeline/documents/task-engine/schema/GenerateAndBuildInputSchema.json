@@ -2,7 +2,7 @@
   "type": "object",
   "properties": {
     "specFolder": {
-      // Path to local spec folder. path to the parent of resourceProvider folders. e.g. azure-rest-api-specs/specifications
+      // Path to local spec folder. path to the parent of service folders. e.g. azure-rest-api-specs/specifications
       "type": "string"
     },
     "headSha": {

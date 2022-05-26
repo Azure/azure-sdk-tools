@@ -41,7 +41,13 @@ export default class SwaggerMocker {
         this.exampleRule = exampleRule
     }
 
-    public mockForExample(example: any, specItem: SpecItem, spec: any, rp: string) {
+    public mockForExample(
+        example: any,
+        specItem: SpecItem,
+        spec: any,
+        rp: string,
+        liveRequest: LiveRequest
+    ) {
         this.spec = spec
         if (Object.keys(example.responses).length === 0) {
             for (const statusCode of Object.keys(specItem.content.responses)) {
@@ -52,14 +58,7 @@ export default class SwaggerMocker {
         }
         example.parameters = this.mockRequest(example.parameters, specItem.content.parameters, rp)
         example.responses = this.mockResponse(example.responses, specItem)
-    }
 
-    public patchExampleResponses(
-        example: any,
-        specItem: SpecItem,
-        spec: any,
-        liveRequest: LiveRequest
-    ) {
         this.patchResourceIdAndType(example.responses, liveRequest, specItem, spec)
         this.patchUserAssignedIdentities(example.responses, liveRequest)
     }
@@ -68,8 +67,8 @@ export default class SwaggerMocker {
         let elementSchema = null
         const modelName = listSchemaRef?.split('/').slice(-1)[0]
         if (
-            modelName in spec.definitions &&
-            spec.definitions[modelName]['properties']?.value?.type === 'array'
+            modelName in (spec.definitions || {}) &&
+            spec.definitions[modelName]?.['properties']?.value?.type === 'array'
         ) {
             elementSchema = spec.definitions[modelName].properties.value.items
         }

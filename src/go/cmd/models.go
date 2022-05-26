@@ -36,6 +36,7 @@ type PackageReview struct {
 	Name        string       `json:"Name,omitempty"`
 	Tokens      []Token      `json:"Tokens,omitempty"`
 	Navigation  []Navigation `json:"Navigation,omitempty"`
+	PackageName string       `json:"PackageName,omitempty"`
 }
 
 // Token ...

@@ -13,7 +13,7 @@ npm i @azure-tools/sdk-generation-cli
 ### docker-cli
 It's used by docker image, and for the details, please refer to  [How to Use Docker Image for SDK Generation](../../documents/docker/README.md).
 
-## run-mock-host
+### run-mock-host
 Run this command to start the mock host.
 Usage:
 ```shell
@@ -21,23 +21,23 @@ run-mock-host --readme=<path-to-readme> --spec-repo=<path-to-spec-repo> --mock-h
 ```
 For more details, please refer to [mock service host document](https://github.com/Azure/azure-sdk-tools/tree/main/tools/mock-service-host).
 
-## getRepoName
+### getRepoName
 Get repository name from the http url and set it as azure pipeline variable.
 Usage:
 ```shell
 getRepoName <variable-key> <repo-http-url>
 ```
 
-## generateResult
+### generateResult
 TODO
 
-## publishResult
+### publishResult
 TODO
 
-## uploadArtifact
+### uploadArtifact
 TODO
 
-## prepareArtifactFiles
+### prepareArtifactFiles
 TODO
 
 

@@ -39,6 +39,7 @@ namespace swagger_api_parser
         public List<Parameter> parameters { get; set; }
 
         public Dictionary<string, Response> responses { get; set; }
+        
     }
 
     public class Parameter : BaseSchema

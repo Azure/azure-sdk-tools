@@ -20,7 +20,7 @@ namespace swagger_api_parser
                         operationIdAction = Utils.GetOperationIdAction(value.operationId)
                     };
                     ret.Paths.AddSwaggerApiViewOperation(op);
-                    ret.Operations.Add(value);
+                    ret.Operations.Add(op);
                 }
             }
 

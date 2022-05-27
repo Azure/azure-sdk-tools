@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ApiView;
@@ -18,7 +19,7 @@ namespace swagger_api_parser
         public General General { get; set; }
         public SwaggerApiViewPaths Paths { get; set; }
 
-        public SwaggerApiViewOperations Operations { get; set; }
+        [JsonIgnore] public SwaggerApiViewOperations Operations { get; set; }
 
         public string fileName;
         public string packageName;
@@ -139,7 +140,8 @@ namespace swagger_api_parser
                     iteratorPath.Add(idx.ToString());
                     iteratorPath.Add("operationId");
                     iteratorPath.Add(operation.operationId);
-                    operationIdActionNavigations.Add(new NavigationItem() {Text = operation.operationIdAction, NavigationId = iteratorPath.CurrentPath()});
+                    operationIdActionNavigations.Add(new NavigationItem() {Text = $"{operation.operationIdAction} - {operation.method}", NavigationId = iteratorPath.CurrentPath()});
+                    operation._iteratorPath = iteratorPath.CurrentPath();
                     iteratorPath.Pop();
                     iteratorPath.Pop();
                     iteratorPath.Pop();
@@ -155,6 +157,18 @@ namespace swagger_api_parser
             ret.ChildItems = operationIdNavigations.ToArray();
             return ret;
         }
+
+
+        public Dictionary<string, string> GenerateOperationIdPathsMapping()
+        {
+            Dictionary<string, string> ret = new Dictionary<string, string>();
+            foreach (var operation in this.Values.SelectMany(operations => operations))
+            {
+                ret.TryAdd(operation.operationId, operation._iteratorPath);
+            }
+
+            return ret;
+        }
     }
 
     public class SwaggerApiViewOperation
@@ -164,10 +178,9 @@ namespace swagger_api_parser
         public string operationIdAction { get; set; }
         public string method { get; set; }
         public string path { get; set; }
-        [JsonIgnore] public Operation operation { get; set; }
+        public Operation operation { get; set; }
 
-
-        // sorted by method.
+        public string _iteratorPath;
     }
 
     public class SwaggerApiViewOperationComp : IComparer<SwaggerApiViewOperation>
@@ -184,8 +197,8 @@ namespace swagger_api_parser
             };
 
 
-            priority.TryGetValue(a.method, out var priorityA);
-            priority.TryGetValue(b.method, out var priorityB);
+            priority.TryGetValue(a!.method, out var priorityA);
+            priority.TryGetValue(b!.method, out var priorityB);
             if (priorityA == priorityB)
             {
                 return 0;
@@ -200,25 +213,20 @@ namespace swagger_api_parser
         }
     }
 
-    public class SwaggerApiViewOperations : List<Operation>, INavigable
+    public class SwaggerApiViewOperations : List<SwaggerApiViewOperation>, INavigable
     {
         public NavigationItem BuildNavigationItem()
         {
             NavigationItem ret = new NavigationItem() {Text = "Operations"};
             List<NavigationItem> children = new List<NavigationItem>();
-            IteratorPath iteratorPath = new IteratorPath();
-            iteratorPath.Add("Operations");
-            var idx = 0;
             foreach (var operation in this)
             {
-                iteratorPath.Add(idx.ToString());
-                iteratorPath.Add("operationId");
-                iteratorPath.Add(operation.operationId);
-                children.Add(new NavigationItem() {Text = operation.operationId, NavigationId = iteratorPath.CurrentPath()});
-                iteratorPath.Pop();
-                iteratorPath.Pop();
-                iteratorPath.Pop();
-                idx++;
+                if (operation._iteratorPath == null)
+                {
+                    throw new Exception($"${operation.operationId}._iteratorPath is null.");
+                }
+
+                children.Add(new NavigationItem() {Text = operation.operationId, NavigationId = operation._iteratorPath});
             }
 
             ret.ChildItems = children.ToArray();

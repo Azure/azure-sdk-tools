@@ -184,44 +184,49 @@ func TestDiagnostics(t *testing.T) {
 	}
 }
 
-func TestExternalDefinitionHoisting(t *testing.T) {
+func TestAliasDefinitions(t *testing.T) {
 	priorValue := sdkDirName
 	sdkDirName = "testdata"
 	defer func() { sdkDirName = priorValue }()
 
-	review, err := createReview(filepath.Clean("testdata/test_external_alias_exporter"))
-	require.NoError(t, err)
-	require.Equal(t, "Go", review.Language)
-	require.Equal(t, 1, len(review.Diagnostics))
-	require.Equal(t, DiagnosticLevelWarning, review.Diagnostics[0].Level)
-	require.Equal(t, aliasFor+"github.com/Azure/azure-sdk-for-go/sdk/test_external_alias_source.Foo", review.Diagnostics[0].Text)
-	require.Equal(t, 1, len(review.Navigation))
-	require.Equal(t, "test_external_alias_exporter", review.Navigation[0].Text)
-	for _, token := range review.Tokens {
-		if token.Value == "Bar" {
-			return
-		}
+	for _, test := range []struct {
+		name, path, sourceName string
+		diagLevel              DiagnosticLevel
+	}{
+		{
+			diagLevel:  DiagnosticLevelWarning,
+			name:       "service_group",
+			path:       "testdata/test_service_group/group/test_alias_export",
+			sourceName: "github.com/Azure/azure-sdk-for-go/sdk/test_service_group/group/internal.Foo",
+		},
+		{
+			diagLevel:  DiagnosticLevelInfo,
+			name:       "internal_package",
+			path:       "testdata/test_alias_export",
+			sourceName: "internal/exported.Foo",
+		},
+		{
+			diagLevel:  DiagnosticLevelWarning,
+			name:       "external_package",
+			path:       "testdata/test_external_alias_exporter",
+			sourceName: "github.com/Azure/azure-sdk-for-go/sdk/test_external_alias_source.Foo",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			review, err := createReview(filepath.Clean(test.path))
+			require.NoError(t, err)
+			require.Equal(t, "Go", review.Language)
+			require.Equal(t, 1, len(review.Diagnostics))
+			require.Equal(t, test.diagLevel, review.Diagnostics[0].Level)
+			require.Equal(t, aliasFor+test.sourceName, review.Diagnostics[0].Text)
+			require.Equal(t, 1, len(review.Navigation))
+			require.Equal(t, filepath.Base(test.path), review.Navigation[0].Text)
+			for _, token := range review.Tokens {
+				if token.Value == "Bar" {
+					return
+				}
+			}
+			t.Fatal("review doesn't contain the aliased struct's definition")
+		})
 	}
-	t.Fatal("review doesn't contain the aliased struct's definition")
-}
-
-func TestInternalDefinitionHoisting(t *testing.T) {
-	priorValue := sdkDirName
-	sdkDirName = "testdata"
-	defer func() { sdkDirName = priorValue }()
-
-	review, err := createReview(filepath.Clean("testdata/test_alias_export"))
-	require.NoError(t, err)
-	require.Equal(t, "Go", review.Language)
-	require.Equal(t, 1, len(review.Diagnostics))
-	require.Equal(t, DiagnosticLevelInfo, review.Diagnostics[0].Level)
-	require.Equal(t, aliasFor+"internal/exported.Foo", review.Diagnostics[0].Text)
-	require.Equal(t, 1, len(review.Navigation))
-	require.Equal(t, "test_alias_export", review.Navigation[0].Text)
-	for _, token := range review.Tokens {
-		if token.Value == "Bar" {
-			return
-		}
-	}
-	t.Fatal("review doesn't contain the aliased struct's definition")
 }

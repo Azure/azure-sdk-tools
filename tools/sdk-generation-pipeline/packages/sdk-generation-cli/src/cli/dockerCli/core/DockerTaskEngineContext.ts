@@ -62,7 +62,8 @@ export class DockerTaskEngineContext {
         this.readmeMdPath = dockerContext.readmeMdPath;
         this.specRepo = {
             repoPath: dockerContext.specRepo,
-            headSha: dockerTaskEngineConfigProperties.headSha ?? this.mode === DockerRunningModel.Pipeline? getHeadSha(dockerContext.specRepo) : '{commit_id}',
+            headSha: dockerTaskEngineConfigProperties.headSha ?? dockerContext.mode === DockerRunningModel.Pipeline?
+                getHeadSha(dockerContext.specRepo) : '{commit_id}',
             headRef: dockerTaskEngineConfigProperties.headRef ?? getHeadRef(dockerContext.specRepo),
             repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl
         };

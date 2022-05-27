@@ -2,17 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ApiView;
 using APIView;
 
 
 namespace swagger_api_parser
 {
-    public class SwaggerApiViewSpec
+    public class SwaggerApiViewSpec : INavigable
     {
+        public SwaggerApiViewSpec(string fileName)
+        {
+            this.fileName = fileName;
+        }
+
         public General General { get; set; }
         public SwaggerApiViewPaths Paths { get; set; }
 
         public SwaggerApiViewOperations Operations { get; set; }
+
+        public string fileName;
+        public string packageName;
 
 
         public SwaggerApiViewSpec()
@@ -24,9 +33,9 @@ namespace swagger_api_parser
 
         public CodeFileToken[] TokenSerialize()
         {
-            var generalTokens = this.General.TokenSerialize();
-            CodeFileToken[] ret = new CodeFileToken[] { };
-            return generalTokens;
+            var options = new JsonSerializerOptions() {DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull};
+            var jsonDoc = JsonSerializer.SerializeToDocument(this, options);
+            return Visitor.GenerateCodeFileTokens(jsonDoc);
         }
 
         public NavigationItem[] BuildNavigationItems()
@@ -36,6 +45,26 @@ namespace swagger_api_parser
             ret.Add(this.Paths.BuildNavigationItem());
             ret.Add(this.Operations.BuildNavigationItem());
             return ret.ToArray();
+        }
+
+        public CodeFile GenerateCodeFile()
+        {
+            CodeFile ret = new CodeFile()
+            {
+                Tokens = this.TokenSerialize(),
+                Language = "Swagger",
+                VersionString = "0",
+                Name = this.fileName,
+                PackageName = packageName,
+                Navigation = new NavigationItem[] {this.BuildNavigationItem()}
+            };
+            return ret;
+        }
+
+        public NavigationItem BuildNavigationItem()
+        {
+            NavigationItem ret = new NavigationItem {Text = this.fileName, ChildItems = this.BuildNavigationItems()};
+            return ret;
         }
     }
 
@@ -66,7 +95,7 @@ namespace swagger_api_parser
         }
     }
 
-    public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperation>>
+    public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperation>>, INavigable
     {
         public void AddSwaggerApiViewOperation(SwaggerApiViewOperation op)
         {
@@ -153,7 +182,7 @@ namespace swagger_api_parser
                 {"get", 4},
                 {"delete", 5},
             };
-            
+
 
             priority.TryGetValue(a.method, out var priorityA);
             priority.TryGetValue(b.method, out var priorityB);
@@ -161,25 +190,35 @@ namespace swagger_api_parser
             {
                 return 0;
             }
-            
-            if(priorityA<priorityB)
+
+            if (priorityA < priorityB)
             {
                 return -1;
             }
+
             return 1;
         }
     }
 
-    public class SwaggerApiViewOperations : List<Operation>
+    public class SwaggerApiViewOperations : List<Operation>, INavigable
     {
         public NavigationItem BuildNavigationItem()
         {
             NavigationItem ret = new NavigationItem() {Text = "Operations"};
             List<NavigationItem> children = new List<NavigationItem>();
-
+            IteratorPath iteratorPath = new IteratorPath();
+            iteratorPath.Add("Operations");
+            var idx = 0;
             foreach (var operation in this)
             {
-                children.Add(new NavigationItem() {Text = operation.operationId, NavigationId = operation.operationId});
+                iteratorPath.Add(idx.ToString());
+                iteratorPath.Add("operationId");
+                iteratorPath.Add(operation.operationId);
+                children.Add(new NavigationItem() {Text = operation.operationId, NavigationId = iteratorPath.CurrentPath()});
+                iteratorPath.Pop();
+                iteratorPath.Pop();
+                iteratorPath.Pop();
+                idx++;
             }
 
             ret.ChildItems = children.ToArray();
@@ -187,7 +226,7 @@ namespace swagger_api_parser
         }
     }
 
-    public class SwaggerApiViewDefinitions : List<Definition>
+    public class SwaggerApiViewDefinitions : List<Definition>, INavigable
     {
         public NavigationItem BuildNavigationItem()
         {
@@ -196,5 +235,10 @@ namespace swagger_api_parser
 
             return ret;
         }
+    }
+
+    public interface INavigable
+    {
+        public NavigationItem BuildNavigationItem();
     }
 }

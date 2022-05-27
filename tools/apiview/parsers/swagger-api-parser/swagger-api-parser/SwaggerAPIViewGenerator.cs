@@ -2,9 +2,9 @@ namespace swagger_api_parser
 {
     public class SwaggerApiViewGenerator
     {
-        public static SwaggerApiViewSpec GenerateSwaggerApiView(SwaggerSpec swaggerSpec)
+        public static SwaggerApiViewSpec GenerateSwaggerApiView(SwaggerSpec swaggerSpec, string fileName = "swagger.json", string packageName = "")
         {
-            SwaggerApiViewSpec ret = new SwaggerApiViewSpec {General = {info = swaggerSpec.info, swagger = swaggerSpec.swagger}};
+            SwaggerApiViewSpec ret = new SwaggerApiViewSpec {General = {info = swaggerSpec.info, swagger = swaggerSpec.swagger}, fileName = fileName, packageName = packageName};
 
             foreach (var (currentPath, operations) in swaggerSpec.paths)
             {

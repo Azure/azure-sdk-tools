@@ -1,25 +1,26 @@
+import * as fs from 'fs';
+import { Column, Entity, ObjectIdColumn } from 'typeorm';
+
+import { getTaskBasicConfig, TaskBasicConfig } from './taskBasicConfig';
 import { GenerateAndBuildOutput } from './taskInputAndOuputSchemaTypes/GenerateAndBuildOutput';
 import { InitOutput } from './taskInputAndOuputSchemaTypes/InitOutput';
 import { TestOutput } from './taskInputAndOuputSchemaTypes/TestOutput';
-import { getTaskBasicConfig, TaskBasicConfig } from './taskBasicConfig';
-import * as fs from 'fs';
-import { Column, Entity, ObjectIdColumn } from 'typeorm';
 
 @Entity('sdkGenerationResults')
 export class TaskResultEntity {
     @ObjectIdColumn()
-    id: string;
+        id: string;
     @Column()
-    key: string;
+        key: string;
     @Column()
-    pipelineBuildId: string;
+        pipelineBuildId: string;
     @Column()
-    taskResult: TaskResult;
+        taskResult: TaskResult;
 }
 
 export enum TaskResultStatus {
-    success = 'succeeded',
-    failure = 'failed',
+    Success = 'succeeded',
+    Failure = 'failed',
 }
 
 export type Extra = {
@@ -101,9 +102,9 @@ export function setTaskResult(config: TaskBasicConfig, taskName: string) {
     taskResult = {
         name: taskName,
         pipelineBuildId: '',
-        result: TaskResultStatus.success,
+        result: TaskResultStatus.Success,
         errorCount: 0,
-        warningCount: 0,
+        warningCount: 0
     };
 }
 
@@ -119,18 +120,18 @@ export function generateTotalResult(taskResults: TaskResult[], pipelineBuildId: 
     const totalResult: TaskResult = {
         name: 'total',
         pipelineBuildId: pipelineBuildId,
-        result: TaskResultStatus.success,
+        result: TaskResultStatus.Success,
         errorCount: 0,
-        messages: [],
+        messages: []
     };
 
     if (taskResults.length === 0) {
-        totalResult.result = TaskResultStatus.failure;
+        totalResult.result = TaskResultStatus.Failure;
         return totalResult;
     }
 
     for (const taskResult of taskResults) {
-        if (taskResult.result !== TaskResultStatus.success) {
+        if (taskResult.result !== TaskResultStatus.Success) {
             totalResult.result = taskResult.result;
         }
         totalResult.errorCount += taskResult.errorCount;

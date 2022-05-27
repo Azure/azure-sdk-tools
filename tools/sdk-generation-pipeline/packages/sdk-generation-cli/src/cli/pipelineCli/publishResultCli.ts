@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import * as fs from 'fs';
 import {
     AzureSDKTaskName,
     BlobBasicContext,
@@ -13,24 +12,25 @@ import {
     QueuedEvent,
     requireJsonc,
     ResultBlobPublisher,
-    ResultEventhubPublisher,
     ResultDBPublisher,
+    ResultEventhubPublisher,
     SDKPipelineStatus,
     StorageType,
     TaskResult,
-    Trigger,
+    Trigger
 } from '@azure-tools/sdk-generation-lib';
+import * as fs from 'fs';
 
 import {
-    resultPublisherBlobInput,
     ResultPublisherBlobInput,
-    resultPublisherDBCodeGenerationInput,
+    resultPublisherBlobInput,
     ResultPublisherDBCodeGenerationInput,
-    resultPublisherDBResultInput,
+    resultPublisherDBCodeGenerationInput,
     ResultPublisherDBResultInput,
-    resultPublisherEventHubInput,
+    resultPublisherDBResultInput,
     ResultPublisherEventHubInput,
-} from './cliSchema/publishResultConfig';
+    resultPublisherEventHubInput
+} from '../../cliSchema/publishResultConfig';
 
 async function publishBlob() {
     resultPublisherBlobInput.validate();
@@ -39,7 +39,7 @@ async function publishBlob() {
         pipelineBuildId: config.pipelineBuildId,
         sdkGenerationName: config.sdkGenerationName,
         azureStorageBlobSasUrl: config.azureStorageBlobSasUrl,
-        azureBlobContainerName: config.azureBlobContainerName,
+        azureBlobContainerName: config.azureBlobContainerName
     };
     const resultBlobPublisher: ResultBlobPublisher = new ResultBlobPublisher(context);
     await resultBlobPublisher.uploadLogsAndResult(config.logsAndResultPath, config.taskName as AzureSDKTaskName);
@@ -75,7 +75,7 @@ function initMongoConnectContext(config: ResultPublisherDBCodeGenerationInput): 
         database: config.mongodb.database,
         ssl: config.mongodb.ssl,
         synchronize: true,
-        logging: true,
+        logging: true
     };
 
     return mongoConnectContext;
@@ -144,37 +144,37 @@ async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
     const publisher: ResultEventhubPublisher = new ResultEventhubPublisher(config.eventHubConnectionString);
 
     switch (pipelineStatus) {
-        case 'queued':
-            event = {
-                status: 'queued',
-                trigger: trigger,
-                pipelineBuildId: config.pipelineBuildId,
-            } as QueuedEvent;
-            break;
-        case 'in_progress':
-            event = {
-                status: 'in_progress',
-                trigger: trigger,
-                pipelineBuildId: config.pipelineBuildId,
-            } as InProgressEvent;
-            break;
-        case 'completed':
-            if (!config.resultsPath || !config.logPath) {
-                throw new Error(`Invalid completed event parameter!`);
-            }
+    case 'queued':
+        event = {
+            status: 'queued',
+            trigger: trigger,
+            pipelineBuildId: config.pipelineBuildId
+        } as QueuedEvent;
+        break;
+    case 'in_progress':
+        event = {
+            status: 'in_progress',
+            trigger: trigger,
+            pipelineBuildId: config.pipelineBuildId
+        } as InProgressEvent;
+        break;
+    case 'completed':
+        if (!config.resultsPath || !config.logPath) {
+            throw new Error(`Invalid completed event parameter!`);
+        }
 
-            const taskResults: TaskResult[] = getTaskResults(config.resultsPath);
-            const taskTotalResult: TaskResult = generateTotalResult(taskResults, config.pipelineBuildId);
-            event = {
-                status: 'completed',
-                trigger: trigger,
-                pipelineBuildId: config.pipelineBuildId,
-                logPath: config.logPath,
-                result: taskTotalResult,
-            } as CompletedEvent;
-            break;
-        default:
-            throw new Error(`Unsupported status: ` + (pipelineStatus as string));
+        const taskResults: TaskResult[] = getTaskResults(config.resultsPath);
+        const taskTotalResult: TaskResult = generateTotalResult(taskResults, config.pipelineBuildId);
+        event = {
+            status: 'completed',
+            trigger: trigger,
+            pipelineBuildId: config.pipelineBuildId,
+            logPath: config.logPath,
+            result: taskTotalResult
+        } as CompletedEvent;
+        break;
+    default:
+        throw new Error(`Unsupported status: ` + (pipelineStatus as string));
     }
     await publisher.publishEvent(event);
     await publisher.close();
@@ -186,17 +186,17 @@ async function main() {
     const pipelineStatus = args['pipelineStatus'];
 
     switch (storageType as StorageType) {
-        case StorageType.Blob:
-            await publishBlob();
-            break;
-        case StorageType.Db:
-            await publishDB(pipelineStatus);
-            break;
-        case StorageType.EventHub:
-            await publishEventhub(pipelineStatus);
-            break;
-        default:
-            throw new Error(`Unknown storageType:${storageType}!`);
+    case StorageType.Blob:
+        await publishBlob();
+        break;
+    case StorageType.Db:
+        await publishDB(pipelineStatus);
+        break;
+    case StorageType.EventHub:
+        await publishEventhub(pipelineStatus);
+        break;
+    default:
+        throw new Error(`Unknown storageType:${storageType}!`);
     }
 }
 

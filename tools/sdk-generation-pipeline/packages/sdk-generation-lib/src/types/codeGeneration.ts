@@ -13,49 +13,49 @@ export class CodeGeneration {
         }
     }
     @ObjectIdColumn()
-    id: number;
+        id: number;
     @Index({ unique: true })
     @Column()
     @IsNotEmpty()
-    name: string;
+        name: string;
     @Column()
     @IsNotEmpty()
-    service: string;
+        service: string;
     @Column()
     @IsNotEmpty()
-    serviceType: string;
+        serviceType: string;
     @Column()
-    resourcesToGenerate: string;
+        resourcesToGenerate: string;
     @Column()
-    tag: string;
-    @Column()
-    @IsNotEmpty()
-    sdk: string;
+        tag: string;
     @Column()
     @IsNotEmpty()
-    swaggerRepo: string;
+        sdk: string;
     @Column()
     @IsNotEmpty()
-    sdkRepo: string;
+        swaggerRepo: string;
     @Column()
     @IsNotEmpty()
-    codegenRepo: string;
+        sdkRepo: string;
     @Column()
     @IsNotEmpty()
-    type: string;
+        codegenRepo: string;
     @Column()
-    ignoreFailure: string;
+    @IsNotEmpty()
+        type: string;
     @Column()
-    stages: string;
+        ignoreFailure: string;
+    @Column()
+        stages: string;
     @Column({ default: '' })
-    lastPipelineBuildID: string;
+        lastPipelineBuildID: string;
     @Column()
-    swaggerPR: string;
+        swaggerPR: string;
     @Column()
-    codePR: string;
+        codePR: string;
     @Column()
     @IsNotEmpty()
-    status: string;
+        status: string;
     @Column({ default: '' })
-    owner: string;
+        owner: string;
 }

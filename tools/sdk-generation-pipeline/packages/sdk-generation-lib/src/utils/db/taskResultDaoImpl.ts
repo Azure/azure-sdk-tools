@@ -1,6 +1,7 @@
-import { TaskResultDao } from './taskResultDao';
-import { TaskResult, TaskResultEntity } from '../../types/taskResult';
 import { Connection, MongoRepository } from 'typeorm';
+
+import { TaskResult, TaskResultEntity } from '../../types/taskResult';
+import { TaskResultDao } from './taskResultDao';
 
 export class TaskResultDaoImpl implements TaskResultDao {
     private repo: MongoRepository<TaskResultEntity>;
@@ -11,7 +12,7 @@ export class TaskResultDaoImpl implements TaskResultDao {
 
     public async getFromBuild(pipelineBuildId: string): Promise<TaskResult[]> {
         const taskResults: TaskResultEntity[] = await this.repo.find({
-            pipelineBuildId: pipelineBuildId,
+            pipelineBuildId: pipelineBuildId
         });
         const results: TaskResult[] = [];
         for (const taskResult of taskResults) {
@@ -27,7 +28,7 @@ export class TaskResultDaoImpl implements TaskResultDao {
             {
                 key: key,
                 pipelineBuildId: pipelineBuildId,
-                taskResult: taskResult,
+                taskResult: taskResult
             },
             { upsert: true }
         );

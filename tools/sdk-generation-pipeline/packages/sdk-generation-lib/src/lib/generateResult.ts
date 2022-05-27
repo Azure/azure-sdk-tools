@@ -1,18 +1,19 @@
+import * as fs from 'fs';
+
 import { AzureSDKTaskName } from '../types/commonType';
 import { LogFilter } from '../types/taskInputAndOuputSchemaTypes/CodegenToSdkConfig';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
 import {
-    TaskResultCommon,
     MessageRecord,
     RawMessageRecord,
     TaskOutput,
     TaskResult,
+    TaskResultCommon,
     TaskResultStatus,
-    TestTaskResult,
+    TestTaskResult
 } from '../types/taskResult';
 import { logger } from '../utils/logger';
 import { isLineMatch } from './runScript';
-import * as fs from 'fs';
 
 const logSeparatorLength = 26; // length of '20xx-xx-xx xx:xx:xx cmdout'
 const timestampLength = 19; // length of '20xx-xx-xx xx:xx:xx'
@@ -62,7 +63,7 @@ export function parseGenerateLog(
                     level: 'Error',
                     message: line,
                     time: new Date(line.substring(0, timestampLength)),
-                    type: 'Raw',
+                    type: 'Raw'
                 };
                 messages.push(message);
             } else if (isLineMatch(line.toLowerCase(), logWarningFilter)) {
@@ -71,7 +72,7 @@ export function parseGenerateLog(
                     level: 'Warning',
                     message: line,
                     time: new Date(line.substring(0, timestampLength)),
-                    type: 'Raw',
+                    type: 'Raw'
                 };
                 messages.push(message);
             }
@@ -85,7 +86,7 @@ export function parseGenerateLog(
         pipelineBuildId: pipelineBuildId,
         errorCount: errorNum,
         warningCount: warnNum,
-        messages: messages,
+        messages: messages
     };
 
     return result;
@@ -100,13 +101,13 @@ export function createTaskResult(
     taskOutput: TaskOutput
 ): TaskResult {
     let commonResult: TaskResultCommon = undefined;
-    if (taskExeResult === TaskResultStatus.success) {
+    if (taskExeResult === TaskResultStatus.Success) {
         commonResult = {
             name: taskname,
             pipelineBuildId: pipelineBuildId,
             result: taskExeResult,
             errorCount: 0,
-            warningCount: 0,
+            warningCount: 0
         };
     } else {
         commonResult = parseGenerateLog(pipelineBuildId, taskname, logfile, logFilter);
@@ -121,7 +122,7 @@ export function createTaskResult(
                 apiCoverage: 0,
                 codeCoverage: 0,
                 result: taskExeResult,
-                ...commonResult,
+                ...commonResult
             };
         }
         const testOutput: TestOutput = taskOutput as TestOutput;
@@ -132,7 +133,7 @@ export function createTaskResult(
             apiCoverage: testOutput.apiCoverage,
             codeCoverage: testOutput.codeCoverage,
             result: taskExeResult,
-            ...commonResult,
+            ...commonResult
         };
         return testTaskResult;
     }

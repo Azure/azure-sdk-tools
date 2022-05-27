@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 
+import { createTaskResult, parseGenerateLog, spliteLog } from '../../src/lib/generateResult';
 import { AzureSDKTaskName } from '../../src/types/commonType';
-import { spliteLog, parseGenerateLog, createTaskResult } from '../../src/lib/generateResult';
-import { TaskResultCommon, TaskResult, TestTaskResult } from '../../src/types/taskResult';
+import { TaskResult, TaskResultCommon, TestTaskResult } from '../../src/types/taskResult';
 
 test('spliteLog', async () => {
     // Standard use case: single line
@@ -30,7 +30,7 @@ test('parseGenerateLog', async () => {
         fs.unlinkSync(parseGenerateLogTestFile);
     }
     fs.writeFileSync(parseGenerateLogTestFile, correctStr, {
-        encoding: 'utf-8',
+        encoding: 'utf-8'
     });
     const correctResult: TaskResultCommon = parseGenerateLog('testId', 'init', parseGenerateLogTestFile, undefined);
     expect(correctResult.name).toBe('init');
@@ -53,7 +53,7 @@ test('createTaskResult', async () => {
         fs.unlinkSync(createTaskResultTestFile);
     }
     fs.writeFileSync(createTaskResultTestFile, correctStr, {
-        encoding: 'utf-8',
+        encoding: 'utf-8'
     });
 
     const correctResult: TaskResult = createTaskResult(

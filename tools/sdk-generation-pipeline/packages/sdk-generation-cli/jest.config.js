@@ -13,7 +13,7 @@ module.exports = {
         "<rootDir>/**/*.test.ts",
     ],
     modulePathIgnorePatterns: [
-        "<rootDir>/tmp/*"
+        "<rootDir>(/.*)*/tmp/*"
     ],
     collectCoverage: true,
     collectCoverageFrom: [

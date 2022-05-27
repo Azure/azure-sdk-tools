@@ -1,1 +1,1 @@
-export * from "./AzureBlobClient";
+export * from './AzureBlobClient';

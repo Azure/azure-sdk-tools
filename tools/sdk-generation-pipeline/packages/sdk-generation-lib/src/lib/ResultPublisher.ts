@@ -1,17 +1,17 @@
 import * as fs from 'fs';
-
 import { Connection, createConnection } from 'typeorm';
-import { AzureBlobClient } from '../utils/blob/AzureBlobClient';
-import { AzureSDKTaskName, SDKPipelineStatus } from '../types/commonType';
+
 import { CodeGeneration } from '../types/codeGeneration';
-import { CodeGenerationDao } from '../utils/db/codeGenerationDao';
-import { CodeGenerationDaoImpl } from '../utils/db/codeGenerationDaoImpl';
-import { EventHubProducer } from '../utils/eventhub/EventHubProducer';
-import { logger } from '../utils/logger';
+import { AzureSDKTaskName } from '../types/commonType';
 import { PipelineRunEvent } from '../types/events';
 import { TaskResult, TaskResultEntity } from '../types/taskResult';
+import { AzureBlobClient } from '../utils/blob/AzureBlobClient';
+import { CodeGenerationDao } from '../utils/db/codeGenerationDao';
+import { CodeGenerationDaoImpl } from '../utils/db/codeGenerationDaoImpl';
 import { TaskResultDao } from '../utils/db/taskResultDao';
 import { TaskResultDaoImpl } from '../utils/db/taskResultDaoImpl';
+import { EventHubProducer } from '../utils/eventhub/EventHubProducer';
+import { logger } from '../utils/logger';
 
 export type MongoConnectContext = {
     name: string;
@@ -50,7 +50,7 @@ export class ResultDBPublisher {
             ssl: this.context.ssl,
             synchronize: this.context.synchronize,
             logging: this.context.logging,
-            entities: [TaskResultEntity, CodeGeneration],
+            entities: [TaskResultEntity, CodeGeneration]
         });
     }
 
@@ -101,9 +101,9 @@ export class ResultBlobPublisher {
         const logsAndResultPathArray = JSON.parse(logsAndResultPath);
         for (const file of logsAndResultPathArray) {
             if (fs.existsSync(file)) {
-                let blobName: string = file.includes('.json')
-                    ? `${this.pipelineBuildId}/logs/${this.sdkGenerationName}-${taskName}-result.json`
-                    : `${this.pipelineBuildId}/logs/${this.sdkGenerationName}-${taskName}.log`;
+                const blobName: string = file.includes('.json') ?
+                    `${this.pipelineBuildId}/logs/${this.sdkGenerationName}-${taskName}-result.json` :
+                    `${this.pipelineBuildId}/logs/${this.sdkGenerationName}-${taskName}.log`;
                 await this.azureBlobClient.publishBlob(file, blobName);
                 logger.info(`Publish ${file} Success !!!`);
             } else {

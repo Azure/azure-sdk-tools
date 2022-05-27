@@ -67,26 +67,31 @@ Services:
       - azure-storage-blob: 12.15.0
         azure-storage-file-share: 12.12.0
         azure-storage-file-datalake: 12.8.0
+        azure-core-http-netty: 1.11.8
         azure-core: 1.26.0
         reactor-core: 3.4.14
       - azure-storage-blob: 12.16.0
         azure-storage-file-share: 12.12.1
         azure-storage-file-datalake: 12.9.0
+        azure-core-http-netty: 1.11.9
         azure-core: 1.27.0
         reactor-core: 3.4.14
       - azure-storage-blob: 12.16.1
         azure-storage-file-share: 12.12.2
         azure-storage-file-datalake: 12.9.1
+        azure-core-http-netty: 1.12.0
         azure-core: 1.28.0
         reactor-core: 3.4.17
       - azure-storage-blob: 12.17.0
         azure-storage-file-share: 12.13.0
         azure-storage-file-datalake: 12.10.0
+        azure-core-http-netty: 1.12.0
         azure-core: 1.28.0
         reactor-core: 3.4.17
       - azure-storage-blob: source
         azure-storage-file-share: source
         azure-storage-file-datalake: source
+        azure-core-http-netty: source
         azure-core: source
         reactor-core: source
       AdditionalArguments: &java-additional-arguments

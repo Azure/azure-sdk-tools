@@ -35,7 +35,7 @@ func NewModule(dir string) (*Module, error) {
 	}
 	m := Module{Name: filepath.Base(dir), packages: map[string]*Pkg{}}
 
-	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			if !indexTestdata && strings.Contains(path, "testdata") {
 				return filepath.SkipDir
@@ -44,11 +44,14 @@ func NewModule(dir string) (*Module, error) {
 			if err == nil {
 				m.packages[baseImportPath+p.Name()] = p
 			} else if !errors.Is(err, ErrNoPackages) {
-				fmt.Printf("error: %v\n", err)
+				return err
 			}
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	for _, p := range m.packages {
 		p.Index()

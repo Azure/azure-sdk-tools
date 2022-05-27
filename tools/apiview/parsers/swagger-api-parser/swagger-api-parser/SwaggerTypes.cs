@@ -1,7 +1,7 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using Newtonsoft.Json;
 
 namespace swagger_api_parser
 {
@@ -19,7 +19,7 @@ namespace swagger_api_parser
 
         [JsonPropertyName("x-ms-paths")] public Dictionary<string, Dictionary<string, Operation>> xMsPaths { get; set; }
 
-        public Dictionary<string, Schema> definitions { get; set; }
+        public Dictionary<string, Definition > definitions { get; set; }
     }
 
     public class Info
@@ -35,17 +35,19 @@ namespace swagger_api_parser
     {
         public string description { get; set; }
         public string operationId { get; set; }
+
         public List<Parameter> parameters { get; set; }
+
         public Dictionary<string, Response> responses { get; set; }
     }
 
-    public class Parameter
+    public class Parameter : BaseSchema
     {
         public string name { get; set; }
         public bool required { get; set; }
         public string description { get; set; }
 
-        [JsonPropertyName("in")] public string In { get; set; }
+        [JsonPropertyName("in")] public string? In { get; set; }
     }
 
 
@@ -53,23 +55,32 @@ namespace swagger_api_parser
     {
         public string description { get; set; }
         public Dictionary<string, Header> headers { get; set; }
+        public BaseSchema schema { get; set; }
+
+        [JsonExtensionData] public IDictionary<string, object> examples { get; set; }
     }
 
     public class Header : BaseSchema
     {
     }
 
-    public class Schema : BaseSchema
+    public class Definition : BaseSchema
     {
+        
     }
+
 
     public class BaseSchema
     {
-        public string description { get; set; }
         public string type { get; set; }
+        public string description { get; set; }
         public string format { get; set; }
+
         public List<BaseSchema> allOf { get; set; }
-        public Boolean additionalProperties { get; set; }
+        public List<BaseSchema> anyOf { get; set; }
+        public List<BaseSchema> oneOf { get; set; }
+
+        // public Boolean additionalProperties { get; set; }
         public Boolean readOnly { get; set; }
         public string discriminator { get; set; }
         public Dictionary<string, BaseSchema> properties { get; set; }
@@ -80,8 +91,9 @@ namespace swagger_api_parser
         public List<string> required { get; set; }
 
 
-        [JsonPropertyName("$ref")] public string _ref { get; set; }
+        [JsonPropertyName("$ref")] public string Ref { get; set; }
 
-        public List<BaseSchema> items { get; set; }
+
+        // public List<BaseSchema> items { get; set; }
     }
 }

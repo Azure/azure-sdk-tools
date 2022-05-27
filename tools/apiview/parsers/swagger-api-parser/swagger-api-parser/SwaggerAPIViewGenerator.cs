@@ -10,7 +10,7 @@ namespace swagger_api_parser
             {
                 foreach (var (key, value) in operations)
                 {
-                    SwaggerAPIViewOperation op = new SwaggerAPIViewOperation
+                    SwaggerApiViewOperation op = new SwaggerApiViewOperation
                     {
                         operation = value,
                         method = key,
@@ -19,10 +19,12 @@ namespace swagger_api_parser
                         operationIdPrefix = Utils.GetOperationIdPrefix(value.operationId),
                         operationIdAction = Utils.GetOperationIdAction(value.operationId)
                     };
-                    ret.AddSwaggerApiViewOperation(op);
+                    ret.Paths.AddSwaggerApiViewOperation(op);
+                    ret.Operations.Add(value);
                 }
             }
 
+            ret.Paths.SortByMethod();
             return ret;
         }
     }

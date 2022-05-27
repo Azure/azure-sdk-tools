@@ -30,6 +30,11 @@ namespace swagger_api_parser
 
         public async Task<CodeFile> GetCodeFileInternalAsync(string originalName, Stream stream, bool runAnalysis) =>
             SwaggerVisitor.GenerateCodeListing(originalName, await JsonDocument.ParseAsync(stream));
+        
+        
+        public async Task<CodeFile> GetCodeFileFromJsonDocumentAsync(string originalName, JsonDocument jsonDoc, bool runAnalysis) =>
+            SwaggerVisitor.GenerateCodeListing(originalName, jsonDoc);
+
 
         /// <summary>
         /// Generate an ApiView listing for an OpenAPI 2.0 specification in
@@ -533,10 +538,10 @@ namespace swagger_api_parser
                 visitor.Visit(document.RootElement, visitor._nav, navigationIdPrefix);
 
                 // Ensure we're looking at OpenAPI 2.0
-                if (GetString(document, "swagger") != "2.0")
-                {
-                    throw new InvalidOperationException("Only Swagger 2.0 is supported.");
-                }
+                // if (GetString(document, "swagger") != "2.0")
+                // {
+                //     throw new InvalidOperationException("Only Swagger 2.0 is supported.");
+                // }
 
                 // Pull the pieces together into a listing
                 return new CodeFile()
@@ -547,6 +552,13 @@ namespace swagger_api_parser
                     Tokens = visitor._writer.ToTokens(),
                     Navigation = visitor._nav.Build()
                 };
+            }
+
+            public static CodeFileToken[] GenerateCodeFileTokens(JsonDocument document)
+            {
+                SwaggerVisitor visitor = new();
+                visitor.Visit(document.RootElement, visitor._nav);
+                return visitor._writer.ToTokens();
             }
 
             /// <summary>

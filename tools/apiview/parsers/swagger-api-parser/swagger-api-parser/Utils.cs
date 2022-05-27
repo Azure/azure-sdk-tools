@@ -62,7 +62,7 @@ namespace swagger_api_parser
 
             return string.Join("/", commonPathList);
         }
-        
+
         public static string GetResourceProviderFromPath(string path)
         {
             const string resourceProviderPattern = "/providers/(:?[^{/]+)";
@@ -98,6 +98,7 @@ namespace swagger_api_parser
                     qu.Enqueue(child);
                 }
             }
+
             return res;
         }
 
@@ -114,11 +115,11 @@ namespace swagger_api_parser
                 if (index + 1 < root.Children.Count &&
                     (currentCommonPath = GetCommonPath(new List<string>() {root.Children[index].CommonPath, root.Children[index + 1].CommonPath})) != "")
                 {
-                    var childNode = new PathNode(currentCommonPath, new List<PathNode>(), level+1, false);
+                    var childNode = new PathNode(currentCommonPath, new List<PathNode>(), level + 1, false);
                     while (index < root.Children.Count && (prevCommonPath == "" || prevCommonPath == currentCommonPath))
                     {
                         prevCommonPath = currentCommonPath;
-                        childNode.Children.Add(new PathNode(root.Children[index].CommonPath.Substring(currentCommonPath.Length, root.Children[index].CommonPath.Length - currentCommonPath.Length), new List<PathNode>(), level+2, false));
+                        childNode.Children.Add(new PathNode(root.Children[index].CommonPath.Substring(currentCommonPath.Length, root.Children[index].CommonPath.Length - currentCommonPath.Length), new List<PathNode>(), level + 2, false));
 
                         index++;
                         if (index < root.Children.Count)
@@ -126,6 +127,7 @@ namespace swagger_api_parser
                             currentCommonPath = GetCommonPath(new List<string>() {currentCommonPath, root.Children[index].CommonPath});
                         }
                     }
+
                     prevCommonPath = "";
                     newRoot.Children.Add(childNode);
                 }
@@ -142,11 +144,11 @@ namespace swagger_api_parser
             {
                 newRoot.Leaf = true;
             }
-            
+
             // build child nodes
             for (var i = 0; i < newRoot.Children.Count; i++)
             {
-                newRoot.Children[i] = BuildPathTreeInternal(newRoot.Children[i], level+1);
+                newRoot.Children[i] = BuildPathTreeInternal(newRoot.Children[i], level + 1);
             }
 
             return newRoot;
@@ -159,8 +161,13 @@ namespace swagger_api_parser
 
         public static string GetOperationIdAction(string operationId)
         {
-            var items =  operationId.Split("_");
+            var items = operationId.Split("_");
             return items.Length < 2 ? "" : items[1];
+        }
+
+        public static string BuildDefinitionId(IEnumerable<string> paths)
+        {
+            return $"{string.Join('-', paths).TrimStart('#')}";
         }
     }
 }

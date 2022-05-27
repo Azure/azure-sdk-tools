@@ -7,7 +7,7 @@
 
 - Use example response prior to mock response
 - Use 200 response if can't find LRO callback url
-- Fix resource-type mocking for list operation 
+- Fix resource-type mocking for list operations that don't have same path pattern with creation path
 
 ## 0.1.15
 2022-05-16

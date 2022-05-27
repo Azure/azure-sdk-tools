@@ -1,8 +1,7 @@
-import { spawn } from 'child_process';
 import { existsSync } from 'fs';
 import * as path from 'path';
 
-import { getChangedPackageDirectory } from '../../../../utils/git';
+import { cloneRepo, getChangedPackageDirectory } from '../../../../utils/git';
 import { sdkToRepoMap } from '../constants';
 import { DockerContext } from '../DockerContext';
 import { DockerTaskEngineContext } from '../DockerTaskEngineContext';
@@ -19,17 +18,7 @@ export class GenerateCodesInLocalJob extends BaseJob {
     public async cloneRepoIfNotExist(sdkRepos: string[]) {
         for (const sdkRepo of sdkRepos) {
             if (!existsSync(path.join(this.context.workDir, sdkRepo))) {
-                const child = spawn(`git`, [`clone`, `https://github.com/Azure/${sdkRepo}.git`], {
-                    cwd: this.context.workDir,
-                    stdio: ['ignore', 'pipe', 'pipe']
-                });
-                child.stdout.on('data', (data) => this.context.logger.log('cmdout', data.toString()));
-                child.stderr.on('data', (data) => this.context.logger.log('cmderr', data.toString()));
-                await new Promise((resolve) => {
-                    child.on('exit', (code, signal) => {
-                        resolve({ code, signal });
-                    });
-                });
+                await cloneRepo(sdkRepo, this.context.workDir, this.context.logger);
             }
             this.context.sdkRepo = path.join(this.context.workDir, sdkRepo);
         }

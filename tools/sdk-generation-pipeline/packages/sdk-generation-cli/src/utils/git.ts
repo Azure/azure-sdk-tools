@@ -1,5 +1,6 @@
-import { execSync } from 'child_process';
+import { execSync, spawn } from 'child_process';
 import * as os from 'os';
+import { Logger } from 'winston';
 
 export function getFileListInPackageFolder(packageFolder: string) {
     const files = execSync('git ls-files -cmo --exclude-standard', { encoding: 'utf8', cwd: packageFolder })
@@ -40,4 +41,18 @@ export async function getChangedPackageDirectory(repo: string): Promise<Set<stri
         }
     }
     return changedPackageDirectories;
+}
+
+export async function cloneRepo(githubRepo: string, cwd: string, logger: Logger) {
+    const child = spawn(`git`, [`clone`, `https://github.com/Azure/${githubRepo}.git`], {
+        cwd: cwd,
+        stdio: ['ignore', 'pipe', 'pipe']
+    });
+    child.stdout.on('data', (data) => logger.log('cmdout', data.toString()));
+    child.stderr.on('data', (data) => logger.log('cmderr', data.toString()));
+    await new Promise((resolve) => {
+        child.on('exit', (code, signal) => {
+            resolve({ code, signal });
+        });
+    });
 }

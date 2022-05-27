@@ -5,9 +5,10 @@ import { Logger } from 'winston';
 
 import { DockerCliInput } from '../schema/dockerCliInput';
 import { sdkToRepoMap } from './constants';
+import { DockerRunningModel } from './DockerRunningModel';
 
 export class DockerContext {
-    mode: 'generateCodesInLocal' | 'growUp' | 'generateCodesInPipeline';
+    mode: DockerRunningModel;
     readmeMdPath?: string;
     tag?: string;
     sdkList: string[];
@@ -36,18 +37,18 @@ export class DockerContext {
 
         if (this.sdkList?.length === 0 && fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to do grow up development');
-            this.mode = 'growUp';
+            this.mode = DockerRunningModel.GrowUp;
             this.validateSpecRepo();
             this.validateWorkDir();
         } else if (fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to generate codes and do grow up development in local');
-            this.mode = 'generateCodesInLocal';
+            this.mode = DockerRunningModel.CodeGenAndGrowUp;
             this.validateSpecRepo();
             this.validateReadmeMdPath();
             this.validateSdk();
         } else {
             this.logger.info('Preparing environment to generate codes in pipeline');
-            this.mode = 'generateCodesInPipeline';
+            this.mode = DockerRunningModel.Pipeline;
             this.validateSdkRepo();
             this.validateSpecRepo();
             this.validateReadmeMdPath();

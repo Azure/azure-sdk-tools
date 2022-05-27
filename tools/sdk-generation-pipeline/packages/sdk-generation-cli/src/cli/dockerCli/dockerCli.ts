@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { DockerContext } from './core/DockerContext';
+import { DockerRunningModel } from './core/DockerRunningModel';
 import { GenerateCodesInLocalJob } from './core/jobs/GenerateCodesInLocalJob';
 import { GenerateCodesInPipelineJob } from './core/jobs/GenerateCodesInPipelineJob';
 import { GrowUpJob } from './core/jobs/GrowUpJob';
@@ -13,13 +14,13 @@ async function main() {
     let executeJob: GenerateCodesInLocalJob | GrowUpJob | GenerateCodesInPipelineJob;
 
     switch (context.mode) {
-    case 'generateCodesInLocal':
+    case DockerRunningModel.CodeGenAndGrowUp:
         executeJob = new GenerateCodesInLocalJob(context);
         break;
-    case 'growUp':
+    case DockerRunningModel.GrowUp:
         executeJob = new GrowUpJob(context);
         break;
-    case 'generateCodesInPipeline':
+    case DockerRunningModel.Pipeline:
         executeJob = new GenerateCodesInPipelineJob(context);
         break;
     }

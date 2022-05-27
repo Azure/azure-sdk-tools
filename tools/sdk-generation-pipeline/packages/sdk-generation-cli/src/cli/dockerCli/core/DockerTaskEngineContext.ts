@@ -8,6 +8,7 @@ import { Logger } from 'winston';
 import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from '../../../utils/git';
 import { dockerTaskEngineInput } from '../schema/dockerTaskEngineInput';
 import { DockerContext } from './DockerContext';
+import { DockerRunningModel } from './DockerRunningModel';
 import { GenerateAndBuildTask } from './tasks/GenerateAndBuildTask';
 import { InitTask } from './tasks/InitTask';
 import { MockTestTask } from './tasks/MockTestTask';
@@ -41,6 +42,7 @@ export class DockerTaskEngineContext {
     taskResults?: {};
     taskResultJsonPath: string;
     changeOwner: boolean;
+    mode: DockerRunningModel;
 
     public initialize(dockerContext: DockerContext) {
         // before execute task engine, safe spec repos and sdk repos because they may be owned by others
@@ -60,7 +62,7 @@ export class DockerTaskEngineContext {
         this.readmeMdPath = dockerContext.readmeMdPath;
         this.specRepo = {
             repoPath: dockerContext.specRepo,
-            headSha: dockerTaskEngineConfigProperties.headSha ?? getHeadSha(dockerContext.specRepo),
+            headSha: dockerTaskEngineConfigProperties.headSha ?? this.mode === DockerRunningModel.Pipeline? getHeadSha(dockerContext.specRepo) : '{commit_id}',
             headRef: dockerTaskEngineConfigProperties.headRef ?? getHeadRef(dockerContext.specRepo),
             repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl
         };
@@ -71,6 +73,7 @@ export class DockerTaskEngineContext {
         this.mockServerHost = dockerTaskEngineConfigProperties.mockServerHost;
         this.taskResultJsonPath = path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.taskResultJson);
         this.changeOwner = dockerTaskEngineConfigProperties.changeOwner;
+        this.mode = dockerContext.mode;
     }
 
     public async beforeRunTaskEngine() {

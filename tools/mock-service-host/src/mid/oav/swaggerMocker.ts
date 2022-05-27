@@ -64,7 +64,7 @@ export default class SwaggerMocker {
         this.patchUserAssignedIdentities(example.responses, liveRequest)
     }
 
-    public findResourcePathByListSchema(spec: any, listSchemaRef: any) {
+    public findResourcePathByListSchema(spec: any, listSchemaRef: any, listPath: string) {
         let elementSchema = null
         const modelName = listSchemaRef?.split('/').slice(-1)[0]
         if (
@@ -73,6 +73,7 @@ export default class SwaggerMocker {
         ) {
             elementSchema = spec.definitions[modelName].properties.value.items
         }
+        const candidates: Set<string> = new Set<string>()
         for (const path in spec.paths || {}) {
             for (const verb in spec.paths[path]) {
                 for (const responseCode in spec.paths[path][verb].responses || {}) {
@@ -81,10 +82,17 @@ export default class SwaggerMocker {
                         JSON.stringify(spec.paths[path][verb].responses[responseCode].schema) ===
                             JSON.stringify(elementSchema)
                     ) {
-                        return path
+                        candidates.add(path)
                     }
                 }
             }
+        }
+        const lc = [...candidates]
+        if (lc.length > 0) {
+            lc.sort((x, y) => {
+                return Math.abs(x.length - listPath.length) - Math.abs(y.length - listPath.length)
+            })
+            return lc[0]
         }
         return null
     }
@@ -122,7 +130,8 @@ export default class SwaggerMocker {
         Object.keys(responses).forEach((key) => {
             const resourcePath = this.findResourcePathByListSchema(
                 spec,
-                specItem.content?.responses[key]?.schema?.['$ref']
+                specItem.content?.responses[key]?.schema?.['$ref'],
+                specItem.path
             )
             const pathElements = (resourcePath || url.pathname || '').split('/')
             let resourceType = ''

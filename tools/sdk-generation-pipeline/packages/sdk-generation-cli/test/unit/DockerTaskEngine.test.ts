@@ -25,11 +25,11 @@ describe('task engine', () => {
         const dockerTaskEngineContext = new DockerTaskEngineContext();
         dockerTaskEngineContext.initialize(dockerContext);
         expect(dockerTaskEngineContext.configFilePath).toBe('eng/codegen_to_sdk_config.json');
-        expect(dockerTaskEngineContext.initOutput).toBe(path.join(tmpFolder, 'output', 'initOutput.json'));
-        expect(dockerTaskEngineContext.generateAndBuildInputJson).toBe(path.join(tmpFolder, 'output', 'generateAndBuildInput.json'));
-        expect(dockerTaskEngineContext.generateAndBuildOutputJson).toBe(path.join(tmpFolder, 'output', 'generateAndBuildOutputJson.json'));
-        expect(dockerTaskEngineContext.mockTestInputJson).toBe(path.join(tmpFolder, 'output', 'mockTestInput.json'));
-        expect(dockerTaskEngineContext.mockTestOutputJson).toBe(path.join(tmpFolder, 'output', 'mockTestOutput.json'));
+        expect(dockerTaskEngineContext.initOutputJsonFile).toBe(path.join(tmpFolder, 'output', 'initOutput.json'));
+        expect(dockerTaskEngineContext.generateAndBuildInputJsonFile).toBe(path.join(tmpFolder, 'output', 'generateAndBuildInput.json'));
+        expect(dockerTaskEngineContext.generateAndBuildOutputJsonFile).toBe(path.join(tmpFolder, 'output', 'generateAndBuildOutputJson.json'));
+        expect(dockerTaskEngineContext.mockTestInputJsonFile).toBe(path.join(tmpFolder, 'output', 'mockTestInput.json'));
+        expect(dockerTaskEngineContext.mockTestOutputJsonFile).toBe(path.join(tmpFolder, 'output', 'mockTestOutput.json'));
         expect(dockerTaskEngineContext.initTaskLog).toBe(path.join(tmpFolder, 'output', 'init-task.log'));
         expect(dockerTaskEngineContext.generateAndBuildTaskLog).toBe(path.join(tmpFolder, 'output', 'generateAndBuild-task.log'));
         expect(dockerTaskEngineContext.mockTestTaskLog).toBe(path.join(tmpFolder, 'output', 'mockTest-task.log'));
@@ -57,11 +57,11 @@ describe('task engine', () => {
         dockerTaskEngineContext.taskResultJsonPath = path.join(tmpFolder, 'output', 'taskResults.json');
         dockerTaskEngineContext.logger = initializeLogger(path.join(tmpFolder, 'docker.log'), 'docker', true);
         dockerTaskEngineContext.configFilePath = 'eng/codegen_to_sdk_config.json';
-        dockerTaskEngineContext.initOutput = path.join(tmpFolder, 'output', 'initOutput.json');
-        dockerTaskEngineContext.generateAndBuildInputJson = path.join(tmpFolder, 'output', 'generateAndBuildInput.json');
-        dockerTaskEngineContext.generateAndBuildOutputJson = path.join(tmpFolder, 'output', 'generateAndBuildOutputJson.json');
-        dockerTaskEngineContext.mockTestInputJson = path.join(tmpFolder, 'output', 'mockTestInput.json');
-        dockerTaskEngineContext.mockTestOutputJson = path.join(tmpFolder, 'output', 'mockTestOutput.json');
+        dockerTaskEngineContext.initOutputJsonFile = path.join(tmpFolder, 'output', 'initOutput.json');
+        dockerTaskEngineContext.generateAndBuildInputJsonFile = path.join(tmpFolder, 'output', 'generateAndBuildInput.json');
+        dockerTaskEngineContext.generateAndBuildOutputJsonFile = path.join(tmpFolder, 'output', 'generateAndBuildOutputJson.json');
+        dockerTaskEngineContext.mockTestInputJsonFile = path.join(tmpFolder, 'output', 'mockTestInput.json');
+        dockerTaskEngineContext.mockTestOutputJsonFile = path.join(tmpFolder, 'output', 'mockTestOutput.json');
         dockerTaskEngineContext.initTaskLog = path.join(tmpFolder, 'output', 'init-task.log');
         dockerTaskEngineContext.generateAndBuildTaskLog = path.join(tmpFolder, 'output', 'generateAndBuild-task.log');
         dockerTaskEngineContext.mockTestTaskLog = path.join(tmpFolder, 'output', 'mockTest-task.log');
@@ -76,8 +76,8 @@ describe('task engine', () => {
 
         await dockerTaskEngineContext.runTaskEngine();
         expect(existsSync(dockerTaskEngineContext.initTaskLog)).toBe(true);
-        expect(existsSync(dockerTaskEngineContext.generateAndBuildInputJson)).toBe(true);
-        expect(existsSync(dockerTaskEngineContext.generateAndBuildOutputJson)).toBe(true);
+        expect(existsSync(dockerTaskEngineContext.generateAndBuildInputJsonFile)).toBe(true);
+        expect(existsSync(dockerTaskEngineContext.generateAndBuildOutputJsonFile)).toBe(true);
         expect(existsSync(dockerTaskEngineContext.generateAndBuildTaskLog)).toBe(true);
         expect(existsSync(dockerTaskEngineContext.taskResultJsonPath)).toBe(true);
     });

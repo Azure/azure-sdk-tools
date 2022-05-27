@@ -43,10 +43,12 @@ export class GenerateCodesInLocalJob extends BaseJob {
         this.context.logger.info(`Finish generating sdk for ${this.context.sdkList.join(', ')}.`);
         for (const sdk of this.context.sdkList) {
             if (generatedCodesPath[sdk].size > 0) {
-                this.context.logger.info(`You can find generated ${sdk} codes in:`);
+                this.context.logger.info(`You can find changed files of ${sdk} in:`);
                 generatedCodesPath[sdk].forEach((ele) => {
                     this.context.logger.info(`    - ${path.join(this.context.workDir, sdkToRepoMap[sdk], ele)}`);
                 });
+            } else {
+                this.context.logger.info(`Cannot find changed files of ${sdk} because there is no git diff.`);
             }
         }
         this.context.logger.info(`You can use vscode to connect this docker container for further development.`);

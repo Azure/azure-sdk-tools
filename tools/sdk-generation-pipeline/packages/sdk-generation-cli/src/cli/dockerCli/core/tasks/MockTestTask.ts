@@ -40,9 +40,9 @@ export class MockTestTask implements SDKGenerationTaskBase {
             const inputJson = JSON.stringify(inputContent, undefined, 2);
             const formattedPackageName = packageFolder.replace(/[^a-zA-z0-9]/g, '-');
             const mockTestInputJsonPath = this.context.packageFolders.length > 1 ?
-                this.context.mockTestInputJson.replace('.json', `${formattedPackageName}.json`) : this.context.mockTestInputJson;
+                this.context.mockTestInputJsonFile.replace('.json', `${formattedPackageName}.json`) : this.context.mockTestInputJsonFile;
             const mockTestOutputJsonPath = this.context.packageFolders.length > 1 ?
-                this.context.mockTestOutputJson.replace('.json', `${formattedPackageName}.json`) : this.context.mockTestOutputJson;
+                this.context.mockTestOutputJsonFile.replace('.json', `${formattedPackageName}.json`) : this.context.mockTestOutputJsonFile;
             const mockTestTaskLogPath = this.context.packageFolders.length > 1 ?
                 this.context.mockTestTaskLog.replace('task.log', `${formattedPackageName}-task.log`) : this.context.mockTestTaskLog;
             fs.writeFileSync(mockTestInputJsonPath, inputJson, { encoding: 'utf-8' });

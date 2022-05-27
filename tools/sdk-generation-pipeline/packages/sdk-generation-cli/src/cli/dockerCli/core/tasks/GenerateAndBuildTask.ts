@@ -42,13 +42,13 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
             serviceType: this.context.serviceType
         };
         const inputJson = JSON.stringify(inputContent, undefined, 2);
-        this.context.logger.info(`Get ${path.basename(this.context.generateAndBuildInputJson)}:`);
+        this.context.logger.info(`Get ${path.basename(this.context.generateAndBuildInputJsonFile)}:`);
         this.context.logger.info(inputJson);
-        fs.writeFileSync(this.context.generateAndBuildInputJson, inputJson, { encoding: 'utf-8' });
+        fs.writeFileSync(this.context.generateAndBuildInputJsonFile, inputJson, { encoding: 'utf-8' });
         addFileLog(this.context.logger, this.context.generateAndBuildTaskLog, 'generateAndBuild');
         const executeResult = await runScript(runOptions, {
             cwd: path.resolve(this.context.sdkRepo),
-            args: [this.context.generateAndBuildInputJson, this.context.generateAndBuildOutputJson],
+            args: [this.context.generateAndBuildInputJsonFile, this.context.generateAndBuildOutputJsonFile],
             envs: this.context.envs,
             customizedLogger: this.context.logger
         });
@@ -57,9 +57,9 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
         if (executeResult === 'failed') {
             throw new Error(`Execute generateAndBuild script failed.`);
         }
-        if (fs.existsSync(this.context.generateAndBuildOutputJson)) {
-            const generateAndBuildOutputJson = getGenerateAndBuildOutput(requireJsonc(this.context.generateAndBuildOutputJson));
-            this.context.logger.info(`Get ${path.basename(this.context.generateAndBuildOutputJson)}:`);
+        if (fs.existsSync(this.context.generateAndBuildOutputJsonFile)) {
+            const generateAndBuildOutputJson = getGenerateAndBuildOutput(requireJsonc(this.context.generateAndBuildOutputJsonFile));
+            this.context.logger.info(`Get ${path.basename(this.context.generateAndBuildOutputJsonFile)}:`);
             this.context.logger.info(JSON.stringify(generateAndBuildOutputJson, undefined, 2));
             const packageFolders: string[] = [];
             for (const p of generateAndBuildOutputJson.packages) {

@@ -5,11 +5,11 @@ dotenv.config();
 
 export class DockerTaskEngineInput {
     configFilePath: string;
-    initOutput: string;
-    generateAndBuildInputJson: string;
-    generateAndBuildOutputJson: string;
-    mockTestInputJson: string;
-    mockTestOutputJson: string;
+    initOutputJsonFile: string;
+    generateAndBuildInputJsonFile: string;
+    generateAndBuildOutputJsonFile: string;
+    mockTestInputJsonFile: string;
+    mockTestOutputJsonFile: string;
     headSha: string | undefined;
     headRef: string | undefined;
     repoHttpsUrl: string;
@@ -30,38 +30,38 @@ export const dockerTaskEngineInput = convict<DockerTaskEngineInput>({
         format: String,
         doc: 'The relative path to codegen_to_sdk_config.json'
     },
-    initOutput: {
+    initOutputJsonFile: {
         default: 'initOutput.json',
-        env: 'INIT_OUTPUT',
-        arg: 'initOutput',
+        env: 'INIT_OUTPUT_JSON_FILE',
+        arg: 'initOutputJsonFile',
         format: String,
         doc: 'The relative path to initOut.json. It will concat with resultOutputFolder'
     },
-    generateAndBuildInputJson: {
+    generateAndBuildInputJsonFile: {
         default: 'generateAndBuildInput.json',
-        env: 'GENERATE_AND_BUILD_INPUT_JSON',
-        arg: 'generateAndBuildInputJson',
+        env: 'GENERATE_AND_BUILD_INPUT_JSON_FILE',
+        arg: 'generateAndBuildInputJsonFile',
         format: String,
         doc: 'The relative path to generateAndBuildInput.json. It will concat with resultOutputFolder'
     },
-    generateAndBuildOutputJson: {
+    generateAndBuildOutputJsonFile: {
         default: 'generateAndBuildOutputJson.json',
-        env: 'GENERATE_AND_BUILD_OUTPUT_JSON',
-        arg: 'generateAndBuildOutputJson',
+        env: 'GENERATE_AND_BUILD_OUTPUT_JSON_File',
+        arg: 'generateAndBuildOutputJsonFile',
         format: String,
         doc: 'The relative path to generateAndBuildOutput.json. It will concat with resultOutputFolder'
     },
-    mockTestInputJson: {
+    mockTestInputJsonFile: {
         default: 'mockTestInput.json',
-        env: 'MOCK_TEST_INPUT_JSON',
-        arg: 'mockTestInputJson',
+        env: 'MOCK_TEST_INPUT_JSON_FILE',
+        arg: 'mockTestInputJsonFile',
         format: String,
         doc: 'The relative path to mockTestInput.json. It will concat with resultOutputFolder'
     },
-    mockTestOutputJson: {
+    mockTestOutputJsonFile: {
         default: 'mockTestOutput.json',
-        env: 'MOCK_TEST_OUTPUT_JSON',
-        arg: 'mockTestOutputJson',
+        env: 'MOCK_TEST_OUTPUT_JSON_FILE',
+        arg: 'mockTestOutputJsonFile',
         format: String,
         doc: 'The relative path to mockTestOutput.json. It will concat with resultOutputFolder'
     },

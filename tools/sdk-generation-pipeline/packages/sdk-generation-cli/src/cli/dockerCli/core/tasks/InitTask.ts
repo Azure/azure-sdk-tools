@@ -34,7 +34,7 @@ export class InitTask implements SDKGenerationTaskBase {
         addFileLog(this.context.logger, this.context.initTaskLog, 'init');
         const executeResult = await runScript(runOptions, {
             cwd: path.resolve(this.context.sdkRepo),
-            args: [this.context.initOutput],
+            args: [this.context.initOutputJsonFile],
             customizedLogger: this.context.logger
         });
         removeFileLog(this.context.logger, 'init');
@@ -42,9 +42,9 @@ export class InitTask implements SDKGenerationTaskBase {
         if (executeResult === 'failed') {
             throw new Error(`Execute init script failed.`);
         }
-        if (fs.existsSync(this.context.initOutput)) {
-            const initOutputJson = initOutput(requireJsonc(this.context.initOutput));
-            this.context.logger.info(`Get ${path.basename(this.context.initOutput)}:`);
+        if (fs.existsSync(this.context.initOutputJsonFile)) {
+            const initOutputJson = initOutput(requireJsonc(this.context.initOutputJsonFile));
+            this.context.logger.info(`Get ${path.basename(this.context.initOutputJsonFile)}:`);
             this.context.logger.info(JSON.stringify(initOutputJson, undefined, 2));
 
             if (initOutputJson?.envs) {

@@ -64,7 +64,7 @@ export type MessageRecord = ResultMessageRecord | RawMessageRecord | MarkdownMes
 export type TaskResultCommon = {
     name: string;
     pipelineBuildId: string;
-    result?: TaskResultStatus;
+    result: TaskResultStatus;
     errorCount?: number;
     warningCount?: number;
     logUrl?: string;

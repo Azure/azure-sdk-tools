@@ -14,6 +14,10 @@ import {
 import { getFileListInPackageFolder } from './utils/git';
 
 function copyFile(filePath: string, targetDir: string) {
+    if (!fs.existsSync(filePath)) {
+        logger.info(`${filePath} isn't exist, skipped it.`);
+        return;
+    }
     const fileDir = path.dirname(filePath);
     fs.mkdirSync(`${targetDir}/${fileDir}`, { recursive: true });
     fs.copyFileSync(`${filePath}`, `${targetDir}/${filePath}`);

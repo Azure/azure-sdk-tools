@@ -2,11 +2,11 @@
 // Licensed under the MIT License. See License in the project root for license information.
 import {
     CreateBatchOptions,
-    EventHubProducerClient,
     EventDataBatch,
-} from "@azure/event-hubs";
+    EventHubProducerClient
+} from '@azure/event-hubs';
 
-import { logger } from "../logger";
+import { logger } from '../logger';
 
 export class EventHubProducer {
     private producer: EventHubProducerClient;
@@ -23,7 +23,7 @@ export class EventHubProducer {
         return await this.producer.createBatch(batchOptions);
     }
 
-    private async *getBatchIterator(events: string[], partitionKey?: string) {
+    private async* getBatchIterator(events: string[], partitionKey?: string) {
         let toAddIndex = 0;
         if (toAddIndex >= events.length) {
             return;
@@ -56,19 +56,19 @@ export class EventHubProducer {
         let next = await batchIterator.next();
         while (!next.done) {
             if (next.value !== undefined) {
-                let batch: EventDataBatch = next.value as EventDataBatch;
+                const batch: EventDataBatch = next.value as EventDataBatch;
                 await this.producer.sendBatch(batch);
             }
             next = await batchIterator.next();
         }
-        logger.info("Send events done");
+        logger.info('Send events done');
     }
 
     public async close() {
         try {
             await this.producer.close();
         } catch (err) {
-            logger.error("Error when closing client: ", err);
+            logger.error('Error when closing client: ', err);
         } // swallow the error
     }
 }

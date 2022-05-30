@@ -1,15 +1,15 @@
-import * as child_process from 'child_process';
+import * as childProcess from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { AzureBlobClient } from '../utils/blob/AzureBlobClient';
-import { GenerateAndBuildOutput } from '../types/taskInputAndOuputSchemaTypes/GenerateAndBuildOutput';
-import { logger } from '../utils/logger';
 import { SDK } from '../types/commonType';
+import { GenerateAndBuildOutput } from '../types/taskInputAndOuputSchemaTypes/GenerateAndBuildOutput';
 import { TaskResultStatus } from '../types/taskResult';
+import { AzureBlobClient } from '../utils/blob/AzureBlobClient';
+import { logger } from '../utils/logger';
 
 function getFileListInPackageFolder(packageFolder: string) {
-    const files = child_process
+    const files = childProcess
         .execSync('git ls-files -cmo --exclude-standard', { encoding: 'utf8', cwd: packageFolder })
         .trim()
         .split('\n');
@@ -57,7 +57,7 @@ export class ArtifactBlobUploader {
     public async uploadSourceCode(generateAndBuildOutputJson: GenerateAndBuildOutput) {
         for (const p of generateAndBuildOutputJson.packages) {
             const result = p.result;
-            if (result === TaskResultStatus.failure) {
+            if (result === TaskResultStatus.Failure) {
                 logger.warn(`Build ${p.packageName} failed, skipped it`);
                 continue;
             }
@@ -80,7 +80,7 @@ export class ArtifactBlobUploader {
     public async uploadArtifacts(generateAndBuildOutputJson: GenerateAndBuildOutput) {
         for (const p of generateAndBuildOutputJson.packages) {
             const result = p.result;
-            if (result === TaskResultStatus.failure) {
+            if (result === TaskResultStatus.Failure) {
                 logger.warn(`Build ${p.packageName} failed, skipped it`);
                 continue;
             }

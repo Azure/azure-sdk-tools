@@ -1,15 +1,15 @@
 #!/usr/bin/env node
-import * as fs from 'fs';
 import {
     ArtifactBlobUploader,
     ArtifactBlobUploaderContext,
     GenerateAndBuildOutput,
     getGenerateAndBuildOutput,
     logger,
-    requireJsonc,
+    requireJsonc
 } from '@azure-tools/sdk-generation-lib';
+import * as fs from 'fs';
 
-import { uploadBlobInput, UploadBlobInput } from './cliSchema/uploadArtifactConfig';
+import { UploadBlobInput, uploadBlobInput } from '../../cliSchema/uploadArtifactConfig';
 
 async function main() {
     uploadBlobInput.validate();
@@ -22,7 +22,7 @@ async function main() {
         azureStorageBlobSasUrl: config.azureStorageBlobSasUrl,
         azureBlobContainerName: config.azureBlobContainerName,
         language: config.language,
-        pipelineBuildId: config.pipelineBuildId,
+        pipelineBuildId: config.pipelineBuildId
     };
     const artifactBlobUploader: ArtifactBlobUploader = new ArtifactBlobUploader(blobContext);
     const generateAndBuildOutputJson: GenerateAndBuildOutput = getGenerateAndBuildOutput(

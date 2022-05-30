@@ -74,5 +74,6 @@ func createReview(pkgDir string) (PackageReview, error) {
 		Name:        m.Name,
 		Navigation:  nav,
 		Tokens:      *tokenList,
+		PackageName: m.Name,
 	}, nil
 }

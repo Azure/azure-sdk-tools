@@ -72,15 +72,10 @@
           // Script path related to repo root
           "type": "string"
         },
-        "script": {
-          // the script type, e.g. pwsh
-          "type": "string"
-        },
         "envs": {
-          // Not Implemented
           // Extra environment variable to be passed to the script (except initScript).
           // By default the following envs will be passed:
-          // PATH, SHELL, PWD (current directory)
+          // PWD (current directory)
           "type": "array",
           "items": {
             "type": "string"
@@ -94,26 +89,6 @@
         "logFilter": {
           // filter for error msg and warning msg.
           "$ref": "#/definitions/LogFilter"
-        },
-        "exitWithNonZeroCode": {
-          "properties": {
-            // How should SDK Automation handle non-zero exitCode.
-            "storeLog": {
-              // Should we store this error.
-              "type": "boolean",
-              "default": true
-            },
-            "result": {
-              // If script has non-error exitCode how should we mark the script's result.
-              "type": "string",
-              "enum": ["error", "warning", "ignore"],
-              "default": "error"
-            }
-          },
-          "storeAllLog": {
-            "show": true,
-            "result": "error"
-          }
         }
       },
       "required": ["path"]

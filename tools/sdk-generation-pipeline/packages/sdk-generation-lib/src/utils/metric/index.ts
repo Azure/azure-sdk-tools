@@ -1,1 +1,1 @@
-export * from "./MonitorClient";
+export * from './MonitorClient';

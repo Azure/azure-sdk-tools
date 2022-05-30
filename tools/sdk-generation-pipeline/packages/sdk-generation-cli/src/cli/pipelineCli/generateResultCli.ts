@@ -1,17 +1,18 @@
 #!/usr/bin/env node
-import * as fs from 'fs';
 import {
     AzureSDKTaskName,
     createTaskResult,
     LogFilter,
     logger,
     requireJsonc,
-    TaskResult,
-    TaskResultStatus,
     TaskOutput,
+    TaskResult,
+    TaskResultStatus
 } from '@azure-tools/sdk-generation-lib';
+import * as fs from 'fs';
 
-import { generateResultCliInput, GenerateResultCliInput } from './cliSchema/generateResultCliConfig';
+import { GenerateResultCliInput, generateResultCliInput } from '../../cliSchema/generateResultCliConfig';
+
 
 generateResultCliInput.validate();
 const config: GenerateResultCliInput = generateResultCliInput.getProperties();
@@ -60,7 +61,7 @@ async function main() {
     );
 
     fs.writeFileSync(config.resultOutputPath, JSON.stringify(taskResult, null, 2), {
-        encoding: 'utf-8',
+        encoding: 'utf-8'
     });
     console.log('Generate Success !!!');
 

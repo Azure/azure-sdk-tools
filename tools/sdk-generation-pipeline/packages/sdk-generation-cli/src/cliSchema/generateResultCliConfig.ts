@@ -17,45 +17,45 @@ export const generateResultCliInput = convict<GenerateResultCliInput>({
     pipelineBuildId: {
         default: null,
         format: assertNullOrEmpty,
-        arg: 'buildId',
+        arg: 'buildId'
     },
     logfile: {
         default: null,
         format: assertNullOrEmpty,
-        arg: 'logfile',
+        arg: 'logfile'
     },
     logFilterStr: {
         default: null,
         nullable: true,
         format: String,
-        arg: 'logFilterStr',
+        arg: 'logFilterStr'
     },
     taskName: {
         default: null,
         format: ['init', 'generateAndBuild', 'mockTest', 'liveTest'],
-        arg: 'taskName',
+        arg: 'taskName'
     },
     exeResult: {
         default: null,
         nullable: true,
         format: ['success', 'failure'],
-        arg: 'exeResult',
+        arg: 'exeResult'
     },
     taskOutputPath: {
         default: null,
         nullable: true,
         format: String,
-        arg: 'taskOutputPath',
+        arg: 'taskOutputPath'
     },
     resultOutputPath: {
         default: null,
         format: assertNullOrEmpty,
-        arg: 'resultOutputPath',
+        arg: 'resultOutputPath'
     },
     dockerResultFile: {
         default: null,
         nullable: true,
         format: String,
-        arg: 'dockerResultFile',
-    },
+        arg: 'dockerResultFile'
+    }
 });

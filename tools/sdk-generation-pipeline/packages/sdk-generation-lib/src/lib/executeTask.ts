@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+
+import { AzureSDKTaskName } from '../types/commonType';
 import { getTaskBasicConfig, TaskBasicConfig } from '../types/taskBasicConfig';
 import { RunOptions } from '../types/taskInputAndOuputSchemaTypes/CodegenToSdkConfig';
 import { GenerateAndBuildInput } from '../types/taskInputAndOuputSchemaTypes/GenerateAndBuildInput';
@@ -6,12 +9,10 @@ import { InitOutput } from '../types/taskInputAndOuputSchemaTypes/InitOutput';
 import { LiveTestInput } from '../types/taskInputAndOuputSchemaTypes/LiveTestInput';
 import { MockTestInput } from '../types/taskInputAndOuputSchemaTypes/MockTestInput';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
-import { TaskResultStatus, TaskResult } from '../types/taskResult';
+import { TaskResult } from '../types/taskResult';
 import { requireJsonc } from '../utils/requireJsonc';
-import { runScript } from './runScript';
-import * as fs from 'fs';
 import { createTaskResult } from './generateResult';
-import { AzureSDKTaskName } from '../types/commonType';
+import { runScript } from './runScript';
 
 export async function executeTask(
     taskName: AzureSDKTaskName,
@@ -30,14 +31,10 @@ export async function executeTask(
         args.push(inputJsonPath);
     }
     args.push(outputJsonPath);
-    const result = await runScript(runScriptOptions, {
+    const execResult = await runScript(runScriptOptions, {
         cwd: cwd,
-        args: args,
+        args: args
     });
-    let execResult: TaskResultStatus = TaskResultStatus.success;
-    if (result === 'failed') {
-        execResult = TaskResultStatus.failure;
-    }
     if (fs.existsSync(outputJsonPath)) {
         const outputJson = requireJsonc(outputJsonPath);
         return {
@@ -49,7 +46,7 @@ export async function executeTask(
                 runScriptOptions.logFilter,
                 outputJson
             ),
-            output: outputJson,
+            output: outputJson
         };
     } else {
         return {
@@ -61,7 +58,7 @@ export async function executeTask(
                 runScriptOptions.logFilter,
                 undefined
             ),
-            output: undefined,
+            output: undefined
         };
     }
 }

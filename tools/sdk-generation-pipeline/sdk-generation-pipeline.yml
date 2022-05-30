@@ -54,6 +54,13 @@ parameters:
   - name: sdkGenerationName
     type: string
 
+  - name: triggerType
+    type: string
+    values:
+      - release
+      - ad-hoc
+      - ci
+
 stages:
   - stage: SdkGeneration
     jobs:
@@ -72,11 +79,13 @@ stages:
               sdkRepoBaseBranch: ${{ variables.sdkRepoBaseBranch }}
               trigger: ${{ parameters.clientAgent }}
               swagger: ${{ parameters.swagger }}
+              triggerType: ${{ parameters.triggerType }}
 
           - template: ./pipelines/steps/generate-sdk.yml
             parameters:
               readmeFile: ${{ parameters.relativeReadmeFilePath }}
               trigger: ${{ parameters.clientAgent }}
+              triggerType: ${{ parameters.triggerType }}
 
           - template: ./pipelines/steps/parse-and-publish-result.yml
             parameters:
@@ -85,3 +94,4 @@ stages:
               serviceType: ${{ parameters.serviceType }}
               trigger: ${{ parameters.clientAgent }}
               sdkGenerationName: ${{ parameters.sdkGenerationName }}
+              triggerType: ${{ parameters.triggerType }}

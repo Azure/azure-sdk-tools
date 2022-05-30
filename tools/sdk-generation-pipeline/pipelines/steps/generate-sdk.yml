@@ -5,6 +5,9 @@ parameters:
   - name: trigger
     type: string
 
+  - name: triggerType
+    type: string
+
 steps:
   - bash: |
       publishResult \
@@ -18,6 +21,8 @@ steps:
     displayName: Publish status
     env:
       EVENTHUB_SAS_URL: $(EVENTHUB_SAS_URL)
+    condition: ne('${{ parameters.triggerType }}', 'release')
+    
 
   - bash: |
       docker run \
@@ -30,3 +35,41 @@ steps:
           exit 1
       fi
     displayName: Generate sdk
+
+  - bash: |
+      #TODO: delete this bash
+      echo "check output dir"
+      ls /tmp/output
+      echo "show docker.log"
+      head -n 30 /tmp/output/docker.log
+      echo "*****"
+      tail -n 30 /tmp/output/docker.log
+      echo "show generateAndBuild-task.log"
+      head -n 30 /tmp/output/generateAndBuild-task.log
+      echo "*****"
+      tail -n 30 /tmp/output/generateAndBuild-task.log
+      echo "show generateAndBuildInput.json"
+      cat /tmp/output/generateAndBuildInput.json
+      echo "show generateAndBuildOutputJson.json"
+      cat /tmp/output/generateAndBuildOutputJson.json
+      echo "show init-task.log"
+      head -n 30 /tmp/output/init-task.log
+      echo "*****"
+      tail -n 30 /tmp/output/init-task.log
+      echo "show taskResults.json"
+      cat /tmp/output/taskResults.json
+
+      echo "show mock-host.log"
+      head -n 30 /tmp/output/mock-host.log | echo "don't quite even failed"
+      echo "*****"
+      tail -n 30 /tmp/output/mock-host.log | echo "don't quite even failed"
+
+      echo "show mockTest-task.log"
+      head -n 30 /tmp/output/mockTest-task.log | echo "don't quite even failed"
+      echo "*****"
+      tail -n 30 /tmp/output/mockTest-task.log | echo "don't quite even failed"
+
+      echo "show mockTestOutput.json"
+      cat /tmp/output/mockTestOutput.json | echo "don't quite even failed"
+    displayName: Check output dir
+    condition: always()

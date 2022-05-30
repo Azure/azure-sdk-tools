@@ -214,6 +214,10 @@ namespace swagger_api_parser
             return 1;
         }
 
+        /*
+         * Post:  /<service>/<resource-collection>/<resource-id>. CreateOrUpdate
+         * Post action:  /<service>/<resource-collection>/<resource-id>:<action>. PostAction
+         */
         private static string GetMethodType(SwaggerApiViewOperation operation)
         {
             if (operation.method == "post")

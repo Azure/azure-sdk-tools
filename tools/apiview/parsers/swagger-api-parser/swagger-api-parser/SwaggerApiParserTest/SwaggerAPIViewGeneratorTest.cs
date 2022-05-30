@@ -18,6 +18,7 @@ public class SwaggerApiViewGeneratorTest
     {
         this.output = output;
     }
+    
 
     [Fact]
     public async Task TestGenerateSwaggerApiViewRunCommands()
@@ -32,7 +33,26 @@ public class SwaggerApiViewGeneratorTest
 
 
         var codeFile = apiView.GenerateCodeFile();
-        var outputFilePath = Path.GetFullPath("./part_output.json");
+        var outputFilePath = Path.GetFullPath("./runCommands_output.json");
+
+        this.output.WriteLine($"Write result to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
+
+    [Fact]
+    public async Task TestGenerateSwaggerApiViewCompute()
+    {
+        const string runCommandsFilePath = "./fixtures/compute.json";
+        var swaggerSpec = await SwaggerDeserializer.Deserialize(runCommandsFilePath);
+        var apiViewGenerator = new SwaggerApiViewGenerator();
+        var apiView = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, "compute.json", "Microsoft.Compute");
+
+        Assert.Equal("2.0", apiView.General.swagger);
+
+
+        var codeFile = apiView.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./compute_output.json");
 
         this.output.WriteLine($"Write result to: {outputFilePath}");
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);

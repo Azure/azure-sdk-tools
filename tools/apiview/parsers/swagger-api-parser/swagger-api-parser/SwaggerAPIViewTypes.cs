@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ApiView;
@@ -194,11 +195,12 @@ namespace swagger_api_parser
                 {"patch", 3},
                 {"get", 4},
                 {"delete", 5},
+                {"post-action", 6}
             };
 
 
-            priority.TryGetValue(a!.method, out var priorityA);
-            priority.TryGetValue(b!.method, out var priorityB);
+            priority.TryGetValue(GetMethodType(a), out var priorityA);
+            priority.TryGetValue(GetMethodType(b), out var priorityB);
             if (priorityA == priorityB)
             {
                 return 0;
@@ -210,6 +212,15 @@ namespace swagger_api_parser
             }
 
             return 1;
+        }
+
+        private static string GetMethodType(SwaggerApiViewOperation operation)
+        {
+            if (operation.method == "post")
+            {
+                return operation.path.Split("/").Length % 2 == 1 ? "post" : "post-action";
+            }
+            return operation.method;
         }
     }
 

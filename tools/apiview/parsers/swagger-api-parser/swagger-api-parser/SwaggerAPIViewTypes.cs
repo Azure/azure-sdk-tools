@@ -193,8 +193,9 @@ namespace swagger_api_parser
                 {"put", 2},
                 {"patch", 3},
                 {"get", 4},
-                {"delete", 5},
-                {"post-action", 6}
+                {"get-action", 5},
+                {"delete", 6},
+                {"post-action", 7}
             };
 
 
@@ -219,11 +220,12 @@ namespace swagger_api_parser
          */
         private static string GetMethodType(SwaggerApiViewOperation operation)
         {
-            if (operation.method == "post")
+            return operation.method switch
             {
-                return operation.path.Split("/").Length % 2 == 1 ? "post" : "post-action";
-            }
-            return operation.method;
+                "post" => operation.path.Split("/").Length % 2 == 1 ? "post" : "post-action",
+                "get" => operation.path.Split("/").Length % 2 == 1 ? "get" : "get-action",
+                _ => operation.method
+            };
         }
     }
 

@@ -12,7 +12,7 @@ import { ExampleRule, getRuleValidator } from 'oav/dist/lib/generator/exampleRul
 import { JsonLoader } from 'oav/dist/lib/swagger/jsonLoader'
 import { LiveRequest } from 'oav/dist/lib/liveValidation/operationValidator'
 import { SpecItem } from '../responser'
-import { logger, setStringIfExist } from '../../common/utils'
+import { isNullOrUndefined, logger, setStringIfExist } from '../../common/utils'
 import { mockedResourceType } from '../../common/constants'
 import { parse as parseUrl } from 'url'
 import { xmsAzureResource } from 'oav/dist/lib/util/constants'
@@ -133,6 +133,7 @@ export default class SwaggerMocker {
         pathElements: Record<string, string>,
         inUserAssignedIdentities = false
     ): any {
+        if (isNullOrUndefined(obj)) return obj
         if (Array.isArray(obj)) {
             return obj.map((x) => this.mockUserAssignedIdentities(x, pathElements))
         } else if (typeof obj === 'object') {

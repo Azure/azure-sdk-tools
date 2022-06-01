@@ -38,6 +38,8 @@
 ------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 $gray-light: #f6f8fa;
 $primary-blue: #006ee5;
+$success-green: #208636;
+$pale-green: #008484;
 
 /* HTML Tags
 ------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -126,11 +128,23 @@ input[type="search"]::-webkit-search-cancel-button {
     border-bottom: 1px solid #e5e5e5;
 }
 
+.bootstrap-select .dropdown-toggle .filter-option-inner-inner {
+    color: #626262;
+}
+
+.btn-success {
+    background-color: $success-green;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    background-color: $primary-blue;
+}
+
 /* Code rendering classes
 ----------------------------------------------------------------------*/
 
 .class {
-    color: #00B8B1;
+    color: #007e79;
     scroll-margin-top: calc(50px + 1.7em);
 }
 
@@ -504,7 +518,7 @@ input[type="search"]::-webkit-search-cancel-button {
     z-index:1;
     position: sticky;
     left: 0;
-    color: darkcyan;
+    color: $pale-green;
 }
 
 .line-number-hidden {

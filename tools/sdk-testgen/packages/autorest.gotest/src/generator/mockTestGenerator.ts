@@ -131,7 +131,7 @@ export class MockTestDataRender extends BaseDataRender {
                         example.responseIsDiscriminator = true;
                         example.responseType = responseEnv.language.go.resultProp.schema.language.go?.discriminatorInterface;
                         example.responseOutput = `${this.context.packageName}.${responseEnv.language.go.name}{
-                            &${example.responseOutput},
+                            ${example.responseType}: &${example.responseOutput},
                         }`;
                     }
                 } else {
@@ -141,7 +141,7 @@ export class MockTestDataRender extends BaseDataRender {
                         example.responseIsDiscriminator = true;
                         example.responseType = responseEnv.language.go.resultProp.schema.language.go?.discriminatorInterface;
                         example.responseOutput = `${this.context.packageName}.${responseEnv.language.go.name}{
-                            &${example.responseOutput},
+                            ${example.responseType}: &${example.responseOutput},
                         }`;
                     }
                 }
@@ -317,10 +317,15 @@ export class MockTestDataRender extends BaseDataRender {
             return output;
         } else if (exampleValue.schema?.type === SchemaType.Dictionary) {
             const elementPtr = exampleValue.schema.language.go.elementIsPtr && !elemByVal ? '*' : '';
-            const elementTypeName = this.getLanguageName((exampleValue.schema as DictionarySchema).elementType);
+            const elementIsPolymorphism = (exampleValue.schema as DictionarySchema).elementType.language.go.discriminatorInterface !== undefined;
+            let elementTypeName = this.getLanguageName((exampleValue.schema as DictionarySchema).elementType);
+            if (elementIsPolymorphism) {
+                elementTypeName = (exampleValue.schema as DictionarySchema).elementType.language.go.discriminatorInterface;
+            }
             let output = `${ptr}map[string]${elementPtr}${GoHelper.addPackage(elementTypeName, this.context.packageName)}{\n`;
             for (const [key, value] of Object.entries(exampleValue.properties || {})) {
-                output += `"${key}": ${this.exampleValueToString(value, exampleValue.schema.language.go.elementIsPtr)},\n`;
+                // for polymorphism map value, value should be a pointer
+                output += `"${key}": ${this.exampleValueToString(value, exampleValue.schema.language.go.elementIsPtr || elementIsPolymorphism)},\n`;
             }
             output += '}';
             return output;

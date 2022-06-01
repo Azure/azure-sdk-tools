@@ -1,5 +1,5 @@
 ﻿/* Mixins used below
--------------------------------------------------- */
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 @mixin placeholder {
     ::-webkit-input-placeholder {
         @content
@@ -15,61 +15,29 @@
     }
 }
 
-/* Color table
--------------------------------------------------- */
-$gray-light: #f6f8fa;
 
-a.navbar-brand
-{
-    white-space: normal;
-    text-align: center;
-    word-break: break-all;
+/* Color table
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+$gray-light: #f6f8fa;
+$primary-blue: #006ee5;
+
+
+/* HTML Tags
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+a {
+    color: $primary-blue;
 }
 
-/* Sticky footer styles
--------------------------------------------------- */
 html {
     font-size: 14px;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
     html {
         font-size: 16px;
     }
-}
-
-// Enable clear button in search input
-input[type="search"]::-webkit-search-cancel-button {
-    -webkit-appearance: none;
-    height: 24px;
-    width: 24px;
-    margin-left: .4em;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
-    cursor: pointer;
-  }
-
-.border-top {
-    border-top: 1px solid #e5e5e5;
-}
-
-.border-bottom {
-    border-bottom: 1px solid #e5e5e5;
-}
-
-.box-shadow {
-    box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
-}
-
-button.accept-policy {
-    font-size: 1rem;
-    line-height: inherit;
-}
-
-/* Sticky footer styles
--------------------------------------------------- */
-html {
-    position: relative;
-    min-height: 100%;
 }
 
 body {
@@ -86,6 +54,39 @@ body {
     height: 60px;
     line-height: 60px;
     /* Vertically center the text there */
+}
+
+/* Functionality Added Via CSS
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+// Enable clear button in search input
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    margin-left: .4em;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
+    cursor: pointer;
+}
+
+/* Bootstrap Classes Overridden
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+.border-top {
+    border-top: 1px solid #e5e5e5;
+}
+
+.border-bottom {
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow {
+    box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+button.accept-policy {
+    font-size: 1rem;
+    line-height: inherit;
 }
 
 /* Code rendering classes
@@ -473,6 +474,10 @@ form.comment {
     padding-left: 14px;
 }
 
+.navbar-dark .navbar-nav .nav-link {
+    color: #fff;
+}
+
 .clickable {
     cursor: pointer;
 }
@@ -609,6 +614,15 @@ mark {
     z-index: 10;
     bottom:10%;
     right:5%;
+}
+
+.btn-primary {
+    background-color: #006ee5;
+}
+
+.btn-outline-primary {
+    color: #006ee5;
+    border-color: #006ee5;
 }
 
 .btn-circle {

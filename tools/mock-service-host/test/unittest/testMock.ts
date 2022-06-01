@@ -96,7 +96,7 @@ describe('mockForExample: ', () => {
             { info: { version: '2020-01-01' } },
             'fakeRp'
         )
-        swaggerMocker.patchExampleResponses(example, specItem as SpecItem, spec, {
+        swaggerMocker.patchExampleResponses(example, {
             method: 'put',
             url:
                 'https://localhost:8443/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/policies/policyId'

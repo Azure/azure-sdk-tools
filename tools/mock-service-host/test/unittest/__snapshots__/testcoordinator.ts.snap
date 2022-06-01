@@ -1,13 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`generateResponse() Can mock resource type in list operation which has odd path pattern 1`] = `
-Object {
-  "id": "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/mockedserviceName/groups/mockName",
-  "name": "mockName",
-  "type": "Microsoft.ApiManagement/service/groups",
-}
-`;
-
 exports[`generateResponse() degrade to non-lro if can't find callback url 1`] = `
 VirtualServerResponse {
   "body": Object {

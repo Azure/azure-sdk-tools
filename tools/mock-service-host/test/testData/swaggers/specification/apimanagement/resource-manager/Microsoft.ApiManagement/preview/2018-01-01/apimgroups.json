@@ -34,7 +34,7 @@
     }
   },
   "paths": {
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/serviceFaked/{serviceName}/groups": {
+    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/groups": {
       "get": {
         "tags": [
           "Groups"
@@ -43,6 +43,11 @@
         "description": "Lists a collection of groups defined within a service instance.",
         "externalDocs": {
           "url": "https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-create-groups"
+        },
+        "x-ms-examples": {
+          "ApiManagementListGroups": {
+            "$ref": "./examples/ApiManagementListGroups.json"
+          }
         },
         "parameters": [
           {

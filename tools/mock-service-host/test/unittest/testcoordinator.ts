@@ -262,25 +262,6 @@ describe('generateResponse()', () => {
             coordinator.generateResponse(request, response, statelessProfile)
         ).rejects.toThrow(LroCallbackNotFound)
     })
-
-    it('Can mock resource type in list operation which has odd path pattern', async () => {
-        const response = mockDefaultResponse()
-
-        // create resource user without create it's parent resource service
-        const fileName = path.join(__dirname, '..', 'testData', 'payloads', 'list_groups.json')
-        const pair: RequestResponsePair = require(fileName)
-        if (!pair.liveRequest.headers) {
-            pair.liveRequest.headers = {}
-        }
-        const request = mockRequest(pair.liveRequest)
-        await coordinator.generateResponse(request, response, statelessProfile)
-        const items = response.body.value as any
-        expect({
-            id: items[0].id,
-            type: items[0].type,
-            name: items[0].name
-        }).toMatchSnapshot()
-    })
 })
 
 describe('genStatefulResponse()', () => {

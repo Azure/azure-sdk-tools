@@ -12,7 +12,7 @@ import { ExampleRule, getRuleValidator } from 'oav/dist/lib/generator/exampleRul
 import { JsonLoader } from 'oav/dist/lib/swagger/jsonLoader'
 import { LiveRequest } from 'oav/dist/lib/liveValidation/operationValidator'
 import { SpecItem } from '../responser'
-import { isNullOrUndefined, logger, setStringIfExist } from '../../common/utils'
+import { logger, setStringIfExist } from '../../common/utils'
 import { mockedResourceType } from '../../common/constants'
 import { parse as parseUrl } from 'url'
 import { xmsAzureResource } from 'oav/dist/lib/util/constants'
@@ -54,101 +54,34 @@ export default class SwaggerMocker {
         example.responses = this.mockResponse(example.responses, specItem)
     }
 
-    public patchExampleResponses(
-        example: any,
-        specItem: SpecItem,
-        spec: any,
-        liveRequest: LiveRequest
-    ) {
-        this.patchResourceIdAndType(example.responses, liveRequest, specItem, spec)
+    public patchExampleResponses(example: any, liveRequest: LiveRequest) {
+        this.patchResourceIdAndType(example.responses, liveRequest)
         this.patchUserAssignedIdentities(example.responses, liveRequest)
-    }
-
-    public findResourcePathByListSchema(spec: any, listSchemaRef: any, listPath: string) {
-        let elementSchema = null
-        const modelName = listSchemaRef?.split('/').slice(-1)[0]
-        if (
-            modelName in spec.definitions &&
-            spec.definitions[modelName]['properties']?.value?.type === 'array'
-        ) {
-            elementSchema = spec.definitions[modelName].properties.value.items
-        }
-        const candidates: Set<string> = new Set<string>()
-        for (const path in spec.paths || {}) {
-            for (const verb in spec.paths[path]) {
-                for (const responseCode in spec.paths[path][verb].responses || {}) {
-                    if (
-                        responseCode.startsWith('2') &&
-                        JSON.stringify(spec.paths[path][verb].responses[responseCode].schema) ===
-                            JSON.stringify(elementSchema)
-                    ) {
-                        candidates.add(path)
-                    }
-                }
-            }
-        }
-        const lc = [...candidates]
-        if (lc.length > 0) {
-            lc.sort((x, y) => {
-                return Math.abs(x.length - listPath.length) - Math.abs(y.length - listPath.length)
-            })
-            return lc[0]
-        }
-        return null
-    }
-
-    public mockIdFromPath(path: string | null, requestPath: string) {
-        if (!path) {
-            return requestPath
-        }
-        const pathValues: Record<string, string> = {}
-        const realElements = requestPath.split('/')
-        for (let i = 2; i < realElements.length; i++) {
-            pathValues[realElements[i - 1]] = realElements[i]
-        }
-
-        const elements = path.split('/')
-        for (let i = 0; i < elements.length; i++) {
-            if (elements[i].startsWith('{') && elements[i].endsWith('}')) {
-                elements[i] = pathValues[elements[i - 1]] || `mocked${elements[i].slice(1, -1)}`
-            }
-        }
-        return elements.join('/')
     }
 
     /**
      * Replaces mock resource IDs with IDs that match current resource.
      */
-    private patchResourceIdAndType(
-        responses: any,
-        liveRequest: LiveRequest,
-        specItem: SpecItem,
-        spec: any
-    ) {
+    private patchResourceIdAndType(responses: any, liveRequest: LiveRequest) {
         const url = parseUrl(liveRequest.url)
 
-        Object.keys(responses).forEach((key) => {
-            const resourcePath = this.findResourcePathByListSchema(
-                spec,
-                specItem.content?.responses[key]?.schema?.['$ref'],
-                specItem.path
-            )
-            const pathElements = (resourcePath || url.pathname || '').split('/')
-            let resourceType = ''
-            let foundProvider = false
-            for (let i = 0; i < pathElements.length; i++) {
-                if (i % 2 === 0 && pathElements[i].match(/microsoft\..+/i)) {
-                    foundProvider = true
-                    resourceType = pathElements[i]
-                }
-                if (foundProvider && i % 2 === 1) {
-                    resourceType = `${resourceType}/${pathElements[i]}`
-                }
+        const pathElements = (url.pathname || '').split('/')
+        let resourceType = ''
+        let foundProvider = false
+        for (let i = 0; i < pathElements.length; i++) {
+            if (i % 2 === 0 && pathElements[i].match(/microsoft\..+/i)) {
+                foundProvider = true
+                resourceType = pathElements[i]
             }
-            if (resourceType.length === 0) {
-                resourceType = mockedResourceType
+            if (foundProvider && i % 2 === 1) {
+                resourceType = `${resourceType}/${pathElements[i]}`
             }
+        }
+        if (resourceType.length === 0) {
+            resourceType = mockedResourceType
+        }
 
+        Object.keys(responses).forEach((key) => {
             if (responses[key]?.body?.id) {
                 // put
                 if (liveRequest.method.toLowerCase() === 'put') {
@@ -176,10 +109,8 @@ export default class SwaggerMocker {
                     arr.forEach((item: any) => {
                         if (item.id) {
                             const resourceName = item.name || 'resourceName'
-                            item.id = this.mockIdFromPath(
-                                resourcePath,
-                                `${url.pathname}/${resourceName}`
-                            )
+                            url.pathname = `${url.pathname}/${resourceName}`
+                            item.id = url.pathname
                         }
                         setStringIfExist(item, 'type', resourceType)
                     })
@@ -202,7 +133,6 @@ export default class SwaggerMocker {
         pathElements: Record<string, string>,
         inUserAssignedIdentities = false
     ): any {
-        if (isNullOrUndefined(obj)) return null
         if (Array.isArray(obj)) {
             return obj.map((x) => this.mockUserAssignedIdentities(x, pathElements))
         } else if (typeof obj === 'object') {

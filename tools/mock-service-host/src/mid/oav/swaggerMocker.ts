@@ -11,7 +11,6 @@ import {
 import { ExampleRule, getRuleValidator } from 'oav/dist/lib/generator/exampleRule'
 import { JsonLoader } from 'oav/dist/lib/swagger/jsonLoader'
 import { LiveRequest } from 'oav/dist/lib/liveValidation/operationValidator'
-import { SpecItem } from '../responser'
 import { isNullOrUndefined, logger, setStringIfExist } from '../../common/utils'
 import { mockedResourceType } from '../../common/constants'
 import { parse as parseUrl } from 'url'
@@ -39,19 +38,6 @@ export default class SwaggerMocker {
 
     public setRule(exampleRule?: ExampleRule) {
         this.exampleRule = exampleRule
-    }
-
-    public mockForExample(example: any, specItem: SpecItem, spec: any, rp: string) {
-        this.spec = spec
-        if (Object.keys(example.responses).length === 0) {
-            for (const statusCode of Object.keys(specItem.content.responses)) {
-                if (statusCode !== 'default') {
-                    example.responses[`${statusCode}`] = {}
-                }
-            }
-        }
-        example.parameters = this.mockRequest(example.parameters, specItem.content.parameters, rp)
-        example.responses = this.mockResponse(example.responses, specItem)
     }
 
     public patchExampleResponses(example: any, liveRequest: LiveRequest) {
@@ -109,8 +95,7 @@ export default class SwaggerMocker {
                     arr.forEach((item: any) => {
                         if (item.id) {
                             const resourceName = item.name || 'resourceName'
-                            url.pathname = `${url.pathname}/${resourceName}`
-                            item.id = url.pathname
+                            item.id = `${url.pathname}/${resourceName}`
                         }
                         setStringIfExist(item, 'type', resourceType)
                     })
@@ -183,7 +168,7 @@ export default class SwaggerMocker {
         return responseExample
     }
 
-    private mockEachResponse(statusCode: string, responseExample: any, specItem: any) {
+    public mockEachResponse(statusCode: string, responseExample: any, specItem: any) {
         const visited = new Set<string>()
         const validator = getRuleValidator(this.exampleRule).onResponseBody
         const responseSpec = specItem.content.responses[statusCode]

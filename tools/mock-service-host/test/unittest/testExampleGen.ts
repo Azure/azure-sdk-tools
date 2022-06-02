@@ -17,7 +17,7 @@ const statelessProfile = {
 
 describe('example generation:', () => {
     const specRetriever = new SpecRetrieverFilesystem(config)
-    const coordinator = new Coordinator(config, specRetriever, new ResponseGenerator())
+    const coordinator = new Coordinator(config, specRetriever, new ResponseGenerator(config))
     beforeAll(async () => {
         await coordinator.initialize()
     })

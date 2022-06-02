@@ -22,7 +22,6 @@ import {
     createLiveRequestForCreateApiManagementService,
     createLiveRequestForCreateRG,
     createLiveRequestForDeleteApiManagementService,
-    genFakeResponses,
     mockDefaultResponse,
     mockRequest
 } from '../tools'
@@ -39,7 +38,7 @@ const alwaysErrorProfile = {
 
 describe('initialize validator:', () => {
     const specRetriever = new SpecRetrieverFilesystem(config)
-    const coordinator = new Coordinator(config, specRetriever, new ResponseGenerator())
+    const coordinator = new Coordinator(config, specRetriever, new ResponseGenerator(config))
 
     beforeAll(async () => {
         await coordinator.initialize()
@@ -54,13 +53,14 @@ describe('initialize validator:', () => {
 
 describe('generateResponse()', () => {
     const specRetriever = new SpecRetrieverFilesystem(config)
-    const coordinator = new Coordinator(config, specRetriever, new ResponseGenerator())
+    const responseGenerator = new ResponseGenerator(config)
+    const coordinator = new Coordinator(config, specRetriever, responseGenerator)
     beforeAll(async () => {
         await coordinator.initialize()
     })
 
     beforeEach(async () => {
-        coordinator.initiateResourcePool()
+        responseGenerator.initiateResourcePool()
         jest.restoreAllMocks()
     })
 
@@ -266,7 +266,8 @@ describe('generateResponse()', () => {
 
 describe('genStatefulResponse()', () => {
     const specRetriever = new SpecRetrieverFilesystem(config)
-    const coordinator = new Coordinator(config, specRetriever, new ResponseGenerator())
+    const responseGenerator = new ResponseGenerator(config)
+    const coordinator = new Coordinator(config, specRetriever, responseGenerator)
 
     beforeAll(async () => {
         await coordinator.initialize()
@@ -274,7 +275,7 @@ describe('genStatefulResponse()', () => {
     })
 
     beforeEach(async () => {
-        coordinator.initiateResourcePool()
+        responseGenerator.initiateResourcePool()
     })
 
     it('stateful: return 404 for GET even it is a valid_input', async () => {
@@ -286,11 +287,12 @@ describe('genStatefulResponse()', () => {
         //await generateResponse(validator, request, response, statelessProfile)
 
         expect(
-            coordinator.genStatefulResponse(
+            responseGenerator.genStatefulResponse(
                 request,
                 response,
-                { [response.statusCode]: response.body },
-                statefulProfile
+                statefulProfile,
+                response.statusCode,
+                response.body
             )
         ).rejects.toThrow(ResourceNotFound)
     })
@@ -310,7 +312,9 @@ describe('genStatefulResponse()', () => {
         //await generateResponse(validator, request, response, statelessProfile)
 
         expect(
-            coordinator.genStatefulResponse(request, response, genFakeResponses(), statefulProfile)
+            responseGenerator.genStatefulResponse(request, response, statefulProfile, '200', {
+                body: 'faked 200'
+            })
         ).rejects.toThrow(ResourceNotFound)
     })
 
@@ -318,53 +322,50 @@ describe('genStatefulResponse()', () => {
         const response = mockDefaultResponse()
 
         //create rg and service before test
-        await coordinator.genStatefulResponse(
+        await responseGenerator.genStatefulResponse(
             mockRequest(createLiveRequestForCreateRG()),
             response,
-            genFakeResponses(),
-            statefulProfile
+            statefulProfile,
+            '200',
+            {
+                body: 'faked 200'
+            }
         )
-        await coordinator.genStatefulResponse(
+        await responseGenerator.genStatefulResponse(
             mockRequest(createLiveRequestForCreateApiManagementService()),
             response,
-            genFakeResponses(),
-            statefulProfile
+            statefulProfile,
+            '200',
+            {
+                body: 'faked 200'
+            }
         )
 
         // create
         let fileName = path.join(__dirname, '..', 'testData', 'payloads', 'valid_input_create.json')
         let pair: RequestResponsePair = require(fileName)
         let request = mockRequest(pair.liveRequest)
-        await coordinator.genStatefulResponse(
-            request,
-            response,
-            genFakeResponses(),
-            statefulProfile
-        )
+        await responseGenerator.genStatefulResponse(request, response, statefulProfile, '200', {
+            body: 'faked 200'
+        })
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
 
         // read
         fileName = path.join(__dirname, '..', 'testData', 'payloads', 'valid_input.json')
         pair = require(fileName)
         request = mockRequest(pair.liveRequest)
-        await coordinator.genStatefulResponse(
-            request,
-            response,
-            genFakeResponses(),
-            statefulProfile
-        )
+        await responseGenerator.genStatefulResponse(request, response, statefulProfile, '200', {
+            body: 'faked 200'
+        })
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
 
         // delete
         fileName = path.join(__dirname, '..', 'testData', 'payloads', 'valid_input_delete.json')
         pair = require(fileName)
         request = mockRequest(pair.liveRequest)
-        await coordinator.genStatefulResponse(
-            request,
-            response,
-            genFakeResponses(),
-            statefulProfile
-        )
+        await responseGenerator.genStatefulResponse(request, response, statefulProfile, '200', {
+            body: 'faked 200'
+        })
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
     })
 
@@ -372,11 +373,14 @@ describe('genStatefulResponse()', () => {
         const response = mockDefaultResponse()
 
         //create rg
-        await coordinator.genStatefulResponse(
+        await responseGenerator.genStatefulResponse(
             mockRequest(createLiveRequestForCreateRG()),
             response,
-            genFakeResponses(),
-            statefulProfile
+            statefulProfile,
+            '200',
+            {
+                body: 'faked 200'
+            }
         )
 
         // create resource user without create it's parent resource service
@@ -390,7 +394,9 @@ describe('genStatefulResponse()', () => {
         const pair: RequestResponsePair = require(fileName)
         const request = mockRequest(pair.liveRequest)
         expect(
-            coordinator.genStatefulResponse(request, response, genFakeResponses(), statefulProfile)
+            responseGenerator.genStatefulResponse(request, response, statefulProfile, '200', {
+                body: 'faked 200'
+            })
         ).rejects.toThrow(NoParentResource)
     })
 
@@ -398,37 +404,43 @@ describe('genStatefulResponse()', () => {
         const response = mockDefaultResponse()
 
         //create rg and service before test
-        await coordinator.genStatefulResponse(
+        await responseGenerator.genStatefulResponse(
             mockRequest(createLiveRequestForCreateRG()),
             response,
-            genFakeResponses(),
-            statefulProfile
+            statefulProfile,
+            '200',
+            {
+                body: 'faked 200'
+            }
         )
-        await coordinator.genStatefulResponse(
+        await responseGenerator.genStatefulResponse(
             mockRequest(createLiveRequestForCreateApiManagementService()),
             response,
-            genFakeResponses(),
-            statefulProfile
+            statefulProfile,
+            '200',
+            {
+                body: 'faked 200'
+            }
         )
 
         // create
         let fileName = path.join(__dirname, '..', 'testData', 'payloads', 'valid_input_create.json')
         let pair: RequestResponsePair = require(fileName)
         let request = mockRequest(pair.liveRequest)
-        await coordinator.genStatefulResponse(
-            request,
-            response,
-            genFakeResponses(),
-            statefulProfile
-        )
+        await responseGenerator.genStatefulResponse(request, response, statefulProfile, '200', {
+            body: 'faked 200'
+        })
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
 
         // delete parent resource
-        await coordinator.genStatefulResponse(
+        await responseGenerator.genStatefulResponse(
             mockRequest(createLiveRequestForDeleteApiManagementService()),
             response,
-            genFakeResponses(),
-            statefulProfile
+            statefulProfile,
+            '200',
+            {
+                body: 'faked 200'
+            }
         )
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
 
@@ -437,14 +449,17 @@ describe('genStatefulResponse()', () => {
         pair = require(fileName)
         request = mockRequest(pair.liveRequest)
         expect(
-            coordinator.genStatefulResponse(request, response, genFakeResponses(), statefulProfile)
+            responseGenerator.genStatefulResponse(request, response, statefulProfile, '200', {
+                body: 'faked 200'
+            })
         ).rejects.toThrow(ResourceNotFound)
     })
 })
 
 describe('genStatefulResponse() with cascadeEnabled==false', () => {
     const specRetriever = new SpecRetrieverFilesystem(config)
-    const coordinator = new Coordinator(config, specRetriever, new ResponseGenerator())
+    const responseGenerator = new ResponseGenerator(config)
+    const coordinator = new Coordinator(config, specRetriever, responseGenerator)
 
     beforeAll(async () => {
         config.cascadeEnabled = false
@@ -452,18 +467,21 @@ describe('genStatefulResponse() with cascadeEnabled==false', () => {
     })
 
     beforeEach(async () => {
-        coordinator.initiateResourcePool()
+        responseGenerator.initiateResourcePool()
     })
 
     it('stateful with cascadeEnabled==false: create subresource can succeed even if parent resource has not been created', async () => {
         const response = mockDefaultResponse()
 
         //create rg
-        await coordinator.genStatefulResponse(
+        await responseGenerator.genStatefulResponse(
             mockRequest(createLiveRequestForCreateRG()),
             response,
-            genFakeResponses(),
-            statefulProfile
+            statefulProfile,
+            '200',
+            {
+                body: 'faked 200'
+            }
         )
 
         // create resource user without create it's parent resource service
@@ -476,12 +494,9 @@ describe('genStatefulResponse() with cascadeEnabled==false', () => {
         )
         const pair: RequestResponsePair = require(fileName)
         const request = mockRequest(pair.liveRequest)
-        await coordinator.genStatefulResponse(
-            request,
-            response,
-            genFakeResponses(),
-            statefulProfile
-        )
+        await responseGenerator.genStatefulResponse(request, response, statefulProfile, '200', {
+            body: 'faked 200'
+        })
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
     })
 
@@ -489,37 +504,43 @@ describe('genStatefulResponse() with cascadeEnabled==false', () => {
         const response = mockDefaultResponse()
 
         //create rg and service before test
-        await coordinator.genStatefulResponse(
+        await responseGenerator.genStatefulResponse(
             mockRequest(createLiveRequestForCreateRG()),
             response,
-            genFakeResponses(),
-            statefulProfile
+            statefulProfile,
+            '200',
+            {
+                body: 'faked 200'
+            }
         )
-        await coordinator.genStatefulResponse(
+        await responseGenerator.genStatefulResponse(
             mockRequest(createLiveRequestForCreateApiManagementService()),
             response,
-            genFakeResponses(),
-            statefulProfile
+            statefulProfile,
+            '200',
+            {
+                body: 'faked 200'
+            }
         )
 
         // create
         let fileName = path.join(__dirname, '..', 'testData', 'payloads', 'valid_input_create.json')
         let pair: RequestResponsePair = require(fileName)
         let request = mockRequest(pair.liveRequest)
-        await coordinator.genStatefulResponse(
-            request,
-            response,
-            genFakeResponses(),
-            statefulProfile
-        )
+        await responseGenerator.genStatefulResponse(request, response, statefulProfile, '200', {
+            body: 'faked 200'
+        })
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
 
         // delete parent resource
-        await coordinator.genStatefulResponse(
+        await responseGenerator.genStatefulResponse(
             mockRequest(createLiveRequestForDeleteApiManagementService()),
             response,
-            genFakeResponses(),
-            statefulProfile
+            statefulProfile,
+            '200',
+            {
+                body: 'faked 200'
+            }
         )
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
 
@@ -527,19 +548,17 @@ describe('genStatefulResponse() with cascadeEnabled==false', () => {
         fileName = path.join(__dirname, '..', 'testData', 'payloads', 'valid_input.json')
         pair = require(fileName)
         request = mockRequest(pair.liveRequest)
-        await coordinator.genStatefulResponse(
-            request,
-            response,
-            genFakeResponses(),
-            statefulProfile
-        )
+        await responseGenerator.genStatefulResponse(request, response, statefulProfile, '200', {
+            body: 'faked 200'
+        })
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
     })
 })
 
 describe('Example Validation', () => {
     const specRetriever = new SpecRetrieverFilesystem(config)
-    const coordinator = new Coordinator(config, specRetriever, new ResponseGenerator())
+    const responseGenerator = new ResponseGenerator(config)
+    const coordinator = new Coordinator(config, specRetriever, responseGenerator)
 
     beforeAll(async () => {
         config.cascadeEnabled = false
@@ -547,7 +566,7 @@ describe('Example Validation', () => {
     })
 
     beforeEach(async () => {
-        coordinator.initiateResourcePool()
+        responseGenerator.initiateResourcePool()
     })
 
     it('valid example request', async () => {

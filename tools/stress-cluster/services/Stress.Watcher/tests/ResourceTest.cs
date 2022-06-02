@@ -11,7 +11,7 @@ namespace Stress.Watcher.Tests
     public class ResourceTest
     {
         [Fact]
-        public void GetInstanceTest()
+        public void GetTestInstanceTest()
         {
             var schedule = new GenericChaosResource();
             var networkChaos = new ChaosResourceSpec();

@@ -66,7 +66,7 @@ namespace Stress.Watcher
                 } else if (property.PropertyType == typeof(ChaosResourceSpec)) {
                     ChaosResourceSpec chaosSpec = (ChaosResourceSpec)property.GetValue(this, null);
                     string ti = chaosSpec?.GetTestInstance();
-                    testInstance = string.IsNullOrEmpty(ti)?testInstance:ti;
+                    testInstance = string.IsNullOrEmpty(ti) ? testInstance : ti;
                 }
                 if (!string.IsNullOrEmpty(testInstance)) {
                     return testInstance;

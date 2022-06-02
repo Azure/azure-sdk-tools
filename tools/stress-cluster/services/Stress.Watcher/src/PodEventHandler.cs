@@ -168,6 +168,7 @@ namespace Stress.Watcher
                             foreach (string pluralName in Enum.GetNames(typeof(GenericChaosClient.ChaosResourcePlurals))) {
                                 if (pluralName.Contains(cr.Kind.ToLower())) {
                                     plural = pluralName;
+                                    break;
                                 }
                             }
                             await Client.PatchNamespacedCustomObjectWithHttpMessagesAsync(

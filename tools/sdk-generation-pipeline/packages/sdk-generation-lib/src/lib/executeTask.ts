@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+
+import { AzureSDKTaskName } from '../types/commonType';
 import { getTaskBasicConfig, TaskBasicConfig } from '../types/taskBasicConfig';
 import { RunOptions } from '../types/taskInputAndOuputSchemaTypes/CodegenToSdkConfig';
 import { GenerateAndBuildInput } from '../types/taskInputAndOuputSchemaTypes/GenerateAndBuildInput';
@@ -6,18 +9,16 @@ import { InitOutput } from '../types/taskInputAndOuputSchemaTypes/InitOutput';
 import { LiveTestInput } from '../types/taskInputAndOuputSchemaTypes/LiveTestInput';
 import { MockTestInput } from '../types/taskInputAndOuputSchemaTypes/MockTestInput';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
-import { PipelineResult, setTaskResult, taskResult, TaskResult } from '../types/taskResult';
+import { TaskResult } from '../types/taskResult';
 import { requireJsonc } from '../utils/requireJsonc';
-import { runScript } from './runScript';
-import * as fs from 'fs';
 import { createTaskResult } from './generateResult';
-import { AzureSDKTaskName } from '../types/commonType';
+import { runScript } from './runScript';
 
 export async function executeTask(
     taskName: AzureSDKTaskName,
     runScriptOptions: RunOptions,
     cwd: string,
-    inputJson?: GenerateAndBuildInput | MockTestInput | LiveTestInput,
+    inputJson?: GenerateAndBuildInput | MockTestInput | LiveTestInput
 ): Promise<{ taskResult: TaskResult; output: InitOutput | GenerateAndBuildOutput | TestOutput | undefined }> {
     const inputJsonPath = '/tmp/input.json';
     const outputJsonPath = '/tmp/output.json';
@@ -30,24 +31,34 @@ export async function executeTask(
         args.push(inputJsonPath);
     }
     args.push(outputJsonPath);
-    const result = await runScript(runScriptOptions, {
+    const execResult = await runScript(runScriptOptions, {
         cwd: cwd,
-        args: args,
+        args: args
     });
-    let execResult: PipelineResult = 'success';
-    if (result === 'failed') {
-        execResult = 'failure';
-    }
     if (fs.existsSync(outputJsonPath)) {
         const outputJson = requireJsonc(outputJsonPath);
         return {
-            taskResult: createTaskResult("", taskName, execResult, config.pipeFullLog, runScriptOptions.logFilter, outputJson),
-            output: outputJson,
+            taskResult: createTaskResult(
+                '',
+                taskName,
+                execResult,
+                config.pipeFullLog,
+                runScriptOptions.logFilter,
+                outputJson
+            ),
+            output: outputJson
         };
     } else {
         return {
-            taskResult: createTaskResult("", taskName, execResult, config.pipeFullLog, runScriptOptions.logFilter, undefined),
-            output: undefined,
+            taskResult: createTaskResult(
+                '',
+                taskName,
+                execResult,
+                config.pipeFullLog,
+                runScriptOptions.logFilter,
+                undefined
+            ),
+            output: undefined
         };
     }
 }

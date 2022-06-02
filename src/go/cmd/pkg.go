@@ -31,9 +31,7 @@ type Pkg struct {
 	diagnostics []Diagnostic
 	files       map[string][]byte
 	fs          *token.FileSet
-	moduleName  string
 	p           *ast.Package
-	path        string
 	relName     string
 
 	// typeAliases keys are the names of types defined in other packages which this package exports by alias.
@@ -52,16 +50,15 @@ func NewPkg(dir, moduleName string) (*Pkg, error) {
 	pk := &Pkg{
 		c:           newContent(),
 		diagnostics: []Diagnostic{},
-		moduleName:  moduleName,
-		path:        dir,
 		typeAliases: map[string]string{},
 		types:       map[string]typeDef{},
 	}
-	if _, after, found := strings.Cut(dir, moduleName); found {
+	if _, after, found := strings.Cut(dir, filepath.Clean(moduleName)); found {
 		pk.relName = moduleName
 		if after != "" {
 			pk.relName += after
 		}
+		pk.relName = strings.ReplaceAll(pk.relName, "\\", "/")
 	} else {
 		return nil, errors.New(dir + " isn't part of module " + moduleName)
 	}

@@ -568,7 +568,7 @@ func (testsuite *MockTestSuite) SetupSuite() {
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
 
-	testsuite.cred = &MockCredential{}
+	testsuite.cred = &testutil.FakeCredential{}
 
 	testsuite.options = arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
@@ -818,14 +818,7 @@ func (testsuite *MockTestSuite) TestOperations_List() {ctx := context.Background
             testsuite.Require().NoError(err, \\"Failed to advance page for example specification/agrifood/resource-manager/Microsoft.AgFoodPlatform/preview/2020-05-12-preview/examples/Operations_List.json\\")
         }
 }
-
-
-type MockCredential struct {
-}
-
-func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
-	return &azcore.AccessToken{Token: \\"MockToken\\", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
-}",
+",
 }
 `;
 
@@ -1034,7 +1027,7 @@ Tier: to.Ptr(test.SignalRSKUTierStandard),
 },
 nil)
             testsuite.Require().NoError(err)
-            _, err = testutil.PollForTest(ctx, signalRClientCreateOrUpdateResponsePoller)
+            _, err = testutil.PollForTest(testsuite.ctx, signalRClientCreateOrUpdateResponsePoller)
             testsuite.Require().NoError(err)
 
     
@@ -1133,7 +1126,7 @@ Tier: to.Ptr(test.SignalRSKUTierStandard),
 },
 nil)
             testsuite.Require().NoError(err)
-            _, err = testutil.PollForTest(ctx, signalRClientUpdateResponsePoller)
+            _, err = testutil.PollForTest(testsuite.ctx, signalRClientUpdateResponsePoller)
             testsuite.Require().NoError(err)
 
     
@@ -1154,7 +1147,7 @@ KeyType: to.Ptr(test.KeyTypePrimary),
 },
 nil)
             testsuite.Require().NoError(err)
-            _, err = testutil.PollForTest(ctx, signalRClientRegenerateKeyResponsePoller)
+            _, err = testutil.PollForTest(testsuite.ctx, signalRClientRegenerateKeyResponsePoller)
             testsuite.Require().NoError(err)
 
     
@@ -1164,7 +1157,7 @@ testsuite.resourceGroupName,
 resourceName,
 nil)
             testsuite.Require().NoError(err)
-            _, err = testutil.PollForTest(ctx, signalRClientRestartResponsePoller)
+            _, err = testutil.PollForTest(testsuite.ctx, signalRClientRestartResponsePoller)
             testsuite.Require().NoError(err)
 
     
@@ -1174,7 +1167,7 @@ nil)
             usagesClientNewListPager:= usagesClient.NewListPager(testsuite.location,
 nil)
             for usagesClientNewListPager.More() {
-                _, err := usagesClientNewListPager.NextPage(ctx)
+                _, err := usagesClientNewListPager.NextPage(testsuite.ctx)
                 testsuite.Require().NoError(err)
                 break
             }
@@ -1184,7 +1177,7 @@ nil)
             signalRClientNewListByResourceGroupPager:= signalRClient.NewListByResourceGroupPager(testsuite.resourceGroupName,
 nil)
             for signalRClientNewListByResourceGroupPager.More() {
-                _, err := signalRClientNewListByResourceGroupPager.NextPage(ctx)
+                _, err := signalRClientNewListByResourceGroupPager.NextPage(testsuite.ctx)
                 testsuite.Require().NoError(err)
                 break
             }
@@ -1193,7 +1186,7 @@ nil)
     // From step SignalR_ListBySubscription
             signalRClientNewListBySubscriptionPager:= signalRClient.NewListBySubscriptionPager(nil)
             for signalRClientNewListBySubscriptionPager.More() {
-                _, err := signalRClientNewListBySubscriptionPager.NextPage(ctx)
+                _, err := signalRClientNewListBySubscriptionPager.NextPage(testsuite.ctx)
                 testsuite.Require().NoError(err)
                 break
             }
@@ -1204,7 +1197,7 @@ nil)
     testsuite.Require().NoError(err)
             operationsClientNewListPager:= operationsClient.NewListPager(nil)
             for operationsClientNewListPager.More() {
-                _, err := operationsClientNewListPager.NextPage(ctx)
+                _, err := operationsClientNewListPager.NextPage(testsuite.ctx)
                 testsuite.Require().NoError(err)
                 break
             }
@@ -1216,7 +1209,7 @@ testsuite.resourceGroupName,
 resourceName,
 nil)
             testsuite.Require().NoError(err)
-            _, err = testutil.PollForTest(ctx, signalRClientDeleteResponsePoller)
+            _, err = testutil.PollForTest(testsuite.ctx, signalRClientDeleteResponsePoller)
             testsuite.Require().NoError(err)
 }",
 }

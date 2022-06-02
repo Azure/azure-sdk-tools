@@ -39,14 +39,14 @@ var err error
             {%- set _ = allVariables.push(resVariable) %}
             {%- endif %}
             {%- endif %}
-            {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err = testutil.PollForTest(ctx, {{pollerVariable}})
+            {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err = testutil.PollForTest(testsuite.ctx, {{pollerVariable}})
             testsuite.Require().NoError(err)
             {%- endif %}
         {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
             {%- set pagerVariable = clientVariable + example.opName %}
             {{pagerVariable}} {%- if allVariables.indexOf(pagerVariable)<0 %}:{%- set _ = allVariables.push(pagerVariable) %}{%- endif %}= {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
             for {{pagerVariable}}.More() {
-                {% if example.checkResponse %}nextResult{% else %}_{% endif %}, err := {{pagerVariable}}.NextPage(ctx)
+                {% if example.checkResponse %}nextResult{% else %}_{% endif %}, err := {{pagerVariable}}.NextPage(testsuite.ctx)
                 testsuite.Require().NoError(err)
                 {%- if example.checkResponse %}
                     {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
@@ -62,7 +62,7 @@ var err error
 
         {%- if example.isLRO and example.isPageable %}
             for {{resVariable}}.More() {
-                {% if example.checkResponse %}nextResult{% else %}_{% endif %}, err := {{pagerVariable}}.NextPage(ctx)
+                {% if example.checkResponse %}nextResult{% else %}_{% endif %}, err := {{pagerVariable}}.NextPage(testsuite.ctx)
                 testsuite.Require().NoError(err)
                 {%- if example.checkResponse %}
                     {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}

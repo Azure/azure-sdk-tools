@@ -104,7 +104,7 @@ For quick testing of various kubernetes configurations, it can be faster and che
 Not all components of stress testing work in local clusters, however. If testing these components is necessary, the
 recommended action is to spin up a dev cluster.
 
-NOTE: Chaos-Mesh may not work on all local deployments (e.g. Docker Desktop on Windows via WSL).
+NOTE: chaos-mesh may not work on all local deployments (e.g. Docker Desktop on Windows via WSL).
 It may be easier to test services, manifests and containers locally with KIND, and test chaos
 in an Azure AKS cluster (shared or personal).
 

@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { PrepareArtifactFilesInput, prepareArtifactFilesInput } from '../../cliSchema/prepareArtifactFilesCliConfig';
-import { getFileListInPackageFolder } from '../../utils/git';
+import { GitOperationWrapper } from '../../utils/GitOperationWrapper';
 
 function copyFile(filePath: string, targetDir: string) {
     const fileDir = path.dirname(filePath);
@@ -24,6 +24,7 @@ async function prepareSourceCode(
     language: string,
     artifactDir: string
 ) {
+    const gitOperationWrapper: GitOperationWrapper = new GitOperationWrapper();
     for (const p of generateAndBuildOutput.packages) {
         const result = p.result;
         if (result === TaskResultStatus.Failure) {
@@ -40,7 +41,7 @@ async function prepareSourceCode(
             }
 
             if (fs.lstatSync(packagePath).isDirectory()) {
-                for (const filePath of getFileListInPackageFolder(packagePath)) {
+                for (const filePath of await gitOperationWrapper.getFileListInPackageFolder(packagePath)) {
                     copyFile(`${path.join(packagePath, filePath)}`, `${artifactDir}/${language}/${packageName}`);
                 }
             } else {

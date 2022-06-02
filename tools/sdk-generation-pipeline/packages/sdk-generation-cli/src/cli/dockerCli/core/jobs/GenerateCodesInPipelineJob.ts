@@ -12,7 +12,7 @@ export class GenerateCodesInPipelineJob extends BaseJob {
 
     public async execute() {
         const context: DockerTaskEngineContext = new DockerTaskEngineContext();
-        context.initialize(this.context);
+        await context.initialize(this.context);
         await context.runTaskEngine();
     }
 }

@@ -142,7 +142,18 @@ namespace APIViewWeb
             {
                 var searchAsQueryStr = ArrayToQueryString<string>(search);
                 var searchAsSingleString = '"' + String.Join(' ', search) + '"';
-                queryStringBuilder.Append($" AND (r.Author IN {searchAsQueryStr} OR CONTAINS(r.Name, {searchAsSingleString}, true) OR CONTAINS(r.ServiceName, {searchAsSingleString}, true) OR CONTAINS(r.PackageDisplayName, {searchAsSingleString}, true))");
+                queryStringBuilder.Append($" AND (r.Author IN {searchAsQueryStr}");
+                queryStringBuilder.Append($" OR STRINGEQUALS(r.Revisions[0].Name, {searchAsSingleString}, true)");
+                queryStringBuilder.Append($" OR CONTAINS(r.Name, {searchAsSingleString}, true)");
+                queryStringBuilder.Append($" OR CONTAINS(r.ServiceName, {searchAsSingleString}, true)");
+                queryStringBuilder.Append($" OR CONTAINS(r.PackageDisplayName, {searchAsSingleString}, true)");
+                queryStringBuilder.Append($" OR (CONTAINS(r.Name, \"{search[0]}\", true)");
+
+                for (int i = 1; i < search.Count; i++)
+                {
+                    queryStringBuilder.Append($" AND CONTAINS(r.Revisions[0].Name, \"{search[i]}\", true)");
+                }
+                queryStringBuilder.Append($"))");
             }
 
             if (languages != null && languages.Count > 0)

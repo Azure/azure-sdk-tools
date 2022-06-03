@@ -10,6 +10,9 @@
   const searchButton = $( '#reviews-search-button' );
   const resetButton = $( '#reset-filter-button' );
 
+  // Import underscorejs
+  var _ = require('underscore');
+
   // Enable tooltip
   (<any>$('[data-toggle="tooltip"]')).tooltip();
 
@@ -108,11 +111,9 @@
     });
   });
 
-  searchBox.on('input', function(e) {
-    setTimeout(function() {
-      updateListedReviews();
-    }, 1000);
-  });
+  searchBox.on('input', _.debounce(function(e) {
+    updateListedReviews();
+  }, 300));
 
   searchButton.on('click', function() {
     updateListedReviews();

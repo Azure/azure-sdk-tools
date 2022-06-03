@@ -5,7 +5,7 @@
 @model (IEnumerable<string> All, IEnumerable<string> Selected)
 @if (Model.All.Any())
 {
-    @foreach (var item in Model.All)
+    @foreach (var item in Model.All.OrderBy(x => x))
     {
         if (!String.IsNullOrWhiteSpace(item))
         {

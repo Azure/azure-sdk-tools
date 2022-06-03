@@ -158,8 +158,8 @@ namespace APIViewWeb.Pages.Assemblies
     public class ReviewsProperties 
     {
         public (IEnumerable<string> All, IEnumerable<string> Selected) Languages = (All: new List<string>(), Selected: new List<string>());
-        public (IEnumerable<string> All, IEnumerable<string> Selected) State = (All: new List<string> { "Open", "Closed" }, Selected: new List<string> { "Open" });
+        public (IEnumerable<string> All, IEnumerable<string> Selected) State = (All: new List<string> { "Closed", "Open" }, Selected: new List<string> { "Open" });
         public (IEnumerable<string> All, IEnumerable<string> Selected) Status = (All: new List<string> { "Approved", "Pending" }, Selected: new List<string>());
-        public (IEnumerable<string> All, IEnumerable<string> Selected) Type = (All: new List<string> { "Manual", "Automatic", "PullRequest" }, Selected: new List<string>());
+        public (IEnumerable<string> All, IEnumerable<string> Selected) Type = (All: new List<string> { "Automatic", "Manual", "PullRequest" }, Selected: new List<string>());
     }
 }

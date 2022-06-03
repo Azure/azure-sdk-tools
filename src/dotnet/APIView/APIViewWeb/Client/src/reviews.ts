@@ -16,13 +16,14 @@
   // Computes the uri string using the values of search, pagination and various filters
   // Invokes partial page update to list of reviews using ajax
   // Updates the uri displayed on the client
-  function updateListedReviews({ pageNo = 1, pageSize = defaultPageSize, search = "" } = {})
+  function updateListedReviews({ pageNo = 1, pageSize = defaultPageSize } = {})
   {
     var uri = '?handler=reviewspartial';
+    var searchQuery = searchBox.val() as string;
 
-    if (search != null && search.trim() != '')
+    if (searchQuery != null && searchQuery.trim() != '')
     {
-      var searchTerms = search.trim().split(/\s+/);
+      var searchTerms = searchQuery.trim().split(/\s+/);
       searchTerms.forEach(function(value, index){
         uri = uri + '&search=' + encodeURIComponent(value);
       });
@@ -108,14 +109,13 @@
   });
 
   searchBox.on('input', function(e) {
-    var searchQuery = searchBox.val() as string;
     setTimeout(function() {
-      updateListedReviews({ search : searchQuery });
+      updateListedReviews();
     }, 1000);
   });
 
   searchButton.on('click', function() {
-    updateListedReviews({ search : searchBox.val() as string });
+    updateListedReviews();
   });
 
   resetButton.on('click', function(e) {

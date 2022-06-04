@@ -290,7 +290,7 @@ function DeleteOrUpdateResourceGroups() {
   }
 
   Write-Verbose "Fetching groups"
-  $allGroups = @(Get-AzResourceGroup)
+  [Array]$allGroups = Retry { Get-AzResourceGroup }
   $toDelete = @()
   $toUpdate = @()
   Write-Host "Total Resource Groups: $($allGroups.Count)"

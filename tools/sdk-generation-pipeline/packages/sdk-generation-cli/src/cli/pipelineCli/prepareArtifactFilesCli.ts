@@ -5,7 +5,7 @@ import {
     logger,
     requireJsonc,
     SDK,
-    TaskResultStatus
+    TaskResultStatus,
 } from '@azure-tools/sdk-generation-lib';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -45,10 +45,13 @@ async function prepareSourceCode(
 
             if (fs.lstatSync(packagePath).isDirectory()) {
                 for (const filePath of getFileListInPackageFolder(packagePath)) {
-                    copyFile(`${path.join(packagePath, filePath)}`, `${artifactDir}/${language}/${packageName}`);
+                    copyFile(
+                        `${path.join(packagePath, filePath)}`,
+                        `${artifactDir}/${language}/sourceCode/${packageName}`
+                    );
                 }
             } else {
-                copyFile(packagePath, `${artifactDir}/${language}/${packageName}`);
+                copyFile(packagePath, `${artifactDir}/${language}/sourceCode/${packageName}`);
             }
         }
     }
@@ -69,8 +72,8 @@ async function prepareArtifacts(generateAndBuildOutput: GenerateAndBuildOutput, 
 
         for (const artifact of artifacts) {
             const artifactName = path.basename(artifact);
-            fs.mkdirSync(`${artifactDir}/${language}`, { recursive: true });
-            fs.copyFileSync(`${artifact}`, `${artifactDir}/${language}/${artifactName}`);
+            fs.mkdirSync(`${artifactDir}/${language}/artifact`, { recursive: true });
+            fs.copyFileSync(`${artifact}`, `${artifactDir}/${language}/artifact/${artifactName}`);
         }
     }
 }

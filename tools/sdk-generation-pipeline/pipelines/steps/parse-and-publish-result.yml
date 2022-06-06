@@ -63,8 +63,20 @@ steps:
   - task: PublishPipelineArtifact@1
     displayName: Publish SDK Generation pipeline artifact
     inputs:
-      targetPath: $(System.ArtifactsDirectory)/
-      artifactName: sdk-generation
+      targetPath: $(System.ArtifactsDirectory)/${{ parameters.sdk }}/artifact/
+      artifactName: sdk-generation-artifact
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish SDK Generation pipeline sourceCode
+    inputs:
+      targetPath: $(System.ArtifactsDirectory)/${{ parameters.sdk }}/sourceCode/
+      artifactName: sdk-generation-sourceCode
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish SDK Generation pipeline logs
+    inputs:
+      targetPath: $(System.ArtifactsDirectory)/logs/
+      artifactName: sdk-generation-logs
 
   - bash: |
       publishResult \

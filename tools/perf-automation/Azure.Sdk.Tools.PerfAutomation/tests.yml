@@ -58,47 +58,17 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Blobs: 12.11.0
+      - Azure.Storage.Blobs: 12.12.0
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf
       PrimaryPackage: azure-storage-blob
       PackageVersions: &java-storage-package-versions
-      - azure-storage-blob: 12.15.0
-        azure-storage-file-share: 12.12.0
-        azure-storage-file-datalake: 12.8.0
-        azure-core-http-netty: 1.11.8
-        azure-core: 1.26.0
-        reactor-core: 3.4.14
-      - azure-storage-blob: 12.16.0
-        azure-storage-file-share: 12.12.1
-        azure-storage-file-datalake: 12.9.0
-        azure-core-http-netty: 1.11.9
-        azure-core: 1.27.0
-        reactor-core: 3.4.14
-      - azure-storage-blob: 12.16.0
-        azure-storage-file-share: 12.12.1
-        azure-storage-file-datalake: 12.9.0
-        azure-core-http-netty: source
-        azure-core: source
-        reactor-core: 3.4.14
-      - azure-storage-blob: 12.16.1
-        azure-storage-file-share: 12.12.2
-        azure-storage-file-datalake: 12.9.1
-        azure-core-http-netty: 1.12.0
-        azure-core: 1.28.0
-        reactor-core: 3.4.17
       - azure-storage-blob: 12.17.0
         azure-storage-file-share: 12.13.0
         azure-storage-file-datalake: 12.10.0
         azure-core-http-netty: 1.12.0
         azure-core: 1.28.0
-        reactor-core: 3.4.17
-      - azure-storage-blob: 12.17.0
-        azure-storage-file-share: 12.13.0
-        azure-storage-file-datalake: 12.10.0
-        azure-core-http-netty: source
-        azure-core: source
         reactor-core: 3.4.17
       - azure-storage-blob: source
         azure-storage-file-share: source
@@ -112,12 +82,14 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-blob
       PackageVersions:
-      - "@azure/storage-blob": 12.9.0
+      # TODO: Pin version of core to align with older version of storage.  Currently always uses source version of core.
+      - "@azure/storage-blob": 12.10.0
       - "@azure/storage-blob": source
     Python:
       Project: sdk/storage/azure-storage-blob
       PackageVersions:
-      - azure-storage-blob: 12.10.0
+      # TODO: Pin version of core to align with older version of storage
+      - azure-storage-blob: 12.12.0
       - azure-storage-blob: source
     Cpp:
       Project: azure-storage-blobs-perf
@@ -236,7 +208,6 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Files.Shares: 12.9.0
       - Azure.Storage.Files.Shares: 12.10.0
       - Azure.Storage.Files.Shares: source
     Java:
@@ -247,12 +218,12 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-file-share
       PackageVersions:
-      - "@azure/storage-file-share": 12.9.0
+      - "@azure/storage-file-share": 12.10.0
       - "@azure/storage-file-share": source      
     Python:
       Project: sdk/storage/azure-storage-file-share
       PackageVersions:
-      - azure-storage-file-share: 12.7.0
+      - azure-storage-file-share: 12.8.0
       - azure-storage-file-share: source
 
   Tests:
@@ -277,7 +248,7 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Files.DataLake/perf/Azure.Storage.Files.DataLake.Perf/Azure.Storage.Files.DataLake.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Files.DataLake: 12.9.0
+      - Azure.Storage.Files.DataLake: 12.10.0
       - Azure.Storage.Files.DataLake: source
     Java:
       Project: sdk/storage/azure-storage-perf
@@ -287,12 +258,12 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-file-datalake
       PackageVersions:
-      - "@azure/storage-file-datalake": 12.8.0
+      - "@azure/storage-file-datalake": 12.9.0
       - "@azure/storage-file-datalake": source
     Python:
       Project: sdk/storage/azure-storage-file-datalake
       PackageVersions:
-      - azure-storage-file-datalake: 12.6.0
+      - azure-storage-file-datalake: 12.7.0
       - azure-storage-file-datalake: source
 
   Tests:

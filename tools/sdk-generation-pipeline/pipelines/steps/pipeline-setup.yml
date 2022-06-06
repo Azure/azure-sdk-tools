@@ -36,8 +36,7 @@ steps:
         --pipelineStatus=queued \
         --buildId="$(Build.BuildId)" \
         --trigger='${{ parameters.trigger }}'
-      retVal=$?
-      if [ $retVal -ne 0 ]; then
+      if [ $? -ne 0 ]; then
           exit 1
       fi
     displayName: Setup Pipeline Runtime Environment

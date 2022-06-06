@@ -32,8 +32,7 @@ steps:
           --resultOutputPath="/tmp/output/${TASK_NAME}-task-result.json" \
           --dockerResultFile="/tmp/output/taskResults.json" \
           --taskOutputPath="${TASK_OUTPUT_PATH}"
-        retVal=$?
-        if [ $retVal -ne 0 ]; then
+        if [ $? -ne 0 ]; then
             #TODO: when all language support mock test, set exit 1 for parse task result failed
             echo "wait all language support mock test"
             #exit 1
@@ -47,8 +46,7 @@ steps:
         --artifactDir="$(System.ArtifactsDirectory)" \
         --generateAndBuildOutputFile="/tmp/output/generateAndBuildOutputJson.json" \
         --language="${{ parameters.sdk }}"
-      retVal=$?
-      if [ $retVal -ne 0 ]; then
+      if [ $? -ne 0 ]; then
           echo "##vso[task.setvariable variable=pipelineResult;]failed"
           exit 1
       fi
@@ -78,8 +76,7 @@ steps:
         --resultsPath='["/tmp/output/init-task-result.json",
           "/tmp/output/generateAndBuild-task-result.json",
           "/tmp/output/mockTest-task-result.json"]'
-      retVal=$?
-      if [ $retVal -ne 0 ]; then
+      if [ $? -ne 0 ]; then
           echo "##vso[task.setvariable variable=pipelineResult;]failed"
           exit 1
       fi

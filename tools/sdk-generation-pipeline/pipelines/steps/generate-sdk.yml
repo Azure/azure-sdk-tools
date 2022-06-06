@@ -12,8 +12,7 @@ steps:
         --pipelineStatus=in_progress \
         --buildId="$(Build.BuildId)" \
         --trigger='${{ parameters.trigger }}'
-      retVal=$?
-      if [ $retVal -ne 0 ]; then
+      if [ $? -ne 0 ]; then
           exit 1
       fi
     displayName: Publish status
@@ -27,8 +26,7 @@ steps:
         -v /tmp/output:/tmp/output \
         $(DOCKER_IMAGE) \
         --readme=${{ parameters.readmeFile }}
-      retVal=$?
-      if [ $retVal -ne 0 ]; then
+      if [ $? -ne 0 ]; then
           exit 1
       fi
     displayName: Generate sdk

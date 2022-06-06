@@ -1,10 +1,12 @@
-namespace swagger_api_parser
+using SwaggerApiParser;
+
+namespace SwaggerApiParser
 {
     public class SwaggerApiViewGenerator
     {
         public static SwaggerApiViewSpec GenerateSwaggerApiView(SwaggerSpec swaggerSpec, string fileName = "swagger.json", string packageName = "")
         {
-            SwaggerApiViewSpec ret = new SwaggerApiViewSpec {General = {info = swaggerSpec.info, swagger = swaggerSpec.swagger}, fileName = fileName, packageName = packageName};
+            SwaggerApiViewSpec ret = new SwaggerApiViewSpec {SwaggerApiViewGeneral = {info = swaggerSpec.info, swagger = swaggerSpec.swagger, host = swaggerSpec.host}, fileName = fileName, packageName = packageName};
 
             foreach (var (currentPath, operations) in swaggerSpec.paths)
             {
@@ -20,7 +22,6 @@ namespace swagger_api_parser
                         operationIdAction = Utils.GetOperationIdAction(value.operationId)
                     };
                     ret.Paths.AddSwaggerApiViewOperation(op);
-                    ret.Operations.Add(op);
                 }
             }
 

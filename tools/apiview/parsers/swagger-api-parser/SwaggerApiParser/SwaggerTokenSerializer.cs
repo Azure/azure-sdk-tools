@@ -10,7 +10,7 @@ using ApiView;
 using APIView;
 using APIViewWeb;
 
-namespace swagger_api_parser
+namespace SwaggerApiParser
 {
     public class SwaggerTokenSerializer : LanguageService
     {

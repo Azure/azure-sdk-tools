@@ -1,7 +1,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using swagger_api_parser;
+using SwaggerApiParser;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -25,7 +25,7 @@ public class SwaggerApiViewGeneratorTest
         var apiViewGenerator = new SwaggerApiViewGenerator();
         var apiView = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, "runCommands.json", "Microsoft.Compute");
 
-        Assert.Equal("2.0", apiView.General.swagger);
+        Assert.Equal("2.0", apiView.SwaggerApiViewGeneral.swagger);
         Assert.Equal("VirtualMachineRunCommands", apiView.Paths.First().Key);
 
 
@@ -45,7 +45,7 @@ public class SwaggerApiViewGeneratorTest
         var apiViewGenerator = new SwaggerApiViewGenerator();
         var apiView = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, "compute.json", "Microsoft.Compute");
 
-        Assert.Equal("2.0", apiView.General.swagger);
+        Assert.Equal("2.0", apiView.SwaggerApiViewGeneral.swagger);
 
 
         var codeFile = apiView.GenerateCodeFile();

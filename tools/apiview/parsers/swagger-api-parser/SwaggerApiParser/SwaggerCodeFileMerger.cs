@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView;
 
-namespace swagger_api_parser;
+namespace SwaggerApiParser;
 
 public class SwaggerCodeFileMerger
 {

@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace swagger_api_parser
+namespace SwaggerApiParser
 {
     public struct PathNode
     {

@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using swagger_api_parser;
+using SwaggerApiParser;
 using Xunit.Abstractions;
 using Xunit;
 

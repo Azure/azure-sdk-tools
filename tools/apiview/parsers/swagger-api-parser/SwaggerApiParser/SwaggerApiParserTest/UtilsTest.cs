@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using swagger_api_parser;
+using SwaggerApiParser;
 using Xunit;
 using Xunit.Abstractions;
 

@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using APIView;
 
-namespace swagger_api_parser
+namespace SwaggerApiParser
 {
     public class IteratorPath
     {
@@ -30,6 +31,54 @@ namespace swagger_api_parser
         public string CurrentPath()
         {
             return Utils.BuildDefinitionId(this.paths);
+        }
+    }
+
+    public static class TokenSerializer
+    {
+        private const String IntentText = "    ";
+        public static CodeFileToken[] TokenSerialize(object obj, int intent = 0, String[] serializePropertyName = null)
+        {
+            List<CodeFileToken> ret = new List<CodeFileToken>();
+            Type t = obj.GetType();
+            PropertyInfo[] props = t.GetProperties();
+            foreach (var prop in props)
+            {
+                object value = prop.GetValue(obj);
+                if (value == null || (serializePropertyName != null && (serializePropertyName.All(s => prop.Name != s))))
+                {
+                    continue;
+                }
+
+
+                Type propType = prop.PropertyType;
+                ret.Add(Intent(intent));
+                ret.Add(new CodeFileToken(prop.Name, CodeFileTokenKind.Literal));
+                ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
+                if (propType.IsPrimitive || propType == typeof(Decimal) || propType == typeof(String))
+                {
+                    ret.Add(new CodeFileToken(value.ToString(), CodeFileTokenKind.Literal));
+                    ret.Add(NewLine());
+                }
+                else
+                {
+                    ret.Add(NewLine());
+                    var child = TokenSerializer.TokenSerialize(value, intent + 1);
+                    ret.AddRange(child);
+                }
+            }
+
+            return ret.ToArray();
+        }
+
+        public static CodeFileToken Intent(int intent)
+        {
+            return new CodeFileToken(String.Concat(Enumerable.Repeat(IntentText, intent)), CodeFileTokenKind.Whitespace);
+        }
+
+        public static CodeFileToken NewLine()
+        {
+            return new CodeFileToken("", CodeFileTokenKind.Newline);
         }
     }
 

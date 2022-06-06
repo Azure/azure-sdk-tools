@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
-using swagger_api_parser;
+using SwaggerApiParser;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -23,7 +23,7 @@ public class TokenSerializerTest
     [Fact]
     public async Task TestTokenSerializerGeneral()
     {
-        var general = new General {swagger = "2.0", info = {description = "sample", title = "sample swagger"}};
+        var general = new SwaggerApiViewGeneral {swagger = "2.0", info = {description = "sample", title = "sample swagger"}};
         var jsonDoc = JsonSerializer.SerializeToDocument(general);
 
 

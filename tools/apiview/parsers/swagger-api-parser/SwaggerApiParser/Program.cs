@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.CommandLine;
 using System.Linq;
 
-namespace swagger_api_parser
+namespace SwaggerApiParser
 {
     internal class Program
     {

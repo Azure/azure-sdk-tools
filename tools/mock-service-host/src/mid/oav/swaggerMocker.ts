@@ -156,18 +156,6 @@ export default class SwaggerMocker {
         })
     }
 
-    private mockResponse(responseExample: any, specItem: any) {
-        for (const statusCode of Object.keys(responseExample)) {
-            const mockedResp = this.mockEachResponse(
-                statusCode,
-                responseExample[statusCode],
-                specItem
-            )
-            responseExample[statusCode] = mockedResp
-        }
-        return responseExample
-    }
-
     public mockEachResponse(statusCode: string, responseExample: any, specItem: any) {
         const visited = new Set<string>()
         const validator = getRuleValidator(this.exampleRule).onResponseBody

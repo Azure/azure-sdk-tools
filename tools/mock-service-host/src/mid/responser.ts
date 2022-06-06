@@ -255,7 +255,7 @@ export class ResponseGenerator {
         }
     }
 
-    private validateExampleResponse(
+    private async validateExampleResponse(
         liveValidator: oav.LiveValidator,
         url: string,
         method: string,
@@ -265,8 +265,12 @@ export class ResponseGenerator {
             headers?: { [headerName: string]: string }
         }
     ) {
+        if (!response.headers) response.headers = {}
+        if (!response.headers[Headers.ContentType]) {
+            response.headers[Headers.ContentType] = 'application/json'
+        }
         // exception will raise if is not valid example responses
-        liveValidator.validateLiveResponse(
+        const validateResult = await liveValidator.validateLiveResponse(
             {
                 statusCode: statusCode,
                 headers: response.headers,
@@ -277,6 +281,9 @@ export class ResponseGenerator {
                 method: method
             }
         )
+        if (!validateResult.isSuccessful) {
+            throw WrongExampleResponse
+        }
     }
 
     public async loadSpecAndItem(
@@ -331,7 +338,7 @@ export class ResponseGenerator {
                     example.responses,
                     lroCallback
                 )
-                this.validateExampleResponse(
+                await this.validateExampleResponse(
                     liveValidator,
                     liveRequest.url,
                     liveRequest.method,

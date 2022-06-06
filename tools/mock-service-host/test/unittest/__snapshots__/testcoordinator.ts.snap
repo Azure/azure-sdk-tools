@@ -37,6 +37,24 @@ VirtualServerResponse {
 }
 `;
 
+exports[`generateResponse() end up with example response 1`] = `
+VirtualServerResponse {
+  "body": Object {
+    "id": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/apimService1/apis/a1/releases/testrev",
+    "name": "testrev",
+    "properties": Object {
+      "apiId": "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/apimService1/apis/a1",
+      "createdDateTime": "2018-02-08T20:52:00.65Z",
+      "notes": "yahooagain",
+      "updatedDateTime": "2018-02-08T20:52:00.65Z",
+    },
+    "type": "Microsoft.ApiManagement/service/apis/releases",
+  },
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;
+
 exports[`generateResponse() special rule of GET locations 1`] = `
 VirtualServerResponse {
   "body": Object {

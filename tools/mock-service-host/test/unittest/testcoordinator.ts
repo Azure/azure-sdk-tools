@@ -236,8 +236,6 @@ describe('generateResponse()', () => {
 
     it("degrade to non-lro if can't find callback url", async () => {
         const response = mockDefaultResponse()
-
-        // create resource user without create it's parent resource service
         const fileName = path.join(__dirname, '..', 'testData', 'payloads', 'restore_service.json')
         const pair: RequestResponsePair = require(fileName)
         if (!pair.liveRequest.headers) {
@@ -250,8 +248,6 @@ describe('generateResponse()', () => {
 
     it("return error if can't find callback url and there is no 200 response", async () => {
         const response = mockDefaultResponse()
-
-        // create resource user without create it's parent resource service
         const fileName = path.join(__dirname, '..', 'testData', 'payloads', 'backup_service.json')
         const pair: RequestResponsePair = require(fileName)
         if (!pair.liveRequest.headers) {
@@ -261,6 +257,40 @@ describe('generateResponse()', () => {
         await expect(
             coordinator.generateResponse(request, response, statelessProfile)
         ).rejects.toThrow(LroCallbackNotFound)
+    })
+
+    it('end up with example response', async () => {
+        const response = mockDefaultResponse()
+        const fileName = path.join(
+            __dirname,
+            '..',
+            'testData',
+            'payloads',
+            'create_api_release.json'
+        )
+        const pair: RequestResponsePair = require(fileName)
+        const request = mockRequest(pair.liveRequest)
+        await coordinator.generateResponse(request, response, statelessProfile)
+        expect(response).toMatchSnapshot()
+    })
+
+    it('end up with mocked response', async () => {
+        const response = mockDefaultResponse()
+        const fileName = path.join(
+            __dirname,
+            '..',
+            'testData',
+            'payloads',
+            'create_api_operation_policy.json'
+        )
+        const pair: RequestResponsePair = require(fileName)
+        const request = mockRequest(pair.liveRequest)
+        await coordinator.generateResponse(request, response, statelessProfile)
+        assert.strictEqual(response.statusCode, '200')
+        assert.notStrictEqual(
+            (response.body as any)['properties']['policyContent'],
+            '<policies></policies>'
+        )
     })
 })
 

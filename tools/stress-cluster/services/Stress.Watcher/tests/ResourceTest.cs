@@ -13,17 +13,45 @@ namespace Stress.Watcher.Tests
         [Fact]
         public void GetTestInstanceTest()
         {
-            var schedule = new GenericChaosResource();
+            var chaosResource = new GenericChaosResource();
             var networkChaos = new ChaosResourceSpec();
-            schedule.Spec = new ChaosResourceSpec();
-            networkChaos.Selector = new ChaosSelector() {
+            
+            // Null selector
+            chaosResource.Spec = new ChaosResourceSpec();
+            chaosResource.Spec.NetworkChaos = networkChaos;
+            chaosResource.Spec.GetTestInstance().Should().Be(null);
+
+            // Null labelSelector
+            networkChaos.Selector = new ChaosSelector();
+            chaosResource.Spec.NetworkChaos = networkChaos;
+            chaosResource.Spec.GetTestInstance().Should().Be(null);
+
+            // Null testInstance
+            networkChaos.Selector.LabelSelectors = new ChaosLabelSelectors() {
+                TestInstance = null
+            };
+            chaosResource.Spec.NetworkChaos = networkChaos;
+            chaosResource.Spec.GetTestInstance().Should().Be(null);
+
+            // Empty string testInstance
+            networkChaos.Selector.LabelSelectors.TestInstance = "";
+            chaosResource.Spec.NetworkChaos = networkChaos;
+            chaosResource.Spec?.GetTestInstance().Should().Be("");
+
+            // Non-empty nested testInstance
+            networkChaos.Selector.LabelSelectors.TestInstance = "ResourceTestTestInstance";
+            networkChaos.GetTestInstance().Should().Be("ResourceTestTestInstance");
+            chaosResource.Spec.NetworkChaos = networkChaos;
+            chaosResource.Spec.GetTestInstance().Should().Be("ResourceTestTestInstance");
+
+            // Non-empty non-nested testInstance
+            chaosResource.Spec.NetworkChaos = null;
+            chaosResource.Spec.Selector = new ChaosSelector() {
                 LabelSelectors = new ChaosLabelSelectors() {
                     TestInstance = "ResourceTestTestInstance"
                 }
             };
-            schedule.Spec.NetworkChaos = networkChaos;
-            networkChaos.GetTestInstance().Should().Be("ResourceTestTestInstance");
-            schedule.Spec?.GetTestInstance().Should().Be("ResourceTestTestInstance");
+            chaosResource.Spec.GetTestInstance().Should().Be("ResourceTestTestInstance");
         }
     }
 }

@@ -59,17 +59,24 @@ namespace Stress.Watcher
 
         public string GetTestInstance()
         {
-            string testInstance = "";
+            bool isInvalidSpec = true;
+            foreach (PropertyInfo property in this.GetType().GetProperties()) {
+                if (property.GetValue(this, null) != null) {
+                    isInvalidSpec = false;
+                    break;
+                }
+            }
+            if (isInvalidSpec) return null;
+
+            string testInstance = null;
             foreach (PropertyInfo property in this.GetType().GetProperties()) {
                 if (property.PropertyType == typeof(ChaosSelector)) {
-                    testInstance = Selector?.LabelSelectors?.TestInstance;
+                    string ti = Selector?.LabelSelectors?.TestInstance;
+                    testInstance = (ti == null) ? testInstance : ti;
                 } else if (property.PropertyType == typeof(ChaosResourceSpec)) {
                     ChaosResourceSpec chaosSpec = (ChaosResourceSpec)property.GetValue(this, null);
                     string ti = chaosSpec?.GetTestInstance();
-                    testInstance = string.IsNullOrEmpty(ti) ? testInstance : ti;
-                }
-                if (!string.IsNullOrEmpty(testInstance)) {
-                    return testInstance;
+                    testInstance = (ti == null) ? testInstance : ti;
                 }
             }
             return testInstance;

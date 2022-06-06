@@ -1,7 +1,7 @@
 # Change Log - @azure-tools/mock-service-host
 
 ## 0.1.16
-2022-05-27
+2022-06-08
 
 ### Patches
 

@@ -70,9 +70,9 @@ async function prepareArtifacts(generateAndBuildOutput: GenerateAndBuildOutput, 
             continue;
         }
 
+        fs.mkdirSync(`${artifactDir}/${language}/artifact`, { recursive: true });
         for (const artifact of artifacts) {
             const artifactName = path.basename(artifact);
-            fs.mkdirSync(`${artifactDir}/${language}/artifact`, { recursive: true });
             fs.copyFileSync(`${artifact}`, `${artifactDir}/${language}/artifact/${artifactName}`);
         }
     }

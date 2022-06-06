@@ -27,27 +27,6 @@ steps:
       fi
     displayName: Check parameters
 
-  - ${{ if eq(parameters.sdk, 'js') }}:
-    - bash: |
-        echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/Azure/azure-sdk-for-js.git"
-      displayName: Set js sdk repo
-  - ${{ elseif eq(parameters.sdk, 'java') }}:
-    - bash: |
-        echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/Azure/azure-sdk-for-java.git"
-      displayName: Set java sdk repo
-  - ${{ elseif eq(parameters.sdk, 'go') }}:
-    - bash: |
-        echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/Azure/azure-sdk-for-go.git"
-      displayName: Set go sdk repo
-  - ${{ elseif eq(parameters.sdk, 'net') }}:
-    - bash: |
-        echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/Azure/azure-sdk-for-net.git"
-      displayName: Set net sdk repo
-  - ${{ elseif eq(parameters.sdk, 'python') }}:
-    - bash: |
-        echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/Azure/azure-sdk-for-python.git"
-      displayName: Set python sdk repo
-  - ${{ else }}:
-    - bash: |
-        exit 1
-      displayName: Set sdk repo
+  - bash: |
+      echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/Azure/azure-sdk-for-${{parameters.sdk}}.git"
+    displayName: Set sdk repo

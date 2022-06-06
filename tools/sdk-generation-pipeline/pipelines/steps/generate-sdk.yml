@@ -14,7 +14,6 @@ steps:
         --trigger='${{ parameters.trigger }}'
       retVal=$?
       if [ $retVal -ne 0 ]; then
-          echo "##vso[task.setvariable variable=pipelineResult;]failed"
           exit 1
       fi
     displayName: Publish status
@@ -30,6 +29,6 @@ steps:
         --readme=${{ parameters.readmeFile }}
       retVal=$?
       if [ $retVal -ne 0 ]; then
-          echo "##vso[task.setvariable variable=pipelineResult;]failed"
+          exit 1
       fi
     displayName: Generate sdk

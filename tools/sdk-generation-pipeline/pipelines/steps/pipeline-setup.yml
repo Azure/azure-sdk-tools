@@ -30,7 +30,7 @@ steps:
       mkdir -p /tmp/output
       echo "mkdir for pipeline artifact"
       mkdir -p logs
-      echo "##vso[task.setvariable variable=pipelineResult;]success"
+
       publishResult \
         --storageType=eventhub \
         --pipelineStatus=queued \
@@ -38,7 +38,6 @@ steps:
         --trigger='${{ parameters.trigger }}'
       retVal=$?
       if [ $retVal -ne 0 ]; then
-          echo "##vso[task.setvariable variable=pipelineResult;]failed"
           exit 1
       fi
     displayName: Setup Pipeline Runtime Environment

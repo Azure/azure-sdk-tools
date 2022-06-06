@@ -21,6 +21,8 @@ steps:
       do
         if [ ${TASK_NAME} = "mockTest" ]; then
           TASK_OUTPUT_PATH="/tmp/output/mockTestOutput.json"
+        else
+          TASK_OUTPUT_PATH=""
         fi
 
         generateResult \
@@ -32,13 +34,13 @@ steps:
           --taskOutputPath="${TASK_OUTPUT_PATH}"
         retVal=$?
         if [ $retVal -ne 0 ]; then
-            #TODO: when all language support mock test, set pipelineResult for parse task result
+            #TODO: when all language support mock test, set exit 1 for parse task result failed
             echo "wait all language support mock test"
-            #echo "##vso[task.setvariable variable=pipelineResult;]failed"
+            #exit 1
         fi
       done
     displayName: Parse task result
-    condition: or(contains(variables['pipelineResult'], 'success'), contains(variables['pipelineResult'], 'failed'))
+    condition: always()
 
   - bash: |
       prepareArtifactFiles \
@@ -59,14 +61,12 @@ steps:
       cp /tmp/output/mockTest-task-result.json $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-mockTest-result.json | echo "wait all language support mock test"
     displayName: Prepare artifact
     workingDirectory: $(SDK_REPO)
-    condition: contains(variables['pipelineResult'], 'success')
 
   - task: PublishPipelineArtifact@1
     displayName: Publish SDK Generation pipeline artifact
     inputs:
       targetPath: $(System.ArtifactsDirectory)/
       artifactName: sdk-generation
-    condition: contains(variables['pipelineResult'], 'success')
 
   - bash: |
       publishResult \
@@ -74,7 +74,7 @@ steps:
         --pipelineStatus=completed \
         --buildId="$(Build.BuildId)" \
         --trigger='${{ parameters.trigger }}' \
-        --logPath=$(Build.BuildId)/logs \
+        --logPath="www.demoLogUrl.com" \
         --resultsPath='["/tmp/output/init-task-result.json",
           "/tmp/output/generateAndBuild-task-result.json",
           "/tmp/output/mockTest-task-result.json"]'
@@ -126,4 +126,3 @@ steps:
       done
     workingDirectory: $(SDK_REPO)
     displayName: Submit Pull Request
-    condition: contains(variables['pipelineResult'], 'success')

@@ -7,6 +7,6 @@ namespace SwaggerApiParser
 {
     public interface INavigable
     {
-        public NavigationItem BuildNavigationItem();
+        public NavigationItem BuildNavigationItem(IteratorPath iteratorPath = null);
     }
 }

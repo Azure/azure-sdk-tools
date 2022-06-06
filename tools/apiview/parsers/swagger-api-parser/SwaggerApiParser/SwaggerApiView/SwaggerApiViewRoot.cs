@@ -11,11 +11,25 @@ public class SwaggerApiViewRoot : ITokenSerializable
     public String PackageName;
     public Dictionary<String, SwaggerApiViewSpec> SwaggerApiViewSpecs;
 
+    public SwaggerApiViewRoot(string resourceProvider, string packageName)
+    {
+        this.ResourceProvider = resourceProvider;
+        this.PackageName = packageName;
+        this.SwaggerApiViewSpecs = new Dictionary<string, SwaggerApiViewSpec>();
+    }
+
+    public void AddSwaggerSpec(SwaggerSpec swaggerSpec, string fileName = "swagger.json", string resourceProvider = "")
+    {
+        var swaggerApiViewSpec = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, fileName, resourceProvider);
+        this.SwaggerApiViewSpecs.Add(fileName, swaggerApiViewSpec);
+    }
+
     public CodeFile GenerateCodeFile()
     {
+        SerializeContext context = new SerializeContext();
         CodeFile ret = new CodeFile()
         {
-            Tokens = this.TokenSerialize(),
+            Tokens = this.TokenSerialize(context),
             Language = "Swagger",
             VersionString = "0",
             Name = this.ResourceProvider,
@@ -27,10 +41,25 @@ public class SwaggerApiViewRoot : ITokenSerializable
     }
 
 
-    public CodeFileToken[] TokenSerialize(int intent = 0)
+    public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
-        CodeFileToken[] ret = new CodeFileToken[] { };
-        return ret;
+        List<CodeFileToken> ret = new List<CodeFileToken>();
+        foreach (var kv in this.SwaggerApiViewSpecs)
+        {
+            ret.Add(TokenSerializer.Intent(context.intent));
+            ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Keyword));
+            ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
+            ret.Add(TokenSerializer.NewLine());
+            
+            var specContext = new SerializeContext(context.intent + 1, context.IteratorPath);
+            specContext.IteratorPath.Add(kv.Key);
+            
+            var specToken = kv.Value.TokenSerialize(specContext);
+            
+            ret.AddRange(specToken);
+        }
+
+        return ret.ToArray();
     }
 
     public NavigationItem[] BuildNavigationItems()

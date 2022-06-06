@@ -14,9 +14,9 @@ public class SwaggerApiViewOperation : ITokenSerializable
 
     public string _iteratorPath;
 
-    public CodeFileToken[] TokenSerialize(int intent = 0)
+    public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
-        return TokenSerializer.TokenSerialize(this, intent, new string[] { });
+        return TokenSerializer.TokenSerialize(this, context.intent, new string[] { });
     }
 }
 

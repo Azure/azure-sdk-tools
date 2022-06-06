@@ -25,41 +25,51 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
         this.SwaggerApiViewGeneral = new SwaggerApiViewGeneral();
     }
 
-    public CodeFileToken[] TokenSerialize(int intent = 0)
+    public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
 
-        ret.Add(TokenSerializer.Intent(intent));
-        ret.Add(new CodeFileToken("General", CodeFileTokenKind.Keyword));
+        // Token Serialize "General" section.
+        ret.Add(TokenSerializer.Intent(context.intent));
+        context.IteratorPath.Add("General");
+        ret.Add(TokenSerializer.NavigableToken("General", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentPath()));
         ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
         ret.Add(TokenSerializer.NewLine());
-        var generalTokens = this.SwaggerApiViewGeneral.TokenSerialize(intent + 1);
+        var generalTokens = this.SwaggerApiViewGeneral.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath));
         ret.AddRange(generalTokens);
+        context.IteratorPath.Pop();
 
 
-        ret.Add(TokenSerializer.Intent(intent));
-        ret.Add(new CodeFileToken("Path", CodeFileTokenKind.Keyword));
+        // Token serialize "Paths" section.
+        ret.Add(TokenSerializer.Intent(context.intent));
+        context.IteratorPath.Add("Paths");
+        ret.Add(TokenSerializer.NavigableToken("Path", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentPath()));
         ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
         ret.Add(TokenSerializer.NewLine());
-        var pathTokens = this.Paths.TokenSerialize(intent + 1);
+        var pathTokens = this.Paths.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath));
         ret.AddRange(pathTokens);
+        context.IteratorPath.Pop();
 
         return ret.ToArray();
     }
 
-    public NavigationItem[] BuildNavigationItems()
+    public NavigationItem[] BuildNavigationItems(IteratorPath iteratorPath = null)
     {
+        iteratorPath ??= new IteratorPath();
         List<NavigationItem> ret = new List<NavigationItem>();
-        ret.Add(this.SwaggerApiViewGeneral.BuildNavigationItem());
-        ret.Add(this.Paths.BuildNavigationItem());
+
+        ret.Add(this.SwaggerApiViewGeneral.BuildNavigationItem(iteratorPath));
+        ret.Add(this.Paths.BuildNavigationItem(iteratorPath));
         return ret.ToArray();
     }
 
     public CodeFile GenerateCodeFile()
     {
+        SerializeContext context = new SerializeContext();
+        context.IteratorPath.Add(this.fileName);
         CodeFile ret = new CodeFile()
         {
-            Tokens = this.TokenSerialize(),
+            Tokens = this.TokenSerialize(context),
             Language = "Swagger",
             VersionString = "0",
             Name = this.fileName,
@@ -69,9 +79,11 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
         return ret;
     }
 
-    public NavigationItem BuildNavigationItem()
+    public NavigationItem BuildNavigationItem(IteratorPath iteratorPath = null)
     {
-        NavigationItem ret = new NavigationItem {Text = this.fileName, ChildItems = this.BuildNavigationItems()};
+        iteratorPath ??= new IteratorPath();
+        iteratorPath.Add(this.fileName);
+        NavigationItem ret = new NavigationItem {Text = this.fileName, ChildItems = this.BuildNavigationItems(iteratorPath)};
         return ret;
     }
 }

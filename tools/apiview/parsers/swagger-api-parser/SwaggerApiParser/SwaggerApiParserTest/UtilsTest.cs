@@ -414,5 +414,14 @@ public class UtilsTest
             "LogAnalytics_ExportThrottledRequests",
             "DedicatedHosts_Restart"
         };
+
+        var operationIdPrefix = operationIds.Select(Utils.GetOperationIdPrefix);
+        foreach (var prefix in operationIdPrefix)
+        {
+            this.output.WriteLine(prefix);
+        }
+        
+
+
     }
 }

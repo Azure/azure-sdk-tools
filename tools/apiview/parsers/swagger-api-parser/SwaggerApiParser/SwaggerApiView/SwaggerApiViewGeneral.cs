@@ -6,7 +6,7 @@ using APIView;
 
 namespace SwaggerApiParser;
 
-public class SwaggerApiViewGeneral: ITokenSerializable
+public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
 {
     public string swagger { set; get; }
     public Info info { set; get; }
@@ -21,14 +21,17 @@ public class SwaggerApiViewGeneral: ITokenSerializable
         this.info = new Info();
     }
 
-    public CodeFileToken[] TokenSerialize(int intent=0)
+    public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
-
-        return TokenSerializer.TokenSerialize(this, intent);
+        return TokenSerializer.TokenSerialize(this, context.intent);
     }
 
-    public NavigationItem BuildNavigationItem()
+    public NavigationItem BuildNavigationItem(IteratorPath iteratorPath = null)
     {
-        return new NavigationItem() {Text = "General", NavigationId = "General"};
+        iteratorPath ??= new IteratorPath();
+        iteratorPath.Add("General");
+        var ret = new NavigationItem() {Text = "General", NavigationId = iteratorPath.CurrentPath()};
+        iteratorPath.Pop();
+        return ret;
     }
 }

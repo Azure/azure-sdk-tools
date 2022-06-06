@@ -18,6 +18,15 @@ namespace SwaggerApiParser
             this.Add("#");
         }
 
+        public IteratorPath(IteratorPath parent)
+        {
+            this.paths = new LinkedList<string>();
+            foreach (var path in parent.paths)
+            {
+                this.paths.AddLast(path);
+            }
+        }
+
         public void Add(string node)
         {
             this.paths.AddLast(node);
@@ -34,9 +43,29 @@ namespace SwaggerApiParser
         }
     }
 
+    public class SerializeContext
+    {
+        public readonly int intent = 0;
+        public readonly IteratorPath IteratorPath;
+
+        public SerializeContext()
+        {
+            this.IteratorPath = new IteratorPath();
+        }
+
+        public SerializeContext(int intent, IteratorPath iteratorPath)
+        {
+            this.intent = intent;
+            this.IteratorPath = new IteratorPath(iteratorPath);
+        }
+        
+        
+    }
+
     public static class TokenSerializer
     {
-        private const String IntentText = "    ";
+        private const String IntentText = "  ";
+
         public static CodeFileToken[] TokenSerialize(object obj, int intent = 0, String[] serializePropertyName = null)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
@@ -79,6 +108,12 @@ namespace SwaggerApiParser
         public static CodeFileToken NewLine()
         {
             return new CodeFileToken("", CodeFileTokenKind.Newline);
+        }
+
+        public static CodeFileToken NavigableToken(String value, CodeFileTokenKind kind, String definitionId)
+        {
+            var ret = new CodeFileToken(value, kind) {DefinitionId = definitionId};
+            return ret;
         }
     }
 

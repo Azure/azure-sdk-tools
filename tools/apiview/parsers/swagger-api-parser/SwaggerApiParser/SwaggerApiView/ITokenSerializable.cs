@@ -4,5 +4,5 @@ namespace SwaggerApiParser;
 
 public interface ITokenSerializable
 {
-    public CodeFileToken[] TokenSerialize(int intent = 0);
+    public CodeFileToken[] TokenSerialize(SerializeContext context);
 }

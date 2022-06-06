@@ -29,11 +29,12 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
         }
     }
 
-    public NavigationItem BuildNavigationItem()
+    public NavigationItem BuildNavigationItem(IteratorPath iteratorPath = null)
     {
-        NavigationItem ret = new NavigationItem() {Text = "Paths", NavigationId = "Paths"};
-        IteratorPath iteratorPath = new IteratorPath();
+        iteratorPath ??= new IteratorPath();
+
         iteratorPath.Add("Paths");
+        NavigationItem ret = new NavigationItem() {Text = "Paths", NavigationId = iteratorPath.CurrentPath()};
 
         List<NavigationItem> operationIdNavigations = new List<NavigationItem>();
         foreach (var path in this)
@@ -78,26 +79,30 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
         return ret;
     }
 
-    public CodeFileToken[] TokenSerialize(int intent = 0)
+    public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
+
         foreach (var (key, value) in this)
         {
-            ret.Add(TokenSerializer.Intent(intent));
-            ret.Add(new CodeFileToken(key, CodeFileTokenKind.Keyword));
+            ret.Add(TokenSerializer.Intent(context.intent));
+            context.IteratorPath.Add(key);
+            ret.Add(TokenSerializer.NavigableToken(key, CodeFileTokenKind.TypeName, context.IteratorPath.CurrentPath()));
             ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
             ret.Add(TokenSerializer.NewLine());
             foreach (var operation in value)
             {
-                ret.Add(TokenSerializer.Intent(intent + 1));
-                var methodPath = $"{operation.method} - {operation.path}";
-                ret.Add(new CodeFileToken(methodPath, CodeFileTokenKind.Literal));
+                ret.Add(TokenSerializer.Intent(context.intent + 1));
+                ret.Add(new CodeFileToken(operation.method, CodeFileTokenKind.Keyword));
+                ret.Add(new CodeFileToken(" - ", CodeFileTokenKind.Punctuation));
+                ret.Add(new CodeFileToken(operation.path, CodeFileTokenKind.Literal));
                 ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
                 ret.Add(TokenSerializer.NewLine());
-                
+
                 // collapse operation here.
-                ret.AddRange(operation.TokenSerialize(intent + 2));
+                ret.AddRange(operation.TokenSerialize(new SerializeContext(context.intent + 2, context.IteratorPath)));
             }
+            context.IteratorPath.Pop();
         }
 
         return ret.ToArray();

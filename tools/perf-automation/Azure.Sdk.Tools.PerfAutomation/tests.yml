@@ -221,6 +221,7 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-file-share
       PackageVersions:
+      - "@azure/storage-file-share": 12.9.0
       - "@azure/storage-file-share": 12.10.0
       - "@azure/storage-file-share": source      
     Python:

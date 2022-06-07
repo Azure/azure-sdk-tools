@@ -1,9 +1,5 @@
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
-using ApiView;
 using APIView;
 using SwaggerApiParser;
 using Xunit;
@@ -21,60 +17,42 @@ public class TokenSerializerTest
     }
 
     [Fact]
-    public async Task TestTokenSerializerGeneral()
+    public Task TestTokenSerializerPrimitiveType()
+    {
+        const string text = "hello";
+        var ret = TokenSerializer.TokenSerialize(text);
+        
+        Assert.Equal(CodeFileTokenKind.Whitespace, ret[0].Kind);
+        Assert.Equal(CodeFileTokenKind.Literal, ret[1].Kind);
+        Assert.Equal("hello", ret[1].Value);
+        return Task.CompletedTask;
+    } 
+
+    [Fact]
+    public Task TestTokenSerializerGeneral()
     {
         var general = new SwaggerApiViewGeneral {swagger = "2.0", info = {description = "sample", title = "sample swagger"}};
-        var jsonDoc = JsonSerializer.SerializeToDocument(general);
 
+        var ret = TokenSerializer.TokenSerialize(general);
 
-        var ret = Visitor.GenerateCodeFileTokens(jsonDoc);
+        // Assert first line format. 
+        Assert.Equal(CodeFileTokenKind.Whitespace, ret[0].Kind);
+        Assert.Equal(CodeFileTokenKind.Literal, ret[1].Kind);
+        Assert.Equal("swagger", ret[1].Value);
+        Assert.Equal(":", ret[2].Value);
+        Assert.Equal("2.0", ret[3].Value);
 
-        this.output.WriteLine(ret.ToString());
-
-        CodeFile codeFile = new CodeFile()
-        {
-            Tokens = ret,
-            Language = "Swagger",
-            VersionString = "0",
-            Name = "tmp",
-            PackageName = "tmp",
-            Navigation = new NavigationItem[
-            ] { }
-        };
-
-        var outputFilePath = Path.GetFullPath("./part_output.json");
-
-        this.output.WriteLine($"Write result to: {outputFilePath}");
-        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
-        await codeFile.SerializeAsync(writer);
+        return Task.CompletedTask;
     }
 
     [Fact]
-    public void TestSortSwaggerApiViewOperation()
+    public Task TestTokenSerializerListObject()
     {
-        List<SwaggerApiViewOperation> operations = new List<SwaggerApiViewOperation>() { };
+        var general = new SwaggerApiViewGeneral {swagger = "2.0", info = {description = "sample", title = "sample swagger"}, consumes = new List<string>{"application/json", "text/json"}};
+        this.output.WriteLine(general.ToString());
 
-        SwaggerApiViewOperation getA = new SwaggerApiViewOperation() {method = "get", operationId = "getA"};
-        SwaggerApiViewOperation getB = new SwaggerApiViewOperation() {method = "get", operationId = "getB"};
-        SwaggerApiViewOperation putA = new SwaggerApiViewOperation() {method = "put", operationId = "putA"};
-        SwaggerApiViewOperation postA = new SwaggerApiViewOperation() {method = "post", operationId = "postA", path = "/resource/{resourceName}"};
-        SwaggerApiViewOperation postActionA = new SwaggerApiViewOperation() {method = "post", operationId = "postAction", path = "/resource/{resourceName}/restart"};
-        SwaggerApiViewOperation postActionB = new SwaggerApiViewOperation() {method = "post", operationId = "postActionB", path = "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/installPatches"};
-
-        operations.Add(postActionB);
-        operations.Add(getA);
-        operations.Add(getB);
-        operations.Add(putA);
-        operations.Add(postA);
-        operations.Add(postActionA);
-
-
-
-        var comp = new SwaggerApiViewOperationComp();
-        operations.Sort(comp);
-
-        string[] expect = new[] {"post", "put", "get", "get", "post", "post"};
-        List<string> actual = operations.Select(operation => operation.method).ToList();
-        Assert.Equal(expect, actual);
+        var ret = TokenSerializer.TokenSerialize(general);
+        
+        return Task.CompletedTask;
     }
 }

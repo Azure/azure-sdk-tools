@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -58,19 +59,33 @@ namespace SwaggerApiParser
             this.intent = intent;
             this.IteratorPath = new IteratorPath(iteratorPath);
         }
-        
-        
     }
 
     public static class TokenSerializer
     {
         private const String IntentText = "  ";
 
+        /*
+         * TokenSerialize obj into CodeFileTokens.
+         * Each line begin with intent
+         * One line format: <intent> <token 1> <token 2> ... <newline>
+         * 
+         */
         public static CodeFileToken[] TokenSerialize(object obj, int intent = 0, String[] serializePropertyName = null)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
             Type t = obj.GetType();
             PropertyInfo[] props = t.GetProperties();
+            
+            
+            if (t.IsPrimitive || t == typeof(Decimal) || t == typeof(String))
+            {
+                ret.Add(Intent(intent));
+                ret.Add(new CodeFileToken(obj.ToString(), CodeFileTokenKind.Literal));
+                ret.Add(TokenSerializer.NewLine());
+                return ret.ToArray();
+            }
+
             foreach (var prop in props)
             {
                 object value = prop.GetValue(obj);
@@ -84,10 +99,21 @@ namespace SwaggerApiParser
                 ret.Add(Intent(intent));
                 ret.Add(new CodeFileToken(prop.Name, CodeFileTokenKind.Literal));
                 ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
+
+
                 if (propType.IsPrimitive || propType == typeof(Decimal) || propType == typeof(String))
                 {
                     ret.Add(new CodeFileToken(value.ToString(), CodeFileTokenKind.Literal));
                     ret.Add(NewLine());
+                }
+                else if (propType.IsGenericType || propType.IsArray)
+                {
+                    ret.Add(NewLine());
+                    foreach (var item in (IEnumerable)value)
+                    {
+                        var child = TokenSerializer.TokenSerialize(item, intent + 1);
+                        ret.AddRange(child);
+                    }
                 }
                 else
                 {

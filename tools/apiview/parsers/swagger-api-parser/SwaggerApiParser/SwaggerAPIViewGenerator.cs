@@ -6,7 +6,20 @@ namespace SwaggerApiParser
     {
         public static SwaggerApiViewSpec GenerateSwaggerApiView(SwaggerSpec swaggerSpec, string fileName = "swagger.json", string packageName = "")
         {
-            SwaggerApiViewSpec ret = new SwaggerApiViewSpec {SwaggerApiViewGeneral = {info = swaggerSpec.info, swagger = swaggerSpec.swagger, host = swaggerSpec.host}, fileName = fileName, packageName = packageName};
+            SwaggerApiViewSpec ret = new SwaggerApiViewSpec
+            {
+                SwaggerApiViewGeneral =
+                {
+                    info = swaggerSpec.info,
+                    swagger = swaggerSpec.swagger,
+                    host = swaggerSpec.host,
+                    schemes = swaggerSpec.schemes,
+                    consumes = swaggerSpec.consumes,
+                    produces = swaggerSpec.produces
+                },
+                fileName = fileName,
+                packageName = packageName
+            };
 
             foreach (var (currentPath, operations) in swaggerSpec.paths)
             {

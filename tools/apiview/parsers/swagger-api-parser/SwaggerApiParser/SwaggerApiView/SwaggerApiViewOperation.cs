@@ -59,8 +59,8 @@ public class SwaggerApiViewOperationComp : IComparer<SwaggerApiViewOperation>
     {
         return operation.method switch
         {
-            "post" => operation.path.Split("/").Length % 2 == 1 ? "post" : "post-action",
-            "get" => operation.path.Split("/").Length % 2 == 1 ? "get" : "get-action",
+            "post" => operation.path == null || operation.path.Split("/").Length % 2 == 1 ? "post" : "post-action",
+            "get" => operation.path == null || operation.path.Split("/").Length % 2 == 1 ? "get" : "get-action",
             _ => operation.method
         };
     }

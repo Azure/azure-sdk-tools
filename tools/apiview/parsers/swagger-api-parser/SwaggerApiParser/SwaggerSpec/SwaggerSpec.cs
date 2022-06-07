@@ -10,6 +10,8 @@ public class SwaggerSpec
     public string host { get; set; }
 
     public List<string> schemes { get; set; }
+    public List<string> consumes{ get; set; }
+    public List<string> produces{ get; set; }
     public Dictionary<string, Dictionary<string, Operation>> paths { get; set; }
     public Info info { get; set; }
 

@@ -90,10 +90,13 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
             ret.Add(TokenSerializer.NavigableToken(key, CodeFileTokenKind.TypeName, context.IteratorPath.CurrentPath()));
             ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
             ret.Add(TokenSerializer.NewLine());
+            var idx = 0;
             foreach (var operation in value)
             {
+                context.IteratorPath.AddRange(new List<string>{idx.ToString(), "operationId", operation.operationId});
+                
                 ret.Add(TokenSerializer.Intent(context.intent + 1));
-                ret.Add(new CodeFileToken(operation.method, CodeFileTokenKind.Keyword));
+                ret.Add(TokenSerializer.NavigableToken(operation.method, CodeFileTokenKind.Keyword, context.IteratorPath.CurrentPath()));
                 ret.Add(new CodeFileToken(" - ", CodeFileTokenKind.Punctuation));
                 ret.Add(new CodeFileToken(operation.path, CodeFileTokenKind.Literal));
                 ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
@@ -101,7 +104,11 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
 
                 // collapse operation here.
                 ret.AddRange(operation.TokenSerialize(new SerializeContext(context.intent + 2, context.IteratorPath)));
+                
+                context.IteratorPath.PopMulti(3);
+                idx += 1;
             }
+
             context.IteratorPath.Pop();
         }
 

@@ -33,6 +33,22 @@ namespace SwaggerApiParser
             this.paths.AddLast(node);
         }
 
+        public void AddRange(IEnumerable<string> nodes)
+        {
+            foreach (var node in nodes)
+            {
+                this.Add(node);
+            }
+        }
+
+        public void PopMulti(int number)
+        {
+            for (int i = 0; i < number; i++)
+            {
+                this.Pop();
+            }
+        }
+
         public void Pop()
         {
             this.paths.RemoveLast();
@@ -216,8 +232,6 @@ namespace SwaggerApiParser
 
 
                     // Create an ID for this property
-
-
                     string id = this.iteratorPath.CurrentPath();
                     _writer.AnnotateDefinition(id);
                     if (isCollapsible)

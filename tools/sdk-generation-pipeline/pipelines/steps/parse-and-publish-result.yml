@@ -65,6 +65,7 @@ steps:
     inputs:
       targetPath: $(System.ArtifactsDirectory)/${{ parameters.sdk }}/artifact/
       artifactName: sdk-generation-artifact
+    continueOnError: true
 
   - task: PublishPipelineArtifact@1
     displayName: Publish SDK Generation pipeline sourceCode

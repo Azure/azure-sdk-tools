@@ -2,6 +2,18 @@
   "name": "@autorest/gotest",
   "entries": [
     {
+      "version": "4.0.2",
+      "tag": "@autorest/gotest_v4.0.2",
+      "date": "Wed, 08 Jun 2022 07:31:03 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Change test and example filename."
+          }
+        ]
+      }
+    },
+    {
       "version": "4.0.1",
       "tag": "@autorest/gotest_v4.0.1",
       "date": "Mon, 23 May 2022 07:05:43 GMT",

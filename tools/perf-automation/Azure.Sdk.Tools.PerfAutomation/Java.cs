@@ -1,4 +1,5 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -67,6 +68,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     }
                 }
             }
+
+            Console.WriteLine(doc.OuterXml);
 
             doc.Save(projectFile);
         }

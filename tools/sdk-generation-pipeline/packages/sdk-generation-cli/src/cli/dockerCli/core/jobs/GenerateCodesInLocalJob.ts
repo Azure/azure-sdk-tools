@@ -19,7 +19,7 @@ export class GenerateCodesInLocalJob extends BaseJob {
         const gitOperationWrapper = new GitOperationWrapper(this.context.workDir);
         for (const sdkRepo of sdkRepos) {
             if (!existsSync(path.join(this.context.workDir, sdkRepo))) {
-                await gitOperationWrapper.cloneRepo(sdkRepo, this.context.logger);
+                await gitOperationWrapper.cloneRepo(`Azure/${sdkRepo}`, this.context.logger);
             }
             this.context.sdkRepo = path.join(this.context.workDir, sdkRepo);
         }

@@ -50,7 +50,7 @@ export class GitOperationWrapper {
     }
 
     public async cloneRepo(githubRepo: string, logger: Logger) {
-        const child = spawn(`git`, [`clone`, `https://github.com/Azure/${githubRepo}.git`], {
+        const child = spawn(`git`, [`clone`, `https://github.com/${githubRepo}.git`], {
             cwd: this.baseDir,
             stdio: ['ignore', 'pipe', 'pipe']
         });

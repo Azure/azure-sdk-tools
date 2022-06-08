@@ -42,13 +42,6 @@ steps:
     condition: always()
 
   - bash: |
-      prepareArtifactFiles \
-        --artifactDir="$(System.ArtifactsDirectory)" \
-        --generateAndBuildOutputFile="/tmp/output/generateAndBuildOutputJson.json" \
-        --language="${{ parameters.sdk }}"
-      if [ $? -ne 0 ]; then
-          exit 1
-      fi
       cp /tmp/output/docker.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-full.log
       cp /tmp/output/init-task.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-init.log
       cp /tmp/output/init-task-result.json $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-init-result.json
@@ -56,8 +49,16 @@ steps:
       cp /tmp/output/generateAndBuild-task-result.json $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-generateAndBuild-result.json
       cp /tmp/output/mockTest-task.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-mockTest.log | echo "wait all language support mock test"
       cp /tmp/output/mockTest-task-result.json $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-mockTest-result.json | echo "wait all language support mock test"
+      prepareArtifactFiles \
+        --artifactDir="$(System.ArtifactsDirectory)" \
+        --generateAndBuildOutputFile="/tmp/output/generateAndBuildOutputJson.json" \
+        --language="${{ parameters.sdk }}"
+      if [ $? -ne 0 ]; then
+          exit 1
+      fi
     displayName: Prepare artifact
     workingDirectory: $(SDK_REPO)
+    condition: always()
 
   - task: PublishPipelineArtifact@1
     displayName: Publish SDK Generation pipeline artifact
@@ -77,6 +78,7 @@ steps:
     inputs:
       targetPath: $(System.ArtifactsDirectory)/logs/
       artifactName: sdk-generation-logs
+    condition: always()
 
   - bash: |
       publishResult \

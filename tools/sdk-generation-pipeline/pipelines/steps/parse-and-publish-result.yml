@@ -47,7 +47,6 @@ steps:
         --generateAndBuildOutputFile="/tmp/output/generateAndBuildOutputJson.json" \
         --language="${{ parameters.sdk }}"
       if [ $? -ne 0 ]; then
-          echo "##vso[task.setvariable variable=pipelineResult;]failed"
           exit 1
       fi
       cp /tmp/output/docker.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-full.log
@@ -90,7 +89,6 @@ steps:
           "/tmp/output/generateAndBuild-task-result.json",
           "/tmp/output/mockTest-task-result.json"]'
       if [ $? -ne 0 ]; then
-          echo "##vso[task.setvariable variable=pipelineResult;]failed"
           exit 1
       fi
     displayName: Publish status
@@ -100,8 +98,8 @@ steps:
 
   - bash: |
       echo "will create PR"
-      git config --global user.email "no-reply@azure-sdk.com"
-      git config --global user.name "$(REPO_OWNER)"
+      git config --global user.email "$(GIT_USER_EMAIL)"
+      git config --global user.name "$(GIT_USER_NAME)"
 
       packages=`cat /tmp/output/generateAndBuildOutputJson.json | jq -c '.packages | .[]'`
       for package in ${packages}

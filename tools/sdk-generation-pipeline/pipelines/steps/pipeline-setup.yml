@@ -8,6 +8,9 @@ parameters:
   - name: trigger
     type: string
 
+  - name: swagger
+    type: object
+
 steps:
   - task: NodeTool@0
     displayName: Specify Node Version
@@ -45,10 +48,21 @@ steps:
 
   - bash: |
       #TODO: will support clone specific PR and commit
-      git clone --branch $(specRepoBranch) $(specRepoUrl)
+      git clone ${{ parameters.swagger.path }}
       downloadSdkRepoUrl=$(echo $(sdkRepoUrl) | sed "s#https://#https://$(REPO_OWNER):$(REPO_OWNER_ACCESSKEY)@#")
       git clone --branch $(sdkRepoBaseBranch) ${downloadSdkRepoUrl}
-      getRepoName SPEC_REPO $(specRepoUrl)
+      getRepoName SPEC_REPO ${{ parameters.swagger.path }}
       getRepoName SDK_REPO $(sdkRepoUrl)
+      cd ${SPEC_REPO}
+      GITHUB_TOKEN=$(REPO_OWNER_ACCESSKEY)
+      if [ -n "${{ parameters.swagger.branch }}" ];then
+        git checkout ${{ parameters.swagger.branch }}
+      elif [ -n "${{ parameters.swagger.pullRequest }}" ];then
+        gh pr checkout ${{ parameters.swagger.pullRequest }}
+      else
+        echo "invalid swagger parameters"
+        exit 1
+      fi
+
     displayName: Repo pull
     workingDirectory: ../

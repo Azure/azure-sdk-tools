@@ -15,15 +15,9 @@ parameters:
     type: string
 steps:
   - bash: |
-      if [ -z ${{ parameters.swagger.branch }} ];then
-        echo "swagger.branch is empty"
-        exit 1
-      elif [ -z ${{ parameters.swagger.path }} ];then
+      if [ -z ${{ parameters.swagger.path }} ];then
         echo "swagger.path is empty"
         exit 1
-      else
-        echo "##vso[task.setvariable variable=specRepoUrl;]${{ parameters.swagger.path }}"
-        echo "##vso[task.setvariable variable=specRepoBranch;]${{ parameters.swagger.branch }}"
       fi
     displayName: Check parameters
 

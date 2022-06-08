@@ -114,7 +114,7 @@ namespace SwaggerApiParser
                 Type propType = prop.PropertyType;
                 ret.Add(Intent(intent));
                 ret.Add(new CodeFileToken(prop.Name, CodeFileTokenKind.Literal));
-                ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
+                ret.Add(Colon());
 
 
                 if (propType.IsPrimitive || propType == typeof(Decimal) || propType == typeof(String))
@@ -147,9 +147,23 @@ namespace SwaggerApiParser
             return new CodeFileToken(String.Concat(Enumerable.Repeat(IntentText, intent)), CodeFileTokenKind.Whitespace);
         }
 
+        public static CodeFileToken[] OneLineToken(int intent, IEnumerable<CodeFileToken> contentTokens)
+        {
+            List<CodeFileToken> ret = new List<CodeFileToken>();
+            ret.Add(TokenSerializer.Intent(intent));
+            ret.AddRange(contentTokens);
+            ret.Add(NewLine());
+            return ret.ToArray();
+        }
+
         public static CodeFileToken NewLine()
         {
             return new CodeFileToken("", CodeFileTokenKind.Newline);
+        }
+
+        public static CodeFileToken Colon()
+        {
+            return new CodeFileToken(": ", CodeFileTokenKind.Punctuation);
         }
 
         public static CodeFileToken NavigableToken(String value, CodeFileTokenKind kind, String definitionId)

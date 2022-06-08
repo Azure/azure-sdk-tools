@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using APIView;
 
@@ -8,15 +9,63 @@ public class SwaggerApiViewOperation : ITokenSerializable
     public string operationId { get; set; }
     public string operationIdPrefix;
     public string operationIdAction { get; set; }
+    public string description { get; set; }
     public string method { get; set; }
     public string path { get; set; }
+
+    public Boolean xMsLongRunningOperation { get; set; }
     public Operation operation { get; set; }
+
+    public SwaggerApiViewOperationParameters PathParameters { get; set; }
+    public SwaggerApiViewOperationParameters QueryParameters { get; set; }
+    public SwaggerApiViewOperationParameters BodyParameters { get; set; }
+
+    public List<SwaggerApiViewResponse> Responses { get; set; }
 
     public string _iteratorPath;
 
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
-        return TokenSerializer.TokenSerialize(this, context.intent, new string[] { });
+        List<CodeFileToken> ret = new List<CodeFileToken>();
+        ret.Add(TokenSerializer.Intent(context.intent));
+        ret.Add(new CodeFileToken(this.operationIdAction, CodeFileTokenKind.TypeName));
+        ret.Add(TokenSerializer.NewLine());
+
+
+        ret.Add(TokenSerializer.Intent(context.intent));
+        ret.Add(new CodeFileToken(this.description, CodeFileTokenKind.Literal));
+        ret.Add(TokenSerializer.NewLine());
+
+        if (this.xMsLongRunningOperation)
+        {
+            ret.Add(TokenSerializer.Intent(context.intent));
+            ret.Add(new CodeFileToken("x-ms-long-running-operation", CodeFileTokenKind.Keyword));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(new CodeFileToken("true", CodeFileTokenKind.Literal));
+            ret.Add(TokenSerializer.NewLine());
+        }
+
+        ret.Add(TokenSerializer.Intent(context.intent));
+        ret.Add(new CodeFileToken("Parameters", CodeFileTokenKind.Keyword));
+        ret.Add(TokenSerializer.Colon());
+        ret.Add(TokenSerializer.NewLine());
+
+        ret.AddRange(PathParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
+        ret.AddRange(QueryParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
+        ret.AddRange(BodyParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
+
+
+        ret.Add(TokenSerializer.Intent(context.intent));
+        ret.Add(new CodeFileToken("Responses", CodeFileTokenKind.Keyword));
+        ret.Add(TokenSerializer.Colon());
+        ret.Add(TokenSerializer.NewLine());
+
+        foreach (var response in Responses)
+        {
+            ret.AddRange(response.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
+        }
+
+        return ret.ToArray();
     }
 }
 

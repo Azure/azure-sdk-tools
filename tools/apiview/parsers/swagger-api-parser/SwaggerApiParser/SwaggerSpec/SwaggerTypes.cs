@@ -24,7 +24,7 @@ namespace SwaggerApiParser
         public List<BaseSchema> oneOf { get; set; }
 
         // public Boolean additionalProperties { get; set; }
-        public Boolean readOnly { get; set; }
+        public bool readOnly { get; set; }
         public string discriminator { get; set; }
         public Dictionary<string, BaseSchema> properties { get; set; }
 
@@ -38,5 +38,10 @@ namespace SwaggerApiParser
 
 
         // public List<BaseSchema> items { get; set; }
+
+        public bool IsRefObj()
+        {
+            return this.Ref != null;
+        }
     }
 }

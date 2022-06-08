@@ -48,7 +48,7 @@ public class SwaggerApiViewRoot : ITokenSerializable
         {
             ret.Add(TokenSerializer.Intent(context.intent));
             ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Keyword));
-            ret.Add(new CodeFileToken(":", CodeFileTokenKind.Punctuation));
+            ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
             
             var specContext = new SerializeContext(context.intent + 1, context.IteratorPath);

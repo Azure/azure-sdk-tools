@@ -71,6 +71,7 @@ stages:
               sdk: ${{ parameters.sdkToGernerate }}
               sdkRepoBaseBranch: ${{ variables.sdkRepoBaseBranch }}
               trigger: ${{ parameters.clientAgent }}
+              swagger: ${{ parameters.swagger }}
 
           - template: ./pipelines/steps/generate-sdk.yml
             parameters:

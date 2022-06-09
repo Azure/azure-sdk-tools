@@ -28,7 +28,7 @@
         private const string BuildsContainerName = "builds";
         private const string BuildLogLinesContainerName = "buildloglines";
         private const string BuildTimelineRecordsContainerName = "buildtimelinerecords";
-        private const string TestRunsContainerNameTestRunsContainerName = "testruns";
+        private const string TestRunsContainerName = "testruns";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
@@ -62,7 +62,7 @@
             {
                 throw new ArgumentNullException(nameof(blobServiceClient));
             }
-            
+
             if (queueServiceClient == null)
             {
                 throw new ArgumentNullException(nameof(queueServiceClient));
@@ -72,11 +72,11 @@
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.logProvider = logProvider ?? throw new ArgumentNullException(nameof(logProvider));
             this.buildClient = buildClient ?? throw new ArgumentNullException(nameof(buildClient));
-            this.testResultsClient = testResultsClient ?? throw new ArgumentNullException(nameof(testResultsClient));
+            this.testResultsClient = testResultsClient ?? throw new ArgumentNullException(nameof(testResultsClient)); 
             this.buildsContainerClient = blobServiceClient.GetBlobContainerClient(BuildsContainerName);
             this.buildTimelineRecordsContainerClient = blobServiceClient.GetBlobContainerClient(BuildTimelineRecordsContainerName);
             this.buildLogLinesContainerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
-            this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerNameTestRunsContainerName);
+            this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerName);
             this.queueClient = queueServiceClient.GetQueueClient(this.options.Value.BuildLogBundlesQueueName);
             this.queueClient.CreateIfNotExists();
         }
@@ -141,7 +141,7 @@
             {
                 return;
             }
-    
+
             await UploadBuildBlobAsync(account, build);
 
             await UploadTestRunBlobsAsync(account, build);
@@ -178,7 +178,7 @@
                 {
                     await EnqueueBuildLogBundleAsync(bundle);
                 }
-            }            
+            }
         }
 
         public async Task ProcessBuildLogBundleAsync(BuildLogBundle buildLogBundle)
@@ -233,14 +233,14 @@
                 {
                     // find all of the child task records
                     var childRecords = timeline.Records.Where(x => x.ParentId == logRecord.Id);
-                    
+
                     // sum the line counts for all of the child task records
                     var childLineCount = childRecords
                         .Where(x => x.Log != null && logsById.ContainsKey(x.Log.Id))
                         .Sum(x => logsById[x.Log.Id].LineCount);
-                    
+
                     // if the job's line count is the task line count + 2, then we can skip the job log
-                    if (log.LineCount == childLineCount + 2)                    
+                    if (log.LineCount == childLineCount + 2)
                     {
                         this.logger.LogTrace("Skipping redundant logs for build {BuildId}, job {RecordId}, log {LogId}", build.Id, logRecord.Id, log.Id);
                         continue;
@@ -426,7 +426,7 @@
                 throw;
             }
         }
-        
+
         private async Task UploadLogLinesBlobAsync(BuildLogBundle build, BuildLogInfo log)
         {
             try
@@ -459,12 +459,12 @@
                     while (true)
                     {
                         var line = await logReader.ReadLineAsync();
-                        
+
                         if (line == null)
                         {
                             break;
                         }
-                        
+
                         var isLastLine = logReader.EndOfStream;
                         lineNumber += 1;
                         characterCount += line.Length;
@@ -480,7 +480,7 @@
                             : lastTimeStamp;
 
                         lastTimeStamp = timestamp;
-                        
+
                         var message = match.Success ? match.Groups[2].Value : line;
 
                         await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
@@ -527,7 +527,7 @@
             {
                 var continuationToken = string.Empty;
                 var buildIds = new[] { build.Id };
-                
+
                 var minLastUpdatedDate = build.QueueTime.Value.AddHours(-1);
                 var maxLastUpdatedDate = build.FinishTime.Value.AddHours(1);
 
@@ -561,7 +561,7 @@
                     } while (!string.IsNullOrEmpty(continuationToken));
 
                     rangeStart = rangeEnd;
-                }                
+                }
             }
             catch (Exception ex)
             {

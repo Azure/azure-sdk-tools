@@ -1,29 +1,41 @@
-using System;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
+using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
-namespace Azure.Sdk.Tools.PipelineWitness.Queue.Functions
+namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
-    public class AzurePipelinesBuildLogBundleFunction
+    internal class BuildLogBundleQueueWorker : QueueWorkerBackgroundService
     {
         private readonly ILogger logger;
-        private readonly BlobUploadProcessor runProcessor;
         private readonly TelemetryClient telemetryClient;
+        private readonly BlobUploadProcessor runProcessor;
 
-        public AzurePipelinesBuildLogBundleFunction(ILogger<AzurePipelinesBuildLogBundleFunction> logger, BlobUploadProcessor runProcessor, TelemetryClient telemetryClient)
+        public BuildLogBundleQueueWorker(
+            ILogger<BuildLogBundleQueueWorker> logger,
+            BlobUploadProcessor runProcessor,
+            QueueServiceClient queueServiceClient,
+            TelemetryClient telemetryClient,
+            IOptions<PipelineWitnessSettings> options)
+            : base(
+                  logger, 
+                  queueServiceClient.GetQueueClient(options.Value.BuildLogBundlesQueueName),
+                  queueServiceClient.GetQueueClient($"{options.Value.BuildLogBundlesQueueName}-poison"),
+                  telemetryClient, 
+                  options)
         {
             this.logger = logger;
             this.runProcessor = runProcessor;
             this.telemetryClient = telemetryClient;
         }
 
-        [FunctionName("AzurePipelinesBuildLogBundle")]
-        public async Task Run([QueueTrigger("%BuildLogBundlesQueueName%")]QueueMessage message)
+        internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
         {
             logger.LogInformation("Processing build log bundle message.");
 
@@ -49,8 +61,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.Queue.Functions
                 logger.LogError(ex, "Failed to deserialize message body.");
                 throw;
             }
-                        
+
+            // TODO: Add cancellation token propatagion
             await runProcessor.ProcessBuildLogBundleAsync(buildLogBundle);
         }
     }
+
 }

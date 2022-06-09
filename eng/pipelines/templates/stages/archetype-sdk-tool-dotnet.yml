@@ -78,7 +78,7 @@ stages:
             inputs:
               version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
 
-          - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) -warnaserror --logger trx'
+          - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
             displayName: 'Test'
             workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
             env:

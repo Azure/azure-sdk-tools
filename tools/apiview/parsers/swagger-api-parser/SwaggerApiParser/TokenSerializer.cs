@@ -62,7 +62,7 @@ namespace SwaggerApiParser
 
     public class SerializeContext
     {
-        public readonly int intent = 0;
+        public  int intent = 0;
         public readonly IteratorPath IteratorPath;
 
         public SerializeContext()

@@ -21,6 +21,15 @@ namespace SwaggerApiParser
                 packageName = packageName
             };
 
+            SchemaCache schemaCache = new SchemaCache();
+            foreach (var definition in swaggerSpec.definitions)
+            {
+                if (!schemaCache.Cache.ContainsKey(definition.Key))
+                {
+                    schemaCache.Cache.TryAdd(definition.Key, definition.Value);
+                }
+            }
+
             foreach (var (currentPath, operations) in swaggerSpec.paths)
             {
                 foreach (var (key, value) in operations)
@@ -54,10 +63,11 @@ namespace SwaggerApiParser
                             name = param.name,
                             required = param.required,
                             In = param.In,
-                            schema = param.schema,
+                            schema = schemaCache.GetResolvedSchema(param.schema),
                             Ref = param.Ref,
                             type = param.type
                         };
+
 
                         switch (param.In)
                         {
@@ -76,11 +86,11 @@ namespace SwaggerApiParser
                     foreach (var (statusCode, response) in value.responses)
                     {
                         var schema = response.schema;
-                        
+
                         //Resolve ref obj for response schema.
-                        if (response.schema != null && response.schema.IsRefObj())
+                        if (response.schema != null)
                         {
-                            schema = (BaseSchema)swaggerSpec.ResolveRefObj(response.schema.Ref);
+                            schema = schemaCache.GetResolvedSchema(schema);
                         }
 
                         op.Responses.Add(new SwaggerApiViewResponse() {description = response.description, statusCode = statusCode, schema = schema});

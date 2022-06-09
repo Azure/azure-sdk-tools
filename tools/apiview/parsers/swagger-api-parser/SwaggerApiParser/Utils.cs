@@ -169,5 +169,10 @@ namespace SwaggerApiParser
         {
             return $"{string.Join('-', paths).TrimStart('#')}";
         }
+
+        public static string GetDefinitionType(string Ref)
+        {
+            return Ref.Split("/").Last();
+        }
     }
 }

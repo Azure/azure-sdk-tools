@@ -17,8 +17,8 @@ jobs:
         run: |
           ${{ github.workspace }}/eng/scripts/Add-IssueToProject.ps1 `
            -label "${{ github.event.label.name }}" `
-           -issueId "${{ github.event.issue.node_id }}" `
-           -issueNumber "${{ github.event.issue.number }}" `
+           -issueId "${{ github.event.issue.node_id }}${{ github.event.pull_request.node_id }}" `
+           -issueNumber "${{ github.event.issue.number }}${{ github.event.pull_request.number }}" `
            -labelAdded:$("${{ github.event.action }}" -eq "labeled") `
            -labelToProjectFile "${{ github.workspace }}/eng/label-to-project.config" `
 

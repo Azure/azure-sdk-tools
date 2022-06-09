@@ -14,9 +14,9 @@ jobs:
       - name: Check if label maps to project
         run: |
           ${{ github.workspace }}/eng/scripts/Add-IssueToProject.ps1 `
-           -label ${{ github.event.label.name }} `
-           -issueId ${{ github.event.issue.node_id }} `
-           -issueNumber ${{ github.event.issue.number }} `
+           -label "${{ github.event.label.name }}" `
+           -issueId "${{ github.event.issue.node_id }}" `
+           -issueNumber "${{ github.event.issue.number }}" `
            -labelAdded:$("${{ github.event.action }}" -eq "labeled") `
            -labelToProjectFile "${{ github.workspace }}/eng/label-to-project.config" `
 

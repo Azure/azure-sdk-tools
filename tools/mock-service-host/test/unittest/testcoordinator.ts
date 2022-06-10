@@ -77,6 +77,18 @@ describe('generateResponse()', () => {
         await coordinator.Validator.validateLiveRequestResponse(pair)
     })
 
+    it('validate status of LRO callback', async () => {
+        const fileName = path.join(__dirname, '..', 'testData', 'payloads', 'valid_input.json')
+        const pair: RequestResponsePair = require(fileName)
+        const request = mockRequest(pair.liveRequest)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        request.query!['lro-callback'] = 'true'
+        const response = mockDefaultResponse()
+        await coordinator.generateResponse(request, response, statelessProfile)
+        assert.strictEqual(response.statusCode, pair.liveResponse.statusCode)
+        assert.strictEqual(response.body.status, 'Succeeded')
+    })
+
     it('alwaysError: return 500 even for a valid_input', async () => {
         const fileName = path.join(__dirname, '..', 'testData', 'payloads', 'valid_input.json')
         const pair: RequestResponsePair = require(fileName)

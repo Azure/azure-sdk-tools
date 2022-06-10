@@ -352,6 +352,10 @@ export class ResponseGenerator {
                     {},
                     specItem
                 ) as any
+            } finally {
+                if (liveRequest.query?.[LRO_CALLBACK] === 'true') {
+                    this.setStatusToSuccess(example.responses[statusCode].body)
+                }
             }
             this.swaggerMocker.patchExampleResponses(example, liveRequest)
         }
@@ -527,7 +531,6 @@ export class ResponseGenerator {
                     const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
                     if (result) {
                         ;[code, ret] = result
-                        ret = this.setStatusToSuccess(ret)
                     } else {
                         const result = this.findResponse(
                             exampleResponses,
@@ -535,7 +538,6 @@ export class ResponseGenerator {
                         )
                         if (result) {
                             ;[code, ret] = result
-                            ret = this.setStatusToSuccess(ret)
                         } else {
                             const result = this.findResponse(
                                 exampleResponses,
@@ -543,7 +545,6 @@ export class ResponseGenerator {
                             )
                             if (result) {
                                 ;[code, ret] = result
-                                ret = this.setStatusToSuccess(ret)
                             } else {
                                 // if no 200/201/204 response, throw exception
                                 throw new WrongExampleResponse()
@@ -556,7 +557,6 @@ export class ResponseGenerator {
                         const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
                         if (result) {
                             ;[code, ret] = result
-                            ret = this.setStatusToSuccess(ret)
                         } else {
                             // if no 200 response, throw exception
                             throw new WrongExampleResponse()
@@ -566,7 +566,6 @@ export class ResponseGenerator {
                         const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
                         if (result) {
                             ;[code, ret] = result
-                            ret = this.setStatusToSuccess(ret)
                         } else {
                             // if no 200 response, throw exception
                             throw new WrongExampleResponse()

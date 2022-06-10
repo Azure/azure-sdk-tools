@@ -55,7 +55,12 @@ export default class SwaggerMocker {
         let resourceType = ''
         let foundProvider = false
         for (let i = 0; i < pathElements.length; i++) {
-            if (i % 2 === 0 && pathElements[i].match(/microsoft\..+/i)) {
+            if (
+                i > 0 &&
+                i % 2 === 0 &&
+                pathElements[i].match(/microsoft\..+/i) &&
+                pathElements[i - 1].match(/providers/i)
+            ) {
                 foundProvider = true
                 resourceType = pathElements[i]
             }

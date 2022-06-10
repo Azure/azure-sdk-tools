@@ -2,6 +2,9 @@ using System.IO;
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Net;
 using System;
+using Newtonsoft.Json;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -34,13 +37,63 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             throw new NotImplementedException();
         }
 
-        public GitAssetsConfiguration ParseConfigurationFile(string assetsJsonPath)
+        public async Task<GitAssetsConfiguration> ParseConfigurationFile(string assetsJsonPath)
         {
             if (!File.Exists(assetsJsonPath)) {
                 throw new HttpException(HttpStatusCode.BadRequest, $"The provided assets json path of \"{assetsJsonPath}\" does not exist.");
             }
+            JsonDocument assetsContent = null;
+
+            var pathToAssets = ResolveAssetsJson(assetsJsonPath);
+
+            using (FileStream fs = File.OpenRead(assetsJsonPath)) {
+                assetsContent = await JsonDocument.ParseAsync(fs, options: new JsonDocumentOptions() { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
+            }
+
+            if (assetsContent == null)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"The provided assets json at \"{assetsJsonPath}\" did not have valid json present.");
+            }
+
+            //if (assetsContent != null)
+            //{
+            //    var recordingFile = GetProp(key, document.RootElement);
+
+            //    if (recordingFile.Value.ValueKind != JsonValueKind.Undefined)
+            //    {
+            //        value = recordingFile.Value.GetString();
+            //    }
+            //    else
+            //    {
+            //        if (!allowNulls)
+            //        {
+            //            throw new HttpException(HttpStatusCode.BadRequest, $"Failed attempting to retrieve value from request body. Targeted key was: {key}. Raw body value was {document.RootElement.GetRawText()}.");
+            //        }
+            //    }
+            //}
+
 
             return new GitAssetsConfiguration();
+        }
+
+        public string ResolveAssetsJson(string inputPath)
+        {
+            var originalPath = inputPath;
+            var directoryEval = EvaluateDirectory(inputPath);
+
+            while (!directoryEval.IsRoot && !directoryEval.IsGitRoot && !directoryEval.AssetsJsonPresent)
+            {
+
+                inputPath = Path.GetDirectoryName(inputPath);
+                directoryEval = EvaluateDirectory(inputPath);
+            }
+
+            if (directoryEval.AssetsJsonPresent)
+            {
+                return Path.Join(inputPath, "assets.json");
+            }
+
+            throw new HttpException(HttpStatusCode.BadRequest, $"Unable to locate an assets.json at or above the targeted directory \"{originalPath}\".");
         }
 
         /// <summary>

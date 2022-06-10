@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Xunit;
@@ -19,8 +20,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     ""AssetsRepo"" = ""Azure/azure-sdk-assets-integration""
     ""AssetsRepoPrefixPath"" = ""python/recordings/""
     ""AssetsRepoId"" = """"
-    ""AssetsRepoBranch"" = ""scenario_new_push""
-    ""SHA"" = ""786b4f3d380d9c36c91f5f146ce4a7661ffee3b9""
+    ""AssetsRepoBranch"" = ""scenario_clean_push""
+    ""SHA"" = ""e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7""
 }
 ";
         #endregion
@@ -35,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "folder2\\file1.json"
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(string.Empty, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(String.Empty, folderStructure);
             GitStore store = new GitStore();
 
             var evaluation = store.EvaluateDirectory(testFolder.FullName);
@@ -85,7 +86,107 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestEvaluateDirectoryFindAssetsAboveFolder()
+        public void ResolveAssetsJsonFindsAssetsInTargetFolder()
+        {
+            string[] folderStructure = new string[]
+            {
+                "assets.json"
+            };
+
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            GitStore store = new GitStore();
+
+            var path = store.ResolveAssetsJson(testFolder.FullName);
+
+            Assert.Equal(Path.Join(testFolder.FullName, "assets.json"), path);
+        }
+
+        [Fact]
+        public void ResolveAssetsJsonFindsAssetsInTargetFolderBelowRoot()
+        {
+            string[] folderStructure = new string[]
+            {
+                "folder1\\assets.json",
+            };
+
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var evaluationDirectory = Path.Join(testFolder.FullName, "folder1");
+            GitStore store = new GitStore();
+
+            var path = store.ResolveAssetsJson(evaluationDirectory);
+
+            Assert.Equal(Path.Join(testFolder.FullName, "folder1", "assets.json"), path);
+        }
+
+
+        [Fact]
+        public void ResolveAssetsJsonFindsAssetsAboveTargetFolder()
+        {
+            string[] folderStructure = new string[]
+            {
+                "assets.json",
+                "folder1\\",
+            };
+
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var evaluationDirectory = Path.Join(testFolder.FullName, "folder1");
+            GitStore store = new GitStore();
+
+            var path = store.ResolveAssetsJson(evaluationDirectory);
+
+            Assert.Equal(Path.Join(testFolder.FullName, "assets.json"), path);
+        }
+
+        [Fact]
+        public void ResolveAssetsJsonThrowsOnUnableToLocate()
+        {
+
+            string[] folderStructure = new string[]
+            {
+            };
+
+            var testFolder = TestHelpers.DescribeTestFolder(String.Empty, folderStructure);
+            GitStore store = new GitStore();
+
+            Assert.Throws<HttpException>(() =>
+            {
+                store.ResolveAssetsJson(testFolder.FullName);
+            });
+        }
+
+        [Fact]
+        public void ResolveAssetsJsonThrowsOnUnableToLocateAfterTraversal()
+        {
+
+            string[] folderStructure = new string[]
+            {
+                "folder1\\",
+            };
+
+            var testFolder = TestHelpers.DescribeTestFolder(String.Empty, folderStructure);
+            var evaluationDirectory = Path.Join(testFolder.FullName, "folder1");
+            GitStore store = new GitStore();
+
+            Assert.Throws<HttpException>(() =>
+            {
+                store.ResolveAssetsJson(evaluationDirectory);
+            });
+        }
+
+        [Fact]
+        public void ParseConfigurationThrowsOnEmptyJson()
+        {
+
+        }
+
+        [Fact]
+        public void ParseConfigurationThrowsOnNonExistentJson()
+        {
+
+        }
+
+        [Fact]
+        public void ParseConfigurationThrowsOn()
         {
 
         }

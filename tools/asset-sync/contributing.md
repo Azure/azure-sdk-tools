@@ -3,7 +3,7 @@
 - Using [Ascii-flow](https://asciiflow.com/#/) to generate the art.
 - Using [pester](https://pester.dev/docs/quick-start) to test module.
 
-To properly run these tests, an internet connection is required. They are designed to work an external github repository: `Azure/azure-sdk-assets-integration`. This repository stores various test scenario branches that are duplicated as part of this pester integration test suite.
+To properly run these tests, an internet connection is required. They are designed to work an external github repository: `Azure/azure-sdk-assets-integration`. This repository stores various test scenario branches that are duplicated as part of this pester integration test suite. If the default git user does not have access to the repo, you will run into problems. To get access, one must be part of the `Azure` organization.
 
 ## Using Pester
 

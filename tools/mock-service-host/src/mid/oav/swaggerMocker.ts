@@ -130,11 +130,16 @@ export default class SwaggerMocker {
             const ret: Record<string, any> = {}
             // eslint-disable-next-line prefer-const
             for (let [key, item] of Object.entries(obj)) {
-                if (inUserAssignedIdentities) {
+                if (
+                    inUserAssignedIdentities &&
+                    !key.match(
+                        /\/subscriptions\/.*\/providers\/Microsoft.ManagedIdentity\/userAssignedIdentities\/.*/i
+                    )
+                ) {
                     const subscription =
                         pathElements.subscriptions || '00000000-0000-0000-0000-000000000000'
                     const resourceGroup = pathElements.subscriptions || 'mockGroup'
-                    key = `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${key}`
+                    key = `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/aa`
                 }
                 ret[key] = this.mockUserAssignedIdentities(
                     item,

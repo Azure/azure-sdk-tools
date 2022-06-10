@@ -26,9 +26,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             IOptions<PipelineWitnessSettings> options)
             : base(
                 logger, 
-                queueServiceClient.GetQueueClient(options.Value.BuildCompleteQueueName), 
-                queueServiceClient.GetQueueClient($"{options.Value.BuildCompleteQueueName}-poison"), 
-                telemetryClient, 
+                telemetryClient,
+                queueServiceClient,
+                options.Value.BuildCompleteQueueName, 
                 options)
         {
             this.logger = logger;
@@ -39,8 +39,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
         {
             this.logger.LogInformation("Processing build.complete event.");
-
-            this.logger.LogInformation("Extracting content from message.");
 
             var devopsEvent = JObject.Parse(message.MessageText);
 

@@ -24,10 +24,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             TelemetryClient telemetryClient,
             IOptions<PipelineWitnessSettings> options)
             : base(
-                  logger, 
-                  queueServiceClient.GetQueueClient(options.Value.BuildLogBundlesQueueName),
-                  queueServiceClient.GetQueueClient($"{options.Value.BuildLogBundlesQueueName}-poison"),
-                  telemetryClient, 
+                  logger,
+                  telemetryClient,
+                  queueServiceClient,
+                  options?.Value?.BuildLogBundlesQueueName,
                   options)
         {
             this.logger = logger;
@@ -48,17 +48,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 });
             }
 
-            logger.LogInformation("Message body was: {messageBody}", message.MessageText);
-
             BuildLogBundle buildLogBundle;
             try
             {
-                logger.LogInformation("Extracting content from message.");
                 buildLogBundle = JsonConvert.DeserializeObject<BuildLogBundle>(message.MessageText);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to deserialize message body.");
+                logger.LogError(ex, "Failed to deserialize message body. Body: {MessageBody}", message.MessageText);
                 throw;
             }
 

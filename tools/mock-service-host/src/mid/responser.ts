@@ -352,12 +352,11 @@ export class ResponseGenerator {
                     {},
                     specItem
                 ) as any
-            } finally {
-                if (liveRequest.query?.[LRO_CALLBACK] === 'true') {
-                    this.setStatusToSuccess(example.responses[statusCode].body)
-                }
             }
             this.swaggerMocker.patchExampleResponses(example, liveRequest)
+        }
+        if (liveRequest.query?.[LRO_CALLBACK] === 'true') {
+            this.setStatusToSuccess(example.responses[statusCode].body)
         }
         if (config.enableExampleGeneration) {
             const params = this.genExampleParameters(specItem, liveRequest)

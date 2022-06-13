@@ -486,7 +486,7 @@ local.settings.json
 *.iml
 
 # Typescript output
-src/dotnet/APIView/APIViewWeb/wwwroot/js/*.js*
+src/dotnet/APIView/APIViewWeb/wwwroot/*.js*
 
 # npm
 *-lock.json

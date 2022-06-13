@@ -43,6 +43,15 @@
                         case "swift":
                             <span><img class="mx-1" src="~/icons/swift-original.svg" width="40" alt="@Model.Review.Language"></span>
                             break;
+                        case "kotlin":
+                            <span><img class="mx-1" src="~/icons/kotlin-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "json":
+                            <span><img class="mx-1" src="~/icons/json-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "swagger":
+                            <span><img class="mx-1" src="~/icons/swagger-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
                         default:
                             <span class="badge badge-info"><em>@Model.Review.Language</em></span>
                             break;
@@ -85,7 +94,7 @@
                         <select class="selectpicker show-tick p-0" data-style="btn-light btn-sm border rounded-left-0 m-0" data-live-search="true" data-size="10" data-width="calc(100% - 68px)" data-container="body" id="revisions-bootstraps-select">
                             @foreach (var revision in Model.Review.Revisions.Reverse())
                             {
-                                var approvedBadge = "<span class='badge badge-pill badge-success ml-1 p-1'><i class='fas fa-check-circle'></i> APPROVED</span>";
+                                var approvedBadge = "<i class='fas fa-check-circle text-success ml-2'></i>";
                                 var optionName = revision.IsApproved ? $"{@revision.DisplayName} {@approvedBadge}" : @revision.DisplayName;
                                 var urlValue = @Url.ActionLink("Review", "Assemblies", new {
                                     id = @Model.Review.ReviewId,

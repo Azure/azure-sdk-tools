@@ -1,4 +1,3 @@
-import { b } from '@ts-common/azure-js-dev-tools';
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as path from "path";
@@ -122,10 +121,6 @@ export async function generateAutorestConfigurationFileForSingleClientByPrCommen
     const packageFolderName = outputFolderMatch[1];
     let packageName = getPackageNameFromPackageFolder(packageFolderName);
     const requiredReadme = changeRequiredReadmePath(yamlContent['require'], swaggerRepo);
-    if (!yamlContent['credential-scopes']) {
-        throw new Error(`Cannot find credential-scopes`);
-    }
-    const credentialScope = yamlContent['credential-scopes'];
 
     const autorestConfig = {
         'package-name': packageName,
@@ -135,15 +130,13 @@ export async function generateAutorestConfigurationFileForSingleClientByPrCommen
         'source-code-folder-path': './src',
         require: requiredReadme,
         'rest-level-client': true,
-        'add-credentials': true,
-        'credential-scopes': credentialScope,
         'use-extension': {
             '@autorest/typescript': `${await getLatestCodegen(outputFolderPath)}`
         }
     }
 
     for (const key of Object.keys(yamlContent)) {
-        if (!['output-folder', 'require', 'credential-scopes'].includes(key)) {
+        if (!['output-folder', 'require'].includes(key)) {
             autorestConfig[key] = yamlContent[key];
         }
     }
@@ -157,8 +150,7 @@ export async function generateAutorestConfigurationFileForSingleClientByPrCommen
 ## Configuration
 
 \`\`\`yaml
-${yaml.dump(autorestConfig, {indent: 2, lineWidth: 200})}
-\`\`\`  
+${yaml.dump(autorestConfig, {indent: 2, lineWidth: 200})}\`\`\`  
 `;
     const readmeMdPath = path.join(outputFolderPath, 'swagger', 'README.md');
     fs.writeFileSync(readmeMdPath, readmeMd, {encoding: 'utf-8'});
@@ -173,17 +165,12 @@ export async function generateAutorestConfigurationFileForMultiClientByPrComment
     let packageName: string | undefined = undefined;
     let outputFolderPath: string | undefined = undefined;
     let requiredReadme: any = undefined;
-    let credentialScopes: string | undefined = undefined;
     for (const block of yamlBlocks) {
         if (block.condition.includes('multi-client')) {
             // change required readme.md path to local path
             requiredReadme = changeRequiredReadmePath(block.yamlContent['require'], swaggerRepo);
             if (!requiredReadme) {
                 throw new Error(`Cannot get required readme file in: ${yaml.dump(block.yamlContent, {indent: 2})}`);
-            }
-            credentialScopes = block.yamlContent['credential-scopes'];
-            if (!credentialScopes) {
-                throw new Error(`Cannot get credential-scopes in: ${yaml.dump(block.yamlContent, {indent: 2})}`);
             }
         } else {
             // calculate packageName and package outputFolderPath
@@ -217,15 +204,13 @@ export async function generateAutorestConfigurationFileForMultiClientByPrComment
                 'generate-metadata': true,
                 'license-header': 'MICROSOFT_MIT_NO_VERSION',
                 'rest-level-client': true,
-                'add-credentials': true,
-                'credential-scopes': credentialScopes,
                 require: requiredReadme,
                 'use-extension': {
                     '@autorest/typescript': `${await getLatestCodegen(outputFolderPath)}`
                 }
             }
             for (const key of Object.keys(block.yamlContent)) {
-                if (!['require', 'credential-scopes'].includes(key)) {
+                if (!['require'].includes(key)) {
                     yamlContent[key] = block.yamlContent[key];
                 }
             }

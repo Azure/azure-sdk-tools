@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using APIView;
 
@@ -56,6 +55,11 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
+        if (this.Count == 0)
+        {
+            return ret.ToArray();
+        }
+
         ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(new CodeFileToken(this.type, CodeFileTokenKind.Keyword));
         ret.Add(TokenSerializer.Colon());

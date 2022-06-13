@@ -110,16 +110,21 @@ namespace SwaggerApiParser
                             ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
                             ret.Add(new CodeFileToken(kv.Value.items.type, CodeFileTokenKind.TypeName));
                             ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
+                            ret.Add(TokenSerializer.NewLine());
                         }
                         else
                         {
                             ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
-                            ret.Add(new CodeFileToken(kv.Value.items.Ref.Split("/").Last(), CodeFileTokenKind.TypeName));
+                            ret.Add(new CodeFileToken(kv.Value.items.originalRef.Split("/").Last(), CodeFileTokenKind.TypeName));
                             ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
+                            ret.Add(TokenSerializer.NewLine());
+                            ret.AddRange(kv.Value.items.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
                         }
                     }
-
-                    ret.Add(TokenSerializer.NewLine());
+                    else
+                    {
+                        ret.Add(TokenSerializer.NewLine());
+                    }
                 }
             }
         }

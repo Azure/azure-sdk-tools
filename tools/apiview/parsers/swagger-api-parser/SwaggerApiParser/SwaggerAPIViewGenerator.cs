@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using System.IO;
 
 namespace SwaggerApiParser
 {
     public class SwaggerApiViewGenerator
     {
-        public static SwaggerApiViewSpec GenerateSwaggerApiView(SwaggerSpec swaggerSpec, string fileName = "swagger.json", string packageName = "")
+        public static SwaggerApiViewSpec GenerateSwaggerApiView(SwaggerSpec swaggerSpec, string swaggerFilePath, SchemaCache schemaCache, string packageName = "")
         {
             SwaggerApiViewSpec ret = new SwaggerApiViewSpec
             {
@@ -17,21 +18,25 @@ namespace SwaggerApiParser
                     consumes = swaggerSpec.consumes,
                     produces = swaggerSpec.produces
                 },
-                fileName = fileName,
+                fileName = Path.GetFileName(swaggerFilePath),
                 packageName = packageName
             };
 
-            SchemaCache schemaCache = new SchemaCache();
             foreach (var definition in swaggerSpec.definitions)
             {
                 if (!schemaCache.Cache.ContainsKey(definition.Key))
                 {
-                    schemaCache.Cache.TryAdd(definition.Key, definition.Value);
+                    schemaCache.AddSchema(swaggerFilePath, definition.Key, definition.Value);
                 }
             }
 
             foreach (var (currentPath, operations) in swaggerSpec.paths)
             {
+                if (operations == null)
+                {
+                    continue;
+                }
+
                 foreach (var (key, value) in operations)
                 {
                     SwaggerApiViewOperation op = new SwaggerApiViewOperation
@@ -57,13 +62,14 @@ namespace SwaggerApiParser
                             param = (Parameter)swaggerSpec.ResolveRefObj(parameter.Ref);
                         }
 
+                        var currentSwaggerFilePath = swaggerFilePath;
                         var swaggerApiViewOperationParameter = new SwaggerApiViewParameter
                         {
                             description = param.description,
                             name = param.name,
                             required = param.required,
                             In = param.In,
-                            schema = schemaCache.GetResolvedSchema(param.schema),
+                            schema = schemaCache.GetResolvedSchema(param.schema, currentSwaggerFilePath),
                             Ref = param.Ref,
                             type = param.type
                         };
@@ -86,11 +92,12 @@ namespace SwaggerApiParser
                     foreach (var (statusCode, response) in value.responses)
                     {
                         var schema = response.schema;
+                        var currentSwaggerFilePath = swaggerFilePath;
 
                         //Resolve ref obj for response schema.
                         if (response.schema != null)
                         {
-                            schema = schemaCache.GetResolvedSchema(schema);
+                            schema = schemaCache.GetResolvedSchema(schema,  currentSwaggerFilePath);
                         }
 
                         op.Responses.Add(new SwaggerApiViewResponse() {description = response.description, statusCode = statusCode, schema = schema});

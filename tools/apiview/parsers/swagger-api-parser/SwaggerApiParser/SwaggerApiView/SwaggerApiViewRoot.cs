@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using ApiView;
 using APIView;
 
@@ -10,18 +11,20 @@ public class SwaggerApiViewRoot : ITokenSerializable
     public String ResourceProvider;
     public String PackageName;
     public Dictionary<String, SwaggerApiViewSpec> SwaggerApiViewSpecs;
+    public SchemaCache schemaCache;
 
     public SwaggerApiViewRoot(string resourceProvider, string packageName)
     {
         this.ResourceProvider = resourceProvider;
         this.PackageName = packageName;
         this.SwaggerApiViewSpecs = new Dictionary<string, SwaggerApiViewSpec>();
+        this.schemaCache = new SchemaCache();
     }
 
-    public void AddSwaggerSpec(SwaggerSpec swaggerSpec, string fileName = "swagger.json", string resourceProvider = "")
+    public void AddSwaggerSpec(SwaggerSpec swaggerSpec, string swaggerFilePath, string resourceProvider = "")
     {
-        var swaggerApiViewSpec = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, fileName, resourceProvider);
-        this.SwaggerApiViewSpecs.Add(fileName, swaggerApiViewSpec);
+        var swaggerApiViewSpec = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, swaggerFilePath, this.schemaCache, resourceProvider);
+        this.SwaggerApiViewSpecs.Add(swaggerFilePath, swaggerApiViewSpec);
     }
 
     public CodeFile GenerateCodeFile()
@@ -47,15 +50,16 @@ public class SwaggerApiViewRoot : ITokenSerializable
         foreach (var kv in this.SwaggerApiViewSpecs)
         {
             ret.Add(TokenSerializer.Intent(context.intent));
-            ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Keyword));
+            var fileName = Path.GetFileName(kv.Key);
+            ret.Add(new CodeFileToken(fileName, CodeFileTokenKind.Keyword));
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
-            
+
             var specContext = new SerializeContext(context.intent + 1, context.IteratorPath);
-            specContext.IteratorPath.Add(kv.Key);
-            
+            specContext.IteratorPath.Add(fileName);
+
             var specToken = kv.Value.TokenSerialize(specContext);
-            
+
             ret.AddRange(specToken);
         }
 

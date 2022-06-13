@@ -15,7 +15,7 @@ public class SwaggerApiViewGeneratorTest
     {
         this.output = output;
     }
-    
+
 
     [Fact]
     public async Task TestGenerateSwaggerApiViewRunCommands()
@@ -23,7 +23,8 @@ public class SwaggerApiViewGeneratorTest
         const string runCommandsFilePath = "./fixtures/runCommands.json";
         var swaggerSpec = await SwaggerDeserializer.Deserialize(runCommandsFilePath);
         var apiViewGenerator = new SwaggerApiViewGenerator();
-        var apiView = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, "runCommands.json", "Microsoft.Compute");
+        SchemaCache schemaCache = new SchemaCache();
+        var apiView = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, "runCommands.json", schemaCache, "Microsoft.Compute");
 
         Assert.Equal("2.0", apiView.SwaggerApiViewGeneral.swagger);
         Assert.Equal("VirtualMachineRunCommands", apiView.Paths.First().Key);
@@ -43,7 +44,8 @@ public class SwaggerApiViewGeneratorTest
         const string runCommandsFilePath = "./fixtures/compute.json";
         var swaggerSpec = await SwaggerDeserializer.Deserialize(runCommandsFilePath);
         var apiViewGenerator = new SwaggerApiViewGenerator();
-        var apiView = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, "compute.json", "Microsoft.Compute");
+        SchemaCache schemaCache = new SchemaCache();
+        var apiView = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, "compute.json", schemaCache, "Microsoft.Compute");
 
         Assert.Equal("2.0", apiView.SwaggerApiViewGeneral.swagger);
 

@@ -92,11 +92,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     throw new HttpException(HttpStatusCode.BadRequest, $"The target directory \"{originalPath}\" does not exist within a git repository. This is disallowed when utilizing git store.");
                 }
 
-                // go up one level
                 path = Path.GetDirectoryName(path);
             }
         }
-
 
         public string ResolveAssetsJson(string inputPath)
         {
@@ -110,7 +108,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             while (!directoryEval.IsRoot && !directoryEval.IsGitRoot && !directoryEval.AssetsJsonPresent)
             {
-
                 inputPath = Path.GetDirectoryName(inputPath);
                 directoryEval = EvaluateDirectory(inputPath);
             }

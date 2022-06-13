@@ -127,17 +127,4 @@
     searchBox.val('');
     updateListedReviews();
   });
-
-  searchButton.on('click', function() {
-    updateListedReviews({ search : searchBox.val() as string });
-  });
-
-  resetButton.on('click', function(e) {
-    (<any>languageFilter).selectpicker('deselectAll');
-    (<any>stateFilter).selectpicker('deselectAll').selectpicker('val', 'Open');
-    (<any>statusFilter).selectpicker('deselectAll');
-    (<any>typeFilter).selectpicker('deselectAll');
-    searchBox.val('');
-    updateListedReviews();
-  });
 });

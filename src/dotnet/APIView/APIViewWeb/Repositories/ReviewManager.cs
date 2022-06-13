@@ -112,29 +112,6 @@ namespace APIViewWeb.Repositories
             return resultToReturn;
         }
 
-        public async Task<IEnumerable<string>> GetReviewProprtiesAsync(string propertyName)
-        {
-            return await _reviewsRepository.GetReviewFirstLevelProprtiesAsync(propertyName);
-        }
-
-        public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
-            List<string> search, List<string> languages, List<string> tags, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
-        {
-            var result = await _reviewsRepository.GetReviewsAsync(search, languages, isClosed, filterTypes, isApproved, offset, limit, orderBy);
-
-            // Calculate and add Previous and Next and Current page to the returned result
-            var totalPages = (int)Math.Ceiling((double)result.TotalCount / (double)limit);
-            var currentPage = (offset == 0) ? 1 : ((offset / limit) + 1);
-
-            (IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage) resultToReturn = (
-                Reviews: result.Reviews, TotalCount: result.TotalCount, TotalPages: totalPages,
-                CurrentPage: currentPage,
-                PreviousPage: (currentPage == 1) ? null : currentPage - 1,
-                NextPage: (currentPage >= totalPages) ? null : currentPage + 1
-            );
-            return resultToReturn;
-        }
-
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
         {
             var reviewModel = await _reviewsRepository.GetReviewAsync(id);

@@ -70,9 +70,6 @@ namespace APIViewWeb
             // Limit to top 50
             queryStringBuilder.Append("OFFSET 0 LIMIT 50");
 
-            // Limit to top 50
-            queryStringBuilder.Append("OFFSET 0 LIMIT 50");
-
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@language", language)

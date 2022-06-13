@@ -57,26 +57,6 @@ namespace APIViewWeb.Pages.Assemblies
             return Partial("_SelectPickerPartial", ReviewsProperties.Languages);
         }
 
-        public async Task OnGetReviewsPartialAsync()
-        {
-        }
-
-        public async Task<PartialViewResult> OnGetReviewsPartialAsync(
-            List<string> search = null, List<string> languages = null, List<string> state = null,
-            List<string> status = null, List<string> type = null, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
-        {
-            await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
-            return Partial("_ReviewsPartial", PagedResults);
-        }
-
-        public async Task<PartialViewResult> OnGetReviewsLanguagesAsync(List<string> selectedLanguages = null)
-        {
-            ReviewsProperties.Languages.All = await _manager.GetReviewProprtiesAsync("Revisions[0].Files[0].Language");
-            selectedLanguages = selectedLanguages.Select(x => HttpUtility.UrlDecode(x)).ToList();
-            ReviewsProperties.Languages.Selected = selectedLanguages;
-            return Partial("_SelectPickerPartial", ReviewsProperties.Languages);
-        }
-
         public async Task<IActionResult> OnPostUploadAsync()
         {
             if (!ModelState.IsValid)

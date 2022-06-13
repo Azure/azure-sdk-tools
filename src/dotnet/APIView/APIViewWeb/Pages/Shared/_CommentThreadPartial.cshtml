@@ -20,8 +20,8 @@
                     {
                         <div id="@comment.CommentId" class="review-comment" data-comment-id="@comment.CommentId">
                             <div class="media">
-                                <a username="@comment.Username">
-                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
+                                <a username="@comment.Username" title="Github Profile of Commenter">
+                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" aria-label="User Avatar of Commenter"/>
                                 </a>
                                 <div class="media-body comment-contents">
                                     <span>
@@ -43,7 +43,7 @@
                                         </form>
 
                                         <div class="btn-group dropup float-right">
-                                            <a class="btn btn-sm" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <a class="btn btn-sm" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Dropdown Menu Button">
                                                 <i class="fa-solid fa-ellipsis"></i>
                                             </a>
 
@@ -79,7 +79,7 @@
 
                     <div class="review-thread-reply">
                         <div class="reply-cell align-middle">
-                            <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28" width="28" />
+                            <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28"  aria-label="User Avatar"/>
                         </div>
                         <div class="reply-cell col-12">
                             <button type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>

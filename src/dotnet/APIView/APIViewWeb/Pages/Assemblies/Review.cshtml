@@ -127,7 +127,7 @@
                                         doc = @Model.ShowDocumentation,
                                         diffOnly = @Model.ShowDiffOnly
                                     });
-                                    <button class="btn btn-outline-secondary diff-button" type="button" value="@urlValue">Diff</button>
+                                    <button class="btn btn-outline-secondary diff-button" type="button" value="@urlValue" aria-label="Diff Button">Diff</button>
                                 }
                                 else
                                 {
@@ -138,10 +138,10 @@
                                         doc = @Model.ShowDocumentation,
                                         diffOnly = @Model.ShowDiffOnly
                                     });
-                                    <button class="btn btn-outline-secondary diff-button" type="button" value="@urlValue">Diff</button>
+                                    <button class="btn btn-outline-secondary diff-button" type="button" value="@urlValue" aria-label="Diff Button">Diff</button>
                                 }
                             </div>
-                            <select class="selectpicker show-tick" data-style="btn-light btn-sm border border-left rounded-left-0" data-size="10" data-width="calc(100% - 39px)" data-live-search="true" data-container="body" id="diff-bootstraps-select">
+                            <select class="selectpicker show-tick" data-style="btn-light btn-sm border border-left rounded-left-0" data-size="10" data-width="calc(100% - 39px)" data-live-search="true" data-container="body" aria-label="Diff Review" id="diff-bootstraps-select">
                                 if (@Model.DiffRevisionId == null)
                                 {
                                     <option value="" selected></option>

@@ -21,4 +21,4 @@ Then you can write your codes in vscode.
 
     Answer: Vscode C# extension is based on OmniSharp, which sometimes make us confused. To resolve it:
     1. Run `dotnet build` to rebuild the project
-    2. In vscode, press `ctrl + shift + p` and then type `Restart Omnisharp`.
+    2. In vscode, press `F1` and then type `Restart Omnisharp`.

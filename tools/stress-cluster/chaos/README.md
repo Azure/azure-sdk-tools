@@ -210,7 +210,7 @@ Stress tests should publish telemetry and logs to Application Insights via the $
 injected into the container.
 
 The following environment variables are currently populated by default into the env file, in addition to any
-[bicep template outputs](https://github.com/Azure/bicep/blob/main/docs/spec/outputs.md) specified.
+[bicep template outputs](https://docs.microsoft.com/azure/azure-resource-manager/bicep/outputs) specified.
 
 ```
 AZURE_CLIENT_ID=<value>

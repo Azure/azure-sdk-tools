@@ -100,6 +100,10 @@ module storage 'cluster/storage.bicep' = {
 var appInsightsInstrumentationKeySecretName = 'appInsightsInstrumentationKey-${resourceSuffix}'
 // Value is in dotenv format as it will be appended to stress test container dotenv files
 var appInsightsInstrumentationKeySecretValue = 'APPINSIGHTS_INSTRUMENTATIONKEY=${appInsights.outputs.instrumentationKey}\n'
+var appInsightsConnectionStringSecretName = 'appInsightsConnectionString-${resourceSuffix}'
+// Value is in dotenv format as it will be appended to stress test container dotenv files
+// Include double quotes since the connection string contains semicolons, which causes problems when sourcing the file
+var appInsightsConnectionStringSecretValue = 'APPLICATIONINSIGHTS_CONNECTION_STRING="${appInsights.outputs.connectionString}"\n'
 
 // Storage account information used for kubernetes fileshare volume mounting via the azure files csi driver
 // See https://docs.microsoft.com/en-us/azure/aks/azure-files-volume#create-a-kubernetes-secret
@@ -122,6 +126,10 @@ module keyvault 'cluster/keyvault.bicep' = {
                 {
                     secretName: appInsightsInstrumentationKeySecretName
                     secretValue: appInsightsInstrumentationKeySecretValue
+                }
+                {
+                    secretName: appInsightsConnectionStringSecretName
+                    secretValue: appInsightsConnectionStringSecretValue
                 }
                 {
                     secretName: debugStorageKeySecretName
@@ -152,6 +160,7 @@ output SECRET_PROVIDER_CLIENT_ID string = cluster.outputs.secretProviderClientId
 output CLUSTER_NAME string = cluster.outputs.clusterName
 output CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.containerRegistryName
 output APPINSIGHTS_KEY_SECRET_NAME string = appInsightsInstrumentationKeySecretName
+output APPINSIGHTS_CONNECTION_STRING_SECRET_NAME string = appInsightsConnectionStringSecretName
 output DEBUG_STORAGE_KEY_SECRET_NAME string = debugStorageKeySecretName
 output DEBUG_STORAGE_ACCOUNT_SECRET_NAME string = debugStorageAccountSecretName
 output DEBUG_FILESHARE_NAME string = storage.outputs.fileShareName

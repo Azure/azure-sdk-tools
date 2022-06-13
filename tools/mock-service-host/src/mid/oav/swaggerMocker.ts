@@ -48,27 +48,27 @@ export default class SwaggerMocker {
     /**
      * Replaces mock resource IDs with IDs that match current resource.
      */
-    private patchResourceIdAndType(responses: any, liveRequest: LiveRequest) {
+    public patchResourceIdAndType(responses: any, liveRequest: LiveRequest) {
         const url = parseUrl(liveRequest.url)
 
         const pathElements = (url.pathname || '').split('/')
         let resourceType = ''
-        let foundProvider = false
-        for (let i = 0; i < pathElements.length; i++) {
+        let providerIdx = pathElements.length - 2
+        for (; providerIdx > 0; providerIdx--) {
             if (
-                i > 0 &&
-                i % 2 === 0 &&
-                pathElements[i].match(/microsoft\..+/i) &&
-                pathElements[i - 1].match(/providers/i)
+                providerIdx % 2 === 1 &&
+                pathElements[providerIdx].match(/providers/i) &&
+                pathElements[providerIdx + 1].match(/microsoft\..+/i)
             ) {
-                foundProvider = true
-                resourceType = pathElements[i]
-            }
-            if (foundProvider && i % 2 === 1) {
-                resourceType = `${resourceType}/${pathElements[i]}`
+                resourceType = pathElements[providerIdx + 1]
+                break
             }
         }
-        if (resourceType.length === 0) {
+        if (providerIdx > 0) {
+            for (let i = providerIdx + 2; i < pathElements.length; i += 2) {
+                resourceType = `${resourceType}/${pathElements[i]}`
+            }
+        } else {
             resourceType = mockedResourceType
         }
 
@@ -139,7 +139,7 @@ export default class SwaggerMocker {
                     const subscription =
                         pathElements.subscriptions || '00000000-0000-0000-0000-000000000000'
                     const resourceGroup = pathElements.subscriptions || 'mockGroup'
-                    key = `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/aa`
+                    key = `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mocked`
                 }
                 ret[key] = this.mockUserAssignedIdentities(
                     item,

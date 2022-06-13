@@ -14,14 +14,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public class GitStoretests
     {
         #region variable defs
+        public static string AssetsJson = "assets.json";
+        string[] basicFolderStructure = new string[]
+        {
+                AssetsJson
+        };
+
         public static string DefaultAssetsJson =
 @"
 {
-    ""AssetsRepo"" = ""Azure/azure-sdk-assets-integration""
-    ""AssetsRepoPrefixPath"" = ""python/recordings/""
-    ""AssetsRepoId"" = """"
-    ""AssetsRepoBranch"" = ""scenario_clean_push""
-    ""SHA"" = ""e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7""
+    ""AssetsRepo"":""Azure/azure-sdk-assets-integration"",
+    ""AssetsRepoPrefixPath"":""python/recordings/"",
+    ""AssetsRepoId"":"""",
+    ""AssetsRepoBranch"":""scenario_clean_push"",
+    ""SHA"":""e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7""
 }
 ";
         #endregion
@@ -31,9 +37,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             string[] folderStructure = new string[]
             {
-                "assets.json",
-                "folder1\\",
-                "folder2\\file1.json"
+                AssetsJson,
+                "folder1",
+                Path.Join("folder2", "file1.json")
             };
 
             var testFolder = TestHelpers.DescribeTestFolder(String.Empty, folderStructure);
@@ -50,9 +56,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             string[] folderStructure = new string[]
             {
-                "assets.json",
-                "folder1\\",
-                "folder2\\file1.json"
+                AssetsJson,
+                "folder1",
+                Path.Join("folder2", "file1.json")
             };
 
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
@@ -69,9 +75,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             string[] folderStructure = new string[]
             {
-                "assets.json",
-                "folder1\\",
-                "folder2\\file1.json"
+                AssetsJson,
+                "folder1",
+                Path.Join("folder2", "file1.json")
             };
 
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
@@ -88,17 +94,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void ResolveAssetsJsonFindsAssetsInTargetFolder()
         {
-            string[] folderStructure = new string[]
-            {
-                "assets.json"
-            };
-
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
             GitStore store = new GitStore();
 
             var path = store.ResolveAssetsJson(testFolder.FullName);
 
-            Assert.Equal(Path.Join(testFolder.FullName, "assets.json"), path);
+            Assert.Equal(Path.Join(testFolder.FullName, AssetsJson), path);
         }
 
         [Fact]
@@ -106,7 +107,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             string[] folderStructure = new string[]
             {
-                "folder1\\assets.json",
+                Path.Join("folder1", AssetsJson)
             };
 
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
@@ -124,8 +125,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             string[] folderStructure = new string[]
             {
-                "assets.json",
-                "folder1\\",
+                AssetsJson,
+                "folder1",
             };
 
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
@@ -140,18 +141,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void ResolveAssetsJsonThrowsOnUnableToLocate()
         {
-
-            string[] folderStructure = new string[]
-            {
-            };
-
-            var testFolder = TestHelpers.DescribeTestFolder(String.Empty, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(String.Empty, new string[] { });
             GitStore store = new GitStore();
 
-            Assert.Throws<HttpException>(() =>
+            var assertion = Assert.Throws<HttpException>(() =>
             {
                 store.ResolveAssetsJson(testFolder.FullName);
             });
+            Assert.StartsWith("Unable to locate an assets.json at", assertion.Message);
         }
 
         [Fact]
@@ -160,35 +157,148 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             string[] folderStructure = new string[]
             {
-                "folder1\\",
+                "folder1",
             };
 
             var testFolder = TestHelpers.DescribeTestFolder(String.Empty, folderStructure);
             var evaluationDirectory = Path.Join(testFolder.FullName, "folder1");
             GitStore store = new GitStore();
 
-            Assert.Throws<HttpException>(() =>
+            var assertion = Assert.Throws<HttpException>(() =>
             {
                 store.ResolveAssetsJson(evaluationDirectory);
             });
+            Assert.StartsWith("Unable to locate an assets.json at", assertion.Message);
+        }
+
+
+        [Theory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""python/recordings/"",
+              ""AssetsRepoId"": """",
+              ""AssetsRepoBranch"": ""auto/test"",
+              ""SHA"": ""786b4f3d380d9c36c91f5f146ce4a7661ffee3b9""
+        }")]
+        // Valid to just pass the assets repo. We can infer everything else.
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+        }")]
+        public async Task ParseConfigurationEvaluatesValidConfigs(string inputJson)
+        {
+            string[] folderStructure = new string[]
+            {
+                AssetsJson
+            };
+
+            var testFolder = TestHelpers.DescribeTestFolder(inputJson, folderStructure);
+            var jsonFileLocation = Path.Join(testFolder.FullName, AssetsJson);
+            GitStore store = new GitStore();
+
+            var parsedConfiguration = await store.ParseConfigurationFile(jsonFileLocation);
+        }
+
+        [Theory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": """",
+        }")]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""   "",
+        }")]
+        [InlineData(
+        @"{
+              ""AssetsRepoId"": """",
+              ""AssetsRepoBranch"": ""auto/test"",
+              ""SHA"": ""786b4f3d380d9c36c91f5f146ce4a7661ffee3b9""
+        }")]
+        public async Task ParseConfigurationThrowsOnMissingRequiredProperty(string inputJson)
+        {
+            string[] folderStructure = new string[]
+            {
+                AssetsJson
+            };
+
+            var testFolder = TestHelpers.DescribeTestFolder(inputJson, folderStructure);
+            var jsonFileLocation = Path.Join(testFolder.FullName, AssetsJson);
+            GitStore store = new GitStore();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
+            {
+                await store.ParseConfigurationFile(Path.Join(testFolder.FullName, AssetsJson));
+            });
+            Assert.Contains("must contain value for the key \"AssetsRepo\"", assertion.Message);
         }
 
         [Fact]
-        public void ParseConfigurationThrowsOnEmptyJson()
+        public async Task ParseConfigurationEvaluatesTargetFolder()
         {
+            var folderPath = Path.Join("folder1", "folder2");
+            var targetRelPath = Path.Join(folderPath, $"{AssetsJson}");
+            string[] folderStructure = new string[]
+            {
+                targetRelPath
+            };
 
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var jsonFileLocation = Path.Join(testFolder.FullName, folderPath);
+            GitStore store = new GitStore();
+
+            var parsedConfiguration = await store.ParseConfigurationFile(jsonFileLocation);
+            Assert.NotNull(parsedConfiguration);
+        }
+
+        [Theory]
+        [InlineData("folder1", "folder2")]
+        [InlineData("folderabc123")]
+        public async Task ParseConfigurationEvaluatesRelativePathCorrectly(params string[] inputPath)
+        {
+            var targetRelPath = Path.Join(inputPath);
+            string[] folderStructure = new string[]
+            {
+                Path.Join(targetRelPath, AssetsJson)
+            };
+
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var jsonFileLocation = Path.Join(testFolder.FullName, targetRelPath, AssetsJson);
+            GitStore store = new GitStore();
+
+            var parsedConfiguration = await store.ParseConfigurationFile(jsonFileLocation);
+            Assert.Equal(Path.Join(targetRelPath, AssetsJson), parsedConfiguration.AssetsJsonRelativeLocation);
+            Assert.Equal(jsonFileLocation, parsedConfiguration.AssetsJsonLocation);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("{}")]
+        public async Task ParseConfigurationThrowsOnEmptyJson(string errorJson)
+        {
+            var testFolder = TestHelpers.DescribeTestFolder(errorJson, basicFolderStructure, ignoreEmptyAssetsJson: true);
+            GitStore store = new GitStore();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
+            {
+                await store.ParseConfigurationFile(Path.Join(testFolder.FullName, AssetsJson));
+            });
+            Assert.StartsWith("The provided assets json at ", assertion.Message);
+            Assert.EndsWith("did not have valid json present.", assertion.Message);
         }
 
         [Fact]
-        public void ParseConfigurationThrowsOnNonExistentJson()
+        public async Task ParseConfigurationThrowsOnNonExistentJson()
         {
+            var testFolder = TestHelpers.DescribeTestFolder(string.Empty, basicFolderStructure);
+            GitStore store = new GitStore();
 
-        }
-
-        [Fact]
-        public void ParseConfigurationThrowsOn()
-        {
-
+            var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
+            {
+                await store.ParseConfigurationFile(Path.Join(testFolder.FullName, AssetsJson));
+            });
+            Assert.StartsWith("The provided assets json path of ", assertion.Message);
+            Assert.EndsWith(" does not exist.", assertion.Message);
         }
     }
 }

@@ -99,8 +99,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         /// <param name="assetsJsonContent">The content of the assets json, if any.</param>
         /// <param name="sampleFiles">A set of relative paths defining what the folder structure of the test folder. Paths should be relative to the root of the newly created temp folder.
         /// If one of the paths ends with assets.json, that path will receive the assetsJsonContent string, instead of defaulting to the root of the temp folder.</param>
+        /// <param name="ignoreEmptyAssetsJson">Normally passing string.Empty to assetsJsonContent argument will result in no assets.json being written. 
+        /// Passing true to this argument will ensure that the file is still created without content.</param>
         /// <returns>The absolute path to the created folder.</returns>
-        public static DirectoryInfo DescribeTestFolder(string assetsJsonContent, string[] sampleFiles)
+        public static DirectoryInfo DescribeTestFolder(string assetsJsonContent, string[] sampleFiles, bool ignoreEmptyAssetsJson = false)
         {
             // get a test folder root
             var tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -147,7 +149,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             WriteTestFile(String.Empty, Path.Combine(tmpPath, ".git"));
 
             // write assets json if we were passed content
-            if (!String.IsNullOrWhiteSpace(assetsJsonContent))
+            if (!String.IsNullOrWhiteSpace(assetsJsonContent) || ignoreEmptyAssetsJson)
             {
                 WriteTestFile(assetsJsonContent, assetsJsonPath);
             }

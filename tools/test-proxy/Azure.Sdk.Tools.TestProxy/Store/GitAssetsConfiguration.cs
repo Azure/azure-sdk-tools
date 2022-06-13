@@ -5,7 +5,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     /// </summary>
     public class GitAssetsConfiguration : AssetsConfiguration
     {
-
         /// <summary>
         /// The targeted assets repo. EG: "Azure/azure-sdk-for-net".
         /// </summary>

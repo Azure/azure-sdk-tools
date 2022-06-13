@@ -2,7 +2,6 @@ using System.IO;
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Net;
 using System;
-using Newtonsoft.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -17,8 +16,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
     public class GitStore : IAssetsStore
     {
-        
-
         public void Push(string pathToAssetsJson, string contextPath) {
             var config = ParseConfigurationFile(pathToAssetsJson);
 
@@ -39,46 +36,76 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public async Task<GitAssetsConfiguration> ParseConfigurationFile(string assetsJsonPath)
         {
-            if (!File.Exists(assetsJsonPath)) {
+            if (!File.Exists(assetsJsonPath) && !Directory.Exists(assetsJsonPath)) {
                 throw new HttpException(HttpStatusCode.BadRequest, $"The provided assets json path of \"{assetsJsonPath}\" does not exist.");
             }
-            JsonDocument assetsContent = null;
 
             var pathToAssets = ResolveAssetsJson(assetsJsonPath);
+            var assetsContent = await File.ReadAllTextAsync(pathToAssets);
 
-            using (FileStream fs = File.OpenRead(assetsJsonPath)) {
-                assetsContent = await JsonDocument.ParseAsync(fs, options: new JsonDocumentOptions() { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
-            }
-
-            if (assetsContent == null)
+            if (string.IsNullOrWhiteSpace(assetsContent) || assetsContent.Trim() == "{}")
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"The provided assets json at \"{assetsJsonPath}\" did not have valid json present.");
             }
+            
+            try
+            {
+                var assetConfig = JsonSerializer.Deserialize<GitAssetsConfiguration>(assetsContent, options: new JsonSerializerOptions() { AllowTrailingCommas = true });
 
-            //if (assetsContent != null)
-            //{
-            //    var recordingFile = GetProp(key, document.RootElement);
+                if (string.IsNullOrWhiteSpace(assetConfig.AssetsRepo))
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, $"Unable to utilize the assets.json present at \"{assetsJsonPath}. It must contain value for the key \"AssetsRepo\" to be considered a valid assets.json.");
+                }
 
-            //    if (recordingFile.Value.ValueKind != JsonValueKind.Undefined)
-            //    {
-            //        value = recordingFile.Value.GetString();
-            //    }
-            //    else
-            //    {
-            //        if (!allowNulls)
-            //        {
-            //            throw new HttpException(HttpStatusCode.BadRequest, $"Failed attempting to retrieve value from request body. Targeted key was: {key}. Raw body value was {document.RootElement.GetRawText()}.");
-            //        }
-            //    }
-            //}
+                var repoRoot = AscendToRepoRoot(pathToAssets);
+                
+                assetConfig.AssetsJsonLocation = pathToAssets;
+                assetConfig.AssetsJsonRelativeLocation = Path.GetRelativePath(repoRoot, pathToAssets);
 
-
-            return new GitAssetsConfiguration();
+                return assetConfig;
+            }
+            catch (Exception e)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse assets.json content at \"{assetsJsonPath}\". Exception: {e.Message}");
+            }
         }
+
+        public string AscendToRepoRoot(string path)
+        {
+            var originalPath = path.Clone();
+            var fileAttributes = File.GetAttributes(path);
+            if (!(fileAttributes == FileAttributes.Directory))
+            {
+                path = Path.GetDirectoryName(path);
+            }
+
+            while (true)
+            {
+                var evaluation = EvaluateDirectory(path);
+
+                if (evaluation.IsGitRoot)
+                {
+                    return path;
+                }
+                else if (evaluation.IsRoot)
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, $"The target directory \"{originalPath}\" does not exist within a git repository. This is disallowed when utilizing git store.");
+                }
+
+                // go up one level
+                path = Path.GetDirectoryName(path);
+            }
+        }
+
 
         public string ResolveAssetsJson(string inputPath)
         {
-            var originalPath = inputPath;
+            if (inputPath.ToLowerInvariant().EndsWith("assets.json"))
+            {
+                return inputPath;
+            }
+
+            var originalPath = inputPath.Clone();
             var directoryEval = EvaluateDirectory(inputPath);
 
             while (!directoryEval.IsRoot && !directoryEval.IsGitRoot && !directoryEval.AssetsJsonPresent)

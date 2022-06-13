@@ -183,22 +183,25 @@
             </div>
         </div>
         <div class="col-lg-6 my-1">
-            <div class="float-right ml-2 my-1">
-                <form asp-resource="@Model.Review" class="form-inline" method="post" asp-page-handler="ToggleClosed">
-                    @if (Model.Review.IsClosed)
-                    {
-                        <button type="submit" class="btn btn-sm border shadow-sm btn-light">
-                            <i class="fa fa-sm fa-undo" aria-hidden="true"></i>&nbsp;&nbsp;Reopen
-                        </button>
-                    }
-                    else
-                    {
-                        <button type="submit" class="btn btn-sm border shadow-sm btn-light">
-                            <i class="far fa-window-close" aria-hidden="true"></i>&nbsp;&nbsp;Close
-                        </button>
-                    }
-                </form>
-            </div>
+            @if (Model.Review.FilterType != ReviewType.Automatic)
+            {
+                <div class="float-right ml-2 my-1">
+                    <form asp-resource="@Model.Review" class="form-inline" method="post" asp-page-handler="ToggleClosed">
+                        @if (Model.Review.IsClosed)
+                        {
+                            <button type="submit" class="btn btn-sm border shadow-sm btn-light">
+                                <i class="fa fa-sm fa-undo" aria-hidden="true"></i>&nbsp;&nbsp;Reopen
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-sm border shadow-sm btn-light">
+                                <i class="far fa-window-close" aria-hidden="true"></i>&nbsp;&nbsp;Close
+                            </button>
+                        }
+                    </form>
+                </div>
+            }
             <div class="float-right ml-2 my-1">
                 <form asp-resource="@Model.Review" class="form-inline" method="post" asp-page-handler="ToggleSubscribed">
                     @if (Model.Review.GetUserEmail(User) != null)

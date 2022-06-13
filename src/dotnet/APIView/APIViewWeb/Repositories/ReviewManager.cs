@@ -335,6 +335,10 @@ namespace APIViewWeb.Repositories
         {
             var review = await GetReviewAsync(user, id);
             review.IsClosed = !review.IsClosed;
+            if (review.FilterType == ReviewType.Automatic)
+            {
+                throw new AuthorizationFailedException();
+            }
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 

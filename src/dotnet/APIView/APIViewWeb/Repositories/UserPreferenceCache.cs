@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using APIViewWeb.Models;
 using System;
+using System.Collections.Generic;
 
 namespace APIViewWeb.Repositories
 {
@@ -19,23 +20,24 @@ namespace APIViewWeb.Repositories
             _cache.Set(preference.UserName, preference);
         }
 
-        public string GetLangauge(string userName)
+        public IEnumerable<string> GetLangauge(string userName)
         {
             if (_cache.TryGetValue(userName, out UserPreferenceModel _preference))
             {
                 return _preference.Language;
             }
-            return "All";
+
+            return null;
         }
 
-        public ReviewType GetFilterType(string userName, ReviewType defaultType = ReviewType.Automatic)
+        public IEnumerable<ReviewType> GetFilterType(string userName, ReviewType defaultType = ReviewType.Automatic)
         {
             if (_cache.TryGetValue(userName, out UserPreferenceModel _preference))
             {
                 return _preference.FilterType;
             }
 
-            return defaultType;
+            return new List<ReviewType> { defaultType };
         }
     }
 }

@@ -6,57 +6,35 @@
 @{
     ViewData["Title"] = "Reviews";
 }
+@section Scripts
+{
+   <script  type="text/javascript" src="@Url.Content("~/reviews.js")"></script>
+}
 <nav class="navbar-light shadow-sm bg-light sticky-top">
     <div class="container-fluid">
-        <div class="row mx-5 d-flex flex-row align-items-center">
-            <div class="col px-0 d-flex flex-wrap flex-sm-nowrap flex-row align-items-center">
-                <div class="input-group mr-2 my-2" style="min-width: 200px;">
-                    <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search by Review Name"></input>
-                </div>
-                <div class="mb-0 mr-2 my-2">
-                    <select id="reviews-table-language-filter" class="custom-select" style="width: auto;">
-                        <option value="">Filter by Language</option>
-                        <option value="">All</option>
-                        <option value="^C$">C</option>
-                        <option value="^C#$">C#</option>
-                        <option value="^C\+\+$">C++</option>
-                        <option value="^Go$">Go</option>
-                        <option value="^Java$">Java</option>
-                        <option value="^JavaScript$">JavaScript | TypeScript</option>
-                        <option value="^Python$">Python</option>
-                        <option value="^Protocol$">Protocol</option>
-                        <option value="^Swift$">Swift</option>
-                        <option value="^Swagger$">Swagger</option>
-                        <option value="^Xml$">Xml</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col px-0 my-2 d-flex flex-row-reverse">
-                <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-sm fa-sliders-h"></i>
-                        &nbsp; Options
-                    </button>
-
-                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink">
-                        <form>
-                            <div class="dropdown-item">
-                                <div class="btn-group">
-                                    <a class="toggle-buttons-left btn btn-sm btn-light" active-if="!@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: false)>Open</a>
-                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: true)>Closed</a>
-                                </div>
-                            </div>
-                            <div class="dropdown-item">
-                                <div class="btn-group">
-                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.All" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.All)>All</a>
-                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.Manual" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Manual)>Manual</a>
-                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.Automatic" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Automatic)>Automatic</a>
-                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.PullRequest" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.PullRequest)>Pull Request Reviews</a>
-                                </div>
-                            </div>
-                        </form>
+        <div class="row mx-5">
+            <div class="col-md-10 px-0 d-sm-flex flex-row justify-content-sm-start">
+                <div class="input-group py-2 mr-2" id="reviews-table-search-container">
+                    <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search.."/>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" id="reviews-search-button" type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
                     </div>
                 </div>
+                <select class="selectpicker show-tick show-menu-arrow py-2 mr-2" multiple data-selected-text-format="static" title="Language" data-style="btn-light border" data-width="120px" data-container="body" id="language-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
+                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Languages" />
+                </select>
+                <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="State" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="85px" data-container="body" id="state-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
+                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
+                </select>
+                <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="Status" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="90px" data-container="body" id="status-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
+                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
+                </select>
+                <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="Type" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="80px" data-container="body" id="type-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
+                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
+                </select>
+            </div>
+            <div class="col-md-2 px-0 py-2 d-sm-flex flex-row justify-content-sm-end">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset</button>
             </div>
         </div>
     </div>
@@ -239,140 +217,13 @@
     </div>
 
     <div class="bottom-right-floating">
-        <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>CREATE</small></br><i class="fas fa-plus"></i></br><small>REVIEW</small></button>
+        <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
     </div>
 
-    <div class="mx-5 mt-3 row">
-        <div class="col p-0 border rounded table-responsive">
-            <table id="reviews-table" class="table table-sm m-0" style="width:100%">
-                <thead>
-                    <tr>
-                        <th colspan="6">
-                            <span class="border-right px-1 pb-1">
-                                <button type="button" id="expand-all-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Expand all Groups">
-                                    <i class="fas fa-angle-right mr-1"></i>All
-                                </button>
-                                <button type="button" id="expand-all-service-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Expand all Service Groups">
-                                    <i class="fas fa-angle-right mr-1"></i>Service
-                                </button>
-                                <button type="button" id="collapse-all-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Collapse all Groups">
-                                    <i class="fas fa-angle-down mr-1"></i>All
-                                </button>
-                            </span>
-                            <span class="pl-2 pb-1">
-                                <button type="button" id="clear-all-filters" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Clear all Filters">
-                                    <i class="fas fa-ban mr-1"></i>Filters
-                                </button>
-                            </span>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var serviceGroup in Model.reviewServices)
-                    {
-                        var serviceGroupTag = @serviceGroup.ServiceName.ToLower().Replace(" ","-");
-                        @serviceGroupTag = @Regex.Replace(@serviceGroupTag, "[^a-zA-Z0-9_-]+", "", RegexOptions.Compiled);
-                        <tr id="@serviceGroupTag" class="service-group-row clickable animate__fadeIn animate__fadeOut">
-                            <td colspan="6" class="align-middle">
-                                <button type="button" class="btn btn-light btn-sm mr-1" data-mdb-ripple-color="dark">
-                                    <i class="fas fa-angle-right"></i>
-                                </button>
-                                <span>@serviceGroup.ServiceName</span>                                
-                            </td>
-                        </tr>
-                        @foreach (var packageGroup in serviceGroup.packages.Values)
-                        {
-                            var packageGroupTag = @serviceGroupTag + '_' + @packageGroup.PackageDisplayName.ToLower().Replace(" ","-");
-                            @packageGroupTag = @Regex.Replace(@packageGroupTag, "[^a-zA-Z0-9_-]+", "", RegexOptions.Compiled);
-                            <tr id="@packageGroupTag" class="package-group-row @serviceGroupTag clickable hidden-row animate__fadeIn animate__fadeOut">
-                                <td colspan="6" class="align-middle pl-4">
-                                    <button type="button" class="btn btn-light btn-sm mr-1" data-mdb-ripple-color="dark">
-                                        <i class="fas fa-angle-right"></i>
-                                    </button>
-                                    <span>@packageGroup.PackageDisplayName</span>
-                                </td>
-                            </tr>
-                            <tr class="review-rows-header @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">
-                                <th scope="col" class="border-top-0"><small class="ml-4">NAME</small></th>
-                                <th scope="col" class="border-top-0"><small>CREATOR</small></th>
-                                <th scope="col" class="border-top-0"><small>UPDATED</small></th>
-                                <th scope="col" class="border-top-0"><small>TYPE</small></th>
-                                <th class="border-top-0"></th>
-                            </tr>
-                            @foreach (var reviewData in packageGroup.reviews)
-                            {
-                                var truncationIndex = @Math.Min(@reviewData.ReviewDisplayName.Length, 100);
-                                <tr class="package-data-row @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">
-                                    <td class="border-right align-middle pl-4 pt-0 pb-0">
-                                         @if (reviewData.Language != null)
-                                        {
-                                            @switch (reviewData.Language.ToLower())
-                                            {
-                                                case "c#":
-                                                    <img class="mx-1" src="~/icons/csharp-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "javascript":
-                                                    <img class="mx-1" src="~/icons/javascript-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "python":
-                                                    <img class="mx-1" src="~/icons/python-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "c":
-                                                    <img class="mx-1" src="~/icons/c-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "c++":
-                                                    <img class="mx-1" src="~/icons/cplusplus-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "go":
-                                                    <img class="mx-1" src="~/icons/go-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "java":
-                                                    <img class="mx-1" src="~/icons/java-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "swift":
-                                                    <img class="mx-1" src="~/icons/swift-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                default:
-                                                    <img class="mx-1" src="~/icons/file-code.svg" alt="@reviewData.Language">
-                                                    break;
-                                            }
-                                        }
-                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@reviewData.id">@reviewData.ReviewDisplayName.Substring(0, @truncationIndex)</a>
-                                        @if (reviewData.IsApproved == true)
-                                        {
-                                            <span class="badge badge-pill badge-success ml-1 p-1"><i class="fas fa-check-circle"></i> APPROVED</span>
-                                        }
-                                    </td>
-                                    <td class="border-right align-middle">
-                                        <a username="@reviewData.Author">@reviewData.Author</a>
-                                    </td>
-                                    <td class="border-right align-middle">
-                                        <span data-placement="left" data-toggle="tooltip" title="@reviewData.LastUpdated" date="@reviewData.LastUpdated.ToLocalTime()"></span>
-                                    </td>
-                                    <td class="border-right align-middle">
-                                        <span>@reviewData.FilterType.ToString()</span>
-                                    </td>
-                                    <td>
-                                        @if (reviewData.Author == User.GetGitHubLogin())
-                                        {
-                                            <a asp-page="./Delete" asp-route-id="@reviewData.id">
-                                                <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-danger"><i class="fas fa-times-circle"></i> Delete</button>
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            <span data-placement="left" data-toggle="tooltip" title="Only review creator can delete.">
-                                                <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-secondary invisible" disabled="disabled"><i class="fas fa-times-circle"></i> Delete</button>
-                                            </span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
+    <div class="mx-5 row">
+        <div class="col-md-12" id="reviews-filter-partial">
+            <partial name="_ReviewsPartial" model="Model.PagedResults" />
+        </div> 
     </div>
 </div>
 

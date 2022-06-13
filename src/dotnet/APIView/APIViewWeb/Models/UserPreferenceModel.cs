@@ -1,4 +1,6 @@
-﻿using CsvHelper.Configuration.Attributes;
+﻿using System.Collections;
+using System.Collections.Generic;
+using CsvHelper.Configuration.Attributes;
 
 namespace APIViewWeb.Models
 {
@@ -7,8 +9,8 @@ namespace APIViewWeb.Models
         [Name("UserName")]
         public string UserName { get; set; }
         [Name("Language")]
-        public string Language { get; set; }
+        public IEnumerable<string> Language { get; set; }
         [Name("FilterType")]
-        public ReviewType FilterType { get; set; }
+        public IEnumerable<ReviewType> FilterType { get; set; }
     }
 }

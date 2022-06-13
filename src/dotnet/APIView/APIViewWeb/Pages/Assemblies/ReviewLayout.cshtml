@@ -1,4 +1,12 @@
-﻿@{
+﻿@section Scripts
+{
+   <script  type="text/javascript" src="@Url.Content("~/review.js")"></script>
+   <script  type="text/javascript" src="@Url.Content("~/comments.js")"></script>
+   <script  type="text/javascript" src="@Url.Content("~/api.js")"></script>
+   <script  type="text/javascript" src="@Url.Content("~/fileInput.js")"></script>
+   <script  type="text/javascript" src="@Url.Content("~/revisions.js")"></script>
+}
+@{
     Layout = "Shared/_Layout";
     var id = ViewContext.RouteData.Values["id"];
 }

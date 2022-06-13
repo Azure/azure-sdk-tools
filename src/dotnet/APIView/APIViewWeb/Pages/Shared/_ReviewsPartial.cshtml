@@ -1,0 +1,189 @@
+﻿
+@using APIViewWeb.Models
+@using System
+@using System.Text.RegularExpressions
+@model (IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)
+<div class="mt-3 row">
+    @if (Model.Reviews.Any())
+    {
+        <div class="col-12 p-0 border rounded table-responsive shadow-sm">
+            <table id="reviews-table" class="table table-sm table-hover m-0" style="width:100%">
+                <thead>
+                    <tr>
+                        <th scope="col" class="pl-4">Name</th>
+                        <th scope="col" class="border-left pl-3">Author</th>
+                        <th scope="col" class="border-left pl-3">Last Updated</th>
+                        <th scope="col" class="border-left pl-3">Type</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var review in Model.Reviews)
+                    {
+                        var truncationIndex = @Math.Min(@review.DisplayName.Length, 100);
+                        <tr class="package-data-row">
+                            <td class="align-middle pl-4 pt-0 pb-0">
+                                @if (review.Language != null)
+                                {
+                                    @switch (review.Language.ToLower())
+                                    {
+                                        case "c#":
+                                            <img class="mx-1" src="~/icons/csharp-original.svg" alt="@review.Language">
+                                            break;
+                                        case "javascript":
+                                            <img class="mx-1" src="~/icons/javascript-original.svg" alt="@review.Language">
+                                            break;
+                                        case "python":
+                                            <img class="mx-1" src="~/icons/python-original.svg" alt="@review.Language">
+                                            break;
+                                        case "c":
+                                            <img class="mx-1" src="~/icons/c-original.svg" alt="@review.Language">
+                                            break;
+                                        case "c++":
+                                            <img class="mx-1" src="~/icons/cplusplus-original.svg" alt="@review.Language">
+                                            break;
+                                        case "go":
+                                            <img class="mx-1" src="~/icons/go-original.svg" alt="@review.Language">
+                                            break;
+                                        case "java":
+                                            <img class="mx-1" src="~/icons/java-original.svg" alt="@review.Language">
+                                            break;
+                                        case "swift":
+                                            <img class="mx-1" src="~/icons/swift-original.svg" alt="@review.Language">
+                                            break;
+                                        case "kotlin":
+                                            <img class="mx-1" src="~/icons/kotlin-original.svg" alt="@review.Language">
+                                            break;
+                                        case "json":
+                                            <img class="mx-1" src="~/icons/json-original.svg" alt="@review.Language">
+                                            break;
+                                        case "swagger":
+                                            <img class="mx-1" src="~/icons/swagger-original.svg" alt="@review.Language">
+                                            break;
+                                        default:
+                                            <img class="mx-1" src="~/icons/file-code.svg" alt="@review.Language">
+                                            break;
+                                    }
+                                }
+                                <a class="review-name align-middle" asp-page="./Review" asp-route-id="@review.ReviewId">@review.DisplayName.Substring(0, @truncationIndex)</a>
+                                @if (review.IsApproved == true)
+                                {
+                                    <i class="fas fa-check-circle text-success ml-2"></i>
+                                }
+                            </td>
+                            <td class="align-middle border-left pl-3">
+                                <a username="@review.Author">@review.Author</a>
+                            </td>
+                            <td class="align-middle border-left pl-3">
+                                <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.LastUpdated.ToLocalTime()"></span>
+                            </td>
+                            <td class="align-middle border-left pl-3">
+                                <span>@review.FilterType.ToString()</span>
+                            </td>
+                            <td>
+                                @if (review.Author == User.GetGitHubLogin())
+                                {
+                                    <a asp-page="./Delete" asp-route-id="@review.ReviewId">
+                                        <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-danger"><i class="fas fa-times-circle"></i> Delete</button>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span data-placement="left" data-toggle="tooltip" title="Only review creator can delete.">
+                                        <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-secondary invisible" disabled="disabled"><i class="fas fa-times-circle"></i> Delete</button>
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="col-12 p-0 mt-2 mb-0 text-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-1">
+                    @if (Model.TotalPages > 1)
+                    {
+                        @if (Model.PreviousPage == null)
+                        {
+                            <li class="page-item disabled shadow-sm">
+                                <a class="page-link" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="page-item shadow-sm">
+                                <a class="page-link" aria-label="Previous" href="@Model.PreviousPage">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        }
+                    }
+                    @{
+                        int noOfPageLinks = 10;
+                        int firstPageNo;
+                        int lastPageNo;
+
+                        if (Model.CurrentPage < noOfPageLinks)
+                        {
+                            firstPageNo = (Model.CurrentPage / noOfPageLinks) + 1;
+                            lastPageNo = Math.Min(firstPageNo + (noOfPageLinks - 1), Model.TotalPages);
+                        }
+                        else
+                        {
+                            firstPageNo = ((Model.CurrentPage / noOfPageLinks) * noOfPageLinks);
+                            lastPageNo = Math.Min(firstPageNo + (noOfPageLinks), Model.TotalPages);
+                        }
+                    }
+                    @for (int i = firstPageNo; i < lastPageNo; i++)
+                    {
+                        if (i == Model.CurrentPage)
+                        {
+                            <li class="page-item active shadow-sm"><a class="page-link">@i</a></li>
+                        }
+                        else
+                        {
+                            <li class="page-item shadow-sm"><a class="page-link" href="@i">@i</a></li>
+                        }
+                    }
+                    @if (Model.TotalPages > 1)
+                    {
+                        @if (Model.NextPage == null)
+                        {
+                            <li class="page-item disabled shadow-sm">
+                                <a class="page-link" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="page-item shadow-sm">
+                                <a class="page-link" aria-label="Next" href="@Model.NextPage">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        }
+
+                    }
+                </ul>
+            </nav>
+            <span class="badge badge-light border p-1">
+                @{
+                    var pageSize = (int)Math.Ceiling((double)Model.TotalCount / (double)Model.TotalPages);
+                    var noOfFirstItemOnPage = ((Model.CurrentPage - 1) * pageSize) + 1;
+                    var noOfLastItemOnPage = noOfFirstItemOnPage + (pageSize - 1);
+                }
+                @noOfFirstItemOnPage - @noOfLastItemOnPage / @Model.TotalCount
+            </span>
+        </div>
+    }
+    else
+    {
+        <div class="col-12 p-4 border rounded text-center shadow-sm">
+            No Reviews Found.
+        </div>
+    }
+</div>

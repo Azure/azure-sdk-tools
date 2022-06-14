@@ -63,5 +63,4 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             await runProcessor.ProcessBuildLogBundleAsync(buildLogBundle);
         }
     }
-
 }

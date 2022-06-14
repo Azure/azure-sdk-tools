@@ -137,14 +137,15 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                         }
                         catch(Exception ex)
                         {
-                            this.logger.LogError(ex, "Exception throw while procesing queue message.");
+                            this.logger.LogError(ex, "Exception thrown while procesing queue message.");
                             activity?.SetStatus(ActivityStatusCode.Error);
                             operation.Telemetry.Success = false;
                         }
                     }
                 }
-                catch
+                catch(Exception ex)
                 {
+                    this.logger.LogError(ex, "Exception thrown while procesing message loop.");
                     await Task.Delay(options.MessageErrorSleepPeriod, stoppingToken);
                 }
             }

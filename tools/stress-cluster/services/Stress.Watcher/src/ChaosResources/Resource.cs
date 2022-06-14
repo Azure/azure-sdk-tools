@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Newtonsoft.Json;
 using k8s.Models;
 
@@ -34,6 +35,52 @@ namespace Stress.Watcher
     {
         [JsonProperty(PropertyName = "selector")]
         public ChaosSelector Selector { get; set; }
+
+        [JsonProperty(PropertyName = "networkChaos")]
+        public ChaosResourceSpec NetworkChaos { get; set; }
+        
+        [JsonProperty(PropertyName = "stressChaos")]
+        public ChaosResourceSpec StressChaos { get; set; }
+
+        [JsonProperty(PropertyName = "httpChaos")]
+        public ChaosResourceSpec HttpChaos { get; set; }
+
+        [JsonProperty(PropertyName = "ioChaos")]
+        public ChaosResourceSpec IoChaos { get; set; }
+
+        [JsonProperty(PropertyName = "kernelChaos")]
+        public ChaosResourceSpec KernelChaos { get; set; }
+
+        [JsonProperty(PropertyName = "timeChaos")]
+        public ChaosResourceSpec TimeChaos { get; set; }
+
+        [JsonProperty(PropertyName = "jvmChaos")]
+        public ChaosResourceSpec JvmChaos { get; set; }
+
+        public string GetTestInstance()
+        {
+            bool isInvalidSpec = true;
+            foreach (PropertyInfo property in this.GetType().GetProperties()) {
+                if (property.GetValue(this, null) != null) {
+                    isInvalidSpec = false;
+                    break;
+                }
+            }
+            if (isInvalidSpec) return null;
+
+            string testInstance = null;
+            foreach (PropertyInfo property in this.GetType().GetProperties()) {
+                if (property.PropertyType == typeof(ChaosSelector)) {
+                    string ti = Selector?.LabelSelectors?.TestInstance;
+                    testInstance = (ti == null) ? testInstance : ti;
+                } else if (property.PropertyType == typeof(ChaosResourceSpec)) {
+                    ChaosResourceSpec chaosSpec = (ChaosResourceSpec)property.GetValue(this, null);
+                    string ti = chaosSpec?.GetTestInstance();
+                    testInstance = (ti == null) ? testInstance : ti;
+                }
+            }
+            return testInstance;
+        }
     }
 
     public class ChaosSelector

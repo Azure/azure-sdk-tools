@@ -5,10 +5,8 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
@@ -19,26 +17,6 @@ namespace Azure.Sdk.Tools.TestProxy
     {
         private readonly ILogger _logger;
         private readonly RecordingHandler _recordingHandler;
-
-        private static readonly HttpClient RedirectableClient = Startup.Insecure ?
-            new HttpClient(new HttpClientHandler() { ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
-            {
-                Timeout = TimeSpan.FromSeconds(600),
-            } :
-            new HttpClient()
-            {
-                Timeout = TimeSpan.FromSeconds(600)
-            };
-
-        private static readonly HttpClient RedirectlessClient = Startup.Insecure ?
-            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false, ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
-            {
-                Timeout = TimeSpan.FromSeconds(600),
-            } :
-            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false })
-            {
-                Timeout = TimeSpan.FromSeconds(600)
-            };
 
         public Record(RecordingHandler recordingHandler, ILoggerFactory loggerFactory)
         {
@@ -88,7 +66,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 
-            await _recordingHandler.HandleRecordRequestAsync(id, Request, Response, RedirectableClient, RedirectlessClient);
+            await _recordingHandler.HandleRecordRequestAsync(id, Request, Response);
         }
     }
 }

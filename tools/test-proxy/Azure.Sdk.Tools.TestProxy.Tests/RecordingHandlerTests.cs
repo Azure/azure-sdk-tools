@@ -198,9 +198,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Single(testRecordingHandler.Sanitizers);
             Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers[0]);
             _checkDefaultExtensions(testRecordingHandler, CheckSkips.IncludeMatcher | CheckSkips.IncludeTransforms);
-            Assert.Empty(session.ModifiableSession.AdditionalSanitizers);
-            Assert.Empty(session.ModifiableSession.AdditionalTransforms);
-            Assert.Null(session.ModifiableSession.CustomMatcher);
+            Assert.Empty(session.Recording.AdditionalSanitizers);
+            Assert.Empty(session.Recording.AdditionalTransforms);
+            Assert.Null(session.Recording.CustomMatcher);
         }
 
         [Fact]
@@ -219,7 +219,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = testRecordingHandler.RecordingSessions.First().Value;
 
             // check that the individual session had reset sanitizers
-            Assert.Empty(session.ModifiableSession.AdditionalSanitizers);
+            Assert.Empty(session.Recording.AdditionalSanitizers);
 
             // stop the recording to clear out the session cache
             testRecordingHandler.StopRecording(recordingId);
@@ -285,7 +285,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await recordingHandler.StartPlaybackAsync(pathToRecording, httpContext.Response);
 
             var playbackSession = recordingHandler.PlaybackSessions.First();
-            var entry = playbackSession.Value.Session.Entries.First();
+            var entry = playbackSession.Value.Recording.Session.Entries.First();
 
             Assert.Equal("https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
         }
@@ -301,7 +301,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await recordingHandler.StartPlaybackAsync(pathToRecording, httpContext.Response);
 
             var playbackSession = recordingHandler.PlaybackSessions.First();
-            var entry = playbackSession.Value.Session.Entries.First();
+            var entry = playbackSession.Value.Recording.Session.Entries.First();
 
             Assert.Equal("https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
         }
@@ -359,7 +359,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/skip_body";
-            var recordingHandler = new RecordingHandler(currentPath);
+            var mockClient = new HttpClient(new MockHttpHandler());
+            var recordingHandler = new RecordingHandler(currentPath)
+            {
+                RedirectableClient = mockClient,
+                RedirectlessClient = mockClient
+            };
             var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
 
             recordingHandler.StartRecording(pathToRecording, httpContext.Response);
@@ -367,8 +372,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             CreateRecordModeRequest(httpContext, "request-body");
 
-            var mockClient = new HttpClient(new MockHttpHandler());
-            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient);
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response);
             recordingHandler.StopRecording(sessionId);
 
             try
@@ -392,7 +396,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/skip_entry";
-            var recordingHandler = new RecordingHandler(currentPath);
+
+            var mockClient = new HttpClient(new MockHttpHandler());
+            var recordingHandler = new RecordingHandler(currentPath)
+            {
+                RedirectableClient = mockClient,
+                RedirectlessClient = mockClient
+            };
+
+
             var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
 
             recordingHandler.StartRecording(pathToRecording, httpContext.Response);
@@ -400,15 +412,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             CreateRecordModeRequest(httpContext, "request-response");
 
-            var mockClient = new HttpClient(new MockHttpHandler());
-            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient);
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response);
 
             httpContext = new DefaultHttpContext();
             // send a second request that SHOULD be recorded
             CreateRecordModeRequest(httpContext);
             httpContext.Request.Headers.Remove("x-recording-skip");
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"value\" }");
-            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient);
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response);
 
             recordingHandler.StopRecording(sessionId);
 
@@ -437,16 +448,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/invalid_record_mode";
-            var recordingHandler = new RecordingHandler(currentPath);
+            var mockClient = new HttpClient(new MockHttpHandler());
+            var recordingHandler = new RecordingHandler(currentPath)
+            {
+                RedirectableClient = mockClient,
+                RedirectlessClient = mockClient
+            };
 
             recordingHandler.StartRecording(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             CreateRecordModeRequest(httpContext, new StringValues(values));
 
-            var mockClient = new HttpClient(new MockHttpHandler());
             HttpException resultingException = await Assert.ThrowsAsync<HttpException>(
-                async () => await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient)
+                async () => await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response)
             );
             Assert.Equal(HttpStatusCode.BadRequest, resultingException.StatusCode);
         }

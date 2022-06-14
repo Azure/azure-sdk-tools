@@ -58,9 +58,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.Start();
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-            var (fileName, session) = testRecordingHandler.RecordingSessions[recordingId];
+            var recordingHandlerSession = testRecordingHandler.RecordingSessions[recordingId];
 
-            Assert.Empty(fileName);
+            Assert.Empty(recordingHandlerSession.Path);
         }
 
         [Theory]

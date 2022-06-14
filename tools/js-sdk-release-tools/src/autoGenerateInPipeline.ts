@@ -42,7 +42,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     } else {
         await generateRLCInPipeline({
             sdkRepo: String(shell.pwd()),
-            swaggerRepo: path.join(String(shell.pwd()), specFolder),
+            swaggerRepo: path.isAbsolute(specFolder)? specFolder : path.join(String(shell.pwd()), specFolder),
             readmeMd: readmeMd,
             autorestConfig,
             use: use,

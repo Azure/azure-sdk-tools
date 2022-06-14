@@ -138,6 +138,12 @@ func (p *Pkg) indexFile(f *ast.File) {
 				// "type ETag string"
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name)
+			case *ast.IndexExpr, *ast.IndexListExpr:
+				// "type Client GenericClient[BaseClient]"
+				// "type Client CompositeClient[BaseClient1, BaseClient2]"
+				txt := p.getText(t.Pos(), t.End())
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.InterfaceType:
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t)

@@ -10,7 +10,7 @@
     "copyfiles": "copyfiles -a \"./test/testData/**/*.json\" ./dist",
     "unit-test": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --config ./jest.unittest.config.js",
     "unittest-update": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --updateSnapshot --config ./jest.unittest.config.js",
-    "test": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --runInBand --forceExit",
+    "test": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --runInBand",
     "eslint-fix": "eslint . --ext .ts --ignore-pattern node_modules/ --ignore-pattern dist/ --fix",
     "eslint": "eslint . --ext .ts --ignore-pattern node_modules/ --ignore-pattern dist/ --quiet",
     "test-report": "npm run build && nyc mocha dist/test --recursive"
@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@azure-tools/openapi-tools-common": "^1.2.2",
+    "@jest/test-sequencer": "^28.1.1",
     "@types/mkdirp": "^1.0.2",
     "@types/mockjs": "^1.0.3",
     "convict": "^6.2.3",

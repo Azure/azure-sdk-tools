@@ -22,10 +22,14 @@ pr:
       - tools/pipeline-witness
   
 extends:
-  template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml
+  template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-webapp.yml
   parameters:
     ToolName: pipeline-witness
-    FunctionProject: Azure.Sdk.Tools.PipelineWitness
+    ServiceProject: Azure.Sdk.Tools.PipelineWitness
     TestProject: Azure.Sdk.Tools.PipelineWitness.Tests
     ProductionEnvironmentName: pipelinewitnessprod
-    StagingEnvironmentName: pipelinewitnessstaging
+    Staging:
+      EnvironmentName: pipelinewitnessstaging
+      ResourceGroupName: pipelinewitnessstaging
+      AzureSubscription: pipelinewitnessstaging
+      ResourceName: pipelinewitnessstaging-app

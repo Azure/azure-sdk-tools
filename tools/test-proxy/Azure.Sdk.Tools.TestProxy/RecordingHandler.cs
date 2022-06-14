@@ -69,14 +69,14 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public RecordMatcher Matcher { get; set; }
 
-        public readonly ConcurrentDictionary<string, RecordingHandlerSession> RecordingSessions
-            = new ConcurrentDictionary<string, RecordingHandlerSession>();
+        public readonly ConcurrentDictionary<string, ModifiableRecordSession> RecordingSessions
+            = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
-        public readonly ConcurrentDictionary<string, RecordingHandlerSession> InMemorySessions
-            = new ConcurrentDictionary<string, RecordingHandlerSession>();
+        public readonly ConcurrentDictionary<string, ModifiableRecordSession> InMemorySessions
+            = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
-        public readonly ConcurrentDictionary<string, RecordingHandlerSession> PlaybackSessions
-            = new ConcurrentDictionary<string, RecordingHandlerSession>();
+        public readonly ConcurrentDictionary<string, ModifiableRecordSession> PlaybackSessions
+            = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
         public RecordingHandler(string targetDirectory, IAssetsStore store = null, StoreResolver storeResolver = null)
         {
@@ -106,16 +106,16 @@ namespace Azure.Sdk.Tools.TestProxy
                 return;
             }
 
-            foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(recordingSession.Recording.AdditionalSanitizers))
+            foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(recordingSession.AdditionalSanitizers))
             {
-                recordingSession.Recording.Session.Sanitize(sanitizer);
+                recordingSession.Session.Sanitize(sanitizer);
             }
 
             if(variables != null)
             {
                 foreach(var kvp in variables)
                 {
-                    recordingSession.Recording.Session.Variables[kvp.Key] = kvp.Value;
+                    recordingSession.Session.Variables[kvp.Key] = kvp.Value;
                 }
             }
 
@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     using var stream = System.IO.File.Create(targetPath);
                     var options = new JsonWriterOptions { Indented = true };
                     var writer = new Utf8JsonWriter(stream, options);
-                    recordingSession.Recording.Session.Serialize(writer);
+                    recordingSession.Session.Serialize(writer);
                     writer.Flush();
                     stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
 
@@ -154,10 +154,9 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             var id = Guid.NewGuid().ToString();
 
-            var session = new RecordingHandlerSession()
+            var session = new ModifiableRecordSession(new RecordSession())
             {
                 Path = sessionId ?? String.Empty,
-                Recording = new ModifiableRecordSession(new RecordSession()),
                 Client = null
             };
 
@@ -209,7 +208,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode != EntryRecordMode.DontRecord)
             {
-                session.Recording.Session.Entries.Add(entry);
+                session.Session.Entries.Add(entry);
 
                 Interlocked.Increment(ref Startup.RequestsRecorded);
             }
@@ -358,7 +357,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public async Task StartPlaybackAsync(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted)
         {
             var id = Guid.NewGuid().ToString();
-            RecordingHandlerSession session;
+            ModifiableRecordSession session;
 
             if (mode == RecordingType.InMemory)
             {
@@ -366,7 +365,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     throw new HttpException(HttpStatusCode.BadRequest, $"There is no in-memory session with id {sessionId} available for playback retrieval.");
                 }
-                session.Recording.SourceRecordingId = sessionId;
+                session.SourceRecordingId = sessionId;
             }
             else
             {
@@ -379,9 +378,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 using var stream = System.IO.File.OpenRead(path);
                 using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-                session = new RecordingHandlerSession()
+                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement))
                 {
-                    Recording = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement))
+                    Path = path
                 };
             }
 
@@ -393,7 +392,7 @@ namespace Azure.Sdk.Tools.TestProxy
             outgoingResponse.Headers.Add("x-recording-id", id);
 
 
-            var json = JsonSerializer.Serialize(session.Recording.Session.Variables);
+            var json = JsonSerializer.Serialize(session.Session.Variables);
             outgoingResponse.Headers.Add("Content-Type", "application/json");
 
             // Write to the response
@@ -407,18 +406,18 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
-            if (!String.IsNullOrEmpty(session.Recording.SourceRecordingId) && purgeMemoryStore)
+            if (!String.IsNullOrEmpty(session.SourceRecordingId) && purgeMemoryStore)
             {
-                if (!InMemorySessions.TryGetValue(session.Recording.SourceRecordingId, out var inMemorySession))
+                if (!InMemorySessions.TryGetValue(session.SourceRecordingId, out var inMemorySession))
                 {
-                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to retrieve in-memory session {session.Recording.SourceRecordingId}.");
+                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to retrieve in-memory session {session.SourceRecordingId}.");
                 }
 
-                Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Recording.Session.Entries.Count);                
+                Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);
 
-                if (!InMemorySessions.TryRemove(session.Recording.SourceRecordingId, out _))
+                if (!InMemorySessions.TryRemove(session.SourceRecordingId, out _))
                 {
-                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to remove in-memory session {session.Recording.SourceRecordingId}.");
+                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to remove in-memory session {session.SourceRecordingId}.");
                 }
 
                 GC.Collect();
@@ -444,9 +443,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 remove = bool.Parse(removeHeader);
             }
 
-            var match = session.Recording.Session.Lookup(entry, session.Recording.CustomMatcher ?? Matcher, session.Recording.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.Recording.AdditionalSanitizers) : Sanitizers, remove);
+            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
 
-            foreach (ResponseTransform transform in Transforms.Concat(session.Recording.AdditionalTransforms))
+            foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
             {
                 transform.Transform(incomingRequest, match);
             }
@@ -596,15 +595,15 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 lock (playbackSession)
                 {
-                    playbackSession.Recording.AdditionalSanitizers.Add(sanitizer);
+                    playbackSession.AdditionalSanitizers.Add(sanitizer);
                 }
             }
 
             if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
             {
-                lock (recordingSession.Recording)
+                lock (recordingSession)
                 {
-                    recordingSession.Recording.AdditionalSanitizers.Add(sanitizer);
+                    recordingSession.AdditionalSanitizers.Add(sanitizer);
                 }
             }
 
@@ -612,7 +611,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 lock (inMemSession)
                 {
-                    inMemSession.Recording.AdditionalSanitizers.Add(sanitizer);
+                    inMemSession.AdditionalSanitizers.Add(sanitizer);
                 }
             }
 
@@ -629,7 +628,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active playback session. Check the value being passed and try again.");
             }
 
-            session.Recording.AdditionalTransforms.Add(transform);
+            session.AdditionalTransforms.Add(transform);
         }
 
 
@@ -640,7 +639,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active playback session. Check the value being passed and try again.");
             }
 
-            session.Recording.CustomMatcher = matcher;
+            session.CustomMatcher = matcher;
         }
 
         public void SetDefaultExtensions(string recordingId = null)
@@ -649,15 +648,15 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
                 {
-                    playbackSession.Recording.ResetExtensions();
+                    playbackSession.ResetExtensions();
                 }
                 if (RecordingSessions.TryGetValue(recordingId, out var recordSession))
                 {
-                    recordSession.Recording.ResetExtensions();
+                    recordSession.ResetExtensions();
                 }
                 if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
                 {
-                    inMemSession.Recording.ResetExtensions();
+                    inMemSession.ResetExtensions();
                 }
             }
             else

@@ -256,7 +256,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             await controller.SetMatcher();
 
-            var result = testRecordingHandler.PlaybackSessions[recordingId].Recording.CustomMatcher;
+            var result = testRecordingHandler.PlaybackSessions[recordingId].CustomMatcher;
             Assert.True(result is BodilessMatcher);
         }
 
@@ -401,7 +401,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             await controller .AddSanitizer();
 
-            var result = testRecordingHandler.PlaybackSessions[recordingId].Recording.AdditionalSanitizers.First();
+            var result = testRecordingHandler.PlaybackSessions[recordingId].AdditionalSanitizers.First();
             Assert.True(result is HeaderRegexSanitizer);
         }
 
@@ -588,7 +588,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             await controller .AddTransform();
 
-            var result = testRecordingHandler.PlaybackSessions[recordingId].Recording.AdditionalTransforms.First();
+            var result = testRecordingHandler.PlaybackSessions[recordingId].AdditionalTransforms.First();
             Assert.True(result is ApiVersionTransform);
         }
 

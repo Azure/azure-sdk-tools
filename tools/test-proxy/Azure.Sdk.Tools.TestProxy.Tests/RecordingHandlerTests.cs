@@ -198,9 +198,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Single(testRecordingHandler.Sanitizers);
             Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers[0]);
             _checkDefaultExtensions(testRecordingHandler, CheckSkips.IncludeMatcher | CheckSkips.IncludeTransforms);
-            Assert.Empty(session.Recording.AdditionalSanitizers);
-            Assert.Empty(session.Recording.AdditionalTransforms);
-            Assert.Null(session.Recording.CustomMatcher);
+            Assert.Empty(session.AdditionalSanitizers);
+            Assert.Empty(session.AdditionalTransforms);
+            Assert.Null(session.CustomMatcher);
         }
 
         [Fact]
@@ -219,7 +219,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = testRecordingHandler.RecordingSessions.First().Value;
 
             // check that the individual session had reset sanitizers
-            Assert.Empty(session.Recording.AdditionalSanitizers);
+            Assert.Empty(session.AdditionalSanitizers);
 
             // stop the recording to clear out the session cache
             testRecordingHandler.StopRecording(recordingId);
@@ -285,7 +285,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await recordingHandler.StartPlaybackAsync(pathToRecording, httpContext.Response);
 
             var playbackSession = recordingHandler.PlaybackSessions.First();
-            var entry = playbackSession.Value.Recording.Session.Entries.First();
+            var entry = playbackSession.Value.Session.Entries.First();
 
             Assert.Equal("https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
         }
@@ -301,7 +301,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await recordingHandler.StartPlaybackAsync(pathToRecording, httpContext.Response);
 
             var playbackSession = recordingHandler.PlaybackSessions.First();
-            var entry = playbackSession.Value.Recording.Session.Entries.First();
+            var entry = playbackSession.Value.Session.Entries.First();
 
             Assert.Equal("https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
         }

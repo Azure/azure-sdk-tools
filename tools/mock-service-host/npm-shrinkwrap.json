@@ -2844,9 +2844,10 @@
       }
     },
     "node_modules/acorn": {
-      "version": "5.7.4",
-      "resolved": "https://registry.npmjs.org/acorn/-/acorn-5.7.4.tgz",
-      "integrity": "sha512-1D++VG7BhrtvQpNbBzovKNc1FLGGEE/oGe7b9xJm/RFHMBeUaUGpluV9RLjZa47YFdPcDAenEYuq9pQPcMdLJg==",
+      "version": "8.7.1",
+      "resolved": "https://registry.npmjs.org/acorn/-/acorn-8.7.1.tgz",
+      "integrity": "sha512-Xx54uLJQZ19lKygFXOWsscKUbsBZW0CPykPhVQdhIeIwrbPmJzqeASDInc8nKBnp/JT6igTs82qPXz069H8I/A==",
+      "dev": true,
       "bin": {
         "acorn": "bin/acorn"
       },
@@ -7258,18 +7259,6 @@
         "node": "^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0"
       }
     },
-    "node_modules/jest-environment-jsdom/node_modules/acorn": {
-      "version": "8.5.0",
-      "resolved": "https://registry.npmjs.org/acorn/-/acorn-8.5.0.tgz",
-      "integrity": "sha512-yXbYeFy+jUuYd3/CDcg2NkIYE991XYX/bje7LmjJigUciaeO1JR4XxXgCIV1/Zc/dRuFEyw1L0pbA+qynJkW5Q==",
-      "dev": true,
-      "bin": {
-        "acorn": "bin/acorn"
-      },
-      "engines": {
-        "node": ">=0.4.0"
-      }
-    },
     "node_modules/jest-environment-jsdom/node_modules/acorn-globals": {
       "version": "6.0.0",
       "resolved": "https://registry.npmjs.org/acorn-globals/-/acorn-globals-6.0.0.tgz",
@@ -8067,6 +8056,17 @@
         "whatwg-url": "^6.4.1",
         "ws": "^5.2.0",
         "xml-name-validator": "^3.0.0"
+      }
+    },
+    "node_modules/jsdom/node_modules/acorn": {
+      "version": "5.7.4",
+      "resolved": "https://registry.npmjs.org/acorn/-/acorn-5.7.4.tgz",
+      "integrity": "sha512-1D++VG7BhrtvQpNbBzovKNc1FLGGEE/oGe7b9xJm/RFHMBeUaUGpluV9RLjZa47YFdPcDAenEYuq9pQPcMdLJg==",
+      "bin": {
+        "acorn": "bin/acorn"
+      },
+      "engines": {
+        "node": ">=0.4.0"
       }
     },
     "node_modules/jsdom/node_modules/escodegen": {
@@ -9797,6 +9797,12 @@
       "funding": {
         "url": "https://github.com/sponsors/sindresorhus"
       }
+    },
+    "node_modules/openapi-types": {
+      "version": "12.0.0",
+      "resolved": "https://registry.npmjs.org/openapi-types/-/openapi-types-12.0.0.tgz",
+      "integrity": "sha512-6Wd9k8nmGQHgCbehZCP6wwWcfXcvinhybUTBatuhjRsCxUIujuYFZc9QnGeae75CyHASewBtxs0HX/qwREReUw==",
+      "peer": true
     },
     "node_modules/optionator": {
       "version": "0.8.3",
@@ -15197,9 +15203,10 @@
       }
     },
     "acorn": {
-      "version": "5.7.4",
-      "resolved": "https://registry.npmjs.org/acorn/-/acorn-5.7.4.tgz",
-      "integrity": "sha512-1D++VG7BhrtvQpNbBzovKNc1FLGGEE/oGe7b9xJm/RFHMBeUaUGpluV9RLjZa47YFdPcDAenEYuq9pQPcMdLJg=="
+      "version": "8.7.1",
+      "resolved": "https://registry.npmjs.org/acorn/-/acorn-8.7.1.tgz",
+      "integrity": "sha512-Xx54uLJQZ19lKygFXOWsscKUbsBZW0CPykPhVQdhIeIwrbPmJzqeASDInc8nKBnp/JT6igTs82qPXz069H8I/A==",
+      "dev": true
     },
     "acorn-globals": {
       "version": "4.3.4",
@@ -18479,12 +18486,6 @@
         "jsdom": "^16.6.0"
       },
       "dependencies": {
-        "acorn": {
-          "version": "8.5.0",
-          "resolved": "https://registry.npmjs.org/acorn/-/acorn-8.5.0.tgz",
-          "integrity": "sha512-yXbYeFy+jUuYd3/CDcg2NkIYE991XYX/bje7LmjJigUciaeO1JR4XxXgCIV1/Zc/dRuFEyw1L0pbA+qynJkW5Q==",
-          "dev": true
-        },
         "acorn-globals": {
           "version": "6.0.0",
           "resolved": "https://registry.npmjs.org/acorn-globals/-/acorn-globals-6.0.0.tgz",
@@ -19122,6 +19123,11 @@
         "xml-name-validator": "^3.0.0"
       },
       "dependencies": {
+        "acorn": {
+          "version": "5.7.4",
+          "resolved": "https://registry.npmjs.org/acorn/-/acorn-5.7.4.tgz",
+          "integrity": "sha512-1D++VG7BhrtvQpNbBzovKNc1FLGGEE/oGe7b9xJm/RFHMBeUaUGpluV9RLjZa47YFdPcDAenEYuq9pQPcMdLJg=="
+        },
         "escodegen": {
           "version": "1.14.3",
           "resolved": "https://registry.npmjs.org/escodegen/-/escodegen-1.14.3.tgz",
@@ -20514,6 +20520,12 @@
         "is-docker": "^2.1.1",
         "is-wsl": "^2.2.0"
       }
+    },
+    "openapi-types": {
+      "version": "12.0.0",
+      "resolved": "https://registry.npmjs.org/openapi-types/-/openapi-types-12.0.0.tgz",
+      "integrity": "sha512-6Wd9k8nmGQHgCbehZCP6wwWcfXcvinhybUTBatuhjRsCxUIujuYFZc9QnGeae75CyHASewBtxs0HX/qwREReUw==",
+      "peer": true
     },
     "optionator": {
       "version": "0.8.3",

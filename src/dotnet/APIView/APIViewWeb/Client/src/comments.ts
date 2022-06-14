@@ -323,14 +323,14 @@
             if (commentRows.length != 1)
             {
                 if (index == 0) {
-                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary" href="#${nextCommentThreadAnchor}"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
                 }
                 else if (index == commentRows.length - 1) {
-                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary" href="#${previousCommentThreadAnchor}"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
                 }
                 else {
-                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary" href="#${previousCommentThreadAnchor}"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
-                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary ml-1" href="#${nextCommentThreadAnchor}"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary ml-1" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
                 }
             }
         });

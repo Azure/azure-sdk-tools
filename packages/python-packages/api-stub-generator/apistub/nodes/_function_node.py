@@ -58,6 +58,21 @@ class FunctionNode(NodeEntityBase):
             self.node = None
         self._inspect()
         self.kwargs = OrderedDict(sorted(self.kwargs.items()))
+        self.namespace_id = self._regenerate_function_id()
+
+    def _regenerate_function_id(self):
+        """
+        Regenerate the namespace_id for functions to account for overloads, which
+        have the same name.
+        """
+        lines = [f"{self.name}("]
+        for arg in self.args.values():
+            lines.append(f"{arg.argname}:{arg.argtype},")
+        for arg in self.kwargs.values():
+            lines.append(f"{arg.argname}:{arg.argtype},")
+        lines.append(f")->{self.return_type}")
+        namespace_id = "".join(lines)
+        return namespace_id
 
     def _inspect(self):
         logging.debug("Processing function {0}".format(self.name))

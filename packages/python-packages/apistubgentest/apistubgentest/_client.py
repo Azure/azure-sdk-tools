@@ -1,6 +1,6 @@
 from datetime import datetime
 from azure.core.paging import ItemPaged
-from typing import Optional, Union, List, Any
+from typing import Optional, Union, List, Any, overload
 
 from .models import FakeObject, FakeError, PetEnumPy3Metaclass
 

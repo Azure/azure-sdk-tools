@@ -45,6 +45,18 @@ export default class SwaggerMocker {
         this.patchUserAssignedIdentities(example.responses, liveRequest)
     }
 
+    private isValidId(id: string): boolean {
+        if (isNullOrUndefined(id) || id.indexOf(mockedResourceType) >= 0) return false
+        // is valid id if start with '/' and there is no special chars
+        return id.match(/^\/.+/) !== null && id.match(/[{}[]()]+/) === null
+    }
+
+    private isValidType(t: string): boolean {
+        if (isNullOrUndefined(t) || t === mockedResourceType) return false
+        // is valid type if there is '.' and there is no special chars
+        return t.match(/./) !== null && t.match(/[{}[]()]+/) === null
+    }
+
     /**
      * Replaces mock resource IDs with IDs that match current resource.
      */
@@ -73,7 +85,7 @@ export default class SwaggerMocker {
         }
 
         Object.keys(responses).forEach((key) => {
-            if (responses[key]?.body?.id) {
+            if (responses[key]?.body?.id && !this.isValidId(responses[key].body.id)) {
                 // put
                 if (liveRequest.method.toLowerCase() === 'put') {
                     responses[key].body.id = url.pathname
@@ -86,10 +98,8 @@ export default class SwaggerMocker {
                     responses[key].body.id = url.pathname
                 }
             }
-            setStringIfExist(responses[key]?.body, 'type', resourceType)
-            if (responses[key]?.body?.type && typeof responses[key]?.body?.type === 'string') {
-                responses[key].body.type = resourceType
-            }
+            if (!this.isValidType(responses[key]?.body?.type))
+                setStringIfExist(responses[key]?.body, 'type', resourceType)
 
             // get(list)
             for (const arr of [
@@ -98,11 +108,12 @@ export default class SwaggerMocker {
             ]) {
                 if (Array.isArray(arr) && arr.length) {
                     arr.forEach((item: any) => {
-                        if (item.id) {
+                        if (item.id && !this.isValidId(item.id)) {
                             const resourceName = item.name || 'resourceName'
                             item.id = `${url.pathname}/${resourceName}`
                         }
-                        setStringIfExist(item, 'type', resourceType)
+                        if (!this.isValidType(item.type))
+                            setStringIfExist(item, 'type', resourceType)
                     })
                 }
             }

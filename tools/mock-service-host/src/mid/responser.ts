@@ -282,7 +282,7 @@ export class ResponseGenerator {
             }
         )
         if (!validateResult.isSuccessful) {
-            throw WrongExampleResponse
+            throw new WrongExampleResponse(JSON.stringify(validateResult))
         }
     }
 

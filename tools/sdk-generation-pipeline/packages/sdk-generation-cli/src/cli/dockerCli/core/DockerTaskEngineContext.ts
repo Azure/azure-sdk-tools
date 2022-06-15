@@ -4,8 +4,8 @@ import * as fs from 'fs';
 import { writeFileSync } from 'fs';
 import * as path from 'path';
 import { Logger } from 'winston';
-import { extractAutorestConfigs } from '../../../utils/autorestConfigExtractorUtils';
 
+import { extractAutorestConfigs } from '../../../utils/autorestConfigExtractorUtils';
 import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from '../../../utils/git';
 import { dockerTaskEngineInput } from '../schema/dockerTaskEngineInput';
 import { DockerContext } from './DockerContext';

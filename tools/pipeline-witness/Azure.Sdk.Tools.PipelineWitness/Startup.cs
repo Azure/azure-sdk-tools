@@ -1,89 +1,44 @@
 ﻿using System;
-
-using Azure.Cosmos;
-using Azure.Sdk.Tools.PipelineWitness;
+using Azure.Identity;
+using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
 using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
 using Azure.Security.KeyVault.Secrets;
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.TestResults.WebApi;
-using Microsoft.ApplicationInsights.Extensibility;
-using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
-using Microsoft.Extensions.Azure;
-
-[assembly: FunctionsStartup(typeof(Startup))]
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
-    public class Startup : FunctionsStartup
+    public class Startup
     {
-        private string GetWebsiteResourceGroupEnvironmentVariable()
+        public static void Configure(WebApplicationBuilder builder)
         {
-            var websiteResourceGroupEnvironmentVariable = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP");
-            return websiteResourceGroupEnvironmentVariable;
-        }
+            var settings = new PipelineWitnessSettings();
+            var settingsSection = builder.Configuration.GetSection("PipelineWitness");
+            settingsSection.Bind(settings);
 
-        private string GetAzureWebJobsStorageEnvironmentVariable()
-        {
-            var value = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
-            return value;
-        }
-
-        private string GetBuildBlobStorageEnvironmentVariable()
-        {
-            var environmentVariable = Environment.GetEnvironmentVariable("BUILD_BLOB_STORAGE_URI");
-            return environmentVariable;
-        }
-
-        public override void Configure(IFunctionsHostBuilder builder)
-        {
-            var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
-            var buildBlobStorageUri = GetBuildBlobStorageEnvironmentVariable();
-            var azureWebJobStorageConnectionString = GetAzureWebJobsStorageEnvironmentVariable();
+            builder.Services.AddApplicationInsightsTelemetry();
 
             builder.Services.AddAzureClients(builder =>
             {
-                var keyVaultUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net/");
-                builder.AddSecretClient(keyVaultUri);
-
-                builder.AddBlobServiceClient(new Uri(buildBlobStorageUri));
-                builder.AddQueueServiceClient(azureWebJobStorageConnectionString)
+                builder.UseCredential(new DefaultAzureCredential());
+                builder.AddSecretClient(new Uri(settings.KeyVaultUri));
+                builder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
+                builder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))
                     .ConfigureOptions(o => o.MessageEncoding = Storage.Queues.QueueMessageEncoding.Base64);
-            });
-
-            builder.Services.AddSingleton<CosmosClient>(provider =>
-            {
-                var secretClient = provider.GetService<SecretClient>();
-                KeyVaultSecret secret = secretClient.GetSecret("cosmosdb-primary-authorization-key");
-                var accountEndpoint = $"https://{websiteResourceGroupEnvironmentVariable}.documents.azure.com";
-
-                // Let's see how this goes. Been having trouble with Cosmos and
-                // and TCP connection limits in Azure Functions. If this persists
-                // after this refactoring then the next step is to either switch
-                // to gateway mode or limit the direct connections somehow.
-                var cosmosClient = new CosmosClient(
-                    accountEndpoint,
-                    secret.Value,
-                    new CosmosClientOptions()
-                    {
-                        Diagnostics = {
-                            IsLoggingEnabled = false // HACK: https://github.com/Azure/azure-cosmos-dotnet-v3/issues/1592 
-                                                     //       It should be safe to remove these options post 4.0.0-preview.3
-                        }
-                    }
-                    );
-
-                return cosmosClient;
             });
 
             builder.Services.AddSingleton<VssConnection>(provider =>
             {
-                var secretClient = provider.GetService<SecretClient>();
+                var secretClient = provider.GetRequiredService<SecretClient>();
                 KeyVaultSecret secret = secretClient.GetSecret("azure-devops-personal-access-token");
                 var credential = new VssBasicCredential("nobody", secret.Value);
                 var connection = new VssConnection(new Uri("https://dev.azure.com/azure-sdk"), credential);
@@ -96,7 +51,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             builder.Services.AddLogging();
             builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<RunProcessor>();
             builder.Services.AddSingleton<BlobUploadProcessor>();
             builder.Services.AddSingleton<BuildLogProvider>();
             builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
@@ -121,7 +75,10 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
             builder.Services.AddTransient<ITelemetryInitializer, NotFoundTelemetryInitializer>();
             builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer<Startup>>();
-            builder.Services.Configure<PipelineWitnessSettings>(builder.GetContext().Configuration);
+            builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
+
+            builder.Services.AddHostedService<BuildCompleteQueueWorker>();
+            builder.Services.AddHostedService<BuildLogBundleQueueWorker>();
         }
     }
 }

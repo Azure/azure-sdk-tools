@@ -20,6 +20,7 @@ export class DockerTaskEngineInput {
     mockTestTaskLog: string;
     taskResultJson: string;
     changeOwner: boolean;
+    autorestConfigFilePath: string;
 }
 
 export const dockerTaskEngineInput = convict<DockerTaskEngineInput>({
@@ -124,5 +125,11 @@ export const dockerTaskEngineInput = convict<DockerTaskEngineInput>({
         env: 'CHANGE_OWNER',
         format: Boolean,
         doc: 'When the commands run in docker, it is required to change the sdk owner because generated codes is owned by root'
+    },
+    autorestConfigFilePath: {
+        default: '/autorest.md',
+        env: 'AUTOREST_CONFIG_FILE_PATH',
+        format: String,
+        doc: `The absolute path to autorest configuration file. It's required when you want to input your own autorest config in generating data-plane sdk.`
     }
 });

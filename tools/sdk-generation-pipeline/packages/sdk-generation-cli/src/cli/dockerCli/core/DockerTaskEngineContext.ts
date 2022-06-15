@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { writeFileSync } from 'fs';
 import * as path from 'path';
 import { Logger } from 'winston';
+import { extractAutorestConfigs } from '../../../utils/autorestConfigExtractorUtils';
 
 import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from '../../../utils/git';
 import { dockerTaskEngineInput } from '../schema/dockerTaskEngineInput';
@@ -43,6 +44,7 @@ export class DockerTaskEngineContext {
     taskResultJsonPath: string;
     changeOwner: boolean;
     mode: DockerRunningModel;
+    autorestConfig: string | undefined;
 
     public initialize(dockerContext: DockerContext) {
         // before execute task engine, safe spec repos and sdk repos because they may be owned by others
@@ -75,6 +77,7 @@ export class DockerTaskEngineContext {
         this.taskResultJsonPath = path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.taskResultJson);
         this.changeOwner = dockerTaskEngineConfigProperties.changeOwner;
         this.mode = dockerContext.mode;
+        this.autorestConfig = extractAutorestConfigs(dockerTaskEngineConfigProperties.autorestConfigFilePath, dockerContext.sdkRepo, dockerContext.logger);
     }
 
     public async beforeRunTaskEngine() {

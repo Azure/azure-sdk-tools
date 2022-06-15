@@ -230,3 +230,38 @@ func TestAliasDefinitions(t *testing.T) {
 		})
 	}
 }
+
+func TestRecursiveAliasDefinitions(t *testing.T) {
+	priorValue := sdkDirName
+	sdkDirName = "testdata"
+	defer func() { sdkDirName = priorValue }()
+
+	for _, test := range []struct {
+		name, path, sourceName string
+		diagLevel              DiagnosticLevel
+	}{
+		{
+			diagLevel:  DiagnosticLevelInfo,
+			name:       "internal_package",
+			path:       "testdata/test_recursive_alias",
+			sourceName: "service.Foo",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			review, err := createReview(filepath.Clean(test.path))
+			require.NoError(t, err)
+			require.Equal(t, "Go", review.Language)
+			require.Equal(t, 2, len(review.Diagnostics))
+			require.Equal(t, test.diagLevel, review.Diagnostics[0].Level)
+			require.Equal(t, aliasFor+test.sourceName, review.Diagnostics[0].Text)
+			require.Equal(t, 2, len(review.Navigation))
+			require.Equal(t, filepath.Base(test.path), review.Navigation[0].Text)
+			for _, token := range review.Tokens {
+				if token.Value == "Bar" {
+					return
+				}
+			}
+			t.Fatal("review doesn't contain the aliased struct's definition")
+		})
+	}
+}

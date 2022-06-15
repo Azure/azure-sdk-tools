@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"golang.org/x/mod/modfile"
@@ -114,7 +115,7 @@ func NewModule(dir string) (*Module, error) {
 			var t TokenMaker
 			if source == nil {
 				t = p.c.addSimpleType(*p, alias, p.Name(), originalName)
-			} else if def, ok := source.types[typeName]; ok {
+			} else if def := recursiveFindTypeDef(typeName, source, m.packages); !reflect.ValueOf(def).IsZero() {
 				switch n := def.n.Type.(type) {
 				case *ast.InterfaceType:
 					t = p.c.addInterface(*def.p, alias, p.Name(), n)
@@ -148,4 +149,44 @@ func parseModFile(dir string) (*modfile.File, error) {
 		return nil, err
 	}
 	return modfile.Parse(path, content, nil)
+}
+
+func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg) typeDef {
+	def, ok := source.types[typeName]
+	if ok {
+		return def
+	}
+
+	// this is a type alias.  recursively find its typeDef
+	alias, ok := source.typeAliases[typeName]
+	if ok {
+		// alias == github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container.DeleteOptions
+		split := strings.LastIndex(alias, ".")
+		if split < 0 {
+			return typeDef{}
+		}
+
+		pkgName := alias[:split]   // github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container
+		typeName = alias[split+1:] // DeleteOptions
+		split = strings.LastIndex(pkgName, "/")
+		if split < 0 {
+			return typeDef{}
+		}
+
+		pkgName = pkgName[split+1:] // container
+		source = nil
+		for _, pkg := range packages {
+			if pkg.p.Name == pkgName {
+				source = pkg
+				break
+			}
+		}
+		if source == nil {
+			return typeDef{}
+		}
+
+		return recursiveFindTypeDef(typeName, source, packages)
+	}
+
+	return typeDef{}
 }

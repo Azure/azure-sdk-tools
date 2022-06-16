@@ -29,6 +29,7 @@
         private const string BuildLogLinesContainerName = "buildloglines";
         private const string BuildTimelineRecordsContainerName = "buildtimelinerecords";
         private const string TestRunsContainerName = "testruns";
+        private const string BuildDefinitionsContainerName = "builddefinitions";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
@@ -46,8 +47,10 @@
         private readonly BlobContainerClient buildsContainerClient;
         private readonly BlobContainerClient buildTimelineRecordsContainerClient;
         private readonly BlobContainerClient testRunsContainerClient;
+        private readonly BlobContainerClient buildDefinitionsContainerClient;
         private readonly QueueClient queueClient;
         private readonly IOptions<PipelineWitnessSettings> options;
+        private readonly HashSet<string> knownBlobs = new HashSet<string>();
 
         public BlobUploadProcessor(
             ILogger<BlobUploadProcessor> logger,
@@ -77,6 +80,7 @@
             this.buildTimelineRecordsContainerClient = blobServiceClient.GetBlobContainerClient(BuildTimelineRecordsContainerName);
             this.buildLogLinesContainerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
             this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerName);
+            this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
             this.queueClient = queueServiceClient.GetQueueClient(this.options.Value.BuildLogBundlesQueueName);
             this.queueClient.CreateIfNotExists();
         }
@@ -186,6 +190,109 @@
             foreach (var log in buildLogBundle.TimelineLogs)
             {
                 await UploadLogLinesBlobAsync(buildLogBundle, log);
+            }
+        }
+
+        public async Task UploadBuildDefinitionBlobsAsync(string account, string projectName)
+        {
+            var definitions = await buildClient.GetFullDefinitionsAsync2(project: projectName);
+
+            foreach (var definition in definitions)
+            {
+                await UploadBuildDefinitionBlobAsync(account, definition);
+            }
+        }
+        private async Task UploadBuildDefinitionBlobAsync(string account, BuildDefinition definition)
+        {
+            var blobPath = $"{definition.Project.Name}/{definition.Id}-{definition.Revision}.jsonl";
+
+            try
+            {
+                var blobClient = this.buildDefinitionsContainerClient.GetBlobClient(blobPath);
+                var alreadySeen = this.knownBlobs.Contains(blobPath);
+
+                if (alreadySeen || await blobClient.ExistsAsync())
+                {
+                    this.knownBlobs.Add(blobPath);
+                    this.logger.LogInformation("Skipping existing build definition blob for build {DefinitionId} project {Project}", definition.Id, definition.Project.Name);
+                    return;
+                }
+
+                this.logger.LogInformation("Creating blob for build definition {DefinitionId} revision {Revision} project {Project}", definition.Id, definition.Revision, definition.Project.Name);
+
+                var content = JsonConvert.SerializeObject(new
+                {
+                    OrganizationName = account,
+                    ProjectId = definition.Project.Id,
+                    BuildDefinitionId = definition.Id,
+                    BuildDefinitionRevision = definition.Revision,
+                    BuildDefinitionName = definition.Name,
+                    Path = definition.Path,
+                    RepositoryId = definition.Repository.Id,
+                    RepositoryName = definition.Repository.Name,
+                    AuthoredByDescriptor = definition.AuthoredBy.Descriptor.ToString(),
+                    AuthoredByDisplayName = definition.AuthoredBy.DisplayName,
+                    AuthoredById = definition.AuthoredBy.Id,
+                    AuthoredByIsContainer = definition.AuthoredBy.IsContainer,
+                    AuthoredByUniqueName = definition.AuthoredBy.UniqueName,
+                    CreatedDate = definition.CreatedDate,
+                    DefaultBranch = definition.Repository.DefaultBranch,
+                    DraftOfId = default(string),
+                    DraftOfName = default(string),
+                    DraftOfProjectId = default(string),
+                    DraftOfProjectName = default(string),
+                    DraftOfProjectRevision = default(string),
+                    DraftOfProjectState = default(string),
+                    DraftOfProjectVisibility = default(string),
+                    DraftOfQueueStatus = default(string),
+                    DraftOfRevision = default(string), 
+                    DraftOfType = default(string), 
+                    DraftOfUri = default(string), 
+                    ProjectName = definition.Project.Name, 
+                    ProjectRevision = definition.Project.Revision, 
+                    ProjectState = definition.Project.State, 
+                    Quality = definition.DefinitionQuality, 
+                    QueueId = definition.Queue?.Id, 
+                    QueueName = definition.Queue?.Name, 
+                    QueuePoolId = definition.Queue?.Pool?.Id, 
+                    QueuePoolIsHosted = definition.Queue?.Pool?.IsHosted, 
+                    QueuePoolName = definition.Queue?.Pool?.Name, 
+                    QueueStatus = definition.QueueStatus, 
+                    Type = definition.Type, 
+                    Uri = definition.Uri,
+                    BadgeEnabled = definition.BadgeEnabled,
+                    BuildNumberFormat = definition.BuildNumberFormat,
+                    Comment = definition.Comment,
+                    JobAuthorizationScope = definition.JobAuthorizationScope,
+                    JobCancelTimeoutInMinutes = definition.JobCancelTimeoutInMinutes,
+                    JobTimeoutInMinutes = definition.JobTimeoutInMinutes,
+                    ProcessType = definition.Process.Type,
+                    ProcessYamlFilename = definition.Process is YamlProcess yamlprocess ? yamlprocess.YamlFilename : null,
+                    RepositoryCheckoutSubmodules = definition.Repository.CheckoutSubmodules,
+                    RepositoryClean = definition.Repository.Clean,
+                    RepositoryDefaultBranch = definition.Repository.DefaultBranch,
+                    RepositoryRootFolder = definition.Repository.RootFolder,
+                    RepositoryType = definition.Repository.Type,
+                    RepositoryUrl = definition.Repository.Url,
+                    Options = definition.Options,
+                    Variables = definition.Variables,
+                    Tags = definition.Tags,
+                    Data = definition,
+                    EtlIngestDate = DateTimeOffset.UtcNow
+                }, jsonSettings);
+
+                await blobClient.UploadAsync(new BinaryData(content));
+                this.knownBlobs.Add(blobPath);
+            }
+            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+            {
+                this.logger.LogInformation("Ignoring exception from existing blob for build definition {DefinitionId}", definition.Id);
+                this.knownBlobs.Add(blobPath);
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Error processing blob for build definition {DefinitionId}", definition.Id);
+                throw;
             }
         }
 

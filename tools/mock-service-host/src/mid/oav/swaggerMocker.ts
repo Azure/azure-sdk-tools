@@ -11,8 +11,7 @@ import {
 import { ExampleRule, getRuleValidator } from 'oav/dist/lib/generator/exampleRule'
 import { JsonLoader } from 'oav/dist/lib/swagger/jsonLoader'
 import { LiveRequest } from 'oav/dist/lib/liveValidation/operationValidator'
-import { SpecItem } from '../responser'
-import { logger, setStringIfExist } from '../../common/utils'
+import { isNullOrUndefined, logger, setStringIfExist } from '../../common/utils'
 import { mockedResourceType } from '../../common/constants'
 import { parse as parseUrl } from 'url'
 import { xmsAzureResource } from 'oav/dist/lib/util/constants'
@@ -41,23 +40,7 @@ export default class SwaggerMocker {
         this.exampleRule = exampleRule
     }
 
-    public mockForExample(
-        example: any,
-        specItem: SpecItem,
-        spec: any,
-        rp: string,
-        liveRequest: LiveRequest
-    ) {
-        this.spec = spec
-        if (Object.keys(example.responses).length === 0) {
-            for (const statusCode of Object.keys(specItem.content.responses)) {
-                if (statusCode !== 'default') {
-                    example.responses[`${statusCode}`] = {}
-                }
-            }
-        }
-        example.parameters = this.mockRequest(example.parameters, specItem.content.parameters, rp)
-        example.responses = this.mockResponse(example.responses, specItem)
+    public patchExampleResponses(example: any, liveRequest: LiveRequest) {
         this.patchResourceIdAndType(example.responses, liveRequest)
         this.patchUserAssignedIdentities(example.responses, liveRequest)
     }
@@ -112,8 +95,7 @@ export default class SwaggerMocker {
                     arr.forEach((item: any) => {
                         if (item.id) {
                             const resourceName = item.name || 'resourceName'
-                            url.pathname = `${url.pathname}/${resourceName}`
-                            item.id = url.pathname
+                            item.id = `${url.pathname}/${resourceName}`
                         }
                         setStringIfExist(item, 'type', resourceType)
                     })
@@ -136,6 +118,7 @@ export default class SwaggerMocker {
         pathElements: Record<string, string>,
         inUserAssignedIdentities = false
     ): any {
+        if (isNullOrUndefined(obj)) return obj
         if (Array.isArray(obj)) {
             return obj.map((x) => this.mockUserAssignedIdentities(x, pathElements))
         } else if (typeof obj === 'object') {
@@ -173,19 +156,7 @@ export default class SwaggerMocker {
         })
     }
 
-    private mockResponse(responseExample: any, specItem: any) {
-        for (const statusCode of Object.keys(responseExample)) {
-            const mockedResp = this.mockEachResponse(
-                statusCode,
-                responseExample[statusCode],
-                specItem
-            )
-            responseExample[statusCode] = mockedResp
-        }
-        return responseExample
-    }
-
-    private mockEachResponse(statusCode: string, responseExample: any, specItem: any) {
+    public mockEachResponse(statusCode: string, responseExample: any, specItem: any) {
         const visited = new Set<string>()
         const validator = getRuleValidator(this.exampleRule).onResponseBody
         const responseSpec = specItem.content.responses[statusCode]

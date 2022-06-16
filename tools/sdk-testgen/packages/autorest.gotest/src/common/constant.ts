@@ -24,7 +24,7 @@ export const configDefaults = {
     [Config.generateSdkExample]: false,
     [Config.generateScenarioTest]: false,
     [Config.generateSdkSample]: false,
-    [Config.filePrefix]: 'zz_generated_',
-    [Config.exampleFilePrefix]: 'ze_generated_',
-    [Config.testFilePrefix]: 'zt_generated_',
+    [Config.filePrefix]: '',
+    [Config.exampleFilePrefix]: '',
+    [Config.testFilePrefix]: '',
 };

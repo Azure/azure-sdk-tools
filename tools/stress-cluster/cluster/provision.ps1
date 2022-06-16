@@ -118,6 +118,7 @@ function SetEnvOutputs([hashtable]$params) {
     $values = GetEnvValues
 
     $values.appInsightsKeySecretName.$Environment = $outputs.APPINSIGHTS_KEY_SECRET_NAME.value
+    $values.appInsightsConnectionStringSecretName.$Environment = $outputs.APPINSIGHTS_CONNECTION_STRING_SECRET_NAME.value
     $values.debugStorageKeySecretName.$Environment = $outputs.DEBUG_STORAGE_KEY_SECRET_NAME.value
     $values.debugStorageAccountSecretName.$Environment = $outputs.DEBUG_STORAGE_ACCOUNT_SECRET_NAME.value
     $values.debugFileShareName.$Environment = $outputs.DEBUG_FILESHARE_NAME.value

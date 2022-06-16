@@ -25,6 +25,9 @@ parameters:
     type: string
     default: main
 
+variables:
+- template: /eng/pipelines/templates/variables/globals.yml
+
 jobs:
 - job:
   strategy:

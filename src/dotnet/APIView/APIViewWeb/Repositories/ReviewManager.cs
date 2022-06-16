@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
 using APIViewWeb.Models;
-using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -83,6 +82,34 @@ namespace APIViewWeb.Repositories
         public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language, string packageName = null, ReviewType filterType = ReviewType.Manual)
         {
             return _reviewsRepository.GetReviewsAsync(closed, language, packageName: packageName, filterType: filterType);
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, IEnumerable<ReviewType> filterTypes)
+        {
+            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterTypes);
+        }
+
+        public async Task<IEnumerable<string>> GetReviewProprtiesAsync(string propertyName)
+        {
+            return await _reviewsRepository.GetReviewFirstLevelProprtiesAsync(propertyName);
+        }
+
+        public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
+            List<string> search, List<string> languages, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
+        {
+            var result = await _reviewsRepository.GetReviewsAsync(search, languages, isClosed, filterTypes, isApproved, offset, limit, orderBy);
+
+            // Calculate and add Previous and Next and Current page to the returned result
+            var totalPages = (int)Math.Ceiling((double)result.TotalCount / (double)limit);
+            var currentPage = (offset == 0) ? 1 : ((offset / limit) + 1);
+
+            (IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage) resultToReturn = (
+                Reviews: result.Reviews, TotalCount: result.TotalCount, TotalPages: totalPages,
+                CurrentPage: currentPage,
+                PreviousPage: (currentPage == 1) ? null : currentPage - 1,
+                NextPage: (currentPage >= totalPages) ? null : currentPage + 1
+            );
+            return resultToReturn;
         }
 
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
@@ -308,6 +335,10 @@ namespace APIViewWeb.Repositories
         {
             var review = await GetReviewAsync(user, id);
             review.IsClosed = !review.IsClosed;
+            if (review.FilterType == ReviewType.Automatic)
+            {
+                throw new AuthorizationFailedException();
+            }
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
@@ -636,11 +667,6 @@ namespace APIViewWeb.Repositories
                 packageDict[packageDisplayName].reviews.Add(new ReviewDisplayModel(review));
             }
             return response.Values.ToList();
-        }
-
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, ReviewType filterType)
-        {
-            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
         }
 
         public async Task AutoArchiveReviews(int archiveAfterMonths)

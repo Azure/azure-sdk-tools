@@ -96,7 +96,7 @@ namespace APIViewWeb
             {
                 var filterTypesAsInts = filterTypes.Cast<int>().ToList();
                 var filterTypeAsQueryStr = ArrayToQueryString<int>(filterTypesAsInts);
-                queryStringBuilder.Append(" AND r.FilterType IN {filterTypeAsQueryStr} ");
+                queryStringBuilder.Append($" AND r.FilterType IN {filterTypeAsQueryStr} ");
             }
 
             var reviews = new List<ReviewModel>();

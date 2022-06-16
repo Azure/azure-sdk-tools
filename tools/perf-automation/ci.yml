@@ -24,6 +24,6 @@ pr:
       - tools/perf-automation
 
 stages:
-  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  - template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
     parameters:
       ToolDirectory: perf-automation

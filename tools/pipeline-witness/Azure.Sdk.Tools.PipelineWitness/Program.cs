@@ -13,6 +13,7 @@ public class Program
 
         // Add services to the container.
         builder.Services.AddControllers();
+        builder.Services.AddHealthChecks();
 
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
@@ -34,6 +35,8 @@ public class Program
         app.UseAuthorization();
 
         app.MapControllers();
+
+        app.UseHealthChecks("/");
 
         await app.RunAsync();
     }

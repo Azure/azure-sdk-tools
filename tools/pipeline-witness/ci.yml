@@ -27,7 +27,11 @@ extends:
     ToolName: pipeline-witness
     ServiceProject: Azure.Sdk.Tools.PipelineWitness
     TestProject: Azure.Sdk.Tools.PipelineWitness.Tests
-    ProductionEnvironmentName: pipelinewitnessprod
+    Production:
+      EnvironmentName: pipelinewitnessprod
+      ResourceGroupName: pipelinewitnessprod
+      AzureSubscription: pipelinewitnessprod
+      ResourceName: pipelinewitnessprod-app
     Staging:
       EnvironmentName: pipelinewitnessstaging
       ResourceGroupName: pipelinewitnessstaging

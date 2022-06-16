@@ -16,6 +16,8 @@ using System.Threading.Tasks;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
+// Test change to trigger CI build
+
 namespace Azure.Sdk.Tools.PerfAutomation
 {
     public static class Program

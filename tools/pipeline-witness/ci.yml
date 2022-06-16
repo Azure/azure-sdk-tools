@@ -30,10 +30,10 @@ extends:
     Production:
       EnvironmentName: pipelinewitnessprod
       ResourceGroupName: pipelinewitnessprod
-      AzureSubscription: pipelinewitnessprod
+      AzureSubscription: Azure SDK Engineering System
       ResourceName: pipelinewitnessprod-app
     Staging:
       EnvironmentName: pipelinewitnessstaging
       ResourceGroupName: pipelinewitnessstaging
-      AzureSubscription: pipelinewitnessstaging
+      AzureSubscription: Azure SDK Engineering System
       ResourceName: pipelinewitnessstaging-app

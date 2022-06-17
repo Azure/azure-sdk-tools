@@ -101,20 +101,21 @@ Before running docker command, pipeline must prepare the spec repo and sdk repo.
 Command:
 
 ```shell
-docker run --privileged  -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {output_folder_path}:/tmp/output docker.image:latest --readme={relative_readme}
+docker run --privileged  -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {local_autorest_config}:/autorest.md -v {output_folder_path}:/tmp/output docker.image:latest --readme={relative_readme}
 ```
 
 Parameter description:
 
-| Parameter           | Description                                                                                                                                        | Example                                             |
-|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
-| { spec_repo_path }  | Required. It's used to point to the swagger folder.                                                                                                | /home/test/azure-rest-api-specs                     |
-| { sdk_repo_path }   | Required. It's used to point to the sdk repository.                                                                                                | /home/test/sdk-repos                                |
-| { relative_readme } | Required. It's used to specify the readme.md file and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo} | specification/agrifood/resource-manager/readme.md   |
+| Parameter                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                       | Example                                                                   |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| { spec_repo_path }         | Required. It's used to point to the swagger folder.                                                                                                                                                                                                                                                                                                                                                                                               | /home/test/azure-rest-api-specs                                           |
+| { sdk_repo_path }          | Required. It's used to point to the sdk repository.                                                                                                                                                                                                                                                                                                                                                                                               | /home/test/sdk-repos                                                      |
+| { local_autorest_config }  | Optional. When you generate data-plane sdk, and there is no autorest configuration in sdk repository or you want to change the autorest configuration, you can set new autorest config in a file and mount it to the docker container. About the content of file, please refer to [document](https://github.com/Azure/azure-rest-api-specs/blob/dpg-doc/documentation/onboard-dpg-in-sdkautomation/add-autorest-configuration-in-spec-comment.md) | /home/test/autorest.md ([Example file](./autorest-config-file-sample.md)) |
+| { relative_readme }        | Required. It's used to specify the readme.md file and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo}                                                                                                                                                                                                                                                                                                | specification/agrifood/resource-manager/readme.md                         |
 
 Example Command:
 ```shell
-docker run -v /var/run/docker.sock:/var/run/docker.sock -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output docker.image:latest --readme=specification/agrifood/resource-manager/readme.md
+docker run --privileged -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output docker.image:latest --readme=specification/agrifood/resource-manager/readme.md
 ```
 
 After running the command in pipeline, docker will execute tasks automatically. Also, there will be output files generated, which will be used by pipeline's other job, such as upload codes, parsing logs.

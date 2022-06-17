@@ -134,17 +134,22 @@ class ClassNode(NodeEntityBase):
                 )
             )
 
+    def _parse_functions_from_class(self, class_obj) -> list[astroid.FunctionDef]:
+        try:
+            class_node = astroid.parse(inspect.getsource(class_obj)).body[0]
+            return [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]
+        except:
+            return []
+
     """ Uses AST parsing to look for @overload decorated functions
         because inspect cannot see these. Note that this will not
         find overloads for module-level functions.
     """
     def _parse_overloads(self) -> List[FunctionNode]:
         overload_nodes = []
-        try:
-            class_node = astroid.parse(inspect.getsource(self.obj)).body[0]
-        except:
-            return []
-        functions = [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]
+        functions = self._parse_functions_from_class(self.obj)
+        for base_class in inspect.getmro(self.obj)[1:-1]:
+            functions += self._parse_functions_from_class(base_class)
         for func in functions:
             if not func.decorators:
                 continue

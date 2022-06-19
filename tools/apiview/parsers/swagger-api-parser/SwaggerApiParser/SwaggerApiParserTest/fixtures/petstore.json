@@ -21,8 +21,8 @@
   "paths": {
     "/pets": {
       "get": {
-        "summary": "List all pets",
-        "operationId": "listPets",
+        "description": "List all pets",
+        "operationId": "Pet_List",
         "tags": [
           "pets"
         ],
@@ -58,8 +58,8 @@
         }
       },
       "post": {
-        "summary": "Create a pet",
-        "operationId": "createPets",
+        "description": "Create a pet",
+        "operationId": "Pet_Create",
         "tags": [
           "pets"
         ],
@@ -78,8 +78,8 @@
     },
     "/pets/{petId}": {
       "get": {
-        "summary": "Info for a specific pet",
-        "operationId": "showPetById",
+        "description": "Info for a specific pet",
+        "operationId": "Pet_Get",
         "tags": [
           "pets"
         ],

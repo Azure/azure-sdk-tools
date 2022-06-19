@@ -62,7 +62,7 @@ namespace SwaggerApiParser
 
     public class SerializeContext
     {
-        public  int intent = 0;
+        public int intent = 0;
         public readonly IteratorPath IteratorPath;
 
         public SerializeContext()
@@ -92,8 +92,8 @@ namespace SwaggerApiParser
             List<CodeFileToken> ret = new List<CodeFileToken>();
             Type t = obj.GetType();
             PropertyInfo[] props = t.GetProperties();
-            
-            
+
+
             if (t.IsPrimitive || t == typeof(Decimal) || t == typeof(String))
             {
                 ret.Add(Intent(intent));
@@ -169,6 +169,24 @@ namespace SwaggerApiParser
         public static CodeFileToken NavigableToken(String value, CodeFileTokenKind kind, String definitionId)
         {
             var ret = new CodeFileToken(value, kind) {DefinitionId = definitionId};
+            return ret;
+        }
+
+        public static CodeFileToken FoldableParentToken(String value)
+        {
+            var ret = new CodeFileToken(value, CodeFileTokenKind.FoldableParentToken);
+            return ret;
+        }
+
+        public static CodeFileToken FoldableContentStart()
+        {
+            var ret = new CodeFileToken(null, CodeFileTokenKind.FoldableContentStart);
+            return ret;
+        }
+
+        public static CodeFileToken FoldableContentEnd()
+        {
+            var ret = new CodeFileToken(null, CodeFileTokenKind.FoldableContentEnd);
             return ret;
         }
     }

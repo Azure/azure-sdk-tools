@@ -27,6 +27,11 @@ public class SwaggerApiViewOperation : ITokenSerializable
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
+
+        ret.Add(TokenSerializer.FoldableParentToken(context.IteratorPath.CurrentPath()));
+        ret.Add(TokenSerializer.NewLine());
+        ret.Add(TokenSerializer.FoldableContentStart());
+
         ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(new CodeFileToken(this.operationIdAction, CodeFileTokenKind.TypeName));
         ret.Add(TokenSerializer.NewLine());
@@ -45,6 +50,9 @@ public class SwaggerApiViewOperation : ITokenSerializable
             ret.Add(TokenSerializer.NewLine());
         }
 
+        // new line for `Parameters` section.
+        ret.Add(TokenSerializer.NewLine());
+
         ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(new CodeFileToken("Parameters", CodeFileTokenKind.Keyword));
         ret.Add(TokenSerializer.Colon());
@@ -54,6 +62,8 @@ public class SwaggerApiViewOperation : ITokenSerializable
         ret.AddRange(QueryParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         ret.AddRange(BodyParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
 
+        // new line for `Response` section.
+        ret.Add(TokenSerializer.NewLine());
 
         ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(new CodeFileToken("Responses", CodeFileTokenKind.Keyword));
@@ -64,6 +74,10 @@ public class SwaggerApiViewOperation : ITokenSerializable
         {
             ret.AddRange(response.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         }
+
+        ret.Add(TokenSerializer.NewLine());
+
+        ret.Add(TokenSerializer.FoldableContentEnd());
 
         return ret.ToArray();
     }

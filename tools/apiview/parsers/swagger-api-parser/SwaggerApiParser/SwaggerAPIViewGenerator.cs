@@ -54,40 +54,45 @@ namespace SwaggerApiParser
                         Responses = new List<SwaggerApiViewResponse>(),
                         xMsLongRunningOperation = value.xMsLongRunningOperaion
                     };
-                    foreach (var parameter in value.parameters)
+                    if (value.parameters != null)
+                        foreach (var parameter in value.parameters)
+                        {
+                            var param = parameter;
+                            if (parameter.IsRefObject())
+                            {
+                                param = (Parameter)swaggerSpec.ResolveRefObj(parameter.Ref);
+                            }
+
+                            var currentSwaggerFilePath = swaggerFilePath;
+                            var swaggerApiViewOperationParameter = new SwaggerApiViewParameter
+                            {
+                                description = param.description,
+                                name = param.name,
+                                required = param.required,
+                                In = param.In,
+                                schema = schemaCache.GetResolvedSchema(param.schema, currentSwaggerFilePath),
+                                Ref = param.Ref,
+                                type = param.type
+                            };
+
+
+                            switch (param.In)
+                            {
+                                case "path":
+                                    op.PathParameters.Add(swaggerApiViewOperationParameter);
+                                    break;
+                                case "query":
+                                    op.QueryParameters.Add(swaggerApiViewOperationParameter);
+                                    break;
+                                case "body":
+                                    op.BodyParameters.Add(swaggerApiViewOperationParameter);
+                                    break;
+                            }
+                        }
+
                     {
-                        var param = parameter;
-                        if (parameter.IsRefObject())
-                        {
-                            param = (Parameter)swaggerSpec.ResolveRefObj(parameter.Ref);
-                        }
-
-                        var currentSwaggerFilePath = swaggerFilePath;
-                        var swaggerApiViewOperationParameter = new SwaggerApiViewParameter
-                        {
-                            description = param.description,
-                            name = param.name,
-                            required = param.required,
-                            In = param.In,
-                            schema = schemaCache.GetResolvedSchema(param.schema, currentSwaggerFilePath),
-                            Ref = param.Ref,
-                            type = param.type
-                        };
-
-
-                        switch (param.In)
-                        {
-                            case "path":
-                                op.PathParameters.Add(swaggerApiViewOperationParameter);
-                                break;
-                            case "query":
-                                op.QueryParameters.Add(swaggerApiViewOperationParameter);
-                                break;
-                            case "body":
-                                op.BodyParameters.Add(swaggerApiViewOperationParameter);
-                                break;
-                        }
                     }
+
 
                     foreach (var (statusCode, response) in value.responses)
                     {
@@ -97,7 +102,7 @@ namespace SwaggerApiParser
                         //Resolve ref obj for response schema.
                         if (response.schema != null)
                         {
-                            schema = schemaCache.GetResolvedSchema(schema,  currentSwaggerFilePath);
+                            schema = schemaCache.GetResolvedSchema(schema, currentSwaggerFilePath);
                         }
 
                         op.Responses.Add(new SwaggerApiViewResponse() {description = response.description, statusCode = statusCode, schema = schema});

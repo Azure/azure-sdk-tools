@@ -56,6 +56,23 @@ public class SwaggerApiViewTest
     }
 
     [Fact]
+    public async Task TestPetStore()
+    {
+        const string petStoreFilePath = "./fixtures/petstore.json";
+        var petStoreSwaggerSpec = await SwaggerDeserializer.Deserialize(petStoreFilePath);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.PetStore", "Microsoft.PetStore");
+        root.AddSwaggerSpec(petStoreSwaggerSpec, Path.GetFullPath(petStoreFilePath), "Microsoft.PetStore");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./petstore_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
+
+
+    [Fact]
     public async Task TestSignalRCrossFileReferenceCommonTypes()
     {
         const string signalRFilePath = "./fixtures/signalr/resource-manager/Microsoft.SignalRService/stable/2022-02-01/signalr.json";

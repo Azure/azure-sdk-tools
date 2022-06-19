@@ -20,7 +20,15 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
 
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
-        return TokenSerializer.TokenSerialize(this, context.intent);
+        List<CodeFileToken> ret = new List<CodeFileToken>();
+        ret.Add(TokenSerializer.FoldableParentToken(context.IteratorPath.CurrentPath()));
+        ret.Add(TokenSerializer.NewLine());
+        ret.Add(TokenSerializer.FoldableContentStart());
+
+        ret.AddRange(TokenSerializer.TokenSerialize(this, context.intent));
+        ret.Add(TokenSerializer.NewLine());
+        ret.Add(TokenSerializer.FoldableContentEnd());
+        return ret.ToArray();
     }
 
     public NavigationItem BuildNavigationItem(IteratorPath iteratorPath = null)

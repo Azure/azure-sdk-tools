@@ -4,7 +4,7 @@ steps:
     if ($differByCaseFiles) 
     {
       Write-Warning "Here are the files which only differ in case. Please double check and rename the following files:"
-      $differByCaseFiles | Write-Warning "    $_"
+      $differByCaseFiles | Write-Warning 
       exit 1
     }
     Write-Host "There are no files only differ in case. "

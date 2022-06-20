@@ -46,8 +46,6 @@ stages:
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
           steps:
-            - template: /eng/common/pipelines/templates/steps/validate-file-names.yml
-
             - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
               parameters:
                 Paths:

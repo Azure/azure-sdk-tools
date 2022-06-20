@@ -9,4 +9,4 @@ steps:
     $differByCaseFiles | ForEach-Object { $_.Group }
     git ls-files | Group-Object | Where-Object { $_.Count -gt 1 } | Select-Object Name
   displayName: Validate on files only differ on cases
-  WorkingDirectory: $(System.DefaultWorkingDirectory)
+  workingDirectory: $(System.DefaultWorkingDirectory)

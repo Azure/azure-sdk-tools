@@ -1,6 +1,6 @@
 steps:
 - pwsh:
-    git ls-files
+    # git ls-files
     # git ls-files | Group-Object | Where-Object { $_.Count -gt 1 } | Select-Object Group
     # $differByCaseFiles = git ls-files | Group-Object | Where-Object { $_.Count -gt 1 } | Select-Object Group
     # Write-Host $differByCaseFiles
@@ -19,5 +19,7 @@ steps:
     # }
 
     # Write-Host "There are no files only differ in case. "
+
+    git ls-files | Group-Object | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Group}
   displayName: Validate on files only differ on cases
   workingDirectory: $(System.DefaultWorkingDirectory)

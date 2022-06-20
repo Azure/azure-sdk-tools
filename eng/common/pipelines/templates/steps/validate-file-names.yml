@@ -1,7 +1,7 @@
 steps:
 - pwsh:
     git ls-files
-    git ls-files | Group-Object | Where-Object { $_.Count -gt 1 } | Select-Object Group
+    # git ls-files | Group-Object | Where-Object { $_.Count -gt 1 } | Select-Object Group
     # $differByCaseFiles = git ls-files | Group-Object | Where-Object { $_.Count -gt 1 } | Select-Object Group
     # Write-Host $differByCaseFiles
 

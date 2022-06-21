@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": {
+      "value": "faa080af-c1d8-40ad-9cce-e1a450ca5b57"
+    },
+    "groupSuffix": {
+      "value": "pg"
+    },
+    "clusterName": {
+      "value": "stress-pg"
+    },
+    "clusterLocation": {
+      "value": "westus3"
+    },
+    "staticTestSecretsKeyvaultName": {
+      "value": "stress-secrets-pg"
+    },
+    "staticTestSecretsKeyvaultGroup": {
+      "value": "rg-stress-secrets-pg"
+    },
+    "enableHighMemAgentPool": {
+        "value": true
+    },
+    "tags": {
+      "value": {
+        "environment": "Pg",
+        "owners": "bebroder"
+      }
+    }
+  }
+}

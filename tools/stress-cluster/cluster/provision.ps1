@@ -1,3 +1,5 @@
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingWriteHost", "")]
+[CmdletBinding(SupportsShouldProcess = $true)]
 param (
     [string]$Environment = 'dev',
     [string]$Namespace = 'stress-infra',
@@ -8,25 +10,53 @@ $STATIC_TEST_DOTENV_NAME="public"
 $VALUES_FILE = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"
 $STRESS_CLUSTER_RESOURCE_GROUP = ""
 
-function Run()
+function _run([string]$CustomWhatIfFlag)
 {
-    Write-Host "`n==> $args`n" -ForegroundColor Green
-    $command, $arguments = $args
-    & $command $arguments
+    if ($WhatIfPreference -and [string]::IsNullOrEmpty($CustomWhatIfFlag)) {
+        Write-Host "`n==> [What if] $args`n" -ForegroundColor Green
+        return
+    } else {
+        $cmdArgs = $args
+        if ($WhatIfPreference) {
+            $cmdArgs += $CustomWhatIfFlag
+        }
+        Write-Host "`n==> $cmdArgs`n" -ForegroundColor Green
+        $command, $arguments = $cmdArgs
+        & $command $arguments
+    }
     if ($LASTEXITCODE) {
         Write-Error "Command '$args' failed with code: $LASTEXITCODE" -ErrorAction 'Continue'
     }
 }
 
-function RunOrExitOnFailure()
+function Run()
 {
-    Run @args
+    _run '' @args
+}
+
+function RunSupportingWhatIfFlag([string]$CustomWhatIfFlag)
+{
+    if ($WhatIfPreference) {
+        _run $CustomWhatIfFlag @args
+    } else {
+        _run @args
+    }
     if ($LASTEXITCODE) {
         exit $LASTEXITCODE
     }
 }
 
-function DeployStaticResources([hashtable]$params) {
+function RunOrExitOnFailure()
+{
+    $LASTEXITCODE = 0
+    _run '' @args
+    if ($LASTEXITCODE) {
+        exit $LASTEXITCODE
+    }
+}
+
+function DeployStaticResources([hashtable]$params)
+{
     Write-Host "Deploying static resources"
 
     RunOrExitOnFailure az group create `
@@ -82,7 +112,9 @@ function DeployStaticResources([hashtable]$params) {
     $dotenv = $credentials.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)`n" }
     (-join $dotenv) | Out-File $envFile
     Run az keyvault secret set --vault-name $params.staticTestSecretsKeyvaultName --file $envFile -n $STATIC_TEST_DOTENV_NAME
-    Remove-Item -Force $envFile
+    if (Test-Path $envFile) {
+        Remove-Item -Force $envFile
+    }
     if ($LASTEXITCODE) {
         exit $LASTEXITCODE
     }
@@ -90,24 +122,28 @@ function DeployStaticResources([hashtable]$params) {
     SetEnvProvisioner $spInfo
 }
 
-function GetEnvValues() {
+function GetEnvValues()
+{
     $values = ConvertFrom-Yaml -Ordered (Get-Content -Raw $VALUES_FILE)
     return $values
 }
 
-function SetEnvValues([object]$values) {
+function SetEnvValues([object]$values)
+{
     $values | ConvertTo-Yaml | Out-File $VALUES_FILE
     Write-Warning "Update https://aka.ms/azsdk/stress/dashboard link page with new dashboard link: $($outputs.DASHBOARD_LINK.value)"
     Write-Warning "$VALUES_FILE has been updated and must be checked in."
 }
 
-function SetEnvProvisioner([object]$provisioner) {
+function SetEnvProvisioner([object]$provisioner)
+{
     $values = GetEnvValues
     $values.provisionerAppId.$Environment = $provisioner.appId
     SetEnvValues $values
 }
 
-function SetEnvOutputs([hashtable]$params) {
+function SetEnvOutputs([hashtable]$params)
+{
     $outputs = (az deployment sub show `
         -o json `
         -n "stress-deploy-$($params.groupSuffix)" `
@@ -131,9 +167,10 @@ function SetEnvOutputs([hashtable]$params) {
     SetEnvValues $values
 }
 
-function DeployClusterResources([hashtable]$params) {
+function DeployClusterResources([hashtable]$params)
+{
     Write-Host "Deploying stress cluster resources"
-    RunOrExitOnFailure az deployment sub create `
+    RunSupportingWhatIfFlag "--what-if" az deployment sub create `
         -o json `
         --subscription $params.subscriptionId `
         -n "stress-deploy-$($params.groupSuffix)" `
@@ -152,23 +189,30 @@ function DeployClusterResources([hashtable]$params) {
         --subscription $params.subscriptionId
 }
 
-function DeployHelmResources() {
+function DeployHelmResources()
+{
     Write-Host "Installing stress infrastructure charts"
+    $LastWhatIfPreference = $WhatIfPreference
+
+    $WhatIfPreference = $false
     RunOrExitOnFailure helm repo add chaos-mesh https://charts.chaos-mesh.org
     RunOrExitOnFailure helm dependency update $PSScriptRoot/kubernetes/stress-infrastructure
-    RunOrExitOnFailure kubectl create namespace $Namespace --dry-run=client -o yaml | kubectl apply -f -
+
+    $WhatIfPreference = $LastWhatIfPreference
+    Run kubectl create namespace $Namespace --dry-run=client -o yaml | kubectl apply -f -
 
     # Skip installing chaos mesh charts in development mode (i.e. when testing stress watcher only).
     $deployChaosMesh = "$(!$Development)".ToLower()
 
-    RunOrExitOnFailure helm upgrade --install stress-infra `
+    RunSupportingWhatIfFlag "--dry-run" helm upgrade --install stress-infra `
         -n $Namespace `
         --set stress-test-addons.env=$Environment `
         --set deploy.chaosmesh=$deployChaosMesh `
         $PSScriptRoot/kubernetes/stress-infrastructure
 }
 
-function LoadEnvParams() {
+function LoadEnvParams()
+{
     try {
         $params = (Get-Content $PSScriptRoot/azure/parameters/$Environment.json | ConvertFrom-Json -AsHashtable).parameters
     } catch {
@@ -184,9 +228,16 @@ function LoadEnvParams() {
     return $paramHash
 }
 
-function main() {
+function main()
+{
     # . (Join-Path $PSScriptRoot "../Helpers" PSModule-Helpers.ps1)
     # Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module
+
+    # Force a reset of $LASTEXITCODE 0 so that when running in -WhatIf mode
+    # we don't inadvertently check a $LASTEXITCODE value from before the script invocation
+    if ($WhatIfPreference) {
+        helm -h > $null
+    }
 
     if (!$Development) {
         $params = LoadEnvParams

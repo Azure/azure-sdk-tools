@@ -9,11 +9,10 @@ parameters:
     type: string
     default: main
 
-variables:
-- template: /eng/pipelines/templates/variables/globals.yml
-
 jobs:
 - job:
+  variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
   strategy:
     matrix:
       ${{ if or(eq(parameters.TestRepository, 'examples'), eq(parameters.TestRepository, 'all')) }}:

@@ -6,17 +6,15 @@ trigger:
     include:
       - tools/stress-cluster
 
-pr:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - tools/stress-cluster
+pr: none
 
-extends:
-  template: /eng/pipelines/templates/jobs/stress-test-release.yml
-  parameters:
-    Environment: test
-    TestRepository: examples
-    DeployFromBranchOrCommit: $(Build.SourceVersion)
+jobs:
+  - template: /eng/pipelines/templates/jobs/stress-test-release.yml
+    parameters:
+      Environment: test
+      TestRepository: examples
+      DeployFromBranchOrCommit: $(Build.SourceVersion)
+  - template: /eng/pipelines/templates/jobs/stress-cluster-provision.yml
+    parameters:
+      Environment: test
+      WhatIf: true

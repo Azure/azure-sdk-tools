@@ -1,10 +1,17 @@
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingWriteHost", "")]
 [CmdletBinding(SupportsShouldProcess = $true)]
 param (
     [string]$Environment = 'dev',
     [string]$Namespace = 'stress-infra',
     [switch]$Development = $false
 )
+
+$ErrorActionPreference = 'Stop'
+$LastWhatIfPreference = $WhatIfPreference
+$WhatIfPreference = $false
+. (Join-Path $PSScriptRoot "../../../eng/common/scripts/Helpers" PSModule-Helpers.ps1)
+Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module
+$WhatIfPreference = $LastWhatIfPreference
+
 
 $STATIC_TEST_DOTENV_NAME="public"
 $VALUES_FILE = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"
@@ -230,9 +237,6 @@ function LoadEnvParams()
 
 function main()
 {
-    # . (Join-Path $PSScriptRoot "../Helpers" PSModule-Helpers.ps1)
-    # Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module
-
     # Force a reset of $LASTEXITCODE 0 so that when running in -WhatIf mode
     # we don't inadvertently check a $LASTEXITCODE value from before the script invocation
     if ($WhatIfPreference) {
@@ -248,8 +252,4 @@ function main()
     DeployHelmResources
 }
 
-# Don't call functions when the script is being dot sourced
-if ($MyInvocation.InvocationName -ne ".") {
-    $ErrorActionPreference = 'Stop'
-    main
-}
+main

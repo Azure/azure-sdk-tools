@@ -25,7 +25,7 @@
     },
     "tags": {
       "value": {
-        "environment": "Pg",
+        "environment": "pg",
         "owners": "bebroder"
       }
     }

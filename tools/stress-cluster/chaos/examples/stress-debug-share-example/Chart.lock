@@ -1,6 +1,6 @@
 dependencies:
 - name: stress-test-addons
-  repository: https://stresstestcharts.blob.core.windows.net/helm/
+  repository: file:///home/ben/sdk/azure-sdk-tools/tools/stress-cluster/cluster/kubernetes/stress-test-addons
   version: 0.1.17
-digest: sha256:282e9b9fad6e60d6671b37e40c553fe06e1603d14ad8277c36250d7a8c570033
-generated: "2022-05-17T21:28:11.0823221-04:00"
+digest: sha256:c06db2bbb005b6bab34d8ccb90458d67941e698323adfa21a47e5fa3e6c5be29
+generated: "2022-06-21T11:58:25.2631393-04:00"

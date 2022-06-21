@@ -25,18 +25,6 @@ parameters:
   - name: DevOpsFeedID
     type: string
     default: ''
-  - name: PartnerDropsSubscription
-    type: string
-    default: 'azuresdkpartnerdrops-kv Secrets'
-  - name: PartnerDropsStorageName
-    type: string
-    default: 'azuresdkpartnerdrops'
-  - name: PartnerDropsContainerName
-    type: string
-    default: 'drops-signed'
-  - name: PartnerDropsBlobDestPrefix
-    type: string
-    default: '$(Build.DefinitionName)\$(Build.BuildId)-$(System.JobAttempt)'
   - name: ShouldSign
     type: boolean
     default: true
@@ -109,13 +97,7 @@ jobs:
               nuGetFeedType: external
               publishFeedCredentials: Nuget.org
 
-      - task: AzureFileCopy@2
-        displayName: 'Copy Signed Files to Blob'
-        inputs:
-          SourcePath: '${{ parameters.ArtifactsPath }}'
-          azureSubscription: '${{ parameters.PartnerDropsSubscription }}'
-          Destination: AzureBlob
-          storage: '${{ parameters.PartnerDropsStorageName }}'
-          ContainerName: '${{ parameters.PartnerDropsContainerName }}'
-          BlobPrefix: '${{ parameters.PartnerDropsBlobDestPrefix }}'
-        condition: and(succeeded(), ne(variables['SkipCopySignedFilestoBlob'], 'true'))
+      - publish: '${{ parameters.ArtifactsPath }}'
+        displayName: Publish Packages
+        artifact: packages
+        condition: succeeded()

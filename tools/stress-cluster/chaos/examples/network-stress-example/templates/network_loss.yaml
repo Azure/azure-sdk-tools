@@ -1,4 +1,4 @@
-{{- include "stress-test-addons.chaos-wrapper.tpl" (list . "network-chaos") -}}
+{{- include "stress-test-addons.chaos-wrapper.tpl" (list . "stress.network-chaos") -}}
 {{- define "stress.network-chaos" -}}
 apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos

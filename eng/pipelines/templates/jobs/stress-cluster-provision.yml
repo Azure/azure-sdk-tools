@@ -17,28 +17,12 @@ jobs:
       name: 'azsdk-pool-mms-ubuntu-2004-general'
       vmImage: 'MMSUbuntu20.04'
     steps:
-      - ${{ if eq(parameters.WhatIf, true) }}:
-        - task: AzureCLI@2
-          displayName: Validate Provision
-          inputs:
-            ${{ if eq(parameters.Environment, 'prod') }}:
-              azureSubscription: Azure SDK Test Resources
-            ${{ if eq(parameters.Environment, 'test') }}:
-              azureSubscription: Azure SDK Playground
-            scriptType: pscore
-            scriptPath: $(System.DefaultWorkingDirectory)/tools/stress-cluster/cluster/provision.ps1
-            arguments:
-              -Environment ${{ parameters.Environment }}
-              -WhatIf
-      - ${{ else }}:
-        - task: AzureCLI@2
-          displayName: Provision
-          inputs:
-            ${{ if eq(parameters.Environment, 'prod') }}:
-              azureSubscription: Azure SDK Test Resources
-            ${{ if eq(parameters.Environment, 'test') }}:
-              azureSubscription: Azure SDK Playground
-            scriptType: pscore
-            scriptPath: $(System.DefaultWorkingDirectory)/tools/stress-cluster/cluster/provision.ps1
-            arguments:
-              -Environment ${{ parameters.Environment }}
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(sub-config-azure-cloud-test-resources)
+          '@ | ConvertFrom-Json -AsHashtable;
+
+          tools/stress-cluster/cluster/provision.ps1 `
+            -WhatIf:$${{ parameters.WhatIf }} `
+            -Environment ${{ parameters.Environment }} `
+            @subscriptionConfiguration

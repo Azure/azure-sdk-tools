@@ -2,7 +2,22 @@
 param (
     [string]$Environment = 'dev',
     [string]$Namespace = 'stress-infra',
-    [switch]$Development = $false
+    [switch]$Development = $false,
+
+    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string] $TenantId,
+
+    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+    [string] $ProvisionerApplicationId,
+
+    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [string] $ProvisionerApplicationSecret,
+
+    # Enables passing full json credential config without throwing unrecognized parameter errors
+    [Parameter(ValueFromRemainingArguments = $true)]
+    $RemainingArguments
 )
 
 $ErrorActionPreference = 'Stop'
@@ -241,6 +256,15 @@ function main()
     # we don't inadvertently check a $LASTEXITCODE value from before the script invocation
     if ($WhatIfPreference) {
         helm -h > $null
+    }
+
+    if ($PSCmdlet.ParameterSetName -eq 'Provisioner') {
+        az login `
+            --service-principal `
+            --username $ProvisionerApplicationId `
+            --password $ProvisionerApplicationSecret`
+            --tenant $TenantId
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
     }
 
     if (!$Development) {

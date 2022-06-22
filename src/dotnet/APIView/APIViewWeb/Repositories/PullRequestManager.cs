@@ -99,8 +99,15 @@ namespace APIViewWeb.Repositories
                 if (pullRequestModel == null || pullRequestModel.Commits.Any(c=> c== commitSha))
                 {
                     // PR commit is already processed. No need to reprocess it again.
-                    return pullRequestModel != null && !string.IsNullOrEmpty(pullRequestModel.ReviewId)?
-                        REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", pullRequestModel.ReviewId) : "";
+                    if (pullRequestModel != null && !string.IsNullOrEmpty(pullRequestModel.ReviewId))
+                    {
+                        return REVIEW_URL.Replace("{hostName}", hostName)
+                            .Replace("{ReviewId}", pullRequestModel.ReviewId);
+                    }
+                    else
+                    {
+                        return "";
+                    }
                 }
 
                 pullRequestModel.Commits.Add(commitSha);

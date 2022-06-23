@@ -9,7 +9,17 @@ export function extractAutorestConfigs(autorestConfigFilePath: string, sdkRepo: 
     }
     const autorestConfigFileContent = fs.readFileSync(autorestConfigFilePath, 'utf-8');
     try {
-        const autorestConfigs: string[] = autorestConfigFileContent.split(/#+ *azure-sdk-for-/);
+        let autorestConfigs: string[] = autorestConfigFileContent.split(/#+ *azure-sdk-for-/);
+        if (autorestConfigs.length < 2) {
+            throw new Error(`Parse autorest config file failed.`);
+        }
+        autorestConfigs = autorestConfigs.slice(1);
+        if (!path.basename(sdkRepo).startsWith('azure-sdk-for-')) {
+            if (autorestConfigs.length > 1) {
+                logger.warn(`Docker is running pipeline, but get autorest config for more than 1 language of sdk. So only get the first autorest config`);
+            }
+            sdkRepo = 'azure-sdk-for-';
+        }
         for (const autorestConfig of autorestConfigs) {
             let autorestFullConfig = `# azure-sdk-for-${autorestConfig}`;
             if (autorestFullConfig.startsWith(`# ${path.basename(sdkRepo)}`)) {

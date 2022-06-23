@@ -77,7 +77,7 @@ export class DockerTaskEngineContext {
         this.taskResultJsonPath = path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.taskResultJson);
         this.changeOwner = dockerTaskEngineConfigProperties.changeOwner;
         this.mode = dockerContext.mode;
-        this.autorestConfig = extractAutorestConfigs(dockerTaskEngineConfigProperties.autorestConfigFilePath, dockerContext.sdkRepo, dockerContext.logger);
+        this.autorestConfig = extractAutorestConfigs(dockerContext.autorestConfigFilePath, dockerContext.sdkRepo, dockerContext.logger);
     }
 
     public async beforeRunTaskEngine() {

@@ -20,7 +20,8 @@ describe('task engine', () => {
             workDir: '/work-dir',
             sdkRepo: path.join(tmpFolder, 'sdk-repo'),
             resultOutputFolder: path.join(tmpFolder, 'output'),
-            dockerLogger: 'docker.log'
+            dockerLogger: 'docker.log',
+            autorestConfigFilePath: path.join(path.resolve('.'), 'test', 'unit', 'utils', 'autorest.md')
         });
         const dockerTaskEngineContext = new DockerTaskEngineContext();
         dockerTaskEngineContext.initialize(dockerContext);
@@ -34,6 +35,7 @@ describe('task engine', () => {
         expect(dockerTaskEngineContext.generateAndBuildTaskLog).toBe(path.join(tmpFolder, 'output', 'generateAndBuild-task.log'));
         expect(dockerTaskEngineContext.mockTestTaskLog).toBe(path.join(tmpFolder, 'output', 'mockTest-task.log'));
         expect(dockerTaskEngineContext.readmeMdPath).toBe('specification/agrifood/resource-manager/readme.md');
+        expect(dockerTaskEngineContext.autorestConfig?.length).toBeGreaterThan(0);
     });
 
     it('should get task list', async () => {

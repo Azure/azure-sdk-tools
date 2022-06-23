@@ -1,4 +1,4 @@
-[CmdletBinding(SupportsShouldProcess = $true)]
+[CmdletBinding(DefaultParameterSetName = 'Default', SupportsShouldProcess = $true)]
 param (
     [string]$Environment = 'dev',
     [string]$Namespace = 'stress-infra',
@@ -26,7 +26,6 @@ $WhatIfPreference = $false
 . (Join-Path $PSScriptRoot "../../../eng/common/scripts/Helpers" PSModule-Helpers.ps1)
 Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module
 $WhatIfPreference = $LastWhatIfPreference
-
 
 $STATIC_TEST_DOTENV_NAME="public"
 $VALUES_FILE = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"

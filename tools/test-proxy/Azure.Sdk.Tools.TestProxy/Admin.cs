@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            _recordingHandler.SetRecordingOptions(options, recordingId);
+            await _recordingHandler.SetRecordingOptions(options, recordingId);
         }
 
         public object GetSanitizer(string name, JsonDocument body)

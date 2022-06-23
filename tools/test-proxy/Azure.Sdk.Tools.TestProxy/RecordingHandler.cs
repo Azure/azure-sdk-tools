@@ -616,7 +616,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             catch(Exception e)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to deserialize the contents of the \"Transport\" key. Visible object: {transportConventions}");
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to deserialize the contents of the \"Transport\" key. Visible object: {transportConventions}. Json Deserialization Error: {e.Message}");
             }
 
             // this will look a bit strange until we take care of #3488
@@ -629,7 +629,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 foreach(var certPair in customizations.Certificates)
                 {
-                    var cert = X509Certificate2.CreateFromPem(certPair.PemKey, certPair.PemValue);
+                    var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
                     cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
                     clientHandler.ClientCertificates.Add(cert);
                 }

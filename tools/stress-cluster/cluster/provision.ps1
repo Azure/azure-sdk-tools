@@ -21,11 +21,8 @@ param (
 )
 
 $ErrorActionPreference = 'Stop'
-$LastWhatIfPreference = $WhatIfPreference
-$WhatIfPreference = $false
 . (Join-Path $PSScriptRoot "../../../eng/common/scripts/Helpers" PSModule-Helpers.ps1)
-Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module
-$WhatIfPreference = $LastWhatIfPreference
+Install-ModuleIfNotInstalled -WhatIf:$false "powershell-yaml" "0.4.1" | Import-Module
 
 $STATIC_TEST_DOTENV_NAME="public"
 $VALUES_FILE = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"

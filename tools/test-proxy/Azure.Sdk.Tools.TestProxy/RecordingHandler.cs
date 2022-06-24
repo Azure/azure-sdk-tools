@@ -601,8 +601,53 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
+        public async Task<HttpClientHandler> GetTransport(bool allowAutoRedirect, TransportCustomizations customizations, bool insecure = false)
+        {
+            var clientHandler = new HttpClientHandler()
+            {
+                AllowAutoRedirect = allowAutoRedirect
+            };
+
+            foreach (var certPair in customizations.Certificates)
+            {
+                var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
+                cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
+                clientHandler.ClientCertificates.Add(cert);
+            }
+
+            if (!string.IsNullOrWhiteSpace(customizations.LedgerId) && !insecure)
+            {
+                var ledgerCert = await GetLedgerTlsCert(customizations);
+
+                X509Chain certificateChain = new();
+                certificateChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                certificateChain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
+                certificateChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                certificateChain.ChainPolicy.VerificationTime = DateTime.Now;
+                certificateChain.ChainPolicy.UrlRetrievalTimeout = new TimeSpan(0, 0, 0);
+                certificateChain.ChainPolicy.ExtraStore.Add(ledgerCert);
+
+                clientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage httpRequestMessage, X509Certificate2 cert, X509Chain x509Chain, SslPolicyErrors sslPolicyErrors) =>
+                {
+                    bool isChainValid = certificateChain.Build(cert);
+                    if (!isChainValid) return false;
+                    var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
+                        .Any(x => x.Certificate.Thumbprint == ledgerCert.Thumbprint);
+
+                    return isCertSignedByTheTlsCert;
+                };
+            }
+            else if (insecure)
+            {
+                clientHandler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
+            }
+
+            return clientHandler;
+        }
+
         public async Task SetTransportOptions(string transportConventions, string sessionId)
         {
+            var timeoutSpan = TimeSpan.FromSeconds(600);
             TransportCustomizations customizations;
 
             try
@@ -619,52 +664,31 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"Unable to deserialize the contents of the \"Transport\" key. Visible object: {transportConventions}. Json Deserialization Error: {e.Message}");
             }
 
-            // this will look a bit strange until we take care of #3488
+            // this will look a bit strange until we take care of #3488 due to the fact that this AllowAutoRedirect customizable from two places
             if (!string.IsNullOrWhiteSpace(sessionId))
             {
-                var clientHandler = new HttpClientHandler()
+                var customizedClientHandler = await GetTransport(customizations.AllowAutoRedirect, customizations);
+
+                RecordingSessions[sessionId].Client = new HttpClient(customizedClientHandler)
                 {
-                    AllowAutoRedirect = customizations.AllowAutoRedirect
-                };
-
-                foreach(var certPair in customizations.Certificates)
-                {
-                    var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
-                    cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
-                    clientHandler.ClientCertificates.Add(cert);
-                }
-
-                if (!string.IsNullOrWhiteSpace(customizations.LedgerId))
-                {
-                    var ledgerCert = await GetLedgerTlsCert(customizations);
-
-                    X509Chain certificateChain = new();
-                    certificateChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                    certificateChain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
-                    certificateChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                    certificateChain.ChainPolicy.VerificationTime = DateTime.Now;
-                    certificateChain.ChainPolicy.UrlRetrievalTimeout = new TimeSpan(0, 0, 0);
-                    certificateChain.ChainPolicy.ExtraStore.Add(ledgerCert);
-
-                    clientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage httpRequestMessage, X509Certificate2 cert, X509Chain x509Chain, SslPolicyErrors sslPolicyErrors) =>
-                    {
-                        bool isChainValid = certificateChain.Build(cert);
-                        if (!isChainValid) return false;
-                        var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
-                            .Any(x => x.Certificate.Thumbprint == ledgerCert.Thumbprint);
-
-                        return isCertSignedByTheTlsCert;
-                    };
-                }
-
-                RecordingSessions[sessionId].Client = new HttpClient(clientHandler)
-                {
-                    Timeout = TimeSpan.FromSeconds(600)
+                    Timeout = timeoutSpan
                 };
             }
             else
             {
-                // update both of the normal clients
+                // after #3488 we will swap to a single client instead of both of these
+                var redirectableCustomizedHandler = await GetTransport(true, customizations, Startup.Insecure);
+                var redirectlessCustomizedHandler = await GetTransport(false, customizations, Startup.Insecure);
+
+                RedirectableClient = new HttpClient(redirectableCustomizedHandler)
+                {
+                    Timeout = timeoutSpan
+                };
+
+                RedirectlessClient = new HttpClient(redirectlessCustomizedHandler)
+                {
+                    Timeout = timeoutSpan
+                };
             }
         }
 

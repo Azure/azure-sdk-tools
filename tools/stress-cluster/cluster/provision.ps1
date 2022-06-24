@@ -21,6 +21,7 @@ param (
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot "../../../eng/common/scripts/Helpers" NativeCommand-Helpers.ps1)
 . (Join-Path $PSScriptRoot "../../../eng/common/scripts/Helpers" PSModule-Helpers.ps1)
 Install-ModuleIfNotInstalled -WhatIf:$false "powershell-yaml" "0.4.1" | Import-Module
 
@@ -28,56 +29,11 @@ $STATIC_TEST_DOTENV_NAME="public"
 $VALUES_FILE = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"
 $STRESS_CLUSTER_RESOURCE_GROUP = ""
 
-function _run([string]$CustomWhatIfFlag)
-{
-    if ($WhatIfPreference -and [string]::IsNullOrEmpty($CustomWhatIfFlag)) {
-        Write-Host "`n==> [What if] $args`n" -ForegroundColor Green
-        return
-    } else {
-        $cmdArgs = $args
-        if ($WhatIfPreference) {
-            $cmdArgs += $CustomWhatIfFlag
-        }
-        Write-Host "`n==> $cmdArgs`n" -ForegroundColor Green
-        $command, $arguments = $cmdArgs
-        & $command $arguments
-    }
-    if ($LASTEXITCODE) {
-        Write-Error "Command '$args' failed with code: $LASTEXITCODE" -ErrorAction 'Continue'
-    }
-}
-
-function Run()
-{
-    _run '' @args
-}
-
-function RunSupportingWhatIfFlag([string]$CustomWhatIfFlag)
-{
-    if ($WhatIfPreference) {
-        _run $CustomWhatIfFlag @args
-    } else {
-        _run @args
-    }
-    if ($LASTEXITCODE) {
-        exit $LASTEXITCODE
-    }
-}
-
-function RunOrExitOnFailure()
-{
-    $LASTEXITCODE = 0
-    _run '' @args
-    if ($LASTEXITCODE) {
-        exit $LASTEXITCODE
-    }
-}
-
 function DeployStaticResources([hashtable]$params)
 {
     Write-Host "Deploying static resources"
 
-    RunOrExitOnFailure az group create `
+    RunOrExit az group create `
         -n $params.staticTestSecretsKeyvaultGroup `
         -l $params.clusterLocation `
         --subscription $params.subscriptionId
@@ -86,7 +42,7 @@ function DeployStaticResources([hashtable]$params)
         -g $params.staticTestSecretsKeyvaultGroup `
         --subscription $params.subscriptionId
     if (!$kv) {
-        RunOrExitOnFailure az keyvault create `
+        RunOrExit az keyvault create `
             -n $params.staticTestSecretsKeyvaultName `
             -g $params.staticTestSecretsKeyvaultGroup `
             --subscription $params.subscriptionId
@@ -106,14 +62,14 @@ function DeployStaticResources([hashtable]$params)
     $spName = "stress-provisioner-$($params.groupSuffix)"
     Write-Host "Creating new provisioner application '$spName'."
 
-    $sp = RunOrExitOnFailure az ad sp create-for-rbac `
+    $sp = RunOrExit az ad sp create-for-rbac `
         -o json `
         -n $spName `
         --role Owner `
         --scopes "/subscriptions/$($params.subscriptionId)"
     $spInfo = $sp | ConvertFrom-Json
     # Force check to see if the service principal was succesfully created and propagated
-    $oid = (RunOrExitOnFailure az ad sp show -o json --id $spInfo.appId | ConvertFrom-Json).objectId
+    $oid = (RunOrExit az ad sp show -o json --id $spInfo.appId | ConvertFrom-Json).objectId
 
     $credentials = @{
         AZURE_CLIENT_ID = $spInfo.appId
@@ -200,7 +156,7 @@ function DeployClusterResources([hashtable]$params)
     SetEnvOutputs $params
 
     Write-Host "Importing cluster credentials"
-    RunOrExitOnFailure az aks get-credentials `
+    RunOrExit az aks get-credentials `
         -n $params.clusterName `
         -g $STRESS_CLUSTER_RESOURCE_GROUP `
         --overwrite `
@@ -213,8 +169,8 @@ function DeployHelmResources()
     $LastWhatIfPreference = $WhatIfPreference
 
     $WhatIfPreference = $false
-    RunOrExitOnFailure helm repo add chaos-mesh https://charts.chaos-mesh.org
-    RunOrExitOnFailure helm dependency update $PSScriptRoot/kubernetes/stress-infrastructure
+    RunOrExit helm repo add chaos-mesh https://charts.chaos-mesh.org
+    RunOrExit helm dependency update $PSScriptRoot/kubernetes/stress-infrastructure
 
     $WhatIfPreference = $LastWhatIfPreference
     Run kubectl create namespace $Namespace --dry-run=client -o yaml | kubectl apply -f -

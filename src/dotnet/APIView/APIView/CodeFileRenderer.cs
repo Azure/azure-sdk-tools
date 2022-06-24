@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using APIView;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -21,15 +22,12 @@ namespace ApiView
         private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff)
         {
             var stringBuilder = new StringBuilder();
-            // this will be used to track nested foldable panels if present
-            var foldableParentStack = new Stack<string>();
             string currentId = null;
             bool isDocumentationRange = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
-            // IF isfoldableRange is set then child nodes will be named as content of parent node
-            bool isFoldableRange = false;
-            string nodeName = null;
+            Stack<(string, string)> nodesInProcess = new Stack<(string, string)>();
+            string lastHeadingEncountered = null;
 
             foreach (var token in node)
             {
@@ -45,11 +43,26 @@ namespace ApiView
                     case CodeFileTokenKind.Newline:
                         // Set parent and content class if current line is infoldable panel
                         string lineClass = "";
-                        if (nodeName != null)
+                        if (nodesInProcess.Count > 0)
                         {
-                            lineClass = nodeName + (isFoldableRange ?"-content" : "-parent");
+                            var nodesInProcessAsArray = nodesInProcess.ToArray();
+                            for (int i = 0; i < nodesInProcessAsArray.Length; i++)
+                            {
+                                if (i == 0 && nodesInProcessAsArray[i].Item2.Equals("heading"))
+                                {
+                                    lineClass += (nodesInProcessAsArray[i].Item1 + "-heading ");
+                                }
+                                else if (i > 0 && nodesInProcessAsArray[i].Item2.Equals("heading"))
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    lineClass += (nodesInProcessAsArray[i].Item1 + "-content ");
+                                }
+                            }
+                            lineClass = lineClass.Trim();
                         }
-
                         list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass));
                         currentId = null;
                         stringBuilder.Clear();
@@ -81,33 +94,23 @@ namespace ApiView
                         isSkipDiffRange = false;
                         break;
 
-                    case CodeFileTokenKind.FoldableParentToken:
-                        // In case of nested foldable panel, push current parent name to stack
-                        if (nodeName != null)
-                        {
-                            foldableParentStack.Push(nodeName);
-                        }
-                        nodeName = token.Value;
+                    case CodeFileTokenKind.FoldableSectionHeading:
+                        nodesInProcess.Push((token.Value, "heading"));
+                        lastHeadingEncountered = token.Value;
+                        RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;
 
-                    case CodeFileTokenKind.FoldableContentStart:
-                        isFoldableRange = true;
+                    case CodeFileTokenKind.FoldableSectionContentStart:
+                        nodesInProcess.Push((lastHeadingEncountered, "content"));
                         break;
 
-                    case CodeFileTokenKind.FoldableContentEnd:
-                        // Foldable content panel is completed.
-                        // Pop previous parent or reset foldable range if no longer a foldable panel.
-                        if (foldableParentStack.Count > 0)
+                    case CodeFileTokenKind.FoldableSectionContentEnd:
+                        nodesInProcess.Pop();
+                        if (nodesInProcess.Peek().Item2.Equals("heading"))
                         {
-                            nodeName = foldableParentStack.Pop();
-                        }
-                        else
-                        {
-                            isFoldableRange = false;
-                            nodeName = null;
+                            nodesInProcess.Pop();
                         }
                         break;
-
                     default:
                         if (token.DefinitionId != null)
                         {

@@ -46,14 +46,14 @@
   });
 
   $('.row-fold-elipsis, .row-fold-caret').on('click', function() {
-    var parentRow = $(this).parents('.code-line');
-    var parentRowClasses = parentRow.attr('class');
-    if (parentRowClasses) {
-      var foldableClassPrefix = parentRowClasses.split(' ').filter(c => c.endsWith('-parent'))[0].replace("-parent","");
+    var headingRow = $(this).parents('.code-line');
+    var headingRowClasses = headingRow.attr('class');
+    if (headingRowClasses) {
+      var foldableClassPrefix = headingRowClasses.split(' ').filter(c => c.endsWith('-heading'))[0].replace("-heading","");
       $(`.${foldableClassPrefix}-content`).toggleClass("d-none");
     }
-    parentRow.find(".row-fold-elipsis").toggleClass("d-none");
-    var caretIcon = parentRow.find(".row-fold-caret").children("i");
+    headingRow.find(".row-fold-elipsis").toggleClass("d-none");
+    var caretIcon = headingRow.find(".row-fold-caret").children("i");
     var caretClasses =  caretIcon.attr("class");
     if (caretClasses)
     {

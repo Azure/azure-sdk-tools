@@ -1,5 +1,6 @@
 ﻿@using ApiView
 @using APIView.DIff
+@using System.Text.RegularExpressions
 @model APIViewWeb.Models.CodeLineModel
 @{
     bool isRemoved = Model.Kind == DiffLineKind.Removed;
@@ -10,11 +11,14 @@
         _ => ""
     };
 
-    string foldableClass = Model.CodeLine.LineClass.ToLower().Replace(".","-").Replace("/","").Replace("{","").Replace("}","").Replace("_","");
-    string collapseClass = foldableClass.EndsWith("-content") ? "d-none" : "";
+    string foldableClass = Model.CodeLine.LineClass;
+    string [] foldableClassParts = Regex.Split(foldableClass, "\\s+");
+    bool isHeading = foldableClassParts.Any(x => x.EndsWith("-heading"));
+    bool isContent = foldableClassParts.Any(x => x.EndsWith("-content"));
+    string hiddenSectionClass = isContent ? "d-none" : "";
 }
 
-<tr class="code-line @lineClass @foldableClass @collapseClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+<tr class="code-line @lineClass @foldableClass @hiddenSectionClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
     <td class="line-details">
         <table>
             <tr>
@@ -30,7 +34,7 @@
                     }
                 </td>
                 <td class="line-details-button-cell">
-                    @if (foldableClass.EndsWith("-heading"))
+                    @if (isHeading)
                     {
                         <span class="row-fold-caret"><i class="fa-solid fa-angle-right"></i></span>
                     }
@@ -40,7 +44,7 @@
     </td>
     <td class="code @lineClass">
         @{
-            string collapseMenu = foldableClass.EndsWith("-heading") ? "<span class='row-fold-elipsis'><i class='fa-solid fa-ellipsis'></i></span>" : "";
+            string collapseMenu = isHeading ? "<span class='row-fold-elipsis'><i class='fa-solid fa-ellipsis'></i></span>" : "";
         }
         @if (Model.Kind == DiffLineKind.Removed)
         {

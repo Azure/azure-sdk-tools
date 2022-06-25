@@ -45,6 +45,7 @@
     });
   });
 
+  // Collapsible Code Lines
   $('.row-fold-elipsis, .row-fold-caret').on('click', function() {
     var headingRow = $(this).parents('.code-line');
     var headingRowClasses = headingRow.attr('class');

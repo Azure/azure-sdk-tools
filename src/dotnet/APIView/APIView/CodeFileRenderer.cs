@@ -5,6 +5,7 @@ using APIView;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ApiView
 {
@@ -28,6 +29,7 @@ namespace ApiView
             bool isSkipDiffRange = false;
             Stack<(string, string)> nodesInProcess = new Stack<(string, string)>();
             string lastHeadingEncountered = null;
+            HashSet<string> lineIds = new HashSet<string>(); // Used to ensure there are no duplicate IDs
 
             foreach (var token in node)
             {
@@ -41,7 +43,6 @@ namespace ApiView
                 switch(token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        // Set parent and content class if current line is infoldable panel
                         string lineClass = "";
                         if (nodesInProcess.Count > 0)
                         {
@@ -63,7 +64,10 @@ namespace ApiView
                             }
                             lineClass = lineClass.Trim();
                         }
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass));
+                        lineClass = SanitizeLineClass(lineClass);
+                        var lineId = SanitizeLineId(currentId, lineIds);
+
+                        list.Add(new CodeLine(stringBuilder.ToString(), lineId, lineClass));
                         currentId = null;
                         stringBuilder.Clear();
                         break;
@@ -120,6 +124,47 @@ namespace ApiView
                         break;
                 }                
             }
+        }
+
+        private string SanitizeLineClass(string lineClass)
+        {
+            if (!String.IsNullOrEmpty(lineClass))
+            {
+                var result = lineClass.ToLower();
+                result = Regex.Replace(result, "[^a-z_0-9-\\s+]", "");
+                result = Regex.Replace(result, "^[0-9]+", "");
+                return result;
+            }
+            return lineClass;
+        }
+
+        private string SanitizeLineId(string lineId, HashSet<string> lineIds)
+        {
+            if (!String.IsNullOrEmpty(lineId))
+            {
+                var result = lineId.ToLower();
+                result = Regex.Replace(result, "[^a-z_0-9-:.]", "");
+                result = Regex.Replace(result, "^[0-9]+", "");
+
+                if (lineIds.Contains(result))
+                {
+                    do
+                    {
+                        if (result.EndsWith("1"))
+                        {
+                            result += '1';
+                        }
+                        else
+                        {
+                            result += $"_1";
+                        }
+                    }
+                    while (lineIds.Contains(result));
+                }
+                lineIds.Add(result);
+                return result;
+            }
+            return lineId;
         }
 
         protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken)

@@ -13,6 +13,8 @@ from enum import Enum, EnumMeta
 import functools
 from typing import Any, overload, TypedDict, Union, Optional, Generic, TypeVar
 
+from ._mixin import MixinWithOverloads
+
 
 def my_decorator(fn):
     @functools.wraps(fn)
@@ -188,6 +190,10 @@ class SomethingWithOverloads:
 
     def something(self, id: int | str, *args, **kwargs) -> str:
         return str(id)
+
+
+class SomethingWithInheritedOverloads(MixinWithOverloads):
+    pass
 
 
 class SomethingWithDecorators:

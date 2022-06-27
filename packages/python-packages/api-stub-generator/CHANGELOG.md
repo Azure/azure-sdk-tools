@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.3.2 (Unreleased)
+Fixed issue where comments would appear incorrectly on overloaded functions.
+Fixed issue where inherited overloads would not appear in APIView.
+
 ## Version 0.3.1 (2022-05-12)
 Fixed issue where pylintrc file was not included in the distribution.
 

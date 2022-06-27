@@ -15,6 +15,7 @@ from apistubgentest.models import (
     SomeAwesomelyNamedObject,
     SomeImplementationClass,
     SomethingWithDecorators,
+    SomethingWithInheritedOverloads,
     SomethingWithOverloads,
     SomethingWithProperties
 )
@@ -30,7 +31,7 @@ def _check_all(actual, expect, obj):
 
 class TestClassParsing:
 
-    pkg_namespace = "apistubgentest.models._models"
+    pkg_namespace = "apistubgentest.models"
     
     def test_typed_dict_class(self):
         obj = FakeTypedDict
@@ -128,6 +129,30 @@ class TestClassParsing:
         actual6 = _merge_lines(lines[44:])
         expected6 = 'def something(self, id: int | str, *args, **kwargs) -> str'
         _check(actual6, expected6, SomethingWithOverloads)
+
+    def test_inherited_overloads(self):
+        obj = SomethingWithInheritedOverloads
+        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        lines = _render_lines(_tokenize(class_node))
+        assert lines[2].lstrip() == "@overload"
+        actual1 = lines[3]
+        expected1 = 'def do_thing(val: str) -> str'
+        _check(actual1, expected1, SomethingWithInheritedOverloads)
+
+        assert lines[5].lstrip() == "@overload"
+        actual2 = lines[6]
+        expected2 = 'def do_thing(val: int) -> int'
+        _check(actual2, expected2, SomethingWithInheritedOverloads)
+
+        assert lines[8].lstrip() == "@overload"
+        actual3 = lines[9]
+        expected3 = 'def do_thing(val: bool) -> bool'
+        _check(actual3, expected3, SomethingWithInheritedOverloads)
+
+        actual4 = lines[11]
+        expected4 = 'def do_thing(val: str | int | bool) -> str | int | bool'
+        _check(actual4, expected4, SomethingWithInheritedOverloads)
+
 
     def test_decorators(self):
         obj = SomethingWithDecorators

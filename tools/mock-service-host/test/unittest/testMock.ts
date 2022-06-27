@@ -4,8 +4,8 @@ import * as assert from 'assert'
 import * as path from 'path'
 import { JsonLoader } from 'oav/dist/lib/swagger/jsonLoader'
 import { MockerCache, PayloadCache } from 'oav/dist/lib/generator/exampleCache'
-import { Operation, SwaggerExample, SwaggerSpec } from 'oav/dist/lib/swagger/swaggerTypes'
 import { ResponseGenerator, SpecItem } from '../../src/mid/responser'
+import { SwaggerSpec } from 'oav/dist/lib/swagger/swaggerTypes'
 import { config } from '../../src/common/index'
 import { inversifyGetInstance } from 'oav/dist/lib/inversifyUtils'
 import Mocker from '../../src/mid/oav/mocker'
@@ -90,23 +90,16 @@ describe('mockForExample: ', () => {
             parameters: {},
             responses: {}
         }
-        swaggerMocker.mockForExample(
-            example,
-            specItem as SpecItem,
-            { info: { version: '2020-01-01' } },
-            'fakeRp',
-            {
-                method: 'put',
-                url:
-                    'https://localhost:8443/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/policies/policyId'
-            }
-        )
+        example.responses['200'] = swaggerMocker.mockEachResponse('200', {}, specItem as SpecItem)
+        swaggerMocker.patchExampleResponses(example, {
+            method: 'put',
+            url:
+                'https://localhost:8443/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/policies/policyId'
+        })
 
         assert.strictEqual(example.responses['200'].body.test, undefined)
 
         expect({
-            requestResourceType: example.parameters.parameters.type,
-            requestResourceId: example.parameters.parameters.id,
             responseResourceType: example.responses['200'].body.type,
             responseResourceId: example.responses['200'].body.id
         }).toMatchSnapshot()

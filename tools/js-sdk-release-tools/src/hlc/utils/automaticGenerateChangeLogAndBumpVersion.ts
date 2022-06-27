@@ -62,7 +62,11 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     logger.log('Try to bump a fix version');
                     const oriPackageJson = execSync(`git show HEAD:${path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'package.json')).replace(/\\/g, '/')}`, {encoding: 'utf-8'});
                     const oriVersion = JSON.parse(oriPackageJson).version;
-                    const newVersion = isBetaVersion(oriVersion)? bumpPreviewVersion(oriVersion, usedVersions) : bumpPatchVersion(oriVersion, usedVersions);
+                    const oriVersionReleased = !usedVersions? false : usedVersions.includes(oriVersion);
+                    let newVersion = oriVersion;
+                    if (oriVersionReleased) {
+                        newVersion = isBetaVersion(oriVersion)? bumpPreviewVersion(oriVersion, usedVersions) : bumpPatchVersion(oriVersion, usedVersions);
+                    }
                     makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);

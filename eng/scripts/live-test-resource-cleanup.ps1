@@ -89,8 +89,6 @@ function Retry([scriptblock] $Action, [int] $Attempts = 5) {
             return $Action.Invoke()
         } catch {
             if ($attempt -lt $Attempts) {
-                $sleep *= 2
-
                 Write-Warning "Attempt $attempt failed: $_. Trying again in $sleep seconds..."
                 Start-Sleep -Seconds $sleep
             } else {
@@ -292,7 +290,7 @@ function DeleteOrUpdateResourceGroups() {
   }
 
   Write-Verbose "Fetching groups"
-  $allGroups = @(Get-AzResourceGroup)
+  [Array]$allGroups = Retry { Get-AzResourceGroup }
   $toDelete = @()
   $toUpdate = @()
   Write-Host "Total Resource Groups: $($allGroups.Count)"

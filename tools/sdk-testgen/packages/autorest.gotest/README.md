@@ -38,11 +38,11 @@ Generate scenario test.
 
 Generate SDK sample code.
 
-### --example-file-prefix=ze_generated_
+### --example-file-prefix
 
 File prefix for auto-generated examples.
 
-### --test-file-prefix=zt_generated_
+### --test-file-prefix
 
 File prefix for auto-generated tests.
 

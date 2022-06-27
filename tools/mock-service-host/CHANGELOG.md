@@ -1,5 +1,13 @@
 # Change Log - @azure-tools/mock-service-host
 
+## 0.1.16
+2022-06-08
+
+### Patches
+
+- Use example response prior to mock response
+- Use 200 response if can't find LRO callback url
+
 ## 0.1.15
 2022-05-16
 

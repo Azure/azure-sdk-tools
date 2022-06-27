@@ -57,7 +57,7 @@ function RunSupportingWhatIfFlag([string]$CustomWhatIfFlag)
     if ($WhatIfPreference) {
         _run $CustomWhatIfFlag @args
     } else {
-        _run @args
+        _run '' @args
     }
     if ($LASTEXITCODE) {
         exit $LASTEXITCODE

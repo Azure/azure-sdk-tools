@@ -126,6 +126,10 @@ describe('mockForExample: ', () => {
         expect(responses).toMatchSnapshot()
 
         // list with nested providers
+        responses['200']['body'] = {
+            id: 'WrongId',
+            type: 'WrongType'
+        }
         swaggerMocker.patchResourceIdAndType(responses, {
             method: 'get',
             url:

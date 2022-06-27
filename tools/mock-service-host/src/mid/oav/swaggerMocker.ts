@@ -48,13 +48,22 @@ export default class SwaggerMocker {
     private isValidId(id: string): boolean {
         if (isNullOrUndefined(id) || id.indexOf(mockedResourceType) >= 0) return false
         // is valid id if start with '/' and there is no special chars
+        const segments = id.split('/')
+        const guidPattern = new RegExp(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i'
+        )
+        if (
+            segments.length < 3 ||
+            (segments[1].toLowerCase() === 'subscriptions' && !guidPattern.test(segments[2]))
+        )
+            return false
         return id.match(/^\/.+/) !== null && id.match(/[{}[]()]+/) === null
     }
 
     private isValidType(t: string): boolean {
         if (isNullOrUndefined(t) || t === mockedResourceType) return false
         // is valid type if there is '.' and there is no special chars
-        return t.match(/./) !== null && t.match(/[{}[]()]+/) === null
+        return t.match(/\./) !== null && t.match(/[{}[]()]+/) === null
     }
 
     /**

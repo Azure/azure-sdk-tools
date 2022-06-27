@@ -215,35 +215,38 @@ describe('generateResponse()', () => {
             },
             localPort: 8443
         }
+        const fakedOperation: any = {}
         assert.strictEqual(
-            await coordinator.findLROGet(liveRequest),
+            await coordinator.findLROGet(liveRequest, fakedOperation),
             'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701'
         assert.strictEqual(
-            await coordinator.findLROGet(liveRequest),
+            await coordinator.findLROGet(liveRequest, fakedOperation),
             'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/stop?api-version=20210701'
         assert.strictEqual(
-            await coordinator.findLROGet(liveRequest),
+            await coordinator.findLROGet(liveRequest, fakedOperation),
             'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/new?api-version=20210701'
         assert.strictEqual(
-            await coordinator.findLROGet(liveRequest),
+            await coordinator.findLROGet(liveRequest, fakedOperation),
             'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type2/myType/new?api-version=20210701'
-        expect(coordinator.findLROGet(liveRequest)).rejects.toThrow(LroCallbackNotFound)
+        expect(coordinator.findLROGet(liveRequest, fakedOperation)).rejects.toThrow(
+            LroCallbackNotFound
+        )
     })
 
     it("degrade to non-lro if can't find callback url", async () => {

@@ -17,16 +17,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public bool AllowAutoRedirect { get; set; } = false;
 
         /// <summary>
-        /// When populated, this value will be used to contact retrieve and retrieve a ledger TLS Certificate. This should be just the hostname of the targeted confidential ledger.
+        /// Provide a value for this property when you have a custom certificate securing the target resource. The public key contained here-in will be using during validation of the SSL connection (comparing thumbprints).
         /// </summary>
-        public string LedgerId { get; set; }
-
-        /// <summary>
-        /// When grabbing a TLS cert from the confidential ledger identity service, what api version are we using?
-        /// </summary>
-        public string LedgerApiVersion { get; set; } = "2022-05-13";
-
-        public string ConfidentialLedgerIdentityUri { get; set; } = "https://identity.confidential-ledger.core.azure.com";
+        public string TLSValidationCert { get; set; }
 
         /// <summary>
         /// Each certificate pair contained within this list should be added to the clientHandler for the server or an individual recording.

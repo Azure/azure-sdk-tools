@@ -678,7 +678,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{ \"HandleRedirects\": \"true2\"}", "The value of key \"HandleRedirects\" MUST be castable to a valid boolean value.")]
         [InlineData("{}", "At least one key is expected in the body being passed to SetRecordingOptions.")]
         [InlineData(null, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.")]
-        public async Task TestSetRecordingOptionsThrowsOnInvalidRedirectSetting(string body, string errorText)
+        public void TestSetRecordingOptionsThrowsOnInvalidRedirectSetting(string body, string errorText)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -689,8 +689,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
             }
 
-            var assertion = await Assert.ThrowsAsync<HttpException>(
-               async () => await testRecordingHandler.SetRecordingOptions(inputBody)
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
             );
 
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
@@ -737,7 +737,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Theory]
         [InlineData("hellothere", "generalkenobi")]
         [InlineData("", "")]
-        public async Task TestSetRecordingOptionsHandlesValidContextDirectory(params string[] relativePaths)
+        public void TestSetRecordingOptionsHandlesValidContextDirectory(params string[] relativePaths)
         {
             var relativePath = Path.Combine(relativePaths);
             var testDirectory = Path.GetTempPath();
@@ -749,14 +749,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             Dictionary<string, object> inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
 
-            await testRecordingHandler.SetRecordingOptions(inputBody);
+            testRecordingHandler.SetRecordingOptions(inputBody);
 
             Assert.Equal(new Uri(testDirectory), new Uri(testRecordingHandler.ContextDirectory));
         }
 
         [Theory]
         [InlineData("{ \"ContextDirectory\": \":/repo/\0\"}", "Unable set proxy context to target directory")]
-        public async Task TestSetRecordingOptionsThrowsOnInvalidContextDirectory(string body, string errorText)
+        public void TestSetRecordingOptionsThrowsOnInvalidContextDirectory(string body, string errorText)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -767,8 +767,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
             }
 
-            var assertion = await Assert.ThrowsAsync<HttpException>(
-               async () => await testRecordingHandler.SetRecordingOptions(inputBody)
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
             );
 
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
@@ -781,7 +781,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{ \"AssetsStore\": \"GitStore\"}")]
         [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.GitStore\"}")]
         [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.NullStore\"}")]
-        public async Task TestSetRecordingOptionsHandlesValidStoreTypes(string body)
+        public void TestSetRecordingOptionsHandlesValidStoreTypes(string body)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             testRecordingHandler.Store = null;
@@ -791,7 +791,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
             }
 
-            await testRecordingHandler.SetRecordingOptions(inputBody);
+            testRecordingHandler.SetRecordingOptions(inputBody);
 
             Assert.NotNull(testRecordingHandler.Store);
         }
@@ -809,13 +809,36 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
             }
 
-            var assertion = await Assert.ThrowsAsync<HttpException>(
-               async () => await testRecordingHandler.SetRecordingOptions(inputBody)
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
             );
 
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
             Assert.StartsWith(errorText, assertion.Message);
         }
+
+
+        [Theory]
+        [InlineData("{ \"AssetsStore\": \"NullStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.NullStore\"}")]
+        public async Task TestSetRecordingOptionsValidTransport(string body)
+        {
+
+        }
+
+
+        [Theory]
+        [InlineData("{ \"AssetsStore\": \"NullStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.NullStore\"}")]
+        public async Task TestSetRecordingOptionsInValidTransport(string body)
+        {
+
+        }
+
     }
 
     internal class MockHttpHandler : HttpMessageHandler

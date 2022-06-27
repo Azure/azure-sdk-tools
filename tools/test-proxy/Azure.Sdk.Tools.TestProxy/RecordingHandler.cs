@@ -497,7 +497,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region SetRecordingOptions and store functionality
-        public async Task SetRecordingOptions(IDictionary<string, object> options = null, string sessionId = null)
+        public void SetRecordingOptions(IDictionary<string, object> options = null, string sessionId = null)
         {
             if (options != null)
             {
@@ -560,7 +560,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     if (transportConventions != null)
                     {
-                        await SetTransportOptions(JsonSerializer.Serialize(transportConventions), sessionId);
+                        SetTransportOptions(JsonSerializer.Serialize(transportConventions), sessionId);
                     }
                     else
                     {
@@ -574,34 +574,19 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public async Task<X509Certificate2> GetLedgerTlsCert(TransportCustomizations settings)
+        public X509Certificate2 GetValidationCert(TransportCustomizations settings)
         {
             try
             {
-                var uri = new UriBuilder(settings.ConfidentialLedgerIdentityUri);
-                uri.Path += $"ledgerIdentity/{settings.LedgerId}";
-                uri.Query += $"api-version={settings.LedgerApiVersion}";
-
-                var certRequest = new HttpRequestMessage();
-                certRequest.RequestUri = new Uri(uri.ToString());
-                certRequest.Method = HttpMethod.Get;
-                certRequest.Headers.Add("Accept", "application/json");
-
-                var response = await BaseRedirectlessClient.SendAsync(certRequest);
-                var eccPem = JsonDocument.Parse(response.Content.ReadAsStream())
-                    .RootElement
-                    .GetProperty("ledgerTlsCertificate")
-                    .GetString();
-
-                return X509Certificate2.CreateFromPem(certPem: eccPem);
+                return X509Certificate2.CreateFromPem(certPem: settings.TLSValidationCert);
             }
             catch(Exception e)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to retrieve the ledger TLS cert for confidential ledger key {settings.LedgerId}. Message: \"{e.Message}\".");
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to instantiate a valid cert from the value provided in Transport settings key \"TLSValidationCert\". Value: \"{settings.TLSValidationCert}\". Message: \"{e.Message}\".");
             }
         }
 
-        public async Task<HttpClientHandler> GetTransport(bool allowAutoRedirect, TransportCustomizations customizations, bool insecure = false)
+        public HttpClientHandler GetTransport(bool allowAutoRedirect, TransportCustomizations customizations, bool insecure = false)
         {
             var clientHandler = new HttpClientHandler()
             {
@@ -617,7 +602,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (!string.IsNullOrWhiteSpace(customizations.LedgerId) && !insecure)
             {
-                var ledgerCert = await GetLedgerTlsCert(customizations);
+                var ledgerCert = GetValidationCert(customizations);
 
                 X509Chain certificateChain = new();
                 certificateChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
@@ -645,7 +630,7 @@ namespace Azure.Sdk.Tools.TestProxy
             return clientHandler;
         }
 
-        public async Task SetTransportOptions(string transportConventions, string sessionId)
+        public void SetTransportOptions(string transportConventions, string sessionId)
         {
             var timeoutSpan = TimeSpan.FromSeconds(600);
             TransportCustomizations customizations;
@@ -667,7 +652,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // this will look a bit strange until we take care of #3488 due to the fact that this AllowAutoRedirect customizable from two places
             if (!string.IsNullOrWhiteSpace(sessionId))
             {
-                var customizedClientHandler = await GetTransport(customizations.AllowAutoRedirect, customizations);
+                var customizedClientHandler = GetTransport(customizations.AllowAutoRedirect, customizations);
 
                 RecordingSessions[sessionId].Client = new HttpClient(customizedClientHandler)
                 {
@@ -677,8 +662,8 @@ namespace Azure.Sdk.Tools.TestProxy
             else
             {
                 // after #3488 we will swap to a single client instead of both of these
-                var redirectableCustomizedHandler = await GetTransport(true, customizations, Startup.Insecure);
-                var redirectlessCustomizedHandler = await GetTransport(false, customizations, Startup.Insecure);
+                var redirectableCustomizedHandler = GetTransport(true, customizations, Startup.Insecure);
+                var redirectlessCustomizedHandler = GetTransport(false, customizations, Startup.Insecure);
 
                 RedirectableClient = new HttpClient(redirectableCustomizedHandler)
                 {

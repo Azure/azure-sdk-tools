@@ -816,6 +816,29 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
             Assert.StartsWith(errorText, assertion.Message);
         }
+
+
+        [Theory]
+        [InlineData("{ \"AssetsStore\": \"NullStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.NullStore\"}")]
+        public async Task TestSetRecordingOptionsValidTransport(string body)
+        {
+
+        }
+
+
+        [Theory]
+        [InlineData("{ \"AssetsStore\": \"NullStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.NullStore\"}")]
+        public async Task TestSetRecordingOptionsInValidTransport(string body)
+        {
+
+        }
+
     }
 
     internal class MockHttpHandler : HttpMessageHandler

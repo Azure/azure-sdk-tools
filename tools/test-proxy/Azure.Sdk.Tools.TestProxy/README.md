@@ -478,9 +478,8 @@ POST /Admin/SetRecordingOptions
           "PemKey": "<string content>",
         }
       ],
-      // used specifically when the test-proxy must get and trust a TLS certificate from the identity service
-      "LedgerId": "<host from your confential ledger uri>",
-      "LedgerApiVersion": "<defaulted to '2022-05-13'>"
+      // used specifically so that an SSL connection presenting a non-standard certificate can still be validated
+      "TLSValidationCert": "<public key portion of TLS cert>",
    }
 }
 ```

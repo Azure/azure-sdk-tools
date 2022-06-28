@@ -800,7 +800,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{ \"AssetsStore\": \"NonExistent\"}", "Unable to load the specified IAssetStore class NonExistent.")]
         [InlineData("{ \"AssetsStore\": \"\"}", "Users must provide a valid value when providing the key \"AssetsStore\"")]
         [InlineData("{ \"AssetsStore\": \"GitAssetsConfiguration\"}", "Unable to create an instance of type GitAssetsConfiguration")]
-        public async Task TestSetRecordingOptionsThrowsOnInvalidStoreTypes(string body, string errorText)
+        public void TestSetRecordingOptionsThrowsOnInvalidStoreTypes(string body, string errorText)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             Dictionary<string, object> inputBody = null;
@@ -817,28 +817,56 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.StartsWith(errorText, assertion.Message);
         }
 
-
         [Theory]
-        [InlineData("{ \"AssetsStore\": \"NullStore\"}")]
-        [InlineData("{ \"AssetsStore\": \"GitStore\"}")]
-        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.GitStore\"}")]
-        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.NullStore\"}")]
-        public async Task TestSetRecordingOptionsValidTransport(string body)
+        [InlineData("{\"Transport\": {\"Certificates\": [ { \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }, { \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" } ]}}")]
+        public void TestSetRecordingOptionsValidTransportSessionLevel(string body)
         {
-
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+            testRecordingHandler.SetRecordingOptions(inputBody, string.Empty);
         }
 
-
         [Theory]
-        [InlineData("{ \"AssetsStore\": \"NullStore\"}")]
-        [InlineData("{ \"AssetsStore\": \"GitStore\"}")]
-        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.GitStore\"}")]
-        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.NullStore\"}")]
-        public async Task TestSetRecordingOptionsInValidTransport(string body)
+        [InlineData("{\"Transport\": {\"Certificates\": [ { \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }, { \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" } ]}}")]
+        public void TestSetRecordingOptionsValidTransportRecordingLevel(string body)
         {
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
 
+            HttpContext context = new DefaultHttpContext();
+            testRecordingHandler.StartRecording("TestSetRecordingOptionsInValidTransportRecordingLevel.json", context.Response);
+            var recordingId = context.Response.Headers["x-recording-id"].ToString();
+
+            testRecordingHandler.SetRecordingOptions(inputBody, recordingId);
         }
 
+        [Theory]
+        [InlineData("{\"Transport\": {\"Certificates\": [ { \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }, { \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" } ]}}")]
+        public void TestSetRecordingOptionsInValidTransportSessionLevel(string body)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+        }
+
+        [Theory]
+        [InlineData("{\"Transport\": {\"Certificates\": [ { \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }, { \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" } ]}}")]
+        public void TestSetRecordingOptionsInValidTransportRecordingLevel(string body)
+        {
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+
+            HttpContext context = new DefaultHttpContext();
+            testRecordingHandler.StartRecording("TestSetRecordingOptionsInValidTransportRecordingLevel.json", context.Response);
+            var recordingId = context.Response.Headers["x-recording-id"].ToString();
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody, recordingId)
+            );
+        }
     }
 
     internal class MockHttpHandler : HttpMessageHandler

@@ -5,9 +5,7 @@ using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
-using NuGet.Configuration;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -18,6 +16,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Security;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -578,7 +577,9 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             try
             {
-                return X509Certificate2.CreateFromPem(certPem: settings.TLSValidationCert);
+                var fields = PemEncoding.Find(settings.TLSValidationCert);
+                var base64Data = settings.TLSValidationCert[fields.Base64Data];
+                return new X509Certificate2(Encoding.ASCII.GetBytes(base64Data));
             }
             catch(Exception e)
             {

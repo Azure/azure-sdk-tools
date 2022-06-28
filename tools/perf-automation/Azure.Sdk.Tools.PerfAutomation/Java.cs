@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             UpdatePackageVersions(PerfCoreProjectFile, packageVersions);
             UpdatePackageVersions(projectFile, packageVersions);
 
-            var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true --pl {project}",
+            var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true --no-transfer-progress --quiet --pl {project}",
                 WorkingDirectory, environmentVariables: _buildEnvironment);
 
             /*

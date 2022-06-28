@@ -600,7 +600,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 clientHandler.ClientCertificates.Add(cert);
             }
 
-            if (!string.IsNullOrWhiteSpace(customizations.LedgerId) && !insecure)
+            if (customizations.TLSValidationCert != null && !insecure)
             {
                 var ledgerCert = GetValidationCert(customizations);
 

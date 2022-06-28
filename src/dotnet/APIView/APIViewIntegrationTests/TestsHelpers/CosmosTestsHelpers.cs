@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 
-namespace APIViewTest.TestsHelpers
+namespace APIViewIntegrationTests.TestsHelpers
 {
     public static class CosmosTestsHelpers
     {

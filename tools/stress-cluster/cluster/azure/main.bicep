@@ -3,7 +3,7 @@ targetScope = 'subscription'
 param subscriptionId string = ''
 param groupSuffix string
 param clusterName string
-param clusterLocation string = 'westus2'
+param clusterLocation string = 'westus3'
 param staticTestSecretsKeyvaultName string
 param staticTestSecretsKeyvaultGroup string
 param monitoringLocation string = 'centralus'

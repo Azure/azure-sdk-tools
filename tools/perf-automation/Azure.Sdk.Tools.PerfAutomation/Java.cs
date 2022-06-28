@@ -1,7 +1,9 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using Microsoft.Crank.Agent;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -25,8 +27,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
-            UpdatePackageVersions(PerfCoreProjectFile, packageVersions);
-            UpdatePackageVersions(projectFile, packageVersions);
+            await UpdatePackageVersions(packageVersions, WorkingDirectory);
 
             var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true --no-transfer-progress --quiet --pl {project}",
                 WorkingDirectory, environmentVariables: _buildEnvironment);
@@ -41,37 +42,36 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (result.StandardOutput, result.StandardError, jar);
         }
 
-        private static void UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions)
+        private static async Task UpdatePackageVersions(IDictionary<string, string> packageVersions, string workingDirectory)
         {
-            // Create backup.  Throw if exists, since this shouldn't happen
-            File.Copy(projectFile, projectFile + ".bak", overwrite: false);
+            string versionsPath = Path.Combine(workingDirectory, "eng", "versioning");
+            string setVersionsScript = Path.Combine(versionsPath, "set_versions.py");
+            string updateVersionsScript = Path.Combine(versionsPath, "update_versions.py");
 
-            var doc = new XmlDocument() { PreserveWhitespace = true };
-            doc.Load(projectFile);
-
-            var nsmgr = new XmlNamespaceManager(doc.NameTable);
-            nsmgr.AddNamespace("mvn", "http://maven.apache.org/POM/4.0.0");
-
-            foreach (var v in packageVersions)
+            bool sourceRun = packageVersions.Values.All(version => string.Equals(version, "source"));
+            if (sourceRun)
             {
-                var packageName = v.Key;
-                var packageVersion = v.Value;
-
-                if (packageVersion != Program.PackageVersionSource)
+                // All packages are set so source, treat this as if it were a From Source CI run.
+                // This call updates all dependency versions to source versions.
+                await ProcessUtil.RunAsync("python", $"{setVersionsScript} --build-type client --pst");
+            } 
+            else
+            {
+                // Loop over each package version, which should use a key that is the artifact identifier (groupId:artifactId)
+                // and have a value of the artifact version.
+                foreach (var packageKvp in packageVersions)
                 {
-                    var versionNode = doc.SelectSingleNode($"/mvn:project/mvn:dependencies/mvn:dependency[mvn:artifactId='{packageName}']/mvn:version", nsmgr);
-
-                    // Skip missing dependencies
-                    if (versionNode != null)
+                    string[] groupIdAndArtifactIdSplit = packageKvp.Key.Split(':', 2);
+                    if (groupIdAndArtifactIdSplit.Length != 2 || !groupIdAndArtifactIdSplit[0].Equals("com.azure"))
                     {
-                        versionNode.InnerText = packageVersion;
+                        continue;
                     }
+
+                    await ProcessUtil.RunAsync("python", $"{setVersionsScript} --bt client --group-id {groupIdAndArtifactIdSplit[0]} --artifact-id {groupIdAndArtifactIdSplit[1]} --new-version {packageKvp.Value}");
                 }
             }
 
-            Console.WriteLine(doc.OuterXml);
-
-            doc.Save(projectFile);
+            await ProcessUtil.RunAsync("python", $"{updateVersionsScript} --sr --bt client --ut library");
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,

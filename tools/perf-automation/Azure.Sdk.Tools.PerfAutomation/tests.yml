@@ -64,20 +64,22 @@ Services:
       Project: sdk/storage/azure-storage-perf
       PrimaryPackage: azure-storage-blob
       PackageVersions: &java-storage-package-versions
-      - azure-storage-blob: 12.17.1
-        azure-storage-file-share: 12.13.1
-        azure-storage-file-datalake: 12.10.1
-        azure-core-http-netty: 1.12.2
-        azure-core-http-okhttp: 1.10.1
-        azure-core: 1.29.1
-        reactor-core: 3.4.17
-      - azure-storage-blob: source
-        azure-storage-file-share: source
-        azure-storage-file-datalake: source
-        azure-core-http-netty: source
-        azure-core-http-okhttp: source
-        azure-core: source
-        reactor-core: source
+      - 'com.azure:azure-storage-common': 12.16.1
+        'com.azure:azure-storage-blob': 12.17.1
+        'com.azure:azure-storage-file-share': 12.13.1
+        'com.azure:azure-storage-file-datalake': 12.10.1
+        'com.azure:azure-core-http-netty': 1.12.2
+        'com.azure:azure-core-http-okhttp': 1.10.1
+        'com.azure:azure-core': 1.29.1
+        'io.projectreactor:reactor-core': 3.4.17
+      - 'com.azure:azure-storage-common': source
+        'com.azure:azure-storage-blob': source
+        'com.azure:azure-storage-file-share': source
+        'com.azure:azure-storage-file-datalake': source
+        'com.azure:azure-core-http-netty': source
+        'com.azure:azure-core-http-okhttp': source
+        'com.azure:azure-core': source
+        'io.projectreactor:reactor-core': source
       AdditionalArguments: &java-additional-arguments
         warmup: 15
         duration: 15

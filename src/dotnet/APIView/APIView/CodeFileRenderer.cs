@@ -4,6 +4,7 @@
 using APIView;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -30,6 +31,7 @@ namespace ApiView
             Stack<(string, string)> nodesInProcess = new Stack<(string, string)>();
             string lastHeadingEncountered = null;
             HashSet<string> lineIds = new HashSet<string>(); // Used to ensure there are no duplicate IDs
+            int indentSize = 0;
 
             foreach (var token in node)
             {
@@ -49,9 +51,10 @@ namespace ApiView
                             var nodesInProcessAsArray = nodesInProcess.ToArray();
                             for (int i = 0; i < nodesInProcessAsArray.Length; i++)
                             {
+                                var classPrefix = SanitizeLineClass(nodesInProcessAsArray[i].Item1);
                                 if (i == 0 && nodesInProcessAsArray[i].Item2.Equals("heading"))
                                 {
-                                    lineClass += (nodesInProcessAsArray[i].Item1 + "-heading ");
+                                    lineClass += (classPrefix + "-heading ");
                                 }
                                 else if (i > 0 && nodesInProcessAsArray[i].Item2.Equals("heading"))
                                 {
@@ -59,15 +62,14 @@ namespace ApiView
                                 }
                                 else
                                 {
-                                    lineClass += (nodesInProcessAsArray[i].Item1 + "-content ");
+                                    lineClass += (classPrefix + "-content ");
                                 }
                             }
                             lineClass = lineClass.Trim();
                         }
-                        lineClass = SanitizeLineClass(lineClass);
                         var lineId = SanitizeLineId(currentId, lineIds);
 
-                        list.Add(new CodeLine(stringBuilder.ToString(), lineId, lineClass));
+                        list.Add(new CodeLine(stringBuilder.ToString(), lineId, lineClass, indentSize));
                         currentId = null;
                         stringBuilder.Clear();
                         break;
@@ -106,6 +108,7 @@ namespace ApiView
 
                     case CodeFileTokenKind.FoldableSectionContentStart:
                         nodesInProcess.Push((lastHeadingEncountered, "content"));
+                        indentSize++;
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentEnd:
@@ -114,6 +117,7 @@ namespace ApiView
                         {
                             nodesInProcess.Pop();
                         }
+                        indentSize--;
                         break;
                     default:
                         if (token.DefinitionId != null)
@@ -131,8 +135,9 @@ namespace ApiView
             if (!String.IsNullOrEmpty(lineClass))
             {
                 var result = lineClass.ToLower();
-                result = Regex.Replace(result, "[^a-z_0-9-\\s+]", "");
+                result = Regex.Replace(result, "[^a-z_0-9-]", "");
                 result = Regex.Replace(result, "^[0-9]+", "");
+                result = Regex.Replace(result, "//s+", "");
                 return result;
             }
             return lineClass;
@@ -140,11 +145,18 @@ namespace ApiView
 
         private string SanitizeLineId(string lineId, HashSet<string> lineIds)
         {
-            if (!String.IsNullOrEmpty(lineId))
+            int resultAsInt;
+            if (Int32.TryParse(lineId, out resultAsInt))
+            {
+                return resultAsInt.ToString();
+            }
+
+            if (!String.IsNullOrWhiteSpace(lineId))
             {
                 var result = lineId.ToLower();
                 result = Regex.Replace(result, "[^a-z_0-9-:.]", "");
                 result = Regex.Replace(result, "^[0-9]+", "");
+                result = Regex.Replace(result, "//s+", "");
 
                 if (lineIds.Contains(result))
                 {

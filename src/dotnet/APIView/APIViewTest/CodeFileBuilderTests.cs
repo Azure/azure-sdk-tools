@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace APIViewUnitTest
+namespace APIViewUnitTests
 {
     public class CodeFileBuilderTests
     {

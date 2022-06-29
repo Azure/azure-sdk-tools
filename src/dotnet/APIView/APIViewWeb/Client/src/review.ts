@@ -27,14 +27,17 @@
     $(".line-number").toggleClass("d-none");
   });
 
-  // Diff button
+  /* DIFF BUTTON (UPDATES REVIEW PAGE ON CLICK)
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $('.diff-button').each(function(index, value){
     $(this).on('click', function () {
       window.location.href = $(this).val() as string;
     });
   });
 
-  // Change dropdown filter for review and revision
+
+  /* DROPDOWN FILTER FOR REVIEW, REVISIONS AND DIFF (UPDATES REVIEW PAGE ON CHANGE)
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $('#revisions-bootstraps-select, #review-bootstraps-select, #diff-bootstraps-select').each(function(index, value) {
     $(this).on('change', function() {
       var url = $(this).find(":selected").val();
@@ -45,7 +48,8 @@
     });
   });
 
-  // Collapsible Code Lines
+  /* COLLAPSIBLE CODE LINES (EXPAND AND COLLAPSE FEATURE)
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $('.row-fold-elipsis, .row-fold-caret').on('click', function () {
     var triggeringClass = $(this)[0].className;
     var headingRow = $(this).parents('.code-line');
@@ -82,15 +86,18 @@
             subHeadingCaretIcon.removeClass("fa-angle-down");
             subHeadingCaretIcon.addClass("fa-angle-right");
           }
+          // toggle ellipsis and border-top
           subHeadingRow.find(".row-fold-elipsis").removeClass("d-none");
+          subHeadingRow.children(".code").removeClass("border-top");
         }
       }
       while (classesOfRowsToHide.length > 0);
     }
     else {
       $(`.${foldableClassPrefix}-content`).toggleClass("d-none");
-      // toggle ellipsis
+      // toggle ellipsis and border-top
       headingRow.find(".row-fold-elipsis").toggleClass("d-none");
+      headingRow.children(".code").toggleClass("border-top");
 
       // Toggle caret direction
       if (caretDirection.endsWith("right")) {
@@ -104,7 +111,8 @@
     }
   });
 
-  // enable tooltip and popover
+  /* ENABLE TOOLTIP AND POPOVER
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   (<any>$('[data-toggle="tooltip"]')).tooltip();
   (<any>$('[data-toggle="popover"]')).popover();
 });

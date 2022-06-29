@@ -34,6 +34,13 @@ describe('autorest config extractor util test', () => {
         expect(result?.length).toBeGreaterThan(0);
     });
 
+    it('should extract the first autorest config from autorest file', async () => {
+        const sdkRepo = './sdk-repo';
+        const result = extractAutorestConfigs(autorestConfigFilePath, sdkRepo, loggerMock);
+        expect(result?.length).toBeGreaterThan(0);
+        expect(result.includes('azure-sdk-for-js')).toBe(true);
+    });
+
     it('cannot extract autorest config from autorest file', async () => {
         const sdkRepo = './azure-sdk-for-go';
         const result = extractAutorestConfigs(autorestConfigFilePath, sdkRepo, loggerMock);

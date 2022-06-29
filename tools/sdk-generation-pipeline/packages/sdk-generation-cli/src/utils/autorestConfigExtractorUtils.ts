@@ -16,9 +16,9 @@ export function extractAutorestConfigs(autorestConfigFilePath: string, sdkRepo: 
         autorestConfigs = autorestConfigs.slice(1);
         if (!path.basename(sdkRepo).startsWith('azure-sdk-for-')) {
             if (autorestConfigs.length > 1) {
-                logger.warn(`Docker is running pipeline, but get autorest config for more than 1 language of sdk. So only get the first autorest config`);
+                logger.warn(`Docker is running in pipeline, but get autorest config for more than 1 language of sdk. So only get the first autorest config`);
             }
-            sdkRepo = 'azure-sdk-for-';
+            return `azure-sdk-for-${autorestConfigs[0]}`;
         }
         for (const autorestConfig of autorestConfigs) {
             let autorestFullConfig = `# azure-sdk-for-${autorestConfig}`;

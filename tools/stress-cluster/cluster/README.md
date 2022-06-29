@@ -3,7 +3,7 @@ Table of Contents
 * [Dependencies](#dependencies)
 * [Deploying Cluster(s)](#deploying-clusters)
    * [Dev Cluster](#dev-cluster)
-   * [Test Cluster](#test-cluster)
+   * [Playground Cluster](#playground-cluster)
    * [Prod Cluster](#prod-cluster)
    * [Local Cluster](#local-cluster)
 * [Deploying Stress Test Addons](#deploying-stress-test-addons)
@@ -19,7 +19,7 @@ as a set of common stress test config boilerplate (helm library).
 
 The `./azure` directory contains [Azure Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview)
 files for deploying Azure resources (mainly [AKS clusters](https://azure.microsoft.com/en-us/services/kubernetes-service/)
-to support stress testing (for dev/test and/or production).
+to support stress testing (for dev/playground and/or production).
 
 Azure Bicep comes pre-installed with the Azure CLI, and is a DSL for generating ARM templates.
 
@@ -78,13 +78,13 @@ Avoid checking in the updated dev values, they are for local use only.
 <tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -Environment dev
 ```
 
-## Test Cluster
+## Playground Cluster
 
-The test cluster is the main ad-hoc cluster made available to SDK developers and partners. Changes to this cluster
+The playground cluster is the main ad-hoc cluster made available to SDK developers and partners. Changes to this cluster
 should be made carefully and announced in advance in order not to disrupt people's work.
 
 ```
-./provision.ps1 -env test
+./provision.ps1 -env pg
 ```
 
 ## Prod Cluster

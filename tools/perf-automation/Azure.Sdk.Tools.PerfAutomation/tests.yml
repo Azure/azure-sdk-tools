@@ -112,6 +112,8 @@ Services:
     - --size 20971520 --parallel 1
     - --size 209715200 --parallel 1
     - --size 1073741824 --parallel 1 --warmup 60 --duration 60
+    - --size 1073741824 --parallel 1 --warmup 60 --duration 60 --client-encryption "1.0"
+    - --size 1073741824 --parallel 1 --warmup 60 --duration 60 --client-encryption "2.0"
     - --size 1073741824 --parallel 8 --warmup 60 --duration 60
     - --size 1073741824 --parallel 8 --warmup 60 --duration 60 --client-encryption "1.0"
     - --size 1073741824 --parallel 8 --warmup 60 --duration 60 --client-encryption "2.0"

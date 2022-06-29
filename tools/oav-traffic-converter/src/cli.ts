@@ -71,7 +71,13 @@ function requestBodyConversion(body: string, headers: any) {
 
         if ( content.indexOf("application/json") > -1 )
         {
-            return JSON.parse(body);
+            try {
+                return JSON.parse(body);
+            }
+            catch (ex: any){
+                console.log(ex);
+                return body;
+            }
         }
     }
 

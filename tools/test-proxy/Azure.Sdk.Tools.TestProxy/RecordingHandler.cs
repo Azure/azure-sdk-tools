@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -559,7 +560,23 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     if (transportConventions != null)
                     {
-                        SetTransportOptions(JsonSerializer.Serialize(transportConventions), sessionId);
+                        try
+                        {
+                            var transportObject = ((JObject)transportConventions).ToString();
+
+                            var serializerOptions = new JsonSerializerOptions
+                            {
+                                ReadCommentHandling = JsonCommentHandling.Skip,
+                                AllowTrailingCommas = true,
+                            };
+                            var customizations = JsonSerializer.Deserialize<TransportCustomizations>(transportObject, serializerOptions);
+
+                            SetTransportOptions(customizations, sessionId);
+                        }
+                        catch (Exception e)
+                        {
+                            throw new HttpException(HttpStatusCode.BadRequest, $"Unable to deserialize the contents of the \"Transport\" key. Visible object: {transportConventions}. Json Deserialization Error: {e.Message}");
+                        }
                     }
                     else
                     {
@@ -594,13 +611,16 @@ namespace Azure.Sdk.Tools.TestProxy
                 AllowAutoRedirect = allowAutoRedirect
             };
 
-            foreach (var certPair in customizations.Certificates)
+            if(customizations.Certificates != null)
             {
-                var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
-                cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
-                clientHandler.ClientCertificates.Add(cert);
+                foreach (var certPair in customizations.Certificates)
+                {
+                    var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
+                    cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
+                    clientHandler.ClientCertificates.Add(cert);
+                }
             }
-
+            
             if (customizations.TLSValidationCert != null && !insecure)
             {
                 var ledgerCert = GetValidationCert(customizations);
@@ -631,24 +651,9 @@ namespace Azure.Sdk.Tools.TestProxy
             return clientHandler;
         }
 
-        public void SetTransportOptions(string transportConventions, string sessionId)
+        public void SetTransportOptions(TransportCustomizations customizations, string sessionId)
         {
             var timeoutSpan = TimeSpan.FromSeconds(600);
-            TransportCustomizations customizations;
-
-            try
-            {
-                var options = new JsonSerializerOptions
-                {
-                    ReadCommentHandling = JsonCommentHandling.Skip,
-                    AllowTrailingCommas = true,
-                };
-                customizations = JsonSerializer.Deserialize<TransportCustomizations>(transportConventions, options);
-            }
-            catch(Exception e)
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to deserialize the contents of the \"Transport\" key. Visible object: {transportConventions}. Json Deserialization Error: {e.Message}");
-            }
 
             // this will look a bit strange until we take care of #3488 due to the fact that this AllowAutoRedirect customizable from two places
             if (!string.IsNullOrWhiteSpace(sessionId))

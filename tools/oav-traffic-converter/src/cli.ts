@@ -71,6 +71,9 @@ function requestBodyConversion(body: string, headers: any) {
 
         if ( content.indexOf("application/json") > -1 )
         {
+            // if RequestBody is a unicode string, it need JSON.parse to format
+            // eg. JSON.parse("{\u0022TableName\u0022: \u0022pytablesync70281ff8\u0022}") => {TableName: 'pytablesync70281ff8'}
+            // else return directly includes Object or Array
             try {
                 return JSON.parse(body);
             }

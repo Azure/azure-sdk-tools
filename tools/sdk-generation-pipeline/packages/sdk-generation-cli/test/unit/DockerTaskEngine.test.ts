@@ -19,7 +19,7 @@ describe('task engine', async () => {
             sdkRepo: path.join(tmpFolder, 'sdk-repo'),
             resultOutputFolder: path.join(tmpFolder, 'output'),
             dockerLogger: 'docker.log',
-            autorestConfigFilePath: path.join(path.resolve('.'), 'test', 'unit', 'utils', 'autorest.md')
+            autorestConfigFilePath: path.join(path.resolve('.'), 'test', 'unit', 'utils', 'autorest-single-config.md')
         });
         const dockerTaskEngineContext = new DockerTaskEngineContext();
         await dockerTaskEngineContext.initialize(dockerContext);

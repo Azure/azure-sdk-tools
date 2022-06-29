@@ -6,7 +6,6 @@ import * as path from 'path';
 import { Logger } from 'winston';
 
 import { extractAutorestConfigs } from '../../../utils/autorestConfigExtractorUtils';
-import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from '../../../utils/git';
 import { GitOperationWrapper } from '../../../utils/GitOperationWrapper';
 import { dockerTaskEngineInput } from '../schema/dockerTaskEngineInput';
 import { DockerContext } from './DockerContext';

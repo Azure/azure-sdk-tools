@@ -77,6 +77,18 @@ describe('generateResponse()', () => {
         await coordinator.Validator.validateLiveRequestResponse(pair)
     })
 
+    it('validate status of LRO callback', async () => {
+        const fileName = path.join(__dirname, '..', 'testData', 'payloads', 'valid_input.json')
+        const pair: RequestResponsePair = require(fileName)
+        const request = mockRequest(pair.liveRequest)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        request.query!['lro-callback'] = 'true'
+        const response = mockDefaultResponse()
+        await coordinator.generateResponse(request, response, statelessProfile)
+        assert.strictEqual(response.statusCode, pair.liveResponse.statusCode)
+        assert.strictEqual(response.body.status, 'Succeeded')
+    })
+
     it('alwaysError: return 500 even for a valid_input', async () => {
         const fileName = path.join(__dirname, '..', 'testData', 'payloads', 'valid_input.json')
         const pair: RequestResponsePair = require(fileName)
@@ -203,35 +215,38 @@ describe('generateResponse()', () => {
             },
             localPort: 8443
         }
+        const fakedOperation: any = {}
         assert.strictEqual(
-            await coordinator.findLROGet(liveRequest),
+            await coordinator.findLROGet(liveRequest, fakedOperation),
             'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701'
         assert.strictEqual(
-            await coordinator.findLROGet(liveRequest),
+            await coordinator.findLROGet(liveRequest, fakedOperation),
             'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/stop?api-version=20210701'
         assert.strictEqual(
-            await coordinator.findLROGet(liveRequest),
+            await coordinator.findLROGet(liveRequest, fakedOperation),
             'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/new?api-version=20210701'
         assert.strictEqual(
-            await coordinator.findLROGet(liveRequest),
+            await coordinator.findLROGet(liveRequest, fakedOperation),
             'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type2/myType/new?api-version=20210701'
-        expect(coordinator.findLROGet(liveRequest)).rejects.toThrow(LroCallbackNotFound)
+        expect(coordinator.findLROGet(liveRequest, fakedOperation)).rejects.toThrow(
+            LroCallbackNotFound
+        )
     })
 
     it("degrade to non-lro if can't find callback url", async () => {

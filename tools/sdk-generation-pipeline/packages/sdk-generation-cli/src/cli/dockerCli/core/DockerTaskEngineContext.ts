@@ -5,7 +5,7 @@ import { writeFileSync } from 'fs';
 import * as path from 'path';
 import { Logger } from 'winston';
 
-import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from '../../../utils/git';
+import { GitOperationWrapper } from '../../../utils/GitOperationWrapper';
 import { dockerTaskEngineInput } from '../schema/dockerTaskEngineInput';
 import { DockerContext } from './DockerContext';
 import { DockerRunningModel } from './DockerRunningModel';
@@ -44,10 +44,10 @@ export class DockerTaskEngineContext {
     changeOwner: boolean;
     mode: DockerRunningModel;
 
-    public initialize(dockerContext: DockerContext) {
+    public async initialize(dockerContext: DockerContext) {
         // before execute task engine, safe spec repos and sdk repos because they may be owned by others
-        safeDirectory(dockerContext.specRepo);
-        safeDirectory(dockerContext.sdkRepo);
+        await new GitOperationWrapper(dockerContext.specRepo).safeDirectory();
+        await new GitOperationWrapper(dockerContext.sdkRepo).safeDirectory();
         const dockerTaskEngineConfigProperties = dockerTaskEngineInput.getProperties();
         this.logger = dockerContext.logger;
         this.configFilePath = dockerTaskEngineConfigProperties.configFilePath;
@@ -63,8 +63,8 @@ export class DockerTaskEngineContext {
         this.specRepo = {
             repoPath: dockerContext.specRepo,
             headSha: dockerTaskEngineConfigProperties.headSha ?? dockerContext.mode === DockerRunningModel.Pipeline?
-                getHeadSha(dockerContext.specRepo) : '{commit_id}',
-            headRef: dockerTaskEngineConfigProperties.headRef ?? getHeadRef(dockerContext.specRepo),
+                await new GitOperationWrapper(dockerContext.specRepo).getHeadSha() : '{commit_id}',
+            headRef: dockerTaskEngineConfigProperties.headRef ?? await new GitOperationWrapper(dockerContext.specRepo).getHeadRef(),
             repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl
         };
         this.serviceType = dockerContext.readmeMdPath.includes('data-plane') && dockerTaskEngineConfigProperties.serviceType ? 'data-plane': 'resource-manager';
@@ -92,7 +92,7 @@ export class DockerTaskEngineContext {
             }
             if (!!this.sdkRepo && fs.existsSync(this.sdkRepo)) {
                 execSync(`chown -R ${userGroupId} ${this.sdkRepo}`, { encoding: 'utf8' });
-                disableFileMode(this.sdkRepo);
+                await new GitOperationWrapper(this.sdkRepo).disableFileMode();
             }
         }
         if (!!this.taskResults) {

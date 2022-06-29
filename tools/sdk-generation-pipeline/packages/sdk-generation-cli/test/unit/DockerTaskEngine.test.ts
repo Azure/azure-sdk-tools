@@ -3,12 +3,10 @@ import { existsSync } from 'fs';
 import * as path from 'path';
 
 import { DockerContext } from '../../src/cli/dockerCli/core/DockerContext';
-import {
-    DockerTaskEngineContext
-} from '../../src/cli/dockerCli/core/DockerTaskEngineContext';
+import { DockerTaskEngineContext } from '../../src/cli/dockerCli/core/DockerTaskEngineContext';
 import { SDKGenerationTaskBase } from '../../src/cli/dockerCli/core/tasks/SDKGenerationTaskBase';
 
-describe('task engine', () => {
+describe('task engine', async () => {
     it('should initialize a DockerTaskEngineContext by DockerContext', async () => {
         const dockerContext = new DockerContext();
         const tmpFolder = path.join(path.resolve('.'), 'test', 'unit', 'tmp');
@@ -23,7 +21,7 @@ describe('task engine', () => {
             dockerLogger: 'docker.log'
         });
         const dockerTaskEngineContext = new DockerTaskEngineContext();
-        dockerTaskEngineContext.initialize(dockerContext);
+        await dockerTaskEngineContext.initialize(dockerContext);
         expect(dockerTaskEngineContext.configFilePath).toBe('eng/codegen_to_sdk_config.json');
         expect(dockerTaskEngineContext.initOutputJsonFile).toBe(path.join(tmpFolder, 'output', 'initOutput.json'));
         expect(dockerTaskEngineContext.generateAndBuildInputJsonFile).toBe(path.join(tmpFolder, 'output', 'generateAndBuildInput.json'));

@@ -28,8 +28,6 @@ public class SwaggerApiViewOperation : ITokenSerializable
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
 
-        ret.Add(TokenSerializer.FoldableParentToken(context.IteratorPath.CurrentPath()));
-        ret.Add(TokenSerializer.NewLine());
         ret.Add(TokenSerializer.FoldableContentStart());
 
         ret.Add(TokenSerializer.Intent(context.intent));

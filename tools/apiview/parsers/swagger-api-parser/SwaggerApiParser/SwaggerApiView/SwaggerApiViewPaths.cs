@@ -82,8 +82,6 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
-        ret.Add(TokenSerializer.FoldableParentToken(context.IteratorPath.CurrentPath()));
-        ret.Add(TokenSerializer.NewLine());
         ret.Add(TokenSerializer.FoldableContentStart());
 
         foreach (var (key, value) in this)
@@ -99,9 +97,7 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
                 context.IteratorPath.AddRange(new List<string>{idx.ToString(), "operationId", operation.operationId});
                 
                 ret.Add(TokenSerializer.Intent(context.intent + 1));
-                ret.Add(TokenSerializer.NavigableToken(operation.method.ToUpper(), CodeFileTokenKind.Keyword, context.IteratorPath.CurrentPath()));
-                ret.Add(new CodeFileToken(" - ", CodeFileTokenKind.Punctuation));
-                ret.Add(new CodeFileToken(operation.path, CodeFileTokenKind.Literal));
+                ret.Add(TokenSerializer.NavigableToken($"{operation.method.ToUpper()} - {operation.path}", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
                 ret.Add(TokenSerializer.NewLine());
 
                 // collapse operation here.

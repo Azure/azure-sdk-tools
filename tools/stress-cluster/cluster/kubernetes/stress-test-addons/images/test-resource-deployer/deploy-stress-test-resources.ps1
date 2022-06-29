@@ -26,7 +26,7 @@ $env = & /common/TestResources/New-TestResources.ps1 `
     -TestApplicationId $secrets.AZURE_CLIENT_ID `
     -TestApplicationSecret $secrets.AZURE_CLIENT_SECRET `
     -TestApplicationOid $secrets.AZURE_CLIENT_OID `
-    -Location 'westus2' `
+    -Location 'westus3' `
     -DeleteAfterHours 168 `
     -ServiceDirectory '/azure/' `
     -SuppressVsoCommands:$true `

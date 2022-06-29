@@ -45,30 +45,56 @@ export default class SwaggerMocker {
         this.patchUserAssignedIdentities(example.responses, liveRequest)
     }
 
+    private isValidId(id: string): boolean {
+        if (isNullOrUndefined(id) || id.indexOf(mockedResourceType) >= 0) return false
+        // is valid id if start with '/' and there is no special chars
+        const segments = id.split('/')
+        const guidPattern = new RegExp(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i'
+        )
+        if (
+            segments.length < 3 ||
+            (segments[1].toLowerCase() === 'subscriptions' && !guidPattern.test(segments[2]))
+        )
+            return false
+        return id.match(/^\/.+/) !== null && id.match(/[{}[]()]+/) === null
+    }
+
+    private isValidType(t: string): boolean {
+        if (isNullOrUndefined(t) || t === mockedResourceType) return false
+        // is valid type if there is '.' and there is no special chars
+        return t.match(/\./) !== null && t.match(/[{}[]()]+/) === null
+    }
+
     /**
      * Replaces mock resource IDs with IDs that match current resource.
      */
-    private patchResourceIdAndType(responses: any, liveRequest: LiveRequest) {
+    public patchResourceIdAndType(responses: any, liveRequest: LiveRequest) {
         const url = parseUrl(liveRequest.url)
 
         const pathElements = (url.pathname || '').split('/')
         let resourceType = ''
-        let foundProvider = false
-        for (let i = 0; i < pathElements.length; i++) {
-            if (i % 2 === 0 && pathElements[i].match(/microsoft\..+/i)) {
-                foundProvider = true
-                resourceType = pathElements[i]
-            }
-            if (foundProvider && i % 2 === 1) {
-                resourceType = `${resourceType}/${pathElements[i]}`
+        let providerIdx = pathElements.length - 2
+        for (; providerIdx > 0; providerIdx--) {
+            if (
+                providerIdx % 2 === 1 &&
+                pathElements[providerIdx].match(/providers/i) &&
+                pathElements[providerIdx + 1].match(/microsoft\..+/i)
+            ) {
+                resourceType = pathElements[providerIdx + 1]
+                break
             }
         }
-        if (resourceType.length === 0) {
+        if (providerIdx > 0) {
+            for (let i = providerIdx + 2; i < pathElements.length; i += 2) {
+                resourceType = `${resourceType}/${pathElements[i]}`
+            }
+        } else {
             resourceType = mockedResourceType
         }
 
         Object.keys(responses).forEach((key) => {
-            if (responses[key]?.body?.id) {
+            if (responses[key]?.body?.id && !this.isValidId(responses[key].body.id)) {
                 // put
                 if (liveRequest.method.toLowerCase() === 'put') {
                     responses[key].body.id = url.pathname
@@ -81,10 +107,8 @@ export default class SwaggerMocker {
                     responses[key].body.id = url.pathname
                 }
             }
-            setStringIfExist(responses[key]?.body, 'type', resourceType)
-            if (responses[key]?.body?.type && typeof responses[key]?.body?.type === 'string') {
-                responses[key].body.type = resourceType
-            }
+            if (!this.isValidType(responses[key]?.body?.type))
+                setStringIfExist(responses[key]?.body, 'type', resourceType)
 
             // get(list)
             for (const arr of [
@@ -93,11 +117,12 @@ export default class SwaggerMocker {
             ]) {
                 if (Array.isArray(arr) && arr.length) {
                     arr.forEach((item: any) => {
-                        if (item.id) {
+                        if (item.id && !this.isValidId(item.id)) {
                             const resourceName = item.name || 'resourceName'
                             item.id = `${url.pathname}/${resourceName}`
                         }
-                        setStringIfExist(item, 'type', resourceType)
+                        if (!this.isValidType(item.type))
+                            setStringIfExist(item, 'type', resourceType)
                     })
                 }
             }
@@ -125,11 +150,16 @@ export default class SwaggerMocker {
             const ret: Record<string, any> = {}
             // eslint-disable-next-line prefer-const
             for (let [key, item] of Object.entries(obj)) {
-                if (inUserAssignedIdentities) {
+                if (
+                    inUserAssignedIdentities &&
+                    !key.match(
+                        /\/subscriptions\/.*\/providers\/Microsoft.ManagedIdentity\/userAssignedIdentities\/.*/i
+                    )
+                ) {
                     const subscription =
                         pathElements.subscriptions || '00000000-0000-0000-0000-000000000000'
                     const resourceGroup = pathElements.subscriptions || 'mockGroup'
-                    key = `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${key}`
+                    key = `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mocked`
                 }
                 ret[key] = this.mockUserAssignedIdentities(
                     item,

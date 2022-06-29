@@ -54,7 +54,6 @@ namespace Azure.Sdk.Tools.TestProxy
             _recordingHandler.StopPlayback(id, purgeMemoryStore: shouldPurgeRecording);
         }
 
-
         [HttpPost]
         public async Task Reset([FromBody()] IDictionary<string, object> options = null)
         {
@@ -74,7 +73,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
             _recordingHandler.Store.Restore(pathToAssets, _recordingHandler.ContextDirectory);
         }
-
 
         public async Task HandleRequest()
         {

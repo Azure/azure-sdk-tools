@@ -43,14 +43,34 @@ namespace Azure.Sdk.Tools.TestProxy
             "Proxy-Connection",
         };
 
+        public HttpClient RedirectableClient = Startup.Insecure ?
+            new HttpClient(new HttpClientHandler() { ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
+            {
+                Timeout = TimeSpan.FromSeconds(600),
+            } :
+            new HttpClient()
+            {
+                Timeout = TimeSpan.FromSeconds(600)
+            };
+
+        public HttpClient RedirectlessClient = Startup.Insecure ?
+            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false, ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
+            {
+                Timeout = TimeSpan.FromSeconds(600),
+            } :
+            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false })
+            {
+                Timeout = TimeSpan.FromSeconds(600)
+            };
+
         public List<RecordedTestSanitizer> Sanitizers { get; set; }
 
         public List<ResponseTransform> Transforms { get; set; }
 
         public RecordMatcher Matcher { get; set; }
 
-        public readonly ConcurrentDictionary<string, (string File, ModifiableRecordSession ModifiableSession)> RecordingSessions
-            = new ConcurrentDictionary<string, (string, ModifiableRecordSession)>();
+        public readonly ConcurrentDictionary<string, ModifiableRecordSession> RecordingSessions
+            = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
         public readonly ConcurrentDictionary<string, ModifiableRecordSession> InMemorySessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
@@ -81,38 +101,36 @@ namespace Azure.Sdk.Tools.TestProxy
         #region recording functionality
         public void StopRecording(string sessionId, IDictionary<string, string> variables = null, bool saveRecording = true)
         {
-            if (!RecordingSessions.TryRemove(sessionId, out var fileAndSession))
+            if (!RecordingSessions.TryRemove(sessionId, out var recordingSession))
             {
                 return;
             }
 
-            var (file, session) = fileAndSession;
-
-            foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
+            foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(recordingSession.AdditionalSanitizers))
             {
-                session.Session.Sanitize(sanitizer);
+                recordingSession.Session.Sanitize(sanitizer);
             }
 
             if(variables != null)
             {
                 foreach(var kvp in variables)
                 {
-                    session.Session.Variables[kvp.Key] = kvp.Value;
+                    recordingSession.Session.Variables[kvp.Key] = kvp.Value;
                 }
             }
 
             if (saveRecording)
             {
-                if (String.IsNullOrEmpty(file))
+                if (String.IsNullOrEmpty(recordingSession.Path))
                 {
-                    if (!InMemorySessions.TryAdd(sessionId, session))
+                    if (!InMemorySessions.TryAdd(sessionId, recordingSession))
                     {
                         throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new in-memory session under id {sessionId}.");
                     }
                 }
                 else
                 {
-                    var targetPath = GetRecordingPath(file);
+                    var targetPath = GetRecordingPath(recordingSession.Path);
 
                     // Create directories above file if they don't already exist
                     var directory = Path.GetDirectoryName(targetPath);
@@ -124,7 +142,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     using var stream = System.IO.File.Create(targetPath);
                     var options = new JsonWriterOptions { Indented = true };
                     var writer = new Utf8JsonWriter(stream, options);
-                    session.Session.Serialize(writer);
+                    recordingSession.Session.Serialize(writer);
                     writer.Flush();
                     stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
 
@@ -135,7 +153,12 @@ namespace Azure.Sdk.Tools.TestProxy
         public void StartRecording(string sessionId, HttpResponse outgoingResponse)
         {
             var id = Guid.NewGuid().ToString();
-            var session = (sessionId ?? String.Empty, new ModifiableRecordSession(new RecordSession()));
+
+            var session = new ModifiableRecordSession(new RecordSession())
+            {
+                Path = sessionId ?? String.Empty,
+                Client = null
+            };
 
             if (!RecordingSessions.TryAdd(id, session))
             {
@@ -145,7 +168,7 @@ namespace Azure.Sdk.Tools.TestProxy
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
-        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient redirectlessClient, HttpClient redirectableClient)
+        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
             await DebugLogger.LogRequestDetailsAsync(incomingRequest);
 
@@ -163,11 +186,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (HandleRedirects)
             {
-                upstreamResponse = await redirectableClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+                upstreamResponse = await RedirectableClient.SendAsync(upstreamRequest).ConfigureAwait(false);
             }
             else
             {
-                upstreamResponse = await redirectlessClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+                upstreamResponse = await RedirectlessClient.SendAsync(upstreamRequest).ConfigureAwait(false);
             }
 
             byte[] body = Array.Empty<byte>();
@@ -185,7 +208,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode != EntryRecordMode.DontRecord)
             {
-                session.ModifiableSession.Session.Entries.Add(entry);
+                session.Session.Entries.Add(entry);
 
                 Interlocked.Increment(ref Startup.RequestsRecorded);
             }
@@ -355,7 +378,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 using var stream = System.IO.File.OpenRead(path);
                 using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement))
+                {
+                    Path = path
+                };
             }
 
             if (!PlaybackSessions.TryAdd(id, session))
@@ -387,7 +413,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to retrieve in-memory session {session.SourceRecordingId}.");
                 }
 
-                Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);                
+                Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);
 
                 if (!InMemorySessions.TryRemove(session.SourceRecordingId, out _))
                 {
@@ -416,7 +442,6 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 remove = bool.Parse(removeHeader);
             }
-
 
             var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
 
@@ -576,9 +601,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
             {
-                lock (recordingSession.ModifiableSession)
+                lock (recordingSession)
                 {
-                    recordingSession.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
+                    recordingSession.AdditionalSanitizers.Add(sanitizer);
                 }
             }
 
@@ -590,7 +615,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            if (inMemSession == null && recordingSession == (null, null) && playbackSession == null)
+            if (inMemSession == null && recordingSession == null && playbackSession == null)
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
             }
@@ -627,7 +652,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
                 if (RecordingSessions.TryGetValue(recordingId, out var recordSession))
                 {
-                    recordSession.ModifiableSession.ResetExtensions();
+                    recordSession.ResetExtensions();
                 }
                 if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
                 {

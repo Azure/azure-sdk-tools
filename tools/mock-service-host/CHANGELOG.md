@@ -1,5 +1,13 @@
 # Change Log - @azure-tools/mock-service-host
 
+## 0.1.17
+2022-06-29
+
+### Patches
+
+- fix a bug of failing to set status for lro-callback GET
+- mock resourceType for nested providers
+
 ## 0.1.16
 2022-06-08
 

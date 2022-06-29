@@ -30,7 +30,7 @@ VirtualServerResponse {
     "tags": Object {
       "UID": "52ed5986-717b-45b4-b17c-3df8db372cff",
     },
-    "type": "Microsoft.ApiManagement/serviceFaked/restore",
+    "type": "Microsoft.ApiManagement/service",
   },
   "headers": Object {},
   "statusCode": "200",

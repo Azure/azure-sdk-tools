@@ -1,43 +1,44 @@
-using System;
+﻿using System;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 
-namespace Azure.Sdk.Tools.PipelineWitness.Queue.Functions
+namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
-    public class AzurePipelinesBuildCompleteFunction
+    internal class BuildCompleteQueueWorker : QueueWorkerBackgroundService
     {
-        private ILogger logger;
-        private BlobUploadProcessor runProcessor;
+        private readonly ILogger logger;
         private readonly TelemetryClient telemetryClient;
+        private readonly BlobUploadProcessor runProcessor;
 
-        public AzurePipelinesBuildCompleteFunction(ILogger<AzurePipelinesBuildCompleteFunction> logger, BlobUploadProcessor runProcessor, TelemetryClient telemetryClient)
+        public BuildCompleteQueueWorker(
+            ILogger<BuildCompleteQueueWorker> logger,
+            BlobUploadProcessor runProcessor,
+            QueueServiceClient queueServiceClient,
+            TelemetryClient telemetryClient,
+            IOptions<PipelineWitnessSettings> options)
+            : base(
+                logger, 
+                telemetryClient,
+                queueServiceClient,
+                options.Value.BuildCompleteQueueName, 
+                options)
         {
             this.logger = logger;
             this.runProcessor = runProcessor;
             this.telemetryClient = telemetryClient;
         }
 
-        [FunctionName("AzurePipelinesBuildComplete")]
-        public async Task Run([QueueTrigger("%BuildCompleteQueueName%")]QueueMessage message)
+        internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Processing build.complete event.");
-
-            if (message.InsertedOn.HasValue)
-            {
-                telemetryClient.TrackMetric(new MetricTelemetry
-                {
-                    Name = "AzurePipelinesBuildComplete MessageLatencyMs",
-                    Sum = DateTimeOffset.Now.Subtract(message.InsertedOn.Value).TotalMilliseconds,
-                });
-            }
-            
-            logger.LogInformation("Extracting content from message.");
+            this.logger.LogInformation("Processing build.complete event.");
 
             var devopsEvent = JObject.Parse(message.MessageText);
 

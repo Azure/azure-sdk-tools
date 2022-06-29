@@ -21,5 +21,6 @@ module.exports = {
         '!**/test/**/syntax.ts'
     ],
     verbose: true,
-    testTimeout: 300000
+    testTimeout: 300000,
+    testSequencer: './testSequencer.js'
 }

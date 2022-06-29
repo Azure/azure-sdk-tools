@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 import * as path from 'path';
 
-import { cloneRepo, getChangedPackageDirectory } from '../../../../utils/git';
+import { GitOperationWrapper } from '../../../../utils/GitOperationWrapper';
 import { sdkToRepoMap } from '../constants';
 import { DockerContext } from '../DockerContext';
 import { DockerTaskEngineContext } from '../DockerTaskEngineContext';
@@ -16,9 +16,10 @@ export class GenerateCodesInLocalJob extends BaseJob {
     }
 
     public async cloneRepoIfNotExist(sdkRepos: string[]) {
+        const gitOperationWrapper = new GitOperationWrapper(this.context.workDir);
         for (const sdkRepo of sdkRepos) {
             if (!existsSync(path.join(this.context.workDir, sdkRepo))) {
-                await cloneRepo(sdkRepo, this.context.workDir, this.context.logger);
+                await gitOperationWrapper.cloneRepo(`Azure/${sdkRepo}`, this.context.logger);
             }
             this.context.sdkRepo = path.join(this.context.workDir, sdkRepo);
         }
@@ -30,14 +31,14 @@ export class GenerateCodesInLocalJob extends BaseJob {
         for (const sdk of this.context.sdkList) {
             this.context.sdkRepo = path.join(this.context.workDir, sdkToRepoMap[sdk]);
             const dockerTaskEngineContext = new DockerTaskEngineContext();
-            dockerTaskEngineContext.initialize(this.context);
+            await dockerTaskEngineContext.initialize(this.context);
             await dockerTaskEngineContext.runTaskEngine();
         }
 
         const generatedCodesPath: Map<string, Set<string>> = new Map();
 
         for (const sdk of this.context.sdkList) {
-            generatedCodesPath[sdk] = await getChangedPackageDirectory(path.join(this.context.workDir, sdkToRepoMap[sdk]));
+            generatedCodesPath[sdk] = await new GitOperationWrapper(path.join(this.context.workDir, sdkToRepoMap[sdk])).getChangedPackageDirectory();
         }
 
         this.context.logger.info(`Finish generating sdk for ${this.context.sdkList.join(', ')}.`);

@@ -1,8 +1,8 @@
-// Dummy parameter to handle defaults the script passes in
-param testApplicationOid string = ''
+// Unique short string safe for naming resources like storage, service bus.
+param BaseName string = ''
 
 resource config 'Microsoft.AppConfiguration/configurationStores@2020-07-01-preview' = {
-  name: 'config-${resourceGroup().name}'
+  name: 'stress-${BaseName}'
   location: resourceGroup().location
   sku: {
     name: 'Standard'
@@ -10,4 +10,4 @@ resource config 'Microsoft.AppConfiguration/configurationStores@2020-07-01-previ
 }
 
 output RESOURCE_GROUP string = resourceGroup().name
-output AZURE_CLIENT_OID string = testApplicationOid
+output APP_CONFIG_NAME string = config.name

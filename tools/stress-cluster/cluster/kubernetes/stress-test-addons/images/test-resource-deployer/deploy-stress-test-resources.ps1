@@ -17,7 +17,7 @@ Copy-Item "/mnt/testresources/*" -Destination "/azure/"
 
 # Capture output so we don't print environment variable secrets
 $env = & /common/TestResources/New-TestResources.ps1 `
-    -BaseName $env:RESOURCE_GROUP_NAME `
+    -BaseName $env:BASE_NAME `
     -ResourceGroupName $env:RESOURCE_GROUP_NAME `
     -SubscriptionId $secrets.AZURE_SUBSCRIPTION_ID `
     -TenantId $secrets.AZURE_TENANT_ID `

@@ -16,6 +16,8 @@
       value: /mnt/outputs/.env
     - name: RESOURCE_GROUP_NAME
       value: {{ .Stress.ResourceGroupName }}
+    - name: BASE_NAME
+      value: {{ .Stress.BaseName }}
   volumeMounts:
     - name: "{{ .Release.Name }}-{{ .Release.Revision }}-test-resources"
       mountPath: /mnt/testresources

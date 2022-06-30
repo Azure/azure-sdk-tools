@@ -200,7 +200,7 @@ function DeployClusterResources([hashtable]$params)
     SetEnvOutputs $params
 
     Write-Host "Importing cluster credentials"
-    RunOrExitOnFailure az aks get-credentials `
+    RunSupportingWhatIfFlag "--only-show-errors" az aks get-credentials `
         -n $params.clusterName `
         -g $STRESS_CLUSTER_RESOURCE_GROUP `
         --overwrite `

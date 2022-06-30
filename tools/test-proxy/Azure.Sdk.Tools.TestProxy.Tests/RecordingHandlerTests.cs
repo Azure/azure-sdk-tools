@@ -942,9 +942,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
     public class IgnoreOnLinux : FactAttribute
     {
-#if MONOWIN
+#if IS_LINUX
     public IgnoreOnMonoFactAttribute() {
-        Skip = "Ignored on Mono";
+        Skip = "Ignored on unix, the libssl library doesn't like the test cert.";
     }
 #endif
     }

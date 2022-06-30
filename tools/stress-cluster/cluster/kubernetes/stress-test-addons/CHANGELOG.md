@@ -1,5 +1,17 @@
 # Release History
 
+## 0.1.19 (2022-06-30)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+* Updated values.yaml environment configs to point to new playground cluster and remove test cluster
+
 ## 0.1.18 (2022-06-28)
 
 ### Features Added

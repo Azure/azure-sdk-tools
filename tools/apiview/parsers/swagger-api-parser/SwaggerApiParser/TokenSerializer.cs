@@ -81,6 +81,8 @@ namespace SwaggerApiParser
     {
         private const String IntentText = "  ";
 
+        private static int intentNumber = 0;
+
         /*
          * TokenSerialize obj into CodeFileTokens.
          * Each line begin with intent
@@ -142,9 +144,11 @@ namespace SwaggerApiParser
             return ret.ToArray();
         }
 
+
         public static CodeFileToken Intent(int intent)
         {
-            return new CodeFileToken(String.Concat(Enumerable.Repeat(IntentText, intent)), CodeFileTokenKind.Whitespace);
+            var ret = new CodeFileToken(String.Concat(Enumerable.Repeat(IntentText, intent)), CodeFileTokenKind.Whitespace) {DefinitionId = (intentNumber++).ToString()};
+            return ret;
         }
 
         public static CodeFileToken[] OneLineToken(int intent, IEnumerable<CodeFileToken> contentTokens)

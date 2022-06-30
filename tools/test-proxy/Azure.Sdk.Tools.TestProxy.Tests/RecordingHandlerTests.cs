@@ -819,7 +819,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.StartsWith(errorText, assertion.Message);
         }
 
-        [Fact]
+        [IgnoreOnLinux]
         public void TestSetRecordingOptionsValidTlsCert()
         {
             var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
@@ -830,7 +830,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.SetRecordingOptions(inputBody, null);
         }
 
-        [Fact]
+        [IgnoreOnLinux]
         public void TestSetRecordingOptionsMultipleCertOptions()
         {
             var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
@@ -938,6 +938,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Contains("No PEM encoded data found. (Parameter 'pemData')", assertion.Message);
         }
         #endregion
+    }
+
+    public class IgnoreOnLinux : FactAttribute
+    {
+#if MONOWIN
+    public IgnoreOnMonoFactAttribute() {
+        Skip = "Ignored on Mono";
+    }
+#endif
     }
 
     internal class MockHttpHandler : HttpMessageHandler

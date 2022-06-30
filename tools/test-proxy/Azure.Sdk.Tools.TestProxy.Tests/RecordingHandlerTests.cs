@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Primitives;
 using Xunit;
 using Azure.Core;
+using System.Runtime.InteropServices;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -819,7 +820,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.StartsWith(errorText, assertion.Message);
         }
 
-        [IgnoreOnLinux]
+        [IgnoreOnLinuxFact]
         public void TestSetRecordingOptionsValidTlsCert()
         {
             var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
@@ -830,7 +831,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.SetRecordingOptions(inputBody, null);
         }
 
-        [IgnoreOnLinux]
+        [IgnoreOnLinuxFact]
         public void TestSetRecordingOptionsMultipleCertOptions()
         {
             var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
@@ -948,6 +949,18 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     }
 #endif
     }
+
+    public sealed class IgnoreOnLinuxFact : FactAttribute
+    {
+        public IgnoreOnLinuxFact()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Skip = "Ignore on Linux.";
+            }
+        }
+    }
+
 
     internal class MockHttpHandler : HttpMessageHandler
     {

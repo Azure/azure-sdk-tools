@@ -573,7 +573,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                             SetTransportOptions(customizations, sessionId);
                         }
-                        catch (HttpException e)
+                        catch (HttpException)
                         {
                             throw;
                         }

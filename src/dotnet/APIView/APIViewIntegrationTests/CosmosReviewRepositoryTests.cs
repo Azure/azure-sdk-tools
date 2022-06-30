@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using APIViewIntegrationTests.TestsHelpers;
 using APIViewWeb;
 using APIViewWeb.Models;
 using Microsoft.Azure.Cosmos;
@@ -14,16 +13,14 @@ namespace APIViewIntegrationTests
 {
     public class CosmosReviewRepositoryTests
     {
-        private readonly Container _reviewsContainer;
         private readonly CosmosClient _cosmosClient;
-        private IConfiguration _configuration;
         private CosmosReviewRepository _cosmosReviewRepository;
+        private readonly string _cosmosEmulatorConnectionString = "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
 
         public CosmosReviewRepositoryTests()
         {
-            _configuration = CosmosTestsHelpers.GetIConfigurationRoot();
-            _cosmosClient = new CosmosClient(_configuration["Cosmos:EmulatorConnectionString"]);
-            _cosmosReviewRepository = new CosmosReviewRepository(_configuration, _cosmosClient);
+            _cosmosClient = new CosmosClient(_cosmosEmulatorConnectionString);
+            _cosmosReviewRepository = new CosmosReviewRepository(null, _cosmosClient);
         }
 
         [Theory]

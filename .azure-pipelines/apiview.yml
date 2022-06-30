@@ -29,12 +29,12 @@ pr:
       - src/ts/ts-genapi
 
 variables:
-  DotNetCoreVersion: '5.x'
+  DotNetCoreVersion: '3.1.x'
   DotNetRuntimeVersion: '3.1.x'
   PythonVersion: '3.10.2'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
-  TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
+  TestProjectPath: 'src/dotnet/APIView/**/*Tests.csproj'
   NodeVersion: '12.x'
   BuildConfiguration: 'Release'
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
@@ -160,6 +160,10 @@ stages:
             inputs:
               packageType: runtime
               version: '$(DotNetRuntimeVersion)'
+          
+          - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
+            parameters:
+              StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'

@@ -1,6 +1,6 @@
 dependencies:
 - name: stress-test-addons
   repository: https://stresstestcharts.blob.core.windows.net/helm/
-  version: 0.1.17
-digest: sha256:282e9b9fad6e60d6671b37e40c553fe06e1603d14ad8277c36250d7a8c570033
-generated: "2022-05-17T21:28:01.5535225-04:00"
+  version: 0.1.18
+digest: sha256:fe1e37c57c10f99ff6da2b5e860fc9b2b1a6d605e6f685aa93602db5d51f7476
+generated: "2022-06-28T21:20:02.7004525-04:00"

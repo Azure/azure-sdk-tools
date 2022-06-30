@@ -1,5 +1,21 @@
 # Release History
 
+## 0.1.18 (2022-06-28)
+
+### Features Added
+
+* Added a 6 character random string `{{ .Stress.BaseName }}` that can be used for naming that doesn't break
+  validation for resources like service bus, storage, etc. Bicep templates can consume this by adding a `BaseName`
+  parameter.
+* Inject `BASE_NAME` environment variable to deployment init container.
+* Add resourceGroupName and baseName labels to job template.
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.1.17 (2022-05-17)
 
 ### Features Added

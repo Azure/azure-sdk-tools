@@ -39,6 +39,10 @@ jobs:
         go:
           Repository: Azure/azure-sdk-for-go
           Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'cpp'), eq(parameters.TestRepository, 'all')) }}:
+        cpp:
+          Repository: Azure/azure-sdk-for-cpp
+          Filters: '@{}'
   pool:
     name: 'azsdk-pool-mms-ubuntu-2004-general'
     vmImage: 'MMSUbuntu20.04'

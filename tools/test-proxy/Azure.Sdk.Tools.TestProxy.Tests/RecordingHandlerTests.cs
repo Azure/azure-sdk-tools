@@ -878,10 +878,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}, {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}", "")]
-        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}", "")]
-        [InlineData("{{\"Transport\": {{\"Certificates\": []}}}}", "")]
-        public void TestSetRecordingOptionsInValidTransportSessionLevel(string body, string errorMsg)
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"badkey\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemKey\": \"{1}\" }}]}}}}")]
+        public void TestSetRecordingOptionsInValidTransportSessionLevel(string body)
         {
             var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
             var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
@@ -892,14 +893,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var assertion = Assert.Throws<HttpException>(
                () => testRecordingHandler.SetRecordingOptions(inputBody)
             );
-            Assert.Contains(errorMsg, assertion.Message);
+            Assert.Contains("Unable to instantiate a new X509 certificate from the provided value and key.", assertion.Message);
         }
 
         [Theory]
-        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}, {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}", "")]
-        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}", "")]
-        [InlineData("{{\"Transport\": {{\"Certificates\": []}}}}", "")]
-        public void TestSetRecordingOptionsInvalidTransportRecordingLevel(string body, string errorMsg)
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"badkey\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemKey\": \"{1}\" }}]}}}}")]
+        public void TestSetRecordingOptionsInvalidTransportRecordingLevel(string body)
         {
             var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
             var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
@@ -914,7 +916,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var assertion = Assert.Throws<HttpException>(
                () => testRecordingHandler.SetRecordingOptions(inputBody, recordingId)
             );
-            Assert.Contains(errorMsg, assertion.Message);
+            Assert.Contains("Unable to instantiate a new X509 certificate from the provided value and key.", assertion.Message);
         }
 
         [Fact]

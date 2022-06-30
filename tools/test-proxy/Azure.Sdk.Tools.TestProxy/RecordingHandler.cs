@@ -615,13 +615,21 @@ namespace Azure.Sdk.Tools.TestProxy
                 AllowAutoRedirect = allowAutoRedirect
             };
 
-            if(customizations.Certificates != null)
+            if (customizations.Certificates != null)
             {
                 foreach (var certPair in customizations.Certificates)
                 {
-                    var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
-                    cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
-                    clientHandler.ClientCertificates.Add(cert);
+                    try
+                    {
+
+                        var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
+                        cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
+                        clientHandler.ClientCertificates.Add(cert);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Unable to instantiate a new X509 certificate from the provided value and key. Failure Message: \"{e.Message}\".");
+                    }
                 }
             }
             

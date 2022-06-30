@@ -73,8 +73,8 @@ Services:
         azure-core: 1.29.1
         reactor-core: 3.4.17
       - azure-storage-blob: 12.18.0-beta.1
-        azure-storage-file-share: 12.14.0-beta.1
-        azure-storage-file-datalake: 12.11.0-beta.1
+        azure-storage-file-share: 12.13.1
+        azure-storage-file-datalake: 12.10.1
         azure-core-http-netty: 1.12.2
         azure-core-http-okhttp: 1.10.1
         azure-core: 1.29.1
@@ -223,7 +223,6 @@ Services:
       Project: sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj
       PackageVersions:
       - Azure.Storage.Files.Shares: 12.10.0
-      - Azure.Storage.Files.Shares: 12.11.0-beta.1
       - Azure.Storage.Files.Shares: source
     Java:
       Project: sdk/storage/azure-storage-perf
@@ -239,7 +238,6 @@ Services:
       Project: sdk/storage/azure-storage-file-share
       PackageVersions:
       - azure-storage-file-share: 12.8.0
-      - azure-storage-file-share: 12.9.0b1
       - azure-storage-file-share: source
 
   Tests:
@@ -265,7 +263,6 @@ Services:
       Project: sdk/storage/Azure.Storage.Files.DataLake/perf/Azure.Storage.Files.DataLake.Perf/Azure.Storage.Files.DataLake.Perf.csproj
       PackageVersions:
       - Azure.Storage.Files.DataLake: 12.10.0
-      - Azure.Storage.Files.DataLake: 12.11.0-beta.1
       - Azure.Storage.Files.DataLake: source
     Java:
       Project: sdk/storage/azure-storage-perf
@@ -281,7 +278,6 @@ Services:
       Project: sdk/storage/azure-storage-file-datalake
       PackageVersions:
       - azure-storage-file-datalake: 12.7.0
-      - azure-storage-file-datalake: 12.8.0b1
       - azure-storage-file-datalake: source
 
   Tests:

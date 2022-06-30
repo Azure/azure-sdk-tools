@@ -6,7 +6,13 @@ trigger:
     include:
       - tools/stress-cluster
 
-pr: none
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/stress-cluster
 
 jobs:
   - template: /eng/pipelines/templates/jobs/stress-test-release.yml

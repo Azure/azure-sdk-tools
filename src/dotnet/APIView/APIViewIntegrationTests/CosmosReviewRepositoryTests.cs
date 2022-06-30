@@ -17,22 +17,143 @@ namespace APIViewIntegrationTests
         private readonly Container _reviewsContainer;
         private readonly CosmosClient _cosmosClient;
         private IConfiguration _configuration;
-        private CosmosReviewRepository _cosmosReviewRepositorpy;
+        private CosmosReviewRepository _cosmosReviewRepository;
 
         public CosmosReviewRepositoryTests()
         {
             _configuration = CosmosTestsHelpers.GetIConfigurationRoot();
             _cosmosClient = new CosmosClient(_configuration["Cosmos:EmulatorConnectionString"]);
-            _cosmosReviewRepositorpy = new CosmosReviewRepository(_configuration, _cosmosClient);
+            _cosmosReviewRepository = new CosmosReviewRepository(_configuration, _cosmosClient);
         }
 
         [Theory]
-        [InlineData("Name")]
-        [InlineData("Language")]
-        public async Task GetReviewFirstLevelProprtiesTest(string propertyName)
+        [InlineData("Name", 64)]
+        [InlineData("Revisions[0].Files[0].Language", 2)]
+        public async Task GetReviewFirstLevelProprties_Test(string propertyName, int count)
         {
             await CreateTestDataIfNotExistAsync();
-            var property = await _cosmosReviewRepositorpy.GetReviewFirstLevelProprtiesAsync(propertyName);
+            var property = await _cosmosReviewRepository.GetReviewFirstLevelProprtiesAsync(propertyName);
+            Assert.Equal(count, property.Count());
+        }
+
+        [Theory]
+        [InlineData("All")]
+        [InlineData("DummyLanguageOne")]
+        public async Task GetReviewsOverload1_WithNoPackageName_Test(string language)
+        {
+            await CreateTestDataIfNotExistAsync();
+            var result = await _cosmosReviewRepository.GetReviewsAsync(false, language, null, ReviewType.Manual);
+            Assert.All(result, item => Assert.Equal(ReviewType.Manual, item.FilterType));
+        }
+
+        [Fact]
+        public async Task GetReviewsOverload2_WithServiceAndPackageDisplayName_Test()
+        {
+            await CreateTestDataIfNotExistAsync();
+            var result = await _cosmosReviewRepository.GetReviewsAsync("DummyServiceName1", "DummyPackageDisplayName1", null);
+            Assert.Equal(16, result.Count());
+        }
+
+        [Fact]
+        public async Task GetReviewsOverload2_WithServiceAndPackageDisplayNameAndFilterType_Test()
+        {
+            await CreateTestDataIfNotExistAsync();
+            List<ReviewType> filterTypes = new List<ReviewType> {
+                ReviewType.Manual
+            };
+            var result = await _cosmosReviewRepository.GetReviewsAsync("DummyServiceName1", "DummyPackageDisplayName1", filterTypes);
+            Assert.Equal(4, result.Count());
+            Assert.All(result, item => Assert.Equal(ReviewType.Manual, item.FilterType));
+        }
+
+        [Fact]
+        public async Task GetReviewsOverload3_WithOnlySearch_Test()
+        {
+            await CreateTestDataIfNotExistAsync();
+            List<string> searchQueries = new List<string> {
+                "Dummy"
+            };
+            var result = await _cosmosReviewRepository.GetReviewsAsync(searchQueries, null, false, null, false, 0, 50, "LastUpdated");
+            Assert.Equal(16, result.Reviews.Count());
+            Assert.Equal(16, result.TotalCount);
+        }
+
+        [Fact]
+        public async Task GetReviewsOverload3_WithOnlyLanguage_Test()
+        {
+            await CreateTestDataIfNotExistAsync();
+            List<string> language = new List<string> {
+                "DummyLanguageOne"
+            };
+            var result = await _cosmosReviewRepository.GetReviewsAsync(null, language, false, null, false, 0, 50, "LastUpdated");
+            Assert.Equal(8, result.Reviews.Count());
+        }
+
+        [Fact]
+        public async Task GetReviewsOverload3_WithOnlyFilterType_Test()
+        {
+            await CreateTestDataIfNotExistAsync();
+            List<int> filterTypes = new List<int> {
+                1
+            };
+            var result = await _cosmosReviewRepository.GetReviewsAsync(null, null, false, filterTypes, false, 0, 50, "LastUpdated");
+            Assert.All(result.Reviews, item => Assert.Equal(ReviewType.Automatic, item.FilterType));
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GetReviewsOverload3_WithOnlyIsClosed_Test(bool boolVal)
+        {
+            await CreateTestDataIfNotExistAsync();
+            var result = await _cosmosReviewRepository.GetReviewsAsync(null, null, boolVal, null, false, 0, 50, "LastUpdated");
+            Assert.All(result.Reviews, item => Assert.Equal(item.IsClosed, boolVal));
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GetReviewsOverload3_WithOnlyIsApproved_Test(bool boolVal)
+        {
+            await CreateTestDataIfNotExistAsync();
+            var result = await _cosmosReviewRepository.GetReviewsAsync(null, null, null, null, boolVal, 0, 50, "LastUpdated");
+            Assert.All(result.Reviews, item => Assert.Equal(item.IsApproved, boolVal));
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GetReviewsOverload3_WithSearchIsClosedAndIsApproved_Test(bool boolVal)
+        {
+            await CreateTestDataIfNotExistAsync();
+            List<string> searchQueries = new List<string> {
+                "Dummy"
+            };
+            var result = await _cosmosReviewRepository.GetReviewsAsync(searchQueries, null, boolVal, null, boolVal, 0, 50, "LastUpdated");
+            Assert.Equal(16, result.Reviews.Count());
+            Assert.Equal(16, result.TotalCount);
+            Assert.All(result.Reviews, item => Assert.Equal(item.IsClosed, boolVal));
+            Assert.All(result.Reviews, item => Assert.Equal(item.IsApproved, boolVal));
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GetReviewsOverload3_WithSearchLanguageAndFilterType_Test(bool boolVal)
+        {
+            await CreateTestDataIfNotExistAsync();
+            List<string> searchQueries = new List<string> {
+                "Dummy"
+            };
+            List<string> language = new List<string> {
+                "DummyLanguageOne"
+            };
+            List<int> filterTypes = new List<int> {
+                1
+            };
+            var result = await _cosmosReviewRepository.GetReviewsAsync(searchQueries, language, boolVal, filterTypes, boolVal, 0, 50, "LastUpdated");
+            Assert.Equal(2, result.Reviews.Count());
+            Assert.All(result.Reviews, item => Assert.Equal(ReviewType.Automatic, item.FilterType));
         }
 
         private async Task CreateTestDataIfNotExistAsync()
@@ -44,7 +165,7 @@ namespace APIViewIntegrationTests
             {
                 foreach (int value in Enumerable.Range(1, 2))
                 {
-                    string[] languages = new String[] { "C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Protocol", "Python", "Swagger", "Xml" };
+                    string[] languages = new String[] { "DummyLanguageOne", "DummyLanguageTwo" };
                     foreach (string language in languages)
                     {
                         ReviewType[] reviewTypes = new ReviewType[] { ReviewType.Manual, ReviewType.Automatic, ReviewType.PullRequest, ReviewType.All };
@@ -58,10 +179,13 @@ namespace APIViewIntegrationTests
                                     var container = containerResponse.Container;
                                     ReviewModel review = new ReviewModel
                                     {
-                                        Name = $"DummyReview{value}",
+                                        Name = $"DummyReview{value}_For_{language}_For_{reviewType.ToString()}_For{boolValue}_For{boolVal}",
                                         Author = $"DummyReviewAuthor{value}",
                                         CreationDate = DateTime.Now,
-                                        IsClosed = boolValue
+                                        IsClosed = boolValue,
+                                        FilterType = reviewType,
+                                        ServiceName = $"DummyServiceName{value}",
+                                        PackageDisplayName = $"DummyPackageDisplayName{value}"
                                     };
                                     var revisions = new ReviewRevisionModelList(review);
                                     foreach (int val in Enumerable.Range(1, 2))
@@ -80,7 +204,7 @@ namespace APIViewIntegrationTests
                                         {
                                             var file = new ReviewCodeFileModel
                                             {
-                                                Name = $"DummuFile{value}_{val}_{v}",
+                                                Name = $"DummyFile{value}_{val}_{v}",
                                                 Language = language
                                             };
                                             revision.Files.Add(file);
@@ -88,7 +212,7 @@ namespace APIViewIntegrationTests
                                         revisions.Add(revision);
                                     }
                                     review.Revisions = revisions;
-                                    await _cosmosReviewRepositorpy.UpsertReviewAsync(review);
+                                    await _cosmosReviewRepository.UpsertReviewAsync(review);
                                 }
                             }
                         }

@@ -58,13 +58,13 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Blobs: 12.12.0
+      - Azure.Storage.Blobs: 12.13.0-beta.1
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf
       PrimaryPackage: azure-storage-blob
       PackageVersions: &java-storage-package-versions
-      - azure-storage-blob: 12.17.1
+      - azure-storage-blob: 12.18.0-beta.1
         azure-storage-file-share: 12.13.1
         azure-storage-file-datalake: 12.10.1
         azure-core-http-netty: 1.12.2
@@ -91,7 +91,7 @@ Services:
       Project: sdk/storage/azure-storage-blob
       PackageVersions:
       # TODO: Pin version of core to align with older version of storage
-      - azure-storage-blob: 12.12.0
+      - azure-storage-blob: 12.13.0b1
       - azure-storage-blob: source
     Cpp:
       Project: azure-storage-blobs-perf

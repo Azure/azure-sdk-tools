@@ -19,11 +19,13 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Primitives;
 using Xunit;
 using Azure.Core;
+using System.Runtime.InteropServices;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordingHandlerTests
     {
+        #region helpers and private test fields
         private HttpContext GenerateHttpRequestContext(string[] headerValueStrings)
         {
             HttpContext context = new DefaultHttpContext();
@@ -91,6 +93,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[2]);
             }
         }
+        #endregion
 
         [Fact]
         public void TestGetHeader()
@@ -650,6 +653,43 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
 
         [Theory]
+        [InlineData("awesomehost.com")]
+        [InlineData("")]
+        public void TestRecordMaintainsUpstreamOverrideHostHeader(string upstreamHostHeaderValue)
+        {
+            var httpContext = new DefaultHttpContext();
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+
+            testRecordingHandler.StartRecording("hello.json", httpContext.Response);
+
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(String.Empty);
+            httpContext.Request.ContentLength = 0;
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Request.Headers["x-recording-upstream-base-uri"] = "http://example.org";
+
+            if (!String.IsNullOrWhiteSpace(upstreamHostHeaderValue))
+            {
+                httpContext.Request.Headers["x-recording-upstream-host-header"] = upstreamHostHeaderValue;
+            }
+
+            httpContext.Request.Method = "GET";
+
+            var upstreamRequest = testRecordingHandler.CreateUpstreamRequest(httpContext.Request, new byte[] { });
+
+            if (!String.IsNullOrWhiteSpace(upstreamHostHeaderValue))
+            {
+                Assert.Equal(upstreamHostHeaderValue, upstreamRequest.Headers.Host);
+            }
+            else
+            {
+                Assert.Null(upstreamRequest.Headers.Host);
+            }
+        }
+
+        #region SetRecordingOptions
+        [Theory]
         [InlineData("{ \"HandleRedirects\": \"true\"}", true)]
         [InlineData("{ \"HandleRedirects\": \"false\"}", false)]
         [InlineData("{ \"HandleRedirects\": \"1\"}", true)]
@@ -696,43 +736,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
             Assert.Contains(errorText, assertion.Message);
         }
-
-        [Theory]
-        [InlineData("awesomehost.com")]
-        [InlineData("")]
-        public void TestRecordMaintainsUpstreamOverrideHostHeader(string upstreamHostHeaderValue)
-        {
-            var httpContext = new DefaultHttpContext();
-            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-
-            testRecordingHandler.StartRecording("hello.json", httpContext.Response);
-
-            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
-
-            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(String.Empty);
-            httpContext.Request.ContentLength = 0;
-            httpContext.Request.Headers["x-recording-id"] = recordingId;
-            httpContext.Request.Headers["x-recording-upstream-base-uri"] = "http://example.org";
-
-            if (!String.IsNullOrWhiteSpace(upstreamHostHeaderValue))
-            {
-                httpContext.Request.Headers["x-recording-upstream-host-header"] = upstreamHostHeaderValue;
-            }
-
-            httpContext.Request.Method = "GET";
-
-            var upstreamRequest = testRecordingHandler.CreateUpstreamRequest(httpContext.Request, new byte[] { });
-
-            if (!String.IsNullOrWhiteSpace(upstreamHostHeaderValue))
-            {
-                Assert.Equal(upstreamHostHeaderValue, upstreamRequest.Headers.Host);
-            }
-            else
-            {
-                Assert.Null(upstreamRequest.Headers.Host);
-            }
-        }
-
 
         [Theory]
         [InlineData("hellothere", "generalkenobi")]
@@ -790,6 +793,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
             }
+
             testRecordingHandler.SetRecordingOptions(inputBody);
 
             Assert.NotNull(testRecordingHandler.Store);
@@ -797,7 +801,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         [Theory]
         [InlineData("{ \"AssetsStore\": \"NonExistent\"}", "Unable to load the specified IAssetStore class NonExistent.")]
-        [InlineData("{ \"AssetsStore\": \"\"}", "Users must provide a valid value to the key \"AssetsStore\"")]
+        [InlineData("{ \"AssetsStore\": \"\"}", "Users must provide a valid value when providing the key \"AssetsStore\"")]
         [InlineData("{ \"AssetsStore\": \"GitAssetsConfiguration\"}", "Unable to create an instance of type GitAssetsConfiguration")]
         public void TestSetRecordingOptionsThrowsOnInvalidStoreTypes(string body, string errorText)
         {
@@ -815,7 +819,148 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
             Assert.StartsWith(errorText, assertion.Message);
         }
+
+        [IgnoreOnLinuxFact]
+        public void TestSetRecordingOptionsValidTlsCert()
+        {
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
+            var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\"}}}}", certValue);
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(inputObj);
+
+            testRecordingHandler.SetRecordingOptions(inputBody, null);
+        }
+
+        [IgnoreOnLinuxFact]
+        public void TestSetRecordingOptionsMultipleCertOptions()
+        {
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\", \"Certificates\": [ {{ \"PemValue\": \"{1}\", \"PemKey\": \"{2}\" }}]}}}}", certValue, pemValue, pemKey);
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(inputObj);
+
+            testRecordingHandler.SetRecordingOptions(inputBody, null);
+        }
+
+        [Theory]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}, {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": []}}}}")]
+        public void TestSetRecordingOptionsValidTransportSessionLevel(string body)
+        {
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var inputObj = string.Format(body, pemValue, pemKey);
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(inputObj);
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.SetRecordingOptions(inputBody, null);
+        }
+
+        [Theory]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}, {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": []}}}}")]
+        public void TestSetRecordingOptionsValidTransportRecordingLevel(string body)
+        {
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputObj = string.Format(body, pemValue, pemKey);
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(inputObj);
+
+            HttpContext context = new DefaultHttpContext();
+            testRecordingHandler.StartRecording("TestSetRecordingOptionsInValidTransportRecordingLevel.json", context.Response);
+            var recordingId = context.Response.Headers["x-recording-id"].ToString();
+
+            testRecordingHandler.SetRecordingOptions(inputBody, recordingId);
+        }
+
+        [Theory]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"badkey\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemKey\": \"{1}\" }}]}}}}")]
+        public void TestSetRecordingOptionsInValidTransportSessionLevel(string body)
+        {
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputObj = string.Format(body, pemValue, pemKey);
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(inputObj);
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+            Assert.Contains("Unable to instantiate a new X509 certificate from the provided value and key.", assertion.Message);
+        }
+
+        [Theory]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"badkey\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemKey\": \"{1}\" }}]}}}}")]
+        public void TestSetRecordingOptionsInvalidTransportRecordingLevel(string body)
+        {
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputObj = string.Format(body, pemValue, pemKey);
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(inputObj);
+
+            HttpContext context = new DefaultHttpContext();
+            testRecordingHandler.StartRecording("TestSetRecordingOptionsInValidTransportRecordingLevel.json", context.Response);
+            var recordingId = context.Response.Headers["x-recording-id"].ToString();
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody, recordingId)
+            );
+            Assert.Contains("Unable to instantiate a new X509 certificate from the provided value and key.", assertion.Message);
+        }
+
+        [Fact]
+        public void TestSetRecordingOptionsInValidTransportWithTLSCert()
+        {
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"hello-there\", \"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}", pemValue, pemKey);
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(inputObj);
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+
+            Assert.StartsWith("Unable to instantiate a valid cert from the value provided in Transport settings key", assertion.Message);
+            Assert.Contains("No PEM encoded data found. (Parameter 'pemData')", assertion.Message);
+        }
+        #endregion
     }
+
+    public class IgnoreOnLinux : FactAttribute
+    {
+#if IS_LINUX
+    public IgnoreOnMonoFactAttribute() {
+        Skip = "Ignored on unix, the libssl library doesn't like the test cert.";
+    }
+#endif
+    }
+
+    public sealed class IgnoreOnLinuxFact : FactAttribute
+    {
+        public IgnoreOnLinuxFact()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Skip = "Ignore on Linux.";
+            }
+        }
+    }
+
 
     internal class MockHttpHandler : HttpMessageHandler
     {

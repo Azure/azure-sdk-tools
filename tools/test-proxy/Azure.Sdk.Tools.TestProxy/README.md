@@ -33,8 +33,9 @@
     - [Resetting active Sanitizers, Matchers, and Transforms](#resetting-active-sanitizers-matchers-and-transforms)
       - [Reset the session](#reset-the-session)
       - [Reset for a specific recordingId](#reset-for-a-specific-recordingid)
-  - [Redirection Settings](#redirection-settings)
-    - [Providing your own `Host` header](#providing-your-own-host-header)
+  - [Recording Options](#recording-options)
+    - [Redirection Settings](#redirection-settings)
+      - [Providing your own `Host` header](#providing-your-own-host-header)
   - [Testing](#testing)
   - [SSL Support](#ssl-support)
     - [On Mac and Windows, .NET can be used to generate a local certificate](#on-mac-and-windows-net-can-be-used-to-generate-a-local-certificate)
@@ -452,7 +453,38 @@ headers: {
 
 If the recordingId is specified in the header, that individual recording's settings will be cleared. The session level updates will remain unchanged.
 
-## Redirection Settings
+## Recording Options
+
+The test-proxy offers further customization beyond that offered by sanitizers, matchers, and transforms. To access this additional functionality, one must POST to `/Admin/SetRecordingOptions` with a json body that contains the options.
+
+```jsonc
+// below is an object representing all valid inputs for SetRecordingOptions body
+
+POST /Admin/SetRecordingOptions
+
+{
+   // boolean value accepted. string or raw.
+   "HandleRedirects": "true/false"
+   // setting context directory will change the "root" path that the test proxy uses when loading a recording
+   "ContextDirectory": "<valid path on local disk>",
+   // as yet unused. will allow to swap away from git-backed recording storage
+   "AssetsStore": "<NullStore/GitStore>",
+   // customizes some transport settings all or a single recording
+   "Transport": {
+      // any number of certificates will be allowed here
+      "Certificates": [
+        {
+          "PemValue": "<string content>",
+          "PemKey": "<string content>",
+        }
+      ],
+      // used specifically so that an SSL connection presenting a non-standard certificate can still be validated
+      "TLSValidationCert": "<public key portion of TLS cert>",
+   }
+}
+```
+
+### Redirection Settings
 
 The test-proxy does NOT transparent follow redirects by default. That means that if the initial request sent by the test-proxy results in some `3XX` redirect status, it **will not** follow. It will return that redirect response to the client to allow THEM to handle the redirect.
 
@@ -484,7 +516,7 @@ POST https://localhost:5001/Admin/SetRecordingOptions
 }
 ```
 
-### Providing your own `Host` header
+#### Providing your own `Host` header
 
 In normal running, the test-proxy actually sets the Host header automatically. If one wants to provide a _specific_ header that gets used during the request, the request must be accompanied by header:
 

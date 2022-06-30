@@ -1,7 +1,7 @@
 parameters:
   - name: Environment
     type: string
-    default: test
+    default: pg
   - name: TestRepository
     type: string
     default: all
@@ -61,7 +61,7 @@ jobs:
       inputs:
         ${{ if eq(parameters.Environment, 'prod') }}:
           azureSubscription: Azure SDK Test Resources
-        ${{ if eq(parameters.Environment, 'test') }}:
+        ${{ if eq(parameters.Environment, 'pg') }}:
           azureSubscription: Azure SDK Playground
         scriptType: pscore
         scriptPath: $(System.DefaultWorkingDirectory)/$(Repository)/eng/common/scripts/stress-testing/deploy-stress-tests.ps1

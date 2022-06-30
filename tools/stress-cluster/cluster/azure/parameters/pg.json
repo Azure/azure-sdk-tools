@@ -6,26 +6,26 @@
       "value": "faa080af-c1d8-40ad-9cce-e1a450ca5b57"
     },
     "groupSuffix": {
-      "value": "test"
+      "value": "pg"
     },
     "clusterName": {
-      "value": "stress-test"
+      "value": "stress-pg"
     },
     "clusterLocation": {
-      "value": "westus2"
+      "value": "westus3"
     },
     "staticTestSecretsKeyvaultName": {
-      "value": "stress-secrets-test"
+      "value": "stress-secrets-pg"
     },
     "staticTestSecretsKeyvaultGroup": {
-      "value": "rg-stress-secrets-test"
+      "value": "rg-stress-secrets-pg"
     },
     "enableHighMemAgentPool": {
         "value": true
     },
     "tags": {
       "value": {
-        "environment": "Test",
+        "environment": "pg",
         "owners": "bebroder"
       }
     }

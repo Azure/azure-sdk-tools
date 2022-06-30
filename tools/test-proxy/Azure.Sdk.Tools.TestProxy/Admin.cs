@@ -105,7 +105,9 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
 
-            _recordingHandler.SetRecordingOptions(options);
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+
+            _recordingHandler.SetRecordingOptions(options, recordingId);
         }
 
         public object GetSanitizer(string name, JsonDocument body)

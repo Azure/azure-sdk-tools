@@ -5,8 +5,8 @@ using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,6 +16,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Security;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -43,7 +46,7 @@ namespace Azure.Sdk.Tools.TestProxy
             "Proxy-Connection",
         };
 
-        public HttpClient RedirectableClient = Startup.Insecure ?
+        public HttpClient BaseRedirectableClient = Startup.Insecure ?
             new HttpClient(new HttpClientHandler() { ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
             {
                 Timeout = TimeSpan.FromSeconds(600),
@@ -53,7 +56,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 Timeout = TimeSpan.FromSeconds(600)
             };
 
-        public HttpClient RedirectlessClient = Startup.Insecure ?
+        public HttpClient BaseRedirectlessClient = Startup.Insecure ?
             new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false, ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
             {
                 Timeout = TimeSpan.FromSeconds(600),
@@ -62,6 +65,9 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 Timeout = TimeSpan.FromSeconds(600)
             };
+
+        public HttpClient RedirectlessClient;
+        public HttpClient RedirectableClient;
 
         public List<RecordedTestSanitizer> Sanitizers { get; set; }
 
@@ -183,14 +189,13 @@ namespace Azure.Sdk.Tools.TestProxy
 
             HttpResponseMessage upstreamResponse = null;
 
-
             if (HandleRedirects)
             {
-                upstreamResponse = await RedirectableClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+                upstreamResponse = await (session.Client ?? RedirectableClient).SendAsync(upstreamRequest).ConfigureAwait(false);
             }
             else
             {
-                upstreamResponse = await RedirectlessClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+                upstreamResponse = await (session.Client ?? RedirectlessClient).SendAsync(upstreamRequest).ConfigureAwait(false);
             }
 
             byte[] body = Array.Empty<byte>();
@@ -492,7 +497,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region SetRecordingOptions and store functionality
-        public void SetRecordingOptions(IDictionary<string, object> options = null)
+        public void SetRecordingOptions(IDictionary<string, object> options = null, string sessionId = null)
         {
             if (options != null)
             {
@@ -547,14 +552,146 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                     else
                     {
-                        throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value to the key \"AssetsStore\" in the recording options dictionary.");
+                        throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value when providing the key \"AssetsStore\" in the recording options dictionary.");
                     }
                 }
 
+                if (options.TryGetValue("Transport", out var transportConventions))
+                {
+                    if (transportConventions != null)
+                    {
+                        try
+                        {
+                            var transportObject = ((JObject)transportConventions).ToString();
+
+                            var serializerOptions = new JsonSerializerOptions
+                            {
+                                ReadCommentHandling = JsonCommentHandling.Skip,
+                                AllowTrailingCommas = true,
+                            };
+                            var customizations = JsonSerializer.Deserialize<TransportCustomizations>(transportObject, serializerOptions);
+
+                            SetTransportOptions(customizations, sessionId);
+                        }
+                        catch (HttpException)
+                        {
+                            throw;
+                        }
+                        catch (Exception e)
+                        {
+                            throw new HttpException(HttpStatusCode.BadRequest, $"Unable to deserialize the contents of the \"Transport\" key. Visible object: {transportConventions}. Json Deserialization Error: {e.Message}");
+                        }
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value when providing the key \"Transport\" in the recording options dictionary.");
+                    }
+                }
             }
             else
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.");
+            }
+        }
+
+        public X509Certificate2 GetValidationCert(TransportCustomizations settings)
+        {
+            try
+            {
+                var fields = PemEncoding.Find(settings.TLSValidationCert);
+                var base64Data = settings.TLSValidationCert[fields.Base64Data];
+                return new X509Certificate2(Encoding.ASCII.GetBytes(base64Data));
+            }
+            catch(Exception e)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to instantiate a valid cert from the value provided in Transport settings key \"TLSValidationCert\". Value: \"{settings.TLSValidationCert}\". Message: \"{e.Message}\".");
+            }
+        }
+
+        public HttpClientHandler GetTransport(bool allowAutoRedirect, TransportCustomizations customizations, bool insecure = false)
+        {
+            var clientHandler = new HttpClientHandler()
+            {
+                AllowAutoRedirect = allowAutoRedirect
+            };
+
+            if (customizations.Certificates != null)
+            {
+                foreach (var certPair in customizations.Certificates)
+                {
+                    try
+                    {
+
+                        var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
+                        cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
+                        clientHandler.ClientCertificates.Add(cert);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Unable to instantiate a new X509 certificate from the provided value and key. Failure Message: \"{e.Message}\".");
+                    }
+                }
+            }
+            
+            if (customizations.TLSValidationCert != null && !insecure)
+            {
+                var ledgerCert = GetValidationCert(customizations);
+
+                X509Chain certificateChain = new();
+                certificateChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                certificateChain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
+                certificateChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                certificateChain.ChainPolicy.VerificationTime = DateTime.Now;
+                certificateChain.ChainPolicy.UrlRetrievalTimeout = new TimeSpan(0, 0, 0);
+                certificateChain.ChainPolicy.ExtraStore.Add(ledgerCert);
+
+                clientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage httpRequestMessage, X509Certificate2 cert, X509Chain x509Chain, SslPolicyErrors sslPolicyErrors) =>
+                {
+                    bool isChainValid = certificateChain.Build(cert);
+                    if (!isChainValid) return false;
+                    var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
+                        .Any(x => x.Certificate.Thumbprint == ledgerCert.Thumbprint);
+
+                    return isCertSignedByTheTlsCert;
+                };
+            }
+            else if (insecure)
+            {
+                clientHandler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
+            }
+
+            return clientHandler;
+        }
+
+        public void SetTransportOptions(TransportCustomizations customizations, string sessionId)
+        {
+            var timeoutSpan = TimeSpan.FromSeconds(600);
+
+            // this will look a bit strange until we take care of #3488 due to the fact that this AllowAutoRedirect customizable from two places
+            if (!string.IsNullOrWhiteSpace(sessionId))
+            {
+                var customizedClientHandler = GetTransport(customizations.AllowAutoRedirect, customizations);
+
+                RecordingSessions[sessionId].Client = new HttpClient(customizedClientHandler)
+                {
+                    Timeout = timeoutSpan
+                };
+            }
+            else
+            {
+                // after #3488 we will swap to a single client instead of both of these
+                var redirectableCustomizedHandler = GetTransport(true, customizations, Startup.Insecure);
+                var redirectlessCustomizedHandler = GetTransport(false, customizations, Startup.Insecure);
+
+                RedirectableClient = new HttpClient(redirectableCustomizedHandler)
+                {
+                    Timeout = timeoutSpan
+                };
+
+                RedirectlessClient = new HttpClient(redirectlessCustomizedHandler)
+                {
+                    Timeout = timeoutSpan
+                };
             }
         }
 
@@ -728,6 +865,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 };
 
                 Matcher = new RecordMatcher();
+
+                RedirectableClient = BaseRedirectableClient;
+                RedirectlessClient = BaseRedirectlessClient;
             }
         }
 

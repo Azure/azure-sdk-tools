@@ -54,8 +54,8 @@ running the build and deployment script, see [Deploying a Stress Test](#deployin
 # Authenticate to Azure
 az login
 
-# Download the kubeconfig for the cluster (creates a 'context' named 'stress-test')
-az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-test -n stress-test
+# Download the kubeconfig for the cluster (creates a 'context' named 'stress-pg')
+az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-pg -n stress-test
 ```
 
 You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:
@@ -84,7 +84,7 @@ You will then need to build and push your container image to an Azure Container 
 Get the default container registry for the stress testing Kubernetes cluster:
 
 ```bash
-az acr list -g rg-stress-cluster-test --subscription "Azure SDK Developer Playground" --query "[0].loginServer"
+az acr list -g rg-stress-cluster-pg --subscription "Azure SDK Developer Playground" --query "[0].loginServer"
 # Outputs: <registry server host name, ex: 'myregistry.azurecr.io'>
 ```
 
@@ -214,6 +214,7 @@ The following environment variables are currently populated by default into the 
 
 ```
 AZURE_CLIENT_ID=<value>
+AZURE_CLIENT_OID=<value>
 AZURE_CLIENT_SECRET=<value>
 AZURE_TENANT_ID=<value>
 AZURE_SUBSCRIPTION_ID=<value>
@@ -257,11 +258,11 @@ stress test container startup.
 The bicep/ARM file should output at least the resource group name, which will be injected into the stress test env file.
 
 ```
-// Dummy parameter to handle defaults the script passes in
-param testApplicationOid string = ''
+// Unique short string safe for naming resources like storage, service bus.
+param BaseName string = ''
 
 resource config 'Microsoft.AppConfiguration/configurationStores@2020-07-01-preview' = {
-  name: 'config-${resourceGroup().name}'
+  name: 'stress-${BaseName}'
   location: resourceGroup().location
   sku: {
     name: 'Standard'
@@ -269,7 +270,7 @@ resource config 'Microsoft.AppConfiguration/configurationStores@2020-07-01-previ
 }
 
 output RESOURCE_GROUP string = resourceGroup().name
-output AZURE_CLIENT_OID string = testApplicationOid
+output APP_CONFIG_NAME string = config.name
 ```
 
 ### Helm Chart File
@@ -318,8 +319,12 @@ are made available in the template context.
     template is being generated.
 - `{{ .Stress.ResourceGroupName }}`
   - If deploying live resources for a test job, the name of the resource group.
-  - This can also be useful for pairing up template values with resource names. The resource group name will be generated based
-    on the deployment and scenario values, and can also be referenced for naming resources in the bicep/ARM template via `resourceGroup().name`.
+- `{{ .Stress.BaseName }}`
+  - Use this value to generate a random name, prefixes or suffixes for azure resources.
+  - The value consists of random alpha characters and will always start with a lowercase letter for maximum compatibility.
+  - This can be referenced for naming resources in the bicep/ARM template by adding `param BaseName string = ''` and passing the `BaseName` to resource names.
+    See [example template](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/stress-deployment-example/stress-test-resources.bicep).
+  - Useful for pairing up template values with resource names, e.g. a DNS target to block for network chaos.
 
 ### Job Manifest
 
@@ -397,12 +402,12 @@ spec:
   externalTargets:
     # Maps to the service bus resource cname, provided the resource group name, provided
     # the service bus namespace uses the resource group name as its name in the bicep template
-    - "{{ .Stress.ResourceGroupName }}.servicebus.windows.net"
+    - "{{ .Stress.BaseName }}.servicebus.windows.net"
   mode: one
   selector:
     labelSelectors:
-      # Maps to the test pod, provided it also sets a testInstance label of {{ .Stress.ResourceGroupName }}
-      testInstance: {{ .Stress.ResourceGroupName }}
+      # Maps to the test pod, provided it also sets a testInstance label of {{ .Stress.BaseName }}
+      testInstance: {{ .Stress.BaseName }}
       chaos: "true"
     namespaces:
       - {{ .Release.Namespace }}
@@ -593,7 +598,7 @@ See [Chaos Manifest](#chaos-manifest).
 
 There are a few ways to check on the status of your chaos resources, after your stress test pod(s) reach a `Running` state.
 
-From the [test cluster dashboard](https://aka.ms/azsdk/stress/dashboard), select your stress test pods from the dropdown
+From the [playground cluster dashboard](https://aka.ms/azsdk/stress/dashboard), select your stress test pods from the dropdown
 and verify there are entries in the logs in the **Chaos Daemon Events** table.
 
 On the stress cluster, you can view the status of your chaos resources. For example, to check on all the network chaos

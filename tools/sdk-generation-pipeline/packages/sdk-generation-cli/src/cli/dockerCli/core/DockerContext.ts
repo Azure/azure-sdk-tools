@@ -16,6 +16,7 @@ export class DockerContext {
     workDir?: string;
     sdkRepo?: string;
     resultOutputFolder?: string;
+    autorestConfigFilePath?: string;
     logger: Logger;
 
     /*
@@ -32,7 +33,7 @@ export class DockerContext {
         this.workDir = inputParams.workDir;
         this.sdkRepo = inputParams.sdkRepo;
         this.resultOutputFolder = inputParams.resultOutputFolder;
-
+        this.autorestConfigFilePath = inputParams.autorestConfigFilePath;
         this.logger = initializeLogger(path.join(inputParams.resultOutputFolder, inputParams.dockerLogger), 'docker');
 
         if (this.sdkList?.length === 0 && fs.existsSync(this.workDir)) {

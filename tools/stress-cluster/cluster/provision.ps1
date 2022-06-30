@@ -15,6 +15,14 @@ param (
     [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
     [string] $ProvisionerApplicationSecret,
 
+    [ValidateScript({
+        if (!(Test-Path $_)) {
+            throw "LocalAddonsPath $LocalAddonsPath does not exist"
+        }
+        return $true
+    })]
+    [System.IO.FileInfo]$LocalAddonsPath,
+
     # Enables passing full json credential config without throwing unrecognized parameter errors
     [Parameter(ValueFromRemainingArguments = $true)]
     $RemainingArguments
@@ -200,7 +208,7 @@ function DeployClusterResources([hashtable]$params)
     SetEnvOutputs $params
 
     Write-Host "Importing cluster credentials"
-    RunOrExitOnFailure az aks get-credentials `
+    RunSupportingWhatIfFlag "--only-show-errors" az aks get-credentials `
         -n $params.clusterName `
         -g $STRESS_CLUSTER_RESOURCE_GROUP `
         --overwrite `
@@ -213,6 +221,16 @@ function DeployHelmResources()
     $LastWhatIfPreference = $WhatIfPreference
 
     $WhatIfPreference = $false
+    $chartRepoName = 'stress-test-charts'
+    if ($LocalAddonsPath) {
+        $absAddonsPath = Resolve-Path $LocalAddonsPath
+        if (!(helm plugin list | Select-String 'file')) {
+            RunOrExitOnFailure helm plugin add (Join-Path $absAddonsPath file-plugin)
+        }
+        RunOrExitOnFailure helm repo add --force-update $chartRepoName file://$absAddonsPath
+    } else {
+        RunOrExitOnFailure helm repo add --force-update $chartRepoName https://stresstestcharts.blob.core.windows.net/helm/
+    }
     RunOrExitOnFailure helm repo add chaos-mesh https://charts.chaos-mesh.org
     RunOrExitOnFailure helm dependency update $PSScriptRoot/kubernetes/stress-infrastructure
 

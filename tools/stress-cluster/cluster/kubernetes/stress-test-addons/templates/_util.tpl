@@ -27,6 +27,7 @@ Fields added to global context and returned:
 .Stress.Scenario - A `.` value passed down from a range loop over a scenarios list
             from values.yaml or a default value "stress".
 .Stress.ResourceGroupName - A pre-calculated resource group name value that can be passed down to various configurations that require it.
+.Stress.BaseName - A random, six character, lowercase alpha string that can be used for naming and is valid for most azure resources.
 
 See https://github.com/Masterminds/sprig/tree/master/docs for template function reference
 */}}
@@ -34,9 +35,11 @@ See https://github.com/Masterminds/sprig/tree/master/docs for template function 
 {{- /* Copy scenario name into top level keys of global context */}}
 {{- $_global := index . 0 -}}
 {{- $_scenario := index . 1 -}}
-{{ $resourceGroupName := lower (print $_global.Release.Namespace "-" $_scenario "-" $_global.Release.Name "-" $_global.Release.Revision) }}
+{{- $resourceGroupName := lower (print $_global.Release.Namespace "-" $_scenario "-" $_global.Release.Name "-" $_global.Release.Revision) -}}
+{{- /* Use lowercase alpha characters for maximum azure resource naming compatibility */ -}}
+{{- $uniqueTestId := lower (randAlpha 6) -}}
 {{- /* Create add Stress context to top level keys of global context */}}
-{{- $_stress := dict "Scenario" $_scenario "ResourceGroupName" $resourceGroupName -}}
+{{- $_stress := dict "Scenario" $_scenario "ResourceGroupName" $resourceGroupName "BaseName" $uniqueTestId -}}
 {{- $_instance := deepCopy ($_global | merge (dict "Stress" $_stress )) -}}
 {{ toYaml ($_instance) }}
 {{- end -}}

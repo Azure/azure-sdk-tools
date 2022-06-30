@@ -53,7 +53,7 @@ RUN npm install -g typescript
 RUN npm install -g @microsoft/rush
 RUN npm install -g autorest
 
-RUN mkdir "/mock-host" && cd /mock-host && npm install @azure-tools/mock-service-host
+RUN mkdir "/mock-host" && cd /mock-host && npm install @azure-tools/mock-service-host@0.1.16
 
 # install chrome
 RUN curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb

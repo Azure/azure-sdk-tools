@@ -573,6 +573,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
                             SetTransportOptions(customizations, sessionId);
                         }
+                        catch (HttpException e)
+                        {
+                            throw;
+                        }
                         catch (Exception e)
                         {
                             throw new HttpException(HttpStatusCode.BadRequest, $"Unable to deserialize the contents of the \"Transport\" key. Visible object: {transportConventions}. Json Deserialization Error: {e.Message}");

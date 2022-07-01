@@ -53,6 +53,28 @@ Services:
       Java: noop
       JS: NoOp
 
+- Service: core
+  Languages:
+    Java:
+      Project: sdk/core/azure-core-perf
+      PrimaryPackage: azure-core
+      PackageVersions:
+      - azure-core: 1.29.1
+        azure-core-http-netty: 1.12.2
+        azure-core-http-okhttp: 1.10.1
+      - azure-core: source
+        azure-core-http-netty: source
+        azure-core-http-okhttp: source
+      AdditionalArguments: &java-additional-arguments
+        warmup: 15
+        duration: 15
+  Tests:
+  - Test: jsonsend
+    Arguments:
+    - ""
+    TestNames:
+      Java: jsonsend
+
 - Service: storage-blob
   Languages:
     Net:
@@ -78,9 +100,7 @@ Services:
         azure-core-http-okhttp: source
         azure-core: source
         reactor-core: source
-      AdditionalArguments: &java-additional-arguments
-        warmup: 15
-        duration: 15
+      AdditionalArguments: *java-additional-arguments
     JS:
       Project: sdk/storage/perf-tests/storage-blob
       PackageVersions:

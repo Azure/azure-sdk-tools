@@ -100,7 +100,6 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
                 ret.Add(TokenSerializer.NavigableToken($"{operation.method.ToUpper()} - {operation.path}", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
                 ret.Add(TokenSerializer.NewLine());
 
-                // collapse operation here.
                 ret.AddRange(operation.TokenSerialize(new SerializeContext(context.intent + 2, context.IteratorPath)));
                 
                 context.IteratorPath.PopMulti(3);

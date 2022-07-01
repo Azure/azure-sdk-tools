@@ -58,6 +58,14 @@ namespace SwaggerApiParser
         {
             return Utils.BuildDefinitionId(this.paths);
         }
+
+        public string CurrentNextPath(string nextPath)
+        {
+            this.Add(nextPath);
+            var ret = this.CurrentPath();
+            this.Pop();
+            return ret;
+        }
     }
 
     public class SerializeContext

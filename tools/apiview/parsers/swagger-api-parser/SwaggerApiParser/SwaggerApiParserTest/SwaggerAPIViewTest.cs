@@ -23,7 +23,7 @@ public class SwaggerApiViewTest
         var swaggerSpec = await SwaggerDeserializer.Deserialize(runCommandFilePath);
 
         SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Compute", "Microsoft.Compute");
-        root.AddSwaggerSpec(swaggerSpec, Path.GetFileName(runCommandFilePath), "Microsoft.Compute");
+        root.AddSwaggerSpec(swaggerSpec, Path.GetFullPath(runCommandFilePath), "Microsoft.Compute");
 
         var codeFile = root.GenerateCodeFile();
         var outputFilePath = Path.GetFullPath("./compute_root_one_file_codefile.json");

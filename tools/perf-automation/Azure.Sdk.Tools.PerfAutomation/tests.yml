@@ -71,7 +71,7 @@ Services:
   Tests:
   - Test: jsonsend
     Arguments:
-    - ""
+    - --backend-type blobs
     TestNames:
       Java: jsonsend
 

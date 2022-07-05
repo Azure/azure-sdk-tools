@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/testmodeler",
+      "comment": "Add securityParameters in ExampleModel for ApiKey securityDefinitions.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@autorest/testmodeler"
+}

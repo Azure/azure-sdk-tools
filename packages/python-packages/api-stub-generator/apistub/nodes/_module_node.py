@@ -1,11 +1,9 @@
+import astroid
 import logging
 import inspect
-import ast
-import io
-import importlib
-import operator
 
 from ._base_node import NodeEntityBase
+from ._data_class_node import DataClassNode
 from ._class_node import ClassNode
 from ._function_node import FunctionNode
 from apistub import Navigation, Kind, NavigationTag
@@ -42,7 +40,18 @@ class ModuleNode(NodeEntityBase):
                 continue
 
             if inspect.isclass(member_obj):
-                class_node = ClassNode(
+                class_type = ClassNode
+                try:
+                    # see if a class is annotated as a dataclass
+                    node = astroid.extract_node(inspect.getsource(member_obj))
+                    if node.decorators:
+                        for item in node.decorators.nodes:
+                            if getattr(item, "name", None) == "dataclass":
+                                class_type = DataClassNode
+                                break
+                except:
+                    pass
+                class_node = class_type(
                     name=name,
                     namespace=self.namespace,
                     parent_node=self,

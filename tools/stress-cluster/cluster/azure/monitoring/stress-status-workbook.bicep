@@ -7,7 +7,7 @@ param workbookDisplayName string
 param workbookType string = 'workbook'
 
 @description('The id of resource instance to which the workbook will be associated')
-param workbookSourceId string = 'azure monitor'
+param workbookSourceId string = resourceGroup().id
 
 // The guid for this workbook instance (must be deterministic in order to be idempotent)
 var workbookId = guid('${resourceGroup().name} ${workbookDisplayName}')
@@ -179,7 +179,7 @@ var workbookContent = {
   ]
   isLocked: false
   fallbackResourceIds: [
-    '/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourcegroups/rg-stress-cluster-test'
+    workbookSourceId
   ]
 }
 

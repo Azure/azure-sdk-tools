@@ -1,10 +1,7 @@
+{{- include "stress-test-addons.chaos-wrapper.tpl" (list . "stress.network-chaos") -}}
+{{- define "stress.network-chaos" -}}
 apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
-metadata:
-  name: "{{ .Release.Name }}-{{ .Release.Revision }}"
-  namespace: {{ .Release.Namespace }}
-  annotations:
-    'experiment.chaos-mesh.org/pause': 'true'
 
 spec:
   action: loss
@@ -21,3 +18,4 @@ spec:
   loss:
     loss: "100"
     correlation: "100"
+{{- end -}}

@@ -17,7 +17,15 @@ export class GenerateContext {
         this.importManager = new ImportManager();
         let module = undefined;
         if (this.packageName) {
-            module = this.testConfig.getValue(Config.module, `github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/${this.packageName.substr(3)}/${this.packageName}`);
+            const majorVersion = this.testConfig.getValue(Config.moduleVersion, '1.0.0').split('.')[0];
+            if (majorVersion > 1) {
+                module = `${this.testConfig.getValue(
+                    Config.module,
+                    `github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/${this.packageName.substr(3)}/${this.packageName}`,
+                )}/v${majorVersion}`;
+            } else {
+                module = this.testConfig.getValue(Config.module, `github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/${this.packageName.substr(3)}/${this.packageName}`);
+            }
         }
         if (module) {
             this.importManager.add(module);

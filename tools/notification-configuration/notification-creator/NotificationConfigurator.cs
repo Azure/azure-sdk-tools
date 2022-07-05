@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using System;
 using Azure.Sdk.Tools.CodeOwnersParser;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.NotificationConfiguration
 {
@@ -186,8 +187,18 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 // Get contents of CODEOWNERS
                 logger.LogInformation("Fetching CODEOWNERS file");
-                var managementUrl = new Uri(pipeline.Repository.Properties["manageUrl"]);
-                var codeOwnerEntries = await gitHubService.GetCodeownersFile(managementUrl);
+                Uri repoUrl = pipeline.Repository.Url;
+
+                if (repoUrl != null)
+                {
+                    repoUrl = new Uri(Regex.Replace(repoUrl.ToString(), @"\.git$", String.Empty));
+                }
+                else
+                {
+                    logger.LogError("No repository url returned from pipeline. Repo id: {0}", pipeline.Repository.Id);
+                    return;
+                }
+                var codeOwnerEntries = await gitHubService.GetCodeownersFile(repoUrl);
 
                 if (codeOwnerEntries == default)
                 {

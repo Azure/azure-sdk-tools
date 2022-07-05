@@ -739,7 +739,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async Task AddSanitizerThrowsOnMissingRequiredArgument()
+        public async Task TestAddSanitizerThrowsOnMissingRequiredArgument()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -766,7 +766,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async Task AddSanitizerContinuesWithTwoRequiredParams()
+        public async Task TestAddSanitizerContinuesWithTwoRequiredParams()
         {
             var targetKey = "Content-Type";
             var targetString = "application/javascript";

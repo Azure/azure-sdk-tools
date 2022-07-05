@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -96,6 +97,17 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 _recordingHandler.Matcher = m;
             }
+        }
+
+        [HttpPost]
+        [AllowEmptyBody]
+        public async Task SetRecordingOptions([FromBody()] IDictionary<string, object> options = null)
+        {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+
+            _recordingHandler.SetRecordingOptions(options, recordingId);
         }
 
         public object GetSanitizer(string name, JsonDocument body)
@@ -203,7 +215,5 @@ namespace Azure.Sdk.Tools.TestProxy
                 else throw;
             }
         }
-
-
     }
 }

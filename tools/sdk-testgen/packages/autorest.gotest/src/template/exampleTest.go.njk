@@ -39,7 +39,7 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 		log.Fatalf("failed to finish the request: %v", err)
 	}
 	{%- if example.isLRO %}
-	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
+	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, nil)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
 	}

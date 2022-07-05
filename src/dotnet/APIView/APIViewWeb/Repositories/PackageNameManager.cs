@@ -21,20 +21,20 @@ namespace APIViewWeb.Repositories
         static Dictionary<string, PackageModel> _packageNameMap = new();
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
-        public PackageNameManager()
+        public async Task<PackageModel> GetPackageDetails(string packageName)
         {
-            LoadPackageDisplayName("python");
-            LoadPackageDisplayName("java");
-            LoadPackageDisplayName("dotnet");
-            LoadPackageDisplayName("js");
-            LoadPackageDisplayName("go");
-            LoadPackageDisplayName("cpp");
-            LoadPackageDisplayName("c");
-            LoadPackageDisplayName("ios");
-        }
+            if(_packageNameMap.Count == 0)
+            {
+                await LoadPackageDisplayName("python");
+                await LoadPackageDisplayName("java");
+                await LoadPackageDisplayName("dotnet");
+                await LoadPackageDisplayName("js");
+                await LoadPackageDisplayName("go");
+                await LoadPackageDisplayName("cpp");
+                await LoadPackageDisplayName("c");
+                await LoadPackageDisplayName("ios");
+            }
 
-        public PackageModel GetPackageDetails(string packageName)
-        {
             if (packageName != null)
             {
                 if (_packageNameMap.ContainsKey(packageName))
@@ -45,18 +45,14 @@ namespace APIViewWeb.Repositories
             return null;
         }
 
-        private static void LoadPackageDisplayName(string language)
+        private async Task LoadPackageDisplayName(string language)
         {
             var url = PACKAGE_CSV_LOOKUP_URL.Replace("<langauge>", language.ToLower());
             try
             {
-                var respTask = _httpClient.GetAsync(url);
-                respTask.Wait();
-                var resp = respTask.Result;
+                var resp = await _httpClient.GetAsync(url);
                 resp.EnsureSuccessStatusCode();
-                var contentStreamTask = resp.Content.ReadAsStreamAsync();
-                contentStreamTask.Wait();
-                var contentStream = contentStreamTask.Result;
+                var contentStream = await resp.Content.ReadAsStreamAsync();
                 var csvReaderConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
                     MissingFieldFound = null,

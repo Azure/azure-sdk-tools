@@ -3,16 +3,16 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
     public class FailureAnalyzer : IFailureAnalyzer
     {
-        public FailureAnalyzer(IFailureClassifier[] classifiers)
+        public FailureAnalyzer(IEnumerable<IFailureClassifier> classifiers)
         {
-            this.classifiers = classifiers;
+            this.classifiers = classifiers.ToArray();
         }
 
         private IFailureClassifier[] classifiers;

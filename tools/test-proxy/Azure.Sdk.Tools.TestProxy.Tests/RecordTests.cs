@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -55,9 +58,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.Start();
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-            var (fileName, session) = testRecordingHandler.RecordingSessions[recordingId];
+            var recordingHandlerSession = testRecordingHandler.RecordingSessions[recordingId];
 
-            Assert.Empty(fileName);
+            Assert.Empty(recordingHandlerSession.Path);
         }
 
         [Theory]
@@ -133,7 +136,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                () => controller.Stop()
             );
 
-            Assert.Equal("When stopping a recording and providing a x-recording-skip value, only value \"request-response\" is accepted.", resultingException.Message);
+            Assert.Equal("When stopping a recording and providing a \"x-recording-skip\" value, only value \"request-response\" is accepted.", resultingException.Message);
             Assert.Equal(HttpStatusCode.BadRequest, resultingException.StatusCode);
         }
 
@@ -186,7 +189,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             playbackContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {

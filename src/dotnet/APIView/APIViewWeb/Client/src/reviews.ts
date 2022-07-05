@@ -1,188 +1,130 @@
 ﻿$(() => {
   // Search
-  const languageSelect = $("#reviews-table-language-filter");
-  const searchBox = $('#reviews-table-search-box');
-  const searchContext = $('.review-name') as any;
-  const serviceGroupRows = $('.service-group-row');
-  const packageGroupRows = $('.package-group-row');
-  const reviewHeaderRows = $('.review-rows-header');
-  const packageDataRows = $('.package-data-row');
+  const defaultPageSize = 50;
+  const reviewsFilterPartial = $( '#reviews-filter-partial' );
+  const languageFilter = $( '#language-filter-bootstraps-select' );
+  const stateFilter = $( '#state-filter-bootstraps-select' );
+  const statusFilter = $( '#status-filter-bootstraps-select' );
+  const typeFilter = $( '#type-filter-bootstraps-select' );
+  const searchBox = $( '#reviews-table-search-box' );
+  const searchButton = $( '#reviews-search-button' );
+  const resetButton = $( '#reset-filter-button' );
+
+  // Import underscorejs
+  var _ = require('underscore');
 
   // Enable tooltip
   (<any>$('[data-toggle="tooltip"]')).tooltip();
 
-  function toggleServiceGroup(serviceRow, state) {
-    var serviceGroupTag = serviceRow[0].id;
-    var serviceRowIcon = serviceRow.find('i').first();
-    var packageGroupRow = $(`.${serviceGroupTag}`);
-    if (state == "closed")
+  // Computes the uri string using the values of search, pagination and various filters
+  // Invokes partial page update to list of reviews using ajax
+  // Updates the uri displayed on the client
+  function updateListedReviews({ pageNo = 1, pageSize = defaultPageSize } = {})
+  {
+    var uri = '?handler=reviewspartial';
+    var searchQuery = searchBox.val() as string;
+
+    if (searchQuery != null && searchQuery.trim() != '')
     {
-      packageGroupRow.removeClass('hidden-row');
-      serviceRowIcon.removeClass('fa-angle-right').addClass('fa-angle-down');
-      serviceRow.addClass('shadow-sm');
+      var searchTerms = searchQuery.trim().split(/\s+/);
+      searchTerms.forEach(function(value, index){
+        uri = uri + '&search=' + encodeURIComponent(value);
+      });
     }
-    else
-    {
-      packageGroupRow.addClass('hidden-row');
-      serviceRowIcon.removeClass('fa-angle-down').addClass('fa-angle-right');
-      serviceRow.removeClass('shadow-sm');
-    }
+
+    languageFilter.children(":selected").each(function() {
+      uri = uri + '&languages=' + encodeURIComponent(`${$(this).val()}`);
+    });
+    
+    stateFilter.children(":selected").each(function() {
+      uri = uri + '&state=' + encodeURIComponent(`${$(this).val()}`);
+    });
+
+    statusFilter.children(":selected").each(function() {
+      uri = uri + '&status=' + encodeURIComponent(`${$(this).val()}`);
+    });
+
+    typeFilter.children(":selected").each(function() {
+      uri = uri + '&type=' + encodeURIComponent(`${$(this).val()}`);
+    });
+
+    uri = uri + '&pageNo=' + encodeURIComponent(pageNo);
+    uri = uri + '&pageSize=' + encodeURIComponent(pageSize);
+    uri = encodeURI(uri);
+
+    $.ajax({
+      url: uri
+    }).done(function(partialViewResult) {
+      reviewsFilterPartial.html(partialViewResult);
+      history.pushState({}, '', uri.replace('handler=reviewspartial&', ''));
+      addPaginationEventHandlers(); // This ensures that the event handlers are re-added after ajax refresh
+    });
   }
 
-  function togglePackageGroup(packageRow, state) {
-    var packageGroupTag = packageRow[0].id;
-    var packageRowIcon = packageRow.find('i').first();
-    var packageDataRows = $(`.${packageGroupTag}`);
-    if (state == "closed")
-    {
-      packageDataRows.removeClass('hidden-row');
-      packageRowIcon.removeClass('fa-angle-right').addClass('fa-angle-down');
-      packageRow.addClass('shadow-sm');
-    }
-    else
-    {
-      packageDataRows.addClass('hidden-row');
-      packageRowIcon.removeClass('fa-angle-down').addClass('fa-angle-right');
-      packageRow.removeClass('shadow-sm');
-    }
-  }
-
-  function filterReviews(){
-    // highlight matching text using mark.js framework and hide rows that don't match
-    const searchText = (searchBox.val() as string).toUpperCase();
-    searchContext.closest('tr').removeClass('hidden-row').unmark();
-    if(searchText)
-    {
-      searchContext.mark(searchText, {
-        done: function () {
-          searchContext.not(':has(mark)').closest('tr').addClass('hidden-row');
-            serviceGroupRows.addClass('hidden-row');
-            packageGroupRows.addClass('hidden-row');
-            reviewHeaderRows.addClass('hidden-row');
-        }
-      });
-    }
-    else
-    {
-      serviceGroupRows.removeClass('hidden-row').addClass('shadow-sm');
-      serviceGroupRows.find('i').removeClass('fa-angle-right').addClass('fa-angle-down');
-      packageGroupRows.removeClass('hidden-row').addClass('shadow-sm');
-      packageGroupRows.find('i').removeClass('fa-angle-right').addClass('fa-angle-down');
-      reviewHeaderRows.removeClass('hidden-row').addClass('shadow-sm');
-    }
-  }
-
-    // Expand all Service Groups
-  $('#expand-all-service-groups-btn').on('click', function () {
-    if (!(searchBox.val() as string))
-    {
-      serviceGroupRows.each(function(index, value){
-        toggleServiceGroup($(this), "closed");
-      });
-    }
-  });
-
-  // Expand all Groups
-  $('#expand-all-groups-btn').on('click', function () {
-    if (!(searchBox.val() as string))
-    {
-      serviceGroupRows.each(function(index, value){
-        toggleServiceGroup($(this), "closed");
-      });
-      packageGroupRows.each(function(index, value){
-        togglePackageGroup($(this), "closed");
-      });
-    }
-  });
-
-  // Collapse all Groups
-  $('#collapse-all-groups-btn').on('click', function () {
-    if (!(searchBox.val() as string))
-    {
-      serviceGroupRows.each(function(index, value){
-        toggleServiceGroup($(this), "opened");
-      });
-      packageGroupRows.each(function(index, value){
-        togglePackageGroup($(this), "opened");
-      });
-    }
-  });
-
-  // Clear all filters
-  $('#clear-all-filters').on('click', function() {
-    if (languageSelect.val() != "")
-    {
-      languageSelect.val("").trigger('change');
-    }
-    if (searchBox.val() != "")
-    {
-      searchBox.val("").trigger('input');
-    }
-  });
-
-  // Toggle individual service Group
-  $('#reviews-table tbody').on('click', '.service-group-row', function() {
-    var serviceRowIcon = $(this).find('i').first();
-    var serviceGroupID = $(this).first()[0].id;
-    if (serviceRowIcon.hasClass('fa-angle-right'))
-    {
-      toggleServiceGroup($(this), "closed");
-    }
-    else 
-    {
-      $(`.package-group-row.${serviceGroupID}`).each(function(index, value){
-        var packageRowIcon = $(this).find('i').first();
-        if (packageRowIcon.hasClass(`fa-angle-down`))
+  // Add custom behaviour and event to pagination buttons
+  function addPaginationEventHandlers()
+  {
+    $( '.page-link' ).each(function() {
+      $(this).on('click', function(event){
+        event.preventDefault();
+        var linkParts = $(this).prop('href').split('/');
+        var pageNo = linkParts[linkParts.length - 1];
+        if (pageNo !== null && pageNo !== undefined)
         {
-          togglePackageGroup($(this), "opened");
+          updateListedReviews({ pageNo: pageNo });
         }
       });
-      toggleServiceGroup($(this), "opened");
-    }
-  });
-
-  // Toggle individual package Group
-  $('#reviews-table tbody').on('click', '.package-group-row', function() {
-    var packageRowIcon = $(this).find('i').first();
-    if (packageRowIcon.hasClass('fa-angle-right'))
-    {
-      togglePackageGroup($(this), "closed");
-    }
-    else 
-    {
-      togglePackageGroup($(this), "opened");
-    }
-  });
-
-  // If already populated from navigating back, filter again
-  if (searchBox.val()) {
-    filterReviews();
+    });
   }
 
-  searchBox.on('input', function() {
-    setTimeout(filterReviews, 300);
-  });
-
-  // Filter by language
-  languageSelect.on('change', function(e) {
-    var filterText = $(this).val() as string;
-    if (filterText == "")
+  // Triggers partial page update to retriev properties for poulating filter dropdowns
+  function updateFilterDropDown(filter, query)
+  {
+    // update tags dropdown select
+    var uri = `?handler=reviews${query}`;
+    var urlParams = new URLSearchParams(location.search);
+    if (urlParams.has(query))
     {
-      packageDataRows.removeClass('hidden-row-via-filter');
-    }
-    else 
-    {
-      packageDataRows.each(function (index, value) {
-        let langImageAlt = value.children[0].children[0].getAttribute("alt");
-        if (langImageAlt != null && langImageAlt.match(RegExp(filterText)))
-        {
-          $(this).removeClass('hidden-row-via-filter');
-        }
-        else
-        {
-          $(this).addClass('hidden-row-via-filter');
-        }
+      urlParams.getAll(query).forEach(function(value, index) {
+        uri = uri + `&selected${query}=` + encodeURIComponent(value);
       });
     }
+    $.ajax({
+      url: uri
+    }).done(function(partialViewResult) {
+      filter.html(partialViewResult);
+      (<any>filter).selectpicker('refresh');
+    });
+  }
+
+  // Update content of dropdown on page load
+  $(document).ready(function() {
+    updateFilterDropDown(languageFilter, "languages");
+    addPaginationEventHandlers();
+  });
+
+
+  // Update when any dropdown is changed
+  [languageFilter, stateFilter, statusFilter, typeFilter].forEach(function(value, index) {
+    value.on('hidden.bs.select', function() {
+      updateListedReviews();
+    });
+  });
+
+  searchBox.on('input', _.debounce(function(e) {
+    updateListedReviews();
+  }, 300));
+
+  searchButton.on('click', function() {
+    updateListedReviews();
+  });
+
+  resetButton.on('click', function(e) {
+    (<any>languageFilter).selectpicker('deselectAll');
+    (<any>stateFilter).selectpicker('deselectAll').selectpicker('val', 'Open');
+    (<any>statusFilter).selectpicker('deselectAll');
+    (<any>typeFilter).selectpicker('deselectAll');
+    searchBox.val('');
+    updateListedReviews();
   });
 });

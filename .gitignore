@@ -47,6 +47,7 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+testResult*.xml
 
 # Translations
 *.mo
@@ -485,11 +486,13 @@ local.settings.json
 *.iml
 
 # Typescript output
-src/dotnet/APIView/APIViewWeb/wwwroot/js/*.js*
+src/dotnet/APIView/APIViewWeb/wwwroot/*.js*
 
 # npm
 *-lock.json
 
+.assets
+tools/asset-sync/.testruns
 
 # oav converter
 tools/oav-traffic-converter/input-example/

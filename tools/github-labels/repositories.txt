@@ -18,6 +18,7 @@ Azure\azure-sdk-for-android-pr
 Azure\azure-sdk
 Azure\azure-sdk-pr
 Azure\azure-sdk-tools
+Azure\azure-sdk-actions
 Azure\autorest
 Azure\autorest.csharp
 Azure\autorest.java

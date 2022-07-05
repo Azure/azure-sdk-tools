@@ -67,7 +67,7 @@ Most issues we've seen are related to having a prior `az acr login` or the like.
 
 If your error looks something like this:
 
-```
+```bash
 > docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 Error response from daemon: Head https://azsdkengsys.azurecr.io/v2/engsys/testproxy-lin/manifests/latest: unauthorized: authentication required
 ```
@@ -82,7 +82,7 @@ This occurs when a user has a **prior login** to `azsdkengsys.azurecr.io`. `az a
 
 For errors that look like:
 
-```
+```bash
 > docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 Error response from daemon: Get https://azsdkengsys.azurecr.io/v2/: x509: certificate has expired or is not yet valid
 ```
@@ -99,7 +99,7 @@ To build the `arm64` version of the linux image, simply provide a build time arg
 
 ```pwsh
 ./prepare.ps1
-docker build -t testproxy --build-arg ARCH=-arm64v8 .
+docker build -t testproxy --build-arg ARCH=-arm64v8 . --platform linux/arm64
 ```
 
 ## Publishing a multiplatform image

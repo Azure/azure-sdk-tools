@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import * as assert from 'assert'
 import * as fs from 'fs'
-import * as lodash from 'lodash'
 import * as path from 'path'
 import { LiveRequest } from 'oav/dist/lib/liveValidation/operationValidator'
-import { RequestResponsePair } from 'oav/dist/lib/liveValidation/liveValidator'
 import { VirtualServerRequest, VirtualServerResponse } from '../src/mid/models'
 import { createErrorBody } from '../src/common/errors'
 
@@ -87,13 +84,5 @@ export function createLiveRequestForDeleteApiManagementService(
         query: {
             'api-version': '2018-01-01'
         }
-    }
-}
-
-export function genFakeResponses() {
-    return {
-        200: 'faked 200',
-        404: 'faked 204',
-        500: 'faked 500'
     }
 }

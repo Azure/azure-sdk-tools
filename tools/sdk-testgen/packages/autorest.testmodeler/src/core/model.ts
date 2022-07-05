@@ -17,8 +17,8 @@ import {
     Schema,
     SchemaResponse,
     SchemaType,
-    codeModelSchema,
     SecurityScheme,
+    codeModelSchema,
 } from '@autorest/codemodel';
 import { AutorestExtensionHost, Session, startSession } from '@autorest/extension-base';
 import { Config, OavStepType, testScenarioVariableDefault } from '../common/constant';
@@ -326,9 +326,9 @@ export class TestCodeModeler {
             }
         }
 
-        for (const paramName in parametersInExample) {
+        for (const paramName of Object.keys(parametersInExample)) {
             for (const securitySchema of this.codeModel.security.schemes) {
-                if (Object.prototype.hasOwnProperty.call(securitySchema, 'name') && paramName == securitySchema['name']) {
+                if (Object.prototype.hasOwnProperty.call(securitySchema, 'name') && paramName === securitySchema['name']) {
                     if (exampleModel.securityParameters === undefined) {
                         exampleModel.securityParameters = [];
                     }

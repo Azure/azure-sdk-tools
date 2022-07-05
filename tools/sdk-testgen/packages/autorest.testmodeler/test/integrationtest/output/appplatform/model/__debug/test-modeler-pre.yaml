@@ -3930,7 +3930,7 @@ schemas:
           namespace: ''
       protocol: {}
     - *ref_130
-    - &ref_295
+    - &ref_297
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -3980,7 +3980,7 @@ schemas:
           description: Test keys payload
           namespace: ''
       protocol: {}
-    - &ref_296
+    - &ref_298
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4010,7 +4010,7 @@ schemas:
     - *ref_139
     - *ref_140
     - *ref_5
-    - &ref_321
+    - &ref_328
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4101,7 +4101,7 @@ schemas:
     - *ref_149
     - *ref_150
     - *ref_151
-    - &ref_347
+    - &ref_358
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4139,7 +4139,7 @@ schemas:
           description: Object that includes an array of App resources and a possible link for next set
           namespace: ''
       protocol: {}
-    - &ref_351
+    - &ref_362
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4170,7 +4170,7 @@ schemas:
       protocol: {}
     - *ref_99
     - *ref_155
-    - &ref_379
+    - &ref_393
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4210,7 +4210,7 @@ schemas:
       protocol: {}
     - *ref_100
     - *ref_157
-    - &ref_392
+    - &ref_407
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4248,7 +4248,7 @@ schemas:
           description: Collection compose of certificate resources list and a possible link for next page.
           namespace: ''
       protocol: {}
-    - &ref_304
+    - &ref_307
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4279,7 +4279,7 @@ schemas:
           description: Name availability parameters payload
           namespace: ''
       protocol: {}
-    - &ref_307
+    - &ref_311
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4317,7 +4317,7 @@ schemas:
       protocol: {}
     - *ref_101
     - *ref_164
-    - &ref_414
+    - &ref_431
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4355,7 +4355,7 @@ schemas:
           description: Collection compose of a custom domain resources list and a possible link for next page.
           namespace: ''
       protocol: {}
-    - &ref_352
+    - &ref_363
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4378,7 +4378,7 @@ schemas:
           description: Custom domain validate payload.
           namespace: ''
       protocol: {}
-    - &ref_357
+    - &ref_369
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4412,7 +4412,7 @@ schemas:
     - *ref_170
     - *ref_171
     - *ref_172
-    - &ref_438
+    - &ref_457
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4450,7 +4450,7 @@ schemas:
           description: Object that includes an array of App resources and a possible link for next set
           namespace: ''
       protocol: {}
-    - &ref_459
+    - &ref_478
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4473,7 +4473,7 @@ schemas:
           description: Log file URL payload
           namespace: ''
       protocol: {}
-    - &ref_308
+    - &ref_312
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4511,7 +4511,7 @@ schemas:
           description: Object that includes an array of Service resources and a possible link for next set
           namespace: ''
       protocol: {}
-    - &ref_460
+    - &ref_479
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4910,7 +4910,7 @@ schemas:
     - *ref_205
     - *ref_206
     - *ref_207
-    - &ref_461
+    - &ref_480
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4978,7 +4978,7 @@ schemas:
           namespace: ''
       protocol: {}
     - *ref_211
-    - &ref_462
+    - &ref_481
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -5401,7 +5401,7 @@ schemas:
     - *ref_252
     - *ref_253
     - *ref_254
-    - &ref_433
+    - &ref_452
       type: array
       apiVersions:
         - version: 2020-11-01-preview
@@ -5412,7 +5412,7 @@ schemas:
           description: Array of Get5ItemsItem
       protocol: {}
     - *ref_256
-    - &ref_439
+    - &ref_458
       type: array
       apiVersions:
         - version: 2020-11-01-preview
@@ -5488,7 +5488,8 @@ globalParameters:
 operationGroups:
   - $key: Services
     operations:
-      - apiVersions:
+      - operationId: Services_Get
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
@@ -5623,13 +5624,14 @@ operationGroups:
             name: Get
             description: Get a Service and its properties.
         protocol: {}
-      - apiVersions:
+      - operationId: Services_CreateOrUpdate
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_286
+          - &ref_287
             schema: *ref_1
             implementation: Method
             required: true
@@ -5641,7 +5643,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_287
+          - &ref_288
             schema: *ref_1
             implementation: Method
             required: true
@@ -5653,8 +5655,9 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
+        requestMediaTypes:
+          application/json: &ref_286
+            parameters:
               - &ref_285
                 schema: *ref_3
                 implementation: Method
@@ -5693,9 +5696,11 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
-        signatureParameters:
+        requests:
           - *ref_286
+        signatureParameters:
           - *ref_287
+          - *ref_288
         responses:
           - schema: *ref_3
             language:
@@ -6032,13 +6037,14 @@ operationGroups:
             name: CreateOrUpdate
             description: Create a new Service or update an exiting Service.
         protocol: {}
-      - apiVersions:
+      - operationId: Services_Delete
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_288
+          - &ref_289
             schema: *ref_1
             implementation: Method
             required: true
@@ -6050,7 +6056,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_289
+          - &ref_290
             schema: *ref_1
             implementation: Method
             required: true
@@ -6087,8 +6093,8 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_288
           - *ref_289
+          - *ref_290
         responses:
           - language:
               default:
@@ -6140,13 +6146,14 @@ operationGroups:
             name: Delete
             description: Operation to delete a Service.
         protocol: {}
-      - apiVersions:
+      - operationId: Services_Update
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_291
+          - &ref_293
             schema: *ref_1
             implementation: Method
             required: true
@@ -6158,7 +6165,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_292
+          - &ref_294
             schema: *ref_1
             implementation: Method
             required: true
@@ -6170,9 +6177,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_290
+        requestMediaTypes:
+          application/json: &ref_292
+            parameters:
+              - &ref_291
                 schema: *ref_3
                 implementation: Method
                 required: true
@@ -6197,7 +6205,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_290
+              - *ref_291
             language:
               default:
                 name: ''
@@ -6210,9 +6218,11 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
-        signatureParameters:
-          - *ref_291
+        requests:
           - *ref_292
+        signatureParameters:
+          - *ref_293
+          - *ref_294
         responses:
           - schema: *ref_3
             language:
@@ -6357,13 +6367,14 @@ operationGroups:
             name: Update
             description: Operation to update an exiting Service.
         protocol: {}
-      - apiVersions:
+      - operationId: Services_ListTestKeys
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_293
+          - &ref_295
             schema: *ref_1
             implementation: Method
             required: true
@@ -6375,7 +6386,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_294
+          - &ref_296
             schema: *ref_1
             implementation: Method
             required: true
@@ -6412,10 +6423,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_293
-          - *ref_294
+          - *ref_295
+          - *ref_296
         responses:
-          - schema: *ref_295
+          - schema: *ref_297
             language:
               default:
                 name: ''
@@ -6461,13 +6472,14 @@ operationGroups:
             name: ListTestKeys
             description: List test keys for a Service.
         protocol: {}
-      - apiVersions:
+      - operationId: Services_RegenerateTestKey
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_298
+          - &ref_301
             schema: *ref_1
             implementation: Method
             required: true
@@ -6479,7 +6491,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_299
+          - &ref_302
             schema: *ref_1
             implementation: Method
             required: true
@@ -6491,10 +6503,11 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_297
-                schema: *ref_296
+        requestMediaTypes:
+          application/json: &ref_300
+            parameters:
+              - &ref_299
+                schema: *ref_298
                 implementation: Method
                 required: true
                 language:
@@ -6518,7 +6531,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_297
+              - *ref_299
             language:
               default:
                 name: ''
@@ -6531,11 +6544,13 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_300
         signatureParameters:
-          - *ref_298
-          - *ref_299
+          - *ref_301
+          - *ref_302
         responses:
-          - schema: *ref_295
+          - schema: *ref_297
             language:
               default:
                 name: ''
@@ -6583,13 +6598,14 @@ operationGroups:
             name: RegenerateTestKey
             description: Regenerate a test key for a Service.
         protocol: {}
-      - apiVersions:
+      - operationId: Services_DisableTestEndpoint
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_300
+          - &ref_303
             schema: *ref_1
             implementation: Method
             required: true
@@ -6601,7 +6617,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_301
+          - &ref_304
             schema: *ref_1
             implementation: Method
             required: true
@@ -6638,8 +6654,8 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_300
-          - *ref_301
+          - *ref_303
+          - *ref_304
         responses:
           - language:
               default:
@@ -6677,13 +6693,14 @@ operationGroups:
             name: DisableTestEndpoint
             description: Disable test endpoint functionality for a Service.
         protocol: {}
-      - apiVersions:
+      - operationId: Services_EnableTestEndpoint
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_302
+          - &ref_305
             schema: *ref_1
             implementation: Method
             required: true
@@ -6695,7 +6712,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_303
+          - &ref_306
             schema: *ref_1
             implementation: Method
             required: true
@@ -6732,10 +6749,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_302
-          - *ref_303
+          - *ref_305
+          - *ref_306
         responses:
-          - schema: *ref_295
+          - schema: *ref_297
             language:
               default:
                 name: ''
@@ -6781,13 +6798,14 @@ operationGroups:
             name: EnableTestEndpoint
             description: Enable test endpoint functionality for a Service.
         protocol: {}
-      - apiVersions:
+      - operationId: Services_CheckNameAvailability
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_306
+          - &ref_310
             schema: *ref_1
             implementation: Method
             required: true
@@ -6799,10 +6817,11 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_305
-                schema: *ref_304
+        requestMediaTypes:
+          application/json: &ref_309
+            parameters:
+              - &ref_308
+                schema: *ref_307
                 implementation: Method
                 required: true
                 language:
@@ -6826,7 +6845,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_305
+              - *ref_308
             language:
               default:
                 name: ''
@@ -6839,10 +6858,12 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_309
         signatureParameters:
-          - *ref_306
+          - *ref_310
         responses:
-          - schema: *ref_307
+          - schema: *ref_311
             language:
               default:
                 name: ''
@@ -6888,7 +6909,8 @@ operationGroups:
             name: CheckNameAvailability
             description: Checks that the resource name is valid and is not already in use.
         protocol: {}
-      - apiVersions:
+      - operationId: Services_ListBySubscription
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
@@ -6920,7 +6942,7 @@ operationGroups:
                 uri: '{$host}'
         signatureParameters: []
         responses:
-          - schema: *ref_308
+          - schema: *ref_312
             language:
               default:
                 name: ''
@@ -7000,13 +7022,14 @@ operationGroups:
             paging:
               nextLinkName: nextLink
         protocol: {}
-      - apiVersions:
+      - operationId: Services_List
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_309
+          - &ref_313
             schema: *ref_1
             implementation: Method
             required: true
@@ -7043,9 +7066,9 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_309
+          - *ref_313
         responses:
-          - schema: *ref_308
+          - schema: *ref_312
             language:
               default:
                 name: ''
@@ -7133,13 +7156,14 @@ operationGroups:
     protocol: {}
   - $key: ConfigServers
     operations:
-      - apiVersions:
+      - operationId: ConfigServers_Get
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_310
+          - &ref_314
             schema: *ref_1
             implementation: Method
             required: true
@@ -7151,7 +7175,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_311
+          - &ref_315
             schema: *ref_1
             implementation: Method
             required: true
@@ -7188,8 +7212,8 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_310
-          - *ref_311
+          - *ref_314
+          - *ref_315
         responses:
           - schema: *ref_96
             language:
@@ -7243,13 +7267,14 @@ operationGroups:
             name: Get
             description: Get the config server and its properties.
         protocol: {}
-      - apiVersions:
+      - operationId: ConfigServers_UpdatePut
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_313
+          - &ref_318
             schema: *ref_1
             implementation: Method
             required: true
@@ -7261,7 +7286,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_314
+          - &ref_319
             schema: *ref_1
             implementation: Method
             required: true
@@ -7273,9 +7298,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_312
+        requestMediaTypes:
+          application/json: &ref_317
+            parameters:
+              - &ref_316
                 schema: *ref_96
                 implementation: Method
                 required: true
@@ -7300,7 +7326,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_312
+              - *ref_316
             language:
               default:
                 name: ''
@@ -7313,9 +7339,11 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_317
         signatureParameters:
-          - *ref_313
-          - *ref_314
+          - *ref_318
+          - *ref_319
         responses:
           - schema: *ref_96
             language:
@@ -7405,13 +7433,14 @@ operationGroups:
             name: UpdatePut
             description: Update the config server.
         protocol: {}
-      - apiVersions:
+      - operationId: ConfigServers_UpdatePatch
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_316
+          - &ref_322
             schema: *ref_1
             implementation: Method
             required: true
@@ -7423,7 +7452,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_317
+          - &ref_323
             schema: *ref_1
             implementation: Method
             required: true
@@ -7435,9 +7464,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_315
+        requestMediaTypes:
+          application/json: &ref_321
+            parameters:
+              - &ref_320
                 schema: *ref_96
                 implementation: Method
                 required: true
@@ -7462,7 +7492,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_315
+              - *ref_320
             language:
               default:
                 name: ''
@@ -7475,9 +7505,11 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_321
         signatureParameters:
-          - *ref_316
-          - *ref_317
+          - *ref_322
+          - *ref_323
         responses:
           - schema: *ref_96
             language:
@@ -7572,13 +7604,14 @@ operationGroups:
             name: UpdatePatch
             description: Update the config server.
         protocol: {}
-      - apiVersions:
+      - operationId: ConfigServers_Validate
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_319
+          - &ref_326
             schema: *ref_1
             implementation: Method
             required: true
@@ -7590,7 +7623,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_320
+          - &ref_327
             schema: *ref_1
             implementation: Method
             required: true
@@ -7602,9 +7635,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_318
+        requestMediaTypes:
+          application/json: &ref_325
+            parameters:
+              - &ref_324
                 schema: *ref_138
                 implementation: Method
                 required: true
@@ -7629,7 +7663,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_318
+              - *ref_324
             language:
               default:
                 name: ''
@@ -7642,11 +7676,13 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_325
         signatureParameters:
-          - *ref_319
-          - *ref_320
+          - *ref_326
+          - *ref_327
         responses:
-          - schema: *ref_321
+          - schema: *ref_328
             language:
               default:
                 name: ''
@@ -7658,7 +7694,7 @@ operationGroups:
                   - application/json
                 statusCodes:
                   - '200'
-          - schema: *ref_321
+          - schema: *ref_328
             language:
               default:
                 name: ''
@@ -7723,13 +7759,14 @@ operationGroups:
     protocol: {}
   - $key: MonitoringSettings
     operations:
-      - apiVersions:
+      - operationId: MonitoringSettings_Get
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_322
+          - &ref_329
             schema: *ref_1
             implementation: Method
             required: true
@@ -7741,7 +7778,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_323
+          - &ref_330
             schema: *ref_1
             implementation: Method
             required: true
@@ -7778,8 +7815,8 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_322
-          - *ref_323
+          - *ref_329
+          - *ref_330
         responses:
           - schema: *ref_97
             language:
@@ -7832,13 +7869,14 @@ operationGroups:
             name: Get
             description: Get the Monitoring Setting and its properties.
         protocol: {}
-      - apiVersions:
+      - operationId: MonitoringSettings_UpdatePut
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_325
+          - &ref_333
             schema: *ref_1
             implementation: Method
             required: true
@@ -7850,7 +7888,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_326
+          - &ref_334
             schema: *ref_1
             implementation: Method
             required: true
@@ -7862,9 +7900,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_324
+        requestMediaTypes:
+          application/json: &ref_332
+            parameters:
+              - &ref_331
                 schema: *ref_97
                 implementation: Method
                 required: true
@@ -7889,7 +7928,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_324
+              - *ref_331
             language:
               default:
                 name: ''
@@ -7902,9 +7941,11 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_332
         signatureParameters:
-          - *ref_325
-          - *ref_326
+          - *ref_333
+          - *ref_334
         responses:
           - schema: *ref_97
             language:
@@ -7989,13 +8030,14 @@ operationGroups:
             name: UpdatePut
             description: Update the Monitoring Setting.
         protocol: {}
-      - apiVersions:
+      - operationId: MonitoringSettings_UpdatePatch
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_328
+          - &ref_337
             schema: *ref_1
             implementation: Method
             required: true
@@ -8007,7 +8049,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_329
+          - &ref_338
             schema: *ref_1
             implementation: Method
             required: true
@@ -8019,9 +8061,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_327
+        requestMediaTypes:
+          application/json: &ref_336
+            parameters:
+              - &ref_335
                 schema: *ref_97
                 implementation: Method
                 required: true
@@ -8046,7 +8089,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_327
+              - *ref_335
             language:
               default:
                 name: ''
@@ -8059,9 +8102,11 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_336
         signatureParameters:
-          - *ref_328
-          - *ref_329
+          - *ref_337
+          - *ref_338
         responses:
           - schema: *ref_97
             language:
@@ -8158,13 +8203,14 @@ operationGroups:
     protocol: {}
   - $key: Apps
     operations:
-      - apiVersions:
+      - operationId: Apps_Get
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_330
+          - &ref_339
             schema: *ref_1
             implementation: Method
             required: true
@@ -8176,7 +8222,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_331
+          - &ref_340
             schema: *ref_1
             implementation: Method
             required: true
@@ -8188,7 +8234,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_332
+          - &ref_341
             schema: *ref_1
             implementation: Method
             required: true
@@ -8200,7 +8246,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_333
+          - &ref_342
             schema: *ref_1
             implementation: Method
             language:
@@ -8236,10 +8282,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_330
-          - *ref_331
-          - *ref_332
-          - *ref_333
+          - *ref_339
+          - *ref_340
+          - *ref_341
+          - *ref_342
         responses:
           - schema: *ref_98
             language:
@@ -8306,13 +8352,14 @@ operationGroups:
             name: Get
             description: Get an App and its properties.
         protocol: {}
-      - apiVersions:
+      - operationId: Apps_CreateOrUpdate
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_335
+          - &ref_345
             schema: *ref_1
             implementation: Method
             required: true
@@ -8324,7 +8371,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_336
+          - &ref_346
             schema: *ref_1
             implementation: Method
             required: true
@@ -8336,7 +8383,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_337
+          - &ref_347
             schema: *ref_1
             implementation: Method
             required: true
@@ -8348,9 +8395,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_334
+        requestMediaTypes:
+          application/json: &ref_344
+            parameters:
+              - &ref_343
                 schema: *ref_98
                 implementation: Method
                 required: true
@@ -8375,7 +8423,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_334
+              - *ref_343
             language:
               default:
                 name: ''
@@ -8388,10 +8436,12 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_344
         signatureParameters:
-          - *ref_335
-          - *ref_336
-          - *ref_337
+          - *ref_345
+          - *ref_346
+          - *ref_347
         responses:
           - schema: *ref_98
             language:
@@ -8550,13 +8600,14 @@ operationGroups:
             name: CreateOrUpdate
             description: Create a new App or update an exiting App.
         protocol: {}
-      - apiVersions:
+      - operationId: Apps_Delete
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_338
+          - &ref_348
             schema: *ref_1
             implementation: Method
             required: true
@@ -8568,7 +8619,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_339
+          - &ref_349
             schema: *ref_1
             implementation: Method
             required: true
@@ -8580,7 +8631,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_340
+          - &ref_350
             schema: *ref_1
             implementation: Method
             required: true
@@ -8617,9 +8668,9 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_338
-          - *ref_339
-          - *ref_340
+          - *ref_348
+          - *ref_349
+          - *ref_350
         responses:
           - language:
               default:
@@ -8679,13 +8730,14 @@ operationGroups:
             name: Delete
             description: Operation to delete an App.
         protocol: {}
-      - apiVersions:
+      - operationId: Apps_Update
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_342
+          - &ref_353
             schema: *ref_1
             implementation: Method
             required: true
@@ -8697,7 +8749,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_343
+          - &ref_354
             schema: *ref_1
             implementation: Method
             required: true
@@ -8709,7 +8761,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_344
+          - &ref_355
             schema: *ref_1
             implementation: Method
             required: true
@@ -8721,9 +8773,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_341
+        requestMediaTypes:
+          application/json: &ref_352
+            parameters:
+              - &ref_351
                 schema: *ref_98
                 implementation: Method
                 required: true
@@ -8748,7 +8801,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_341
+              - *ref_351
             language:
               default:
                 name: ''
@@ -8761,10 +8814,12 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_352
         signatureParameters:
-          - *ref_342
-          - *ref_343
-          - *ref_344
+          - *ref_353
+          - *ref_354
+          - *ref_355
         responses:
           - schema: *ref_98
             language:
@@ -8894,13 +8949,14 @@ operationGroups:
             name: Update
             description: Operation to update an exiting App.
         protocol: {}
-      - apiVersions:
+      - operationId: Apps_List
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_345
+          - &ref_356
             schema: *ref_1
             implementation: Method
             required: true
@@ -8912,7 +8968,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_346
+          - &ref_357
             schema: *ref_1
             implementation: Method
             required: true
@@ -8949,10 +9005,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_345
-          - *ref_346
+          - *ref_356
+          - *ref_357
         responses:
-          - schema: *ref_347
+          - schema: *ref_358
             language:
               default:
                 name: ''
@@ -9021,13 +9077,14 @@ operationGroups:
             paging:
               nextLinkName: nextLink
         protocol: {}
-      - apiVersions:
+      - operationId: Apps_GetResourceUploadUrl
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_348
+          - &ref_359
             schema: *ref_1
             implementation: Method
             required: true
@@ -9039,7 +9096,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_349
+          - &ref_360
             schema: *ref_1
             implementation: Method
             required: true
@@ -9051,7 +9108,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_350
+          - &ref_361
             schema: *ref_1
             implementation: Method
             required: true
@@ -9088,11 +9145,11 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_348
-          - *ref_349
-          - *ref_350
+          - *ref_359
+          - *ref_360
+          - *ref_361
         responses:
-          - schema: *ref_351
+          - schema: *ref_362
             language:
               default:
                 name: ''
@@ -9137,13 +9194,14 @@ operationGroups:
             name: GetResourceUploadUrl
             description: Get an resource upload URL for an App, which may be artifacts or source archive.
         protocol: {}
-      - apiVersions:
+      - operationId: Apps_ValidateDomain
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_354
+          - &ref_366
             schema: *ref_1
             implementation: Method
             required: true
@@ -9155,7 +9213,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_355
+          - &ref_367
             schema: *ref_1
             implementation: Method
             required: true
@@ -9167,7 +9225,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_356
+          - &ref_368
             schema: *ref_1
             implementation: Method
             required: true
@@ -9179,10 +9237,11 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_353
-                schema: *ref_352
+        requestMediaTypes:
+          application/json: &ref_365
+            parameters:
+              - &ref_364
+                schema: *ref_363
                 implementation: Method
                 required: true
                 language:
@@ -9206,7 +9265,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_353
+              - *ref_364
             language:
               default:
                 name: ''
@@ -9219,12 +9278,14 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_365
         signatureParameters:
-          - *ref_354
-          - *ref_355
-          - *ref_356
+          - *ref_366
+          - *ref_367
+          - *ref_368
         responses:
-          - schema: *ref_357
+          - schema: *ref_369
             language:
               default:
                 name: ''
@@ -9277,13 +9338,14 @@ operationGroups:
     protocol: {}
   - $key: Bindings
     operations:
-      - apiVersions:
+      - operationId: Bindings_Get
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_358
+          - &ref_370
             schema: *ref_1
             implementation: Method
             required: true
@@ -9295,7 +9357,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_359
+          - &ref_371
             schema: *ref_1
             implementation: Method
             required: true
@@ -9307,7 +9369,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_360
+          - &ref_372
             schema: *ref_1
             implementation: Method
             required: true
@@ -9319,7 +9381,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_361
+          - &ref_373
             schema: *ref_1
             implementation: Method
             required: true
@@ -9356,10 +9418,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_358
-          - *ref_359
-          - *ref_360
-          - *ref_361
+          - *ref_370
+          - *ref_371
+          - *ref_372
+          - *ref_373
         responses:
           - schema: *ref_99
             language:
@@ -9420,13 +9482,14 @@ operationGroups:
             name: Get
             description: Get a Binding and its properties.
         protocol: {}
-      - apiVersions:
+      - operationId: Bindings_CreateOrUpdate
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_363
+          - &ref_376
             schema: *ref_1
             implementation: Method
             required: true
@@ -9438,7 +9501,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_364
+          - &ref_377
             schema: *ref_1
             implementation: Method
             required: true
@@ -9450,7 +9513,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_365
+          - &ref_378
             schema: *ref_1
             implementation: Method
             required: true
@@ -9462,7 +9525,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_366
+          - &ref_379
             schema: *ref_1
             implementation: Method
             required: true
@@ -9474,9 +9537,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_362
+        requestMediaTypes:
+          application/json: &ref_375
+            parameters:
+              - &ref_374
                 schema: *ref_99
                 implementation: Method
                 required: true
@@ -9501,7 +9565,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_362
+              - *ref_374
             language:
               default:
                 name: ''
@@ -9514,11 +9578,13 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_375
         signatureParameters:
-          - *ref_363
-          - *ref_364
-          - *ref_365
-          - *ref_366
+          - *ref_376
+          - *ref_377
+          - *ref_378
+          - *ref_379
         responses:
           - schema: *ref_99
             language:
@@ -9652,13 +9718,14 @@ operationGroups:
             name: CreateOrUpdate
             description: Create a new Binding or update an exiting Binding.
         protocol: {}
-      - apiVersions:
+      - operationId: Bindings_Delete
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_367
+          - &ref_380
             schema: *ref_1
             implementation: Method
             required: true
@@ -9670,7 +9737,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_368
+          - &ref_381
             schema: *ref_1
             implementation: Method
             required: true
@@ -9682,7 +9749,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_369
+          - &ref_382
             schema: *ref_1
             implementation: Method
             required: true
@@ -9694,7 +9761,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_370
+          - &ref_383
             schema: *ref_1
             implementation: Method
             required: true
@@ -9731,10 +9798,10 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_367
-          - *ref_368
-          - *ref_369
-          - *ref_370
+          - *ref_380
+          - *ref_381
+          - *ref_382
+          - *ref_383
         responses:
           - language:
               default:
@@ -9795,13 +9862,14 @@ operationGroups:
             name: Delete
             description: Operation to delete a Binding.
         protocol: {}
-      - apiVersions:
+      - operationId: Bindings_Update
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_372
+          - &ref_386
             schema: *ref_1
             implementation: Method
             required: true
@@ -9813,7 +9881,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_373
+          - &ref_387
             schema: *ref_1
             implementation: Method
             required: true
@@ -9825,7 +9893,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_374
+          - &ref_388
             schema: *ref_1
             implementation: Method
             required: true
@@ -9837,7 +9905,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_375
+          - &ref_389
             schema: *ref_1
             implementation: Method
             required: true
@@ -9849,9 +9917,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_371
+        requestMediaTypes:
+          application/json: &ref_385
+            parameters:
+              - &ref_384
                 schema: *ref_99
                 implementation: Method
                 required: true
@@ -9876,7 +9945,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_371
+              - *ref_384
             language:
               default:
                 name: ''
@@ -9889,11 +9958,13 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_385
         signatureParameters:
-          - *ref_372
-          - *ref_373
-          - *ref_374
-          - *ref_375
+          - *ref_386
+          - *ref_387
+          - *ref_388
+          - *ref_389
         responses:
           - schema: *ref_99
             language:
@@ -10001,13 +10072,14 @@ operationGroups:
             name: Update
             description: Operation to update an exiting Binding.
         protocol: {}
-      - apiVersions:
+      - operationId: Bindings_List
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_376
+          - &ref_390
             schema: *ref_1
             implementation: Method
             required: true
@@ -10019,7 +10091,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_377
+          - &ref_391
             schema: *ref_1
             implementation: Method
             required: true
@@ -10031,7 +10103,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_378
+          - &ref_392
             schema: *ref_1
             implementation: Method
             required: true
@@ -10068,11 +10140,11 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_376
-          - *ref_377
-          - *ref_378
+          - *ref_390
+          - *ref_391
+          - *ref_392
         responses:
-          - schema: *ref_379
+          - schema: *ref_393
             language:
               default:
                 name: ''
@@ -10142,13 +10214,14 @@ operationGroups:
     protocol: {}
   - $key: Certificates
     operations:
-      - apiVersions:
+      - operationId: Certificates_Get
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_380
+          - &ref_394
             schema: *ref_1
             implementation: Method
             required: true
@@ -10160,7 +10233,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_381
+          - &ref_395
             schema: *ref_1
             implementation: Method
             required: true
@@ -10172,7 +10245,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_382
+          - &ref_396
             schema: *ref_1
             implementation: Method
             required: true
@@ -10209,9 +10282,9 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_380
-          - *ref_381
-          - *ref_382
+          - *ref_394
+          - *ref_395
+          - *ref_396
         responses:
           - schema: *ref_100
             language:
@@ -10272,13 +10345,14 @@ operationGroups:
             name: Get
             description: Get the certificate resource.
         protocol: {}
-      - apiVersions:
+      - operationId: Certificates_CreateOrUpdate
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_384
+          - &ref_399
             schema: *ref_1
             implementation: Method
             required: true
@@ -10290,7 +10364,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_385
+          - &ref_400
             schema: *ref_1
             implementation: Method
             required: true
@@ -10302,7 +10376,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_386
+          - &ref_401
             schema: *ref_1
             implementation: Method
             required: true
@@ -10314,9 +10388,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_383
+        requestMediaTypes:
+          application/json: &ref_398
+            parameters:
+              - &ref_397
                 schema: *ref_100
                 implementation: Method
                 required: true
@@ -10341,7 +10416,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_383
+              - *ref_397
             language:
               default:
                 name: ''
@@ -10354,10 +10429,12 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_398
         signatureParameters:
-          - *ref_384
-          - *ref_385
-          - *ref_386
+          - *ref_399
+          - *ref_400
+          - *ref_401
         responses:
           - schema: *ref_100
             language:
@@ -10488,13 +10565,14 @@ operationGroups:
             name: CreateOrUpdate
             description: Create or update certificate resource.
         protocol: {}
-      - apiVersions:
+      - operationId: Certificates_Delete
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_387
+          - &ref_402
             schema: *ref_1
             implementation: Method
             required: true
@@ -10506,7 +10584,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_388
+          - &ref_403
             schema: *ref_1
             implementation: Method
             required: true
@@ -10518,7 +10596,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_389
+          - &ref_404
             schema: *ref_1
             implementation: Method
             required: true
@@ -10555,9 +10633,9 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_387
-          - *ref_388
-          - *ref_389
+          - *ref_402
+          - *ref_403
+          - *ref_404
         responses:
           - language:
               default:
@@ -10617,13 +10695,14 @@ operationGroups:
             name: Delete
             description: Delete the certificate resource.
         protocol: {}
-      - apiVersions:
+      - operationId: Certificates_List
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_390
+          - &ref_405
             schema: *ref_1
             implementation: Method
             required: true
@@ -10635,7 +10714,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_391
+          - &ref_406
             schema: *ref_1
             implementation: Method
             required: true
@@ -10672,10 +10751,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_390
-          - *ref_391
+          - *ref_405
+          - *ref_406
         responses:
-          - schema: *ref_392
+          - schema: *ref_407
             language:
               default:
                 name: ''
@@ -10746,13 +10825,14 @@ operationGroups:
     protocol: {}
   - $key: CustomDomains
     operations:
-      - apiVersions:
+      - operationId: CustomDomains_Get
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_393
+          - &ref_408
             schema: *ref_1
             implementation: Method
             required: true
@@ -10764,7 +10844,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_394
+          - &ref_409
             schema: *ref_1
             implementation: Method
             required: true
@@ -10776,7 +10856,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_395
+          - &ref_410
             schema: *ref_1
             implementation: Method
             required: true
@@ -10788,7 +10868,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_396
+          - &ref_411
             schema: *ref_1
             implementation: Method
             required: true
@@ -10825,10 +10905,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_393
-          - *ref_394
-          - *ref_395
-          - *ref_396
+          - *ref_408
+          - *ref_409
+          - *ref_410
+          - *ref_411
         responses:
           - schema: *ref_101
             language:
@@ -10880,13 +10960,14 @@ operationGroups:
             name: Get
             description: Get the custom domain of one lifecycle application.
         protocol: {}
-      - apiVersions:
+      - operationId: CustomDomains_CreateOrUpdate
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_398
+          - &ref_414
             schema: *ref_1
             implementation: Method
             required: true
@@ -10898,7 +10979,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_399
+          - &ref_415
             schema: *ref_1
             implementation: Method
             required: true
@@ -10910,7 +10991,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_400
+          - &ref_416
             schema: *ref_1
             implementation: Method
             required: true
@@ -10922,7 +11003,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_401
+          - &ref_417
             schema: *ref_1
             implementation: Method
             required: true
@@ -10934,9 +11015,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_397
+        requestMediaTypes:
+          application/json: &ref_413
+            parameters:
+              - &ref_412
                 schema: *ref_101
                 implementation: Method
                 required: true
@@ -10961,7 +11043,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_397
+              - *ref_412
             language:
               default:
                 name: ''
@@ -10974,11 +11056,13 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_413
         signatureParameters:
-          - *ref_398
-          - *ref_399
-          - *ref_400
-          - *ref_401
+          - *ref_414
+          - *ref_415
+          - *ref_416
+          - *ref_417
         responses:
           - schema: *ref_101
             language:
@@ -11079,13 +11163,14 @@ operationGroups:
             name: CreateOrUpdate
             description: Create or update custom domain of one lifecycle application.
         protocol: {}
-      - apiVersions:
+      - operationId: CustomDomains_Delete
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_402
+          - &ref_418
             schema: *ref_1
             implementation: Method
             required: true
@@ -11097,7 +11182,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_403
+          - &ref_419
             schema: *ref_1
             implementation: Method
             required: true
@@ -11109,7 +11194,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_404
+          - &ref_420
             schema: *ref_1
             implementation: Method
             required: true
@@ -11121,7 +11206,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_405
+          - &ref_421
             schema: *ref_1
             implementation: Method
             required: true
@@ -11158,10 +11243,10 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_402
-          - *ref_403
-          - *ref_404
-          - *ref_405
+          - *ref_418
+          - *ref_419
+          - *ref_420
+          - *ref_421
         responses:
           - language:
               default:
@@ -11222,13 +11307,14 @@ operationGroups:
             name: Delete
             description: Delete the custom domain of one lifecycle application.
         protocol: {}
-      - apiVersions:
+      - operationId: CustomDomains_Update
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_407
+          - &ref_424
             schema: *ref_1
             implementation: Method
             required: true
@@ -11240,7 +11326,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_408
+          - &ref_425
             schema: *ref_1
             implementation: Method
             required: true
@@ -11252,7 +11338,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_409
+          - &ref_426
             schema: *ref_1
             implementation: Method
             required: true
@@ -11264,7 +11350,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_410
+          - &ref_427
             schema: *ref_1
             implementation: Method
             required: true
@@ -11276,9 +11362,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_406
+        requestMediaTypes:
+          application/json: &ref_423
+            parameters:
+              - &ref_422
                 schema: *ref_101
                 implementation: Method
                 required: true
@@ -11303,7 +11390,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_406
+              - *ref_422
             language:
               default:
                 name: ''
@@ -11316,11 +11403,13 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_423
         signatureParameters:
-          - *ref_407
-          - *ref_408
-          - *ref_409
-          - *ref_410
+          - *ref_424
+          - *ref_425
+          - *ref_426
+          - *ref_427
         responses:
           - schema: *ref_101
             language:
@@ -11405,13 +11494,14 @@ operationGroups:
             name: Update
             description: Update custom domain of one lifecycle application.
         protocol: {}
-      - apiVersions:
+      - operationId: CustomDomains_List
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_411
+          - &ref_428
             schema: *ref_1
             implementation: Method
             required: true
@@ -11423,7 +11513,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_412
+          - &ref_429
             schema: *ref_1
             implementation: Method
             required: true
@@ -11435,7 +11525,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_413
+          - &ref_430
             schema: *ref_1
             implementation: Method
             required: true
@@ -11472,11 +11562,11 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_411
-          - *ref_412
-          - *ref_413
+          - *ref_428
+          - *ref_429
+          - *ref_430
         responses:
-          - schema: *ref_414
+          - schema: *ref_431
             language:
               default:
                 name: ''
@@ -11538,13 +11628,14 @@ operationGroups:
     protocol: {}
   - $key: Deployments
     operations:
-      - apiVersions:
+      - operationId: Deployments_Get
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_415
+          - &ref_432
             schema: *ref_1
             implementation: Method
             required: true
@@ -11556,7 +11647,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_416
+          - &ref_433
             schema: *ref_1
             implementation: Method
             required: true
@@ -11568,7 +11659,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_417
+          - &ref_434
             schema: *ref_1
             implementation: Method
             required: true
@@ -11580,7 +11671,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_418
+          - &ref_435
             schema: *ref_1
             implementation: Method
             required: true
@@ -11617,10 +11708,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_415
-          - *ref_416
-          - *ref_417
-          - *ref_418
+          - *ref_432
+          - *ref_433
+          - *ref_434
+          - *ref_435
         responses:
           - schema: *ref_102
             language:
@@ -11694,13 +11785,14 @@ operationGroups:
             name: Get
             description: Get a Deployment and its properties.
         protocol: {}
-      - apiVersions:
+      - operationId: Deployments_CreateOrUpdate
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_420
+          - &ref_438
             schema: *ref_1
             implementation: Method
             required: true
@@ -11712,7 +11804,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_421
+          - &ref_439
             schema: *ref_1
             implementation: Method
             required: true
@@ -11724,7 +11816,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_422
+          - &ref_440
             schema: *ref_1
             implementation: Method
             required: true
@@ -11736,7 +11828,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_423
+          - &ref_441
             schema: *ref_1
             implementation: Method
             required: true
@@ -11748,9 +11840,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_419
+        requestMediaTypes:
+          application/json: &ref_437
+            parameters:
+              - &ref_436
                 schema: *ref_102
                 implementation: Method
                 required: true
@@ -11775,7 +11868,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_419
+              - *ref_436
             language:
               default:
                 name: ''
@@ -11788,11 +11881,13 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_437
         signatureParameters:
-          - *ref_420
-          - *ref_421
-          - *ref_422
-          - *ref_423
+          - *ref_438
+          - *ref_439
+          - *ref_440
+          - *ref_441
         responses:
           - schema: *ref_102
             language:
@@ -11974,13 +12069,14 @@ operationGroups:
             name: CreateOrUpdate
             description: Create a new Deployment or update an exiting Deployment.
         protocol: {}
-      - apiVersions:
+      - operationId: Deployments_Delete
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_424
+          - &ref_442
             schema: *ref_1
             implementation: Method
             required: true
@@ -11992,7 +12088,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_425
+          - &ref_443
             schema: *ref_1
             implementation: Method
             required: true
@@ -12004,7 +12100,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_426
+          - &ref_444
             schema: *ref_1
             implementation: Method
             required: true
@@ -12016,7 +12112,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_427
+          - &ref_445
             schema: *ref_1
             implementation: Method
             required: true
@@ -12053,10 +12149,10 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_424
-          - *ref_425
-          - *ref_426
-          - *ref_427
+          - *ref_442
+          - *ref_443
+          - *ref_444
+          - *ref_445
         responses:
           - language:
               default:
@@ -12117,13 +12213,14 @@ operationGroups:
             name: Delete
             description: Operation to delete a Deployment.
         protocol: {}
-      - apiVersions:
+      - operationId: Deployments_Update
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_429
+          - &ref_448
             schema: *ref_1
             implementation: Method
             required: true
@@ -12135,7 +12232,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_430
+          - &ref_449
             schema: *ref_1
             implementation: Method
             required: true
@@ -12147,7 +12244,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_431
+          - &ref_450
             schema: *ref_1
             implementation: Method
             required: true
@@ -12159,7 +12256,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_432
+          - &ref_451
             schema: *ref_1
             implementation: Method
             required: true
@@ -12171,9 +12268,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_428
+        requestMediaTypes:
+          application/json: &ref_447
+            parameters:
+              - &ref_446
                 schema: *ref_102
                 implementation: Method
                 required: true
@@ -12198,7 +12296,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_428
+              - *ref_446
             language:
               default:
                 name: ''
@@ -12211,11 +12309,13 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_447
         signatureParameters:
-          - *ref_429
-          - *ref_430
-          - *ref_431
-          - *ref_432
+          - *ref_448
+          - *ref_449
+          - *ref_450
+          - *ref_451
         responses:
           - schema: *ref_102
             language:
@@ -12348,13 +12448,14 @@ operationGroups:
             name: Update
             description: Operation to update an exiting Deployment.
         protocol: {}
-      - apiVersions:
+      - operationId: Deployments_List
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_434
+          - &ref_453
             schema: *ref_1
             implementation: Method
             required: true
@@ -12366,7 +12467,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_435
+          - &ref_454
             schema: *ref_1
             implementation: Method
             required: true
@@ -12378,7 +12479,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_436
+          - &ref_455
             schema: *ref_1
             implementation: Method
             required: true
@@ -12390,8 +12491,8 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_437
-            schema: *ref_433
+          - &ref_456
+            schema: *ref_452
             implementation: Method
             language:
               default:
@@ -12428,12 +12529,12 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_434
-          - *ref_435
-          - *ref_436
-          - *ref_437
+          - *ref_453
+          - *ref_454
+          - *ref_455
+          - *ref_456
         responses:
-          - schema: *ref_438
+          - schema: *ref_457
             language:
               default:
                 name: ''
@@ -12509,13 +12610,14 @@ operationGroups:
             paging:
               nextLinkName: nextLink
         protocol: {}
-      - apiVersions:
+      - operationId: Deployments_ListForCluster
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_440
+          - &ref_459
             schema: *ref_1
             implementation: Method
             required: true
@@ -12527,7 +12629,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_441
+          - &ref_460
             schema: *ref_1
             implementation: Method
             required: true
@@ -12539,8 +12641,8 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_442
-            schema: *ref_439
+          - &ref_461
+            schema: *ref_458
             implementation: Method
             language:
               default:
@@ -12577,11 +12679,11 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_440
-          - *ref_441
-          - *ref_442
+          - *ref_459
+          - *ref_460
+          - *ref_461
         responses:
-          - schema: *ref_438
+          - schema: *ref_457
             language:
               default:
                 name: ''
@@ -12657,13 +12759,14 @@ operationGroups:
             paging:
               nextLinkName: nextLink
         protocol: {}
-      - apiVersions:
+      - operationId: Deployments_Start
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_443
+          - &ref_462
             schema: *ref_1
             implementation: Method
             required: true
@@ -12675,7 +12778,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_444
+          - &ref_463
             schema: *ref_1
             implementation: Method
             required: true
@@ -12687,7 +12790,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_445
+          - &ref_464
             schema: *ref_1
             implementation: Method
             required: true
@@ -12699,7 +12802,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_446
+          - &ref_465
             schema: *ref_1
             implementation: Method
             required: true
@@ -12736,10 +12839,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_443
-          - *ref_444
-          - *ref_445
-          - *ref_446
+          - *ref_462
+          - *ref_463
+          - *ref_464
+          - *ref_465
         responses:
           - language:
               default:
@@ -12793,13 +12896,14 @@ operationGroups:
             name: Start
             description: Start the deployment.
         protocol: {}
-      - apiVersions:
+      - operationId: Deployments_Stop
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_447
+          - &ref_466
             schema: *ref_1
             implementation: Method
             required: true
@@ -12811,7 +12915,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_448
+          - &ref_467
             schema: *ref_1
             implementation: Method
             required: true
@@ -12823,7 +12927,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_449
+          - &ref_468
             schema: *ref_1
             implementation: Method
             required: true
@@ -12835,7 +12939,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_450
+          - &ref_469
             schema: *ref_1
             implementation: Method
             required: true
@@ -12872,10 +12976,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_447
-          - *ref_448
-          - *ref_449
-          - *ref_450
+          - *ref_466
+          - *ref_467
+          - *ref_468
+          - *ref_469
         responses:
           - language:
               default:
@@ -12929,13 +13033,14 @@ operationGroups:
             name: Stop
             description: Stop the deployment.
         protocol: {}
-      - apiVersions:
+      - operationId: Deployments_Restart
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_451
+          - &ref_470
             schema: *ref_1
             implementation: Method
             required: true
@@ -12947,7 +13052,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_452
+          - &ref_471
             schema: *ref_1
             implementation: Method
             required: true
@@ -12959,7 +13064,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_453
+          - &ref_472
             schema: *ref_1
             implementation: Method
             required: true
@@ -12971,7 +13076,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_454
+          - &ref_473
             schema: *ref_1
             implementation: Method
             required: true
@@ -13008,10 +13113,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_451
-          - *ref_452
-          - *ref_453
-          - *ref_454
+          - *ref_470
+          - *ref_471
+          - *ref_472
+          - *ref_473
         responses:
           - language:
               default:
@@ -13065,13 +13170,14 @@ operationGroups:
             name: Restart
             description: Restart the deployment.
         protocol: {}
-      - apiVersions:
+      - operationId: Deployments_GetLogFileUrl
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
           - *ref_279
           - *ref_280
-          - &ref_455
+          - &ref_474
             schema: *ref_1
             implementation: Method
             required: true
@@ -13083,7 +13189,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_456
+          - &ref_475
             schema: *ref_1
             implementation: Method
             required: true
@@ -13095,7 +13201,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_457
+          - &ref_476
             schema: *ref_1
             implementation: Method
             required: true
@@ -13107,7 +13213,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_458
+          - &ref_477
             schema: *ref_1
             implementation: Method
             required: true
@@ -13144,12 +13250,12 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_455
-          - *ref_456
-          - *ref_457
-          - *ref_458
+          - *ref_474
+          - *ref_475
+          - *ref_476
+          - *ref_477
         responses:
-          - schema: *ref_459
+          - schema: *ref_478
             language:
               default:
                 name: ''
@@ -13210,7 +13316,8 @@ operationGroups:
     protocol: {}
   - $key: Operations
     operations:
-      - apiVersions:
+      - operationId: Operations_List
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
@@ -13241,7 +13348,7 @@ operationGroups:
                 uri: '{$host}'
         signatureParameters: []
         responses:
-          - schema: *ref_460
+          - schema: *ref_479
             language:
               default:
                 name: ''
@@ -13302,7 +13409,8 @@ operationGroups:
     protocol: {}
   - $key: RuntimeVersions
     operations:
-      - apiVersions:
+      - operationId: RuntimeVersions_ListRuntimeVersions
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
@@ -13333,7 +13441,7 @@ operationGroups:
                 uri: '{$host}'
         signatureParameters: []
         responses:
-          - schema: *ref_461
+          - schema: *ref_480
             language:
               default:
                 name: ''
@@ -13388,7 +13496,8 @@ operationGroups:
     protocol: {}
   - $key: Skus
     operations:
-      - apiVersions:
+      - operationId: Skus_List
+        apiVersions:
           - version: 2020-11-01-preview
         parameters:
           - *ref_278
@@ -13420,7 +13529,7 @@ operationGroups:
                 uri: '{$host}'
         signatureParameters: []
         responses:
-          - schema: *ref_462
+          - schema: *ref_481
             language:
               default:
                 name: ''
@@ -13486,7 +13595,10 @@ operationGroups:
     protocol: {}
 security:
   authenticationRequired: true
-  schemes: []
+  schemes:
+    - type: OAuth2
+      scopes:
+        - user_impersonation
 language:
   default:
     name: AppPlatformManagementClient

@@ -2,7 +2,7 @@
   "changes": [
     {
       "packageName": "@autorest/testmodeler",
-      "comment": "Add securityParameters in ExampleModel for ApiKey securityDefinitions.",
+      "comment": "Use modelerfour@4.23.7 and add securityParameters in ExampleModel for ApiKey securityDefinitions.",
       "type": "minor"
     }
   ],

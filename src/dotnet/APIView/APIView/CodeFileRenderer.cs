@@ -28,7 +28,7 @@ namespace ApiView
             bool isDocumentationRange = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
-            Stack<(string, string)> nodesInProcess = new Stack<(string, string)>();
+            Stack<NodeInProcess> nodesInProcess = new Stack<NodeInProcess>();
             string lastHeadingEncountered = null;
             HashSet<string> lineIds = new HashSet<string>(); // Used to ensure there are no duplicate IDs
             int indentSize = 0;
@@ -51,12 +51,12 @@ namespace ApiView
                             var nodesInProcessAsArray = nodesInProcess.ToArray();
                             for (int i = 0; i < nodesInProcessAsArray.Length; i++)
                             {
-                                var classPrefix = SanitizeLineClass(nodesInProcessAsArray[i].Item1);
-                                if (i == 0 && nodesInProcessAsArray[i].Item2.Equals("heading"))
+                                var classPrefix = SanitizeLineClass(nodesInProcessAsArray[i].classPrefix);
+                                if (i == 0 && nodesInProcessAsArray[i].classSuffix.Equals("heading"))
                                 {
                                     lineClass += (classPrefix + "-heading ");
                                 }
-                                else if (i > 0 && nodesInProcessAsArray[i].Item2.Equals("heading"))
+                                else if (i > 0 && nodesInProcessAsArray[i].classSuffix.Equals("heading"))
                                 {
                                     break;
                                 }
@@ -101,19 +101,19 @@ namespace ApiView
                         break;
 
                     case CodeFileTokenKind.FoldableSectionHeading:
-                        nodesInProcess.Push((token.Value, "heading"));
+                        nodesInProcess.Push(new NodeInProcess(token.Value, "heading"));
                         lastHeadingEncountered = token.Value;
                         RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentStart:
-                        nodesInProcess.Push((lastHeadingEncountered, "content"));
+                        nodesInProcess.Push(new NodeInProcess(lastHeadingEncountered, "content"));
                         indentSize++;
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentEnd:
                         nodesInProcess.Pop();
-                        if (nodesInProcess.Peek().Item2.Equals("heading"))
+                        if (nodesInProcess.Peek().classSuffix.Equals("heading"))
                         {
                             nodesInProcess.Pop();
                         }
@@ -151,6 +151,7 @@ namespace ApiView
                 return resultAsInt.ToString();
             }
 
+            // Ensure the id is valid html id
             if (!String.IsNullOrWhiteSpace(lineId))
             {
                 var result = lineId.ToLower();
@@ -158,13 +159,16 @@ namespace ApiView
                 result = Regex.Replace(result, "^[0-9]+", "");
                 result = Regex.Replace(result, "//s+", "");
 
+                // Remove duplicates by appending or incrementing a number as suffix of string
                 if (lineIds.Contains(result))
                 {
                     do
                     {
-                        if (result.EndsWith("1"))
+                        var suffixCount = Regex.Match(result, "[0-9]+$").Value;
+                        if (!String.IsNullOrWhiteSpace(suffixCount))
                         {
-                            result += '1';
+                            int suffixCountAsInt = Int32.Parse(suffixCount);
+                            result = Regex.Replace(result, $"{suffixCount}$", $"{++suffixCountAsInt}");
                         }
                         else
                         {
@@ -191,5 +195,17 @@ namespace ApiView
         // These methods should not render anything for text renderer so keeping it empty
         protected virtual void StartDocumentationRange(StringBuilder stringBuilder) { }
         protected virtual void CloseDocumentationRange(StringBuilder stringBuilder) { }
+    }
+
+    public struct NodeInProcess
+    {
+        public NodeInProcess(string prefix, string suffix)
+        {
+            classPrefix = prefix;
+            classSuffix = suffix;
+        }
+
+        public string classPrefix { get; }
+        public string classSuffix { get; }
     }
 }

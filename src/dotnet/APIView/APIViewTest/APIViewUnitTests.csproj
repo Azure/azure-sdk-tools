@@ -19,8 +19,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.26.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="2.1.0" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="1.0.0-preview.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="3.0.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
     <PackageReference Include="Moq" Version="4.18.1" />
     <PackageReference Include="xunit" Version="2.4.1" />

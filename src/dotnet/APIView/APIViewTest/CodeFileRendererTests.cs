@@ -424,7 +424,7 @@ namespace APIViewUnitTests
             Assert.Equal($"{duplicateId}_1", result[2].ElementId);
             Assert.Equal(" LiteralLineTwo:", result[3].DisplayString);
             Assert.Equal("headinglineone-content", result[3].LineClass);
-            Assert.Equal($"{duplicateId}_11", result[3].ElementId);
+            Assert.Equal($"{duplicateId}_2", result[3].ElementId);
         }
 
     }

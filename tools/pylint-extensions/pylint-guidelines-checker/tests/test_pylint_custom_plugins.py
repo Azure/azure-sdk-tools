@@ -2978,13 +2978,13 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         class_node, function_node = astroid.extract_node(
             """
             import logging
-            logger = logging.getLogger(__name__)
+            _LOGGER = logging.getLogger(__name__)
             class SomeClient(object): #@
                 def __init__(self, something, **kwargs): #@
                     try:
                         pass
                     except Exception as e:
-                        logger.Warning("something went wrong"+ str(e))
+                        _LOGGER.warning("something went wrong"+ str(e))
             """
         )
 
@@ -2999,13 +2999,13 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         class_node, function_node = astroid.extract_node(
             """
             import logging
-            logger = logging.getLogger(__name__)
+            _LOGGER = logging.getLogger(__name__)
             class SomeClient(object): #@
                 def __init__(self, something, **kwargs): #@
                     try:
                         pass
                     except Exception as e:
-                        logger.Debug("this is okay"+ str(e))
+                        _LOGGER.debug("this is okay"+ str(e))
             """
         )
 
@@ -3016,13 +3016,13 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         class_node, function_node = astroid.extract_node(
             """
             import logging
-            logger = logging.getLogger(__name__)
+            _LOGGER = logging.getLogger(__name__)
             class SomeClient(object): #@
                 def logging(self, something, **kwargs): #@
                     try:
                         pass
                     except Exception as e:
-                        logger.Warning("this is okay")
+                        _LOGGER.warning("this is okay")
             """
         )
 
@@ -3033,13 +3033,13 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         class_node, function_node = astroid.extract_node(
             """
             import logging
-            logger = logging.getLogger(__name__)
+            _LOGGER = logging.getLogger(__name__)
             class SomeClient(object): #@
                 def __init__(self, something, **kwargs): #@
                     try:
                         pass
                     except Exception:
-                        logger.Debug("this is okay"+ repr(Exception))
+                        _LOGGER.debug("this is okay"+ repr(Exception))
             """
         )
 
@@ -3050,13 +3050,13 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         class_node, function_node = astroid.extract_node(
             """
             import logging
-            logger = logging.getLogger(__name__)
+            _LOGGER = logging.getLogger(__name__)
             class SomeClient(object): #@
                 def __init__(self, something, **kwargs): #@
                     try:
                         pass
                     except (Exception, AttributeError) as e:
-                        logger.Warning("this is not okay"+ repr(e))
+                        _LOGGER.warning("this is not okay"+ repr(e))
             """
         )
 

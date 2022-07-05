@@ -117,7 +117,6 @@ namespace PipelineGenerator.Conventions
         {
             Logger.LogDebug("Attempting to get existing definition '{0}'.", definitionName);
             var projectReference = await Context.GetProjectReferenceAsync(cancellationToken);
-            var sourceRepository = await Context.GetSourceRepositoryAsync(cancellationToken);
             var buildClient = await Context.GetBuildHttpClientAsync(cancellationToken);
 
             if (pipelineReferences == default)
@@ -163,20 +162,20 @@ namespace PipelineGenerator.Conventions
 
         private async Task<BuildDefinition> CreateDefinitionAsync(string definitionName, SdkComponent component, CancellationToken cancellationToken)
         {
-
-            var sourceRepository = await Context.GetSourceRepositoryAsync(cancellationToken);
-
-            var buildRepository = new BuildRepository()
+            var serviceEndpoint = await Context.GetServiceEndpointAsync(cancellationToken);
+            
+            var repository = Context.Repository;
+            
+            var buildRepository = new BuildRepository
             {
                 DefaultBranch = Context.Branch,
-                Id = sourceRepository.Id,
-                Name = sourceRepository.FullName,
+                Id = repository,
+                Name = repository,
                 Type = "GitHub",
-                Url = new Uri(sourceRepository.Properties["cloneUrl"]),
+                Url = new Uri($"https://github.com/{repository}.git"),
+                Properties = { ["connectedServiceId"] = serviceEndpoint.Id.ToString() }
             };
-
-            buildRepository.Properties.AddRangeIfRangeNotNull(sourceRepository.Properties);
-
+            
             var projectReference = await Context.GetProjectReferenceAsync(cancellationToken);
             var agentPoolQueue = await Context.GetAgentPoolQueue(cancellationToken);
             var normalizedRelativeYamlPath = component.RelativeYamlPath.Replace("\\", "/");

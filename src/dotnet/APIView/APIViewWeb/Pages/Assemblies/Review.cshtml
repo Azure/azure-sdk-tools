@@ -43,6 +43,15 @@
                         case "swift":
                             <span><img class="mx-1" src="~/icons/swift-original.svg" width="40" alt="@Model.Review.Language"></span>
                             break;
+                        case "kotlin":
+                            <span><img class="mx-1" src="~/icons/kotlin-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "json":
+                            <span><img class="mx-1" src="~/icons/json-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "swagger":
+                            <span><img class="mx-1" src="~/icons/swagger-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
                         default:
                             <span class="badge badge-info"><em>@Model.Review.Language</em></span>
                             break;
@@ -85,7 +94,7 @@
                         <select class="selectpicker show-tick p-0" data-style="btn-light btn-sm border rounded-left-0 m-0" data-live-search="true" data-size="10" data-width="calc(100% - 68px)" data-container="body" id="revisions-bootstraps-select">
                             @foreach (var revision in Model.Review.Revisions.Reverse())
                             {
-                                var approvedBadge = "<span class='badge badge-pill badge-success ml-1 p-1'><i class='fas fa-check-circle'></i> APPROVED</span>";
+                                var approvedBadge = "<i class='fas fa-check-circle text-success ml-2'></i>";
                                 var optionName = revision.IsApproved ? $"{@revision.DisplayName} {@approvedBadge}" : @revision.DisplayName;
                                 var urlValue = @Url.ActionLink("Review", "Assemblies", new {
                                     id = @Model.Review.ReviewId,
@@ -118,7 +127,7 @@
                                         doc = @Model.ShowDocumentation,
                                         diffOnly = @Model.ShowDiffOnly
                                     });
-                                    <button class="btn btn-outline-secondary diff-button" type="button" value="@urlValue">Diff</button>
+                                    <button class="btn btn-outline-secondary diff-button" type="button" value="@urlValue" aria-label="Diff Button">Diff</button>
                                 }
                                 else
                                 {
@@ -129,10 +138,10 @@
                                         doc = @Model.ShowDocumentation,
                                         diffOnly = @Model.ShowDiffOnly
                                     });
-                                    <button class="btn btn-outline-secondary diff-button" type="button" value="@urlValue">Diff</button>
+                                    <button class="btn btn-outline-secondary diff-button" type="button" value="@urlValue" aria-label="Diff Button">Diff</button>
                                 }
                             </div>
-                            <select class="selectpicker show-tick" data-style="btn-light btn-sm border border-left rounded-left-0" data-size="10" data-width="calc(100% - 39px)" data-live-search="true" data-container="body" id="diff-bootstraps-select">
+                            <select class="selectpicker show-tick" data-style="btn-light btn-sm border border-left rounded-left-0" data-size="10" data-width="calc(100% - 39px)" data-live-search="true" data-container="body" aria-label="Diff Review" id="diff-bootstraps-select">
                                 if (@Model.DiffRevisionId == null)
                                 {
                                     <option value="" selected></option>
@@ -174,22 +183,25 @@
             </div>
         </div>
         <div class="col-lg-6 my-1">
-            <div class="float-right ml-2 my-1">
-                <form asp-resource="@Model.Review" class="form-inline" method="post" asp-page-handler="ToggleClosed">
-                    @if (Model.Review.IsClosed)
-                    {
-                        <button type="submit" class="btn btn-sm border shadow-sm btn-light">
-                            <i class="fa fa-sm fa-undo" aria-hidden="true"></i>&nbsp;&nbsp;Reopen
-                        </button>
-                    }
-                    else
-                    {
-                        <button type="submit" class="btn btn-sm border shadow-sm btn-light">
-                            <i class="far fa-window-close" aria-hidden="true"></i>&nbsp;&nbsp;Close
-                        </button>
-                    }
-                </form>
-            </div>
+            @if (Model.Review.FilterType != ReviewType.Automatic)
+            {
+                <div class="float-right ml-2 my-1">
+                    <form asp-resource="@Model.Review" class="form-inline" method="post" asp-page-handler="ToggleClosed">
+                        @if (Model.Review.IsClosed)
+                        {
+                            <button type="submit" class="btn btn-sm border shadow-sm btn-light">
+                                <i class="fa fa-sm fa-undo" aria-hidden="true"></i>&nbsp;&nbsp;Reopen
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-sm border shadow-sm btn-light">
+                                <i class="far fa-window-close" aria-hidden="true"></i>&nbsp;&nbsp;Close
+                            </button>
+                        }
+                    </form>
+                </div>
+            }
             <div class="float-right ml-2 my-1">
                 <form asp-resource="@Model.Review" class="form-inline" method="post" asp-page-handler="ToggleSubscribed">
                     @if (Model.Review.GetUserEmail(User) != null)

@@ -57,3 +57,13 @@ public class ExampleClass: NSObject {
         return true
     }
 }
+
+// Use of @unchecked Sendable
+
+public class SomeSendable: @unchecked Sendable {
+    public let name: String
+
+    public init(name: String) {
+        self.name = name
+    }
+}

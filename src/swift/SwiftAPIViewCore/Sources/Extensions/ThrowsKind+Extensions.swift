@@ -29,11 +29,8 @@ import Foundation
 
 extension ThrowsKind: Tokenizable {
     func tokenize(apiview a: APIViewModel) {
-        switch self {
-        case .throwing, .rethrowing:
-            a.keyword("throws", prefixSpace: true, postfixSpace: true)
-        case .nothrowing:
-            return
-        }
+        let throwString = self.textDescription
+        guard throwString != "" else { return }
+        a.keyword(throwString, prefixSpace: true, postfixSpace: true)
     }
 }

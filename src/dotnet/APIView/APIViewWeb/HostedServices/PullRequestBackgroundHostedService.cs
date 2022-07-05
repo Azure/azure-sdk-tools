@@ -4,6 +4,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb.Repositories;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
@@ -13,6 +15,8 @@ namespace APIViewWeb.HostedServices
     {
         private bool _isDisabled = false;
         private PullRequestManager _pullRequestManager;
+
+        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
         public PullRequestBackgroundHostedService(PullRequestManager pullRequestManager, IConfiguration configuration)
         {
@@ -48,8 +52,19 @@ namespace APIViewWeb.HostedServices
         {
             do
             {
-                await _pullRequestManager.CleanupPullRequestData();
-                await Task.Delay(6 * 60 * 60000, stoppingToken); //6 hours delay
+                try
+                {
+                    await _pullRequestManager.CleanupPullRequestData();
+                }
+                catch (Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                }
+                finally
+                {
+                    //6 hours delay before running background task again
+                    await Task.Delay(6 * 60 * 60000, stoppingToken);
+                }
             }
             while (!stoppingToken.IsCancellationRequested);
         }

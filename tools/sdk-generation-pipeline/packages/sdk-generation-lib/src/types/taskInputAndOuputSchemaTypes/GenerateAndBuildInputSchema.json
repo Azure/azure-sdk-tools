@@ -2,7 +2,7 @@
   "type": "object",
   "properties": {
     "specFolder": {
-      // Path to local spec folder. path to the parent of resourceProvider folders. e.g. azure-rest-api-specs/specifications
+      // Path to local spec folder. path to the parent of service folders. e.g. azure-rest-api-specs/specifications
       "type": "string"
     },
     "headSha": {
@@ -27,6 +27,10 @@
       // The type of related swagger: resource-manager or data-plane
       "type": "string",
       "enum": ["resource-manager", "data-plane"]
+    },
+    "autorestConfig": {
+      // The autorest config got from /autorest.md, which is mounted by user
+      "type": "string"
     }
   },
   "required": ["specFolder", "headSha", "headRef", "repoHttpsUrl", "relatedReadmeMdFile"]

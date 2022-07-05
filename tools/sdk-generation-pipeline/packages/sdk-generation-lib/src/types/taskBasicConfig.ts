@@ -1,4 +1,4 @@
-import * as convict from 'convict';
+import convict from 'convict';
 
 export class TaskBasicConfig {
     sdkRepo: string;

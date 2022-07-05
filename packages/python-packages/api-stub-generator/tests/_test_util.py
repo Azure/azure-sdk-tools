@@ -32,4 +32,4 @@ def _merge_lines(lines) -> str:
 
 
 def _check(actual, expected, client):
-    assert actual == expected, f"\n*******\nClient: {client.__name__}\nActual:   {actual}\nExpected: {expected}\n*******"    
+    assert actual.lstrip() == expected, f"\n*******\nClient: {client.__name__}\nActual:   {actual}\nExpected: {expected}\n*******"    

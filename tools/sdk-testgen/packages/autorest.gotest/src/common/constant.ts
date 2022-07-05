@@ -9,6 +9,7 @@ export enum Config {
     parents = '__parents',
     outputFolder = 'output-folder',
     module = 'module',
+    moduleVersion = 'module-version',
     filePrefix = 'file-prefix',
     exampleFilePrefix = 'example-file-prefix',
     testFilePrefix = 'test-file-prefix',
@@ -19,11 +20,11 @@ export enum Config {
 export const configDefaults = {
     ...baseConfigDefaults,
     [Config.exportCodemodel]: false,
-    [Config.generateMockTest]: true,
+    [Config.generateMockTest]: false,
     [Config.generateSdkExample]: false,
     [Config.generateScenarioTest]: false,
     [Config.generateSdkSample]: false,
-    [Config.filePrefix]: 'zz_generated_',
-    [Config.exampleFilePrefix]: 'ze_generated_',
-    [Config.testFilePrefix]: 'zt_generated_',
+    [Config.filePrefix]: '',
+    [Config.exampleFilePrefix]: '',
+    [Config.testFilePrefix]: '',
 };

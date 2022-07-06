@@ -11,4 +11,8 @@
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Azure.Sdk.Tools.PerfAutomation\Azure.Sdk.Tools.PerfAutomation.csproj" />
+  </ItemGroup>
+
 </Project>

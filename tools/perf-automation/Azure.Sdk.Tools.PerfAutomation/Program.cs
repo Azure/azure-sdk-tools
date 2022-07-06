@@ -421,6 +421,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
             }
 
+            using (var streamWriter = new StreamWriter(outputCsv))
+            {
+                await WriteResultsSummary(streamWriter, results);
+            }
+        }
+
+        public static async Task WriteResultsSummary(StreamWriter streamWriter, IEnumerable<Result> results)
+        {
             var groups = results.GroupBy(r => (r.Language, r.LanguageVersion, r.Service, r.Test, r.Arguments));
             var resultSummaries = groups.Select(g =>
             {
@@ -436,7 +444,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 foreach (var result in g)
                 {
                     var primaryPackage = result.PrimaryPackage;
-                    var primaryPackageVersion = result.PackageVersions[primaryPackage];
+                    var primaryPackageVersion = result.PackageVersions?[primaryPackage];
                     if (primaryPackageVersion == "source")
                     {
                         resultSummary.Source = result.OperationsPerSecondMax;
@@ -451,7 +459,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 return resultSummary;
             });
 
-            using (var streamWriter = new StreamWriter(outputCsv))
             using (var csvWriter = new CsvWriter(streamWriter, CsvConfiguration))
             {
                 await csvWriter.WriteRecordsAsync(resultSummaries);

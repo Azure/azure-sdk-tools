@@ -1871,7 +1871,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         """)
 
         with self.assertNoMessages():
-            self.checker.visit_functiondef(function_node)
+            self.checker.visit_return(function_node.body[0])
 
     def test_ignores_non_client_methods(self):
         class_node, function_node = astroid.extract_node("""
@@ -1881,7 +1881,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         """)
 
         with self.assertNoMessages():
-            self.checker.visit_functiondef(function_node)
+            self.checker.visit_return(function_node.body[0])
 
     def test_ignores_methods_return_ItemPaged(self):
         class_node, function_node_a, function_node_b = astroid.extract_node("""
@@ -1898,8 +1898,8 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         """)
 
         with self.assertNoMessages():
-            self.checker.visit_functiondef(function_node_a)
-            self.checker.visit_functiondef(function_node_b)
+            self.checker.visit_return(function_node_a.body[0])
+            self.checker.visit_return(function_node_b.body[0])
 
     def test_ignores_methods_return_AsyncItemPaged(self):
         class_node, function_node_a, function_node_b = astroid.extract_node("""
@@ -1916,8 +1916,8 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         """)
 
         with self.assertNoMessages():
-            self.checker.visit_functiondef(function_node_a)
-            self.checker.visit_functiondef(function_node_b)
+            self.checker.visit_return(function_node_a.body[0])
+            self.checker.visit_return(function_node_b.body[0])
 
     def test_finds_method_returning_something_else(self):
         class_node, function_node_a, function_node_b = astroid.extract_node("""
@@ -1938,8 +1938,8 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
                 msg_id="client-list-methods-use-paging", node=function_node_b
             ),
         ):
-            self.checker.visit_functiondef(function_node_a)
-            self.checker.visit_functiondef(function_node_b)
+            self.checker.visit_return(function_node_a.body[0])
+            self.checker.visit_return(function_node_b.body[0])
 
     def test_finds_method_returning_something_else_async(self):
         class_node, function_node_a, function_node_b = astroid.extract_node("""
@@ -1961,8 +1961,8 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
                 msg_id="client-list-methods-use-paging", node=function_node_b
             ),
         ):
-            self.checker.visit_functiondef(function_node_a)
-            self.checker.visit_functiondef(function_node_b)
+            self.checker.visit_return(function_node_a.body[0])
+            self.checker.visit_return(function_node_b.body[0])
 
     def test_core_paging_file_custom_class_acceptable_and_violation(self):
         file = open(os.path.join(TEST_FOLDER, "test_files", "core_paging_acceptable_and_violation.py"))
@@ -1978,9 +1978,9 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
                 msg_id="client-list-methods-use-paging", node=function_node_b
             )
         ):
-            self.checker.visit_functiondef(function_node)
-            self.checker.visit_functiondef(function_node_a)
-            self.checker.visit_functiondef(function_node_b)
+            self.checker.visit_return(function_node.body[2])
+            self.checker.visit_return(function_node_a.body[0])
+            self.checker.visit_return(function_node_b.body[0])
      
 
     def test_core_paging_file_custom_class_violation(self):
@@ -1996,7 +1996,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
                 msg_id="client-list-methods-use-paging", node=function_node
             )
         ):
-            self.checker.visit_functiondef(function_node)
+            self.checker.visit_return(function_node.body[0])
     
     def test_core_paging_file_custom_class_acceptable(self):
         file = open(os.path.join(TEST_FOLDER, "test_files", "core_paging_acceptable.py"))
@@ -2007,7 +2007,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
 
    
         with self.assertNoMessages():
-            self.checker.visit_functiondef(function_node)
+            self.checker.visit_return(function_node.body[0])
           
 
     def test_guidelines_link_active(self):

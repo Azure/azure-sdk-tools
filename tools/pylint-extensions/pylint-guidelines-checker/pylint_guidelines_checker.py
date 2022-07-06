@@ -875,8 +875,8 @@ class ClientListMethodsUseCorePaging(BaseChecker):
 
     def __init__(self, linter=None):
         super(ClientListMethodsUseCorePaging, self).__init__(linter)
-
-    def visit_functiondef(self, node):
+    
+    def visit_return(self, node):
         """Visits every method in the client and checks that any list_ methods return
         an ItemPaged or AsyncItemPaged value.
 
@@ -885,30 +885,25 @@ class ClientListMethodsUseCorePaging(BaseChecker):
         :return: None
         """
         try:
-            if node.parent.name.endswith("Client") and node.parent.name not in self.ignore_clients and node.is_method():
-                if node.name.startswith("list"):
+            if node.parent.parent.name.endswith("Client") and node.parent.parent.name not in self.ignore_clients and node.parent.is_method():
+                if node.parent.name.startswith("list"):
                     paging_class = False
 
-                    for inner_node in node.body:
-                        # If this is a return node
-                        if isinstance(inner_node, astroid.Return):
+                    try:
+                        if "def by_page" in next(node.value.infer()).as_string():
+                            paging_class = True
 
-                            try:
-                                if "def by_page" in next(inner_node.value.infer()).as_string():
-                                    paging_class = True
-
-                            except (astroid.exceptions.InferenceError, AttributeError): # astroid can't always infer the return
-                                logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
-                                pass
+                    except (astroid.exceptions.InferenceError, AttributeError): # astroid can't always infer the return
+                        logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
+                        pass
 
                     if not paging_class:
                         self.add_message(
-                            msgid="client-list-methods-use-paging", node=node, confidence=None
+                            msgid="client-list-methods-use-paging", node=node.parent, confidence=None
                         )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
             pass
-
 
 class ClientLROMethodsUseCorePolling(BaseChecker):
     __implements__ = IAstroidChecker

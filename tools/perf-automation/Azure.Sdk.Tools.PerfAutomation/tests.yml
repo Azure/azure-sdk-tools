@@ -70,10 +70,51 @@ Services:
         duration: 15
   Tests:
   - Test: jsonsend
-    Arguments:
-    - ""
+    Arguments: &core-document-sizes
+    - --size 10 --parallel 64 --backend-type blobs
+    - --size 1000 --parallel 64 --backend-type blobs
     TestNames:
       Java: jsonsend
+  - Test: jsonreceive
+    Arguments: *core-document-sizes
+    TestNames:
+      Java: jsonreceive
+  - Test: xmlsend
+    Arguments: *core-document-sizes
+    TestNames:
+      Java: xmlsend
+  - Test: xmlreceive
+    Arguments: *core-document-sizes
+    TestNames:
+      Java: xmlreceive
+  - Test: binarydatasend
+    Arguments:
+    - --size 10240 --binary-data-source bytes --parallel 64 --backend-type blobs
+    - --size 10240 --binary-data-source file --parallel 64 --backend-type blobs
+    - --size 10240 --binary-data-source flux --parallel 64 --backend-type blobs
+    - --size 10240 --binary-data-source stream --parallel 64 --backend-type blobs
+    - --size 10485760 --binary-data-source bytes --parallel 32 --backend-type blobs
+    - --size 10485760 --binary-data-source file --parallel 32 --backend-type blobs
+    - --size 10485760 --binary-data-source flux --parallel 32 --backend-type blobs
+    - --size 10485760 --binary-data-source stream --parallel 32 --backend-type blobs
+    - --size 10240 --binary-data-source bytes --parallel 64 --backend-type blobs --http-client okhttp
+    - --size 10240 --binary-data-source file --parallel 64 --backend-type blobs --http-client okhttp
+    - --size 10240 --binary-data-source flux --parallel 64 --backend-type blobs --http-client okhttp
+    - --size 10240 --binary-data-source stream --parallel 64 --backend-type blobs --http-client okhttp
+    - --size 10485760 --binary-data-source bytes --parallel 32 --backend-type blobs --http-client okhttp
+    - --size 10485760 --binary-data-source file --parallel 32 --backend-type blobs --http-client okhttp
+    - --size 10485760 --binary-data-source flux --parallel 32 --backend-type blobs --http-client okhttp
+    - --size 10485760 --binary-data-source stream --parallel 32 --backend-type blobs --http-client okhttp
+    TestNames:
+      Java: binarydatasend
+  - Test: binarydatareceive
+    Arguments:
+    - --size 10240 --parallel 64 --backend-type blobs
+    - --size 10485760 --parallel 32 --backend-type blobs
+    - --size 10240 --parallel 64 --backend-type blobs --http-client okhttp
+    - --size 10485760 --parallel 32 --backend-type blobs --http-client okhttp
+    TestNames:
+      Java: binarydatareceive
 
 - Service: storage-blob
   Languages:

@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
             IDictionary<string, string> packageVersions, string testName, string arguments, string context)
         {
-            var processArguments = $"-jar {context} -- {testName} {arguments}";
+            var processArguments = $"-XX:+CrashOnOutOfMemoryError -jar {context} -- {testName} {arguments}";
 
             var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false);
 

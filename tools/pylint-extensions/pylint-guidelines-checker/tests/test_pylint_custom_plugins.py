@@ -2987,13 +2987,12 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
                         _LOGGER.warning("something went wrong"+ str(e))
             """
         )
-
         with self.assertAddsMessages(
                 pylint.testutils.Message(
-                    msg_id="exception-logging", node=function_node
+                    msg_id="exception-logging", node=function_node.body[0]
                 )
         ):
-            self.checker.visit_functiondef(function_node)
+            self.checker.visit_tryexcept(function_node.body[0])
 
     def test_logging_exception_debug_str_acceptable(self):
         class_node, function_node = astroid.extract_node(
@@ -3010,7 +3009,7 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         )
 
         with self.assertNoMessages():
-            self.checker.visit_functiondef(function_node)
+            self.checker.visit_tryexcept(function_node.body[0])
 
     def test_not_logging_exception_in_warning_acceptable(self):
         class_node, function_node = astroid.extract_node(
@@ -3027,7 +3026,7 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         )
 
         with self.assertNoMessages():
-            self.checker.visit_functiondef(function_node)
+            self.checker.visit_tryexcept(function_node.body[0])
 
     def test_logging_exception_debug_repr_acceptable(self):
         class_node, function_node = astroid.extract_node(
@@ -3044,7 +3043,7 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         )
 
         with self.assertNoMessages():
-            self.checker.visit_functiondef(function_node)
+            self.checker.visit_tryexcept(function_node.body[0])
 
     def test_logging_exception_in_warning_repr_violation(self):
         class_node, function_node = astroid.extract_node(
@@ -3062,7 +3061,7 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.Message(
-                    msg_id="exception-logging", node=function_node
+                    msg_id="exception-logging", node=function_node.body[0]
                 )
         ):
-            self.checker.visit_functiondef(function_node)
+            self.checker.visit_tryexcept(function_node.body[0])

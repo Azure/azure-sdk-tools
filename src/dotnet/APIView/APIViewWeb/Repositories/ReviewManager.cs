@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
 using APIViewWeb.Models;
-using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -85,6 +84,34 @@ namespace APIViewWeb.Repositories
             return _reviewsRepository.GetReviewsAsync(closed, language, packageName: packageName, filterType: filterType);
         }
 
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, IEnumerable<ReviewType> filterTypes)
+        {
+            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterTypes);
+        }
+
+        public async Task<IEnumerable<string>> GetReviewProprtiesAsync(string propertyName)
+        {
+            return await _reviewsRepository.GetReviewFirstLevelProprtiesAsync(propertyName);
+        }
+
+        public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
+            List<string> search, List<string> languages, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
+        {
+            var result = await _reviewsRepository.GetReviewsAsync(search, languages, isClosed, filterTypes, isApproved, offset, limit, orderBy);
+
+            // Calculate and add Previous and Next and Current page to the returned result
+            var totalPages = (int)Math.Ceiling((double)result.TotalCount / (double)limit);
+            var currentPage = (offset == 0) ? 1 : ((offset / limit) + 1);
+
+            (IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage) resultToReturn = (
+                Reviews: result.Reviews, TotalCount: result.TotalCount, TotalPages: totalPages,
+                CurrentPage: currentPage,
+                PreviousPage: (currentPage == 1) ? null : currentPage - 1,
+                NextPage: (currentPage >= totalPages) ? null : currentPage + 1
+            );
+            return resultToReturn;
+        }
+
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
         {
             var reviewModel = await _reviewsRepository.GetReviewAsync(id);
@@ -137,7 +164,7 @@ namespace APIViewWeb.Repositories
 
             if (review.PackageName != null && review.PackageDisplayName == null)
             {
-                var p = _packageNameManager.GetPackageDetails(review.PackageName);
+                var p = await _packageNameManager.GetPackageDetails(review.PackageName);
                 review.PackageDisplayName = p?.DisplayName;
                 review.ServiceName = p?.ServiceName;
             }
@@ -160,6 +187,8 @@ namespace APIViewWeb.Repositories
                     {
                         var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
                         var languageService = GetLanguageService(file.Language);
+                        if (languageService == null)
+                            continue;
 
                         // file.Name property has been repurposed to store package name and version string
                         // This is causing issue when updating review using latest parser since it expects Name field as file name
@@ -221,7 +250,7 @@ namespace APIViewWeb.Repositories
 
             if (review.PackageName != null)
             {
-                var p = _packageNameManager.GetPackageDetails(review.PackageName);
+                var p = await _packageNameManager.GetPackageDetails(review.PackageName);
                 review.PackageDisplayName = p?.DisplayName ?? review.PackageDisplayName;
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
             }
@@ -306,6 +335,10 @@ namespace APIViewWeb.Repositories
         {
             var review = await GetReviewAsync(user, id);
             review.IsClosed = !review.IsClosed;
+            if (review.FilterType == ReviewType.Automatic)
+            {
+                throw new AuthorizationFailedException();
+            }
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
@@ -319,7 +352,7 @@ namespace APIViewWeb.Repositories
 
         private LanguageService GetLanguageService(string language)
         {
-           return _languageServices.Single(service => service.Name == language);
+           return _languageServices.FirstOrDefault(service => service.Name == language);
         }
 
         private async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewModel reviewModel)
@@ -378,7 +411,7 @@ namespace APIViewWeb.Repositories
         {
             return review.Revisions
                .SelectMany(r => r.Files)
-               .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+               .Any(f => f.HasOriginal && GetLanguageService(f.Language)?.CanUpdate(f.VersionString) == true);
         }
 
         public async Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile)
@@ -522,10 +555,9 @@ namespace APIViewWeb.Repositories
             return null;
         }
 
-        public async void UpdateReviewBackground()
+        public async Task UpdateReviewBackground()
         {
             var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
-            await SyncPackageDisplayServiceName(reviews);
             foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
@@ -542,28 +574,6 @@ namespace APIViewWeb.Repositories
                 finally
                 {
                     _telemetryClient.StopOperation(operation);
-                }
-            }
-        }
-
-        private async Task SyncPackageDisplayServiceName(IEnumerable<ReviewModel> reviews)
-        {
-            foreach (var review in reviews)
-            {
-                var newServiceName = review.ServiceName ?? "Other";
-                var newDisplayName = review.PackageDisplayName ?? "Other";
-                var pkg = _packageNameManager.GetPackageDetails(review.PackageName);
-                if (pkg != null)
-                {
-                    newServiceName = pkg.ServiceName;
-                    newDisplayName = pkg.DisplayName;
-                }
-
-                if (newServiceName != review.ServiceName || newDisplayName != review.PackageDisplayName)
-                {
-                    review.ServiceName = newServiceName;
-                    review.PackageDisplayName = newDisplayName;
-                    await _reviewsRepository.UpsertReviewAsync(review);
                 }
             }
         }
@@ -657,11 +667,6 @@ namespace APIViewWeb.Repositories
                 packageDict[packageDisplayName].reviews.Add(new ReviewDisplayModel(review));
             }
             return response.Values.ToList();
-        }
-
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, ReviewType filterType)
-        {
-            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
         }
 
         public async Task AutoArchiveReviews(int archiveAfterMonths)

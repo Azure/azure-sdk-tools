@@ -23,7 +23,6 @@ __all__ = [
 
 
 def console_entry_point():
-    from apistub.nodes._pylint_parser import PylintParser
     print("Running api-stub-generator version {}".format(__version__))
     stub_generator = StubGenerator()
     apiview = stub_generator.generate_tokens()

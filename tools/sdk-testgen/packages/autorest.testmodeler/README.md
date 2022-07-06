@@ -94,7 +94,7 @@ try-require:
 version: 3.7.3
 
 use-extension:
-  "@autorest/modelerfour" : "4.22.3"
+  "@autorest/modelerfour" : "4.23.7"
 
 pipeline:
     test-modeler:

@@ -56,8 +56,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
             using (var writer = new StringWriter())
             {
-                
-
                 IViewEngine viewEngine = controller.HttpContext.RequestServices.GetService(typeof(ICompositeViewEngine)) as ICompositeViewEngine;
                 
                 ViewEngineResult viewResult = viewEngine.FindView(controller.ControllerContext, viewName, !partial);

@@ -17,13 +17,21 @@ export enum RepoType {
 }
 
 export enum AzureSDKTaskName {
-    Init = "init",
-    GenerateAndBuild = "generateAndBuild",
-    MockTest = "mockTest",
-    LiveTest = "liveTest",
+    Init = 'init',
+    GenerateAndBuild = 'generateAndBuild',
+    MockTest = 'mockTest',
+    LiveTest = 'liveTest',
 }
 
 export enum ServiceType {
-    DataPlane = "data-plane",
-    ResourceManager = "resource-manager",
+    DataPlane = 'data-plane',
+    ResourceManager = 'resource-manager',
 }
+
+export enum StorageType {
+    Blob = 'blob',
+    Db = 'db',
+    EventHub = 'eventhub',
+}
+
+export type SDKPipelineStatus = 'bot_update' | 'queued' | 'in_progress' | 'completed' | 'skipped';

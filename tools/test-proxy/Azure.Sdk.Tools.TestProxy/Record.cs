@@ -2,12 +2,11 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
@@ -17,22 +16,13 @@ namespace Azure.Sdk.Tools.TestProxy
     public sealed class Record : ControllerBase
     {
         private readonly ILogger _logger;
-
         private readonly RecordingHandler _recordingHandler;
+
         public Record(RecordingHandler recordingHandler, ILoggerFactory loggerFactory)
         {
             _recordingHandler = recordingHandler;
             _logger = loggerFactory.CreateLogger<Record>();
         }
-        
-        private static readonly HttpClient s_client = Startup.Insecure ?
-            new HttpClient(new HttpClientHandler() {  ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
-            {
-                Timeout = TimeSpan.FromSeconds(600)
-            } :
-            new HttpClient() {
-                Timeout = TimeSpan.FromSeconds(600)
-            };
 
         [HttpPost]
         public async Task Start()
@@ -40,6 +30,15 @@ namespace Azure.Sdk.Tools.TestProxy
             string file = await HttpRequestInteractions.GetBodyKey(Request, "x-recording-file", allowNulls: true);
 
             _recordingHandler.StartRecording(file, Response);
+        }
+
+
+        [HttpPost]
+        public async Task Push([FromBody()] IDictionary<string, object> options = null)
+        {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+            var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
+            _recordingHandler.Store.Push(pathToAssets, _recordingHandler.ContextDirectory);
         }
 
         [HttpPost]
@@ -52,7 +51,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode != EntryRecordMode.Record && mode != EntryRecordMode.DontRecord)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, "When stopping a recording and providing a x-recording-skip value, only value \"request-response\" is accepted.");
+                throw new HttpException(HttpStatusCode.BadRequest, "When stopping a recording and providing a \"x-recording-skip\" value, only value \"request-response\" is accepted.");
             }
 
             if (mode == EntryRecordMode.DontRecord)
@@ -67,7 +66,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 
-            await _recordingHandler.HandleRecordRequestAsync(id, Request, Response, s_client);
+            await _recordingHandler.HandleRecordRequestAsync(id, Request, Response);
         }
     }
 }

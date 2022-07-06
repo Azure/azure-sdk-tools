@@ -1,0 +1,68 @@
+{
+    "env": {
+        "browser": true,
+        "commonjs": true,
+        "es2021": true
+    },
+    "extends": [
+        "google"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": "2019"
+    },
+    "plugins": [
+        "@typescript-eslint",
+        "simple-import-sort"
+    ],
+    "rules": {
+      "indent": ["error", 4],
+      "max-len": ["error", 160],
+      "comma-dangle": ["error", "never"],
+      "require-jsdoc": ["error", {
+        "require": {
+          "FunctionDeclaration": false,
+          "MethodDefinition": false,
+          "ClassDeclaration": false,
+          "ArrowFunctionExpression": false,
+          "FunctionExpression": false
+        }
+      }],
+      "object-curly-spacing": ["error", "always"],
+      "simple-import-sort/imports": "error",
+      "new-cap": "off",
+      "valid-jsdoc": "off",
+      "@typescript-eslint/naming-convention": [
+        "error",
+        {
+          "selector": ["class", "interface", "enum", "enumMember", "typeParameter", "typeLike", "default"],
+          "format": ["PascalCase"],
+          "filter": {
+            "regex": "^_$",
+            "match": false
+          }
+        },
+        {
+          "selector": [ "variable", "parameter", "function", "method", "property", "memberLike"],
+          "format": ["camelCase"],
+          "filter": {
+            "regex": "^_$",
+            "match": false
+          }
+        },
+        {
+          "selector": ["default"],
+          "modifiers": ["global", "const"],
+          "format": ["UPPER_CASE"],
+          "filter": {
+            "regex": "^_$",
+            "match": false
+          }
+        },
+        {
+          "selector": ["objectLiteralProperty"],
+          "format": null
+        }
+      ]
+    }
+}

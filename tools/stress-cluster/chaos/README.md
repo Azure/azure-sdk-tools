@@ -13,7 +13,8 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Stress Test Secrets](#stress-test-secrets)
      * [Stress Test File Share](#stress-test-file-share)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
-     * [Helm Chart Dependencies](#helm-chart-dependencies)
+     * [Helm Chart File](#helm-chart-file)
+        * [Customize Docker Build](#customize-docker-build)
      * [Manifest Special Fields](#manifest-special-fields)
      * [Job Manifest](#job-manifest)
      * [Chaos Manifest](#chaos-manifest)
@@ -53,8 +54,8 @@ running the build and deployment script, see [Deploying a Stress Test](#deployin
 # Authenticate to Azure
 az login
 
-# Download the kubeconfig for the cluster (creates a 'context' named 'stress-test')
-az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-test -n stress-test
+# Download the kubeconfig for the cluster (creates a 'context' named 'stress-pg')
+az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-pg -n stress-test
 ```
 
 You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:
@@ -83,7 +84,7 @@ You will then need to build and push your container image to an Azure Container 
 Get the default container registry for the stress testing Kubernetes cluster:
 
 ```bash
-az acr list -g rg-stress-cluster-test --subscription "Azure SDK Developer Playground" --query "[0].loginServer"
+az acr list -g rg-stress-cluster-pg --subscription "Azure SDK Developer Playground" --query "[0].loginServer"
 # Outputs: <registry server host name, ex: 'myregistry.azurecr.io'>
 ```
 
@@ -171,7 +172,7 @@ The basic layout for a stress test is the following (see [`examples/stress_deplo
 
 ```
 <stress test root directory>
-    Dockerfile                          # A Dockerfile for building the stress test image
+    Dockerfile                          # A Dockerfile for building the stress test image. Custom dockerfile names are also supported.
     stress-test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
 
     Chart.yaml                          # A YAML file containing information about the helm chart and its dependencies
@@ -205,17 +206,21 @@ test container can be found in a file at path `$ENV_FILE` (usually `/mnt/outputs
 can be [loaded](https://www.npmjs.com/package/dotenv) [via](https://pypi.org/project/python-dotenv/)
 [various](https://mvnrepository.com/artifact/io.github.cdimascio/dotenv-java) [packages](https://www.nuget.org/packages/dotenv.net/).
 
-Stress tests should publish telemetry and logs to Application Insights via the $APPINSIGHTS_INSTRUMENTATIONKEY environment variable
-injected into the container.
+Stress tests should publish telemetry and logs to Application Insights via the `$APPINSIGHTS_CONNECTION_STRING` environment variable
+injected into the container. An `$APPINSIGHTS_INSTRUMENTATIONKEY` environment variable is also made available for
+backwards compatibility, but using the connection string is recommended as the app insights service is deprecating the
+instrumentation key approach.
 
 The following environment variables are currently populated by default into the env file, in addition to any
-[bicep template outputs](https://github.com/Azure/bicep/blob/main/docs/spec/outputs.md) specified.
+[bicep template outputs](https://docs.microsoft.com/azure/azure-resource-manager/bicep/outputs) specified.
 
 ```
 AZURE_CLIENT_ID=<value>
+AZURE_CLIENT_OID=<value>
 AZURE_CLIENT_SECRET=<value>
 AZURE_TENANT_ID=<value>
 AZURE_SUBSCRIPTION_ID=<value>
+APPINSIGHTS_CONNECTION_STRING=<value>
 APPINSIGHTS_INSTRUMENTATIONKEY=<value>
 
 # Bicep template outputs inserted here as well, for example
@@ -256,11 +261,11 @@ stress test container startup.
 The bicep/ARM file should output at least the resource group name, which will be injected into the stress test env file.
 
 ```
-// Dummy parameter to handle defaults the script passes in
-param testApplicationOid string = ''
+// Unique short string safe for naming resources like storage, service bus.
+param BaseName string = ''
 
 resource config 'Microsoft.AppConfiguration/configurationStores@2020-07-01-preview' = {
-  name: 'config-${resourceGroup().name}'
+  name: 'stress-${BaseName}'
   location: resourceGroup().location
   sku: {
     name: 'Standard'
@@ -268,10 +273,10 @@ resource config 'Microsoft.AppConfiguration/configurationStores@2020-07-01-previ
 }
 
 output RESOURCE_GROUP string = resourceGroup().name
-output AZURE_CLIENT_OID string = testApplicationOid
+output APP_CONFIG_NAME string = config.name
 ```
 
-### Helm Chart Dependencies
+### Helm Chart File
 
 The `<chart root>/Chart.yaml` file should look something like below. It must include the `stress-test-addons` dependency and the included annotations:
 
@@ -284,6 +289,8 @@ appVersion: v0.1
 annotations:
   stressTest: 'true'  # enable auto-discovery of this test via `find-all-stress-packages.ps1`
   namespace: <your stress test namespace, e.g. python>
+  dockerbuilddir: <OPTIONAL: custom docker build directory when dependencies are located in a parent directory>
+  dockerfile: <OPTIONAL: custom dockerfile path when file is not named Dockerfile>
   <optional key/value annotations for filtering>
 
 dependencies:
@@ -294,6 +301,13 @@ dependencies:
 
 The `stress-test-addons` dependency is a [helm library chart](https://helm.sh/docs/topics/library_charts/), which
 pre-defines a lot of the kubernetes config boilerplate needed to configure stress tests correctly.
+
+#### Customize Docker Build
+
+To customize the docker build behavior, update the following fields in `Chart.yaml`:
+
+- `annotations.dockerbuilddir` - docker build can only reference files within its build directory context. To run the docker build from a higher level context, e.g. to include file dependencies in other locations, set this value.
+- `annotations.dockerfile` - If a stress test directory has multiple dockerfiles that need to be used for different purposes, you can customize which one to build with this field.
 
 ### Manifest Special Fields
 
@@ -308,8 +322,12 @@ are made available in the template context.
     template is being generated.
 - `{{ .Stress.ResourceGroupName }}`
   - If deploying live resources for a test job, the name of the resource group.
-  - This can also be useful for pairing up template values with resource names. The resource group name will be generated based
-    on the deployment and scenario values, and can also be referenced for naming resources in the bicep/ARM template via `resourceGroup().name`.
+- `{{ .Stress.BaseName }}`
+  - Use this value to generate a random name, prefixes or suffixes for azure resources.
+  - The value consists of random alpha characters and will always start with a lowercase letter for maximum compatibility.
+  - This can be referenced for naming resources in the bicep/ARM template by adding `param BaseName string = ''` and passing the `BaseName` to resource names.
+    See [example template](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/stress-deployment-example/stress-test-resources.bicep).
+  - Useful for pairing up template values with resource names, e.g. a DNS target to block for network chaos.
 
 ### Job Manifest
 
@@ -387,12 +405,12 @@ spec:
   externalTargets:
     # Maps to the service bus resource cname, provided the resource group name, provided
     # the service bus namespace uses the resource group name as its name in the bicep template
-    - "{{ .Stress.ResourceGroupName }}.servicebus.windows.net"
+    - "{{ .Stress.BaseName }}.servicebus.windows.net"
   mode: one
   selector:
     labelSelectors:
-      # Maps to the test pod, provided it also sets a testInstance label of {{ .Stress.ResourceGroupName }}
-      testInstance: {{ .Stress.ResourceGroupName }}
+      # Maps to the test pod, provided it also sets a testInstance label of {{ .Stress.BaseName }}
+      testInstance: {{ .Stress.BaseName }}
       chaos: "true"
     namespaces:
       - {{ .Release.Namespace }}
@@ -583,7 +601,7 @@ See [Chaos Manifest](#chaos-manifest).
 
 There are a few ways to check on the status of your chaos resources, after your stress test pod(s) reach a `Running` state.
 
-From the [test cluster dashboard](https://aka.ms/azsdk/stress/dashboard), select your stress test pods from the dropdown
+From the [playground cluster dashboard](https://aka.ms/azsdk/stress/dashboard), select your stress test pods from the dropdown
 and verify there are entries in the logs in the **Chaos Daemon Events** table.
 
 On the stress cluster, you can view the status of your chaos resources. For example, to check on all the network chaos

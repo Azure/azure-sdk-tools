@@ -31,7 +31,7 @@ pr:
       - tools/mock-service-host
 
 variables:
-  NodeVersion: '14.x'
+  NodeVersion: '16.x'
   VAR_ARIFACT_NAME: "drop"
   VAR_BUILD_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
   NugetSecurityAnalysisWarningLevel: 'none'

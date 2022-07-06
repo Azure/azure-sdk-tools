@@ -16,6 +16,7 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
+import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 
 import java.util.Collections;
@@ -196,6 +197,11 @@ public final class ASTUtils {
         return MAKE_ID.matcher(fullPath).replaceAll("-");
     }
 
+    public static String makeId(AnnotationExpr annotation) {
+        int line = annotation.getBegin().orElseThrow(RuntimeException::new).line;
+        return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + "-L" + line);
+    }
+
     /**
      * Determines whether the type declaration is a public API (public or protected).
      * <p>
@@ -278,11 +284,26 @@ public final class ASTUtils {
         return false;
     }
 
+    public static boolean isTypeImplementingInterface(TypeDeclaration type, String interfaceName) {
+        return type.asClassOrInterfaceDeclaration().getImplementedTypes().stream()
+                .anyMatch(_interface -> _interface.getNameAsString().equals(interfaceName));
+    }
+
     private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
-        return nodeOptional.filter(node -> node instanceof TypeDeclaration<?>)
-            .map(node -> ((TypeDeclaration<?>) node).getFullyQualifiedName())
-            .map(Optional::get)
-            .orElse("");
+        if (!nodeOptional.isPresent()) {
+            return "";
+        }
+
+        Node node = nodeOptional.get();
+        if (node instanceof TypeDeclaration<?>) {
+            TypeDeclaration<?> type = (TypeDeclaration<?>) node;
+            return type.getFullyQualifiedName().get();
+        } else if (node instanceof CallableDeclaration) {
+            CallableDeclaration callableDeclaration = (CallableDeclaration) node;
+            return getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
+        } else {
+            return "";
+        }
     }
 
     /**

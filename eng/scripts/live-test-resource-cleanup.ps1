@@ -79,6 +79,25 @@ $OwnerAliasCache = @{}
 $IsProvisionerApp = $PSCmdlet.ParameterSetName -eq "Provisioner"
 $Exceptions = [System.Collections.Generic.HashSet[String]]@()
 
+function Retry([scriptblock] $Action, [int] $Attempts = 5) {
+    $attempt = 0
+    $sleep = 5
+
+    while ($attempt -lt $Attempts) {
+        try {
+            $attempt++
+            return $Action.Invoke()
+        } catch {
+            if ($attempt -lt $Attempts) {
+                Write-Warning "Attempt $attempt failed: $_. Trying again in $sleep seconds..."
+                Start-Sleep -Seconds $sleep
+            } else {
+                Write-Error -ErrorRecord $_
+            }
+        }
+    }
+}
+
 function LoadAllowList() {
   if (!(Test-Path $AllowListPath)) {
     return
@@ -271,7 +290,7 @@ function DeleteOrUpdateResourceGroups() {
   }
 
   Write-Verbose "Fetching groups"
-  $allGroups = @(Get-AzResourceGroup)
+  [Array]$allGroups = Retry { Get-AzResourceGroup }
   $toDelete = @()
   $toUpdate = @()
   Write-Host "Total Resource Groups: $($allGroups.Count)"
@@ -346,7 +365,9 @@ function Login() {
     Write-Verbose "Logging in with provisioner"
     $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
     $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)
-    Connect-AzAccount -Force -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal -Environment $Environment -WhatIf:$false
+    Retry {
+        Connect-AzAccount -Force -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal -Environment $Environment -WhatIf:$false
+    }
     Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false -WhatIf:$false
   } elseif ($Login) {
     Write-Verbose "Logging in with interactive user"

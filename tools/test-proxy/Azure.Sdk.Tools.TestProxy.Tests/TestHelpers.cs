@@ -11,6 +11,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public static class TestHelpers
     {
+        public static string GetValueFromCertificateFile(string certName)
+        {
+            var path = Path.Join(Directory.GetCurrentDirectory(), "Test.Certificates", certName);
+
+            return File.ReadAllText(path);
+        }
+
         public static Stream GenerateStreamRequestBody(string s)
         {
             var stream = new MemoryStream();

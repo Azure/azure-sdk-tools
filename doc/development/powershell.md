@@ -19,7 +19,7 @@ _(i.e. too long, didn't read)_
 **DO**
 
 - Try to write scripts that can be run locally
-- Write unit tests for your scripts
+- Write unit tests for your scripts. See [Unit Testing](#unit-testing).
 - Handle exit codes from external programs
 - Use `Set-StrictMode -Version 4` where possible
 - Define your data structures as much as possible via composition, or unit test or comment examples.

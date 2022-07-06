@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import * as path from 'path';
 import {generateMgmt} from "./hlc/generateMgmt";
 import {logger} from "./utils/logger";
 import {generateRLCInPipeline} from "./llc/generateRLCInPipeline/generateRLCInPipeline";
@@ -14,6 +15,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     const readmeFiles: string[] | string = inputJson['relatedReadmeMdFiles']? inputJson['relatedReadmeMdFiles']: inputJson['relatedReadmeMdFile'];
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
+    const autorestConfig: string | undefined = inputJson['autorestConfig'];
 
     if ((typeof readmeFiles !== 'string') && readmeFiles.length !== 1) {
         throw new Error(`get ${readmeFiles.length} readme files`);
@@ -40,8 +42,9 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     } else {
         await generateRLCInPipeline({
             sdkRepo: String(shell.pwd()),
-            swaggerRepo: specFolder,
+            swaggerRepo: path.isAbsolute(specFolder)? specFolder : path.join(String(shell.pwd()), specFolder),
             readmeMd: readmeMd,
+            autorestConfig,
             use: use,
             outputJson: outputJson,
             runningEnvironment: runningEnvironment

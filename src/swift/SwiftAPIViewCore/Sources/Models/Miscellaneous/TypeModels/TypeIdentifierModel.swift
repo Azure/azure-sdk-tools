@@ -52,9 +52,15 @@ struct TypeIdentifierModel: TypeModel {
 
     var optional = OptionalKind.none
     var opaque = OpaqueKind.none
+    var attributes: AttributesModel?
     var names: [TypeNameModel]
 
     init(from source: TypeIdentifier) {
+        if let attrs = source.attributes {
+            attributes = AttributesModel(from: attrs)
+        } else {
+            attributes = nil
+        }
         names = [TypeNameModel]()
         source.names.forEach { item in
             names.append(TypeNameModel(from: item))
@@ -67,6 +73,7 @@ struct TypeIdentifierModel: TypeModel {
 
     func tokenize(apiview a: APIViewModel) {
         opaque.tokenize(apiview: a)
+        attributes?.tokenize(apiview: a)
         let stopIdx = names.count - 1
         for (idx, name) in names.enumerated() {
             name.tokenize(apiview: a)

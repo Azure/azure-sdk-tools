@@ -4,16 +4,20 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb.Repositories;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace APIViewWeb.HostedServices
 {
-    public class ReviewBackgroundHostedService : IHostedService, IDisposable
+    public class ReviewBackgroundHostedService : BackgroundService
     {
         private readonly bool _isDisabled;
         private readonly ReviewManager _reviewManager;
         private readonly int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
+
+        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
         public ReviewBackgroundHostedService(ReviewManager reviewManager, IConfiguration configuration)
         {
@@ -31,31 +35,39 @@ namespace APIViewWeb.HostedServices
             }
         }
 
-        public Task StartAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             if (!_isDisabled)
             {
-                _reviewManager.UpdateReviewBackground();
-                return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                try
+                {
+                    await _reviewManager.UpdateReviewBackground();
+                    await ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                }
+                catch (Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                }
             }
-
-            return Task.CompletedTask;
         }
-
-        public Task StopAsync(CancellationToken stoppingToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose(){}
 
         private async Task ArchiveInactiveReviews(CancellationToken stoppingToken, int archiveAfter)
         {
             do
             {
-                await _reviewManager.AutoArchiveReviews(archiveAfter);
-                // Wait 6 hours before running archive task again
-                await Task.Delay(6 * 60 * 60000, stoppingToken);
+                try
+                {
+                    await _reviewManager.AutoArchiveReviews(archiveAfter);
+                }
+                catch(Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                }
+                finally
+                {
+                    // Wait 6 hours before running archive task again
+                    await Task.Delay(6 * 60 * 60000, stoppingToken);
+                }                
             }
             while (!stoppingToken.IsCancellationRequested);
         }

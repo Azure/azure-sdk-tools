@@ -48,5 +48,11 @@ namespace APIViewWeb
             }
             return allRequests;
         }
+
+        public async Task<List<PullRequestModel>> GetPullRequestsAsync(int pullRequestNumber, string repoName)
+        {
+            var query = $"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}'";
+            return await GetPullRequestFromQueryAsync(query);
+        }
     }
 }

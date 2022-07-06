@@ -51,7 +51,7 @@ class SubscriptModel: Tokenizable, Commentable, AccessLevelProtocol {
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
         genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
-        signature = SignatureModel(params: decl.parameterList, result: decl.resultType, resultAttributes: decl.resultAttributes)
+        signature = SignatureModel(params: decl.parameterList, result: decl.resultType, resultAttributes: decl.resultAttributes, throwsKind: nil)
     }
 
     init(from decl: ProtocolDeclaration.SubscriptMember, parent: ProtocolModel) {
@@ -61,7 +61,7 @@ class SubscriptModel: Tokenizable, Commentable, AccessLevelProtocol {
         accessLevel = modifiers.accessLevel ?? .internal
         genericParamClause = GenericParameterModel(from: decl.genericParameter)
         genericWhereClause = GenericWhereModel(from: decl.genericWhere)
-        signature = SignatureModel(params: decl.parameterList, result: decl.resultType, resultAttributes: decl.resultAttributes)
+        signature = SignatureModel(params: decl.parameterList, result: decl.resultType, resultAttributes: decl.resultAttributes, throwsKind: nil)
     }
 
     func tokenize(apiview a: APIViewModel) {

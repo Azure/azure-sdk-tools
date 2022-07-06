@@ -602,10 +602,23 @@ public class JavaASTAnalyser implements Analyser {
 
                 addToken(makeWhitespace());
 
+                // annotations
+                getAnnotations(enumConstantDeclaration, false, false);
+
                 // create a unique id for enum constants
                 final String name = enumConstantDeclaration.getNameAsString();
                 final String definitionId = makeId(enumDeclaration.getFullyQualifiedName().get() + "." + counter);
+                final boolean isDeprecated = enumConstantDeclaration.isAnnotationPresent("Deprecated");
+
+                if (isDeprecated) {
+                    addToken(new Token(DEPRECATED_RANGE_START));
+                }
+
                 addToken(new Token(MEMBER_NAME, name, definitionId));
+
+                if (isDeprecated) {
+                    addToken(new Token(DEPRECATED_RANGE_END));
+                }
 
                 enumConstantDeclaration.getArguments().forEach(expression -> {
                     addToken(new Token(PUNCTUATION, "("));
@@ -1008,7 +1021,7 @@ public class JavaASTAnalyser implements Analyser {
                     addToken(makeWhitespace());
                 }
 
-                addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString()));
+                addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString(), makeId(annotation)));
                 if (showAnnotationProperties) {
                     if (annotation instanceof NormalAnnotationExpr) {
                         addToken(new Token(PUNCTUATION, "("));
@@ -1040,8 +1053,11 @@ public class JavaASTAnalyser implements Analyser {
 
             nodeWithAnnotations.getAnnotations()
                 .stream()
-                .filter(annotationExpr -> !BLOCKED_ANNOTATIONS.contains(annotationExpr.getName().getIdentifier())
-                    && !annotationExpr.getName().getIdentifier().startsWith("Json"))
+                .filter(annotationExpr -> {
+                    String id = annotationExpr.getName().getIdentifier();
+                    return !BLOCKED_ANNOTATIONS.contains(id) && !id.startsWith("Json");
+                })
+                .sorted(Comparator.comparing(a -> a.getName().getIdentifier())) // we sort the annotations alphabetically
                 .forEach(consumer);
         }
 

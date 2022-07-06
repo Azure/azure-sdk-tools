@@ -47,6 +47,7 @@ describe('processRequest of go-tester', () => {
                 if (key === '') {
                     return {
                         testmodeler: {
+                            'generate-mock-test': true,
                             'export-codemodel': true,
                         },
                     };
@@ -64,6 +65,8 @@ describe('processRequest of go-tester', () => {
         expect(spyExampleGenerateCode).not.toHaveBeenCalled();
         expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
         expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).not.toHaveBeenCalled();
+        expect(spySampleGenerateCode).not.toHaveBeenCalled();
         expect(Helper.outputToModelerfour).toHaveBeenCalledTimes(1);
         expect(Helper.addCodeModelDump).toHaveBeenCalledTimes(2);
         expect(Helper.dump).toHaveBeenCalledTimes(1);
@@ -75,6 +78,7 @@ describe('processRequest of go-tester', () => {
                 if (key === '') {
                     return {
                         testmodeler: {
+                            'generate-mock-test': true,
                             'export-codemodel': false,
                         },
                     };
@@ -91,18 +95,20 @@ describe('processRequest of go-tester', () => {
         expect(spyExampleGenerateCode).not.toHaveBeenCalled();
         expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
         expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).not.toHaveBeenCalled();
+        expect(spySampleGenerateCode).not.toHaveBeenCalled();
         expect(Helper.outputToModelerfour).toHaveBeenCalledTimes(1);
         expect(Helper.addCodeModelDump).not.toHaveBeenCalled();
         expect(Helper.dump).toHaveBeenCalledTimes(1);
     });
 
-    it("don't generate mock test if generate-mock-test is false", async () => {
+    it("don't generate mock test if generate-mock-test is true", async () => {
         TestCodeModeler.getSessionFromHost = jest.fn().mockResolvedValue({
             getValue: jest.fn().mockImplementation((key: string) => {
                 if (key === '') {
                     return {
                         testmodeler: {
-                            'generate-mock-test': false,
+                            'generate-mock-test': true,
                         },
                     };
                 } else if (key === 'header-text') {
@@ -112,11 +118,13 @@ describe('processRequest of go-tester', () => {
         });
         await processRequest(undefined);
         expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
-        expect(spyMockTestGenerateCode).not.toHaveBeenCalled();
+        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
         expect(spyExampleRenderData).not.toHaveBeenCalled();
         expect(spyExampleGenerateCode).not.toHaveBeenCalled();
         expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
         expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).not.toHaveBeenCalled();
+        expect(spySampleGenerateCode).not.toHaveBeenCalled();
     });
 
     it('generate sdk example if generate-sdk-example is true', async () => {
@@ -135,11 +143,13 @@ describe('processRequest of go-tester', () => {
         });
         await processRequest(undefined);
         expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
-        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).not.toHaveBeenCalled();
         expect(spyExampleRenderData).toHaveBeenCalledTimes(1);
         expect(spyExampleGenerateCode).toHaveBeenCalledTimes(1);
         expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
         expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).not.toHaveBeenCalled();
+        expect(spySampleGenerateCode).not.toHaveBeenCalled();
     });
 
     it('generate scenario test if generate-scenario-test is true', async () => {
@@ -158,11 +168,13 @@ describe('processRequest of go-tester', () => {
         });
         await processRequest(undefined);
         expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
-        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).not.toHaveBeenCalled();
         expect(spyExampleRenderData).not.toHaveBeenCalled();
         expect(spyExampleGenerateCode).not.toHaveBeenCalled();
         expect(spyScenarioTestRenderData).toHaveBeenCalledTimes(1);
         expect(spyScenarioTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spySampleRenderData).not.toHaveBeenCalled();
+        expect(spySampleGenerateCode).not.toHaveBeenCalled();
     });
 
     it('generate sdk sample if generate-sdk-sample is true', async () => {
@@ -181,7 +193,7 @@ describe('processRequest of go-tester', () => {
         });
         await processRequest(undefined);
         expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
-        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).not.toHaveBeenCalled();
         expect(spyExampleRenderData).not.toHaveBeenCalled();
         expect(spyExampleGenerateCode).not.toHaveBeenCalled();
         expect(spyScenarioTestRenderData).not.toHaveBeenCalled();

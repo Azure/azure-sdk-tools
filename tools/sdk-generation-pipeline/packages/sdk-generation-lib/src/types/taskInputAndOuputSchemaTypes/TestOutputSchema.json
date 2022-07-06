@@ -17,6 +17,5 @@
     "codeCoverage": {
       "type": "number"
     }
-  },
-  "required": ["total", "success", "fail", "apiCoverage", "codeCoverage"]
+  }
 }

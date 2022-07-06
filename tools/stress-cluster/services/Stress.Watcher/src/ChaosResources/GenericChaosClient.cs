@@ -17,7 +17,8 @@ namespace Stress.Watcher
             iochaos,
             kernelchaos,
             timechaos,
-            jvmchaos
+            jvmchaos,
+            schedules
         };
 
         public string Group = "chaos-mesh.org";

@@ -233,6 +233,7 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj
       PackageVersions:
+      - Azure.Storage.Files.Shares: 12.9.0
       - Azure.Storage.Files.Shares: 12.10.0
       - Azure.Storage.Files.Shares: source
     Java:

@@ -149,11 +149,19 @@ stages:
           vmImage: MMS2019
 
         steps:
+          - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
+            parameters:
+              StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
 
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
             inputs:
               version: '$(DotNetCoreVersion)'
+          
+          - task: DotNetCoreInstaller@2
+            displayName: 'Use .NET Core sdk 5.x'
+            inputs:
+              version: '5.x'
 
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core $(DotNetRuntimeVersion)'
@@ -161,9 +169,11 @@ stages:
               packageType: runtime
               version: '$(DotNetRuntimeVersion)'
           
-          - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
-            parameters:
-              StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
+          - task: DotNetCoreCLI@2
+            displayName: 'List Dotnet RunTimes'
+            inputs:
+              command: custom
+              custom: '--list-runtimes'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'

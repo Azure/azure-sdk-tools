@@ -51,7 +51,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<PartialViewResult> OnGetReviewsLanguagesAsync(List<string> selectedLanguages = null)
         {
-            ReviewsProperties.Languages.All = await _manager.GetReviewProprtiesAsync("Revisions[0].Files[0].Language");
+            ReviewsProperties.Languages.All = await _manager.GetReviewPropertiesAsync("Revisions[0].Files[0].Language");
             selectedLanguages = selectedLanguages.Select(x => HttpUtility.UrlDecode(x)).ToList();
             ReviewsProperties.Languages.Selected = selectedLanguages;
             return Partial("_SelectPickerPartial", ReviewsProperties.Languages);

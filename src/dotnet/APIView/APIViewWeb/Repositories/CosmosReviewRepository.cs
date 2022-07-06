@@ -112,7 +112,7 @@ namespace APIViewWeb
             return reviews.OrderBy(r => r.Name).ThenByDescending(r => r.LastUpdated);
         }
 
-        public async Task<IEnumerable<string>> GetReviewFirstLevelProprtiesAsync(string propertyName)
+        public async Task<IEnumerable<string>> GetReviewFirstLevelPropertiesAsync(string propertyName)
         {
             var query = $"SELECT DISTINCT VALUE r.{propertyName} FROM Reviews r";
             var properties = new List<string>();

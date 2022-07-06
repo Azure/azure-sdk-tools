@@ -64,6 +64,20 @@ There are many quirks to how powershell works that make trade offs between being
 Powershell is a very flexible language. In engsys we try to use a smaller subset of what's possible to keep programs consistent and their behavior predictable.
 
 - Declare types for function parameters (e.g. `function foo([string]$bar) {}`.
+- Add formatted documentation for entrypoints like top-level scripts or publicly exposed functions.
+  ```
+  <#
+  .SYNOPSIS
+  <blah>
+  
+  .DESCRIPTION
+  <blah>
+  
+  .PARAMETER baz
+  <blah>
+  #>
+  function foobar([string]$baz)
+  ```
 - Avoid complex pipeline statements.
 - Put curly braces `{` for opening function blocks on a new line.
     ```

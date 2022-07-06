@@ -17,6 +17,7 @@ import {
     Schema,
     SchemaResponse,
     SchemaType,
+    SecurityScheme,
     codeModelSchema,
 } from '@autorest/codemodel';
 import { AutorestExtensionHost, Session, startSession } from '@autorest/extension-base';
@@ -217,6 +218,16 @@ export class ExampleParameter {
     }
 }
 
+export class SecurityParameter {
+    schema: SecurityScheme; // Ref to security.schmas[x]
+    rawValue: any;
+
+    public constructor(schema: SecurityScheme, rawValue: any) {
+        this.schema = schema;
+        this.rawValue = rawValue;
+    }
+}
+
 export class ExampleResponse {
     body?: ExampleValue;
     headers?: Record<string, any>;
@@ -238,6 +249,7 @@ export class ExampleModel {
     operation: Operation;
     clientParameters: ExampleParameter[] = [];
     methodParameters: ExampleParameter[] = [];
+    securityParameters?: SecurityParameter[] = undefined;
     responses: Record<string, ExampleResponse> = {}; // statusCode-->ExampleResponse
     originalFile: string;
 
@@ -310,6 +322,18 @@ export class TestCodeModeler {
                     exampleModel.clientParameters.push(exampleParameter);
                 } else {
                     // ignore
+                }
+            }
+        }
+
+        for (const paramName of Object.keys(parametersInExample)) {
+            for (const securitySchema of this.codeModel.security.schemes) {
+                if (Object.prototype.hasOwnProperty.call(securitySchema, 'name') && paramName === securitySchema['name']) {
+                    if (exampleModel.securityParameters === undefined) {
+                        exampleModel.securityParameters = [];
+                    }
+                    exampleModel.securityParameters.push(new SecurityParameter(securitySchema, parametersInExample[paramName]));
+                    break;
                 }
             }
         }

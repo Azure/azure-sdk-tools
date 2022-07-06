@@ -31,7 +31,7 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&armcompute.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &armcompute.CloudService{
+		armcompute.CloudService{
 			Location: to.Ptr("westus"),
 			Properties: &armcompute.CloudServiceProperties{
 				Configuration: to.Ptr("{ServiceConfiguration}"),
@@ -75,7 +75,7 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 				UpgradeMode: to.Ptr(armcompute.CloudServiceUpgradeModeAuto),
 			},
 		},
-		})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -101,12 +101,12 @@ func ExampleCloudServicesClient_BeginUpdate() {
 	poller, err := client.BeginUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&armcompute.CloudServicesClientBeginUpdateOptions{Parameters: &armcompute.CloudServiceUpdate{
+		armcompute.CloudServiceUpdate{
 			Tags: map[string]*string{
 				"Documentation": to.Ptr("RestAPI"),
 			},
 		},
-		})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

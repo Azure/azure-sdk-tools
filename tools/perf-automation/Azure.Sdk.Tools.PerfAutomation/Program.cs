@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             { Language.Cpp, new Cpp() }
         };
 
-        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+        public static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
             Converters =
             {

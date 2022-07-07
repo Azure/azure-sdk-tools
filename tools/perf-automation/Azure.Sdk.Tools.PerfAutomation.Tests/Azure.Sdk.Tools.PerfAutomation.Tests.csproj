@@ -15,4 +15,10 @@
     <ProjectReference Include="..\Azure.Sdk.Tools.PerfAutomation\Azure.Sdk.Tools.PerfAutomation.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="results.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PerfAutomation.Models;
 using NUnit.Framework;
@@ -13,9 +13,16 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         [Test]
         public async Task WriteResultsSummary()
         {
+            List<Result> results;
+            using (var stream = File.OpenRead("results.json")) {
+                results = await JsonSerializer.DeserializeAsync<List<Result>>(stream, options: Program.JsonOptions);
+            }
+
+            var resultsSummary = await GetResultsSummary(results);
+            Console.WriteLine(resultsSummary);
         }
 
-        private async Task<string> GetResultsSummary(IEnumerable<Result> results)
+        private static async Task<string> GetResultsSummary(IEnumerable<Result> results)
         {
             using var memoryStream = new MemoryStream();
 

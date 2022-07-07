@@ -145,14 +145,6 @@ Services:
     - --size 209715200 --parallel 1 --http-client apache
     - --size 1073741824 --parallel 1 --warmup 60 --duration 60 --http-client apache
     - --size 1073741824 --parallel 8 --warmup 60 --duration 60 --http-client apache
-    - --size 1 --warmup 0 --duration 1 --http-client vertx
-    - --size 10240 --parallel 64 --http-client vertx
-    - --size 1048576 --parallel 1 --http-client vertx
-    - --size 10485760 --parallel 32 --http-client vertx
-    - --size 20971520 --parallel 1 --http-client vertx
-    - --size 209715200 --parallel 1 --http-client vertx
-    - --size 1073741824 --parallel 1 --warmup 60 --duration 60 --http-client vertx
-    - --size 1073741824 --parallel 8 --warmup 60 --duration 60 --http-client vertx
     TestNames:
       Net: DownloadBlob
       Java: downloadblob
@@ -182,6 +174,14 @@ Services:
     - --count 5 --parallel 64
     - --count 500 --parallel 32
     - --count 50000 --parallel 32 --warmup 60 --duration 60
+    - --count 1 --warmup 0 --duration 1 --http-client apache
+    - --count 5 --parallel 64 --http-client apache
+    - --count 500 --parallel 32 --http-client apache
+    - --count 50000 --parallel 32 --warmup 60 --duration 60 --http-client apache
+    - --count 1 --warmup 0 --duration 1 --http-client okhttp
+    - --count 5 --parallel 64 --http-client okhttp
+    - --count 500 --parallel 32 --http-client okhttp
+    - --count 50000 --parallel 32 --warmup 60 --duration 60 --http-client okhttp
     TestNames:
       Net: GetBlobs
       Java: listblobs

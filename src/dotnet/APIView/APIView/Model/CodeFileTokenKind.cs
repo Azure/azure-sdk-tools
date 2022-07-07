@@ -20,6 +20,9 @@ namespace APIView
         DeprecatedRangeStart = 13,
         DeprecatedRangeEnd = 14,
         SkipDiffRangeStart = 15,
-        SkipDiffRangeEnd = 16
+        SkipDiffRangeEnd = 16,
+        FoldableSectionHeading = 17,
+        FoldableSectionContentStart = 18,
+        FoldableSectionContentEnd = 19
     }
 }

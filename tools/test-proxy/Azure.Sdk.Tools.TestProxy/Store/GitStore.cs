@@ -15,24 +15,37 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public bool AssetsJsonPresent;
     }
 
+    public class CommandResult
+    {
+        public int ReturnCode;
+        public string StdErr;
+        public string StdOut;
+
+    }
+
     public class GitStore : IAssetsStore
     {
         public async Task Push(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            var gitCommand = CreateBasicProcess(config.RepoRoot);
+            var gitCommand = BasicGitInvocation(config.RepoRoot);
 
+            // need to add further arguments
             throw new NotImplementedException();
         }
 
-        public Task Restore(string pathToAssetsJson, string contextPath) {
-            var config = ParseConfigurationFile(pathToAssetsJson);
+        public async Task Restore(string pathToAssetsJson, string contextPath) {
+            var config = await ParseConfigurationFile(pathToAssetsJson);
+            var gitCommand = BasicGitInvocation(config.RepoRoot);
 
+            // need to add further arguments
             throw new NotImplementedException();
         }
 
-        public Task Reset(string pathToAssetsJson, string contextPath) {
-            var config = ParseConfigurationFile(pathToAssetsJson);
+        public async Task Reset(string pathToAssetsJson, string contextPath) {
+            var config = await ParseConfigurationFile(pathToAssetsJson);
+            var gitCommand = BasicGitInvocation(config.RepoRoot);
 
+            // need to add further arguments
             throw new NotImplementedException();
         }
 
@@ -73,17 +86,46 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
-        public ProcessStartInfo CreateBasicProcess(string workingDirectory)
+        public ProcessStartInfo BasicGitInvocation(string workingDirectory)
         {
-            var process = new ProcessStartInfo("git")
+            var startInfo = new ProcessStartInfo("git")
             {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
                 WorkingDirectory = workingDirectory,
-                UseShellExecute = true,
-                CreateNoWindow = true
             };
 
-            return process;
+            startInfo.EnvironmentVariables["PATH"] = Environment.GetEnvironmentVariable("PATH");
+
+            return startInfo;
         }
+
+        public CommandResult RunProcess(ProcessStartInfo processStartInfo)
+        {
+            Process process = null;
+
+            try
+            {
+                process = Process.Start(processStartInfo);
+                string output = process.StandardOutput.ReadToEnd();
+                string errorOutput = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+
+                return new CommandResult()
+                {
+                    ReturnCode = process.ExitCode,
+                    StdErr = output,
+                    StdOut = errorOutput
+                };
+            }
+            catch (Exception e)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "Unable to locate git command.");
+            }
+        }
+
 
         public string AscendToRepoRoot(string path)
         {

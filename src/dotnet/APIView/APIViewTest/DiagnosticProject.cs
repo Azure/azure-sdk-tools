@@ -11,7 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace APIViewTest
+namespace APIViewUnitTest
 {
     public class DiagnosticProject
     {

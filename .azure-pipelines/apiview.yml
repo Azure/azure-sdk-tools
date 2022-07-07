@@ -29,7 +29,6 @@ pr:
       - src/ts/ts-genapi
 
 variables:
-  DotNetCoreVersion: '3.1.x'
   DotNetRuntimeVersion: '3.1.x'
   PythonVersion: '3.10.2'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
@@ -154,9 +153,9 @@ stages:
               StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
 
           - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+            displayName: 'Use .NET Core sdk 3.1.x'
             inputs:
-              version: '$(DotNetCoreVersion)'
+              version: '3.1.x'
           
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk 5.x'
@@ -168,12 +167,6 @@ stages:
             inputs:
               packageType: runtime
               version: '$(DotNetRuntimeVersion)'
-          
-          - task: DotNetCoreCLI@2
-            displayName: 'List Dotnet RunTimes'
-            inputs:
-              command: custom
-              custom: '--list-runtimes'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
@@ -191,6 +184,6 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
+              testRunTitle: 'Windows DotNet $(DotNetRuntimeVersion)'
               testResultsFormat: 'VSTest'
               mergeTestResults: true

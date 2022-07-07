@@ -98,6 +98,6 @@ jobs:
               publishFeedCredentials: Nuget.org
 
       - publish: '${{ parameters.ArtifactsPath }}'
-        displayName: Publish Packages
+        displayName: Upload Packages to Artifacts
         artifact: packages
         condition: succeeded()

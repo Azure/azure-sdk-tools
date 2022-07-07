@@ -21,6 +21,7 @@ from ._models import (
     SomeAwesomelyNamedObject,
     SomeImplementationClass,
     SomethingWithDecorators,
+    SomethingWithInheritedOverloads,
     SomethingWithOverloads,
     SomethingWithProperties
 )
@@ -51,6 +52,7 @@ __all__ = (
     "SomeAwesomelyNamedObject",
     "SomeImplementationClass",
     "SomethingWithDecorators",
+    "SomethingWithInheritedOverloads",
     "SomethingWithOverloads",
     "SomethingWithProperties"
 )

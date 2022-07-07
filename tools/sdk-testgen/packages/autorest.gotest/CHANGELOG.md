@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Mon, 23 May 2022 07:05:43 GMT and should not be manually modified.
+This log was last generated on Wed, 08 Jun 2022 07:31:03 GMT and should not be manually modified.
+
+## 4.0.2
+Wed, 08 Jun 2022 07:31:03 GMT
+
+### Patches
+
+- Change test and example filename.
 
 ## 4.0.1
 Mon, 23 May 2022 07:05:43 GMT

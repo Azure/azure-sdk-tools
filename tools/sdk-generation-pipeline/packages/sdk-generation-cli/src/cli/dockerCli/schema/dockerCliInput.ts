@@ -12,6 +12,7 @@ export class DockerCliInput {
     sdkRepo: string;
     resultOutputFolder: string;
     dockerLogger: string;
+    autorestConfigFilePath: string;
 }
 
 export const dockerCliInput = convict<DockerCliInput>({
@@ -70,5 +71,11 @@ export const dockerCliInput = convict<DockerCliInput>({
         arg: 'docker-logger',
         format: String,
         doc: 'the path of docker.log. it will concat with resultOutputFolder'
+    },
+    autorestConfigFilePath: {
+        default: '/autorest.md',
+        env: 'AUTOREST_CONFIG_FILE_PATH',
+        format: String,
+        doc: `The absolute path to autorest configuration file. It's required when you want to input your own autorest config in generating data-plane sdk.`
     }
 });

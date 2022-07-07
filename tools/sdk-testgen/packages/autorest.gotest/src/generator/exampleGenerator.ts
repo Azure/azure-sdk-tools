@@ -35,7 +35,7 @@ export class ExampleCodeGenerator extends BaseCodeGenerator {
             this.renderAndWrite(
                 { exampleGroups: exampleGroups },
                 'exampleTest.go.njk',
-                `${this.getFilePrefix(Config.exampleFilePrefix)}example_${exampleModel.operationGroup.language.go.name.toLowerCase()}_client_test.go`,
+                `${this.getFilePrefix(Config.exampleFilePrefix)}${exampleModel.operationGroup.language.go.name.toLowerCase()}_client_example_test.go`,
                 extraParam,
             );
         }

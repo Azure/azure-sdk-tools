@@ -2,7 +2,7 @@
 
 exports[`GoTestGenerator from RP agrifood Generate MockTest and SDK example 1`] = `
 Object {
-  "ze_generated_example_extensions_client_test.go": "//go:build go1.18
+  "extensions_client_example_test.go": "//go:build go1.18
 // +build go1.18
 
 
@@ -154,7 +154,7 @@ SkipToken: nil,
 
 
 ",
-  "ze_generated_example_farmbeatsextensions_client_test.go": "//go:build go1.18
+  "farmbeatsextensions_client_example_test.go": "//go:build go1.18
 // +build go1.18
 
 
@@ -232,7 +232,7 @@ nil)
 
 
 ",
-  "ze_generated_example_farmbeatsmodels_client_test.go": "//go:build go1.18
+  "farmbeatsmodels_client_example_test.go": "//go:build go1.18
 // +build go1.18
 
 
@@ -420,7 +420,7 @@ SkipToken: nil,
 
 
 ",
-  "ze_generated_example_locations_client_test.go": "//go:build go1.18
+  "locations_client_example_test.go": "//go:build go1.18
 // +build go1.18
 
 
@@ -470,57 +470,7 @@ nil)
 
 
 ",
-  "ze_generated_example_operations_client_test.go": "//go:build go1.18
-// +build go1.18
-
-
-
-package armagrifood_test
-
-import (
-	\\"context\\"
-	\\"log\\"
-
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
-)
-import (
-	\\"encoding/json\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agrifood/armagrifood\\"
-	\\"reflect\\"
-	\\"time\\"
-)
-
-
-
-// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/agrifood/resource-manager/Microsoft.AgFoodPlatform/preview/2020-05-12-preview/examples/Operations_List.json
-func ExampleOperationsClient_NewListPager() {
-	cred, err := azidentity.NewDefaultAzureCredential(nil)
-	if err != nil {
-		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-	}
-	ctx := context.Background()
-	client, err := armagrifood.NewOperationsClient(cred, nil)
-    if err != nil {
-		log.Fatalf(\\"failed to create client: %v\\", err)
-	}
-	pager := client.NewListPager(nil)
-	for pager.More() {
-        nextResult, err := pager.NextPage(ctx)
-		if err != nil {
-			log.Fatalf(\\"failed to advance page: %v\\", err)
-		}
-		for _, v := range nextResult.Value {
-            // TODO: use page item
-            _ = v
-		}
-	}
-}
-
-
-",
-  "zt_generated_mock_test.go": "//go:build go1.18
+  "mock_test.go": "//go:build go1.18
 // +build go1.18
 
 
@@ -819,12 +769,62 @@ func (testsuite *MockTestSuite) TestOperations_List() {ctx := context.Background
         }
 }
 ",
+  "operations_client_example_test.go": "//go:build go1.18
+// +build go1.18
+
+
+
+package armagrifood_test
+
+import (
+	\\"context\\"
+	\\"log\\"
+
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
+)
+import (
+	\\"encoding/json\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agrifood/armagrifood\\"
+	\\"reflect\\"
+	\\"time\\"
+)
+
+
+
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/agrifood/resource-manager/Microsoft.AgFoodPlatform/preview/2020-05-12-preview/examples/Operations_List.json
+func ExampleOperationsClient_NewListPager() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+	}
+	ctx := context.Background()
+	client, err := armagrifood.NewOperationsClient(cred, nil)
+    if err != nil {
+		log.Fatalf(\\"failed to create client: %v\\", err)
+	}
+	pager := client.NewListPager(nil)
+	for pager.More() {
+        nextResult, err := pager.NextPage(ctx)
+		if err != nil {
+			log.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range nextResult.Value {
+            // TODO: use page item
+            _ = v
+		}
+	}
+}
+
+
+",
 }
 `;
 
 exports[`GoTestGenerator from RP signalR Generate scenario test 1`] = `
 Object {
-  "zt_generated_signalr_live_test.go": "//go:build go1.18
+  "signalr_live_test.go": "//go:build go1.18
 // +build go1.18
 
 

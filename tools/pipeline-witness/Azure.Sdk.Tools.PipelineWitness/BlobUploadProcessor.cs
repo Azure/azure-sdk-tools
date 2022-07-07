@@ -33,7 +33,6 @@
         private const string BuildDefinitionsContainerName = "builddefinitions";
         private const string BuildFailuresContainerName = "buildfailures";
         private const string TestRunsContainerName = "testruns";
-        private const string BuildDefinitionsContainerName = "builddefinitions";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()

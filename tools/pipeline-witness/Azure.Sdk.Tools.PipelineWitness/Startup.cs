@@ -80,7 +80,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddHostedService<BuildCompleteQueueWorker>();
             builder.Services.AddHostedService<BuildLogBundleQueueWorker>();
             builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
-            builder.Services.AddHostedService<AzurePipelinesBuildFailureWorker>();
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Net;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -16,19 +17,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
     public class GitStore : IAssetsStore
     {
-        public void Push(string pathToAssetsJson, string contextPath) {
+        public async Task Push(string pathToAssetsJson, string contextPath) {
+            var config = await ParseConfigurationFile(pathToAssetsJson);
+            var gitCommand = CreateBasicProcess(config.RepoRoot);
+
+            throw new NotImplementedException();
+        }
+
+        public Task Restore(string pathToAssetsJson, string contextPath) {
             var config = ParseConfigurationFile(pathToAssetsJson);
 
             throw new NotImplementedException();
         }
 
-        public void Restore(string pathToAssetsJson, string contextPath) {
-            var config = ParseConfigurationFile(pathToAssetsJson);
-
-            throw new NotImplementedException();
-        }
-
-        public void Reset(string pathToAssetsJson, string contextPath) {
+        public Task Reset(string pathToAssetsJson, string contextPath) {
             var config = ParseConfigurationFile(pathToAssetsJson);
 
             throw new NotImplementedException();
@@ -61,6 +63,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 
                 assetConfig.AssetsJsonLocation = pathToAssets;
                 assetConfig.AssetsJsonRelativeLocation = Path.GetRelativePath(repoRoot, pathToAssets);
+                assetConfig.RepoRoot = repoRoot;
 
                 return assetConfig;
             }
@@ -68,6 +71,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse assets.json content at \"{assetsJsonPath}\". Exception: {e.Message}");
             }
+        }
+
+        public ProcessStartInfo CreateBasicProcess(string workingDirectory)
+        {
+            var process = new ProcessStartInfo("git")
+            {
+                WorkingDirectory = workingDirectory,
+                UseShellExecute = true,
+                CreateNoWindow = true
+            };
+
+            return process;
         }
 
         public string AscendToRepoRoot(string path)

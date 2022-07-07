@@ -8,16 +8,22 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     public class AssetsConfiguration
     {
         /// <summary>
-        /// One of two base properties of an AssetsConfiguration. This property contains the relative path from the containing repo root to the location of this assets json location.
+        /// Contains the relative path from the containing repo root to the location of this assets json location.
         /// Useful for sparse checkout operations.
         /// </summary>
         [JsonIgnore]
         public virtual string AssetsJsonRelativeLocation { get; set; }
 
         /// <summary>
-        /// One of two base properties of an AssetsConfiguration. This property contains the absolute path to the assets.json.
+        /// Contains the absolute path to the assets.json.
         /// </summary>
         [JsonIgnore]
         public virtual string AssetsJsonLocation { get; set; }
+
+        /// <summary>
+        /// Contains the absolute path to the root of the repo. Outside of a git repo, will return disk root.
+        /// </summary>
+        [JsonIgnore]
+        public virtual string RepoRoot { get; set; }
     }
 }

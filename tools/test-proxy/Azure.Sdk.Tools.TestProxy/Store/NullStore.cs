@@ -1,16 +1,17 @@
 using System.IO;
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
     public class NullStore : IAssetsStore
     {
-        public void Push(string assetsJsonPath, string contextPath) {}
+        public Task Push(string assetsJsonPath, string contextPath) { return null; }
 
-        public void Restore(string assetsJsonPath, string contextPath) {}
+        public Task Restore(string assetsJsonPath, string contextPath) { return null; }
 
-        public void Reset(string assetsJsonPath, string contextPath) {}
+        public Task Reset(string assetsJsonPath, string contextPath) { return null; }
 
         public AssetsConfiguration ParseConfigurationFile(string assetsJsonPath)
         {

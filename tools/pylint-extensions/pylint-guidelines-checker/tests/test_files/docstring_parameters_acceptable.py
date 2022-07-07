@@ -23,5 +23,7 @@ def with_ivar_typehints(self, something: str, something2: str, union: Union[bool
     :ivar str something2: Something2
     :ivar union: Union
     :vartype union: Union[bool, int]
+    :rtype: None
+    :return: None
     """
     pass

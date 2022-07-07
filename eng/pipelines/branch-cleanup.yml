@@ -40,6 +40,7 @@ jobs:
       - template: ./templates/variables/globals.yml
     steps:
       - ${{ each repo in parameters.Repos }}:
+        - template: /eng/common/pipelines/templates/validate-filename.yml
         - task: PowerShell@2
           displayName: Clean Up ${{ repo }} Sync Common Branches
           condition: succeededOrFailed()

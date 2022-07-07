@@ -89,9 +89,9 @@ namespace APIViewWeb.Repositories
             return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterTypes);
         }
 
-        public async Task<IEnumerable<string>> GetReviewProprtiesAsync(string propertyName)
+        public async Task<IEnumerable<string>> GetReviewPropertiesAsync(string propertyName)
         {
-            return await _reviewsRepository.GetReviewFirstLevelProprtiesAsync(propertyName);
+            return await _reviewsRepository.GetReviewFirstLevelPropertiesAsync(propertyName);
         }
 
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(

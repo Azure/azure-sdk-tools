@@ -23,6 +23,27 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
     }
 
+    // Locating Assets Repo
+        // ResolveAssetsStoreLocation
+        // ResolveAssetRepoLocation
+        // IsAssetsRepoInitialized
+
+    // Interacting with Assets Repo
+        // CheckoutRepoAtConfig
+        // InitializeAssetsRepo
+        // DetectPendingChanges
+        // ResetAssetsRepo
+        // PushAssetsRepoUpdate
+
+    // Generic "Target to Targeted Git Repo for current config"
+        // GetDefaultBranch
+        // ResolveCheckoutPaths
+        // ResolveTargetBranch resolve presence of autobranch
+        // UpdateAssetsJson
+
+    // Targeted "get user decision" that can accept user input or no. depending on how it's been called.
+        // do we need to add a bit for mode? that way we can either set TRUE for cli interrupt, but FALSE for the server calls
+
     public class GitStore : IAssetsStore
     {
         public async Task Push(string pathToAssetsJson, string contextPath) {

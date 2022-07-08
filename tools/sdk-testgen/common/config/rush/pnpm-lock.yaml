@@ -1777,10 +1777,6 @@ packages:
       retry: 0.13.1
     dev: false
 
-  /async/1.5.2:
-    resolution: {integrity: sha512-nSVgobk4rv61R9PUSDtYt7mPVB2olxNR5RWJcAsH676/ef11bUZwvu7+RGYrYauVdDPcO519v68wRhXQtxsV9w==}
-    dev: false
-
   /async/3.2.3:
     resolution: {integrity: sha512-spZRyzKL5l5BZQrr/6m/SqFdBN0q3OCI0f9rjfBzCMBIP4p75P620rR3gTmaksNOhmzgdxcaxdNfMy6anrbM0g==}
     dev: false
@@ -4194,7 +4190,7 @@ packages:
     hasBin: true
     dependencies:
       abbrev: 1.0.9
-      async: 1.5.2
+      async: 3.2.3
       escodegen: 1.8.1
       esprima: 2.7.3
       glob: 5.0.15

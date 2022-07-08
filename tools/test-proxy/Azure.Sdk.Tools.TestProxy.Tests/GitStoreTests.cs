@@ -300,5 +300,31 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.StartsWith("The provided assets json path of ", assertion.Message);
             Assert.EndsWith(" does not exist.", assertion.Message);
         }
+
+        [Fact]
+        public async Task GetDefaultBranchWorksWithValidRepo()
+        {
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            GitStore store = new GitStore();
+            store.DefaultBranch = "not-main";
+            var assetsConfiguration = await store.ParseConfigurationFile(Path.Join(testFolder.FullName, AssetsJson));
+            var result = await store.GetDefaultBranch(assetsConfiguration);
+
+            Assert.Equal("main", result);
+        }
+
+        [Fact]
+        public async Task GetDefaultBranchFailsWithInvalidRepo()
+        {
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            GitStore store = new GitStore();
+            // we are resetting the default branch so we will see if fallback logic kicks in
+            store.DefaultBranch = "not-main";
+            var assetsConfiguration = await store.ParseConfigurationFile(Path.Join(testFolder.FullName, AssetsJson));
+            assetsConfiguration.AssetsRepo = "Azure/an-invalid-repo";
+
+            var result = await store.GetDefaultBranch(assetsConfiguration);
+            Assert.Equal("not-main", result);
+        }
     }
 }

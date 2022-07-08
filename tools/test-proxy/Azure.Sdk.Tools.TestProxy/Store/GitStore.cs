@@ -5,6 +5,7 @@ using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Net.Http;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -46,6 +47,37 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
     public class GitStore : IAssetsStore
     {
+        private HttpClient httpClient = new HttpClient();
+        public string DefaultBranch = "main";
+
+        /// <summary>
+        /// Reaches out to a git repo and resolves the default branch
+        /// </summary>
+        /// <param name="config">A valid and populated GitAssetsConfiguration generated from a assets.json.</param>
+        /// <returns>The default branch</returns>
+        public async Task<string> GetDefaultBranch(GitAssetsConfiguration config)
+        {
+            var gitCommand = BasicGitInvocation(config.RepoRoot);
+            HttpRequestMessage msg = new HttpRequestMessage()
+            {
+                RequestUri = new Uri($"https://api.github.com/repos/{config.AssetsRepo}"),
+                Method = HttpMethod.Get
+            };
+
+            var webResult = await httpClient.SendAsync(msg);
+
+            if(webResult.StatusCode == HttpStatusCode.OK)
+            {
+                var doc = JsonDocument.Parse(webResult.Content.ReadAsStream(), options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+                if (doc.RootElement.TryGetProperty("default_branch", out var result))
+                {
+                    return result.ToString();
+                }
+            }
+            
+            return DefaultBranch;
+        }
+
         public async Task Push(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var gitCommand = BasicGitInvocation(config.RepoRoot);

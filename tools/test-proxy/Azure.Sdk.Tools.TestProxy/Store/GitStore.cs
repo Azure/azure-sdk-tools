@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             var webResult = await httpClient.SendAsync(msg);
 
-            if(webResult.StatusCode == HttpStatusCode.OK)
+            if (webResult.StatusCode == HttpStatusCode.OK)
             {
                 var doc = JsonDocument.Parse(webResult.Content.ReadAsStream(), options: new JsonDocumentOptions() { AllowTrailingCommas = true });
                 if (doc.RootElement.TryGetProperty("default_branch", out var result))

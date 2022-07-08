@@ -5,7 +5,7 @@ using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
 {
-    public class ApplicationVersionTelemetryInitializer<T> : ITelemetryInitializer
+    public class ApplicationVersionTelemetryInitializer : ITelemetryInitializer
     {
         private static string _version = GetVersion();
 
@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
         
         private static string GetVersion()
         {
-            var assembly = typeof(T).Assembly;
+            var assembly = typeof(ApplicationVersionTelemetryInitializer).Assembly;
             
             var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
                 ?? assembly.GetName().Version.ToString();

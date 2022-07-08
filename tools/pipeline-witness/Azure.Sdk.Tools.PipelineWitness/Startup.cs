@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Common;
@@ -17,7 +18,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
-    public class Startup
+    public static class Startup
     {
         public static void Configure(WebApplicationBuilder builder)
         {
@@ -74,12 +75,20 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
             builder.Services.AddTransient<ITelemetryInitializer, NotFoundTelemetryInitializer>();
-            builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer<Startup>>();
+            builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
             builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
 
-            builder.Services.AddHostedService<BuildCompleteQueueWorker>();
-            builder.Services.AddHostedService<BuildLogBundleQueueWorker>();
+            builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
+            builder.Services.AddHostedService<BuildLogBundleQueueWorker>(settings.BuildLogBundlesWorkerCount);
             builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
+        }
+
+        private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService
+        {
+            for (var i = 0; i < instanceCount; i++)
+            {
+                services.AddSingleton<IHostedService, T>();
+            }
         }
     }
 }

@@ -206,8 +206,10 @@ test container can be found in a file at path `$ENV_FILE` (usually `/mnt/outputs
 can be [loaded](https://www.npmjs.com/package/dotenv) [via](https://pypi.org/project/python-dotenv/)
 [various](https://mvnrepository.com/artifact/io.github.cdimascio/dotenv-java) [packages](https://www.nuget.org/packages/dotenv.net/).
 
-Stress tests should publish telemetry and logs to Application Insights via the $APPINSIGHTS_INSTRUMENTATIONKEY environment variable
-injected into the container.
+Stress tests should publish telemetry and logs to Application Insights via the `$APPINSIGHTS_CONNECTION_STRING` environment variable
+injected into the container. An `$APPINSIGHTS_INSTRUMENTATIONKEY` environment variable is also made available for
+backwards compatibility, but using the connection string is recommended as the app insights service is deprecating the
+instrumentation key approach.
 
 The following environment variables are currently populated by default into the env file, in addition to any
 [bicep template outputs](https://docs.microsoft.com/azure/azure-resource-manager/bicep/outputs) specified.
@@ -218,6 +220,7 @@ AZURE_CLIENT_OID=<value>
 AZURE_CLIENT_SECRET=<value>
 AZURE_TENANT_ID=<value>
 AZURE_SUBSCRIPTION_ID=<value>
+APPINSIGHTS_CONNECTION_STRING=<value>
 APPINSIGHTS_INSTRUMENTATIONKEY=<value>
 
 # Bicep template outputs inserted here as well, for example

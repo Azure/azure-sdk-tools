@@ -18920,7 +18920,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&armcompute.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &armcompute.CloudService{
+		armcompute.CloudService{
 			Location: to.Ptr("westus"),
 			Properties: &armcompute.CloudServiceProperties{
 				Configuration: to.Ptr("{ServiceConfiguration}"),
@@ -18964,7 +18964,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 				UpgradeMode: to.Ptr(armcompute.CloudServiceUpgradeModeAuto),
 			},
 		},
-		})
+		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json")
 	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json")
@@ -19036,7 +19036,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&armcompute.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &armcompute.CloudService{
+		armcompute.CloudService{
 			Location: to.Ptr("westus"),
 			Properties: &armcompute.CloudServiceProperties{
 				Configuration: to.Ptr("{ServiceConfiguration}"),
@@ -19072,7 +19072,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 				UpgradeMode: to.Ptr(armcompute.CloudServiceUpgradeModeAuto),
 			},
 		},
-		})
+		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json")
 	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json")
@@ -19136,7 +19136,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&armcompute.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &armcompute.CloudService{
+		armcompute.CloudService{
 			Location: to.Ptr("westus"),
 			Properties: &armcompute.CloudServiceProperties{
 				Configuration: to.Ptr("{ServiceConfiguration}"),
@@ -19184,7 +19184,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 				UpgradeMode: to.Ptr(armcompute.CloudServiceUpgradeModeAuto),
 			},
 		},
-		})
+		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json")
 	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json")
@@ -19257,7 +19257,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&armcompute.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &armcompute.CloudService{
+		armcompute.CloudService{
 			Location: to.Ptr("westus"),
 			Properties: &armcompute.CloudServiceProperties{
 				Configuration: to.Ptr("{ServiceConfiguration}"),
@@ -19307,7 +19307,7 @@ func (testsuite *MockTestSuite) TestCloudServices_CreateOrUpdate() {
 				UpgradeMode: to.Ptr(armcompute.CloudServiceUpgradeModeAuto),
 			},
 		},
-		})
+		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json")
 	res, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json")
@@ -19390,12 +19390,12 @@ func (testsuite *MockTestSuite) TestCloudServices_Update() {
 	poller, err := client.BeginUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&armcompute.CloudServicesClientBeginUpdateOptions{Parameters: &armcompute.CloudServiceUpdate{
+		armcompute.CloudServiceUpdate{
 			Tags: map[string]*string{
 				"Documentation": to.Ptr("RestAPI"),
 			},
 		},
-		})
+		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json")
 	res, err := poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json")
@@ -19947,7 +19947,8 @@ func (testsuite *MockTestSuite) TestCloudServicesUpdateDomain_WalkUpdateDomain()
 		"ConstosoRG",
 		"{cs-name}",
 		1,
-		&armcompute.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil})
+		armcompute.UpdateDomain{},
+		nil)
 	testsuite.Require().NoError(err, "Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json")
 	_, err = poller.PollUntilDone(ctx, nil)
 	testsuite.Require().NoError(err, "Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json")

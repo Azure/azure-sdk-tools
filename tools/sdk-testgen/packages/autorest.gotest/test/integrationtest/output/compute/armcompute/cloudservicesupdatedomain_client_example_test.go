@@ -31,7 +31,8 @@ func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 		"ConstosoRG",
 		"{cs-name}",
 		1,
-		&armcompute.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil})
+		armcompute.UpdateDomain{},
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

@@ -29,12 +29,11 @@ pr:
       - src/ts/ts-genapi
 
 variables:
-  DotNetCoreVersion: '5.x'
   DotNetRuntimeVersion: '3.1.x'
   PythonVersion: '3.10.2'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
-  TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
+  TestProjectPath: 'src/dotnet/APIView/**/*Tests.csproj'
   NodeVersion: '12.x'
   BuildConfiguration: 'Release'
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
@@ -149,11 +148,19 @@ stages:
           vmImage: MMS2019
 
         steps:
+          - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
+            parameters:
+              StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
 
           - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+            displayName: 'Use .NET Core sdk 3.1.x'
             inputs:
-              version: '$(DotNetCoreVersion)'
+              version: '3.1.x'
+          
+          - task: DotNetCoreInstaller@2
+            displayName: 'Use .NET Core sdk 5.x'
+            inputs:
+              version: '5.x'
 
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core $(DotNetRuntimeVersion)'
@@ -177,6 +184,6 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
+              testRunTitle: 'Windows DotNet $(DotNetRuntimeVersion)'
               testResultsFormat: 'VSTest'
               mergeTestResults: true

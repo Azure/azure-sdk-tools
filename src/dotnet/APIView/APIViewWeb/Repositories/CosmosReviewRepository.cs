@@ -15,13 +15,12 @@ namespace APIViewWeb
     public class CosmosReviewRepository
     {
         private readonly Container _reviewsContainer;
-        private readonly PackageNameManager _packageNameManager;
+        private readonly CosmosClient _cosmosClient;
 
-        public CosmosReviewRepository(IConfiguration configuration, PackageNameManager packageNameManager)
+        public CosmosReviewRepository(IConfiguration configuration, CosmosClient cosmosClient = null)
         {
-            var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
-            _reviewsContainer = client.GetContainer("APIView", "Reviews");
-            _packageNameManager = packageNameManager;
+            _cosmosClient = cosmosClient ?? new CosmosClient(configuration["Cosmos:ConnectionString"]);
+            _reviewsContainer = _cosmosClient.GetContainer("APIView", "Reviews");
         }
 
         public async Task UpsertReviewAsync(ReviewModel reviewModel)
@@ -113,7 +112,7 @@ namespace APIViewWeb
             return reviews.OrderBy(r => r.Name).ThenByDescending(r => r.LastUpdated);
         }
 
-        public async Task<IEnumerable<string>> GetReviewFirstLevelProprtiesAsync(string propertyName)
+        public async Task<IEnumerable<string>> GetReviewFirstLevelPropertiesAsync(string propertyName)
         {
             var query = $"SELECT DISTINCT VALUE r.{propertyName} FROM Reviews r";
             var properties = new List<string>();

@@ -128,6 +128,7 @@ Services:
       PrimaryPackage: azure-storage-blob
       PackageVersions: &java-storage-package-versions
       - azure-storage-blob: 12.18.0-beta.1
+        azure-storage-blob-cryptography: 12.17.0-beta.1
         azure-storage-file-share: 12.13.1
         azure-storage-file-datalake: 12.10.1
         azure-core-http-netty: 1.12.2
@@ -135,6 +136,7 @@ Services:
         azure-core: 1.29.1
         reactor-core: 3.4.17
       - azure-storage-blob: source
+        azure-storage-blob-cryptography: source
         azure-storage-file-share: source
         azure-storage-file-datalake: source
         azure-core-http-netty: source

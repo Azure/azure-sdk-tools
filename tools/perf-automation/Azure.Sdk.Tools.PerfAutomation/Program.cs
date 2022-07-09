@@ -1,8 +1,6 @@
 using Azure.Sdk.Tools.PerfAutomation.Models;
 using CommandLine;
 using CommandLine.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -41,11 +39,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             },
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             WriteIndented = true,
-        };
-
-        private static readonly CsvConfiguration CsvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            Delimiter = ", ",
         };
 
         [Verb("run", HelpText = "Run perf tests and collect results")]
@@ -430,6 +423,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public static async Task WriteResultsSummary(StreamWriter streamWriter, IEnumerable<Result> results)
         {
             var groups = results.GroupBy(r => (r.Language, r.LanguageVersion, r.Service, r.Test, r.Arguments));
+
             var resultSummaries = groups.Select(g =>
             {
                 var resultSummary = new ResultSummary()
@@ -441,27 +435,70 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     Arguments = g.Key.Arguments,
                 };
 
+                var operationsPerSecondMax = new List<(string version, double operationsPerSecond)>();
+                var operationsPerSecondMean = new List<(string version, double operationsPerSecond)>();
+
                 foreach (var result in g)
                 {
                     var primaryPackage = result.PrimaryPackage;
                     var primaryPackageVersion = result.PackageVersions?[primaryPackage];
-                    if (primaryPackageVersion == "source")
-                    {
-                        resultSummary.Source = result.OperationsPerSecondMax;
-                    }
-                    else
-                    {
-                        resultSummary.LastVersion = primaryPackageVersion;
-                        resultSummary.Last = result.OperationsPerSecondMax;
-                    }
+                    operationsPerSecondMax.Add((primaryPackageVersion, result.OperationsPerSecondMax));
+                    operationsPerSecondMean.Add((primaryPackageVersion, result.OperationsPerSecondMean));
                 }
+
+                resultSummary.OperationsPerSecondMax = operationsPerSecondMax;
+                resultSummary.OperationsPerSecondMean = operationsPerSecondMean;
 
                 return resultSummary;
             });
 
-            using (var csvWriter = new CsvWriter(streamWriter, CsvConfiguration))
+            var languageServiceGroups = resultSummaries.GroupBy(r => (r.Language, r.LanguageVersion, r.Service));
+            foreach (var group in languageServiceGroups)
             {
-                await csvWriter.WriteRecordsAsync(resultSummaries);
+                await streamWriter.WriteLineAsync($"Language: {group.Key.Language} ({group.Key.LanguageVersion})");
+                await streamWriter.WriteLineAsync($"Service: {group.Key.Service}");
+                await streamWriter.WriteLineAsync();
+
+                await streamWriter.WriteLineAsync("Package Versions (requested, runtime)");
+                await streamWriter.WriteLineAsync();
+                await streamWriter.WriteLineAsync();
+
+                await WriteResultsSummaryThroughput(streamWriter, group, "Max", r => r.OperationsPerSecondMax, r => r.OperationsPerSecondMaxDifferences);
+                await streamWriter.WriteLineAsync();
+
+                await WriteResultsSummaryThroughput(streamWriter, group, "Mean", r => r.OperationsPerSecondMean, r => r.OperationsPerSecondMeanDifferences);
+            }
+        }
+
+        private static async Task WriteResultsSummaryThroughput(StreamWriter streamWriter, IEnumerable<ResultSummary> resultSummaries,
+            string aggregateType,
+            Func<ResultSummary, IEnumerable<(string version, double operationsPerSecond)>> operationsPerSecond,
+            Func<ResultSummary, IEnumerable<double>> operationsPerSecondDifferences)
+        {
+            var versions = operationsPerSecond(resultSummaries.First()).Select(o => o.version);
+            var headers = versions.Take(1).Concat(versions.Skip(1).Zip(Enumerable.Repeat("%Change", versions.Count() - 1),
+                (f, s) => new[] { f, s }).SelectMany(f => f));
+
+            await streamWriter.WriteLineAsync($"*** {aggregateType} throughput (ops/sec) ***");
+            await streamWriter.WriteAsync("Test, Arguments, ");
+            await streamWriter.WriteAsync(string.Join(", ", headers));
+            await streamWriter.WriteLineAsync();
+
+            var testGroups = resultSummaries.GroupBy(g => g.Test);
+            foreach (var testGroup in testGroups)
+            {
+                foreach (var resultSummary in testGroup)
+                {
+                    await streamWriter.WriteAsync($"{resultSummary.Test}, {resultSummary.Arguments}, ");
+
+                    var operationsPerSecondStrings = operationsPerSecond(resultSummary).Select(o => $"{o.operationsPerSecond:F2}");
+                    var operationsPerSecondDifferencesStrings = operationsPerSecondDifferences(resultSummary).Select(o => $"{o * 100:N2}%");
+
+                    var values = operationsPerSecondStrings.Take(1).Concat(operationsPerSecondStrings.Skip(1)
+                        .Zip(operationsPerSecondDifferencesStrings, (f, s) => new[] { f, s }).SelectMany(f => f));
+                    await streamWriter.WriteLineAsync(string.Join(", ", values));
+                }
+                await streamWriter.WriteLineAsync();
             }
         }
 

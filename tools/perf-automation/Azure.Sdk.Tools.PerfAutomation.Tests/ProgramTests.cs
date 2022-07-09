@@ -11,15 +11,28 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
     public class ProgramTests
     {
         [Test]
-        public async Task WriteResultsSummary()
+        public async Task WriteResultsSummaryTwoVersions()
         {
             List<Result> results;
-            using (var stream = File.OpenRead("results.json")) {
+            using (var stream = File.OpenRead("two-versions.json"))
+            {
                 results = await JsonSerializer.DeserializeAsync<List<Result>>(stream, options: Program.JsonOptions);
             }
 
             var resultsSummary = await GetResultsSummary(results);
-            Console.WriteLine(resultsSummary);
+            Console.Write(resultsSummary);
+        }
+
+        [Test]
+        public async Task WriteResultsSummaryThreeVersions()
+        {
+            List<Result> results;
+            using (var stream = File.OpenRead("three-versions.json")) {
+                results = await JsonSerializer.DeserializeAsync<List<Result>>(stream, options: Program.JsonOptions);
+            }
+
+            var resultsSummary = await GetResultsSummary(results);
+            Console.Write(resultsSummary);
         }
 
         private static async Task<string> GetResultsSummary(IEnumerable<Result> results)

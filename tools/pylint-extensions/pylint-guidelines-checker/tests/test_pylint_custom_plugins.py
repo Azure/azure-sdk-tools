@@ -1955,10 +1955,10 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", node=function_node_a
+                msg_id="client-list-methods-use-paging", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", node=function_node_b
+                msg_id="client-list-methods-use-paging", line=7, node=function_node_b,  col_offset=4, end_line=7, end_col_offset=25
             ),
         ):
             self.checker.visit_functiondef(function_node_a)

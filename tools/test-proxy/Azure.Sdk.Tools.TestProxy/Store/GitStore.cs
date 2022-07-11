@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -58,11 +59,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task<string> GetDefaultBranch(GitAssetsConfiguration config)
         {
             var gitCommand = BasicGitInvocation(config.RepoRoot);
+            var token = Environment.GetEnvironmentVariable("GIT_TOKEN");
+
             HttpRequestMessage msg = new HttpRequestMessage()
             {
                 RequestUri = new Uri($"https://api.github.com/repos/{config.AssetsRepo}"),
                 Method = HttpMethod.Get
             };
+
+            if (token != null)
+            {
+                msg.Headers.Authorization = new AuthenticationHeaderValue("token", token);
+                msg.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+                msg.Headers.Add("User-Agent", "Azure-Sdk-Test-Proxy");
+            }
 
             var webResult = await httpClient.SendAsync(msg);
 

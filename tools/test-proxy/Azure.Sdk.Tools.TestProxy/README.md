@@ -587,3 +587,10 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 [Add Internet Information](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
 
 ![image](https://user-images.githubusercontent.com/24213737/152258180-0bac3e7f-910c-45fd-aa5f-fc932fce91e6.png)
+
+## Asset Sync (Retrieve External Test Recordings)
+
+<TODO: populate this documentation section>
+<summary goes here>
+
+If the remote git repository is secured, the test-proxy must be handed a token via environment variable GITHUB_TOKEN.

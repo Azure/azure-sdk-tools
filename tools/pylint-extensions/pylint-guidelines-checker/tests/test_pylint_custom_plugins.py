@@ -103,13 +103,13 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
         """)
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-tracing-decorator-async", node=func_node_a
+                msg_id="client-method-missing-tracing-decorator-async", line=5, node=func_node_a, col_offset=4, end_line=5, end_col_offset=34
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-tracing-decorator-async", node=func_node_b
+                msg_id="client-method-missing-tracing-decorator-async", line=8, node=func_node_b, col_offset=4, end_line=8, end_col_offset=23
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-tracing-decorator-async", node=func_node_c
+                msg_id="client-method-missing-tracing-decorator-async", line=11, node=func_node_c, col_offset=4, end_line=11, end_col_offset=24
             ),
         ):
             self.checker.visit_asyncfunctiondef(func_node_a)
@@ -132,13 +132,13 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
         """)
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-tracing-decorator", node=func_node_a
+                msg_id="client-method-missing-tracing-decorator", line=5, node=func_node_a, col_offset=4, end_line=5, end_col_offset=28
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-tracing-decorator", node=func_node_b
+                msg_id="client-method-missing-tracing-decorator", line=8, node=func_node_b, col_offset=4, end_line=8, end_col_offset=17
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-tracing-decorator", node=func_node_c
+                msg_id="client-method-missing-tracing-decorator", line=11, node=func_node_c, col_offset=4, end_line=11, end_col_offset=18
             ),
         ):
             self.checker.visit_functiondef(func_node_a)
@@ -301,13 +301,13 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
         """)
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-should-not-use-static-method", node=func_node_a
+                    msg_id="client-method-should-not-use-static-method", line=4, node=func_node_a, col_offset=4, end_line=4, end_col_offset=34
                 ),
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-should-not-use-static-method", node=func_node_b
+                    msg_id="client-method-should-not-use-static-method", line=7, node=func_node_b, col_offset=4, end_line=7, end_col_offset=23
                 ),
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-should-not-use-static-method", node=func_node_c
+                    msg_id="client-method-should-not-use-static-method", line=10, node=func_node_c, col_offset=4, end_line=10, end_col_offset=24
                 ),
         ):
             self.checker.visit_asyncfunctiondef(func_node_a)
@@ -329,13 +329,13 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
         """)
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-should-not-use-static-method", node=func_node_a
+                    msg_id="client-method-should-not-use-static-method", line=4, node=func_node_a, col_offset=4, end_line=4, end_col_offset=28
                 ),
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-should-not-use-static-method", node=func_node_b
+                    msg_id="client-method-should-not-use-static-method", line=7, node=func_node_b, col_offset=4, end_line=7, end_col_offset=17
                 ),
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-should-not-use-static-method", node=func_node_c
+                    msg_id="client-method-should-not-use-static-method", line=10, node=func_node_c, col_offset=4, end_line=10, end_col_offset=18
                 ),
         ):
             self.checker.visit_functiondef(func_node_a)
@@ -552,52 +552,52 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_a
+                msg_id="unapproved-client-method-name-prefix", line=4, node=func_node_a, col_offset=4, end_line=4, end_col_offset=27
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_b
+                msg_id="unapproved-client-method-name-prefix", line=6, node=func_node_b, col_offset=4, end_line=6, end_col_offset=22
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_c
+                msg_id="unapproved-client-method-name-prefix", line=8, node=func_node_c, col_offset=4, end_line=8, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_d
+                msg_id="unapproved-client-method-name-prefix", line=10, node=func_node_d, col_offset=4, end_line=10, end_col_offset=20
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_e
+                msg_id="unapproved-client-method-name-prefix", line=12, node=func_node_e, col_offset=4, end_line=12, end_col_offset=17
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_f
+                msg_id="unapproved-client-method-name-prefix", line=14, node=func_node_f, col_offset=4, end_line=14, end_col_offset=29
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_g
+                msg_id="unapproved-client-method-name-prefix", line=16, node=func_node_g, col_offset=4, end_line=16, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_h
+                msg_id="unapproved-client-method-name-prefix", line=18, node=func_node_h, col_offset=4, end_line=18, end_col_offset=19
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_i
+                msg_id="unapproved-client-method-name-prefix", line=20, node=func_node_i, col_offset=4, end_line=20, end_col_offset=21
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_j
+                msg_id="unapproved-client-method-name-prefix", line=22, node=func_node_j, col_offset=4, end_line=22, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_k
+                msg_id="unapproved-client-method-name-prefix", line=24, node=func_node_k, col_offset=4, end_line=24, end_col_offset=21
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_l
+                msg_id="unapproved-client-method-name-prefix", line=26, node=func_node_l, col_offset=4, end_line=26, end_col_offset=22
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_m
+                msg_id="unapproved-client-method-name-prefix", line=28, node=func_node_m, col_offset=4, end_line=28, end_col_offset=21
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_n
+                msg_id="unapproved-client-method-name-prefix", line=30, node=func_node_n, col_offset=4, end_line=30, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_o
+                msg_id="unapproved-client-method-name-prefix", line=32, node=func_node_o, col_offset=4, end_line=32, end_col_offset=21
             ),
             pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix", node=func_node_p
+                msg_id="unapproved-client-method-name-prefix", line=34, node=func_node_p, col_offset=4, end_line=34, end_col_offset=21
             )
         ):
             self.checker.visit_classdef(class_node)
@@ -653,7 +653,7 @@ class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCa
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="missing-client-constructor-parameter-kwargs", node=function_node
+                msg_id="missing-client-constructor-parameter-kwargs", line=3, node=function_node, col_offset=4, end_line=3, end_col_offset=16
             )
         ):
             self.checker.visit_functiondef(function_node)
@@ -667,7 +667,7 @@ class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCa
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="missing-client-constructor-parameter-credential", node=function_node
+                msg_id="missing-client-constructor-parameter-credential", line=3, node=function_node, col_offset=4, end_line=3, end_col_offset=16
             )
         ):
             self.checker.visit_functiondef(function_node)
@@ -681,10 +681,10 @@ class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCa
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="missing-client-constructor-parameter-credential", node=function_node
+                msg_id="missing-client-constructor-parameter-credential", line=3, node=function_node, col_offset=4, end_line=3, end_col_offset=16
             ),
             pylint.testutils.MessageTest(
-                msg_id="missing-client-constructor-parameter-kwargs", node=function_node
+                msg_id="missing-client-constructor-parameter-kwargs", line=3, node=function_node, col_offset=4, end_line=3, end_col_offset=16
             )
         ):
             self.checker.visit_functiondef(function_node)
@@ -828,25 +828,25 @@ class TestClientMethodsUseKwargsWithMultipleParameters(pylint.testutils.CheckerT
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node
+                msg_id="client-method-has-more-than-5-positional-arguments", line=4, node=function_node, col_offset=4, end_line=4, end_col_offset=16
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_a
+                msg_id="client-method-has-more-than-5-positional-arguments", line=6, node=function_node_a, col_offset=4, end_line=6, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_b
+                msg_id="client-method-has-more-than-5-positional-arguments", line=8, node=function_node_b, col_offset=4, end_line=8, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_c
+                msg_id="client-method-has-more-than-5-positional-arguments", line=10, node=function_node_c, col_offset=4, end_line=10, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_d
+                msg_id="client-method-has-more-than-5-positional-arguments", line=12, node=function_node_d, col_offset=4, end_line=12, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_e
+                msg_id="client-method-has-more-than-5-positional-arguments", line=14, node=function_node_e, col_offset=4, end_line=14, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_f
+                msg_id="client-method-has-more-than-5-positional-arguments", line=16, node=function_node_f, col_offset=4, end_line=16, end_col_offset=18
             )
         ):
             self.checker.visit_functiondef(function_node)
@@ -880,25 +880,25 @@ class TestClientMethodsUseKwargsWithMultipleParameters(pylint.testutils.CheckerT
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node
+                msg_id="client-method-has-more-than-5-positional-arguments", line=4, node=function_node, col_offset=4, end_line=4, end_col_offset=22
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_a
+                msg_id="client-method-has-more-than-5-positional-arguments", line=6, node=function_node_a, col_offset=4, end_line=6, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_b
+                msg_id="client-method-has-more-than-5-positional-arguments", line=8, node=function_node_b, col_offset=4, end_line=8, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_c
+                msg_id="client-method-has-more-than-5-positional-arguments", line=10, node=function_node_c, col_offset=4, end_line=10, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_d
+                msg_id="client-method-has-more-than-5-positional-arguments", line=12, node=function_node_d, col_offset=4, end_line=12, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_e
+                msg_id="client-method-has-more-than-5-positional-arguments", line=14, node=function_node_e, col_offset=4, end_line=14, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-has-more-than-5-positional-arguments", node=function_node_f
+                msg_id="client-method-has-more-than-5-positional-arguments", line=16, node=function_node_f, col_offset=4, end_line=16, end_col_offset=24
             )
         ):
             self.checker.visit_asyncfunctiondef(function_node)
@@ -1042,10 +1042,10 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-missing-type-annotations", node=function_node_a
+                    msg_id="client-method-missing-type-annotations", line=3, node=function_node_a, col_offset=4, end_line=3, end_col_offset=16
                 ),
                 pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node_b
+                msg_id="client-method-missing-type-annotations", line=5, node=function_node_b, col_offset=4, end_line=5, end_col_offset=22
                 ),
         ):
             self.checker.visit_functiondef(function_node_a)
@@ -1060,7 +1060,7 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node
+                msg_id="client-method-missing-type-annotations", line=3, node=function_node, col_offset=4, end_line=3, end_col_offset=16
             )
         ):
             self.checker.visit_functiondef(function_node)
@@ -1074,7 +1074,7 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node
+                msg_id="client-method-missing-type-annotations", line=3, node=function_node, col_offset=4, end_line=3, end_col_offset=22
             )
         ):
             self.checker.visit_asyncfunctiondef(function_node)
@@ -1088,7 +1088,7 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-missing-type-annotations", node=function_node
+                    msg_id="client-method-missing-type-annotations", line=3, node=function_node, col_offset=4, end_line=3, end_col_offset=16
                 )
         ):
             self.checker.visit_functiondef(function_node)
@@ -1106,10 +1106,10 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node_a
+                msg_id="client-method-missing-type-annotations", line=3, node=function_node_a, col_offset=4, end_line=3, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node_b
+                msg_id="client-method-missing-type-annotations", line=6, node=function_node_b, col_offset=4, end_line=6, end_col_offset=18
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
@@ -1128,10 +1128,10 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node_a
+                msg_id="client-method-missing-type-annotations", line=3, node=function_node_a, col_offset=4, end_line=3, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node_b
+                msg_id="client-method-missing-type-annotations", line=6, node=function_node_b, col_offset=4, end_line=6, end_col_offset=24
             ),
         ):
             self.checker.visit_asyncfunctiondef(function_node_a)
@@ -1150,10 +1150,10 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node_a
+                msg_id="client-method-missing-type-annotations", line=3, node=function_node_a,  col_offset=4, end_line=3, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node_b
+                msg_id="client-method-missing-type-annotations", line=6, node=function_node_b, col_offset=4, end_line=6, end_col_offset=18
             )
         ):
             self.checker.visit_functiondef(function_node_a)
@@ -1172,10 +1172,10 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node_a
+                msg_id="client-method-missing-type-annotations", line=3, node=function_node_a, col_offset=4, end_line=3, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-type-annotations", node=function_node_b
+                msg_id="client-method-missing-type-annotations", line=6, node=function_node_b, col_offset=4, end_line=6, end_col_offset=24
             )
         ):
             self.checker.visit_asyncfunctiondef(function_node_a)
@@ -1263,16 +1263,16 @@ class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="config-missing-kwargs-in-policy", node=policy_a
+                msg_id="config-missing-kwargs-in-policy", line=5, node=policy_a, col_offset=4, end_line=5, end_col_offset=55
             ),
             pylint.testutils.MessageTest(
-                msg_id="config-missing-kwargs-in-policy", node=policy_b
+                msg_id="config-missing-kwargs-in-policy", line=8, node=policy_b, col_offset=4, end_line=8, end_col_offset=50
             ),
             pylint.testutils.MessageTest(
-                msg_id="config-missing-kwargs-in-policy", node=policy_c
+                msg_id="config-missing-kwargs-in-policy", line=9, node=policy_c, col_offset=4, end_line=9, end_col_offset=39
             ),
             pylint.testutils.MessageTest(
-                msg_id="config-missing-kwargs-in-policy", node=policy_d
+                msg_id="config-missing-kwargs-in-policy", line=18, node=policy_d,  col_offset=4, end_line=18, end_col_offset=66
             )
         ):
             self.checker.visit_functiondef(function_node_a)
@@ -1419,13 +1419,13 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=class_node_a
+                msg_id="client-incorrect-naming-convention", line=2, node=class_node_a, col_offset=0, end_line=2, end_col_offset=17
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=class_node_b
+                msg_id="client-incorrect-naming-convention", line=4, node=class_node_b, col_offset=0, end_line=4, end_col_offset=17
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=class_node_c
+                msg_id="client-incorrect-naming-convention", line=6, node=class_node_c, col_offset=0, end_line=6, end_col_offset=16
             ),
         ):
             self.checker.visit_classdef(class_node_a)
@@ -1452,22 +1452,22 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_a
+                msg_id="client-incorrect-naming-convention", line=3, node=func_node_a,  col_offset=4, end_line=3, end_col_offset=21
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_b
+                msg_id="client-incorrect-naming-convention", line=5, node=func_node_b, col_offset=4, end_line=5, end_col_offset=16
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_c
+                msg_id="client-incorrect-naming-convention", line=7, node=func_node_c, col_offset=4, end_line=7, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_d
+                msg_id="client-incorrect-naming-convention", line=9, node=func_node_d, col_offset=4, end_line=9, end_col_offset=19
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_e
+                msg_id="client-incorrect-naming-convention", line=11, node=func_node_e, col_offset=4, end_line=11, end_col_offset=17
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_f
+                msg_id="client-incorrect-naming-convention", line=13, node=func_node_f, col_offset=4, end_line=13, end_col_offset=19
             ),
         ):
             self.checker.visit_classdef(class_node)
@@ -1492,22 +1492,22 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_a
+                msg_id="client-incorrect-naming-convention", line=3, node=func_node_a, col_offset=4, end_line=3, end_col_offset=27
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_b
+                msg_id="client-incorrect-naming-convention", line=5, node=func_node_b, col_offset=4, end_line=5, end_col_offset=22
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_c
+                msg_id="client-incorrect-naming-convention", line=7, node=func_node_c,col_offset=4, end_line=7, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_d
+                msg_id="client-incorrect-naming-convention", line=9, node=func_node_d, col_offset=4, end_line=9, end_col_offset=25
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_e
+                msg_id="client-incorrect-naming-convention", line=11, node=func_node_e, col_offset=4, end_line=11, end_col_offset=23
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=func_node_f
+                msg_id="client-incorrect-naming-convention", line=13, node=func_node_f, col_offset=4, end_line=13, end_col_offset=25
             ),
         ):
             self.checker.visit_classdef(class_node)
@@ -1521,10 +1521,10 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=const_a
+                msg_id="client-incorrect-naming-convention", line=3, node=const_a, col_offset=4, end_line=3, end_col_offset=17
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-incorrect-naming-convention", node=const_b
+                msg_id="client-incorrect-naming-convention", line=4,node=const_b, col_offset=4, end_line=4, end_col_offset=16
             ),
         ):
             self.checker.visit_classdef(class_node)
@@ -1612,10 +1612,10 @@ class TestClientMethodsHaveKwargsParameter(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-kwargs", node=function_node_a
+                msg_id="client-method-missing-kwargs", line=6, node=function_node_a, col_offset=4, end_line=6, end_col_offset=17
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-kwargs", node=function_node_b
+                msg_id="client-method-missing-kwargs", line=9, node=function_node_b, col_offset=4, end_line=9, end_col_offset=20
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
@@ -1649,10 +1649,10 @@ class TestClientMethodsHaveKwargsParameter(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-kwargs", node=function_node_a
+                msg_id="client-method-missing-kwargs", line=6, node=function_node_a, col_offset=4, end_line=6, end_col_offset=23
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-method-missing-kwargs", node=function_node_b
+                msg_id="client-method-missing-kwargs", line=9, node=function_node_b, col_offset=4, end_line=9, end_col_offset=26
             ),
         ):
             self.checker.visit_asyncfunctiondef(function_node_a)
@@ -1751,7 +1751,7 @@ class TestFileHasCopyrightHeader(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="file-needs-copyright-header", node=node
+                    msg_id="file-needs-copyright-header", line=0, node=node
                 )
         ):
             self.checker.visit_module(node)
@@ -1832,7 +1832,7 @@ class TestSpecifyParameterNamesInCall(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="specify-parameter-names-in-call", node=call_node
+                msg_id="specify-parameter-names-in-call", line=4, node=call_node, col_offset=8, end_line=4, end_col_offset=43
             ),
         ):
             self.checker.visit_call(call_node)
@@ -1846,7 +1846,7 @@ class TestSpecifyParameterNamesInCall(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="specify-parameter-names-in-call", node=call_node
+                msg_id="specify-parameter-names-in-call", line=4, node=call_node, col_offset=8, end_line=4, end_col_offset=59
             ),
         ):
             self.checker.visit_call(call_node)
@@ -2023,10 +2023,10 @@ class TestClientLROMethodsUseCorePolling(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-lro-methods-use-polling", node=function_node_a
+                msg_id="client-lro-methods-use-polling", line=3, node=function_node_a,  col_offset=4, end_line=3, end_col_offset=19
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-lro-methods-use-polling", node=function_node_b
+                msg_id="client-lro-methods-use-polling", line=5, node=function_node_b,  col_offset=4, end_line=5, end_col_offset=20
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
@@ -2101,10 +2101,10 @@ class TestClientLROMethodsUseCorrectNaming(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="lro-methods-use-correct-naming", node=function_node_a
+                msg_id="lro-methods-use-correct-naming", line=5, node=function_node_a,  col_offset=4, end_line=5, end_col_offset=20
             ),
             pylint.testutils.MessageTest(
-                msg_id="lro-methods-use-correct-naming", node=function_node_b
+                msg_id="lro-methods-use-correct-naming", line=8, node=function_node_b, col_offset=4, end_line=8, end_col_offset=20
             ),
         ):
             self.checker.visit_classdef(class_node)
@@ -2152,7 +2152,7 @@ class TestClientConstructorDoesNotHaveConnectionStringParam(pylint.testutils.Che
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="connection-string-should-not-be-constructor-param", node=class_node
+                    msg_id="connection-string-should-not-be-constructor-param", line=2, node=class_node, col_offset=0, end_line=2, end_col_offset=16
                 ),
         ):
             self.checker.visit_classdef(class_node)
@@ -2166,7 +2166,7 @@ class TestClientConstructorDoesNotHaveConnectionStringParam(pylint.testutils.Che
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="connection-string-should-not-be-constructor-param", node=class_node
+                    msg_id="connection-string-should-not-be-constructor-param", line=2, node=class_node, col_offset=0, end_line=2, end_col_offset=16
                 ),
         ):
             self.checker.visit_classdef(class_node)
@@ -2207,7 +2207,7 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="package-name-incorrect", node=module_node
+                    msg_id="package-name-incorrect", line=0, node=module_node
                 )
         ):
             self.checker.visit_module(module_node)
@@ -2249,7 +2249,7 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
         module_node.body = [client_node]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="client-suffix-needed", node=module_node
+                    msg_id="client-suffix-needed", line=0, node=module_node
                 )
         ):
             self.checker.visit_module(module_node)
@@ -2380,13 +2380,13 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(pylint.testutils.Check
         """)
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-name-no-double-underscore", node=func_node_a
+                    msg_id="client-method-name-no-double-underscore", line=4, node=func_node_a, col_offset=4, end_line=4, end_col_offset=36
                 ),
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-name-no-double-underscore", node=func_node_b
+                    msg_id="client-method-name-no-double-underscore", line=7, node=func_node_b, col_offset=4, end_line=7, end_col_offset=25
                 ),
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-name-no-double-underscore", node=func_node_c
+                    msg_id="client-method-name-no-double-underscore", line=10, node=func_node_c, col_offset=4, end_line=10, end_col_offset=26
                 ),
         ):
             self.checker.visit_asyncfunctiondef(func_node_a)
@@ -2408,13 +2408,13 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(pylint.testutils.Check
         """)
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-name-no-double-underscore", node=func_node_a
+                    msg_id="client-method-name-no-double-underscore", line=4, node=func_node_a, col_offset=4, end_line=4, end_col_offset=30
                 ),
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-name-no-double-underscore", node=func_node_b
+                    msg_id="client-method-name-no-double-underscore", line=7, node=func_node_b, col_offset=4, end_line=7, end_col_offset=19
                 ),
                 pylint.testutils.MessageTest(
-                    msg_id="client-method-name-no-double-underscore", node=func_node_c
+                    msg_id="client-method-name-no-double-underscore", line=10, node=func_node_c, col_offset=4, end_line=10, end_col_offset=2
                 ),
         ):
             self.checker.visit_functiondef(func_node_a)
@@ -2495,7 +2495,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="docstring-admonition-needs-newline", node=function_node
+                    msg_id="docstring-admonition-needs-newline", line=2, node=function_node, col_offset=0, end_line=2, end_col_offset=16
                 )
         ):
             self.checker.visit_functiondef(function_node)
@@ -2516,7 +2516,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="docstring-admonition-needs-newline", node=function_node
+                    msg_id="docstring-admonition-needs-newline", line=2, node=function_node, col_offset=0, end_line=2, end_col_offset=16
                 )
         ):
             self.checker.visit_functiondef(function_node)
@@ -2567,7 +2567,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="docstring-admonition-needs-newline", node=function_node
+                    msg_id="docstring-admonition-needs-newline", line=2, node=function_node, col_offset=0, end_line=2, end_col_offset=22
                 )
         ):
             self.checker.visit_asyncfunctiondef(function_node)
@@ -2588,7 +2588,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="docstring-admonition-needs-newline", node=function_node
+                    msg_id="docstring-admonition-needs-newline", line=2, node=function_node, col_offset=0, end_line=2, end_col_offset=22
                 )
         ):
             self.checker.visit_asyncfunctiondef(function_node)
@@ -2645,7 +2645,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="docstring-admonition-needs-newline", node=class_node
+                    msg_id="docstring-admonition-needs-newline", line=2, node=class_node, col_offset=0, end_line=2, end_col_offset=16
                 )
         ):
             self.checker.visit_classdef(class_node)
@@ -2668,7 +2668,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="docstring-admonition-needs-newline", node=class_node
+                    msg_id="docstring-admonition-needs-newline", line=2, node=class_node,  col_offset=0, end_line=2, end_col_offset=16
                 )
         ):
             self.checker.visit_classdef(class_node)        
@@ -2703,7 +2703,7 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
      
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="naming-mismatch", node=err_node ,confidence=None
+                    msg_id="naming-mismatch", line=4, node=err_node ,col_offset=0, end_line=4, end_col_offset=14
                 )
         ):
             self.checker.visit_module(module_node)
@@ -2734,7 +2734,7 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
      
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="naming-mismatch", node=err_node ,confidence=None
+                    msg_id="naming-mismatch", line=4, node=err_node, col_offset=0, end_line=4, end_col_offset=14
                 )
         ):
             self.checker.visit_module(module_node)
@@ -2807,7 +2807,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
              pylint.testutils.MessageTest(
-                msg_id="enum-must-be-uppercase", node=class_node.body[0].targets[0]
+                msg_id="enum-must-be-uppercase", line=7, node=class_node.body[0].targets[0], col_offset=4, end_line=7, end_col_offset=7
             )
         ):
             self.checker.visit_classdef(class_node)
@@ -2826,7 +2826,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
  
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="enum-must-be-uppercase", node=class_node.body[0].targets[0]
+                msg_id="enum-must-be-uppercase", line=6, node=class_node.body[0].targets[0], col_offset=4, end_line=6, end_col_offset=7
             )
         ):
             self.checker.visit_classdef(class_node)
@@ -2843,7 +2843,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="enum-must-inherit-case-insensitive-enum-meta", node=class_node )
+                msg_id="enum-must-inherit-case-insensitive-enum-meta", line=4, node=class_node,  col_offset=0, end_line=4, end_col_offset=16 )
         ):
             self.checker.visit_classdef(class_node)
 
@@ -2876,10 +2876,10 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="enum-must-inherit-case-insensitive-enum-meta", node=node.body[1]
+                msg_id="enum-must-inherit-case-insensitive-enum-meta", line=4, node=node.body[1], col_offset=0, end_line=4, end_col_offset=16
             ),
             pylint.testutils.MessageTest(
-                msg_id="enum-must-be-uppercase", node=node.body[1].body[0].targets[0]
+                msg_id="enum-must-be-uppercase", line=5, node=node.body[1].body[0].targets[0], col_offset=4, end_line=5, end_col_offset=7
             )
         ):
 
@@ -2913,7 +2913,7 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="client-accepts-api-version-keyword", node=class_node
+                    msg_id="client-accepts-api-version-keyword", col_offset=0, line=2, node=class_node, end_line=2, end_col_offset=16
                 )
         ):
             self.checker.visit_classdef(class_node)
@@ -2958,7 +2958,7 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="client-accepts-api-version-keyword", node=node.body[0]
+                    msg_id="client-accepts-api-version-keyword", line=4, node=node.body[0], col_offset=0, end_line=4, end_col_offset=16
                 )
         ):
             self.checker.visit_classdef(node.body[0])
@@ -2970,34 +2970,3 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
-
-class TestCheckDocstringParameters(pylint.testutils.CheckerTestCase):
-    CHECKER_CLASS = checker.CheckDocstringParameters
-
-    def test_docstring_parameters_file_acceptable(self):
-        file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters_acceptable.py"))
-        node = astroid.parse(file.read())
-        file.close()
-
-
-        with self.assertNoMessages():
-            self.checker.visit_functiondef(node.body[1])
-            self.checker.visit_functiondef(node.body[2])
-
-    def test_docstring_parameters_file_violation(self):
-        file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters_violation.py"))
-        node = astroid.parse(file.read())
-        file.close()
-
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="docstring-missing-param", node=node.body[0], args=node.body[0].args.args[2].name
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="docstring-missing-type", node=node.body[0], args=node.body[0].args.args[1].name
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="docstring-missing-rtype", node=node.body[0]
-            )
-        ):
-            self.checker.visit_functiondef(node.body[0])

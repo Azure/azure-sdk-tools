@@ -26,9 +26,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     }
 
     // Locating Assets Repo
-        // ResolveAssetsStoreLocation
-        // ResolveAssetRepoLocation
-        // IsAssetsRepoInitialized
+        // -ResolveAssetsStoreLocation
+        // -ResolveAssetRepoLocation
+        // -IsAssetsRepoInitialized
 
     // Interacting with Assets Repo
         // CheckoutRepoAtConfig
@@ -38,8 +38,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         // PushAssetsRepoUpdate
 
     // Generic "Target to Targeted Git Repo for current config"
-        // GetDefaultBranch
-        // ResolveCheckoutPaths
+        // -GetDefaultBranch
+        // -ResolveCheckoutPaths
         // ResolveTargetBranch resolve presence of autobranch
         // UpdateAssetsJson
 
@@ -51,43 +51,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private HttpClient httpClient = new HttpClient();
         public string DefaultBranch = "main";
 
-        /// <summary>
-        /// Reaches out to a git repo and resolves the default branch
-        /// </summary>
-        /// <param name="config">A valid and populated GitAssetsConfiguration generated from a assets.json.</param>
-        /// <returns>The default branch</returns>
-        public async Task<string> GetDefaultBranch(GitAssetsConfiguration config)
-        {
-            var gitCommand = BasicGitInvocation(config.RepoRoot);
-            var token = Environment.GetEnvironmentVariable("GIT_TOKEN");
 
-            HttpRequestMessage msg = new HttpRequestMessage()
-            {
-                RequestUri = new Uri($"https://api.github.com/repos/{config.AssetsRepo}"),
-                Method = HttpMethod.Get
-            };
-
-            if (token != null)
-            {
-                msg.Headers.Authorization = new AuthenticationHeaderValue("token", token);
-                msg.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-                msg.Headers.Add("User-Agent", "Azure-Sdk-Test-Proxy");
-            }
-
-            var webResult = await httpClient.SendAsync(msg);
-
-            if (webResult.StatusCode == HttpStatusCode.OK)
-            {
-                var doc = JsonDocument.Parse(webResult.Content.ReadAsStream(), options: new JsonDocumentOptions() { AllowTrailingCommas = true });
-                if (doc.RootElement.TryGetProperty("default_branch", out var result))
-                {
-                    return result.ToString();
-                }
-            }
-            
-            return DefaultBranch;
-        }
-
+        #region push, reset, restore implementations
         public async Task Push(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var gitCommand = BasicGitInvocation(config.RepoRoot);
@@ -148,7 +113,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse assets.json content at \"{assetsJsonPath}\". Exception: {e.Message}");
             }
         }
+        #endregion
 
+        #region git process interactions
         public ProcessStartInfo BasicGitInvocation(string workingDirectory)
         {
             var startInfo = new ProcessStartInfo("git")
@@ -188,8 +155,57 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 throw new HttpException(HttpStatusCode.BadRequest, "Unable to locate git command.");
             }
         }
+        #endregion
 
+        #region code repo interactions
+        /// <summary>
+        /// Reaches out to a git repo and resolves the default branch
+        /// </summary>
+        /// <param name="config">A valid and populated GitAssetsConfiguration generated from a assets.json.</param>
+        /// <returns>The default branch</returns>
+        public async Task<string> GetDefaultBranch(GitAssetsConfiguration config)
+        {
+            var gitCommand = BasicGitInvocation(config.RepoRoot);
+            var token = Environment.GetEnvironmentVariable("GIT_TOKEN");
 
+            HttpRequestMessage msg = new HttpRequestMessage()
+            {
+                RequestUri = new Uri($"https://api.github.com/repos/{config.AssetsRepo}"),
+                Method = HttpMethod.Get
+            };
+
+            if (token != null)
+            {
+                msg.Headers.Authorization = new AuthenticationHeaderValue("token", token);
+                msg.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+                msg.Headers.Add("User-Agent", "Azure-Sdk-Test-Proxy");
+            }
+
+            var webResult = await httpClient.SendAsync(msg);
+
+            if (webResult.StatusCode == HttpStatusCode.OK)
+            {
+                var doc = JsonDocument.Parse(webResult.Content.ReadAsStream(), options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+                if (doc.RootElement.TryGetProperty("default_branch", out var result))
+                {
+                    return result.ToString();
+                }
+            }
+
+            return DefaultBranch;
+        }
+
+        public Task<string> ResolveTargetBranch(GitAssetsConfiguration config)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Used to ascend to the repo root of any given startup path. Unlike ResolveAssetsJson, which implements similar ascension logic, this function returns the repo root, NOT the assets.json.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>An absolute path to the discovered repo root.</returns>
+        /// <exception cref="HttpException"></exception>
         public string AscendToRepoRoot(string path)
         {
             var originalPath = path.Clone();
@@ -216,6 +232,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
+        /// <summary>
+        /// Given a startup path, ascend the directory tree until we either reach git root (success) or disk root (failure).
+        /// </summary>
+        /// <param name="inputPath">A valid directory. If passed an assets json file directly instead of a directory, that value will be returned.</param>
+        /// <returns>A path to a file named "assets.json"</returns>
+        /// <exception cref="HttpException"></exception>
         public string ResolveAssetsJson(string inputPath)
         {
             if (inputPath.ToLowerInvariant().EndsWith("assets.json"))
@@ -264,5 +286,54 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 IsRoot = new DirectoryInfo(directoryPath).Parent == null
             };
         }
+
+        #endregion
+
+        #region assets repo interactions
+        public string ResolveAssetsStoreLocation(GitAssetsConfiguration config, bool autoCreate = true)
+        {
+            var location = Path.Join(config.RepoRoot, ".assets");
+            if (!Directory.Exists(location) && autoCreate)
+            {
+                Directory.CreateDirectory(location);
+            }
+
+            return location;
+        }
+
+        public string ResolveAssetRepoLocation(GitAssetsConfiguration config, bool autoCreate = true)
+        {
+            var assetsStore = ResolveAssetsStoreLocation(config, autoCreate: autoCreate);
+            var location = Path.Join(assetsStore, config.RepoRoot.GetHashCode().ToString());
+            if (!Directory.Exists(location) && autoCreate)
+            {
+                Directory.CreateDirectory(location);
+            }
+
+            return location;
+        }
+
+        public bool IsAssetsRepoInitialized(GitAssetsConfiguration config, bool autoCreate = true)
+        {
+            var location = Path.Join(ResolveAssetRepoLocation(config, autoCreate: autoCreate), ".git");
+
+            return Directory.Exists(location);
+        }
+
+        public string ResolveCheckoutPaths(GitAssetsConfiguration config)
+        {
+            var assetsRepoPath = ResolveAssetRepoLocation(config);
+
+            var combinedPath = Path.Join(config.AssetsRepoPrefixPath, config.AssetsJsonRelativeLocation);
+
+
+            throw new NotImplementedException();
+        }
+
+        public void UpdateAssetsJson(GitAssetsConfiguration config)
+        {
+
+        }
+        #endregion
     }
 }

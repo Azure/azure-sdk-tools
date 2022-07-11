@@ -23,12 +23,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             BlobUploadProcessor runProcessor,
             QueueServiceClient queueServiceClient,
             TelemetryClient telemetryClient,
-            IOptions<PipelineWitnessSettings> options)
+            IOptionsMonitor<PipelineWitnessSettings> options)
             : base(
                 logger, 
                 telemetryClient,
                 queueServiceClient,
-                options.Value.BuildCompleteQueueName, 
+                options.CurrentValue.BuildCompleteQueueName, 
                 options)
         {
             this.logger = logger;

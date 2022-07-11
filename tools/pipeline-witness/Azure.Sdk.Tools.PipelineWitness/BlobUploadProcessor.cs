@@ -168,9 +168,8 @@
             else
             {
                 await UploadTimelineBlobAsync(account, build, timeline);
+                await UploadBuildFailureBlobAsync(account, build, timeline);
             }
-
-            await UploadBuildFailureBlobAsync(account, build, timeline);
 
             var logs = await buildClient.GetBuildLogsAsync(build.Project.Id, build.Id);
 
@@ -182,20 +181,14 @@
             
             var bundles = BuildLogBundles(account, build, timeline, logs);
 
-            if (bundles.Count == 1)
+            // We no longer process log bundles on separate messages.
+            // During zero downtime upgrade phase, process all the bundles sequentially but allow for processing message in the log bundle queue
+            // After the upgrade phase, this should be rewritten to remove bundling but keep the log -> timeline record association
+            foreach(var bundle in bundles)
             {
-                await ProcessBuildLogBundleAsync(bundles[0]);
-            }
-            else
-            {
-                // If there's more than one bundle, we need to fan out the logs to multiple queue messages
-                foreach (var bundle in bundles)
-                {
-                    await EnqueueBuildLogBundleAsync(bundle);
-                }
+                await ProcessBuildLogBundleAsync(bundle);
             }
         }
-
 
         private async Task UploadBuildFailureBlobAsync(string account, Build build, Timeline timeline)
         {
@@ -690,13 +683,7 @@
                 throw;
             }
         }
-
-        private async Task EnqueueBuildLogBundleAsync(BuildLogBundle bundle)
-        {
-            var message = JsonConvert.SerializeObject(bundle, jsonSettings);
-            await this.queueClient.SendMessageAsync(message);
-        }
-
+ 
         private async Task UploadTestRunBlobsAsync(string account, Build build)
         {
             try

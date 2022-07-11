@@ -1709,7 +1709,7 @@ class TestAsyncClientCorrectNaming(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="async-client-bad-name", node=class_node_a
+                msg_id="async-client-bad-name", line=2, node=class_node_a, col_offset=0, end_line=2, end_col_offset=21
             ),
         ):
             self.checker.visit_classdef(class_node_a)
@@ -1932,10 +1932,10 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", node=function_node_a
+                msg_id="client-list-methods-use-paging", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", node=function_node_b
+                msg_id="client-list-methods-use-paging", line=7, node=function_node_b, col_offset=4, end_line=7, end_col_offset=19
             ),
         ):
             self.checker.visit_functiondef(function_node_a)

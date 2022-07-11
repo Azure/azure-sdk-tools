@@ -12,6 +12,10 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
         public string Test { get; set; }
         public string Arguments { get; set; }
 
+        public string PrimaryPackage { get; set; }
+        public IEnumerable<IDictionary<string, string>> RequestedPackageVersions { get; set; }
+        public IEnumerable<IDictionary<string, string>> RuntimePackageVersions { get; set; }
+
         public IEnumerable<(string version, double operationsPerSecond)> OperationsPerSecondMax { get; set; }
         public IEnumerable<(string version, double operationsPerSecond)> OperationsPerSecondMean { get; set; }
 

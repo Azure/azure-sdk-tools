@@ -433,6 +433,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     Service = g.Key.Service,
                     Test = g.Key.Test,
                     Arguments = g.Key.Arguments,
+                    PrimaryPackage = g.First().PrimaryPackage,
+                    RequestedPackageVersions = g.Select(r => r.PackageVersions).Distinct(new DictionaryEqualityComparer<string, string>()),
+                    RuntimePackageVersions = g.Select(r => r.Iterations.First().PackageVersions).Distinct(new DictionaryEqualityComparer<string, string>()),
                 };
 
                 var operationsPerSecondMax = new List<(string version, double operationsPerSecond)>();
@@ -440,8 +443,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 foreach (var result in g)
                 {
-                    var primaryPackage = result.PrimaryPackage;
-                    var primaryPackageVersion = result.PackageVersions?[primaryPackage];
+                    var primaryPackageVersion = result.PackageVersions?[resultSummary.PrimaryPackage];
                     operationsPerSecondMax.Add((primaryPackageVersion, result.OperationsPerSecondMax));
                     operationsPerSecondMean.Add((primaryPackageVersion, result.OperationsPerSecondMean));
                 }
@@ -460,6 +462,17 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 await streamWriter.WriteLineAsync();
 
                 await streamWriter.WriteLineAsync("Package Versions (requested, runtime)");
+
+                var packageVersions = group.First().RequestedPackageVersions.Zip(group.First().RuntimePackageVersions);
+
+                foreach (var (requested, runtime) in packageVersions)
+                {
+                    foreach (var packageName in requested.Keys.OrderBy(n => n))
+                    {
+                        await streamWriter.WriteLineAsync($"{packageName}: {requested[packageName]}, {runtime[packageName]}");
+                    }
+                }
+
                 await streamWriter.WriteLineAsync();
                 await streamWriter.WriteLineAsync();
 

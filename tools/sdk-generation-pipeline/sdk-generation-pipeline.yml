@@ -61,6 +61,10 @@ parameters:
       - ad-hoc
       - ci
 
+  - name: sdkConfig
+    type: string
+    default: "''"
+
 stages:
   - stage: SdkGeneration
     jobs:
@@ -72,11 +76,11 @@ stages:
               swagger: ${{ parameters.swagger }}
               sdk: ${{ parameters.sdkToGernerate }}
               service: ${{ parameters.service }}
+              sdkRepoBaseBranch: ${{ variables.sdkRepoBaseBranch }}
 
           - template: ./pipelines/steps/pipeline-setup.yml
             parameters:
               sdk: ${{ parameters.sdkToGernerate }}
-              sdkRepoBaseBranch: ${{ variables.sdkRepoBaseBranch }}
               trigger: ${{ parameters.clientAgent }}
               swagger: ${{ parameters.swagger }}
               triggerType: ${{ parameters.triggerType }}
@@ -86,6 +90,9 @@ stages:
               readmeFile: ${{ parameters.relativeReadmeFilePath }}
               trigger: ${{ parameters.clientAgent }}
               triggerType: ${{ parameters.triggerType }}
+              serviceType: ${{ parameters.serviceType }}
+              sdk: ${{ parameters.sdkToGernerate }}
+              sdkConfig: ${{ parameters.sdkConfig }}
 
           - template: ./pipelines/steps/parse-and-publish-result.yml
             parameters:

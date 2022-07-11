@@ -13,6 +13,9 @@ parameters:
 
   - name: service
     type: string
+
+  - name: sdkRepoBaseBranch
+    type: string
 steps:
   - bash: |
       if [ -z ${{ parameters.swagger.path }} ];then
@@ -22,5 +25,18 @@ steps:
     displayName: Check parameters
 
   - bash: |
-      echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/Azure/azure-sdk-for-${{parameters.sdk}}.git"
+      #TODO remove hard code
+      if [ ${{parameters.sdk}} = "js" ]; then
+        echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/$(SDK_OWNER)/azure-sdk-for-js.git"
+        echo "##vso[task.setvariable variable=sdkMainBranch;]js-dpg"
+      elif [ ${{parameters.sdk}} = "net" ]; then
+        echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/$(SDK_OWNER)/azure-sdk-for-net.git"
+        echo "##vso[task.setvariable variable=sdkMainBranch;]yc/dpgauto"
+      elif [ ${{parameters.sdk}} = "python" ]; then
+        echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/$(SDK_OWNER)/azure-sdk-for-python.git"
+        echo "##vso[task.setvariable variable=sdkMainBranch;]dpg-readme-sdkGeneration"
+      else
+        echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/Azure/azure-sdk-for-${{parameters.sdk}}.git"
+        echo "##vso[task.setvariable variable=sdkMainBranch;]$(sdkRepoBaseBranch)"
+      fi
     displayName: Set sdk repo

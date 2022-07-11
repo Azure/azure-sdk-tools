@@ -8,6 +8,15 @@ parameters:
   - name: triggerType
     type: string
 
+  - name: serviceType
+    type: string
+
+  - name: sdk
+    type: string
+
+  - name: sdkConfig
+    type: string
+
 steps:
   - bash: |
       publishResult \
@@ -23,14 +32,37 @@ steps:
       EVENTHUB_SAS_URL: $(EVENTHUB_SAS_URL)
     condition: ne('${{ parameters.triggerType }}', 'release')
     
-
   - bash: |
-      docker run \
-        -v $(SPEC_REPO):/spec-repo \
-        -v $(SDK_REPO):/sdk-repo \
-        -v /tmp/output:/tmp/output \
-        $(DOCKER_IMAGE) \
-        --readme=${{ parameters.readmeFile }}
+      if [ "${{ parameters.serviceType }}" = "resource-manager" ];then
+        docker run --privileged \
+          -v $(SPEC_REPO):/spec-repo \
+          -v $(SDK_REPO):/sdk-repo \
+          -v /tmp/output:/tmp/output \
+          $(DOCKER_IMAGE) \
+          --readme=${{ parameters.readmeFile }}
+      else
+        echo '${{ parameters.sdkConfig }}' > /tmp/output/autorest.md
+        configLen=`cat /tmp/output/autorest.md | wc -L`
+        echo "configLen is :${configLen}"
+        #check if config is default ''
+        if [ 2 -ge ${configLen} ];then
+          docker run --privileged \
+            -v $(SPEC_REPO):/spec-repo \
+            -v $(SDK_REPO):/sdk-repo \
+            -v /tmp/output:/tmp/output \
+            $(DOCKER_IMAGE) \
+            --readme=${{ parameters.readmeFile }}
+        else
+          docker run --privileged \
+            -v $(SPEC_REPO):/spec-repo \
+            -v $(SDK_REPO):/sdk-repo \
+            -v /tmp/output/autorest.md:/autorest.md \
+            -v /tmp/output:/tmp/output \
+            $(DOCKER_IMAGE) \
+            --readme=${{ parameters.readmeFile }}
+        fi
+      fi
+
       if [ $? -ne 0 ]; then
           exit 1
       fi

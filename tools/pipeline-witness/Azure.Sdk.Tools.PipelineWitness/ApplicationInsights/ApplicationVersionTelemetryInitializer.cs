@@ -11,11 +11,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
 
         public void Initialize(ITelemetry telemetry)
         {
-            var component = telemetry.Context?.Component;
-            
-            if (component != null)
+            if (!string.IsNullOrEmpty(_version))
             {
-                component.Version = _version;
+                var component = telemetry.Context?.Component;
+
+                if (component != null)
+                {
+                    component.Version = _version;
+                }
             }
         }
         

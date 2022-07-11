@@ -54,7 +54,7 @@
         private readonly BlobContainerClient buildFailuresContainerClient;
         private readonly QueueClient queueClient;
         private readonly IOptions<PipelineWitnessSettings> options;
-        private readonly HashSet<string> knownBlobs = new HashSet<string>();
+        private readonly Dictionary<string, int?> cachedDefinitionRevisions = new();
         private readonly IFailureAnalyzer failureAnalyzer;        
 
         public BlobUploadProcessor(
@@ -260,7 +260,14 @@
 
             foreach (var definition in definitions)
             {
-                await UploadBuildDefinitionBlobAsync(account, definition);
+                var cacheKey = $"{definition.Project.Id}:{definition.Id}";
+                
+                if (!this.cachedDefinitionRevisions.TryGetValue(cacheKey, out var cachedRevision) || cachedRevision != definition.Revision)
+                { 
+                    await UploadBuildDefinitionBlobAsync(account, definition);
+                }
+
+                this.cachedDefinitionRevisions[cacheKey] = definition.Revision;
             }
         }
 
@@ -271,11 +278,9 @@
             try
             {
                 var blobClient = this.buildDefinitionsContainerClient.GetBlobClient(blobPath);
-                var alreadySeen = this.knownBlobs.Contains(blobPath);
 
-                if (alreadySeen || await blobClient.ExistsAsync())
+                if (await blobClient.ExistsAsync())
                 {
-                    this.knownBlobs.Add(blobPath);
                     this.logger.LogInformation("Skipping existing build definition blob for build {DefinitionId} project {Project}", definition.Id, definition.Project.Name);
                     return;
                 }
@@ -344,12 +349,10 @@
                 }, jsonSettings);
 
                 await blobClient.UploadAsync(new BinaryData(content));
-                this.knownBlobs.Add(blobPath);
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
                 this.logger.LogInformation("Ignoring exception from existing blob for build definition {DefinitionId}", definition.Id);
-                this.knownBlobs.Add(blobPath);
             }
             catch (Exception ex)
             {

@@ -59,9 +59,9 @@ Services:
       Project: sdk/core/azure-core-perf
       PrimaryPackage: azure-core
       PackageVersions:
-      - azure-core: 1.29.1
-        azure-core-http-netty: 1.12.2
-        azure-core-http-okhttp: 1.10.1
+      - azure-core: 1.30.0
+        azure-core-http-netty: 1.12.3
+        azure-core-http-okhttp: 1.11.0
       - azure-core: source
         azure-core-http-netty: source
         azure-core-http-okhttp: source
@@ -121,20 +121,20 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Blobs: 12.13.0-beta.1
+      - Azure.Storage.Blobs: 12.13.0
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf
       PrimaryPackage: azure-storage-blob
       PackageVersions: &java-storage-package-versions
-      - azure-storage-blob: 12.18.0-beta.1
-        azure-storage-blob-cryptography: 12.17.0-beta.1
-        azure-storage-file-share: 12.13.1
-        azure-storage-file-datalake: 12.10.1
-        azure-core-http-netty: 1.12.2
-        azure-core-http-okhttp: 1.10.1
-        azure-core: 1.29.1
-        reactor-core: 3.4.17
+      - azure-storage-blob: 12.18.0
+        azure-storage-blob-cryptography: 12.17.0
+        azure-storage-file-share: 12.14.0
+        azure-storage-file-datalake: 12.11.0
+        azure-core-http-netty: 1.12.3
+        azure-core-http-okhttp: 1.11.0
+        azure-core: 1.30.0
+        reactor-core: 3.4.19
       - azure-storage-blob: source
         azure-storage-blob-cryptography: source
         azure-storage-file-share: source
@@ -148,13 +148,13 @@ Services:
       Project: sdk/storage/perf-tests/storage-blob
       PackageVersions:
       # TODO: Pin version of core to align with older version of storage.  Currently always uses source version of core.
-      - "@azure/storage-blob": 12.10.0
+      - "@azure/storage-blob": 12.11.0
       - "@azure/storage-blob": source
     Python:
       Project: sdk/storage/azure-storage-blob
       PackageVersions:
       # TODO: Pin version of core to align with older version of storage
-      - azure-storage-blob: 12.13.0b1
+      - azure-storage-blob: 12.13.0
       - azure-storage-blob: source
     Cpp:
       Project: azure-storage-blobs-perf
@@ -276,7 +276,7 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Files.Shares: 12.10.0
+      - Azure.Storage.Files.Shares: 12.11.0
       - Azure.Storage.Files.Shares: source
     Java:
       Project: sdk/storage/azure-storage-perf
@@ -286,12 +286,12 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-file-share
       PackageVersions:
-      - "@azure/storage-file-share": 12.10.0
+      - "@azure/storage-file-share": 12.11.0
       - "@azure/storage-file-share": source      
     Python:
       Project: sdk/storage/azure-storage-file-share
       PackageVersions:
-      - azure-storage-file-share: 12.8.0
+      - azure-storage-file-share: 12.9.0
       - azure-storage-file-share: source
 
   Tests:
@@ -316,7 +316,7 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Files.DataLake/perf/Azure.Storage.Files.DataLake.Perf/Azure.Storage.Files.DataLake.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Files.DataLake: 12.10.0
+      - Azure.Storage.Files.DataLake: 12.11.0
       - Azure.Storage.Files.DataLake: source
     Java:
       Project: sdk/storage/azure-storage-perf
@@ -326,12 +326,12 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-file-datalake
       PackageVersions:
-      - "@azure/storage-file-datalake": 12.9.0
+      - "@azure/storage-file-datalake": 12.10.0
       - "@azure/storage-file-datalake": source
     Python:
       Project: sdk/storage/azure-storage-file-datalake
       PackageVersions:
-      - azure-storage-file-datalake: 12.7.0
+      - azure-storage-file-datalake: 12.8.0
       - azure-storage-file-datalake: source
 
   Tests:

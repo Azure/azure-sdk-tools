@@ -8,36 +8,40 @@ using NUnit.Framework;
 
 namespace Azure.Sdk.Tools.PerfAutomation.Tests
 {
-    public class ProgramTests
+    public class ResultsSummaryTests
     {
+        // Tests generate results summaries from sample results.json files.  Output is printed to console
+        // for manual inspection in Test Explorer, rather than asserting specific output, since it will
+        // change frequently.
+
         [Test]
-        public async Task WriteResultsSummaryTwoVersionsNet()
+        public async Task Net()
         {
-            Console.Write(await GetResultsSummary("two-versions-net.json"));
+            Console.Write(await GetResultsSummary("results-net.json"));
         }
 
         [Test]
-        public async Task WriteResultsSummaryThreeVersionsNet()
+        public async Task Java()
         {
-            Console.Write(await GetResultsSummary("three-versions-net.json"));
+            Console.Write(await GetResultsSummary("results-java.json"));
         }
 
         [Test]
-        public async Task WriteResultsSummaryTwoVersionsJava()
+        public async Task JS()
         {
-            Console.Write(await GetResultsSummary("two-versions-java.json"));
+            Console.Write(await GetResultsSummary("results-js.json"));
         }
 
         [Test]
-        public async Task WriteResultsSummaryTwoVersionsJS()
+        public async Task Python()
         {
-            Console.Write(await GetResultsSummary("two-versions-js.json"));
+            Console.Write(await GetResultsSummary("results-python.json"));
         }
 
         [Test]
-        public async Task WriteResultsSummaryTwoVersionsPython()
+        public async Task ThreeVersions()
         {
-            Console.Write(await GetResultsSummary("two-versions-python.json"));
+            Console.Write(await GetResultsSummary("results-three-versions.json"));
         }
 
         private static async Task<string> GetResultsSummary(string path)

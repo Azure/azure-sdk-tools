@@ -30,8 +30,8 @@ export enum ExtensionName {
     xMsExamples = 'x-ms-examples',
 }
 export interface ExampleExtensionResponse {
-    body: any;
-    headers: Record<string, any>;
+    body?: any;
+    headers?: Record<string, any>;
 }
 export interface ExampleExtension {
     parameters?: Record<string, any>;
@@ -471,15 +471,10 @@ export class TestCodeModeler {
                 step.exampleModel = this.createExampleModel(
                     session,
                     {
-                        parameters: step.requestParameters,
-                        responses: {
-                            [step.statusCode]: {
-                                body: step.expectedResponse,
-                                headers: {},
-                            },
-                        },
+                        parameters: step.parameters,
+                        responses: step.responses,
                     },
-                    step.exampleName,
+                    step.exampleFile,
                     operation,
                     operationGroup,
                 );
@@ -578,7 +573,7 @@ export class TestCodeModeler {
             const stepModel = step as StepRestCallModel;
             this.initiateRestCall(session, stepModel);
             if (codeModelRestcallOnly && !stepModel.exampleModel) {
-                throw new Error(`Can't find operationId ${step.operationId}[step ${step.exampleName}] in codeModel!`);
+                throw new Error(`Can't find operationId ${step.operationId}[step ${step.step}] in codeModel!`);
             }
         } else if (step.type === OavStepType.armTemplate) {
             testDef.useArmTemplate = true;
@@ -608,6 +603,7 @@ export class TestCodeModeler {
                         checkUnderFileRoot: false,
                         fileRoot: fileRoot,
                         swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
+                        eraseXmsExamples: false,
                     });
                     const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
                     this.initiateTestDefinition(session, testDef);
@@ -633,14 +629,16 @@ export class TestCodeModeler {
                         if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) {
                             continue;
                         }
-                        const scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
+                        var scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
                         try {
                             const loader = ApiScenarioLoader.create({
                                 useJsonParser: false,
                                 checkUnderFileRoot: false,
                                 fileRoot: fileRoot,
                                 swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
+                                eraseXmsExamples: false,
                             });
+                            scenarioPathName = scenarioPathName.split('\\').join('/');
                             const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
 
                             this.initiateTestDefinition(session, testDef, codemodelRestCallOnly);

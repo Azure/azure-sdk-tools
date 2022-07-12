@@ -26,7 +26,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
             var settingsSection = builder.Configuration.GetSection("PipelineWitness");
             settingsSection.Bind(settings);
 
-            builder.Services.AddApplicationInsightsTelemetry();
+            builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
+            builder.Services.AddApplicationInsightsTelemetryProcessor<BlobNotFoundTelemetryProcessor>();
+            builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
 
             builder.Services.AddAzureClients(builder =>
             {
@@ -74,8 +76,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, AzureArtifactsServiceUnavailableClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
-            builder.Services.AddTransient<ITelemetryInitializer, NotFoundTelemetryInitializer>();
-            builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
             builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
 
             builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);

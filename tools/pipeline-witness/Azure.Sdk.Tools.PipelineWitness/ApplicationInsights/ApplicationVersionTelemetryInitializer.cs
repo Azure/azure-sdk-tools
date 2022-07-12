@@ -11,9 +11,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
 
         public void Initialize(ITelemetry telemetry)
         {
-            if (telemetry is ISupportProperties propertyTelemetry)
+            if (!string.IsNullOrEmpty(_version))
             {
-                propertyTelemetry.Properties["Application version"] = _version;
+                var component = telemetry.Context?.Component;
+
+                if (component != null)
+                {
+                    component.Version = _version;
+                }
             }
         }
         
@@ -22,7 +27,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
             var assembly = typeof(ApplicationVersionTelemetryInitializer).Assembly;
             
             var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-                ?? assembly.GetName().Version.ToString();
+                ?? assembly.GetName().Version?.ToString();
 
             return version;
         }

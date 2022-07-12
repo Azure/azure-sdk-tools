@@ -35,9 +35,7 @@ Services:
     Net:
       Project: common/Perf/Azure.Sample.Perf/Azure.Sample.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Blobs: 12.12.0
-      - Azure.Storage.Blobs: 12.13.0-beta.1
-      - Azure.Storage.Blobs: source
+      - Azure.Test.Perf: source
     Java:
       Project: sdk/template/azure-template-perf
       PackageVersions:

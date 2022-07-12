@@ -596,23 +596,19 @@ export class TestCodeModeler {
 
     public async loadTestResourcesFromConfig(session: Session<TestCodeModel>, fileRoot: string) {
         for (const testResource of this.testConfig.getValue(Config.testResources)) {
-            if (fs.existsSync(path.join(fileRoot, testResource[Config.test]))) {
-                try {
-                    const loader = ApiScenarioLoader.create({
-                        useJsonParser: false,
-                        checkUnderFileRoot: false,
-                        fileRoot: fileRoot,
-                        swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
-                        eraseXmsExamples: false,
-                    });
-                    const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
-                    this.initiateTestDefinition(session, testDef);
-                    this.codeModel.testModel.scenarioTests.push(testDef);
-                } catch (error) {
-                    session.warning(`Exception occured when load testdef ${testResource[Config.test]}: ${error}`, ['Test Modeler']);
-                }
-            } else {
-                session.warning(`Unexisted test resource scenario file: ${testResource[Config.test]}`, ['Test Modeler']);
+            try {
+                const loader = ApiScenarioLoader.create({
+                    useJsonParser: false,
+                    checkUnderFileRoot: false,
+                    fileRoot: fileRoot,
+                    swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
+                    eraseXmsExamples: false,
+                });
+                const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
+                this.initiateTestDefinition(session, testDef);
+                this.codeModel.testModel.scenarioTests.push(testDef);
+            } catch (error) {
+                session.warning(`Exception occured when load testdef ${testResource[Config.test]}: ${error}`, ['Test Modeler']);
             }
         }
     }

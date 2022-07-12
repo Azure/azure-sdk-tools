@@ -11,12 +11,6 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
     public class ProgramTests
     {
         [Test]
-        public async Task WriteResultsSummaryTwoVersionsJava()
-        {
-            Console.Write(await GetResultsSummary("two-versions-java.json"));
-        }
-
-        [Test]
         public async Task WriteResultsSummaryTwoVersionsNet()
         {
             Console.Write(await GetResultsSummary("two-versions-net.json"));
@@ -26,6 +20,24 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         public async Task WriteResultsSummaryThreeVersionsNet()
         {
             Console.Write(await GetResultsSummary("three-versions-net.json"));
+        }
+
+        [Test]
+        public async Task WriteResultsSummaryTwoVersionsJava()
+        {
+            Console.Write(await GetResultsSummary("two-versions-java.json"));
+        }
+
+        [Test]
+        public async Task WriteResultsSummaryTwoVersionsJS()
+        {
+            Console.Write(await GetResultsSummary("two-versions-js.json"));
+        }
+
+        [Test]
+        public async Task WriteResultsSummaryTwoVersionsPython()
+        {
+            Console.Write(await GetResultsSummary("two-versions-python.json"));
         }
 
         private static async Task<string> GetResultsSummary(string path)

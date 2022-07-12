@@ -426,6 +426,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var resultSummaries = groups.Select(g =>
             {
+                var requestedPackageVersions = g.Select(r => r.PackageVersions).Distinct(new DictionaryEqualityComparer<string, string>());
+                var runtimePackageVersions = requestedPackageVersions.Select(req =>
+                    g.Where(r => r.PackageVersions == req).First().Iterations.First().PackageVersions);
+
                 var resultSummary = new ResultSummary()
                 {
                     Language = g.Key.Language,
@@ -434,8 +438,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     Test = g.Key.Test,
                     Arguments = g.Key.Arguments,
                     PrimaryPackage = g.First().PrimaryPackage,
-                    RequestedPackageVersions = g.Select(r => r.PackageVersions).Distinct(new DictionaryEqualityComparer<string, string>()),
-                    RuntimePackageVersions = g.Select(r => r.Iterations.First().PackageVersions).Distinct(new DictionaryEqualityComparer<string, string>()),
+                    RequestedPackageVersions = requestedPackageVersions,
+                    RuntimePackageVersions = runtimePackageVersions,
                 };
 
                 var operationsPerSecondMax = new List<(string version, double operationsPerSecond)>();
@@ -457,8 +461,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var languageServiceGroups = resultSummaries.GroupBy(r => (r.Language, r.LanguageVersion, r.Service));
             foreach (var group in languageServiceGroups)
             {
+                var primaryPackage = group.First().PrimaryPackage;
+
                 await streamWriter.WriteLineAsync($"Language: {group.Key.Language} ({group.Key.LanguageVersion})");
                 await streamWriter.WriteLineAsync($"Service: {group.Key.Service}");
+                await streamWriter.WriteLineAsync($"PrimaryPackage: {primaryPackage}");
                 await streamWriter.WriteLineAsync();
 
                 await streamWriter.WriteLineAsync("Package Versions (requested, runtime)");
@@ -467,11 +474,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 foreach (var (requested, runtime) in packageVersions)
                 {
-                    foreach (var packageName in requested.Keys.OrderBy(n => n))
+                    var prefix = "- ";
+                    
+                    // Primary package should be listed first, with remaining sorted alphabetically
+                    foreach (var packageName in requested.Keys.OrderBy(n => (n == primaryPackage) ? $"_{n}" : n))
                     {
                         var requestedName = requested[packageName];
                         var runtimeName = runtime?[packageName] ?? "unknown";
-                        await streamWriter.WriteLineAsync($"{packageName}: {requestedName}, {runtimeName}");
+                        await streamWriter.WriteLineAsync($"{prefix}{packageName}: {requestedName}, {runtimeName}");
+                        prefix = "  ";
                     }
                 }
 

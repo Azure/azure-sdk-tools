@@ -22,33 +22,39 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         }
 
         [Test]
+        public async Task NoIterations()
+        {
+            Console.Write(await GetResultsSummary("results/no-iterations.json"));
+        }
+
+        [Test]
         public async Task Net()
         {
-            Console.Write(await GetResultsSummary("results-net.json"));
+            Console.Write(await GetResultsSummary("results/net.json"));
         }
 
         [Test]
         public async Task Java()
         {
-            Console.Write(await GetResultsSummary("results-java.json"));
+            Console.Write(await GetResultsSummary("results/java.json"));
         }
 
         [Test]
         public async Task JS()
         {
-            Console.Write(await GetResultsSummary("results-js.json"));
+            Console.Write(await GetResultsSummary("results/js.json"));
         }
 
         [Test]
         public async Task Python()
         {
-            Console.Write(await GetResultsSummary("results-python.json"));
+            Console.Write(await GetResultsSummary("results/python.json"));
         }
 
         [Test]
         public async Task ThreeVersions()
         {
-            Console.Write(await GetResultsSummary("results-three-versions.json"));
+            Console.Write(await GetResultsSummary("results/three-versions.json"));
         }
 
         private static async Task<string> GetResultsSummary(string path)

@@ -427,8 +427,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var resultSummaries = groups.Select(g =>
             {
                 var requestedPackageVersions = g.Select(r => r.PackageVersions).Distinct(new DictionaryEqualityComparer<string, string>());
+
                 var runtimePackageVersions = requestedPackageVersions.Select(req =>
-                    g.Where(r => r.PackageVersions == req).First().Iterations.First().PackageVersions);
+                    g.Where(r => r.PackageVersions == req).First().Iterations.FirstOrDefault()?.PackageVersions);
 
                 var resultSummary = new ResultSummary()
                 {

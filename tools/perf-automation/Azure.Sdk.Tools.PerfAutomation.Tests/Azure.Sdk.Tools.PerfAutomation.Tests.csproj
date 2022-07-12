@@ -16,19 +16,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="results-three-versions.json">
+    <None Update="results\three-versions.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="results-java.json">
+    <None Update="results\java.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="results-js.json">
+    <None Update="results\js.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="results-net.json">
+    <None Update="results\net.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="results-python.json">
+    <None Update="results\no-iterations.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="results\python.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -2,9 +2,10 @@
 // Licensed under the MIT License.
 
 using APIView;
+using APIView.Model;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -14,14 +15,15 @@ namespace ApiView
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
-        public CodeLine[] Render(CodeFile file, bool showDocumentation = false, bool enableSkipDiff = false)
+        public RenderResult Render(CodeFile file, bool showDocumentation = false, bool enableSkipDiff = false)
         {
-            var list = new List<CodeLine>();
-            Render(list, file.Tokens, showDocumentation, enableSkipDiff);
-            return list.ToArray();
+            var codeLines = new List<CodeLine>();
+            var sections = new List<TreeNode<CodeLine>>();
+            Render(codeLines, file.Tokens, showDocumentation, enableSkipDiff, sections);
+            return new RenderResult(codeLines.ToArray(), sections);
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff)
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff, List<TreeNode<CodeLine>> sections)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
@@ -29,9 +31,10 @@ namespace ApiView
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
             Stack<NodeInProcess> nodesInProcess = new Stack<NodeInProcess>();
-            string lastHeadingEncountered = null;
             HashSet<string> lineIds = new HashSet<string>(); // Used to ensure there are no duplicate IDs
             int indentSize = 0;
+            int lineNumber = 0;
+            TreeNode<CodeLine> section = null;
 
             foreach (var token in node)
             {
@@ -45,30 +48,42 @@ namespace ApiView
                 switch(token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        string lineClass = "";
+                        var lineId = SanitizeLineId(currentId, lineIds);
+                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), lineId, String.Empty, ++lineNumber, indentSize);
                         if (nodesInProcess.Count > 0)
                         {
                             var nodesInProcessAsArray = nodesInProcess.ToArray();
                             for (int i = 0; i < nodesInProcessAsArray.Length; i++)
                             {
-                                var classPrefix = SanitizeLineClass(nodesInProcessAsArray[i].classPrefix);
-                                if (i == 0 && nodesInProcessAsArray[i].classSuffix.Equals("heading"))
+                                if (i == 0 && nodesInProcessAsArray[i].SectionType.Equals("heading"))
                                 {
-                                    lineClass += (classPrefix + "-heading ");
+                                    if (nodesInProcessAsArray[i].SectionNode == null)
+                                    {
+                                        section = new TreeNode<CodeLine>(codeLine);
+                                        nodesInProcessAsArray[i].SectionNode = section;
+                                        list.Add(codeLine);
+                                    }
+                                    else
+                                    {
+                                        section = nodesInProcessAsArray[i].SectionNode.AddChild(codeLine);
+                                    }
+                                    
                                 }
-                                else if (i > 0 && nodesInProcessAsArray[i].classSuffix.Equals("heading"))
+                                else if (i > 0 && nodesInProcessAsArray[i].SectionType.Equals("heading"))
                                 {
+                                    section = nodesInProcessAsArray[i].SectionNode?.Parent;
                                     break;
                                 }
                                 else
                                 {
-                                    lineClass += (classPrefix + "-content ");
+                                    nodesInProcessAsArray[i].SectionNode.AddChild(codeLine);
                                 }
                             }
-                            lineClass = lineClass.Trim();
                         }
-
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize));
+                        else 
+                        {
+                            list.Add(codeLine);
+                        }
                         currentId = null;
                         stringBuilder.Clear();
                         break;
@@ -100,20 +115,23 @@ namespace ApiView
                         break;
 
                     case CodeFileTokenKind.FoldableSectionHeading:
-                        nodesInProcess.Push(new NodeInProcess(token.Value, "heading"));
-                        lastHeadingEncountered = token.Value;
+                        nodesInProcess.Push(new NodeInProcess(section, "heading"));
                         RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentStart:
-                        nodesInProcess.Push(new NodeInProcess(lastHeadingEncountered, "content"));
+                        nodesInProcess.Push(new NodeInProcess(section, "content"));
                         indentSize++;
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentEnd:
                         nodesInProcess.Pop();
-                        if (nodesInProcess.Peek().classSuffix.Equals("heading"))
+                        if (nodesInProcess.Peek().SectionType.Equals("heading"))
                         {
+                            if (nodesInProcess.Count == 1)
+                            {
+                                sections.Add(nodesInProcess.Peek().SectionNode);
+                            }
                             nodesInProcess.Pop();
                         }
                         indentSize--;
@@ -198,13 +216,25 @@ namespace ApiView
 
     public struct NodeInProcess
     {
-        public NodeInProcess(string prefix, string suffix)
+        public NodeInProcess(TreeNode<CodeLine> sectionNode, string sectionType)
         {
-            classPrefix = prefix;
-            classSuffix = suffix;
+            SectionNode = sectionNode;
+            SectionType = sectionType;
         }
 
-        public string classPrefix { get; }
-        public string classSuffix { get; }
+        public TreeNode<CodeLine> SectionNode { get; set; }
+        public string SectionType { get; }
+    }
+
+    public struct RenderResult
+    {
+        public RenderResult(CodeLine[] codeLines, List<TreeNode<CodeLine>> sections)
+        {
+            CodeLines = codeLines;
+            Sections = sections;
+        }
+
+        public CodeLine[] CodeLines { get; }
+        public List<TreeNode<CodeLine>> Sections { get; }
     }
 }

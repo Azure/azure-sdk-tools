@@ -66,7 +66,6 @@ namespace ApiView
                                 }
                             }
                             lineClass = lineClass.Trim();
-                            currentId = SanitizeLineId(currentId, lineIds);
                         }
 
                         list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize));

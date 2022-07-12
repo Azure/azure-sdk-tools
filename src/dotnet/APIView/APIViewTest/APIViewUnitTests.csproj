@@ -36,4 +36,10 @@
     <ProjectReference Include="..\APIView\APIView.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="SampleTestFiles\SampleCodeFileWithSections.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

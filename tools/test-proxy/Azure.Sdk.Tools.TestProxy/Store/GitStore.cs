@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -32,7 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
     // Interacting with Assets Repo
         // CheckoutRepoAtConfig
-        // InitializeAssetsRepo
+        // -InitializeAssetsRepo
         // DetectPendingChanges
         // ResetAssetsRepo
         // PushAssetsRepoUpdate
@@ -40,8 +41,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     // Generic "Target to Targeted Git Repo for current config"
         // -GetDefaultBranch
         // -ResolveCheckoutPaths
-        // ResolveTargetBranch resolve presence of autobranch
-        // UpdateAssetsJson
+        // -ResolveTargetBranch resolve presence of autobranch
+        // -UpdateAssetsJson
 
     // Targeted "get user decision" that can accept user input or no. depending on how it's been called.
         // do we need to add a bit for mode? that way we can either set TRUE for cli interrupt, but FALSE for the server calls
@@ -93,7 +94,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             
             try
             {
-                var assetConfig = JsonSerializer.Deserialize<GitAssetsConfiguration>(assetsContent, options: new JsonSerializerOptions() { AllowTrailingCommas = true });
+                var assetConfig = JsonSerializer.Deserialize<GitAssetsConfiguration>(assetsContent, options: new JsonSerializerOptions() { AllowTrailingCommas = true, ReadCommentHandling = JsonCommentHandling.Skip });
 
                 if (string.IsNullOrWhiteSpace(assetConfig.AssetsRepo))
                 {
@@ -132,7 +133,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return startInfo;
         }
 
-        public CommandResult RunProcess(ProcessStartInfo processStartInfo)
+        public CommandResult Run(ProcessStartInfo processStartInfo)
         {
             Process process = null;
 
@@ -152,7 +153,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
             catch (Exception e)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, "Unable to locate git command.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"{e.Message}");
             }
         }
         #endregion
@@ -195,9 +196,22 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return DefaultBranch;
         }
 
-        public Task<string> ResolveTargetBranch(GitAssetsConfiguration config)
+        public string ResolveTargetBranch(GitAssetsConfiguration config)
         {
-            throw new NotImplementedException();
+            var assetsRepo = ResolveAssetRepoLocation(config);
+            var branch = DefaultBranch;
+            var gitCommand = BasicGitInvocation(assetsRepo);
+
+            gitCommand.Arguments = $"rev-parse \"origin/{config.AssetsRepoBranch}\"";
+
+            var result = Run(gitCommand);
+            
+            if(result.ReturnCode == 0)
+            {
+                return result.StdOut.Trim();
+            }
+
+            return DefaultBranch;
         }
 
         /// <summary>
@@ -290,6 +304,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         #endregion
 
         #region assets repo interactions
+        public void InitializeAssetsRepo(GitAssetsConfiguration config)
+        {
+
+        }
+
         public string ResolveAssetsStoreLocation(GitAssetsConfiguration config, bool autoCreate = true)
         {
             var location = Path.Join(config.RepoRoot, ".assets");
@@ -320,19 +339,40 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return Directory.Exists(location);
         }
 
+        /// <summary>
+        /// Evaluates an assets configuration and returns the correct sparse checkout path.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns>A relative path for use within the assets repo.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         public string ResolveCheckoutPaths(GitAssetsConfiguration config)
         {
-            var assetsRepoPath = ResolveAssetRepoLocation(config);
-
-            var combinedPath = Path.Join(config.AssetsRepoPrefixPath, config.AssetsJsonRelativeLocation);
-
-
-            throw new NotImplementedException();
+            var combinedPath = Path.Join(config.AssetsRepoPrefixPath, config.AssetsJsonRelativeLocation).Replace("\\", "/");
+            return combinedPath;
         }
 
-        public void UpdateAssetsJson(GitAssetsConfiguration config)
+        /// <summary>
+        /// Do we have a new update for the assets.json? Right now, only the recording SHA is automatically updatable by the test-proxy.
+        /// </summary>
+        /// <param name="newSha"></param>
+        /// <param name="config"></param>
+        public async Task UpdateAssetsJson(string newSha, GitAssetsConfiguration config)
         {
+            // only do work if the SHAs aren't equivalent
+            if (config.SHA != newSha)
+            {
+                config.SHA = newSha;
 
+                // we deliberately do an extremely stripped down version parse and update here. We do this primarily to maintain
+                // any comments left in the assets.json though maintaining attribute ordering is also nice. To do this, we read all the file content, then
+                // simply replace the existing SHA value with the new one, then write the content back to the json file.
+
+                var currentSHA = (await ParseConfigurationFile(config.AssetsJsonLocation)).SHA;
+                var content = await File.ReadAllTextAsync(config.AssetsJsonLocation);
+                content = content.Replace(currentSHA, newSha);
+
+                File.WriteAllText(config.AssetsJsonLocation, content);
+            }
         }
         #endregion
     }

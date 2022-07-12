@@ -326,5 +326,58 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var result = await store.GetDefaultBranch(assetsConfiguration);
             Assert.Equal("not-main", result);
         }
+
+        [Fact]
+        public async Task UpdateRecordingJsonUpdatesProperly()
+        {
+            var fakeSha = "FakeReplacementSha";
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            GitStore store = new GitStore();
+            var configuration = await store.ParseConfigurationFile(testFolder.ToString());
+            await store.UpdateAssetsJson(fakeSha, configuration);
+
+            Assert.Equal(fakeSha, configuration.SHA);
+            var newConfiguration = await store.ParseConfigurationFile(testFolder.ToString());
+            Assert.Equal(fakeSha, newConfiguration.SHA);
+        }
+
+        [Fact]
+        public async Task UpdateRecordingJsonNoOpsProperly()
+        {
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            var pathToAssets = Path.Combine(testFolder.ToString(), "assets.json");
+            var creationTime = File.GetLastWriteTime(pathToAssets);
+
+            GitStore store = new GitStore();
+            var configuration = await store.ParseConfigurationFile(testFolder.ToString());
+            await store.UpdateAssetsJson(configuration.SHA, configuration);
+            var postUpdateLastWrite = File.GetLastWriteTime(pathToAssets);
+
+            Assert.Equal(creationTime, postUpdateLastWrite);
+            var newConfiguration = await store.ParseConfigurationFile(testFolder.ToString());
+            Assert.Equal(configuration.SHA, newConfiguration.SHA);
+        }
+
+
+        [Fact]
+        public async Task UpdateRecordingJsonOnlyUpdatesTargetSHA()
+        {
+            GitStore store = new GitStore();
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            var fakeSha = "FakeReplacementSha";
+            var pathToAssets = Path.Combine(testFolder.ToString(), "assets.json");
+            var contentBeforeUpdate = File.ReadAllText(pathToAssets);
+            var configuration = await store.ParseConfigurationFile(pathToAssets);
+            var originalSHA = configuration.SHA;
+
+            await store.UpdateAssetsJson(fakeSha, configuration);
+
+            var newConfiguration = await store.ParseConfigurationFile(pathToAssets);
+            Assert.NotEqual(originalSHA, newConfiguration.SHA);
+            var contentAfterUpdate = File.ReadAllText(pathToAssets);
+
+            Assert.NotEqual(contentBeforeUpdate, contentAfterUpdate);
+            Assert.Equal(contentBeforeUpdate.Replace(originalSHA, fakeSha), contentAfterUpdate);
+        }
     }
 }

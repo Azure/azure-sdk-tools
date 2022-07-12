@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
-            _recordingHandler.Store.Push(pathToAssets, _recordingHandler.ContextDirectory);
+            await _recordingHandler.Store.Push(pathToAssets, _recordingHandler.ContextDirectory);
         }
 
         [HttpPost]

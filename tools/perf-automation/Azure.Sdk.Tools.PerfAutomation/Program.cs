@@ -466,46 +466,31 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 await WriteResultsSummaryThroughput(streamWriter, group, "Mean", r => r.OperationsPerSecondMean, r => r.OperationsPerSecondMeanDifferences);
 
-                await streamWriter.WriteAsync("*** Package Versions ***");
+                await streamWriter.WriteLineAsync("*** Package Versions ***");
 
-                // TODO
-                // |---------------------------------------|------------------|---------|
-                // | Name                                  | Requested        | Runtime |
-                // |---------------------------------------|------------------|---------|
-                // | azure - storage - file - share        | 12.13.1          | unknown |
-                // | azure-core                            | 1.29.1           | unknown |
-                // | azure - core - http - netty           | 1.12.2           | unknown |
-                // | azure - core - http - okhttp          | 1.10.1           | unknown |
-                // | azure - storage - blob                | 12.18.0 - beta.1 | unknown |
-                // | azure - storage - blob - cryptography | 12.17.0 - beta.1 | unknown |
-                // | azure - storage - file - datalake     | 12.10.1          | unknown |
-                // | reactor - core                        | 3.4.17           | unknown |
-                // |---------------------------------------|------------------|---------|
-                // | azure - storage - file - share        | source           | unknown |
-                // | azure-core                            | source           | unknown |
-                // | azure - core - http - netty           | source           | unknown |
-                // | azure - core - http - okhttp          | source           | unknown |
-                // | azure - storage - blob                | source           | unknown |
-                // | azure - storage - blob - cryptography | source           | unknown |
-                // | azure - storage - file - datalake     | source           | unknown |
-                // | reactor - core                        | source           | unknown |
-                // |---------------------------------------|------------------|---------|
+                var headers = new string[] { "Name", "Requested", "Runtime" };
+                var versionTable = new List<IList<IList<string>>>();
 
                 var primaryPackage = group.First().PrimaryPackage;
                 var packageVersions = group.First().RequestedPackageVersions.Zip(group.First().RuntimePackageVersions);
                 foreach (var (requested, runtime) in packageVersions)
                 {
-                    var prefix = Environment.NewLine + "- ";
+                    var versionRows = new List<IList<string>>();
                     
                     // Primary package should be listed first, with remaining sorted alphabetically
                     foreach (var packageName in requested.Keys.OrderBy(n => (n == primaryPackage) ? $"_{n}" : n))
                     {
-                        var requestedName = requested[packageName];
-                        var runtimeName = runtime?[packageName] ?? "unknown";
-                        await streamWriter.WriteLineAsync($"{prefix}{packageName}: {requestedName}, {runtimeName}");
-                        prefix = "  ";
+                        var versionRow = new List<string>();
+                        versionRow.Add(packageName);
+                        versionRow.Add(requested[packageName]);
+                        versionRow.Add(runtime?[packageName] ?? "unknown");
+                        versionRows.Add(versionRow);
                     }
+
+                    versionTable.Add(versionRows);
                 }
+
+                await streamWriter.WriteLineAsync(AsciiiTable.Generate(headers, versionTable));
 
                 await streamWriter.WriteLineAsync("*** Metadata ***");
                 await streamWriter.WriteLineAsync($"Language: {group.Key.Language} ({group.Key.LanguageVersion})");

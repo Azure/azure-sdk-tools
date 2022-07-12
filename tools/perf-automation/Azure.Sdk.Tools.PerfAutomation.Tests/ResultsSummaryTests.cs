@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PerfAutomation.Models;
@@ -13,6 +14,12 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         // Tests generate results summaries from sample results.json files.  Output is printed to console
         // for manual inspection in Test Explorer, rather than asserting specific output, since it will
         // change frequently.
+
+        [Test]
+        public async Task Empty()
+        {
+            Console.Write(await GetResultsSummary(Enumerable.Empty<Result>()));
+        }
 
         [Test]
         public async Task Net()

@@ -55,7 +55,7 @@ running the build and deployment script, see [Deploying a Stress Test](#deployin
 az login
 
 # Download the kubeconfig for the cluster (creates a 'context' named 'stress-pg')
-az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-pg -n stress-test
+az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-pg -n stress-pg
 ```
 
 You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:

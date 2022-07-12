@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
-    internal static class AsciiiTable
+    internal static class TableGenerator
     {
         // |---------------------------------------|------------------|---------|
         // | Name                                  | Requested        | Runtime |
@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         // | azure - storage - file - datalake     | source           | unknown |
         // | reactor - core                        | source           | unknown |
         // |---------------------------------------|------------------|---------|
-        public static string Generate(IList<string> headers, IList<IList<IList<string>>> table)
+        public static string Ascii(IList<string> headers, IList<IList<IList<string>>> table)
         {
             var columns = table.SelectMany(rowSet => rowSet).Prepend(headers);
 

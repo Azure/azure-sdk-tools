@@ -490,7 +490,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     versionTable.Add(versionRows);
                 }
 
-                await streamWriter.WriteLineAsync(AsciiiTable.Generate(headers, versionTable));
+                await streamWriter.WriteLineAsync(TableGenerator.Ascii(headers, versionTable));
 
                 await streamWriter.WriteLineAsync("*** Metadata ***");
                 await streamWriter.WriteLineAsync($"Language: {group.Key.Language} ({group.Key.LanguageVersion})");

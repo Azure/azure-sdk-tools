@@ -463,10 +463,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             foreach (var group in languageServiceGroups)
             {
                 await WriteResultsSummaryThroughput(streamWriter, group, "Max", r => r.OperationsPerSecondMax, r => r.OperationsPerSecondMaxDifferences);
-                await streamWriter.WriteLineAsync();
 
                 await WriteResultsSummaryThroughput(streamWriter, group, "Mean", r => r.OperationsPerSecondMean, r => r.OperationsPerSecondMeanDifferences);
-                await streamWriter.WriteLineAsync();
 
                 await streamWriter.WriteLineAsync("*** Metadata ***");
                 await streamWriter.WriteLineAsync($"Language: {group.Key.Language} ({group.Key.LanguageVersion})");

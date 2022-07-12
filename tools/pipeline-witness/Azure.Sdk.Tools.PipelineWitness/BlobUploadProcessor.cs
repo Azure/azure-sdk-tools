@@ -54,7 +54,7 @@
         private readonly BlobContainerClient buildFailuresContainerClient;
         private readonly QueueClient queueClient;
         private readonly IOptions<PipelineWitnessSettings> options;
-        private readonly HashSet<string> knownBlobs = new HashSet<string>();
+        private readonly Dictionary<string, int?> cachedDefinitionRevisions = new();
         private readonly IFailureAnalyzer failureAnalyzer;        
 
         public BlobUploadProcessor(
@@ -168,9 +168,8 @@
             else
             {
                 await UploadTimelineBlobAsync(account, build, timeline);
+                await UploadBuildFailureBlobAsync(account, build, timeline);
             }
-
-            await UploadBuildFailureBlobAsync(account, build, timeline);
 
             var logs = await buildClient.GetBuildLogsAsync(build.Project.Id, build.Id);
 
@@ -182,20 +181,14 @@
             
             var bundles = BuildLogBundles(account, build, timeline, logs);
 
-            if (bundles.Count == 1)
+            // We no longer process log bundles on separate messages.
+            // During zero downtime upgrade phase, process all the bundles sequentially but allow for processing message in the log bundle queue
+            // After the upgrade phase, this should be rewritten to remove bundling but keep the log -> timeline record association
+            foreach(var bundle in bundles)
             {
-                await ProcessBuildLogBundleAsync(bundles[0]);
-            }
-            else
-            {
-                // If there's more than one bundle, we need to fan out the logs to multiple queue messages
-                foreach (var bundle in bundles)
-                {
-                    await EnqueueBuildLogBundleAsync(bundle);
-                }
+                await ProcessBuildLogBundleAsync(bundle);
             }
         }
-
 
         private async Task UploadBuildFailureBlobAsync(string account, Build build, Timeline timeline)
         {
@@ -267,7 +260,14 @@
 
             foreach (var definition in definitions)
             {
-                await UploadBuildDefinitionBlobAsync(account, definition);
+                var cacheKey = $"{definition.Project.Id}:{definition.Id}";
+                
+                if (!this.cachedDefinitionRevisions.TryGetValue(cacheKey, out var cachedRevision) || cachedRevision != definition.Revision)
+                { 
+                    await UploadBuildDefinitionBlobAsync(account, definition);
+                }
+
+                this.cachedDefinitionRevisions[cacheKey] = definition.Revision;
             }
         }
 
@@ -278,11 +278,9 @@
             try
             {
                 var blobClient = this.buildDefinitionsContainerClient.GetBlobClient(blobPath);
-                var alreadySeen = this.knownBlobs.Contains(blobPath);
 
-                if (alreadySeen || await blobClient.ExistsAsync())
+                if (await blobClient.ExistsAsync())
                 {
-                    this.knownBlobs.Add(blobPath);
                     this.logger.LogInformation("Skipping existing build definition blob for build {DefinitionId} project {Project}", definition.Id, definition.Project.Name);
                     return;
                 }
@@ -351,12 +349,10 @@
                 }, jsonSettings);
 
                 await blobClient.UploadAsync(new BinaryData(content));
-                this.knownBlobs.Add(blobPath);
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
                 this.logger.LogInformation("Ignoring exception from existing blob for build definition {DefinitionId}", definition.Id);
-                this.knownBlobs.Add(blobPath);
             }
             catch (Exception ex)
             {
@@ -690,13 +686,7 @@
                 throw;
             }
         }
-
-        private async Task EnqueueBuildLogBundleAsync(BuildLogBundle bundle)
-        {
-            var message = JsonConvert.SerializeObject(bundle, jsonSettings);
-            await this.queueClient.SendMessageAsync(message);
-        }
-
+ 
         private async Task UploadTestRunBlobsAsync(string account, Build build)
         {
             try

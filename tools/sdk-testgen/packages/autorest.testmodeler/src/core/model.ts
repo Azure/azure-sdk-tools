@@ -625,7 +625,7 @@ export class TestCodeModeler {
                         if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) {
                             continue;
                         }
-                        var scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
+                        let scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
                         try {
                             const loader = ApiScenarioLoader.create({
                                 useJsonParser: false,

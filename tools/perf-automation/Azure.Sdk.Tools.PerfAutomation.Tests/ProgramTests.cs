@@ -11,28 +11,32 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
     public class ProgramTests
     {
         [Test]
-        public async Task WriteResultsSummaryTwoVersions()
+        public async Task WriteResultsSummaryTwoVersionsJava()
+        {
+            Console.Write(await GetResultsSummary("two-versions-java.json"));
+        }
+
+        [Test]
+        public async Task WriteResultsSummaryTwoVersionsNet()
+        {
+            Console.Write(await GetResultsSummary("two-versions-net.json"));
+        }
+
+        [Test]
+        public async Task WriteResultsSummaryThreeVersionsNet()
+        {
+            Console.Write(await GetResultsSummary("three-versions-net.json"));
+        }
+
+        private static async Task<string> GetResultsSummary(string path)
         {
             List<Result> results;
-            using (var stream = File.OpenRead("two-versions.json"))
+            using (var stream = File.OpenRead(path))
             {
                 results = await JsonSerializer.DeserializeAsync<List<Result>>(stream, options: Program.JsonOptions);
             }
 
-            var resultsSummary = await GetResultsSummary(results);
-            Console.Write(resultsSummary);
-        }
-
-        [Test]
-        public async Task WriteResultsSummaryThreeVersions()
-        {
-            List<Result> results;
-            using (var stream = File.OpenRead("three-versions.json")) {
-                results = await JsonSerializer.DeserializeAsync<List<Result>>(stream, options: Program.JsonOptions);
-            }
-
-            var resultsSummary = await GetResultsSummary(results);
-            Console.Write(resultsSummary);
+            return await GetResultsSummary(results);
         }
 
         private static async Task<string> GetResultsSummary(IEnumerable<Result> results)

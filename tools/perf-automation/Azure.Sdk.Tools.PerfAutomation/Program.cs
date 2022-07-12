@@ -469,7 +469,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 {
                     foreach (var packageName in requested.Keys.OrderBy(n => n))
                     {
-                        await streamWriter.WriteLineAsync($"{packageName}: {requested[packageName]}, {runtime[packageName]}");
+                        var requestedName = requested[packageName];
+                        var runtimeName = runtime?[packageName] ?? "unknown";
+                        await streamWriter.WriteLineAsync($"{packageName}: {requestedName}, {runtimeName}");
                     }
                 }
 

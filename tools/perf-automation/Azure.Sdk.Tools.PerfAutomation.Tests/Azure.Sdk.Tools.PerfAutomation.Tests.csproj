@@ -16,10 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="three-versions.json">
+    <None Update="three-versions-net.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="two-versions.json">
+    <None Update="two-versions-java.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="two-versions-net.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

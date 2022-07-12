@@ -466,12 +466,31 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 await WriteResultsSummaryThroughput(streamWriter, group, "Mean", r => r.OperationsPerSecondMean, r => r.OperationsPerSecondMeanDifferences);
 
-                await streamWriter.WriteLineAsync("*** Metadata ***");
-                await streamWriter.WriteLineAsync($"Language: {group.Key.Language} ({group.Key.LanguageVersion})");
-                await streamWriter.WriteLineAsync($"Service: {group.Key.Service}");
-                await streamWriter.WriteLineAsync();
+                await streamWriter.WriteAsync("*** Package Versions ***");
 
-                await streamWriter.WriteAsync("Package Versions (requested, runtime)");
+                // TODO
+                // |---------------------------------------|------------------|---------|
+                // | Name                                  | Requested        | Runtime |
+                // |---------------------------------------|------------------|---------|
+                // | azure - storage - file - share        | 12.13.1          | unknown |
+                // | azure-core                            | 1.29.1           | unknown |
+                // | azure - core - http - netty           | 1.12.2           | unknown |
+                // | azure - core - http - okhttp          | 1.10.1           | unknown |
+                // | azure - storage - blob                | 12.18.0 - beta.1 | unknown |
+                // | azure - storage - blob - cryptography | 12.17.0 - beta.1 | unknown |
+                // | azure - storage - file - datalake     | 12.10.1          | unknown |
+                // | reactor - core                        | 3.4.17           | unknown |
+                // |---------------------------------------|------------------|---------|
+                // | azure - storage - file - share        | source           | unknown |
+                // | azure-core                            | source           | unknown |
+                // | azure - core - http - netty           | source           | unknown |
+                // | azure - core - http - okhttp          | source           | unknown |
+                // | azure - storage - blob                | source           | unknown |
+                // | azure - storage - blob - cryptography | source           | unknown |
+                // | azure - storage - file - datalake     | source           | unknown |
+                // | reactor - core                        | source           | unknown |
+                // |---------------------------------------|------------------|---------|
+
                 var primaryPackage = group.First().PrimaryPackage;
                 var packageVersions = group.First().RequestedPackageVersions.Zip(group.First().RuntimePackageVersions);
                 foreach (var (requested, runtime) in packageVersions)
@@ -487,6 +506,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         prefix = "  ";
                     }
                 }
+
+                await streamWriter.WriteLineAsync("*** Metadata ***");
+                await streamWriter.WriteLineAsync($"Language: {group.Key.Language} ({group.Key.LanguageVersion})");
+                await streamWriter.WriteLineAsync($"Service: {group.Key.Service}");
             }
         }
 

@@ -1,9 +1,14 @@
 ﻿@model IEnumerable<APIView.NavigationItem>
+@{
+    bool hasSections = ViewBag.HasSections;
+    bool isChildNavigation = ViewBag.IsChildNavigation ?? false;
+    string navListGroupClass = (hasSections && isChildNavigation) ? "nav-list-group nav-list-collapsed" : "nav-list-group";
+}
 
 <ul class="nav-list-children">
         @foreach (var item in Model)
         {
-            <li class="nav-list-group">
+            <li class="@navListGroupClass">
                 <span class="nav-list-toggle @(item.ChildItems.Any() ? "":"invisible")"></span>
 
                 @if (item.Tags != null && item.Tags.ContainsKey("TypeKind"))
@@ -16,7 +21,9 @@
                 }
 
                 <a href="#@item.NavigationId" title="@item.Text">@item.Text</a>
-
+                @{
+                    ViewBag.IsChildNavigation = true;
+                }
                 <partial name="Shared/Navigation" model="item.ChildItems"/>
             </li>
         }

@@ -1,9 +1,9 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
+﻿namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
+    using Microsoft.TeamFoundation.Build.WebApi;
+    using System.Linq;
+    using System.Threading.Tasks;
+
     public class AzureArtifactsServiceUnavailableClassifier : IFailureClassifier
     {
         public AzureArtifactsServiceUnavailableClassifier(BuildLogProvider buildLogProvider)
@@ -15,13 +15,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 
         public async Task ClassifyAsync(FailureAnalyzerContext context)
         {
-            var failedTasks = from r in context.Timeline.Records
-                                where r.Result == TaskResult.Failed
-                                where r.RecordType == "Task"
-                                where r.Task != null
-                                where r.Name == "Publish to Java Dev Feed"
-                                where r.Log != null
-                                select r;
+            var failedTasks = context.Timeline.Records
+                .Where(r => r.Result == TaskResult.Failed && 
+                            r.RecordType == "Task" && 
+                            r.Task != null &&
+                            r.Name == "Publish to Java Dev Feed" && 
+                            r.Log != null);
 
             foreach (var failedTask in failedTasks)
             {

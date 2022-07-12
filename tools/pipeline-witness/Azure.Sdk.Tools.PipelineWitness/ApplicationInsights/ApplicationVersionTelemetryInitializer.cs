@@ -1,23 +1,22 @@
-﻿using System.Reflection;
-using Microsoft.ApplicationInsights.Channel;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
-
-namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
+﻿namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
 {
+    using System.Reflection;
+    using Microsoft.ApplicationInsights.Channel;
+    using Microsoft.ApplicationInsights.Extensibility;
+
     public class ApplicationVersionTelemetryInitializer : ITelemetryInitializer
     {
-        private static string _version = GetVersion();
+        private static readonly string Version = GetVersion();
 
         public void Initialize(ITelemetry telemetry)
         {
-            if (!string.IsNullOrEmpty(_version))
+            if (!string.IsNullOrEmpty(Version))
             {
                 var component = telemetry.Context?.Component;
 
                 if (component != null)
                 {
-                    component.Version = _version;
+                    component.Version = Version;
                 }
             }
         }

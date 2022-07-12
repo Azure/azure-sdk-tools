@@ -1,24 +1,20 @@
-﻿using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.WebApi;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
+﻿namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
+    using Microsoft.TeamFoundation.Build.WebApi;
+    using System;
+    using System.Linq;
+    using System.Threading.Tasks;
+
     public class DnsResolutionFailureClassifier : IFailureClassifier
     {
+        private readonly BuildLogProvider buildLogProvider;
+
         public DnsResolutionFailureClassifier(BuildLogProvider buildLogProvider)
         {
             this.buildLogProvider = buildLogProvider;
         }
 
-        private readonly BuildLogProvider buildLogProvider;
-
-        private bool IsDnsResolutionFailure(string line)
+        private static bool IsDnsResolutionFailure(string line)
         {
             return line.Contains("EAI_AGAIN", StringComparison.OrdinalIgnoreCase)
                 || line.Contains("getaddrinfo", StringComparison.OrdinalIgnoreCase)
@@ -29,17 +25,16 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 
         public async Task ClassifyAsync(FailureAnalyzerContext context)
         {
-            var failedTasks = from r in context.Timeline.Records
-                                where r.Result == TaskResult.Failed
-                                where r.RecordType == "Task"
-                                where r.Log != null
-                                select r;
+            var failedTasks = context.Timeline.Records
+                .Where(r => r.Result == TaskResult.Failed &&
+                            r.RecordType == "Task" &&
+                            r.Log != null);
 
             foreach (var failedTask in failedTasks)
             {
                 var lines = await buildLogProvider.GetLogLinesAsync(context.Build, failedTask.Log.Id);
 
-                if (lines.Any(line => IsDnsResolutionFailure(line)))
+                if (lines.Any(IsDnsResolutionFailure))
                 {
                     context.AddFailure(failedTask, "DNS Resolution Failure");
                 }

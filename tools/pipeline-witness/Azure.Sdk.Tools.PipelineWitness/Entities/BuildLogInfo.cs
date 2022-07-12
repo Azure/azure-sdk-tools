@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.PipelineWitness
+﻿namespace Azure.Sdk.Tools.PipelineWitness.Entities
 {
     using System;
 

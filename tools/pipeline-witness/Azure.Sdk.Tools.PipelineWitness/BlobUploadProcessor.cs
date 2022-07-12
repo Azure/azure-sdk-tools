@@ -2,14 +2,13 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.IO;
     using System.Linq;
     using System.Net;
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
-
+    using Azure.Sdk.Tools.PipelineWitness.Entities;
     using Azure.Sdk.Tools.PipelineWitness.Services;
     using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
     using Azure.Storage.Blobs;
@@ -35,7 +34,8 @@
         private const string TestRunsContainerName = "testruns";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
-        private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
+        
+        private static readonly JsonSerializerSettings jsonSettings = new()
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
             Converters = { new StringEnumConverter(new CamelCaseNamingStrategy()) },
@@ -334,7 +334,7 @@
                     JobCancelTimeoutInMinutes = definition.JobCancelTimeoutInMinutes,
                     JobTimeoutInMinutes = definition.JobTimeoutInMinutes,
                     ProcessType = definition.Process.Type,
-                    ProcessYamlFilename = definition.Process is YamlProcess yamlprocess ? yamlprocess.YamlFilename : null,
+                    ProcessYamlFilename = definition.Process is YamlProcess yamlProcess ? yamlProcess.YamlFilename : null,
                     RepositoryCheckoutSubmodules = definition.Repository.CheckoutSubmodules,
                     RepositoryClean = definition.Repository.Clean,
                     RepositoryDefaultBranch = definition.Repository.DefaultBranch,
@@ -345,7 +345,7 @@
                     Variables = definition.Variables,
                     Tags = definition.Tags,
                     Data = definition,
-                    EtlIngestDate = DateTimeOffset.UtcNow
+                    EtlIngestDate = DateTimeOffset.UtcNow,
                 }, jsonSettings);
 
                 await blobClient.UploadAsync(new BinaryData(content));
@@ -363,7 +363,7 @@
 
         private List<BuildLogBundle> BuildLogBundles(string account, Build build, Timeline timeline, List<BuildLog> logs)
         {
-            BuildLogBundle CreateBundle() => new BuildLogBundle
+            BuildLogBundle CreateBundle() => new()
             {
                 Account = account,
                 BuildId = build.Id,
@@ -374,7 +374,7 @@
                 FinishTime = build.FinishTime.Value,
                 DefinitionId = build.Definition.Id,
                 DefinitionName = build.Definition.Name,
-                DefinitionPath = build.Definition.Path
+                DefinitionPath = build.Definition.Path,
             };
 
             BuildLogBundle currentBundle;
@@ -426,7 +426,7 @@
                     LogCreatedOn = log.CreatedOn.Value,
                     RecordId = logRecord?.Id,
                     ParentRecordId = logRecord?.ParentId,
-                    RecordType = logRecord?.RecordType
+                    RecordType = logRecord?.RecordType,
                 });
             }
 
@@ -604,7 +604,7 @@
             try
             {
                 // we don't use FinishTime in the logs blob path to prevent duplicating logs when processing retries.
-                // i.e.  logs with a given buildid/logid are immutable and retries only add new logs.
+                // i.e.  logs with a given buildId/logId are immutable and retries only add new logs.
                 var blobPath = $"{build.ProjectName}/{build.QueueTime:yyyy/MM/dd}/{build.BuildId}-{log.LogId}.jsonl";
                 var blobClient = this.buildLogLinesContainerClient.GetBlobClient(blobPath);
 
@@ -637,7 +637,6 @@
                             break;
                         }
 
-                        var isLastLine = logReader.EndOfStream;
                         lineNumber += 1;
                         characterCount += line.Length;
 

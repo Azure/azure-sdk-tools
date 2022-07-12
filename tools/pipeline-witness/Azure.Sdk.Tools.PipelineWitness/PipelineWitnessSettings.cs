@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-
 namespace Azure.Sdk.Tools.PipelineWitness
 {
+    using System;
+
     public class PipelineWitnessSettings
     {
         public string KeyVaultUri { get; set; }

@@ -1,8 +1,7 @@
-using System;
-using Xunit;
-
 namespace Azure.Sdk.Tools.PipelineWitness.Tests
 {
+    using Xunit;
+
     public class UnitTest1
     {
         [Fact]

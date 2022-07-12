@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Azure.Sdk.Tools.PipelineWitness
+﻿namespace Azure.Sdk.Tools.PipelineWitness.Entities
 {
+    using System;
+    using System.Collections.Generic;
+
     public class BuildLogBundle
     {
         public string Account { get; set; }
@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         
         public string DefinitionName { get; set; }
 
-        public List<BuildLogInfo> TimelineLogs { get; } = new List<BuildLogInfo>();
+        public List<BuildLogInfo> TimelineLogs { get; } = new();
     }
 }
 

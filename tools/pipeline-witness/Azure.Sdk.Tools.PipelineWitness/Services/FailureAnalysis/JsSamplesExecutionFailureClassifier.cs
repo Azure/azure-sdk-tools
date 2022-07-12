@@ -1,31 +1,26 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
+    using Microsoft.TeamFoundation.Build.WebApi;
+    using System.Linq;
+    using System.Threading.Tasks;
+
     public class JsSamplesExecutionFailureClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
             if (context.Build.Definition.Name.StartsWith("js -"))
             {
-                var failedTasks = from r in context.Timeline.Records
-                                  where r.Name == "Execute Samples"
-                                  where r.Result == TaskResult.Failed
-                                  select r;
+                var failedTasks = context.Timeline.Records
+                    .Where(r => r.Name == "Execute Samples" &&
+                                r.Result == TaskResult.Failed);
 
-                if (failedTasks.Count() > 0)
+                foreach (var failedTask in failedTasks)
                 {
-                    foreach (var failedTask in failedTasks)
-                    {
-                        context.AddFailure(failedTask, "Sample Execution");
-                    }
+                    context.AddFailure(failedTask, "Sample Execution");
                 }
             }
+            
+            return Task.CompletedTask;
         }
     }
 }

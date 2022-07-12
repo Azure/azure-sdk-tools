@@ -1,9 +1,9 @@
-using Microsoft.ApplicationInsights.Channel;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
-
 namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
 {
+    using Microsoft.ApplicationInsights.Channel;
+    using Microsoft.ApplicationInsights.DataContracts;
+    using Microsoft.ApplicationInsights.Extensibility;
+
     public class BlobNotFoundTelemetryProcessor : ITelemetryProcessor
     {
         private readonly ITelemetryProcessor next;

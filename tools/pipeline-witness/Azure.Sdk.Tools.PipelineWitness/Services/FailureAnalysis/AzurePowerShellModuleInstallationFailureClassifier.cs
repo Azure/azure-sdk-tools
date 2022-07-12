@@ -1,33 +1,27 @@
-﻿using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
-using Microsoft.TeamFoundation.Build.WebApi;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
+﻿namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
+    using Microsoft.TeamFoundation.Build.WebApi;
+    using System.Linq;
+    using System.Threading.Tasks;
+
     public class AzurePowerShellModuleInstallationFailureClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
             if (context.Build.Definition.Name.EndsWith("- tests"))
             {
-                var failedTasks = from r in context.Timeline.Records
-                                  where r.Result == TaskResult.Failed
-                                  where r.RecordType == "Task"
-                                  where r.Name == "Install Azure PowerShell module"
-                                  select r;
+                var failedTasks = context.Timeline.Records
+                    .Where(r => r.Result == TaskResult.Failed && 
+                                r.RecordType == "Task" &&
+                                r.Name == "Install Azure PowerShell module");
 
-                if (failedTasks.Count() > 0)
+                foreach (var failedTask in failedTasks)
                 {
-                    foreach (var failedTask in failedTasks)
-                    {
-                        context.AddFailure(failedTask, "Azure PS Module");
-                    }
+                    context.AddFailure(failedTask, "Azure PS Module");
                 }
             }
+            
+            return Task.CompletedTask;
         }
     }
 }

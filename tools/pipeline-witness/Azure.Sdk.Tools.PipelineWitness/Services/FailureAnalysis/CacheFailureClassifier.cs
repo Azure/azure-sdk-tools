@@ -1,62 +1,35 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.WebApi;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
+﻿namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
+    using Microsoft.TeamFoundation.Build.WebApi;
+    using System.Linq;
+    using System.Threading.Tasks;
+
     public class CacheFailureClassifier : IFailureClassifier
     {
-        private class FailureClassifier
+        private static readonly (string MessagePrefix, string FailureName)[] failureClassifiers =
         {
-            public readonly string MessageContains;
-            public readonly string FailureName;
-
-            public FailureClassifier(string messageContains, string failureName)
-            {
-                this.MessageContains = messageContains;
-                this.FailureName = failureName;
-            }
-
-            public bool IsFailure(string message)
-            {
-                return message.StartsWith(MessageContains);
-            }
-        }
-
-        private static readonly FailureClassifier[] failureClassifiers = new FailureClassifier[]
-        {
-            new FailureClassifier("Chunks are not arriving in order or sizes are not matched up", "Cache Chunk Ordering" ),
-            new FailureClassifier("The task has timed out", "Cache Task Timeout" ),
-            new FailureClassifier("Service Unavailable", "Cache Service Unavailable"),
-            new FailureClassifier("The HTTP request timed out after", "Cache Service HTTP Timeout"),
-            new FailureClassifier("Access to the path", "Cache Cannot Access Path"),
+            ("Chunks are not arriving in order or sizes are not matched up", "Cache Chunk Ordering" ),
+            ("The task has timed out", "Cache Task Timeout" ),
+            ("Service Unavailable", "Cache Service Unavailable"),
+            ("The HTTP request timed out after", "Cache Service HTTP Timeout"),
+            ("Access to the path", "Cache Cannot Access Path"),
         };
-
-        public CacheFailureClassifier(VssConnection vssConnection)
+        
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
-            this.vssConnection = vssConnection;
-            buildClient = vssConnection.GetClient<BuildHttpClient>();
-        }
-
-        private VssConnection vssConnection;
-        private BuildHttpClient buildClient;
-
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
-        {
-            var failedTasks = from r in context.Timeline.Records
-                                where r.Result == TaskResult.Failed
-                                where r.RecordType == "Task"
-                                where r.Task != null
-                                where r.Task.Name == "Cache"
-                                where r.Log != null
-                                select r;
+            var failedTasks = context.Timeline.Records
+                .Where(r => r.Result == TaskResult.Failed &&
+                            r.RecordType == "Task" &&
+                            r.Task?.Name == "Cache" &&
+                            r.Log != null);
 
             var classificationFound = false;
+            
             foreach (var failedTask in failedTasks)
             {
-                foreach (var classifier in failureClassifiers) {
-                    if (failedTask.Issues.Any(i => classifier.IsFailure(i.Message)))
+                foreach (var classifier in failureClassifiers)
+                {
+                    if (failedTask.Issues.Any(i => i.Message.StartsWith(classifier.MessagePrefix)))
                     {
                         context.AddFailure(failedTask, classifier.FailureName);
                         classificationFound = true;
@@ -68,6 +41,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                     context.AddFailure(failedTask, "Cache Failure Other");
                 }
             }
+            
+            return Task.CompletedTask;
         }
     }
 }

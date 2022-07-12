@@ -1,21 +1,19 @@
-﻿using System;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure.Storage.Queues;
-using Azure.Storage.Queues.Models;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
-
 namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
+    using System;
+    using System.Text.RegularExpressions;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Azure.Storage.Queues;
+    using Azure.Storage.Queues.Models;
+    using Microsoft.ApplicationInsights;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
+    using Newtonsoft.Json.Linq;
+
     internal class BuildCompleteQueueWorker : QueueWorkerBackgroundService
     {
         private readonly ILogger logger;
-        private readonly TelemetryClient telemetryClient;
         private readonly BlobUploadProcessor runProcessor;
 
         public BuildCompleteQueueWorker(
@@ -33,10 +31,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         {
             this.logger = logger;
             this.runProcessor = runProcessor;
-            this.telemetryClient = telemetryClient;
         }
 
-        internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
+        protected override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
         {
             this.logger.LogInformation("Processing build.complete event.");
 

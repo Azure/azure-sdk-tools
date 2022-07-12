@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Microsoft.Extensions.Logging;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.WebApi;
-
 namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.TeamFoundation.Build.WebApi;
+    using Microsoft.VisualStudio.Services.WebApi;
+
     public class BuildLogProvider
     {
         private readonly ILogger<BuildLogProvider> logger;
@@ -21,7 +19,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             this.vssConnection = vssConnection;
         }
 
-        public virtual async Task<IReadOnlyList<string>> GetLogLinesAsync(Build build, int logId)
+        public async Task<IReadOnlyList<string>> GetLogLinesAsync(Build build, int logId)
         {
             logger.LogTrace("Getting logs for build {BuildId}, log {LogId} from rest api", build.Id, logId);
 
@@ -33,7 +31,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             return response;
         }
 
-        public virtual async Task<Stream> GetLogStreamAsync(string projectName, int buildId, int logId)
+        public async Task<Stream> GetLogStreamAsync(string projectName, int buildId, int logId)
         {
             logger.LogTrace("Getting logs for build {BuildId}, log {LogId} from rest api", buildId, logId);
 

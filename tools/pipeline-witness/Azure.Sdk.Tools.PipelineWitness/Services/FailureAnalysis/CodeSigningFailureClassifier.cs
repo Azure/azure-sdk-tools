@@ -1,31 +1,25 @@
-﻿using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.TeamFoundation.Build.WebApi;
-
-namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
+﻿namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Microsoft.TeamFoundation.Build.WebApi;
+
     public class CodeSigningFailureClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
-            var failedTasks = from r in context.Timeline.Records
-                              where r.Result == TaskResult.Failed
-                              where r.RecordType == "Task"
-                              where r.Task != null
-                              where r.Task.Name == "EsrpCodeSigning"
-                              where r.Log != null
-                              select r;
+            var failedTasks = context.Timeline.Records
+                .Where(r => r.Result == TaskResult.Failed &&
+                            r.RecordType == "Task" &&
+                            r.Task?.Name == "EsrpCodeSigning" &&
+                            r.Log != null);
 
-            if (failedTasks.Count() > 0)
+            foreach (var failedTask in failedTasks)
             {
-                foreach (var failedTask in failedTasks)
-                {
-                    context.AddFailure(failedTask, "Code Signing");
-                }
+                context.AddFailure(failedTask, "Code Signing");
             }
+
+            return Task.CompletedTask;
         }
     }
 }

@@ -1,32 +1,29 @@
-﻿using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.TeamFoundation.Build.WebApi;
-
 namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Microsoft.TeamFoundation.Build.WebApi;
+
     public class JavaScriptLiveTestFailureClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
-            if (context.Build.Definition.Name.StartsWith("js - ") && context.Build.Definition.Name.EndsWith(" - tests"))
+            var definitionName = context.Build.Definition.Name;
+            
+            if (definitionName.StartsWith("js - ") && definitionName.EndsWith(" - tests"))
             {
-                var failedTasks = from r in context.Timeline.Records
-                                  where r.RecordType == "Task"
-                                  where r.Name == "Integration test libraries"
-                                  where r.Result == TaskResult.Failed
-                                  select r;
+                var failedTasks = context.Timeline.Records
+                    .Where(r => r.RecordType == "Task" &&
+                                r.Name == "Integration test libraries" &&
+                                r.Result == TaskResult.Failed);
 
-                if (failedTasks.Count() > 0)
+                foreach (var failedTask in failedTasks)
                 {
-                    foreach (var failedTask in failedTasks)
-                    {
-                        context.AddFailure(failedTask, "Test Failure");
-                    }
+                    context.AddFailure(failedTask, "Test Failure");
                 }
             }
+
+            return Task.CompletedTask;
         }
     }
 }

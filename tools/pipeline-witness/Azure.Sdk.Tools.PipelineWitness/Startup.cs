@@ -1,23 +1,23 @@
-﻿using System;
-using Azure.Identity;
-using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
-using Azure.Sdk.Tools.PipelineWitness.Services;
-using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
-using Azure.Security.KeyVault.Secrets;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Azure;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.Core.WebApi;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.TestResults.WebApi;
-using Microsoft.VisualStudio.Services.WebApi;
-
 namespace Azure.Sdk.Tools.PipelineWitness
 {
+    using System;
+    using Azure.Identity;
+    using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
+    using Azure.Sdk.Tools.PipelineWitness.Services;
+    using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
+    using Azure.Security.KeyVault.Secrets;
+    using Microsoft.ApplicationInsights.Extensibility;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.Extensions.Azure;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
+    using Microsoft.TeamFoundation.Build.WebApi;
+    using Microsoft.TeamFoundation.Core.WebApi;
+    using Microsoft.VisualStudio.Services.Common;
+    using Microsoft.VisualStudio.Services.TestResults.WebApi;
+    using Microsoft.VisualStudio.Services.WebApi;
+
     public static class Startup
     {
         public static void Configure(WebApplicationBuilder builder)
@@ -30,12 +30,12 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddApplicationInsightsTelemetryProcessor<BlobNotFoundTelemetryProcessor>();
             builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
 
-            builder.Services.AddAzureClients(builder =>
+            builder.Services.AddAzureClients(clientFactoryBuilder =>
             {
-                builder.UseCredential(new DefaultAzureCredential());
-                builder.AddSecretClient(new Uri(settings.KeyVaultUri));
-                builder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
-                builder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))
+                clientFactoryBuilder.UseCredential(new DefaultAzureCredential());
+                clientFactoryBuilder.AddSecretClient(new Uri(settings.KeyVaultUri));
+                clientFactoryBuilder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
+                clientFactoryBuilder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))
                     .ConfigureOptions(o => o.MessageEncoding = Storage.Queues.QueueMessageEncoding.Base64);
             });
 
@@ -57,6 +57,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<BlobUploadProcessor>();
             builder.Services.AddSingleton<BuildLogProvider>();
             builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
+            builder.Services.AddSingleton<IFailureClassifier, AzurePowerShellModuleInstallationFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CosmosDbEmulatorStartFailureClassifier>();

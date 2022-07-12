@@ -1,16 +1,17 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure.Storage.Queues;
-using Azure.Storage.Queues.Models;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-
-namespace Azure.Sdk.Tools.PipelineWitness.Services
+﻿namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Azure.Storage.Queues;
+    using Azure.Storage.Queues.Models;
+    using Microsoft.ApplicationInsights;
+    using Microsoft.ApplicationInsights.DataContracts;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
+    using Newtonsoft.Json;
+    using Azure.Sdk.Tools.PipelineWitness.Entities;
+
     internal class BuildLogBundleQueueWorker : QueueWorkerBackgroundService
     {
         private readonly ILogger logger;
@@ -35,7 +36,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             this.telemetryClient = telemetryClient;
         }
 
-        internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
+        protected override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
         {
             logger.LogInformation("Processing build log bundle message.");
 
@@ -59,7 +60,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 throw;
             }
 
-            // TODO: Add cancellation token propatagion
+            // TODO: Add cancellation token propagation
             await runProcessor.ProcessBuildLogBundleAsync(buildLogBundle);
         }
     }

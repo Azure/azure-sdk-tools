@@ -1,28 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
+    using System.Linq;
+    using System.Threading.Tasks;
+
     public class GitCheckoutFailureClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
-            var tasks = from r in context.Timeline.Records
-                       where r.RecordType == "Task"
-                       where r.Issues.Any(i => i.Message.Contains("Git fetch failed with exit code: 128"))
-                       select r;
+            var tasks = context.Timeline.Records
+                .Where(r => r.RecordType == "Task" &&
+                            r.Issues.Any(i => i.Message.Contains("Git fetch failed with exit code: 128")));
 
-            if (tasks.Count() > 0)
+            foreach (var task in tasks)
             {
-                foreach (var task in tasks)
-                {
-                    context.AddFailure(task
-                        , "Git Checkout");
-                }
+                context.AddFailure(task, "Git Checkout");
             }
+
+            return Task.CompletedTask;
         }
     }
 }

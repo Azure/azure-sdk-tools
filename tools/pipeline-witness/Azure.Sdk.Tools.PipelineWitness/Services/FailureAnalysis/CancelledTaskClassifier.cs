@@ -1,30 +1,23 @@
-﻿using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
-using Microsoft.TeamFoundation.Build.WebApi;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
+﻿namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
+    using Microsoft.TeamFoundation.Build.WebApi;
+    using System.Linq;
+    using System.Threading.Tasks;
+
     public class CancelledTaskClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
-            var timedOutTestTasks = from r in context.Timeline.Records
-                                    where r.RecordType == "Task"
-                                    where r.Result == TaskResult.Canceled
-                                    select r;
+            var timedOutTestTasks = context.Timeline.Records
+                .Where(r => r.RecordType == "Task" &&
+                            r.Result == TaskResult.Canceled);
 
-            if (timedOutTestTasks.Count() > 0)
+            foreach (var timedOutTestTask in timedOutTestTasks)
             {
-                foreach (var timedOutTestTask in timedOutTestTasks)
-                {
-                    context.AddFailure(timedOutTestTask, "Cancelled Task");
-                }
+                context.AddFailure(timedOutTestTask, "Cancelled Task");
             }
+            
+            return Task.CompletedTask;
         }
     }
 }

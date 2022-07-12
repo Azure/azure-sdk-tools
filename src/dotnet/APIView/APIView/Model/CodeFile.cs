@@ -48,7 +48,7 @@ namespace ApiView
 
         public override string ToString()
         {
-            return new CodeFileRenderer().Render(this).ToString();
+            return new CodeFileRenderer().Render(this).CodeLines.ToString();
         }
 
         public static async Task<CodeFile> DeserializeAsync(Stream stream)

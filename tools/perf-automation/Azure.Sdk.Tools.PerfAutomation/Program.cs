@@ -462,20 +462,23 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var languageServiceGroups = resultSummaries.GroupBy(r => (r.Language, r.LanguageVersion, r.Service));
             foreach (var group in languageServiceGroups)
             {
-                var primaryPackage = group.First().PrimaryPackage;
-
-                await streamWriter.WriteLineAsync($"Language: {group.Key.Language} ({group.Key.LanguageVersion})");
-                await streamWriter.WriteLineAsync($"Service: {group.Key.Service}");
-                await streamWriter.WriteLineAsync($"PrimaryPackage: {primaryPackage}");
+                await WriteResultsSummaryThroughput(streamWriter, group, "Max", r => r.OperationsPerSecondMax, r => r.OperationsPerSecondMaxDifferences);
                 await streamWriter.WriteLineAsync();
 
-                await streamWriter.WriteLineAsync("Package Versions (requested, runtime)");
+                await WriteResultsSummaryThroughput(streamWriter, group, "Mean", r => r.OperationsPerSecondMean, r => r.OperationsPerSecondMeanDifferences);
+                await streamWriter.WriteLineAsync();
 
+                await streamWriter.WriteLineAsync("*** Metadata ***");
+                await streamWriter.WriteLineAsync($"Language: {group.Key.Language} ({group.Key.LanguageVersion})");
+                await streamWriter.WriteLineAsync($"Service: {group.Key.Service}");
+                await streamWriter.WriteLineAsync();
+
+                await streamWriter.WriteAsync("Package Versions (requested, runtime)");
+                var primaryPackage = group.First().PrimaryPackage;
                 var packageVersions = group.First().RequestedPackageVersions.Zip(group.First().RuntimePackageVersions);
-
                 foreach (var (requested, runtime) in packageVersions)
                 {
-                    var prefix = "- ";
+                    var prefix = Environment.NewLine + "- ";
                     
                     // Primary package should be listed first, with remaining sorted alphabetically
                     foreach (var packageName in requested.Keys.OrderBy(n => (n == primaryPackage) ? $"_{n}" : n))
@@ -486,14 +489,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         prefix = "  ";
                     }
                 }
-
-                await streamWriter.WriteLineAsync();
-                await streamWriter.WriteLineAsync();
-
-                await WriteResultsSummaryThroughput(streamWriter, group, "Max", r => r.OperationsPerSecondMax, r => r.OperationsPerSecondMaxDifferences);
-                await streamWriter.WriteLineAsync();
-
-                await WriteResultsSummaryThroughput(streamWriter, group, "Mean", r => r.OperationsPerSecondMean, r => r.OperationsPerSecondMeanDifferences);
             }
         }
 

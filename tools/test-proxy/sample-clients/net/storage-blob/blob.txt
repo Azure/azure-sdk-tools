@@ -1,0 +1,1 @@
+This is a test of the record/playback functionality of the Azure SDKs!

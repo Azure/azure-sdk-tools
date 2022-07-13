@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Storage.Blobs;
+using Azure.Storage;
 using System;
 using System.IO;
 using System.Linq;
@@ -13,10 +14,11 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
     class Program
     {
         private static readonly string _connectionString = Environment.GetEnvironmentVariable("STORAGE_CONNECTION_STRING");
-        private static readonly string _containerName = "net-storage-blob-sample" + Guid.NewGuid().ToString();
-        private const string _blobName = "sample";
+        private static readonly string _containerName = "net-storage-blob-sample";// + Guid.NewGuid().ToString();
+        private const string _blobName = "sample-blob";
+        private const string _data = "This is a test of the record/playback functionality of the Azure SDKs!";
 
-        private static readonly Uri _proxy = new Uri("https://localhost:5001");
+        private static readonly Uri _proxy = new Uri("http://localhost:5000");
         private static readonly string _recordingFile = "recordings/net-storage-blob-sample.json";
 
         private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler()
@@ -28,6 +30,14 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
 
         static async Task Main(string[] args)
         {
+
+            string localFilePath = "./blob.txt";
+            FileStream fs = File.OpenWrite(localFilePath);
+            var bytes = Encoding.UTF8.GetBytes(_data);
+            await fs.WriteAsync(bytes, 0, bytes.Length);
+            await fs.FlushAsync();
+            fs.Close();
+
             Console.WriteLine($"Recording File: {_recordingFile}");
             Console.WriteLine();
 
@@ -40,6 +50,7 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
                 // Create container and upload blob
                 await containerClient.CreateIfNotExistsAsync();
                 await blobClient.UploadAsync(new MemoryStream(Encoding.UTF8.GetBytes("sample")));
+                await blobClient.UploadAsync(localFilePath);
 
                 // Download blob directly from service
                 await SendRequest(_httpClientTransport);
@@ -203,6 +214,7 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
                 message.Request.Headers.Add("x-recording-upstream-base-uri", baseUri.ToString());
 
                 message.Request.Uri.Host = _host;
+                message.Request.Uri.Scheme = _proxy.Scheme;
                 if (_port.HasValue)
                 {
                     message.Request.Uri.Port = _port.Value;

@@ -22,10 +22,11 @@ namespace APIViewWeb
 
         public async Task<PullRequestModel> GetPullRequestAsync(int pullRequestNumber, string repoName, string packageName, string language = null)
         {
-            var queryBuilder  =  new StringBuilder($"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}' and c.PackageName = '{packageName}' ");
+            var queryBuilder  =  new StringBuilder($"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}' and c.PackageName = '{packageName}'");
             if (language != null)
             {
-                queryBuilder.Append($"and IS_DEFINED(c.Language) and c.Language = '{language}'");
+                queryBuilder.Append($" and IS_DEFINED(c.Language) and c.Language = '{language}'");
+
             }
             var requests = await GetPullRequestFromQueryAsync(queryBuilder.ToString());
             return requests.Count > 0 ? requests[0] : null;

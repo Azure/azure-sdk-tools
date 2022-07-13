@@ -39,10 +39,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         // PushAssetsRepoUpdate
 
     // Generic "Target to Targeted Git Repo for current config"
-        // -GetDefaultBranch
+        // -GetDefaultBranch-
         // -ResolveCheckoutPaths
         // -ResolveTargetBranch resolve presence of autobranch
-        // -UpdateAssetsJson
+        // -UpdateAssetsJson-
 
     // Targeted "get user decision" that can accept user input or no. depending on how it's been called.
         // do we need to add a bit for mode? that way we can either set TRUE for cli interrupt, but FALSE for the server calls
@@ -51,6 +51,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     {
         private HttpClient httpClient = new HttpClient();
         public string DefaultBranch = "main";
+        public string FileName = "assets.json";
 
 
         #region push, reset, restore implementations
@@ -81,7 +82,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task<GitAssetsConfiguration> ParseConfigurationFile(string assetsJsonPath)
         {
             if (!File.Exists(assetsJsonPath) && !Directory.Exists(assetsJsonPath)) {
-                throw new HttpException(HttpStatusCode.BadRequest, $"The provided assets json path of \"{assetsJsonPath}\" does not exist.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"The provided {FileName} path of \"{assetsJsonPath}\" does not exist.");
             }
 
             var pathToAssets = ResolveAssetsJson(assetsJsonPath);
@@ -89,7 +90,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (string.IsNullOrWhiteSpace(assetsContent) || assetsContent.Trim() == "{}")
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"The provided assets json at \"{assetsJsonPath}\" did not have valid json present.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"The provided {FileName} at \"{assetsJsonPath}\" did not have valid json present.");
             }
             
             try
@@ -98,7 +99,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 if (string.IsNullOrWhiteSpace(assetConfig.AssetsRepo))
                 {
-                    throw new HttpException(HttpStatusCode.BadRequest, $"Unable to utilize the assets.json present at \"{assetsJsonPath}. It must contain value for the key \"AssetsRepo\" to be considered a valid assets.json.");
+                    throw new HttpException(HttpStatusCode.BadRequest, $"Unable to utilize the {FileName} present at \"{assetsJsonPath}. It must contain value for the key \"AssetsRepo\" to be considered a valid {FileName}.");
                 }
 
                 var repoRoot = AscendToRepoRoot(pathToAssets);
@@ -111,7 +112,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
             catch (Exception e)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse assets.json content at \"{assetsJsonPath}\". Exception: {e.Message}");
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse {FileName} content at \"{assetsJsonPath}\". Exception: {e.Message}");
             }
         }
         #endregion
@@ -254,7 +255,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <exception cref="HttpException"></exception>
         public string ResolveAssetsJson(string inputPath)
         {
-            if (inputPath.ToLowerInvariant().EndsWith("assets.json"))
+            if (inputPath.ToLowerInvariant().EndsWith(FileName))
             {
                 return inputPath;
             }
@@ -270,10 +271,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (directoryEval.AssetsJsonPresent)
             {
-                return Path.Join(inputPath, "assets.json");
+                return Path.Join(inputPath, FileName);
             }
 
-            throw new HttpException(HttpStatusCode.BadRequest, $"Unable to locate an assets.json at or above the targeted directory \"{originalPath}\".");
+            throw new HttpException(HttpStatusCode.BadRequest, $"Unable to locate an {FileName} at or above the targeted directory \"{originalPath}\".");
         }
 
         /// <summary>
@@ -290,7 +291,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 directoryPath = Path.GetDirectoryName(directoryPath);
             }
 
-            var assetsJsonLocation = Path.Join(directoryPath, "assets.json");
+            var assetsJsonLocation = Path.Join(directoryPath, FileName);
             var gitLocation = Path.Join(directoryPath, ".git");
 
             return new DirectoryEvaluation()
@@ -347,8 +348,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <exception cref="NotImplementedException"></exception>
         public string ResolveCheckoutPaths(GitAssetsConfiguration config)
         {
-            var combinedPath = Path.Join(config.AssetsRepoPrefixPath, config.AssetsJsonRelativeLocation).Replace("\\", "/");
-            return combinedPath;
+            var combinedPath = Path.Join(config.AssetsRepoPrefixPath??String.Empty, config.AssetsJsonRelativeLocation).Replace("\\", "/");
+
+            if (combinedPath.ToLower() == FileName)
+            {
+                return "./";
+            }
+            else
+            {
+                return combinedPath.Substring(0, combinedPath.Length - (FileName.Length + 1));
+            }
         }
 
         /// <summary>

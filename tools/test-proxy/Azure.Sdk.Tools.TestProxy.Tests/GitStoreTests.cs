@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static string DefaultAssetsJson =
 @"
 {
+    // a json comment that shouldn't break parsing.
     ""AssetsRepo"":""Azure/azure-sdk-assets-integration"",
     ""AssetsRepoPrefixPath"":""python/recordings/"",
     ""AssetsRepoId"":"""",
@@ -339,6 +340,42 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(fakeSha, configuration.SHA);
             var newConfiguration = await store.ParseConfigurationFile(testFolder.ToString());
             Assert.Equal(fakeSha, newConfiguration.SHA);
+        }
+
+        [Theory]
+        [InlineData("assets.json", false, "./")]
+        [InlineData("assets.json", true, "python/recordings")]
+        [InlineData("sdk/storage/assets.json", false, "sdk/storage")]
+        [InlineData("sdk/storage/assets.json", true, "python/recordings/sdk/storage")]
+        public async Task ResolveCheckPathsResolvesProperly(string assetsJsonPath, bool includePrefix, string expectedResult)
+        {
+            var expectedPaths = new string[]
+            {
+                assetsJsonPath
+            };
+
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, expectedPaths);
+            GitStore store = new GitStore();
+            string configLocation;
+
+            if(assetsJsonPath == "assets.json")
+            {
+                configLocation = testFolder.ToString();
+            }
+            else
+            {
+                configLocation = Path.Join(testFolder.ToString(), assetsJsonPath);
+            }
+
+            var configuration = await store.ParseConfigurationFile(configLocation);
+
+            if (!includePrefix)
+            {
+                configuration.AssetsRepoPrefixPath = null;
+            }
+
+            var result = store.ResolveCheckoutPaths(configuration);
+            Assert.Equal(expectedResult, result);
         }
 
         [Fact]

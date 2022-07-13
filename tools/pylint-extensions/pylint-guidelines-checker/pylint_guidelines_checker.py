@@ -1934,17 +1934,20 @@ class BlockedImport(BaseChecker):
     AZURE_CORE_NAME = "azure.core"
 
     def visit_import(self, node):
+        """Check that we dont have blocked imports."""
         if node.root().name.startswith(self.AZURE_CORE_NAME):
             return
         for import_, _ in node.names:
             self._check_import(import_, node)
 
     def visit_importfrom(self, node):
+        """Check that we aren't import from a blocked package."""
         if node.root().name.startswith(self.AZURE_CORE_NAME):
             return
         self._check_import(node.modname, node)
     
     def _check_import(self, name, node):
+        """Check if an import is blocked."""
         for blocked in self.BLOCKED_MODULES:
             if name.startswith(blocked):
                 self.add_message(

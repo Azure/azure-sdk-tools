@@ -1860,7 +1860,7 @@ class CheckNamingMismatchGeneratedCode(BaseChecker):
     name = "check-naming-mismatch"
     priority = -1
     msgs = {
-        "C4745": (
+        "W9991": (  # FIXME
             "Do not alias generated code. "
             "This messes up sphinx, intellisense, and apiview, so please modify the name of the generated code through"
             " the swagger / directives, or code customizations. See Details: "
@@ -1914,7 +1914,45 @@ class CheckNamingMismatchGeneratedCode(BaseChecker):
     
         except Exception:
                 logger.debug("Pylint custom checker failed to check if model is aliased.")
-                pass
+
+class BlockedImport(BaseChecker):
+    """There are certain imports that should only occur in the core package.
+    For example, instead of using `requests` to make requests, clients should
+    take a `azure.core.pipeline.Pipeline` as input to make requests.
+    """
+    name = "blocked-import"
+    priority = -1  # what is this?
+    msgs = {
+        "W9992": (
+            "This import is not allowed. Consider importing an abstract"
+            " alternative from `azure.core`",
+            "blocked-import",
+            "Do not import this module",
+        ),
+    }
+    BLOCKED_MODULES = ["aiohttp", "requests"]
+    AZURE_CORE_NAME = "azure.core"
+
+    def visit_import(self, node):
+        if node.root().name.startswith(self.AZURE_CORE_NAME):
+            return
+        for import_, _ in node.names:
+            self._check_import(import_, node)
+
+    def visit_importfrom(self, node):
+        if node.root().name.startswith(self.AZURE_CORE_NAME):
+            return
+        self._check_import(node.modname, node)
+    
+    def _check_import(self, name, node):
+        for blocked in self.BLOCKED_MODULES:
+            if name.startswith(blocked):
+                self.add_message(
+                    msgid=f"blocked-import", node=node, confidence=None
+                )
+                break
+ 
+
 
 
 # if a linter is registered in this function then it will be checked with pylint
@@ -1937,6 +1975,7 @@ def register(linter):
     linter.register_checker(CheckNamingMismatchGeneratedCode(linter))
     linter.register_checker(CheckAPIVersion(linter))
     linter.register_checker(CheckEnum(linter))
+    linter.register_checker(BlockedImport(linter))
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

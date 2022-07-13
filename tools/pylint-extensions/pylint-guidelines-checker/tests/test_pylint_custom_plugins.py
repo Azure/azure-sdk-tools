@@ -2970,3 +2970,51 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
+
+class TestCheckBlockedImports(pylint.testutils.CheckerTestCase):
+    CHECKER_CLASS = checker.BlockedImport
+    """Test that we are blocking disallowed imports."""
+    def test_disallowed_imports(self):
+        """Check that illegal imports raise warnings"""
+        # Blocked import ouside of core.
+        import_node = astroid.extract_node("import requests")
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id="blocked-import", node=import_node
+                )
+        ):
+            self.checker.visit_import(import_node)
+
+        # blocked import from outside of core.
+        importfrom_node = astroid.extract_node("from aiohttp import get")
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id="blocked-import", node=importfrom_node
+                )
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+
+    def test_allowed_imports(self):
+        """Check that allowed imports don't raise warnings."""
+        # import not in the blocked list.
+        import_node = astroid.extract_node("import math")
+        with self.assertNoMessages():
+            self.checker.visit_import(import_node)
+
+        # from import not in the blocked list.
+        importfrom_node = astroid.extract_node("from azure.core.pipeline import Pipeline")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # blocked import, but in core.
+        import_node = astroid.extract_node("import requests")
+        import_node.root().name = "azure.core.something.something"
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(import_node)
+
+        # blocked from import, but in core.
+        importfrom_node = astroid.extract_node("from requests.exceptions import HttpException")
+        importfrom_node.root().name = "azure.core"
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)

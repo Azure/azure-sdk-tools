@@ -87,7 +87,8 @@ namespace APIViewWeb.Repositories
             string hostName,
             string codeFileName = null,
             string baselineCodeFileName = null,
-            bool commentOnPR = true)
+            bool commentOnPR = true,
+            string language = null)
         {
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
             var operation = _telemetryClient.StartOperation(requestTelemetry);
@@ -95,7 +96,7 @@ namespace APIViewWeb.Repositories
             {
                 originalFileName = originalFileName ?? codeFileName;
                 string[] repoInfo = repoName.Split("/");
-                var pullRequestModel = await GetPullRequestModel(prNumber, repoName, packageName, originalFileName);
+                var pullRequestModel = await GetPullRequestModel(prNumber, repoName, packageName, originalFileName, language);
                 if (pullRequestModel == null)
                 {
                     return "";
@@ -183,9 +184,9 @@ namespace APIViewWeb.Repositories
             }
         }
 
-        private async Task<PullRequestModel> GetPullRequestModel(int prNumber, string repoName, string packageName, string originalFile)
+        private async Task<PullRequestModel> GetPullRequestModel(int prNumber, string repoName, string packageName, string originalFile, string language)
         {
-            var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName);
+            var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName, language);
             if (pullRequestModel == null)
             {
                 string[] repoInfo = repoName.Split("/");
@@ -196,7 +197,8 @@ namespace APIViewWeb.Repositories
                     PullRequestNumber = prNumber,
                     FilePath = originalFile,
                     Author = pullRequest.User.Login,
-                    PackageName = packageName
+                    PackageName = packageName,
+                    Language = language
                 };
             }
             return pullRequestModel;

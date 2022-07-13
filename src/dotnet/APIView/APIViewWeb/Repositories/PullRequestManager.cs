@@ -96,10 +96,15 @@ namespace APIViewWeb.Repositories
                 originalFileName = originalFileName ?? codeFileName;
                 string[] repoInfo = repoName.Split("/");
                 var pullRequestModel = await GetPullRequestModel(prNumber, repoName, packageName, originalFileName);
-                if (pullRequestModel == null || pullRequestModel.Commits.Any(c=> c== commitSha))
+                if (pullRequestModel == null)
+                {
+                    return "";
+                }
+                if (pullRequestModel.Commits.Any(c=> c== commitSha))
                 {
                     // PR commit is already processed. No need to reprocess it again.
-                    return "";
+                    return !string.IsNullOrEmpty(pullRequestModel.ReviewId)? REVIEW_URL.Replace("{hostName}", hostName)
+                            .Replace("{ReviewId}", pullRequestModel.ReviewId) : "";
                 }
 
                 pullRequestModel.Commits.Add(commitSha);

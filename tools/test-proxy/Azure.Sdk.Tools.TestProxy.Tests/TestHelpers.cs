@@ -109,7 +109,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         /// <param name="ignoreEmptyAssetsJson">Normally passing string.Empty to assetsJsonContent argument will result in no assets.json being written. 
         /// Passing true to this argument will ensure that the file is still created without content.</param>
         /// <returns>The absolute path to the created folder.</returns>
-        public static DirectoryInfo DescribeTestFolder(string assetsJsonContent, string[] sampleFiles, bool ignoreEmptyAssetsJson = false)
+        public static string DescribeTestFolder(string assetsJsonContent, string[] sampleFiles, bool ignoreEmptyAssetsJson = false)
         {
             // get a test folder root
             var tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -160,8 +160,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 WriteTestFile(assetsJsonContent, assetsJsonPath);
             }
-            
-            return testFolder;
+
+            return testFolder.ToString();
         }
     }
 }

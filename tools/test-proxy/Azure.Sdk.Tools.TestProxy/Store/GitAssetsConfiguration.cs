@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
     /// <summary>
@@ -24,5 +26,41 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// The auto-commit branch.
         /// </summary>
         public string AssetsRepoBranch { get; set; }
+
+        public string AssetsRepoLocation { get
+            {
+                return ResolveAssetRepoLocation(true);
+            }
+        }
+
+        public string ResolveAssetsStoreLocation(bool autoCreate = true)
+        {
+            var location = Path.Join(RepoRoot, ".assets");
+            if (!Directory.Exists(location) && autoCreate)
+            {
+                Directory.CreateDirectory(location);
+            }
+
+            return location;
+        }
+
+        public string ResolveAssetRepoLocation(bool autoCreate = true)
+        {
+            var assetsStore = ResolveAssetsStoreLocation(autoCreate: autoCreate);
+            var location = Path.Join(assetsStore, AssetsRepo.Replace("/", "-"));
+            if (!Directory.Exists(location) && autoCreate)
+            {
+                Directory.CreateDirectory(location);
+            }
+
+            return location;
+        }
+
+        public bool IsAssetsRepoInitialized(bool autoCreate = true)
+        {
+            var location = Path.Join(ResolveAssetRepoLocation(autoCreate: autoCreate), ".git");
+
+            return Directory.Exists(location);
+        }
     }
 }

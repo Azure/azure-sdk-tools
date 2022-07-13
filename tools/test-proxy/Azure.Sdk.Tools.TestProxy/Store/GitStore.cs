@@ -18,46 +18,44 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public bool AssetsJsonPresent;
     }
 
-    public class CommandResult
-    {
-        public int ReturnCode;
-        public string StdErr;
-        public string StdOut;
-
-    }
-
     // Locating Assets Repo
-        // -ResolveAssetsStoreLocation
-        // -ResolveAssetRepoLocation
-        // -IsAssetsRepoInitialized
+    // -ResolveAssetsStoreLocation
+    // -ResolveAssetRepoLocation
+    // -IsAssetsRepoInitialized
 
     // Interacting with Assets Repo
-        // CheckoutRepoAtConfig
-        // -InitializeAssetsRepo
-        // DetectPendingChanges
-        // ResetAssetsRepo
-        // PushAssetsRepoUpdate
+    // InitializeAssetsRepo
+    // CheckoutRepoAtConfig
+    // DetectPendingChanges
+    // ResetAssetsRepo
+    // PushAssetsRepoUpdate
 
     // Generic "Target to Targeted Git Repo for current config"
-        // -GetDefaultBranch-
-        // -ResolveCheckoutPaths
-        // -ResolveTargetBranch resolve presence of autobranch
-        // -UpdateAssetsJson-
+    // -GetDefaultBranch-
+    // -ResolveCheckoutPaths-
+    // -UpdateAssetsJson-
+    // -ResolveCheckoutBranch
 
     // Targeted "get user decision" that can accept user input or no. depending on how it's been called.
-        // do we need to add a bit for mode? that way we can either set TRUE for cli interrupt, but FALSE for the server calls
+    // do we need to add a bit for mode? that way we can either set TRUE for cli interrupt, but FALSE for the server calls
 
     public class GitStore : IAssetsStore
     {
         private HttpClient httpClient = new HttpClient();
+        public GitProcessHandler GitHandler = new GitProcessHandler();
         public string DefaultBranch = "main";
         public string FileName = "assets.json";
 
+        public GitStore() { }
+
+        public GitStore(GitProcessHandler processHandler) { 
+            GitHandler = processHandler;
+        }
 
         #region push, reset, restore implementations
         public async Task Push(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            var gitCommand = BasicGitInvocation(config.RepoRoot);
+            //var gitCommand = GitHandler.CreateGitProcessInfo(config.RepoRoot);
 
             // need to add further arguments
             throw new NotImplementedException();
@@ -65,7 +63,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public async Task Restore(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            var gitCommand = BasicGitInvocation(config.RepoRoot);
+            //var gitCommand = GitHandler.CreateGitProcessInfo(config.RepoRoot);
 
             // need to add further arguments
             throw new NotImplementedException();
@@ -73,7 +71,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public async Task Reset(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            var gitCommand = BasicGitInvocation(config.RepoRoot);
+            //var gitCommand = GitHandler.CreateGitProcessInfo(config.RepoRoot);
 
             // need to add further arguments
             throw new NotImplementedException();
@@ -117,48 +115,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
         #endregion
 
-        #region git process interactions
-        public ProcessStartInfo BasicGitInvocation(string workingDirectory)
-        {
-            var startInfo = new ProcessStartInfo("git")
-            {
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-                WorkingDirectory = workingDirectory,
-            };
-
-            startInfo.EnvironmentVariables["PATH"] = Environment.GetEnvironmentVariable("PATH");
-
-            return startInfo;
-        }
-
-        public CommandResult Run(ProcessStartInfo processStartInfo)
-        {
-            Process process = null;
-
-            try
-            {
-                process = Process.Start(processStartInfo);
-                string output = process.StandardOutput.ReadToEnd();
-                string errorOutput = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-
-                return new CommandResult()
-                {
-                    ReturnCode = process.ExitCode,
-                    StdErr = output,
-                    StdOut = errorOutput
-                };
-            }
-            catch (Exception e)
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, $"{e.Message}");
-            }
-        }
-        #endregion
-
         #region code repo interactions
         /// <summary>
         /// Reaches out to a git repo and resolves the default branch
@@ -167,7 +123,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns>The default branch</returns>
         public async Task<string> GetDefaultBranch(GitAssetsConfiguration config)
         {
-            var gitCommand = BasicGitInvocation(config.RepoRoot);
             var token = Environment.GetEnvironmentVariable("GIT_TOKEN");
 
             HttpRequestMessage msg = new HttpRequestMessage()
@@ -197,19 +152,21 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return DefaultBranch;
         }
 
-        public string ResolveTargetBranch(GitAssetsConfiguration config)
+        /// <summary>
+        /// Reaches out to the assets repo and confirms presence of auto branch.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public string ResolveCheckoutBranch(GitAssetsConfiguration config)
         {
-            var assetsRepo = ResolveAssetRepoLocation(config);
-            var branch = DefaultBranch;
-            var gitCommand = BasicGitInvocation(assetsRepo);
+            var result = GitHandler.Run(config, $"rev-parse \"origin/{config.AssetsRepoBranch}\"");
 
-            gitCommand.Arguments = $"rev-parse \"origin/{config.AssetsRepoBranch}\"";
-
-            var result = Run(gitCommand);
-            
-            if(result.ReturnCode == 0)
+            switch (result.ReturnCode)
             {
-                return result.StdOut.Trim();
+                case 0:   // there is indeed a branch that exists with that name
+                    return config.AssetsRepoBranch;
+                case 128: // not a git repo
+                    throw new HttpException(HttpStatusCode.BadRequest, result.StdOut); ;
             }
 
             return DefaultBranch;
@@ -305,39 +262,57 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         #endregion
 
         #region assets repo interactions
-        public void InitializeAssetsRepo(GitAssetsConfiguration config)
-        {
 
-        }
-
-        public string ResolveAssetsStoreLocation(GitAssetsConfiguration config, bool autoCreate = true)
+        public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
         {
-            var location = Path.Join(config.RepoRoot, ".assets");
-            if (!Directory.Exists(location) && autoCreate)
+            var checkoutPaths = ResolveCheckoutPaths(config);
+
+            var sparseSetResult = GitHandler.Run(config, $"sparse-checkout set {checkoutPaths}");
+            if (sparseSetResult.ReturnCode > 0)
             {
-                Directory.CreateDirectory(location);
+                // TODO: handle exception here
             }
 
-            return location;
+            var checkoutResult = GitHandler.Run(config, $"git checkout {config.SHA}");
+            if (checkoutResult.ReturnCode > 0)
+            {
+                // TODO: handle exception here
+            }
         }
 
-        public string ResolveAssetRepoLocation(GitAssetsConfiguration config, bool autoCreate = true)
+        public bool InitializeAssetsRepo(GitAssetsConfiguration config, bool forceInit = false)
         {
-            var assetsStore = ResolveAssetsStoreLocation(config, autoCreate: autoCreate);
-            var location = Path.Join(assetsStore, config.RepoRoot.GetHashCode().ToString());
-            if (!Directory.Exists(location) && autoCreate)
+            var assetRepo = config.AssetsRepoLocation;
+            var initialized = config.IsAssetsRepoInitialized();
+            var workCompleted = false;
+
+            if (forceInit)
             {
-                Directory.CreateDirectory(location);
+                Directory.Delete(assetRepo, true);
+                Directory.CreateDirectory(assetRepo);
+                initialized = false;
             }
 
-            return location;
-        }
+            if (!initialized)
+            {
+                var cloneResult = GitHandler.Run(config, $"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .");
+                if (cloneResult.ReturnCode > 0)
+                {
+                    // TODO: handle exception here
+                }
 
-        public bool IsAssetsRepoInitialized(GitAssetsConfiguration config, bool autoCreate = true)
-        {
-            var location = Path.Join(ResolveAssetRepoLocation(config, autoCreate: autoCreate), ".git");
+                var sparseInit = GitHandler.Run(config, $"sparse checkout init");
+                if (sparseInit.ReturnCode > 0)
+                {
+                    // TODO: handle exception here
+                }
 
-            return Directory.Exists(location);
+                CheckoutRepoAtConfig(config);
+
+                workCompleted = true;
+            }
+
+            return workCompleted;
         }
 
         /// <summary>

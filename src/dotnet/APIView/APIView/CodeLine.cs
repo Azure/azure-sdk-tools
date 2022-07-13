@@ -10,16 +10,16 @@ namespace ApiView
         public string LineClass { get; }
         public int? LineNumber { get; }
         public int IndentSize { get; }
-        public string SectionCacheKey { get;  }
+        public int? SectionKey { get;  }
 
-        public CodeLine(string html, string id, string lineClass, int? lineNumber = null, int indentSize = 0, string sectionCacheKey = null)
+        public CodeLine(string html, string id, string lineClass, int? lineNumber = null, int indentSize = 0, int? sectionKey = null)
         {
             this.DisplayString = html;
             this.ElementId = id;
             this.LineClass = lineClass;
             this.LineNumber = lineNumber;
             this.IndentSize = indentSize;
-            this.SectionCacheKey = sectionCacheKey;
+            this.SectionKey = sectionKey;
         }
 
         public override string ToString()

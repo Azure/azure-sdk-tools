@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
         private static readonly string _containerName = "net-storage-blob-sample" + Guid.NewGuid().ToString();
         private const string _blobName = "sample";
 
-        private static readonly Uri _proxy = new Uri("https://localhost:5001");
+        private static readonly Uri _proxy = new Uri("http://localhost:5000");
         private static readonly string _recordingFile = "recordings/net-storage-blob-sample.json";
 
         private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler()
@@ -203,6 +203,7 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
                 message.Request.Headers.Add("x-recording-upstream-base-uri", baseUri.ToString());
 
                 message.Request.Uri.Host = _host;
+                message.Request.Uri.Scheme = _proxy.Scheme;
                 if (_port.HasValue)
                 {
                     message.Request.Uri.Port = _port.Value;

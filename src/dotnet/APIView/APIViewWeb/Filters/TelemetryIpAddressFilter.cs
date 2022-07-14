@@ -12,19 +12,15 @@ namespace APIViewWeb.Filters
         public TelemetryIpAddressFilter(ITelemetryProcessor next)
         {
             _next = next;
-
         }
 
         public void Process(ITelemetry item)
         {
             if (item.Context?.Location?.Ip != null)
-
             {
                 item.Context.Location.Ip = null;
             }
-
             _next.Process(item);
-
         }
     }
 }

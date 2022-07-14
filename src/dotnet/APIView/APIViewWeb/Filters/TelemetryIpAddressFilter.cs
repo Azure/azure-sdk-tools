@@ -6,21 +6,25 @@ namespace APIViewWeb.Filters
 {
     public class TelemetryIpAddressFilter : ITelemetryProcessor
     {
-        private ITelemetryProcessor Next { get; set; }
+        private readonly ITelemetryProcessor _next;
+
 
         public TelemetryIpAddressFilter(ITelemetryProcessor next)
         {
-            this.Next = next;
+            _next = next;
+
         }
 
         public void Process(ITelemetry item)
         {
-            if(item.Context?.Location?.Ip != null)
+            if (item.Context?.Location?.Ip != null)
+
             {
                 item.Context.Location.Ip = null;
             }
 
-            this.Next.Process(item);
+            _next.Process(item);
+
         }
     }
 }

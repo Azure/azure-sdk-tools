@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Linq;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -24,20 +25,24 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     // -IsAssetsRepoInitialized
 
     // Interacting with Assets Repo
-    // InitializeAssetsRepo
-    // CheckoutRepoAtConfig
-    // DetectPendingChanges
-    // ResetAssetsRepo
-    // PushAssetsRepoUpdate
+    // -InitializeAssetsRepo -> Checkout
+    // -CheckoutRepoAtConfig
+    // -DetectPendingChanges
+    // ResetAssetsRepo -> Reset
+    // PushAssetsRepoUpdate -> Push
 
     // Generic "Target to Targeted Git Repo for current config"
     // -GetDefaultBranch-
     // -ResolveCheckoutPaths-
     // -UpdateAssetsJson-
-    // -ResolveCheckoutBranch
+    // -ResolveCheckoutBranch-
 
-    // Targeted "get user decision" that can accept user input or no. depending on how it's been called.
-    // do we need to add a bit for mode? that way we can either set TRUE for cli interrupt, but FALSE for the server calls
+    /* TODO: scenarios to integration test
+        * Restore from service 1 to service 2 to service 3 without actually doing anything other than restoring
+        * Handle CLI invoked vs Server modes. Ask for user input on pending changes if in CLI mode. Otherwise just error and ask for discard.
+        * Targeted "get user decision" that can accept user input or no. depending on how it's been called.
+            * do we need to add a bit for mode? that way we can either set TRUE for cli interrupt, but FALSE for the server calls
+     * */
 
     public class GitStore : IAssetsStore
     {
@@ -48,11 +53,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public GitStore() { }
 
-        public GitStore(GitProcessHandler processHandler) { 
+        public GitStore(GitProcessHandler processHandler) {
             GitHandler = processHandler;
         }
 
-        #region push, reset, restore implementations
+        #region push, reset, restore, and other asset repo implementations 
         public async Task Push(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             //var gitCommand = GitHandler.CreateGitProcessInfo(config.RepoRoot);
@@ -63,7 +68,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public async Task Restore(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            //var gitCommand = GitHandler.CreateGitProcessInfo(config.RepoRoot);
+            var initialized = config.IsAssetsRepoInitialized();
+
+            if (!initialized)
+            {
+                InitializeAssetsRepo(config);
+            }
+
 
             // need to add further arguments
             throw new NotImplementedException();
@@ -71,15 +82,139 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public async Task Reset(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            //var gitCommand = GitHandler.CreateGitProcessInfo(config.RepoRoot);
+            var initialized = config.IsAssetsRepoInitialized();
+            var allowReset = true;
 
-            // need to add further arguments
-            throw new NotImplementedException();
+            if (!initialized)
+            {
+                InitializeAssetsRepo(config);
+            }
+
+            var pendingChanges = DetectPendingChanges(config);
+
+            if (pendingChanges.Length > 0)
+            {
+                // TODO: optionally check if a reset should be allowed
+                // if no, set allowReset to false
+            }
+
+            if (allowReset)
+            {
+                var checkoutResult = GitHandler.Run(config, "checkout *");
+                if (checkoutResult.ReturnCode > 0)
+                {
+                    // TODO: handle exception here
+                }
+
+                var cleanResult = GitHandler.Run(config, "git clean -xdf");
+                if (checkoutResult.ReturnCode > 0)
+                {
+                    // TODO: handle exception here
+                }
+
+                if (!string.IsNullOrWhiteSpace(config.SHA))
+                {
+                    CheckoutRepoAtConfig(config);
+                }
+            }
         }
+
+        public string[] DetectPendingChanges(GitAssetsConfiguration config)
+        {
+            var diffResult = GitHandler.Run(config, "diff-index --name-only HEAD");
+            if (diffResult.ReturnCode > 0)
+            {
+                // TODO: handle exception here
+            }
+
+            if (!string.IsNullOrWhiteSpace(diffResult.StdOut))
+            {
+                var individualResults = diffResult.StdOut.Split(Environment.NewLine).Select(x => x.Trim()).ToArray();
+                return individualResults;
+            }
+
+            return new string[] {};
+        }
+
+        public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
+        {
+            var checkoutPaths = ResolveCheckoutPaths(config);
+
+            var sparseSetResult = GitHandler.Run(config, $"sparse-checkout set {checkoutPaths}");
+            if (sparseSetResult.ReturnCode > 0)
+            {
+                // TODO: handle exception here
+            }
+
+            var checkoutResult = GitHandler.Run(config, $"checkout {config.SHA}");
+            if (checkoutResult.ReturnCode > 0)
+            {
+                // TODO: handle exception here
+            }
+        }
+
+        public bool InitializeAssetsRepo(GitAssetsConfiguration config, bool forceInit = false)
+        {
+            var assetRepo = config.AssetsRepoLocation;
+            var initialized = config.IsAssetsRepoInitialized();
+            var workCompleted = false;
+
+            if (forceInit)
+            {
+                Directory.Delete(assetRepo, true);
+                Directory.CreateDirectory(assetRepo);
+                initialized = false;
+            }
+
+            if (!initialized)
+            {
+                var cloneResult = GitHandler.Run(config, $"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .");
+                if (cloneResult.ReturnCode > 0)
+                {
+                    // TODO: handle exception here
+                }
+
+                var sparseInit = GitHandler.Run(config, $"sparse-checkout init");
+                if (sparseInit.ReturnCode > 0)
+                {
+                    // TODO: handle exception here
+                }
+
+                CheckoutRepoAtConfig(config);
+
+                workCompleted = true;
+            }
+
+            return workCompleted;
+        }
+
+        /// <summary>
+        /// Evaluates an assets configuration and returns the correct sparse checkout path.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns>A relative path for use within the assets repo.</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public string ResolveCheckoutPaths(GitAssetsConfiguration config)
+        {
+            var combinedPath = Path.Join(config.AssetsRepoPrefixPath ?? String.Empty, config.AssetsJsonRelativeLocation).Replace("\\", "/");
+
+            if (combinedPath.ToLower() == FileName)
+            {
+                return "./";
+            }
+            else
+            {
+                return combinedPath.Substring(0, combinedPath.Length - (FileName.Length + 1));
+            }
+        }
+        #endregion
+
+        #region code repo interactions
 
         public async Task<GitAssetsConfiguration> ParseConfigurationFile(string assetsJsonPath)
         {
-            if (!File.Exists(assetsJsonPath) && !Directory.Exists(assetsJsonPath)) {
+            if (!File.Exists(assetsJsonPath) && !Directory.Exists(assetsJsonPath))
+            {
                 throw new HttpException(HttpStatusCode.BadRequest, $"The provided {FileName} path of \"{assetsJsonPath}\" does not exist.");
             }
 
@@ -90,7 +225,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"The provided {FileName} at \"{assetsJsonPath}\" did not have valid json present.");
             }
-            
+
             try
             {
                 var assetConfig = JsonSerializer.Deserialize<GitAssetsConfiguration>(assetsContent, options: new JsonSerializerOptions() { AllowTrailingCommas = true, ReadCommentHandling = JsonCommentHandling.Skip });
@@ -101,10 +236,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
 
                 var repoRoot = AscendToRepoRoot(pathToAssets);
-                
+
                 assetConfig.AssetsJsonLocation = pathToAssets;
                 assetConfig.AssetsJsonRelativeLocation = Path.GetRelativePath(repoRoot, pathToAssets);
                 assetConfig.RepoRoot = repoRoot;
+                assetConfig.AssetsFileName = FileName;
 
                 return assetConfig;
             }
@@ -113,9 +249,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse {FileName} content at \"{assetsJsonPath}\". Exception: {e.Message}");
             }
         }
-        #endregion
 
-        #region code repo interactions
         /// <summary>
         /// Reaches out to a git repo and resolves the default branch
         /// </summary>
@@ -257,82 +391,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 IsGitRoot = File.Exists(gitLocation),
                 IsRoot = new DirectoryInfo(directoryPath).Parent == null
             };
-        }
-
-        #endregion
-
-        #region assets repo interactions
-
-        public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
-        {
-            var checkoutPaths = ResolveCheckoutPaths(config);
-
-            var sparseSetResult = GitHandler.Run(config, $"sparse-checkout set {checkoutPaths}");
-            if (sparseSetResult.ReturnCode > 0)
-            {
-                // TODO: handle exception here
-            }
-
-            var checkoutResult = GitHandler.Run(config, $"checkout {config.SHA}");
-            if (checkoutResult.ReturnCode > 0)
-            {
-                // TODO: handle exception here
-            }
-        }
-
-        public bool InitializeAssetsRepo(GitAssetsConfiguration config, bool forceInit = false)
-        {
-            var assetRepo = config.AssetsRepoLocation;
-            var initialized = config.IsAssetsRepoInitialized();
-            var workCompleted = false;
-
-            if (forceInit)
-            {
-                Directory.Delete(assetRepo, true);
-                Directory.CreateDirectory(assetRepo);
-                initialized = false;
-            }
-
-            if (!initialized)
-            {
-                var cloneResult = GitHandler.Run(config, $"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .");
-                if (cloneResult.ReturnCode > 0)
-                {
-                    // TODO: handle exception here
-                }
-
-                var sparseInit = GitHandler.Run(config, $"sparse-checkout init");
-                if (sparseInit.ReturnCode > 0)
-                {
-                    // TODO: handle exception here
-                }
-
-                CheckoutRepoAtConfig(config);
-
-                workCompleted = true;
-            }
-
-            return workCompleted;
-        }
-
-        /// <summary>
-        /// Evaluates an assets configuration and returns the correct sparse checkout path.
-        /// </summary>
-        /// <param name="config"></param>
-        /// <returns>A relative path for use within the assets repo.</returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public string ResolveCheckoutPaths(GitAssetsConfiguration config)
-        {
-            var combinedPath = Path.Join(config.AssetsRepoPrefixPath??String.Empty, config.AssetsJsonRelativeLocation).Replace("\\", "/");
-
-            if (combinedPath.ToLower() == FileName)
-            {
-                return "./";
-            }
-            else
-            {
-                return combinedPath.Substring(0, combinedPath.Length - (FileName.Length + 1));
-            }
         }
 
         /// <summary>

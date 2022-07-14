@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
@@ -7,6 +8,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     /// </summary>
     public class GitAssetsConfiguration : AssetsConfiguration
     {
+        public string AssetsFileName { get; set; }
+
         /// <summary>
         /// The targeted assets repo. EG: "Azure/azure-sdk-for-net".
         /// </summary>
@@ -27,6 +30,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         public string AssetsRepoBranch { get; set; }
 
+        /// <summary>
+        /// The location of the assets repo for this config.
+        /// </summary>
         public string AssetsRepoLocation { get
             {
                 return ResolveAssetRepoLocation(true);
@@ -35,7 +41,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public string ResolveAssetsStoreLocation(bool autoCreate = true)
         {
-            var location = Path.Join(RepoRoot, ".assets");
+            var location = Environment.GetEnvironmentVariable("PROXY_ASSETS_FOLDER") ?? Path.Join(RepoRoot, ".assets");
             if (!Directory.Exists(location) && autoCreate)
             {
                 Directory.CreateDirectory(location);

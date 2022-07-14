@@ -1,11 +1,6 @@
 ﻿using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Store;
-using Azure.Sdk.Tools.TestProxy.Transforms;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging.Abstractions;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Xunit;
@@ -433,7 +428,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var workDone = _defaultStore.InitializeAssetsRepo(config);
         }
 
-        [Theory(Skip ="No properly cloned assets repo here.")]
+        [Theory(Skip = "Skipping because we don't have an integration test suite working yet.")]
         [InlineData("scenario_clean_push", "scenario_clean_push")]
         [InlineData("nonexistent_branch", "main")]
         public async Task ResolveTargetBranchIntegration(string targetBranch, string result)

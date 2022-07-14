@@ -594,16 +594,21 @@ export class TestCodeModeler {
         }
     }
 
+    public createApiScenarioLoaderOption(fileRoot: string) {
+        const options = {
+            useJsonParser: false,
+            checkUnderFileRoot: false,
+            fileRoot: fileRoot,
+            swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
+            eraseXmsExamples: false,
+        }
+        return {...options, ...this.testConfig.getValue(Config.apiScenarioLoaderOption, {})}
+    }
+
     public async loadTestResourcesFromConfig(session: Session<TestCodeModel>, fileRoot: string) {
         for (const testResource of this.testConfig.getValue(Config.testResources)) {
             try {
-                const loader = ApiScenarioLoader.create({
-                    useJsonParser: false,
-                    checkUnderFileRoot: false,
-                    fileRoot: fileRoot,
-                    swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
-                    eraseXmsExamples: false,
-                });
+                const loader = ApiScenarioLoader.create(this.createApiScenarioLoaderOption(fileRoot));
                 const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
                 this.initiateTestDefinition(session, testDef);
                 this.codeModel.testModel.scenarioTests.push(testDef);
@@ -627,13 +632,7 @@ export class TestCodeModeler {
                         }
                         let scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
                         try {
-                            const loader = ApiScenarioLoader.create({
-                                useJsonParser: false,
-                                checkUnderFileRoot: false,
-                                fileRoot: fileRoot,
-                                swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
-                                eraseXmsExamples: false,
-                            });
+                            const loader = ApiScenarioLoader.create(this.createApiScenarioLoaderOption(fileRoot));
                             scenarioPathName = scenarioPathName.split('\\').join('/');
                             const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
 

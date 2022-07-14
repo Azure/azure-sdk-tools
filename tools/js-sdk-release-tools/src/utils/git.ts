@@ -16,6 +16,8 @@ export async function getChangedPackageDirectory() {
             if (packageDirectory) {
                 changedPackageDirectories.add(packageDirectory[0]);
             }
+        } else {
+            throw new Error(`Find unexpected generated file: ${filePath}. Please confirm whether the output-folder is correct.`);
         }
     }
     return changedPackageDirectories;

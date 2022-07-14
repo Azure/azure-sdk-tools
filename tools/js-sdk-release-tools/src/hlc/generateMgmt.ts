@@ -25,11 +25,12 @@ export async function generateMgmt(options: {
     additionalArgs?: string;
     outputJson?: any;
     swaggerRepoUrl?: string;
+    downloadUrlPrefix?: string;
     runningEnvironment?: RunningEnvironment;
 }) {
     logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
 
-    let cmd = `autorest --version=3.7.3 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
+    let cmd = `autorest --version=3.8.4 --typescript --debug --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
 
     if (options.tag) {
         cmd += ` --tag=${options.tag}`;
@@ -121,12 +122,22 @@ export async function generateMgmt(options: {
                     outputPackageInfo.path.push(file);
                 }
 
+                let artifactName: string | undefined = undefined;
                 for (const file of fs.readdirSync(packagePath)) {
                     if (file.startsWith('azure-arm') && file.endsWith('.tgz')) {
                         outputPackageInfo.artifacts.push(path.join(changedPackageDirectory, file));
+                        artifactName = file;
                     }
                 }
                 addApiViewInfo(outputPackageInfo, packagePath, changedPackageDirectory);
+                if (!outputPackageInfo.packageName.startsWith('@azure/arm-')) {
+                    throw new Error(`Unexpected package name: ${outputPackageInfo.packageName}`);
+                }
+                if (!!options.downloadUrlPrefix && !!artifactName) {
+                    outputPackageInfo.installInstructions = {
+                        full: `Please install the package by \`npm install ${options.downloadUrlPrefix}${outputPackageInfo.packageName.replace('/', '_')}/${artifactName}\``
+                    }
+                }
             }
         } catch (e) {
             logger.logError('Error:');

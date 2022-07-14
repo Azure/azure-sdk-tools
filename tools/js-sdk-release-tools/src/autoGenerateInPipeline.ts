@@ -16,6 +16,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
     const autorestConfig: string | undefined = inputJson['autorestConfig'];
+    const downloadUrlPrefix: string | undefined = inputJson.installInstructionInput?.downloadUrlPrefix;
 
     if ((typeof readmeFiles !== 'string') && readmeFiles.length !== 1) {
         throw new Error(`get ${readmeFiles.length} readme files`);
@@ -37,6 +38,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
             use: use,
             outputJson: outputJson,
             swaggerRepoUrl: repoHttpsUrl,
+            downloadUrlPrefix: downloadUrlPrefix,
             runningEnvironment: runningEnvironment
         });
     } else {

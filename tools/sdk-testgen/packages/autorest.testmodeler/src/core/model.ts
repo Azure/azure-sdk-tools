@@ -601,8 +601,8 @@ export class TestCodeModeler {
             fileRoot: fileRoot,
             swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
             eraseXmsExamples: false,
-        }
-        return {...options, ...this.testConfig.getValue(Config.apiScenarioLoaderOption, {})}
+        };
+        return { ...options, ...this.testConfig.getValue(Config.apiScenarioLoaderOption, {}) };
     }
 
     public async loadTestResourcesFromConfig(session: Session<TestCodeModel>, fileRoot: string) {

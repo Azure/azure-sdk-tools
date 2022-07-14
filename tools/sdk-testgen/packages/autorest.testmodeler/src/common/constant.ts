@@ -12,7 +12,7 @@ export enum Config {
     scenarioCodeModelRestCallOnly = 'testmodeler.scenario.codemodel-restcall-only',
     useExampleModel = 'testmodeler.use-example-model',
     addArmTemplatePayloadString = 'testmodeler.add-armtemplate-payload-string',
-    apiScenarioLoaderOption = 'testmodeler.api-scenario-loader-option'
+    apiScenarioLoaderOption = 'testmodeler.api-scenario-loader-option',
 }
 
 export const configDefaults = {

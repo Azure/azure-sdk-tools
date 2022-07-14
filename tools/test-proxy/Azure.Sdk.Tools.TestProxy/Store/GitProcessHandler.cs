@@ -35,12 +35,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public virtual CommandResult Run(GitAssetsConfiguration config, string arguments)
         {
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(config);
+            processStartInfo.Arguments = arguments;
 
             try
             {
-                var process = Process.Start(processStartInfo);
                 // TODO: verbose logging add here
                 Console.WriteLine($"git {processStartInfo.Arguments}");
+                var process = Process.Start(processStartInfo);
                 string output = process.StandardOutput.ReadToEnd();
                 string errorOutput = process.StandardError.ReadToEnd();
                 process.WaitForExit();

@@ -424,8 +424,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(contentBeforeUpdate.Replace(originalSHA, fakeSha), contentAfterUpdate);
         }
 
-
-        [Fact(Skip = "No properly cloned assets repo here.")]
+        [Fact(Skip ="Skipping because we don't have an integration test suite working yet.")]
         public async Task GitCallHonorsLocalCredential()
         {
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);

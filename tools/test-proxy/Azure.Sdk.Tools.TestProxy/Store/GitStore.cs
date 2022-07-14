@@ -273,7 +273,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 // TODO: handle exception here
             }
 
-            var checkoutResult = GitHandler.Run(config, $"git checkout {config.SHA}");
+            var checkoutResult = GitHandler.Run(config, $"checkout {config.SHA}");
             if (checkoutResult.ReturnCode > 0)
             {
                 // TODO: handle exception here
@@ -301,7 +301,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     // TODO: handle exception here
                 }
 
-                var sparseInit = GitHandler.Run(config, $"sparse checkout init");
+                var sparseInit = GitHandler.Run(config, $"sparse-checkout init");
                 if (sparseInit.ReturnCode > 0)
                 {
                     // TODO: handle exception here

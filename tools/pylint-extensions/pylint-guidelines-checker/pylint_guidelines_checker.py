@@ -1860,7 +1860,7 @@ class CheckNamingMismatchGeneratedCode(BaseChecker):
     name = "check-naming-mismatch"
     priority = -1
     msgs = {
-        "W9991": (  # FIXME
+        "C4745": (
             "Do not alias generated code. "
             "This messes up sphinx, intellisense, and apiview, so please modify the name of the generated code through"
             " the swagger / directives, or code customizations. See Details: "
@@ -1954,8 +1954,6 @@ class BlockedImport(BaseChecker):
                     msgid=f"blocked-import", node=node, confidence=None
                 )
                 break
- 
-
 
 
 # if a linter is registered in this function then it will be checked with pylint

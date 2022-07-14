@@ -2971,9 +2971,11 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
 
+
 class TestCheckBlockedImports(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed imports and allowing allowed imports."""
     CHECKER_CLASS = checker.BlockedImport
-    """Test that we are blocking disallowed imports."""
+
     def test_disallowed_imports(self):
         """Check that illegal imports raise warnings"""
         # Blocked import ouside of core.

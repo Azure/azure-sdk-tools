@@ -1,25 +1,25 @@
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
+
 namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
 {
-    using Microsoft.ApplicationInsights.Channel;
-    using Microsoft.ApplicationInsights.DataContracts;
-    using Microsoft.ApplicationInsights.Extensibility;
-
     public class BlobNotFoundTelemetryProcessor : ITelemetryProcessor
     {
-        private readonly ITelemetryProcessor next;
+        private readonly ITelemetryProcessor _next;
 
         // next will point to the next TelemetryProcessor in the chain.
         public BlobNotFoundTelemetryProcessor(ITelemetryProcessor next)
         {
-            this.next = next;
+            _next = next;
         }
-  
-        public void Process(ITelemetry telemetry)
+
+        public void Process(ITelemetry item)
         {
-            if (telemetry is DependencyTelemetry { Success: false, Type: "Azure blob" or "Microsoft.Storage" } blobRequestTelemetry)
+            if (item is DependencyTelemetry { Success: false, Type: "Azure blob" or "Microsoft.Storage" } blobRequestTelemetry)
             {
                 blobRequestTelemetry.Properties.TryGetValue("Error", out var errorProperty);
-                
+
                 var isNotFound = blobRequestTelemetry.ResultCode is "404" or "409"
                     || (blobRequestTelemetry.ResultCode == "" && errorProperty?.Contains("Status: 404") == true);
 
@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
                 }
             }
 
-            this.next.Process(telemetry);
+            _next.Process(item);
         }
     }
 }

@@ -1,7 +1,7 @@
+using System;
+
 namespace Azure.Sdk.Tools.PipelineWitness
 {
-    using System;
-
     public class PipelineWitnessSettings
     {
         public string KeyVaultUri { get; set; }

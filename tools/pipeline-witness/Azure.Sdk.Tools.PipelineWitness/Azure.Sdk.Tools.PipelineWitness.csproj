@@ -4,6 +4,8 @@
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>10.0</LangVersion>
     <UserSecretsId>bc5587e8-3503-4e1a-816c-1e219e4047f6</UserSecretsId>
+	  <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-Recommended</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>

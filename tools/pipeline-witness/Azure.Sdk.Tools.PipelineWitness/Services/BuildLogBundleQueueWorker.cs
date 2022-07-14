@@ -1,22 +1,22 @@
-﻿namespace Azure.Sdk.Tools.PipelineWitness.Services
-{
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Azure.Storage.Queues;
-    using Azure.Storage.Queues.Models;
-    using Microsoft.ApplicationInsights;
-    using Microsoft.ApplicationInsights.DataContracts;
-    using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Options;
-    using Newtonsoft.Json;
-    using Azure.Sdk.Tools.PipelineWitness.Entities;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Azure.Sdk.Tools.PipelineWitness.Entities;
 
+namespace Azure.Sdk.Tools.PipelineWitness.Services
+{
     internal class BuildLogBundleQueueWorker : QueueWorkerBackgroundService
     {
-        private readonly ILogger logger;
-        private readonly TelemetryClient telemetryClient;
-        private readonly BlobUploadProcessor runProcessor;
+        private readonly ILogger _logger;
+        private readonly TelemetryClient _telemetryClient;
+        private readonly BlobUploadProcessor _runProcessor;
 
         public BuildLogBundleQueueWorker(
             ILogger<BuildLogBundleQueueWorker> logger,
@@ -31,18 +31,18 @@
                   options?.CurrentValue?.BuildLogBundlesQueueName,
                   options)
         {
-            this.logger = logger;
-            this.runProcessor = runProcessor;
-            this.telemetryClient = telemetryClient;
+            _logger = logger;
+            _runProcessor = runProcessor;
+            _telemetryClient = telemetryClient;
         }
 
         protected override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
         {
-            logger.LogInformation("Processing build log bundle message.");
+            _logger.LogInformation("Processing build log bundle message.");
 
             if (message.InsertedOn.HasValue)
             {
-                telemetryClient.TrackMetric(new MetricTelemetry
+                _telemetryClient.TrackMetric(new MetricTelemetry
                 {
                     Name = "AzurePipelinesBuildLogBundle MessageLatencyMs",
                     Sum = DateTimeOffset.Now.Subtract(message.InsertedOn.Value).TotalMilliseconds,
@@ -56,12 +56,12 @@
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to deserialize message body. Body: {MessageBody}", message.MessageText);
+                _logger.LogError(ex, "Failed to deserialize message body. Body: {MessageBody}", message.MessageText);
                 throw;
             }
 
             // TODO: Add cancellation token propagation
-            await runProcessor.ProcessBuildLogBundleAsync(buildLogBundle);
+            await _runProcessor.ProcessBuildLogBundleAsync(buildLogBundle);
         }
     }
 }

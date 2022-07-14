@@ -1,20 +1,20 @@
+using System;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
+
 namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
-    using System;
-    using System.Text.RegularExpressions;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Azure.Storage.Queues;
-    using Azure.Storage.Queues.Models;
-    using Microsoft.ApplicationInsights;
-    using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Options;
-    using Newtonsoft.Json.Linq;
-
     internal class BuildCompleteQueueWorker : QueueWorkerBackgroundService
     {
-        private readonly ILogger logger;
-        private readonly BlobUploadProcessor runProcessor;
+        private readonly ILogger _logger;
+        private readonly BlobUploadProcessor _runProcessor;
 
         public BuildCompleteQueueWorker(
             ILogger<BuildCompleteQueueWorker> logger,
@@ -23,19 +23,19 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             TelemetryClient telemetryClient,
             IOptionsMonitor<PipelineWitnessSettings> options)
             : base(
-                logger, 
+                logger,
                 telemetryClient,
                 queueServiceClient,
-                options.CurrentValue.BuildCompleteQueueName, 
+                options.CurrentValue.BuildCompleteQueueName,
                 options)
         {
-            this.logger = logger;
-            this.runProcessor = runProcessor;
+            _logger = logger;
+            _runProcessor = runProcessor;
         }
 
         protected override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
         {
-            this.logger.LogInformation("Processing build.complete event.");
+            _logger.LogInformation("Processing build.complete event.");
 
             var devopsEvent = JObject.Parse(message.MessageText);
 
@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
 
             if (buildUrl == null)
             {
-                this.logger.LogError("Message contained no build url. Message body: {MessageBody}", message.MessageText);
+                _logger.LogError("Message contained no build url. Message body: {MessageBody}", message.MessageText);
                 return;
             }
 
@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
 
             if (!match.Success)
             {
-                this.logger.LogError("Message contained an invalid build url: {BuildUrl}", buildUrl);
+                _logger.LogError("Message contained an invalid build url: {BuildUrl}", buildUrl);
                 return;
             }
 
@@ -61,17 +61,17 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
 
             if (!Guid.TryParse(projectIdString, out var projectId))
             {
-                this.logger.LogError("Could not parse project id as a guid '{ProjectId}'", projectIdString);
+                _logger.LogError("Could not parse project id as a guid '{ProjectId}'", projectIdString);
                 return;
             }
 
             if (!int.TryParse(buildIdString, out var buildId))
             {
-                this.logger.LogError("Could not parse build id as a guid '{BuildId}'", buildIdString);
+                _logger.LogError("Could not parse build id as a guid '{BuildId}'", buildIdString);
                 return;
             }
 
-            await runProcessor.UploadBuildBlobsAsync(account, projectId, buildId);
+            await _runProcessor.UploadBuildBlobsAsync(account, projectId, buildId);
         }
     }
 }

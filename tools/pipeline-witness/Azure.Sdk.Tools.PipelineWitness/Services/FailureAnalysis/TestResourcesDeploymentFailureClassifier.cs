@@ -1,16 +1,17 @@
+using System;
+using Microsoft.TeamFoundation.Build.WebApi;
+using System.Linq;
+using System.Threading.Tasks;
+
 namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
-    using Microsoft.TeamFoundation.Build.WebApi;
-    using System.Linq;
-    using System.Threading.Tasks;
-
-   public class TestResourcesDeploymentFailureClassifier : IFailureClassifier
+    public class TestResourcesDeploymentFailureClassifier : IFailureClassifier
     {
         public Task ClassifyAsync(FailureAnalyzerContext context)
         {
             var failedTasks = context.Timeline.Records
-                .Where(r => r.Name.StartsWith("Deploy test resources") &&
-                            r.Result == TaskResult.Failed);
+                .Where(r => r.Name.StartsWith("Deploy test resources", StringComparison.InvariantCulture))
+                .Where(r => r.Result == TaskResult.Failed);
 
             foreach (var failedTask in failedTasks)
             {

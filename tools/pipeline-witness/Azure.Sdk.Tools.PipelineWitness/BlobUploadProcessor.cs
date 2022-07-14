@@ -1,29 +1,29 @@
-﻿namespace Azure.Sdk.Tools.PipelineWitness
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Azure.Sdk.Tools.PipelineWitness.Entities;
+using Azure.Sdk.Tools.PipelineWitness.Services;
+using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.TestManagement.WebApi;
+using Microsoft.VisualStudio.Services.TestResults.WebApi;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
+
+namespace Azure.Sdk.Tools.PipelineWitness
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Net;
-    using System.Text;
-    using System.Text.RegularExpressions;
-    using System.Threading.Tasks;
-    using Azure.Sdk.Tools.PipelineWitness.Entities;
-    using Azure.Sdk.Tools.PipelineWitness.Services;
-    using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
-    using Azure.Storage.Blobs;
-    using Azure.Storage.Blobs.Models;
-    using Azure.Storage.Queues;
-    using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Options;
-    using Microsoft.TeamFoundation.Build.WebApi;
-    using Microsoft.TeamFoundation.TestManagement.WebApi;
-    using Microsoft.VisualStudio.Services.TestResults.WebApi;
-
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
-    using Newtonsoft.Json.Serialization;
-
     public class BlobUploadProcessor
     {
         private const string BuildsContainerName = "builds";
@@ -34,34 +34,32 @@
         private const string TestRunsContainerName = "testruns";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
-        
-        private static readonly JsonSerializerSettings jsonSettings = new()
+
+        private static readonly JsonSerializerSettings s_jsonSettings = new()
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
             Converters = { new StringEnumConverter(new CamelCaseNamingStrategy()) },
             Formatting = Formatting.None,
         };
 
-        private readonly ILogger<BlobUploadProcessor> logger;
-        private readonly BuildLogProvider logProvider;
-        private readonly TestResultsHttpClient testResultsClient;
-        private readonly BuildHttpClient buildClient;
-        private readonly BlobContainerClient buildLogLinesContainerClient;
-        private readonly BlobContainerClient buildsContainerClient;
-        private readonly BlobContainerClient buildTimelineRecordsContainerClient;
-        private readonly BlobContainerClient testRunsContainerClient;
-        private readonly BlobContainerClient buildDefinitionsContainerClient;
-        private readonly BlobContainerClient buildFailuresContainerClient;
-        private readonly QueueClient queueClient;
-        private readonly IOptions<PipelineWitnessSettings> options;
-        private readonly Dictionary<string, int?> cachedDefinitionRevisions = new();
-        private readonly IFailureAnalyzer failureAnalyzer;        
+        private readonly ILogger<BlobUploadProcessor> _logger;
+        private readonly BuildLogProvider _logProvider;
+        private readonly TestResultsHttpClient _testResultsClient;
+        private readonly BuildHttpClient _buildClient;
+        private readonly BlobContainerClient _buildLogLinesContainerClient;
+        private readonly BlobContainerClient _buildsContainerClient;
+        private readonly BlobContainerClient _buildTimelineRecordsContainerClient;
+        private readonly BlobContainerClient _testRunsContainerClient;
+        private readonly BlobContainerClient _buildDefinitionsContainerClient;
+        private readonly BlobContainerClient _buildFailuresContainerClient;
+        private readonly IOptions<PipelineWitnessSettings> _options;
+        private readonly Dictionary<string, int?> _cachedDefinitionRevisions = new();
+        private readonly IFailureAnalyzer _failureAnalyzer;
 
         public BlobUploadProcessor(
             ILogger<BlobUploadProcessor> logger,
             BuildLogProvider logProvider,
             BlobServiceClient blobServiceClient,
-            QueueServiceClient queueServiceClient,
             BuildHttpClient buildClient,
             TestResultsHttpClient testResultsClient,
             IOptions<PipelineWitnessSettings> options,
@@ -72,26 +70,19 @@
                 throw new ArgumentNullException(nameof(blobServiceClient));
             }
 
-            if (queueServiceClient == null)
-            {
-                throw new ArgumentNullException(nameof(queueServiceClient));
-            }
-
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.logProvider = logProvider ?? throw new ArgumentNullException(nameof(logProvider));
-            this.buildClient = buildClient ?? throw new ArgumentNullException(nameof(buildClient));
-            this.testResultsClient = testResultsClient ?? throw new ArgumentNullException(nameof(testResultsClient));
-            this.buildsContainerClient = blobServiceClient.GetBlobContainerClient(BuildsContainerName);
-            this.buildTimelineRecordsContainerClient = blobServiceClient.GetBlobContainerClient(BuildTimelineRecordsContainerName);
-            this.buildLogLinesContainerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
-            this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
-            this.buildFailuresContainerClient = blobServiceClient.GetBlobContainerClient(BuildFailuresContainerName);
-            this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerName);
-            this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
-            this.queueClient = queueServiceClient.GetQueueClient(this.options.Value.BuildLogBundlesQueueName);
-            this.queueClient.CreateIfNotExists();
-            this.failureAnalyzer = failureAnalyzer;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _logProvider = logProvider ?? throw new ArgumentNullException(nameof(logProvider));
+            _buildClient = buildClient ?? throw new ArgumentNullException(nameof(buildClient));
+            _testResultsClient = testResultsClient ?? throw new ArgumentNullException(nameof(testResultsClient));
+            _buildsContainerClient = blobServiceClient.GetBlobContainerClient(BuildsContainerName);
+            _buildTimelineRecordsContainerClient = blobServiceClient.GetBlobContainerClient(BuildTimelineRecordsContainerName);
+            _buildLogLinesContainerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
+            _buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
+            _buildFailuresContainerClient = blobServiceClient.GetBlobContainerClient(BuildFailuresContainerName);
+            _testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerName);
+            _buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
+            _failureAnalyzer = failureAnalyzer;
         }
 
         public async Task UploadBuildBlobsAsync(string account, Guid projectId, int buildId)
@@ -100,7 +91,7 @@
 
             if (build == null)
             {
-                this.logger.LogWarning("Unable to process run due to missing build. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
+                _logger.LogWarning("Unable to process run due to missing build. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
                 return;
             }
 
@@ -109,44 +100,45 @@
             // Project name is used in blob paths and cannot be empty
             if (build.Project == null)
             {
-                this.logger.LogWarning("Skipping build with null project property. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
+                _logger.LogWarning("Skipping build with null project property. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
                 skipBuild = true;
             }
-            else if (string.IsNullOrWhiteSpace(build.Project.Name))
+
+            if (string.IsNullOrWhiteSpace(build.Project?.Name))
             {
-                this.logger.LogWarning("Skipping build with null project property. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
+                _logger.LogWarning("Skipping build with null or empty project name. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
                 skipBuild = true;
             }
 
             if (build.Deleted)
             {
-                this.logger.LogInformation("Skipping deleted build. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                _logger.LogInformation("Skipping deleted build. Project: {Project}, BuildId: {BuildId}", build.Project?.Name, buildId);
                 skipBuild = true;
             }
 
             if (build.StartTime == null)
             {
-                this.logger.LogWarning("Skipping build with null start time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                _logger.LogWarning("Skipping build with null start time. Project: {Project}, BuildId: {BuildId}", build.Project?.Name, buildId);
                 skipBuild = true;
             }
 
             // FinishTime is used in blob paths and cannot be null
             if (build.FinishTime == null)
             {
-                this.logger.LogWarning("Skipping build with null finish time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                _logger.LogWarning("Skipping build with null finish time. Project: {Project}, BuildId: {BuildId}", build.Project?.Name, buildId);
                 skipBuild = true;
             }
 
             // QueueTime is used in blob paths and cannot be null
             if (build.QueueTime == null)
             {
-                this.logger.LogWarning("Skipping build with null queue time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                _logger.LogWarning("Skipping build with null queue time. Project: {Project}, BuildId: {BuildId}", build.Project?.Name, buildId);
                 skipBuild = true;
             }
 
             if (build.Definition == null)
             {
-                this.logger.LogWarning("Skipping build with null definition property. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                _logger.LogWarning("Skipping build with null definition property. Project: {Project}, BuildId: {BuildId}", build.Project?.Name, buildId);
                 skipBuild = true;
             }
 
@@ -159,11 +151,11 @@
 
             await UploadTestRunBlobsAsync(account, build);
 
-            var timeline = await this.buildClient.GetBuildTimelineAsync(projectId, buildId);
+            var timeline = await _buildClient.GetBuildTimelineAsync(projectId, buildId);
 
             if (timeline == null)
             {
-                logger.LogWarning("No timeline available for build {Project}: {BuildId}", build.Project.Name, build.Id);
+                _logger.LogWarning("No timeline available for build {Project}: {BuildId}", build.Project.Name, build.Id);
             }
             else
             {
@@ -171,20 +163,20 @@
                 await UploadBuildFailureBlobAsync(account, build, timeline);
             }
 
-            var logs = await buildClient.GetBuildLogsAsync(build.Project.Id, build.Id);
+            var logs = await _buildClient.GetBuildLogsAsync(build.Project.Id, build.Id);
 
             if (logs == null || logs.Count == 0)
             {
-                logger.LogWarning("No logs available for build {Project}: {BuildId}", build.Project.Name, build.Id);
+                _logger.LogWarning("No logs available for build {Project}: {BuildId}", build.Project.Name, build.Id);
                 return;
             }
-            
+
             var bundles = BuildLogBundles(account, build, timeline, logs);
 
             // We no longer process log bundles on separate messages.
             // During zero downtime upgrade phase, process all the bundles sequentially but allow for processing message in the log bundle queue
             // After the upgrade phase, this should be rewritten to remove bundling but keep the log -> timeline record association
-            foreach(var bundle in bundles)
+            foreach (var bundle in bundles)
             {
                 await ProcessBuildLogBundleAsync(bundle);
             }
@@ -195,21 +187,21 @@
             try
             {
                 var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
-                var blobClient = this.buildFailuresContainerClient.GetBlobClient(blobPath);
+                var blobClient = _buildFailuresContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing build failure blob for build {BuildId}", build.Id);
+                    _logger.LogInformation("Skipping existing build failure blob for build {BuildId}", build.Id);
                     return;
                 }
 
-                var failures = await this.failureAnalyzer.AnalyzeFailureAsync(build, timeline);
+                var failures = await _failureAnalyzer.AnalyzeFailureAsync(build, timeline);
                 if (!failures.Any())
                 {
                     return;
                 }
 
-                this.logger.LogInformation("Creating failure blob for build {DefinitionId} change {ChangeId}", build.Id, timeline.ChangeId);
+                _logger.LogInformation("Creating failure blob for build {DefinitionId} change {ChangeId}", build.Id, timeline.ChangeId);
 
                 var stringBuilder = new StringBuilder();
 
@@ -229,19 +221,19 @@
                         RecordId = failure.Record.Id,
                         BuildTimelineId = timeline.Id,
                         ErrorClassification = failure.Classification,
-                     }, jsonSettings);
-                     stringBuilder.AppendLine(contentLine);
+                    }, s_jsonSettings);
+                    stringBuilder.AppendLine(contentLine);
                 }
 
-                await blobClient.UploadAsync(new BinaryData(stringBuilder.ToString()));   
+                await blobClient.UploadAsync(new BinaryData(stringBuilder.ToString()));
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring exception from existing failure blob for build {BuildId}", build.Id);
+                _logger.LogInformation("Ignoring exception from existing failure blob for build {BuildId}", build.Id);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing build failure blob for build {BuildId}", build.Id);
+                _logger.LogError(ex, "Error processing build failure blob for build {BuildId}", build.Id);
                 throw;
             }
         }
@@ -256,18 +248,18 @@
 
         public async Task UploadBuildDefinitionBlobsAsync(string account, string projectName)
         {
-            var definitions = await buildClient.GetFullDefinitionsAsync2(project: projectName);
+            var definitions = await _buildClient.GetFullDefinitionsAsync2(project: projectName);
 
             foreach (var definition in definitions)
             {
                 var cacheKey = $"{definition.Project.Id}:{definition.Id}";
-                
-                if (!this.cachedDefinitionRevisions.TryGetValue(cacheKey, out var cachedRevision) || cachedRevision != definition.Revision)
-                { 
+
+                if (!_cachedDefinitionRevisions.TryGetValue(cacheKey, out var cachedRevision) || cachedRevision != definition.Revision)
+                {
                     await UploadBuildDefinitionBlobAsync(account, definition);
                 }
 
-                this.cachedDefinitionRevisions[cacheKey] = definition.Revision;
+                _cachedDefinitionRevisions[cacheKey] = definition.Revision;
             }
         }
 
@@ -277,15 +269,15 @@
 
             try
             {
-                var blobClient = this.buildDefinitionsContainerClient.GetBlobClient(blobPath);
+                var blobClient = _buildDefinitionsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing build definition blob for build {DefinitionId} project {Project}", definition.Id, definition.Project.Name);
+                    _logger.LogInformation("Skipping existing build definition blob for build {DefinitionId} project {Project}", definition.Id, definition.Project.Name);
                     return;
                 }
 
-                this.logger.LogInformation("Creating blob for build definition {DefinitionId} revision {Revision} project {Project}", definition.Id, definition.Revision, definition.Project.Name);
+                _logger.LogInformation("Creating blob for build definition {DefinitionId} revision {Revision} project {Project}", definition.Id, definition.Revision, definition.Project.Name);
 
                 var content = JsonConvert.SerializeObject(new
                 {
@@ -346,22 +338,22 @@
                     Tags = definition.Tags,
                     Data = definition,
                     EtlIngestDate = DateTimeOffset.UtcNow,
-                }, jsonSettings);
+                }, s_jsonSettings);
 
                 await blobClient.UploadAsync(new BinaryData(content));
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring exception from existing blob for build definition {DefinitionId}", definition.Id);
+                _logger.LogInformation("Ignoring exception from existing blob for build definition {DefinitionId}", definition.Id);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing blob for build definition {DefinitionId}", definition.Id);
+                _logger.LogError(ex, "Error processing blob for build definition {DefinitionId}", definition.Id);
                 throw;
             }
         }
 
-        private List<BuildLogBundle> BuildLogBundles(string account, Build build, Timeline timeline, List<BuildLog> logs)
+        private List<BuildLogBundle> BuildLogBundles(string account, Build build, Timeline timeline, IReadOnlyCollection<BuildLog> logs)
         {
             BuildLogBundle CreateBundle() => new()
             {
@@ -369,9 +361,9 @@
                 BuildId = build.Id,
                 ProjectId = build.Project.Id,
                 ProjectName = build.Project.Name,
-                QueueTime = build.QueueTime.Value,
-                StartTime = build.StartTime.Value,
-                FinishTime = build.FinishTime.Value,
+                QueueTime = build.QueueTime!.Value,
+                StartTime = build.StartTime!.Value,
+                FinishTime = build.FinishTime!.Value,
                 DefinitionId = build.Definition.Id,
                 DefinitionName = build.Definition.Name,
                 DefinitionPath = build.Definition.Path,
@@ -385,16 +377,16 @@
 
             foreach (var log in logs)
             {
-                if(currentBundle.TimelineLogs.Count >= this.options.Value.BuildLogBundleSize)
+                if (currentBundle.TimelineLogs.Count >= _options.Value.BuildLogBundleSize)
                 {
                     logBundles.Add(currentBundle = CreateBundle());
                 }
 
                 var logRecords = timeline.Records.Where(x => x.Log?.Id == log.Id).ToArray();
 
-                if(logRecords.Length > 1)
+                if (logRecords.Length > 1)
                 {
-                    this.logger.LogWarning("Found multiple timeline records for build {BuildId}, log {LogId}", build.Id, log.Id);
+                    _logger.LogWarning("Found multiple timeline records for build {BuildId}, log {LogId}", build.Id, log.Id);
                 }
 
                 var logRecord = logRecords.FirstOrDefault();
@@ -414,7 +406,7 @@
                     // if the job's line count is the task line count + 2, then we can skip the job log
                     if (log.LineCount == childLineCount + 2)
                     {
-                        this.logger.LogTrace("Skipping redundant logs for build {BuildId}, job {RecordId}, log {LogId}", build.Id, logRecord.Id, log.Id);
+                        _logger.LogTrace("Skipping redundant logs for build {BuildId}, job {RecordId}, log {LogId}", build.Id, logRecord.Id, log.Id);
                         continue;
                     }
                 }
@@ -422,11 +414,8 @@
                 currentBundle.TimelineLogs.Add(new BuildLogInfo
                 {
                     LogId = log.Id,
-                    LineCount = log.LineCount,
                     LogCreatedOn = log.CreatedOn.Value,
                     RecordId = logRecord?.Id,
-                    ParentRecordId = logRecord?.ParentId,
-                    RecordType = logRecord?.RecordType,
                 });
             }
 
@@ -438,11 +427,11 @@
             try
             {
                 var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}.jsonl";
-                var blobClient = this.buildsContainerClient.GetBlobClient(blobPath);
+                var blobClient = _buildsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing build blob for build {BuildId}", build.Id);
+                    _logger.LogInformation("Skipping existing build blob for build {BuildId}", build.Id);
                     return;
                 }
 
@@ -501,22 +490,22 @@
                     SourceBranch = build.SourceBranch,
                     SourceVersion = build.SourceVersion,
                     Status = build.Status,
-                    Tags = build.Tags?.Any() == true ? JsonConvert.SerializeObject(build.Tags, jsonSettings) : null,
+                    Tags = build.Tags?.Any() == true ? JsonConvert.SerializeObject(build.Tags, s_jsonSettings) : null,
                     Uri = build.Uri,
                     ValidationResults = build.ValidationResults,
-                    Data = JsonConvert.SerializeObject(build, jsonSettings),
+                    Data = JsonConvert.SerializeObject(build, s_jsonSettings),
                     EtlIngestDate = DateTime.UtcNow,
-                }, jsonSettings);
+                }, s_jsonSettings);
 
                 await blobClient.UploadAsync(new BinaryData(content));
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring exception from existing blob for build {BuildId}", build.Id);
+                _logger.LogInformation("Ignoring exception from existing blob for build {BuildId}", build.Id);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing build blob for build {BuildId}", build.Id);
+                _logger.LogError(ex, "Error processing build blob for build {BuildId}", build.Id);
                 throw;
             }
         }
@@ -527,16 +516,16 @@
             {
                 if (timeline.Records == null)
                 {
-                    this.logger.LogInformation("Skipping timeline with null Records property for build {BuildId}", build.Id);
+                    _logger.LogInformation("Skipping timeline with null Records property for build {BuildId}", build.Id);
                     return;
                 }
 
                 var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
-                var blobClient = this.buildTimelineRecordsContainerClient.GetBlobClient(blobPath);
+                var blobClient = _buildTimelineRecordsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing timeline for build {BuildId}, change {ChangeId}", build.Id, timeline.ChangeId);
+                    _logger.LogInformation("Skipping existing timeline for build {BuildId}, change {ChangeId}", build.Id, timeline.ChangeId);
                     return;
                 }
 
@@ -580,21 +569,21 @@
                             TaskVersion = record.Task?.Version,
                             Type = record.RecordType,
                             Issues = record.Issues?.Any() == true
-                                ? JsonConvert.SerializeObject(record.Issues, jsonSettings)
+                                ? JsonConvert.SerializeObject(record.Issues, s_jsonSettings)
                                 : null,
                             EtlIngestDate = DateTime.UtcNow,
-                        }, jsonSettings));
+                        }, s_jsonSettings));
                 }
 
                 await blobClient.UploadAsync(new BinaryData(builder.ToString()));
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring exception from existing timeline blob for build {BuildId}, change {ChangeId}", build.Id, timeline.ChangeId);
+                _logger.LogInformation("Ignoring exception from existing timeline blob for build {BuildId}, change {ChangeId}", build.Id, timeline.ChangeId);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing timeline for build {BuildId}", build.Id);
+                _logger.LogError(ex, "Error processing timeline for build {BuildId}", build.Id);
                 throw;
             }
         }
@@ -606,86 +595,85 @@
                 // we don't use FinishTime in the logs blob path to prevent duplicating logs when processing retries.
                 // i.e.  logs with a given buildId/logId are immutable and retries only add new logs.
                 var blobPath = $"{build.ProjectName}/{build.QueueTime:yyyy/MM/dd}/{build.BuildId}-{log.LogId}.jsonl";
-                var blobClient = this.buildLogLinesContainerClient.GetBlobClient(blobPath);
+                var blobClient = _buildLogLinesContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing log for build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
+                    _logger.LogInformation("Skipping existing log for build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
                     return;
                 }
 
-                this.logger.LogInformation("Processing log for build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
+                _logger.LogInformation("Processing log for build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
 
                 var lineNumber = 0;
                 var characterCount = 0;
 
                 // Over an open read stream and an open write stream, one line at a time, read, process, and write to
                 // blob storage
-                using (var logStream = await this.logProvider.GetLogStreamAsync(build.ProjectName, build.BuildId, log.LogId))
-                using (var logReader = new StreamReader(logStream))
-                using (var blobStream = await blobClient.OpenWriteAsync(overwrite: true, new BlobOpenWriteOptions()))
-                using (var blobWriter = new StreamWriter(blobStream))
+                await using var logStream = await _logProvider.GetLogStreamAsync(build.ProjectName, build.BuildId, log.LogId);
+                using var logReader = new StreamReader(logStream);
+                await using var blobStream = await blobClient.OpenWriteAsync(true, new BlobOpenWriteOptions());
+                await using var blobWriter = new StreamWriter(blobStream);
+
+                var lastTimeStamp = log.LogCreatedOn;
+
+                while (true)
                 {
-                    var lastTimeStamp = log.LogCreatedOn;
+                    var line = await logReader.ReadLineAsync();
 
-                    while (true)
+                    if (line == null)
                     {
-                        var line = await logReader.ReadLineAsync();
-
-                        if (line == null)
-                        {
-                            break;
-                        }
-
-                        lineNumber += 1;
-                        characterCount += line.Length;
-
-                        // log lines usually follow the format:
-                        // 2022-03-30T21:38:38.7007903Z Downloading task: AzureKeyVault (1.200.0)
-                        // Sometimes, there's no leading timestamp, so we'll use the last timestamp we saw.
-                        var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
-
-                        var timestamp = match.Success
-                            ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
-                                System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
-                            : lastTimeStamp;
-
-                        lastTimeStamp = timestamp;
-
-                        var message = match.Success ? match.Groups[2].Value : line;
-
-                        await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
-                        {
-                            OrganizationName = build.Account,
-                            ProjectId = build.ProjectId,
-                            ProjectName = build.ProjectName,
-                            BuildDefinitionId = build.DefinitionId,
-                            BuildDefinitionPath = build.DefinitionPath,
-                            BuildDefinitionName = build.DefinitionName,
-                            BuildId = build.BuildId,
-                            LogId = log.LogId,
-                            LineNumber = lineNumber,
-                            Length = message.Length,
-                            Timestamp = timestamp.ToString(TimeFormat),
-                            Message = message,
-                            EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
-                        }, jsonSettings));
+                        break;
                     }
+
+                    lineNumber += 1;
+                    characterCount += line.Length;
+
+                    // log lines usually follow the format:
+                    // 2022-03-30T21:38:38.7007903Z Downloading task: AzureKeyVault (1.200.0)
+                    // Sometimes, there's no leading timestamp, so we'll use the last timestamp we saw.
+                    var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
+
+                    var timestamp = match.Success
+                        ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
+                            System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
+                        : lastTimeStamp;
+
+                    lastTimeStamp = timestamp;
+
+                    var message = match.Success ? match.Groups[2].Value : line;
+
+                    await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
+                    {
+                        OrganizationName = build.Account,
+                        ProjectId = build.ProjectId,
+                        ProjectName = build.ProjectName,
+                        BuildDefinitionId = build.DefinitionId,
+                        BuildDefinitionPath = build.DefinitionPath,
+                        BuildDefinitionName = build.DefinitionName,
+                        BuildId = build.BuildId,
+                        LogId = log.LogId,
+                        LineNumber = lineNumber,
+                        Length = message.Length,
+                        Timestamp = timestamp.ToString(TimeFormat, CultureInfo.InvariantCulture),
+                        Message = message,
+                        EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat, CultureInfo.InvariantCulture),
+                    }, s_jsonSettings));
                 }
 
-                logger.LogInformation("Processed {CharacterCount} characters and {LineCount} lines for build {BuildId}, record {RecordId}, log {LogId}", characterCount, lineNumber, build.BuildId, log.RecordId, log.LogId);
+                _logger.LogInformation("Processed {CharacterCount} characters and {LineCount} lines for build {BuildId}, record {RecordId}, log {LogId}", characterCount, lineNumber, build.BuildId, log.RecordId, log.LogId);
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring existing blob exception for build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
+                _logger.LogInformation("Ignoring existing blob exception for build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
+                _logger.LogError(ex, "Error processing build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
                 throw;
             }
         }
- 
+
         private async Task UploadTestRunBlobsAsync(string account, Build build)
         {
             try
@@ -693,23 +681,23 @@
                 var continuationToken = string.Empty;
                 var buildIds = new[] { build.Id };
 
-                var minLastUpdatedDate = build.QueueTime.Value.AddHours(-1);
-                var maxLastUpdatedDate = build.FinishTime.Value.AddHours(1);
+                var minLastUpdatedDate = build.QueueTime!.Value.AddHours(-1);
+                var maxLastUpdatedDate = build.FinishTime!.Value.AddHours(1);
 
                 var rangeStart = minLastUpdatedDate;
 
-                while(rangeStart < maxLastUpdatedDate)
+                while (rangeStart < maxLastUpdatedDate)
                 {
                     // Ado limits test run queries to a 7 day range, so we'll chunk on 6 days.
                     var rangeEnd = rangeStart.AddDays(6);
-                    if(rangeEnd > maxLastUpdatedDate)
+                    if (rangeEnd > maxLastUpdatedDate)
                     {
                         rangeEnd = maxLastUpdatedDate;
                     }
 
                     do
                     {
-                        var page = await testResultsClient.QueryTestRunsAsync2(
+                        var page = await _testResultsClient.QueryTestRunsAsync2(
                             build.Project.Id,
                             rangeStart,
                             rangeEnd,
@@ -730,7 +718,7 @@
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing test runs for build {BuildId}", build.Id);
+                _logger.LogError(ex, "Error processing test runs for build {BuildId}", build.Id);
                 throw;
             }
         }
@@ -740,11 +728,11 @@
             try
             {
                 var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl";
-                var blobClient = this.testRunsContainerClient.GetBlobClient(blobPath);
+                var blobClient = _testRunsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
+                    _logger.LogInformation("Skipping existing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
                     return;
                 }
 
@@ -788,17 +776,17 @@
                     OrganizationId = default(string),
                     Data = default(string),
                     EtlIngestDate = DateTime.UtcNow,
-                }, jsonSettings);
+                }, s_jsonSettings);
 
                 await blobClient.UploadAsync(new BinaryData(content));
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring exception from existing blob for test run {RunId} for build {BuildId}", testRun.Id, build.Id);
+                _logger.LogInformation("Ignoring exception from existing blob for test run {RunId} for build {BuildId}", testRun.Id, build.Id);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
+                _logger.LogError(ex, "Error processing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
                 throw;
             }
         }
@@ -809,7 +797,7 @@
 
             try
             {
-                build = await buildClient.GetBuildAsync(projectId, buildId);
+                build = await _buildClient.GetBuildAsync(projectId, buildId);
             }
             catch (BuildNotFoundException)
             {

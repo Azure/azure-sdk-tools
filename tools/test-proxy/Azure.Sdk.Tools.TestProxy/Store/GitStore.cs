@@ -100,14 +100,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (allowReset)
             {
-                var checkoutResult = GitHandler.Run(config, "checkout *");
-                if (checkoutResult.ReturnCode > 0)
+                if (!GitHandler.TryRun(config, "checkout *", out var checkoutResult))
                 {
-                    // TODO: handle exception here
-                }
+                    // TODO: handle exception or bad code here
+                };
 
-                var cleanResult = GitHandler.Run(config, "git clean -xdf");
-                if (checkoutResult.ReturnCode > 0)
+                if (!GitHandler.TryRun(config, "git clean -xdf", out var cleanResult))
                 {
                     // TODO: handle exception here
                 }
@@ -121,8 +119,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public string[] DetectPendingChanges(GitAssetsConfiguration config)
         {
-            var diffResult = GitHandler.Run(config, "diff-index --name-only HEAD");
-            if (diffResult.ReturnCode > 0)
+            if (!GitHandler.TryRun(config, "diff-index --name-only HEAD", out var diffResult))
             {
                 // TODO: handle exception here
             }
@@ -140,14 +137,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var checkoutPaths = ResolveCheckoutPaths(config);
 
-            var sparseSetResult = GitHandler.Run(config, $"sparse-checkout set {checkoutPaths}");
-            if (sparseSetResult.ReturnCode > 0)
+            if (!GitHandler.TryRun(config, $"sparse-checkout set {checkoutPaths}", out var sparseSetResult))
             {
                 // TODO: handle exception here
             }
 
-            var checkoutResult = GitHandler.Run(config, $"checkout {config.SHA}");
-            if (checkoutResult.ReturnCode > 0)
+            if (!GitHandler.TryRun(config, $"checkout {config.SHA}", out var checkoutResult))
             {
                 // TODO: handle exception here
             }
@@ -168,14 +163,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (!initialized)
             {
-                var cloneResult = GitHandler.Run(config, $"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .");
-                if (cloneResult.ReturnCode > 0)
+                if (!GitHandler.TryRun(config, $"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .", out var cloneResult))
                 {
                     // TODO: handle exception here
                 }
 
-                var sparseInit = GitHandler.Run(config, $"sparse-checkout init");
-                if (sparseInit.ReturnCode > 0)
+                if (!GitHandler.TryRun(config, $"sparse-checkout init", out var sparseInitResult))
                 {
                     // TODO: handle exception here
                 }
@@ -293,14 +286,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public string ResolveCheckoutBranch(GitAssetsConfiguration config)
         {
-            var result = GitHandler.Run(config, $"rev-parse \"origin/{config.AssetsRepoBranch}\"");
+            GitHandler.TryRun(config, $"rev-parse \"origin/{config.AssetsRepoBranch}\"", out var commandResult);
 
-            switch (result.ReturnCode)
+            switch (commandResult.ReturnCode)
             {
                 case 0:   // there is indeed a branch that exists with that name
                     return config.AssetsRepoBranch;
                 case 128: // not a git repo
-                    throw new HttpException(HttpStatusCode.BadRequest, result.StdOut); ;
+                    throw new HttpException(HttpStatusCode.BadRequest, commandResult.StdOut); ;
             }
 
             return DefaultBranch;

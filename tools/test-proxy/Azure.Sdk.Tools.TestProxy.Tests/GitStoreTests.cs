@@ -18,14 +18,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         }
 
-        public override CommandResult Run(GitAssetsConfiguration config, string arguments)
+        public override bool TryRun(GitAssetsConfiguration config, string arguments, out CommandResult result)
         {
-            return new CommandResult()
+            result = new CommandResult()
             {
                 ReturnCode = ErrorCode,
                 StdErr = ErrorResult,
                 StdOut = RunResult
             };
+
+            return true;
         }
 
         public FakeCommandResultsHandler() { }

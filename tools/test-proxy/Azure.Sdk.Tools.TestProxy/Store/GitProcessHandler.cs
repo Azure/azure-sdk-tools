@@ -12,6 +12,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public int ReturnCode;
         public string StdErr;
         public string StdOut;
+        public Exception CommandException;
     }
 
     public class GitProcessHandler
@@ -32,7 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return startInfo;
         }
 
-        public virtual CommandResult Run(GitAssetsConfiguration config, string arguments)
+        public virtual bool TryRun(GitAssetsConfiguration config, string arguments, out CommandResult result)
         {
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(config);
             processStartInfo.Arguments = arguments;
@@ -42,21 +43,35 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 // TODO: verbose logging add here
                 Console.WriteLine($"git {processStartInfo.Arguments}");
                 var process = Process.Start(processStartInfo);
-                string output = process.StandardOutput.ReadToEnd();
-                string errorOutput = process.StandardError.ReadToEnd();
+                string stdOut = process.StandardOutput.ReadToEnd();
+                string stdErr = process.StandardError.ReadToEnd();
                 process.WaitForExit();
 
-                return new CommandResult()
+                int returnCode = process.ExitCode;
+
+                result = new CommandResult()
                 {
                     ReturnCode = process.ExitCode,
-                    StdErr = output,
-                    StdOut = errorOutput
+                    StdErr = stdOut,
+                    StdOut = stdErr
                 };
+
             }
             catch (Exception e)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"{e.Message}");
+                result = new CommandResult()
+                {
+                    ReturnCode = -1,
+                    CommandException = e
+                };
             }
+
+            if (result.ReturnCode != 0)
+            {
+                return false;
+            }
+
+            return true;
         }
 
     }

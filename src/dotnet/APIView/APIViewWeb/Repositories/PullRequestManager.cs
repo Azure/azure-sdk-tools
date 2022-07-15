@@ -139,7 +139,8 @@ namespace APIViewWeb.Repositories
                 }
 
                 // Return review URL created for current package if exists
-                var review = prReviews.SingleOrDefault(r => r.PackageName == packageName);
+                var review = prReviews.SingleOrDefault(r => r.PackageName == packageName && (r.Language == null || r.Language == language));
+
                 return review == null ? "" : REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", review.ReviewId);
             }
             catch (Exception ex)

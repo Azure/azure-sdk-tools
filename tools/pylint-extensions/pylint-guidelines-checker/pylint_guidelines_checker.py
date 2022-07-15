@@ -892,7 +892,6 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                     try:
                         if "def by_page" in next(node.value.infer()).as_string():
                             paging_class = True
-
                     except (astroid.exceptions.InferenceError, AttributeError): # astroid can't always infer the return
                         logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
                         pass

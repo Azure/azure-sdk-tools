@@ -18,12 +18,12 @@ namespace ApiView
         public RenderResult Render(CodeFile file, bool showDocumentation = false, bool enableSkipDiff = false)
         {
             var codeLines = new List<CodeLine>();
-            var sections = new List<TreeNode<CodeLine>>();
+            var sections = new Dictionary<int,TreeNode<CodeLine>>();
             Render(codeLines, file.Tokens, showDocumentation, enableSkipDiff, sections);
             return new RenderResult(codeLines.ToArray(), sections);
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff, List<TreeNode<CodeLine>> sections)
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff, Dictionary<int,TreeNode<CodeLine>> sections)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
@@ -31,7 +31,6 @@ namespace ApiView
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
             Stack<SectionType> nodesInProcess = new Stack<SectionType>();
-            int indentSize = 0;
             int lineNumber = 0;
             TreeNode<CodeLine> section = null;
 
@@ -47,9 +46,8 @@ namespace ApiView
                 switch(token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        string lineClass = (nodesInProcess.Count > 0 && section == null) ? "heading" : String.Empty;
                         int ? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count: null;
-                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, lineClass, ++lineNumber, indentSize, sectionKey);
+                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey);
                         if (nodesInProcess.Count > 0)
                         {
                             if (nodesInProcess.Peek().Equals(SectionType.Heading))
@@ -73,7 +71,7 @@ namespace ApiView
                         {
                             if (section != null)
                             {
-                                sections.Add(section);
+                                sections.Add(sections.Count, section);
                                 section = null;
                             }
                             list.Add(codeLine);
@@ -115,7 +113,6 @@ namespace ApiView
 
                     case CodeFileTokenKind.FoldableSectionContentStart:
                         nodesInProcess.Push(SectionType.Content);
-                        indentSize++;
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentEnd:
@@ -125,10 +122,9 @@ namespace ApiView
                         {
                             nodesInProcess.Pop();
                         }
-                        indentSize--;
                         if (nodesInProcess.Count == 0 && section != null)
                         {
-                            sections.Add(section);
+                            sections.Add(sections.Count, section);
                             section = null;
                         }
                         break;
@@ -159,14 +155,14 @@ namespace ApiView
 
     public struct RenderResult
     {
-        public RenderResult(CodeLine[] codeLines, List<TreeNode<CodeLine>> sections)
+        public RenderResult(CodeLine[] codeLines, Dictionary<int,TreeNode<CodeLine>> sections)
         {
             CodeLines = codeLines;
             Sections = sections;
         }
 
         public CodeLine[] CodeLines { get; }
-        public List<TreeNode<CodeLine>> Sections { get; }
+        public Dictionary<int, TreeNode<CodeLine>> Sections { get; }
     }
 
     enum SectionType

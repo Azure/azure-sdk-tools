@@ -85,9 +85,7 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Revision = revisionId != null ?
-                Review.Revisions.Single(r => r.RevisionId == revisionId) :
-                Review.Revisions.Last();
+            Revision = GetReviewRevision(revisionId);
             PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
 
             var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
@@ -124,6 +122,58 @@ namespace APIViewWeb.Pages.Assemblies
             var filterPreference = _preferenceCache.GetFilterType(User.GetGitHubLogin(), Review.FilterType);
             ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName, filterPreference);
             return Page();
+        }
+
+        public async Task<PartialViewResult> OnGetCodeLineSectionAsync(string id, int sectionId, string revisionId = null)
+        {
+            Review = await _manager.GetReviewAsync(User, id);
+            Revision = GetReviewRevision(revisionId);
+            var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
+            var CodeLineSection = renderedCodeFile.RenderResult.Sections[sectionId];
+            TempData["CodeLineSection"] = CodeLineSection;
+            return Partial("_CodeLinePartial");
+        }
+
+        public async Task<ActionResult> OnPostRefreshModelAsync(string id)
+        {
+            await _manager.UpdateReviewAsync(User, id);
+
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<ActionResult> OnPostToggleClosedAsync(string id)
+        {
+            await _manager.ToggleIsClosedAsync(User, id);
+
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
+        {
+            await _notificationManager.ToggleSubscribedAsync(User, id);
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<IActionResult> OnPostToggleApprovalAsync(string id, string revisionId)
+        {
+            await _manager.ToggleApprovalAsync(User, id, revisionId);
+            return RedirectToPage(new { id = id });
+        }
+        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null, string revisionId = null)
+        {
+            var routingData = new Dictionary<string, string>();
+            routingData["revisionId"] = revisionId;
+            routingData["diffRevisionId"] = diffRevisionId;
+            routingData["doc"] = (showDocumentation ?? false).ToString();
+            routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
+            return routingData;
+        }
+
+        private ReviewRevisionModel GetReviewRevision(string revisionId = null)
+        {
+            return revisionId != null ?
+                Review.Revisions.Single(r => r.RevisionId == revisionId) :
+                Review.Revisions.Last();
         }
 
         private InlineDiffLine<CodeLine>[] CreateDiffOnlyLines(InlineDiffLine<CodeLine>[] lines)
@@ -219,35 +269,6 @@ namespace APIViewWeb.Pages.Assemblies
                 }
             }
             return activeThreads;
-        }
-
-        public async Task<ActionResult> OnPostToggleClosedAsync(string id)
-        {
-            await _manager.ToggleIsClosedAsync(User, id);
-
-            return RedirectToPage(new { id = id });
-        }
-
-        public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
-        {
-            await _notificationManager.ToggleSubscribedAsync(User, id);
-            return RedirectToPage(new { id = id });
-        }
-
-        public async Task<IActionResult> OnPostToggleApprovalAsync(string id, string revisionId)
-        {
-            await _manager.ToggleApprovalAsync(User, id, revisionId);
-            return RedirectToPage(new { id = id });
-        }
-
-        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null, string revisionId = null)
-        {
-            var routingData = new Dictionary<string, string>();
-            routingData["revisionId"] = revisionId;
-            routingData["diffRevisionId"] = diffRevisionId;
-            routingData["doc"] = (showDocumentation ?? false).ToString();
-            routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
-            return routingData;
         }
     }
 }

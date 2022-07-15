@@ -19,17 +19,21 @@ namespace APIViewWeb.Models
 
         public CodeFile CodeFile { get; }
 
+        public RenderResult RenderResult { get; private set; }
+
         public CodeLine[] Render(bool showDocumentation)
         {
             //Always render when documentation is requested to avoid cach thrashing
             if (showDocumentation)
             {
-                return CodeFileHtmlRenderer.Normal.Render(CodeFile, showDocumentation: true).CodeLines;
+                RenderResult =  CodeFileHtmlRenderer.Normal.Render(CodeFile, showDocumentation: true);
+                return RenderResult.CodeLines;
             }
 
             if (_rendered == null)
             {
-                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile).CodeLines;
+                RenderResult = CodeFileHtmlRenderer.Normal.Render(CodeFile);
+                _rendered = RenderResult.CodeLines;
             }
 
             return _rendered;
@@ -39,12 +43,14 @@ namespace APIViewWeb.Models
         {
             if (showDocumentation)
             {
-                return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, showDocumentation: true).CodeLines;
+                RenderResult = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, showDocumentation: true);
+                return RenderResult.CodeLines;
             }
 
             if (_renderedReadOnly == null)
             {
-                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile).CodeLines;
+                RenderResult = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
+                _renderedReadOnly = RenderResult.CodeLines;
             }
 
             return _renderedReadOnly;
@@ -54,12 +60,14 @@ namespace APIViewWeb.Models
         {
             if (showDocumentation || skipDiff)
             {
-                return CodeFileRenderer.Instance.Render(CodeFile, showDocumentation: showDocumentation, enableSkipDiff: skipDiff).CodeLines;
+                RenderResult = CodeFileRenderer.Instance.Render(CodeFile, showDocumentation: showDocumentation, enableSkipDiff: skipDiff);
+                return RenderResult.CodeLines;
             }
 
             if (_renderedText == null)
             {
-                _renderedText = CodeFileRenderer.Instance.Render(CodeFile).CodeLines;
+                RenderResult = CodeFileRenderer.Instance.Render(CodeFile);
+                _renderedText = RenderResult.CodeLines;
             }
 
             return _renderedText;

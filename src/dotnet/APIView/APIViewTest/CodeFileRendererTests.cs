@@ -46,15 +46,19 @@ namespace APIViewUnitTests
             Assert.Equal(" KeywordLine_One:", codeLines[0].DisplayString);
             Assert.Equal(1, codeLines[0].LineNumber);
             Assert.Null(codeLines[0].SectionKey);
+            Assert.Empty(codeLines[0].LineClass);
             Assert.Equal("HeadingLineOne", codeLines[1].DisplayString);
             Assert.Equal(2, codeLines[1].LineNumber);
             Assert.Equal(0, codeLines[1].IndentSize);
             Assert.Equal(0, codeLines[1].SectionKey);
+            Assert.Equal("heading", codeLines[1].LineClass);
+
 
             Assert.Single(sections);
             Assert.Collection(sectionsAsList,
                 item => {
                     Assert.Equal("HeadingLineOne", item.Data.DisplayString);
+                    Assert.Equal("heading", item.Data.LineClass);
                     Assert.Equal(2, item.Data.LineNumber);
                     Assert.Equal(0, item.Data.IndentSize);
                 },
@@ -267,10 +271,12 @@ namespace APIViewUnitTests
             Assert.Equal(0, codeLines[0].IndentSize);
             Assert.Equal(1, codeLines[0].LineNumber);
             Assert.Null(codeLines[0].SectionKey);
+            Assert.Empty(codeLines[0].LineClass);
             Assert.Equal("HeadingLine_1", codeLines[1].DisplayString);
             Assert.Equal(0, codeLines[1].IndentSize);
             Assert.Equal(2, codeLines[1].LineNumber);
             Assert.Equal(0, codeLines[1].SectionKey);
+            Assert.Equal("heading", codeLines[1].LineClass);
 
             Assert.Single(sections);
 

@@ -47,8 +47,9 @@ namespace ApiView
                 switch(token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
+                        string lineClass = (nodesInProcess.Count > 0 && section == null) ? "heading" : String.Empty;
                         int ? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count: null;
-                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, indentSize, sectionKey);
+                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, lineClass, ++lineNumber, indentSize, sectionKey);
                         if (nodesInProcess.Count > 0)
                         {
                             if (nodesInProcess.Peek().Equals(SectionType.Heading))

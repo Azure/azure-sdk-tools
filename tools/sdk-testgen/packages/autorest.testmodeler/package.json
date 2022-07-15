@@ -55,7 +55,8 @@
         "lodash": "~4.17.21",
         "node-yaml": "^3.2.0",
         "oav": "3.0.3",
-        "reflect-metadata": "~0.1.13"
+        "reflect-metadata": "~0.1.13",
+        "yuml2svg": "^5.0.1"
     },
     "files": [
         "dist/src",

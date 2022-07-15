@@ -1,5 +1,4 @@
-﻿using APIView;
-using System;
+﻿using System;
 
 namespace ApiView
 {
@@ -9,16 +8,14 @@ namespace ApiView
         public string ElementId { get; }
         public string LineClass { get; }
         public int? LineNumber { get; }
-        public int IndentSize { get; }
         public int? SectionKey { get;  }
 
-        public CodeLine(string html, string id, string lineClass, int? lineNumber = null, int indentSize = 0, int? sectionKey = null)
+        public CodeLine(string html, string id, string lineClass, int? lineNumber = null, int? sectionKey = null)
         {
             this.DisplayString = html;
             this.ElementId = id;
             this.LineClass = lineClass;
             this.LineNumber = lineNumber;
-            this.IndentSize = indentSize;
             this.SectionKey = sectionKey;
         }
 

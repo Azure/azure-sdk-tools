@@ -46,26 +46,20 @@ namespace APIViewUnitTests
             Assert.Equal(" KeywordLine_One:", codeLines[0].DisplayString);
             Assert.Equal(1, codeLines[0].LineNumber);
             Assert.Null(codeLines[0].SectionKey);
-            Assert.Empty(codeLines[0].LineClass);
             Assert.Equal("HeadingLineOne", codeLines[1].DisplayString);
             Assert.Equal(2, codeLines[1].LineNumber);
-            Assert.Equal(0, codeLines[1].IndentSize);
             Assert.Equal(0, codeLines[1].SectionKey);
-            Assert.Equal("heading", codeLines[1].LineClass);
 
 
             Assert.Single(sections);
             Assert.Collection(sectionsAsList,
                 item => {
                     Assert.Equal("HeadingLineOne", item.Data.DisplayString);
-                    Assert.Equal("heading", item.Data.LineClass);
                     Assert.Equal(2, item.Data.LineNumber);
-                    Assert.Equal(0, item.Data.IndentSize);
                 },
                 item => {
                     Assert.Equal(" LiteralLineOne:", item.Data.DisplayString);
                     Assert.Equal(3, item.Data.LineNumber);
-                    Assert.Equal(1, item.Data.IndentSize);
                 });
         }
 
@@ -108,11 +102,9 @@ namespace APIViewUnitTests
             // Assert
             Assert.Equal(2, codeLines.Length);
             Assert.Equal(" KeywordLine_One:", codeLines[0].DisplayString);
-            Assert.Equal(0, codeLines[0].IndentSize);
             Assert.Equal(1, codeLines[0].LineNumber);
             Assert.Null(codeLines[0].SectionKey);
             Assert.Equal("HeadingLineOne", codeLines[1].DisplayString);
-            Assert.Equal(0, codeLines[1].IndentSize);
             Assert.Equal(2, codeLines[1].LineNumber);
             Assert.Equal(0, codeLines[1].SectionKey);
 
@@ -121,17 +113,14 @@ namespace APIViewUnitTests
                 item => {
                     Assert.Equal("HeadingLineOne", item.Data.DisplayString);
                     Assert.Equal(2, item.Data.LineNumber);
-                    Assert.Equal(0, item.Data.IndentSize);
                 },
                 item => {
                     Assert.Equal(" LiteralLineOne: 3.0", item.Data.DisplayString);
                     Assert.Equal(3, item.Data.LineNumber);
-                    Assert.Equal(1, item.Data.IndentSize);
                 },
                 item => {
                     Assert.Equal(" LiteralLineTwo: 4.0", item.Data.DisplayString);
                     Assert.Equal(4, item.Data.LineNumber);
-                    Assert.Equal(1, item.Data.IndentSize);
                 });
         }
         
@@ -185,11 +174,9 @@ namespace APIViewUnitTests
             // Assert
             Assert.Equal(2, codeLines.Length);
             Assert.Equal("HeadingLine_1", codeLines[0].DisplayString);
-            Assert.Equal(0, codeLines[0].IndentSize);
             Assert.Equal(1, codeLines[0].LineNumber);
             Assert.Equal(0, codeLines[0].SectionKey);
             Assert.Equal("HeadingLine_2", codeLines[1].DisplayString);
-            Assert.Equal(0, codeLines[1].IndentSize);
             Assert.Equal(4, codeLines[1].LineNumber);
             Assert.Equal(1, codeLines[1].SectionKey);
 
@@ -198,33 +185,27 @@ namespace APIViewUnitTests
                 item => {
                     Assert.Equal("HeadingLine_1", item.Data.DisplayString);
                     Assert.Equal(1, item.Data.LineNumber);
-                    Assert.Equal(0, item.Data.IndentSize);
                 },
                 item => {
                     Assert.Equal(" LiteralLine_11: 3.0", item.Data.DisplayString);
                     Assert.Equal(2, item.Data.LineNumber);
-                    Assert.Equal(1, item.Data.IndentSize);
                 },
                 item => {
                     Assert.Equal(" LiteralLine_12: 4.0", item.Data.DisplayString);
                     Assert.Equal(3, item.Data.LineNumber);
-                    Assert.Equal(1, item.Data.IndentSize);
                 });
             Assert.Collection(sectionsAsList2,
                 item => {
                     Assert.Equal("HeadingLine_2", item.Data.DisplayString);
                     Assert.Equal(4, item.Data.LineNumber);
-                    Assert.Equal(0, item.Data.IndentSize);
                 },
                 item => {
                     Assert.Equal(" LiteralLine_21: 3.0", item.Data.DisplayString);
                     Assert.Equal(5, item.Data.LineNumber);
-                    Assert.Equal(1, item.Data.IndentSize);
                 },
                 item => {
                     Assert.Equal(" LiteralLine_22: 4.0", item.Data.DisplayString);
                     Assert.Equal(6, item.Data.LineNumber);
-                    Assert.Equal(1, item.Data.IndentSize);
                 });
         }
         
@@ -268,15 +249,11 @@ namespace APIViewUnitTests
             // Assert
             Assert.Equal(2, codeLines.Length);
             Assert.Equal(" KeywordLine_1:", codeLines[0].DisplayString);
-            Assert.Equal(0, codeLines[0].IndentSize);
             Assert.Equal(1, codeLines[0].LineNumber);
             Assert.Null(codeLines[0].SectionKey);
-            Assert.Empty(codeLines[0].LineClass);
             Assert.Equal("HeadingLine_1", codeLines[1].DisplayString);
-            Assert.Equal(0, codeLines[1].IndentSize);
             Assert.Equal(2, codeLines[1].LineNumber);
             Assert.Equal(0, codeLines[1].SectionKey);
-            Assert.Equal("heading", codeLines[1].LineClass);
 
             Assert.Single(sections);
 
@@ -284,22 +261,22 @@ namespace APIViewUnitTests
                 item => {
                     Assert.Equal("HeadingLine_1", item.Data.DisplayString);
                     Assert.Equal(2, item.Data.LineNumber);
-                    Assert.Equal(0, item.Data.IndentSize);
+                    Assert.Equal(0, item.Level);
                 },
                 item => {
                     Assert.Equal(" LiteralLine_1:", item.Data.DisplayString);
                     Assert.Equal(3, item.Data.LineNumber);
-                    Assert.Equal(1, item.Data.IndentSize);
+                    Assert.Equal(1, item.Level);
                 },
                 item => {
                     Assert.Equal("HeadingLine_11", item.Data.DisplayString);
                     Assert.Equal(4, item.Data.LineNumber);
-                    Assert.Equal(1, item.Data.IndentSize);
+                    Assert.Equal(1, item.Level);
                 },
                 item => {
                     Assert.Equal(" LiteralLine_111:", item.Data.DisplayString);
                     Assert.Equal(5, item.Data.LineNumber);
-                    Assert.Equal(2, item.Data.IndentSize);
+                    Assert.Equal(2, item.Level);
                 });
         }
         
@@ -382,79 +359,64 @@ namespace APIViewUnitTests
             Assert.Single(sections);
             Assert.Equal("HeadingLine_1", codeLines[0].DisplayString);
             Assert.Equal(1, codeLines[0].LineNumber);
-            Assert.Equal(0, codeLines[0].IndentSize);
             Assert.Equal(0, codeLines[0].SectionKey);
 
             Assert.Collection(sectionsAsList,
             item => {
                 Assert.Equal("HeadingLine_1", item.Data.DisplayString);
                 Assert.Equal(1, item.Data.LineNumber);
-                Assert.Equal(0, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal(" LiteralLine_1:", item.Data.DisplayString);
                 Assert.Equal(2, item.Data.LineNumber);
-                Assert.Equal(1, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal("HeadingLine_11", item.Data.DisplayString);
                 Assert.Equal(3, item.Data.LineNumber);
-                Assert.Equal(1, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal(" LiteralLine_111:", item.Data.DisplayString);
                 Assert.Equal(4, item.Data.LineNumber);
-                Assert.Equal(2, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal("HeadingLine_111", item.Data.DisplayString);
                 Assert.Equal(5, item.Data.LineNumber);
-                Assert.Equal(2, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal(" LiteralLine_1111:", item.Data.DisplayString);
                 Assert.Equal(6, item.Data.LineNumber);
-                Assert.Equal(3, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal("HeadingLine_112", item.Data.DisplayString);
                 Assert.Equal(7, item.Data.LineNumber);
-                Assert.Equal(2, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal(" LiteralLine_1121:", item.Data.DisplayString);
                 Assert.Equal(8, item.Data.LineNumber);
-                Assert.Equal(3, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal("HeadingLine_1121", item.Data.DisplayString);
                 Assert.Equal(9, item.Data.LineNumber);
-                Assert.Equal(3, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal(" LiteralLine_11211:", item.Data.DisplayString);
                 Assert.Equal(10, item.Data.LineNumber);
-                Assert.Equal(4, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal(" LiteralLine_2:", item.Data.DisplayString);
                 Assert.Equal(11, item.Data.LineNumber);
-                Assert.Equal(1, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal(" LiteralLine_3:", item.Data.DisplayString);
                 Assert.Equal(12, item.Data.LineNumber);
-                Assert.Equal(1, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal("HeadingLine_12", item.Data.DisplayString);
                 Assert.Equal(13, item.Data.LineNumber);
-                Assert.Equal(1, item.Data.IndentSize);
             },
             item => {
                 Assert.Equal(" LiteralLine_121:", item.Data.DisplayString);
                 Assert.Equal(14, item.Data.LineNumber);
-                Assert.Equal(2, item.Data.IndentSize);
             });
         }
     }

@@ -87,7 +87,8 @@ namespace APIViewWeb.Repositories
             string hostName,
             string codeFileName = null,
             string baselineCodeFileName = null,
-            bool commentOnPR = true)
+            bool commentOnPR = true,
+            string language = null)
         {
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
             var operation = _telemetryClient.StartOperation(requestTelemetry);
@@ -95,11 +96,16 @@ namespace APIViewWeb.Repositories
             {
                 originalFileName = originalFileName ?? codeFileName;
                 string[] repoInfo = repoName.Split("/");
-                var pullRequestModel = await GetPullRequestModel(prNumber, repoName, packageName, originalFileName);
-                if (pullRequestModel == null || pullRequestModel.Commits.Any(c=> c== commitSha))
+                var pullRequestModel = await GetPullRequestModel(prNumber, repoName, packageName, originalFileName, language);
+                if (pullRequestModel == null)
+                {
+                    return "";
+                }
+                if (pullRequestModel.Commits.Any(c=> c== commitSha))
                 {
                     // PR commit is already processed. No need to reprocess it again.
-                    return "";
+                    return !string.IsNullOrEmpty(pullRequestModel.ReviewId)? REVIEW_URL.Replace("{hostName}", hostName)
+                            .Replace("{ReviewId}", pullRequestModel.ReviewId) : "";
                 }
 
                 pullRequestModel.Commits.Add(commitSha);
@@ -133,7 +139,8 @@ namespace APIViewWeb.Repositories
                 }
 
                 // Return review URL created for current package if exists
-                var review = prReviews.SingleOrDefault(r => r.PackageName == packageName);
+                var review = prReviews.SingleOrDefault(r => r.PackageName == packageName && (r.Language == null || r.Language == language));
+
                 return review == null ? "" : REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", review.ReviewId);
             }
             catch (Exception ex)
@@ -178,9 +185,9 @@ namespace APIViewWeb.Repositories
             }
         }
 
-        private async Task<PullRequestModel> GetPullRequestModel(int prNumber, string repoName, string packageName, string originalFile)
+        private async Task<PullRequestModel> GetPullRequestModel(int prNumber, string repoName, string packageName, string originalFile, string language)
         {
-            var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName);
+            var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName, language);
             if (pullRequestModel == null)
             {
                 string[] repoInfo = repoName.Split("/");
@@ -191,7 +198,8 @@ namespace APIViewWeb.Repositories
                     PullRequestNumber = prNumber,
                     FilePath = originalFile,
                     Author = pullRequest.User.Login,
-                    PackageName = packageName
+                    PackageName = packageName,
+                    Language = language
                 };
             }
             return pullRequestModel;

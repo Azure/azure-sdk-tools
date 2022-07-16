@@ -203,6 +203,7 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
                 message.Request.Headers.Add("x-recording-upstream-base-uri", baseUri.ToString());
 
                 message.Request.Uri.Host = _host;
+                message.Request.Uri.Scheme = _proxy.Scheme;
                 if (_port.HasValue)
                 {
                     message.Request.Uri.Port = _port.Value;

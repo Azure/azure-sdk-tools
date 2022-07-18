@@ -507,27 +507,44 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var headers = versions.Take(1).Concat(versions.Skip(1).Zip(Enumerable.Repeat("%Change", versions.Count() - 1),
                 (f, s) => new[] { f, s }).SelectMany(f => f));
 
-            await streamWriter.WriteLineAsync($"*** {aggregateType} throughput (ops/sec) ***");
-            await streamWriter.WriteAsync("Test, Arguments, ");
-            await streamWriter.WriteAsync(string.Join(", ", headers));
-            await streamWriter.WriteLineAsync();
-
             var testGroups = resultSummaries.GroupBy(g => g.Test);
+
+            await streamWriter.WriteLineAsync($"*** {aggregateType} throughput (ops/sec) ***");
+
+            headers = headers.Prepend("Arguments").Prepend("Test");
+
+            var table = new List<IList<IList<string>>>();
+
             foreach (var testGroup in testGroups)
             {
+                var rowSet = new List<IList<string>>();
                 foreach (var resultSummary in testGroup)
                 {
-                    await streamWriter.WriteAsync($"{resultSummary.Test}, {resultSummary.Arguments}, ");
 
-                    var operationsPerSecondStrings = operationsPerSecond(resultSummary).Select(o => $"{o.operationsPerSecond:F2}");
-                    var operationsPerSecondDifferencesStrings = operationsPerSecondDifferences(resultSummary).Select(o => $"{o * 100:N2}%");
-
-                    var values = operationsPerSecondStrings.Take(1).Concat(operationsPerSecondStrings.Skip(1)
-                        .Zip(operationsPerSecondDifferencesStrings, (f, s) => new[] { f, s }).SelectMany(f => f));
-                    await streamWriter.WriteLineAsync(string.Join(", ", values));
                 }
-                await streamWriter.WriteLineAsync();
             }
+
+            await streamWriter.WriteLineAsync(TableGenerator.Ascii(headers.ToList(), table));
+
+            //await streamWriter.WriteAsync("Test, Arguments, ");
+            //await streamWriter.WriteAsync(string.Join(", ", headers));
+            //await streamWriter.WriteLineAsync();
+
+            //foreach (var testGroup in testGroups)
+            //{
+            //    foreach (var resultSummary in testGroup)
+            //    {
+            //        await streamWriter.WriteAsync($"{resultSummary.Test}, {resultSummary.Arguments}, ");
+
+            //        var operationsPerSecondStrings = operationsPerSecond(resultSummary).Select(o => $"{o.operationsPerSecond:F2}");
+            //        var operationsPerSecondDifferencesStrings = operationsPerSecondDifferences(resultSummary).Select(o => $"{o * 100:N2}%");
+
+            //        var values = operationsPerSecondStrings.Take(1).Concat(operationsPerSecondStrings.Skip(1)
+            //            .Zip(operationsPerSecondDifferencesStrings, (f, s) => new[] { f, s }).SelectMany(f => f));
+            //        await streamWriter.WriteLineAsync(string.Join(", ", values));
+            //    }
+            //    await streamWriter.WriteLineAsync();
+            //}
         }
 
         private static T DeserializeYaml<T>(string path)

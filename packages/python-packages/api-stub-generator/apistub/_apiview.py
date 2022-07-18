@@ -42,7 +42,7 @@ class ApiView:
     def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None):
         self.name = pkg_name
         self.version = 0
-        self.version_string = ""
+        self.version_string = VERSION
         self.language = "Python"
         self.tokens = []
         self.navigation = []

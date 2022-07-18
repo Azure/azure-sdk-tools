@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+
 import { GitOperationWrapper } from '../../../../utils/GitOperationWrapper';
 import { DockerContext } from '../DockerContext';
 import { BaseJob } from './BaseJob';
@@ -19,7 +20,7 @@ export class GrowUpJob extends BaseJob {
             const sdkRepo = match[2];
             const branch = match[3];
             if (fs.existsSync(path.join(this.context.workDir, sdkRepo))) {
-                this.context.logger.info(`${path.join(this.context.workDir, sdkRepo)} has already existed, and no need to clone it.`)
+                this.context.logger.info(`${path.join(this.context.workDir, sdkRepo)} has already existed, and no need to clone it.`);
                 return;
             }
             const gitOperationWrapper = new GitOperationWrapper(this.context.workDir);

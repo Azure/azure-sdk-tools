@@ -309,7 +309,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.EndsWith(" does not exist.", assertion.Message);
         }
 
-        [Fact]
+        [Fact(Skip = "Skipping due to integration tests not figured out yet.")]
         public async Task GetDefaultBranchWorksWithValidRepo()
         {
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);

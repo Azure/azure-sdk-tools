@@ -19,31 +19,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public bool AssetsJsonPresent;
     }
 
-    // Locating Assets Repo
-    // -ResolveAssetsStoreLocation
-    // -ResolveAssetRepoLocation
-    // -IsAssetsRepoInitialized
-
-    // Interacting with Assets Repo
-    // -InitializeAssetsRepo -> Checkout
-    // -CheckoutRepoAtConfig
-    // -DetectPendingChanges
-    // ResetAssetsRepo -> Reset
-    // PushAssetsRepoUpdate -> Push
-
-    // Generic "Target to Targeted Git Repo for current config"
-    // -GetDefaultBranch-
-    // -ResolveCheckoutPaths-
-    // -UpdateAssetsJson-
-    // -ResolveCheckoutBranch-
-
-    /* TODO: scenarios to integration test
-        * Restore from service 1 to service 2 to service 3 without actually doing anything other than restoring
-        * Handle CLI invoked vs Server modes. Ask for user input on pending changes if in CLI mode. Otherwise just error and ask for discard.
-        * Targeted "get user decision" that can accept user input or no. depending on how it's been called.
-            * do we need to add a bit for mode? that way we can either set TRUE for cli interrupt, but FALSE for the server calls
-     * */
-
+    /// <summary>
+    /// This class provides a 
+    /// </summary>
     public class GitStore : IAssetsStore
     {
         private HttpClient httpClient = new HttpClient();
@@ -58,6 +36,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         #region push, reset, restore, and other asset repo implementations 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pathToAssetsJson"></param>
+        /// <param name="contextPath"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public async Task Push(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             //var gitCommand = GitHandler.CreateGitProcessInfo(config.RepoRoot);
@@ -66,6 +51,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pathToAssetsJson"></param>
+        /// <param name="contextPath"></param>
+        /// <returns></returns>
         public async Task Restore(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = config.IsAssetsRepoInitialized();
@@ -75,11 +66,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 InitializeAssetsRepo(config);
             }
 
-
-            // need to add further arguments
-            throw new NotImplementedException();
+            CheckoutRepoAtConfig(config);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pathToAssetsJson"></param>
+        /// <param name="contextPath"></param>
+        /// <returns></returns>
         public async Task Reset(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = config.IsAssetsRepoInitialized();
@@ -117,6 +112,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
         public string[] DetectPendingChanges(GitAssetsConfiguration config)
         {
             if (!GitHandler.TryRun(config, "diff-index --name-only HEAD", out var diffResult))
@@ -133,6 +133,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new string[] {};
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="config"></param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
         {
             var checkoutPaths = ResolveCheckoutPaths(config);
@@ -148,6 +152,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="forceInit"></param>
+        /// <returns></returns>
         public bool InitializeAssetsRepo(GitAssetsConfiguration config, bool forceInit = false)
         {
             var assetRepo = config.AssetsRepoLocation;
@@ -203,7 +213,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         #endregion
 
         #region code repo interactions
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="assetsJsonPath"></param>
+        /// <returns></returns>
+        /// <exception cref="HttpException"></exception>
         public async Task<GitAssetsConfiguration> ParseConfigurationFile(string assetsJsonPath)
         {
             if (!File.Exists(assetsJsonPath) && !Directory.Exists(assetsJsonPath))

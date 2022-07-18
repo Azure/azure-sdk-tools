@@ -112,7 +112,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         private static async Task<string> _generateLogLine(HttpRequest req)
         {
             StringBuilder sb = new StringBuilder();
-            string headers = String.Empty;
+            string headers = string.Empty;
 
             using (MemoryStream ms = new MemoryStream())
             {

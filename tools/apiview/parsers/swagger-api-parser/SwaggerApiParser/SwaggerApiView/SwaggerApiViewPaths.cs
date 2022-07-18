@@ -8,7 +8,7 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
 {
     public void AddSwaggerApiViewOperation(SwaggerApiViewOperation op)
     {
-        bool found = this.TryGetValue(op.operationIdPrefix, out var operations);
+        bool found = this.TryGetValue(op.path, out var operations);
         if (found && operations != null)
         {
             operations.Add(op);
@@ -16,7 +16,7 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
         else
         {
             operations = new List<SwaggerApiViewOperation> {op};
-            this.TryAdd(op.operationIdPrefix, operations);
+            this.TryAdd(op.path, operations);
         }
     }
 
@@ -97,7 +97,7 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
                 context.IteratorPath.AddRange(new List<string>{idx.ToString(), "operationId", operation.operationId});
                 
                 ret.Add(TokenSerializer.Intent(context.intent + 1));
-                ret.Add(TokenSerializer.NavigableToken($"{operation.method.ToUpper()} - {operation.path}", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
+                ret.Add(TokenSerializer.NavigableToken($"{operation.method.ToUpper()} - {operation.operationId}", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
                 ret.Add(TokenSerializer.NewLine());
 
                 ret.AddRange(operation.TokenSerialize(new SerializeContext(context.intent + 2, context.IteratorPath)));

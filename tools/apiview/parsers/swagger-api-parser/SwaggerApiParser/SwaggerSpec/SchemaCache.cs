@@ -119,7 +119,7 @@ public class SchemaCache
             }
         }
 
-        if (root.items != null)
+        if (root.items != null && !refChain.Contains(root.items.Ref))
         {
             root.items = GetResolvedSchema(root.items, currentSwaggerFilePath, refChain);
         }
@@ -128,7 +128,10 @@ public class SchemaCache
         {
             foreach (var rootProperty in root.properties)
             {
-                root.properties[rootProperty.Key] = this.GetResolvedSchema(rootProperty.Value, currentSwaggerFilePath, refChain);
+                if (!refChain.Contains(rootProperty.Value.Ref)&&!refChain.Contains(rootProperty.Value.originalRef)&&!refChain.Contains(rootProperty.Value.items?.originalRef))
+                {
+                    root.properties[rootProperty.Key] = this.GetResolvedSchema(rootProperty.Value, currentSwaggerFilePath, refChain);
+                }
             }
         }
 

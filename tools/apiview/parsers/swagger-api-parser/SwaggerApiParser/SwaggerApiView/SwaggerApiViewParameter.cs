@@ -61,16 +61,16 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
         }
 
         ret.Add(TokenSerializer.Intent(context.intent));
-        ret.Add(TokenSerializer.NavigableToken(this.type, CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentNextPath(this.type)));
+        ret.Add(TokenSerializer.NavigableToken(this.type, CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath(this.type)));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
         
-        ret.Add(TokenSerializer.FoldableContentStart());
+        // ret.Add(TokenSerializer.FoldableContentStart());
         foreach (var parameter in this)
         {
             ret.AddRange(parameter.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         }
-        ret.Add(TokenSerializer.FoldableContentEnd());
+        // ret.Add(TokenSerializer.FoldableContentEnd());
 
         return ret.ToArray();
     }

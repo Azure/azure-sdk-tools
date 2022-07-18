@@ -34,6 +34,23 @@ public class SwaggerApiViewTest
     }
 
     [Fact]
+    public async Task TestMediaComposition()
+    {
+        const string runCommandFilePath = "./fixtures/mediacomposition.json";
+        var swaggerSpec = await SwaggerDeserializer.Deserialize(runCommandFilePath);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Media", "Microsoft.Media");
+        root.AddSwaggerSpec(swaggerSpec, Path.GetFullPath(runCommandFilePath), "Microsoft.Media");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./media_codefile.json");
+
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
+
+    [Fact]
     public async Task TestComputeTwoFiles()
     {
         const string runCommandFilePath = "./fixtures/runCommands.json";

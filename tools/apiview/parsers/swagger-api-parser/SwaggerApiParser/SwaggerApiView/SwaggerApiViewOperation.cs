@@ -52,30 +52,30 @@ public class SwaggerApiViewOperation : ITokenSerializable
         ret.Add(TokenSerializer.NewLine());
 
         ret.Add(TokenSerializer.Intent(context.intent));
-        ret.Add(TokenSerializer.NavigableToken("Parameters", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentNextPath("Parameters")));
+        ret.Add(TokenSerializer.NavigableToken("Parameters", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
 
-        ret.Add(TokenSerializer.FoldableContentStart());
+        // ret.Add(TokenSerializer.FoldableContentStart());
         ret.AddRange(PathParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         ret.AddRange(QueryParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         ret.AddRange(BodyParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
-        ret.Add(TokenSerializer.FoldableContentEnd());
+        // ret.Add(TokenSerializer.FoldableContentEnd());
         // new line for `Response` section.
         ret.Add(TokenSerializer.NewLine());
         
         ret.Add(TokenSerializer.Intent(context.intent));
 
-        ret.Add(TokenSerializer.NavigableToken("Responses", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentNextPath("Responses")));
+        ret.Add(TokenSerializer.NavigableToken("Responses", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Responses")));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
 
-        ret.Add(TokenSerializer.FoldableContentStart());
+        // ret.Add(TokenSerializer.FoldableContentStart());
         foreach (var response in Responses)
         {
             ret.AddRange(response.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         }
-        ret.Add(TokenSerializer.FoldableContentEnd());
+        // ret.Add(TokenSerializer.FoldableContentEnd());
 
         ret.Add(TokenSerializer.NewLine());
 

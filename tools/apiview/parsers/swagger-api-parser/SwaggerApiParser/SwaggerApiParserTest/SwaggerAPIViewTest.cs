@@ -36,7 +36,7 @@ public class SwaggerApiViewTest
     [Fact]
     public async Task TestMediaComposition()
     {
-        const string runCommandFilePath = "./fixtures/mediacomposition.json";
+        const string runCommandFilePath = "./fixtures/mediacompositionsmall.json";
         var swaggerSpec = await SwaggerDeserializer.Deserialize(runCommandFilePath);
 
         SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Media", "Microsoft.Media");

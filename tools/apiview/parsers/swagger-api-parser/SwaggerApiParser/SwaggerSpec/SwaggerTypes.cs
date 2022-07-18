@@ -60,12 +60,12 @@ namespace SwaggerApiParser
             }
 
 
-            if (schema.properties.Count != 0)
+            if (schema.properties?.Count != 0)
             {
                 TokenSerializeProperties(context, schema, schema.properties, ret);
             }
 
-            if (schema.allOfProperities.Count != 0 && schema.allOf != null)
+            if (schema.allOfProperities?.Count != 0 && schema.allOf != null)
             {
                 ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken("allOf", CodeFileTokenKind.Keyword));
@@ -89,54 +89,70 @@ namespace SwaggerApiParser
                 ret.Add(TokenSerializer.Intent(context.intent));
                 TokenSerializeArray(context, ret, schema);
             }
-            
+
             return ret.ToArray();
         }
 
         private static void TokenSerializeProperties(SerializeContext context, BaseSchema schema, Dictionary<string, BaseSchema> properties, List<CodeFileToken> ret)
         {
+            if (properties == null)
+            {
+                return;
+            }
+
             foreach (var kv in properties)
             {
                 ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Literal));
                 ret.Add(TokenSerializer.Colon());
 
-                if (kv.Value.properties.Count != 0)
+                // Normal case: If properties is has values. Serialize each key value pair in properties.
+                if ((kv.Value.properties != null && kv.Value.properties?.Count != 0))
                 {
                     ret.Add(TokenSerializer.NewLine());
                     ret.AddRange(schema.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), kv.Value));
                 }
-                else
+                // Circular reference case: the ref won't be expanded. 
+                else if (kv.Value.Ref != null)
+                {
+                    ret.Add(TokenSerializer.NewLine());
+                    ret.Add(TokenSerializer.Intent(context.intent + 1));
+                    ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
+                    var refName = kv.Value.Ref;
+                    ret.Add(new CodeFileToken(refName.Split("/").Last(), CodeFileTokenKind.TypeName));
+                    ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
+                }
+                // Array case: Serialize array.
+                else if (kv.Value.type == "array")
                 {
                     TokenSerializeArray(context, ret, kv.Value);
+                }
+                else
+                {
+                    ret.Add(new CodeFileToken(kv.Value.type, CodeFileTokenKind.Keyword));
+                    ret.Add(TokenSerializer.NewLine());
                 }
             }
         }
 
         private static void TokenSerializeArray(SerializeContext context, List<CodeFileToken> ret, BaseSchema arraySchema)
         {
-            ret.Add(new CodeFileToken(arraySchema.type, CodeFileTokenKind.Keyword));
-            if (arraySchema.type == "array")
+            ret.Add(new CodeFileToken("array", CodeFileTokenKind.Keyword));
+            if (arraySchema.items.type != null)
             {
-                if (arraySchema.items.type != null)
-                {
-                    ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
-                    ret.Add(new CodeFileToken(arraySchema.items.type, CodeFileTokenKind.TypeName));
-                    ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
-                    ret.Add(TokenSerializer.NewLine());
-                }
-                else
-                {
-                    ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
-                    ret.Add(new CodeFileToken(arraySchema.items.originalRef.Split("/").Last(), CodeFileTokenKind.TypeName));
-                    ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
-                    ret.Add(TokenSerializer.NewLine());
-                    ret.AddRange(arraySchema.items.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
-                }
+                ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
+                ret.Add(new CodeFileToken(arraySchema.items.type, CodeFileTokenKind.TypeName));
+                ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
+                ret.Add(TokenSerializer.NewLine());
             }
             else
             {
+                ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
+                var refName = arraySchema.items.originalRef ?? arraySchema.items.Ref ?? "";
+                ret.Add(new CodeFileToken(refName.Split("/").Last(), CodeFileTokenKind.TypeName));
+                ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
                 ret.Add(TokenSerializer.NewLine());
+                ret.AddRange(arraySchema.items.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
             }
         }
 

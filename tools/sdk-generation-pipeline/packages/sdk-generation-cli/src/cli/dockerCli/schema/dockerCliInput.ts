@@ -13,7 +13,6 @@ export class DockerCliInput {
     resultOutputFolder: string;
     dockerLogger: string;
     autorestConfigFilePath: string;
-    specPrLink: string;
     sdkWorkBranchLink: string;
 }
 
@@ -79,13 +78,6 @@ export const dockerCliInput = convict<DockerCliInput>({
         env: 'AUTOREST_CONFIG_FILE_PATH',
         format: String,
         doc: `The absolute path to autorest configuration file. It's required when you want to input your own autorest config in generating data-plane sdk.`
-    },
-    specPrLink: {
-        default: '',
-        env: 'SPEC_PR',
-        arg: 'spec-pr',
-        format: String,
-        doc: `The PR link of swagger PR, which will be used in grow up scenario if you want docker container help you clone the spec PR ref.`
     },
     sdkWorkBranchLink: {
         default: '',

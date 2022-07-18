@@ -12,19 +12,6 @@ export class GrowUpJob extends BaseJob {
         this.context = context;
     }
 
-    private async cloneSpecRepoByGhIfNotExist() {
-        if (!fs.existsSync(this.context.specRepo)) {
-            const specPRLink = this.context.specPrLink;
-            const match = specPRLink.match(/(https.*)\/pull\/(.*)/);
-            const specRepoLink = match[1];
-            const prNumber = match[2];
-            const gitOperationWrapper = new GitOperationWrapper('/');
-            await gitOperationWrapper.cloneRepo(specRepoLink, this.context.logger, this.context.specRepo);
-            gitOperationWrapper.baseDir = this.context.specRepo;
-            await gitOperationWrapper.checkoutPrRef(prNumber, this.context.logger);
-        }
-    }
-
     private async cloneSdkWorkBranchIfNotExist() {
         if (!!this.context.sdkWorkBranchLink) {
             const match = this.context.sdkWorkBranchLink.match(/(https.*\/([^\/]*))\/tree\/(.*)/);
@@ -37,11 +24,12 @@ export class GrowUpJob extends BaseJob {
             }
             const gitOperationWrapper = new GitOperationWrapper(this.context.workDir);
             await gitOperationWrapper.cloneBranch(sdkRepoUrl, branch, this.context.logger);
+            gitOperationWrapper.baseDir = path.join(this.context.workDir, sdkRepo);
+            await gitOperationWrapper.safeDirectory();
         }
     }
 
     public async execute() {
-        await this.cloneSpecRepoByGhIfNotExist();
         await this.cloneSdkWorkBranchIfNotExist();
         this.context.logger.info(`Please use vscode to connect this container.`);
         this.doNotExitDockerContainer();

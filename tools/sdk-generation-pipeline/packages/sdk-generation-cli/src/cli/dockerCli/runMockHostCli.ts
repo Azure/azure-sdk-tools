@@ -33,7 +33,7 @@ export function runMockHost() {
     };
     const context = initializeDockerMockHostContext(inputParams);
     if (!context.specRepo) {
-        context.logger.log('cmdout', `Cannot tart mock server because /spec-repo doesn't exist. You are going to do grow up development. The mock server will start later.`);
+        context.logger.log('cmdout', `Cannot start mock server because ${context.specRepo} doesn't exist.`);
         return;
     }
     if (!context.readmeMdPath) {

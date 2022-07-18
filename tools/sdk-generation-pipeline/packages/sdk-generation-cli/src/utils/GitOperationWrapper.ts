@@ -49,28 +49,8 @@ export class GitOperationWrapper {
         return changedPackageDirectories;
     }
 
-    public async cloneRepo(githubRepo: string, logger: Logger, targetFolder?: string) {
-        function isValidHttpUrl(string) {
-            let url;
-            try {
-                url = new URL(string);
-            } catch (_) {
-                return false;
-            }
-            return url.protocol === "https:";
-        }
-        if (!isValidHttpUrl(githubRepo)) {
-            githubRepo = `https://github.com/${githubRepo}.git`;
-        }
-        const child = spawn(`git`, [`clone`, githubRepo, ...(!targetFolder? [] : [targetFolder])], {
-            cwd: this.baseDir,
-            stdio: ['ignore', 'pipe', 'pipe']
-        });
-        await this.injectListener(child, logger);
-    }
-
-    public async checkoutPrRef(prNumber: string, logger: Logger) {
-        const child = spawn(`gh`, [`pr`, 'checkout', prNumber], {
+    public async cloneRepo(githubRepo: string, logger: Logger) {
+        const child = spawn(`git`, [`clone`, `https://github.com/${githubRepo}.git`], {
             cwd: this.baseDir,
             stdio: ['ignore', 'pipe', 'pipe']
         });
@@ -79,7 +59,7 @@ export class GitOperationWrapper {
 
     private async injectListener(child: any, logger: Logger) {
         child.stdout.on('data', (data) => logger.log('cmdout', data.toString()));
-        child.stderr.on('data', (data) => logger.log('cmderr', data.toString()));
+        child.stderr.on('data', (data) => logger.log('cmdout', data.toString()));
         await new Promise((resolve) => {
             child.on('exit', (code, signal) => {
                 resolve({ code, signal });

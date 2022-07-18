@@ -1,4 +1,5 @@
 import { initializeLogger } from '@azure-tools/sdk-generation-lib';
+import { throws } from 'assert';
 import fs from 'fs';
 import path from 'path';
 import { Logger } from 'winston';
@@ -17,6 +18,8 @@ export class DockerContext {
     sdkRepo?: string;
     resultOutputFolder?: string;
     autorestConfigFilePath?: string;
+    specPrLink?: string;
+    sdkWorkBranchLink?: string;
     logger: Logger;
 
     /*
@@ -34,13 +37,26 @@ export class DockerContext {
         this.sdkRepo = inputParams.sdkRepo;
         this.resultOutputFolder = inputParams.resultOutputFolder;
         this.autorestConfigFilePath = inputParams.autorestConfigFilePath;
+        this.specPrLink = inputParams.specPrLink;
+        this.sdkWorkBranchLink = inputParams.sdkWorkBranchLink;
         this.logger = initializeLogger(path.join(inputParams.resultOutputFolder, inputParams.dockerLogger), 'docker');
-
         if (this.sdkList?.length === 0 && fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to do grow up development');
             this.mode = DockerRunningModel.GrowUp;
-            this.validateSpecRepo();
+
+            if (!this.specPrLink) {
+                try {
+                    this.validateSpecRepo();
+                } catch (e) {
+                    throw new Error(`Don't find spec PR in input parameter --spec-pr, and also don't find the spec repo in ${this.specRepo} mounted to docker container`);
+                }
+            } else {
+                this.validatePRLink(this.specPrLink);
+            }
             this.validateWorkDir();
+            if (!!this.sdkWorkBranchLink) {
+                this.validateWorkBranchLink(this.sdkWorkBranchLink);
+            }
         } else if (fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to generate codes and do grow up development in local');
             this.mode = DockerRunningModel.CodeGenAndGrowUp;
@@ -100,6 +116,20 @@ export class DockerContext {
     private validateOutputFolder() {
         if (!fs.existsSync(this.resultOutputFolder)) {
             throw new Error(`Cannot find ${this.resultOutputFolder}, please mount it to docker container`);
+        }
+    }
+
+    private validatePRLink(specPr: string) {
+        const match = specPr?.match(/(https.*)\/pull\/(.*)/);
+        if (match?.length !== 3) {
+            throw new Error(`Get invalid specPR link: ${specPr}`);
+        }
+    }
+
+    private validateWorkBranchLink(sdkWorkBranchLink: string) {
+        const match = sdkWorkBranchLink.match(/(https.*\/([^\/]*))\/tree\/(.*)/);
+        if (match?.length !== 4) {
+            throw new Error(`Get invalid sdk work branch link: ${sdkWorkBranchLink}`);
         }
     }
 }

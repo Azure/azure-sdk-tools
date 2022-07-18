@@ -46,6 +46,8 @@ RUN apt-get install -y dotnet-sdk-6.0
 # install git
 RUN add-apt-repository ppa:git-core/ppa -y && apt update && apt upgrade -y && apt install git -y
 RUN git config --global credential.helper store && git config --global core.fileMode false
+COPY scripts/install-gh.sh /install-gh.sh
+RUN sh /install-gh.sh
 
 # install depended packages
 RUN pip3 install --upgrade wheel PyYAML requests

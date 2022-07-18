@@ -32,6 +32,10 @@ export function runMockHost() {
         ...dockerMockHostInput.getProperties()
     };
     const context = initializeDockerMockHostContext(inputParams);
+    if (!context.specRepo) {
+        context.logger.log('cmdout', `Cannot tart mock server because /spec-repo doesn't exist. You are going to do grow up development. The mock server will start later.`);
+        return;
+    }
     if (!context.readmeMdPath) {
         context.logger.log('cmdout', `Cannot get valid readme, so do not start mock server.`);
         return;

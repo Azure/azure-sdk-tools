@@ -21,7 +21,7 @@ The docker image will be used in different scenarios:
 Command
 
 ```shell
-docker run -it --privileged  -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir -v {local_autorest_config}:/autorest.md docker.image:latest --readme={relative_readme} --sdk={sdk_to_generate}
+docker run -it --privileged  -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir -v {local_autorest_config}:/autorest.md sdkgeneration.azurecr.io/sdk-generation:latest --readme={relative_readme} --sdk={sdk_to_generate}
 ```
 
 Parameter description:
@@ -36,10 +36,10 @@ Parameter description:
 
 Example Command:
 ```shell
-docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir docker.image:latest --readme="specification/agrifood/resource-manager/readme.md" --sdk=js,java
+docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest --readme="specification/agrifood/resource-manager/readme.md" --sdk=js,java
 ```
 
-After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can open your browser and request `http://127.0.0.1:8080/?folder=/work-dir` for further grow up development.
+After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can [open your local vscode and connect to docker container](./vscode-connect-docker-container.md) for further grow up development.
 If you want to re-generate codes after grow up development or changing swagger, please run command in docker container:
 ```shell
 rerun-tasks -readme={relative_readme} --sdk={sdk_to_generate}
@@ -68,7 +68,7 @@ Parameter description:
 
 Then run docker commands to do grow up development:
 ```shell
-docker run -it --privileged  -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir -v {local_autorest_config}:/autorest.md docker.image:latest --readme={relative_readme}
+docker run -it --privileged -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir -v {local_autorest_config}:/autorest.md sdkgeneration.azurecr.io/sdk-generation:latest --readme={relative_readme}
 ```
 Parameter description:
 
@@ -81,10 +81,10 @@ Parameter description:
 
 Example Command:
 ```shell
-docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir docker.image:latest
+docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest
 ```
 
-After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can open your browser and request `http://127.0.0.1:8080/?folder=/work-dir` for further grow up development.
+After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can [open your local vscode and connect to docker container](./vscode-connect-docker-container.md) for further grow up development.
 If you want to re-generate codes after grow up development or changing swagger, please run command in docker container:
 ```shell
 rerun-tasks -readme={relative_readme} --sdk={sdk_to_generate}
@@ -101,7 +101,7 @@ Before running docker command, pipeline must prepare the spec repo and sdk repo.
 Command:
 
 ```shell
-docker run --privileged  -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {local_autorest_config}:/autorest.md -v {output_folder_path}:/tmp/output docker.image:latest --readme={relative_readme}
+docker run --privileged  -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {local_autorest_config}:/autorest.md -v {output_folder_path}:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --readme={relative_readme}
 ```
 
 Parameter description:
@@ -115,7 +115,7 @@ Parameter description:
 
 Example Command:
 ```shell
-docker run --privileged -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output docker.image:latest --readme=specification/agrifood/resource-manager/readme.md
+docker run --privileged -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --readme=specification/agrifood/resource-manager/readme.md
 ```
 
 After running the command in pipeline, docker will execute tasks automatically. Also, there will be output files generated, which will be used by pipeline's other job, such as upload codes, parsing logs.

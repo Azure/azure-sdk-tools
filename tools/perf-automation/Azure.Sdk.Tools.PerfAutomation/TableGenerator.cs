@@ -63,12 +63,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             if (outputFormat == OutputFormat.Txt || outputFormat == OutputFormat.Md)
             {
-                sb.Append("| ");
+                sb.Append('|');
                 for (var i = 0; i < columnWidths.Count; i++)
                 {
                     var cell = (row.Count > i) ? row[i] : null;
-                    sb.AppendFormat($"{{0,-{columnWidths[i]}}}", cell);
-                    sb.Append(" | ");
+                    sb.AppendFormat($"{{0,-{columnWidths[i] + 2}}}", cell);
+                    sb.Append('|');
                 }
                 sb.AppendLine();
             }

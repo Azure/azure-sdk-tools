@@ -510,16 +510,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        public static async Task WriteHeader(StreamWriter streamWriter, string header, OutputFormat outputFormat)
+        private static async Task WriteHeader(StreamWriter streamWriter, string header, OutputFormat outputFormat)
         {
-            if (outputFormat == OutputFormat.Csv || outputFormat == OutputFormat.Txt)
-            {
-                await streamWriter.WriteLineAsync($"*** {header} ***");
-            }
-            else if (outputFormat == OutputFormat.Md)
-            {
-                await streamWriter.WriteLineAsync($"## {header}");
-            }
+            await streamWriter.WriteLineAsync($"## {header}");
         }
 
         private static async Task WriteResultsSummaryThroughput(

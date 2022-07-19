@@ -46,6 +46,7 @@ namespace SwaggerApiParser
                         path = currentPath,
                         operationId = value.operationId,
                         description = value.description,
+                        summary = value.summary,
                         operationIdPrefix = Utils.GetOperationIdPrefix(value.operationId),
                         operationIdAction = Utils.GetOperationIdAction(value.operationId),
                         PathParameters = new SwaggerApiViewOperationParameters("PathParameters"),

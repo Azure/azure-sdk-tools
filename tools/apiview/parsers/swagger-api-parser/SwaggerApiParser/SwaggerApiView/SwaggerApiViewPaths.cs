@@ -97,7 +97,7 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
                 context.IteratorPath.AddRange(new List<string>{idx.ToString(), "operationId", operation.operationId});
                 
                 ret.Add(TokenSerializer.Intent(context.intent + 1));
-                ret.Add(TokenSerializer.NavigableToken($"{operation.method.ToUpper()} - {operation.operationId}", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
+                ret.Add(TokenSerializer.NavigableToken($"{operation.method.ToUpper()}", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
                 ret.Add(TokenSerializer.NewLine());
 
                 ret.AddRange(operation.TokenSerialize(new SerializeContext(context.intent + 2, context.IteratorPath)));

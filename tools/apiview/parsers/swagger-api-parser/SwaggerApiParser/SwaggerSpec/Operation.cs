@@ -7,6 +7,8 @@ namespace SwaggerApiParser;
 public class Operation
 {
     public string description { get; set; }
+    
+    public string summary { get; set; }
     public string operationId { get; set; }
     
     [JsonPropertyName("x-ms-long-running-operation")]

@@ -10,6 +10,8 @@ public class SwaggerApiViewOperation : ITokenSerializable
     public string operationIdPrefix;
     public string operationIdAction { get; set; }
     public string description { get; set; }
+
+    public string summary { get; set; }
     public string method { get; set; }
     public string path { get; set; }
 
@@ -31,13 +33,24 @@ public class SwaggerApiViewOperation : ITokenSerializable
         ret.Add(TokenSerializer.FoldableContentStart());
 
         ret.Add(TokenSerializer.Intent(context.intent));
-        ret.Add(new CodeFileToken(this.operationIdAction, CodeFileTokenKind.TypeName));
+        ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
         ret.Add(TokenSerializer.NewLine());
 
 
-        ret.Add(TokenSerializer.Intent(context.intent));
-        ret.Add(new CodeFileToken(this.description, CodeFileTokenKind.Literal));
-        ret.Add(TokenSerializer.NewLine());
+        if (this.description != null)
+        {
+            ret.Add(TokenSerializer.Intent(context.intent));
+            ret.Add(new CodeFileToken(this.description, CodeFileTokenKind.Literal));
+            ret.Add(TokenSerializer.NewLine());
+        }
+
+        if (this.summary != null)
+        {
+            ret.Add(TokenSerializer.Intent(context.intent));
+            ret.Add(new CodeFileToken(this.summary, CodeFileTokenKind.Literal));
+            ret.Add(TokenSerializer.NewLine());
+        }
+
 
         if (this.xMsLongRunningOperation)
         {
@@ -63,7 +76,7 @@ public class SwaggerApiViewOperation : ITokenSerializable
         // ret.Add(TokenSerializer.FoldableContentEnd());
         // new line for `Response` section.
         ret.Add(TokenSerializer.NewLine());
-        
+
         ret.Add(TokenSerializer.Intent(context.intent));
 
         ret.Add(TokenSerializer.NavigableToken("Responses", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Responses")));

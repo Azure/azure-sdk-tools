@@ -90,15 +90,6 @@ $(() => {
     }
   });
 
-  /* DIFF BUTTON (UPDATES REVIEW PAGE ON CLICK)
-  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  $('.diff-button').each(function(index, value){
-    $(this).on('click', function () {
-      window.location.href = $(this).val() as string;
-    });
-  });
-
-
   /* DROPDOWN FILTER FOR REVIEW, REVISIONS AND DIFF (UPDATES REVIEW PAGE ON CHANGE)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $('#revisions-bootstraps-select, #review-bootstraps-select, #diff-bootstraps-select').each(function(index, value) {

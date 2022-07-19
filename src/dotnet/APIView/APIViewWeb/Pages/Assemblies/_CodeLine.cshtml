@@ -29,7 +29,7 @@
         <table>
             <tr>
                 <td class="line-number @lineClass"><span>@Model.LineNumber</span></td>
-                <td class="line-details-button-cell">
+                <td class="line-details-button-cell @lineClass">
                     @if (!isRemoved && Model.CodeLine.ElementId != null)
                     {
                         <a class="line-comment-button">+</a>
@@ -39,7 +39,7 @@
                        <a class="line-comment-button" style="visibility: hidden;">+</a> // Added for visual consistency
                     }
                 </td>
-                <td class="line-details-button-cell">
+                <td class="line-details-button-cell @lineClass">
                     @if (isHeading)
                     {
                         <span class="row-fold-caret"><i class="fa-solid fa-angle-right"></i></span>

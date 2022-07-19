@@ -422,6 +422,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 await WriteResultsSummary(streamWriter, results, OutputFormat.Csv);
             }
+
+            using (var streamWriter = new StreamWriter(outputTxt))
+            {
+                await WriteResultsSummary(streamWriter, results, OutputFormat.Txt);
+            }
+
+            using (var streamWriter = new StreamWriter(outputMd))
+            {
+                await WriteResultsSummary(streamWriter, results, OutputFormat.Md);
+            }
         }
 
         public static async Task WriteResultsSummary(StreamWriter streamWriter, IEnumerable<Result> results, OutputFormat outputFormat)

@@ -42,7 +42,7 @@ docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /h
 After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can [open your local vscode and connect to docker container](./vscode-connect-docker-container.md) for further grow up development.
 If you want to re-generate codes after grow up development or changing swagger, please run command in docker container:
 ```shell
-rerun-tasks -readme={relative_readme} --sdk={sdk_to_generate}
+rerun-tasks --readme={relative_readme} --sdk={sdk_to_generate}
 ```
 rerun-tasks is a script, which invokes task engine to re-run tasks.
 
@@ -81,7 +81,7 @@ docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /h
 After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can [open your local vscode and connect to docker container](./vscode-connect-docker-container.md) for further grow up development.
 If you want to re-generate codes after grow up development or changing swagger, please run command in docker container:
 ```shell
-rerun-tasks -readme={relative_readme} --sdk={sdk_to_generate}
+rerun-tasks --readme={relative_readme} --sdk={sdk_to_generate}
 ```
 rerun-tasks is a script, which invokes task engine to re-run tasks.
 

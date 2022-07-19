@@ -117,9 +117,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 recordingSession.Session.Sanitize(sanitizer);
             }
 
-            if(variables != null)
+            if (variables != null)
             {
-                foreach(var kvp in variables)
+                foreach (var kvp in variables)
                 {
                     recordingSession.Session.Variables[kvp.Key] = kvp.Value;
                 }
@@ -338,7 +338,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         continue;
                     }
 
-                    if(!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
+                    if (!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
                     {
                         throw new HttpException(
                             HttpStatusCode.BadRequest,
@@ -347,7 +347,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                 }
 
-                if(header.Key == "x-recording-upstream-host-header")
+                if (header.Key == "x-recording-upstream-host-header")
                 {
                     upstreamRequest.Headers.Host = header.Value;
                 }
@@ -562,7 +562,15 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         try
                         {
-                            var transportObject = ((JObject)transportConventions).ToString();
+                            string transportObject;
+                            if (transportConventions is JsonElement je)
+                            {
+                                transportObject = je.ToString();
+                            }
+                            else
+                            {
+                                throw new Exception("'Transport' object was not a JsonElement");
+                            }
 
                             var serializerOptions = new JsonSerializerOptions
                             {
@@ -602,7 +610,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 var base64Data = settings.TLSValidationCert[fields.Base64Data];
                 return new X509Certificate2(Encoding.ASCII.GetBytes(base64Data));
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"Unable to instantiate a valid cert from the value provided in Transport settings key \"TLSValidationCert\". Value: \"{settings.TLSValidationCert}\". Message: \"{e.Message}\".");
             }
@@ -632,7 +640,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                 }
             }
-            
+
             if (customizations.TLSValidationCert != null && !insecure)
             {
                 var ledgerCert = GetValidationCert(customizations);
@@ -809,7 +817,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     sb.Append($"There are a total of {countTotal} active sessions. Remove these sessions before hitting Admin/Reset." + Environment.NewLine);
 
-                    if(countPlayback > 0)
+                    if (countPlayback > 0)
                     {
                         sb.Append("Active Playback Sessions: [");
                         lock (PlaybackSessions)
@@ -839,7 +847,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         sb.Append("]. ");
                     }
 
-                    throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());               
+                    throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());
                 }
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
@@ -913,7 +921,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
             var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
             var hostValue = GetHeader(request, "x-recording-upstream-base-uri");
-            
+
             // There is an ongoing issue where some libraries send a URL with two leading // after the hostname.
             // This will just handle the error explicitly rather than letting it slip through and cause random issues during record/playback sessions.
             if (rawTarget.StartsWith("//"))

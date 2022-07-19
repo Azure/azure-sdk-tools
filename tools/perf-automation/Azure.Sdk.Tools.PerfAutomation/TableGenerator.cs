@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
-    internal static class TableGenerator
+    public static class TableGenerator
     {
         public static string Generate(IList<string> headers, IList<IList<IList<string>>> table, OutputFormat outputFormat)
         {
@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var columnWidths = new List<int>(new int[columns.First().Count()]);
             foreach (var row in columns)
             {
-                for (var i=0; i < row.Count(); i++)
+                for (var i=0; i < row.Count; i++)
                 {
                     columnWidths[i] = Math.Max(columnWidths[i], row.ElementAt(i).Length);
                 }
@@ -66,9 +66,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             if (outputFormat == OutputFormat.Txt || outputFormat == OutputFormat.Md)
             {
                 sb.Append("| ");
-                for (var i = 0; i < columnWidths.Count(); i++)
+                for (var i = 0; i < columnWidths.Count; i++)
                 {
-                    sb.AppendFormat($"{{0,-{columnWidths[i]}}}", row[i]);
+                    var cell = (row.Count > i) ? row[i] : null;
+                    sb.AppendFormat($"{{0,-{columnWidths[i]}}}", cell);
                     sb.Append(" | ");
                 }
                 sb.AppendLine();

@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 for (var i = 0; i < columnWidths.Count; i++)
                 {
                     var cell = (row.Count > i) ? row[i] : null;
-                    sb.AppendFormat($"{{0,-{columnWidths[i] + 2}}}", cell);
+                    sb.AppendFormat($" {{0,-{columnWidths[i]}}} ", cell);
                     sb.Append('|');
                 }
                 sb.AppendLine();

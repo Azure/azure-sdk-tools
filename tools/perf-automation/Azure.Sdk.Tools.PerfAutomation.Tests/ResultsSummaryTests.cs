@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
 
         [TestCase("results/no-iterations.json", OutputFormat.Txt)]
         [TestCase("results/java.json", OutputFormat.Txt)]
+        [TestCase("results/net.json", OutputFormat.Csv)]
         [TestCase("results/net.json", OutputFormat.Txt)]
         [TestCase("results/net.json", OutputFormat.Md)]
         [TestCase("results/js.json", OutputFormat.Txt)]

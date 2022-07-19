@@ -482,7 +482,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 foreach (var (requested, runtime) in packageVersions)
                 {
                     var versionRows = new List<IList<string>>();
-                    
+
                     // Primary package should be listed first, with remaining sorted alphabetically
                     foreach (var packageName in requested.Keys.OrderBy(n => (n == primaryPackage) ? $"_{n}" : n))
                     {
@@ -512,7 +512,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public static async Task WriteHeader(StreamWriter streamWriter, string header, OutputFormat outputFormat)
         {
-            if (outputFormat == OutputFormat.Txt)
+            if (outputFormat == OutputFormat.Csv || outputFormat == OutputFormat.Txt)
             {
                 await streamWriter.WriteLineAsync($"*** {header} ***");
             }

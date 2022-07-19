@@ -32,7 +32,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             WriteRow(sb, columnWidths, headers, outputFormat);
 
-            WriteHorizontalLine(sb, columnWidths);
+            if (outputFormat == OutputFormat.Txt || outputFormat == OutputFormat.Md)
+            {
+                WriteHorizontalLine(sb, columnWidths);
+            }
 
             foreach (var rowSet in table)
             {
@@ -48,6 +51,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 else if (outputFormat == OutputFormat.Md && rowSet != table.Last())
                 {
                     WriteBlankLine(sb, columnWidths);
+                }
+                else if (outputFormat == OutputFormat.Csv)
+                {
+                    sb.AppendLine();
                 }
             }
 
@@ -65,7 +72,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     sb.Append(" | ");
                 }
                 sb.AppendLine();
-
+            }
+            else if (outputFormat == OutputFormat.Csv)
+            {
+                sb.Append(row.First());
+                foreach (var column in row.Skip(1))
+                {
+                    sb.Append(',');
+                    sb.Append(column);
+                }
+                sb.AppendLine();
             }
         }
 

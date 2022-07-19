@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,28 +10,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     internal static class TableGenerator
     {
-        // |---------------------------------------|------------------|---------|
-        // | Name                                  | Requested        | Runtime |
-        // |---------------------------------------|------------------|---------|
-        // | azure - storage - file - share        | 12.13.1          | unknown |
-        // | azure-core                            | 1.29.1           | unknown |
-        // | azure - core - http - netty           | 1.12.2           | unknown |
-        // | azure - core - http - okhttp          | 1.10.1           | unknown |
-        // | azure - storage - blob                | 12.18.0 - beta.1 | unknown |
-        // | azure - storage - blob - cryptography | 12.17.0 - beta.1 | unknown |
-        // | azure - storage - file - datalake     | 12.10.1          | unknown |
-        // | reactor - core                        | 3.4.17           | unknown |
-        // |---------------------------------------|------------------|---------|
-        // | azure - storage - file - share        | source           | unknown |
-        // | azure-core                            | source           | unknown |
-        // | azure - core - http - netty           | source           | unknown |
-        // | azure - core - http - okhttp          | source           | unknown |
-        // | azure - storage - blob                | source           | unknown |
-        // | azure - storage - blob - cryptography | source           | unknown |
-        // | azure - storage - file - datalake     | source           | unknown |
-        // | reactor - core                        | source           | unknown |
-        // |---------------------------------------|------------------|---------|
-        public static string Ascii(IList<string> headers, IList<IList<IList<string>>> table)
+        public static string Generate(IList<string> headers, IList<IList<IList<string>>> table, OutputFormat outputFormat)
         {
             var columns = table.SelectMany(rowSet => rowSet).Prepend(headers);
 
@@ -45,9 +25,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var sb = new StringBuilder();
 
-            WriteHorizontalLine(sb, columnWidths);
+            if (outputFormat == OutputFormat.Txt)
+            {
+                WriteHorizontalLine(sb, columnWidths);
+            }
 
-            WriteRow(sb, columnWidths, headers);
+            WriteRow(sb, columnWidths, headers, outputFormat);
 
             WriteHorizontalLine(sb, columnWidths);
 
@@ -55,23 +38,35 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 foreach (var row in rowSet)
                 {
-                    WriteRow(sb, columnWidths, row);
+                    WriteRow(sb, columnWidths, row, outputFormat);
                 }
-                WriteHorizontalLine(sb, columnWidths);
+
+                if (outputFormat == OutputFormat.Txt)
+                {
+                    WriteHorizontalLine(sb, columnWidths);
+                }
+                else if (outputFormat == OutputFormat.Md && rowSet != table.Last())
+                {
+                    WriteBlankLine(sb, columnWidths);
+                }
             }
 
             return sb.ToString();
         }
 
-        private static void WriteRow(StringBuilder sb, IList<int> columnWidths, IList<string> row)
+        private static void WriteRow(StringBuilder sb, IList<int> columnWidths, IList<string> row, OutputFormat outputFormat)
         {
-            sb.Append("| ");
-            for (var i = 0; i < columnWidths.Count(); i++)
+            if (outputFormat == OutputFormat.Txt || outputFormat == OutputFormat.Md)
             {
-                sb.AppendFormat($"{{0,-{columnWidths[i]}}}", row[i]);
-                sb.Append(" | ");
+                sb.Append("| ");
+                for (var i = 0; i < columnWidths.Count(); i++)
+                {
+                    sb.AppendFormat($"{{0,-{columnWidths[i]}}}", row[i]);
+                    sb.Append(" | ");
+                }
+                sb.AppendLine();
+
             }
-            sb.AppendLine();
         }
 
         private static void WriteHorizontalLine(StringBuilder sb, IEnumerable<int> columnWidths)
@@ -83,6 +78,22 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 for (var i=0; i < columnWidth + 2; i++)
                 {
                     sb.Append('-');
+                }
+                sb.Append('|');
+            }
+
+            sb.AppendLine();
+        }
+
+        private static void WriteBlankLine(StringBuilder sb, IEnumerable<int> columnWidths)
+        {
+            sb.Append('|');
+
+            foreach (var columnWidth in columnWidths)
+            {
+                for (var i = 0; i < columnWidth + 2; i++)
+                {
+                    sb.Append(' ');
                 }
                 sb.Append('|');
             }

@@ -15,49 +15,25 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         // for manual inspection in Test Explorer, rather than asserting specific output, since it will
         // change frequently.
 
-        [Test]
-        public async Task Empty()
+        [TestCase(OutputFormat.Txt)]
+        public async Task Empty(OutputFormat outputFormat)
         {
-            Console.Write(await GetResultsSummary(Enumerable.Empty<Result>()));
+            Console.Write(await GetResultsSummary(Enumerable.Empty<Result>(), outputFormat));
         }
 
-        [Test]
-        public async Task NoIterations()
+        [TestCase("results/no-iterations.json", OutputFormat.Txt)]
+        [TestCase("results/java.json", OutputFormat.Txt)]
+        [TestCase("results/net.json", OutputFormat.Txt)]
+        [TestCase("results/net.json", OutputFormat.Md)]
+        [TestCase("results/js.json", OutputFormat.Txt)]
+        [TestCase("results/python.json", OutputFormat.Txt)]
+        [TestCase("results/three-versions.json", OutputFormat.Txt)]
+        public async Task FromFile(string fileName, OutputFormat outputFormat)
         {
-            Console.Write(await GetResultsSummary("results/no-iterations.json"));
+            Console.Write(await GetResultsSummary(fileName, outputFormat));
         }
 
-        [Test]
-        public async Task Net()
-        {
-            Console.Write(await GetResultsSummary("results/net.json"));
-        }
-
-        [Test]
-        public async Task Java()
-        {
-            Console.Write(await GetResultsSummary("results/java.json"));
-        }
-
-        [Test]
-        public async Task JS()
-        {
-            Console.Write(await GetResultsSummary("results/js.json"));
-        }
-
-        [Test]
-        public async Task Python()
-        {
-            Console.Write(await GetResultsSummary("results/python.json"));
-        }
-
-        [Test]
-        public async Task ThreeVersions()
-        {
-            Console.Write(await GetResultsSummary("results/three-versions.json"));
-        }
-
-        private static async Task<string> GetResultsSummary(string path)
+        private static async Task<string> GetResultsSummary(string path, OutputFormat outputFormat)
         {
             List<Result> results;
             using (var stream = File.OpenRead(path))
@@ -65,16 +41,16 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                 results = await JsonSerializer.DeserializeAsync<List<Result>>(stream, options: Program.JsonOptions);
             }
 
-            return await GetResultsSummary(results);
+            return await GetResultsSummary(results, outputFormat);
         }
 
-        private static async Task<string> GetResultsSummary(IEnumerable<Result> results)
+        private static async Task<string> GetResultsSummary(IEnumerable<Result> results, OutputFormat outputFormat)
         {
             using var memoryStream = new MemoryStream();
 
             using (var streamWriter = new StreamWriter(memoryStream, leaveOpen: true))
             {
-                await Program.WriteResultsSummary(streamWriter, results);
+                await Program.WriteResultsSummary(streamWriter, results, outputFormat);
             }
 
             memoryStream.Seek(0, SeekOrigin.Begin);

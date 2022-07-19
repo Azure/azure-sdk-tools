@@ -15,6 +15,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         // for manual inspection in Test Explorer, rather than asserting specific output, since it will
         // change frequently.
 
+        [TestCase(OutputFormat.Csv)]
+        [TestCase(OutputFormat.Md)]
         [TestCase(OutputFormat.Txt)]
         public async Task Empty(OutputFormat outputFormat)
         {

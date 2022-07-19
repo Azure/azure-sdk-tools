@@ -587,7 +587,7 @@ namespace APIViewWeb.Repositories
             MemoryStream originalFileStream,
             string baselineCodeFileName = "",
             MemoryStream baselineStream = null,
-            string project = ""
+            string project = "public"
             )
         {
             Stream stream = null;

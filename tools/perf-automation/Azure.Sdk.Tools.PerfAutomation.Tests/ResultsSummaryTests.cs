@@ -21,13 +21,23 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             Console.Write(await GetResultsSummary(Enumerable.Empty<Result>(), outputFormat));
         }
 
+        [TestCase("results/no-iterations.json", OutputFormat.Csv)]
+        [TestCase("results/no-iterations.json", OutputFormat.Md)]
         [TestCase("results/no-iterations.json", OutputFormat.Txt)]
+        [TestCase("results/java.json", OutputFormat.Csv)]
+        [TestCase("results/java.json", OutputFormat.Md)]
         [TestCase("results/java.json", OutputFormat.Txt)]
         [TestCase("results/net.json", OutputFormat.Csv)]
-        [TestCase("results/net.json", OutputFormat.Txt)]
         [TestCase("results/net.json", OutputFormat.Md)]
+        [TestCase("results/net.json", OutputFormat.Txt)]
+        [TestCase("results/js.json", OutputFormat.Csv)]
+        [TestCase("results/js.json", OutputFormat.Md)]
         [TestCase("results/js.json", OutputFormat.Txt)]
+        [TestCase("results/python.json", OutputFormat.Csv)]
+        [TestCase("results/python.json", OutputFormat.Md)]
         [TestCase("results/python.json", OutputFormat.Txt)]
+        [TestCase("results/three-versions.json", OutputFormat.Csv)]
+        [TestCase("results/three-versions.json", OutputFormat.Md)]
         [TestCase("results/three-versions.json", OutputFormat.Txt)]
         public async Task FromFile(string fileName, OutputFormat outputFormat)
         {

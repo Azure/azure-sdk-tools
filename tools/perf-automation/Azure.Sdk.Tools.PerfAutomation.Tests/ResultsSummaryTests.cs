@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             using (var streamReader = new StreamReader(memoryStream))
             {
                 return await streamReader.ReadToEndAsync();
-            }               
+            }
         }
     }
 }

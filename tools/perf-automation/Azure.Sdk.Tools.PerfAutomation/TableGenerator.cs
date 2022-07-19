@@ -1,10 +1,8 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
@@ -17,7 +15,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var columnWidths = new List<int>(new int[columns.First().Count()]);
             foreach (var row in columns)
             {
-                for (var i=0; i < row.Count; i++)
+                for (var i = 0; i < row.Count; i++)
                 {
                     columnWidths[i] = Math.Max(columnWidths[i], row.ElementAt(i).Length);
                 }
@@ -92,7 +90,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             foreach (var columnWidth in columnWidths)
             {
-                for (var i=0; i < columnWidth + 2; i++)
+                for (var i = 0; i < columnWidth + 2; i++)
                 {
                     sb.Append('-');
                 }

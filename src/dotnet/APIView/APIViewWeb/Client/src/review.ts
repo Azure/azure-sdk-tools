@@ -1,4 +1,6 @@
-﻿$(() => {  
+﻿import Split from "split.js";
+
+$(() => {  
   const SEL_DOC_CLASS = ".documentation";
   const SHOW_DOC_CHECK_COMPONENT = "#show-documentation-component";
   const SHOW_DOC_CHECKBOX = ".show-doc-checkbox";
@@ -6,14 +8,55 @@
   const SHOW_DIFFONLY_CHECKBOX = ".show-diffonly-checkbox";
   const SHOW_DIFFONLY_HREF = ".show-diffonly";
   const HIDE_LINE_NUMBERS = "#hide-line-numbers";
+  const HIDE_LEFT_NAVIGATION = "#hide-left-navigation";
 
   hideCheckboxIfNoDocs();
 
   function hideCheckboxIfNoDocs() {
-      if ($(SEL_DOC_CLASS).length == 0) {
-          $(SHOW_DOC_CHECK_COMPONENT).hide();
-      }
+    if ($(SEL_DOC_CLASS).length == 0) {
+        $(SHOW_DOC_CHECK_COMPONENT).hide();
+    }
   }
+
+  function splitReviewPageContent() {
+    /* Split left and right review panes using split.js */
+    const rl = $('#review-left');
+    const rr = $('#review-right');
+
+    if (rl.length && rr.length) {
+      Split(['#review-left', '#review-right'], {
+        direction: 'horizontal',
+        sizes: [17, 83],
+        elementStyle: (dimension, size, gutterSize) => {
+          return {
+            'flex-basis': `calc(${size}% - ${gutterSize}px`
+          }
+        },
+        gutterStyle: (dimension, gutterSize) => {
+          return {
+            'flex-basis': `${gutterSize}px`
+          }
+        }
+      });
+    }
+  }
+
+  /* ADD NAVIGATION EVENT LISTENER
+--------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  addEventListener("load", () => {
+    $(".nav-list-toggle").click(function () {
+      $(this).parents(".nav-list-group").first().toggleClass("nav-list-collapsed");
+    });
+  });
+
+  /* SPLIT REVIEW PAGE CONTENT
+--------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  /* 992px matches bootstrap col-lg min-width */
+  ($('.namespace-view') as any).stickySidebar({ minWidth: 992 });
+  splitReviewPageContent();
+
+  /* TOGGLE PAGE OPTIONS
+ --------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
   $(SHOW_DOC_CHECKBOX).on("click", e => {
     $(SHOW_DOC_HREF)[0].click();
@@ -25,6 +68,26 @@
 
   $(HIDE_LINE_NUMBERS).on("click", e => {
     $(".line-number").toggleClass("d-none");
+  });
+
+  $(HIDE_LEFT_NAVIGATION).on("click", e => {
+    var leftContainer = $("#review-left");
+    var rightContainer = $("#review-right");
+    var gutter = $(".gutter-horizontal");
+
+    if (leftContainer.hasClass("d-none")) {
+      leftContainer.removeClass("d-none");
+      rightContainer.removeClass("col-12");
+      rightContainer.addClass("col-10");
+      splitReviewPageContent();
+    }
+    else {
+      leftContainer.addClass("d-none");
+      rightContainer.css("flex-basis", "100%");
+      gutter.remove();
+      rightContainer.removeClass("col-10");
+      rightContainer.addClass("col-12");
+    }
   });
 
   /* DIFF BUTTON (UPDATES REVIEW PAGE ON CLICK)

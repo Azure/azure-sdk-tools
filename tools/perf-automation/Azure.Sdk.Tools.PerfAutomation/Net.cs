@@ -120,6 +120,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             };
         }
 
+        public static Dictionary<string, string> GetRuntimePackageVersions(string standardOutput)
+        {
+            var runtimePackageVersions = new Dictionary<string, string>();
+
+
+
+            return runtimePackageVersions;
+        }
+
         public override Task CleanupAsync(string project)
         {
             Util.DeleteIfExists(PublishDirectory);

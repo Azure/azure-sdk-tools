@@ -47,6 +47,7 @@
       - [ASP.NET and web development](#aspnet-and-web-development)
       - [Windows IIS](#windows-iis)
   - [Asset Sync (Retrieve External Test Recordings)](#asset-sync-retrieve-external-test-recordings)
+    - [The `assets.json`, and how it works with the test-proxy](#the-assetsjson-and-how-it-works-with-the-test-proxy)
 
 For a detailed explanation and more-or-less spec, check the [README.md](../README.md) one level up from this one.
 
@@ -599,7 +600,11 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 
 ## Asset Sync (Retrieve External Test Recordings)
 
-<TODO: populate this documentation section>
-<summary goes here>
+The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
-If the remote git repository is secured, the test-proxy must be handed a token via environment variable GITHUB_TOKEN.
+
+
+
+In the context of a `monorepo`, this means that we store FAR less data per feature.
+
+### The `assets.json`, and how it works with the test-proxy

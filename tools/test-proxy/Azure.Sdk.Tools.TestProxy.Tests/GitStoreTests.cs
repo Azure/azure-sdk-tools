@@ -432,8 +432,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(result, targetBranch);
         }
 
-        [Fact]
-        //[Fact(Skip = "Skipping due to integration tests not figured out yet.")]
+        [Fact(Skip = "Skipping due to integration tests not figured out yet.")]
         public async Task GetDefaultBranchWorksWithValidRepo()
         {
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);

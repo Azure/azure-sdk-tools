@@ -44,8 +44,88 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task Push(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
+            var pendingChanges = DetectPendingChanges(config);
+            var onLatestSHA = true;
 
-            throw new NotImplementedException();
+            if (pendingChanges.Length > 0)
+            {
+                if(!GitHandler.TryRun(config, $"rev-parse origin/{config.AssetsRepoBranch}", out CommandResult result))
+                {
+                    // if we have a nonzero exit code, only code 128 is acceptable.
+                    if (result.ExitCode != 128)
+                    {
+                        throw GenerateInvokeException(result);
+                    }
+                }
+                else
+                {
+                    var retrievedSHA = result.StdOut.Trim();
+                    if (retrievedSHA != config.SHA)
+                    {
+                        onLatestSHA = false;
+                    }
+                }
+
+                if (onLatestSHA)
+                {
+                    if (!GitHandler.TryRun(config, $"checkout -b {config.AssetsRepoBranch}", out CommandResult checkoutResult))
+                    {
+                        throw GenerateInvokeException(checkoutResult);
+                    }
+
+                    if (!GitHandler.TryRun(config, $"add -A .", out CommandResult addResult))
+                    {
+                        throw GenerateInvokeException(addResult);
+                    }
+
+                    if (!GitHandler.TryRun(config, $"commit -m \"Automatic asset update from test-proxy.\"", out CommandResult commitResult))
+                    {
+                        throw GenerateInvokeException(commitResult);
+                    }
+
+                    if (!GitHandler.TryRun(config, $"push origin {config.AssetsRepoBranch}", out CommandResult pushResult))
+                    {
+                        throw GenerateInvokeException(pushResult);
+                    }
+                }
+                else
+                {
+                    if (!GitHandler.TryRun(config, $"stash", out CommandResult stashResult))
+                    {
+                        throw GenerateInvokeException(stashResult);
+                    }
+
+                    if (!GitHandler.TryRun(config, $"fetch origin {config.AssetsRepoBranch}", out CommandResult fetchResult))
+                    {
+                        throw GenerateInvokeException(fetchResult);
+                    }
+
+                    if (!GitHandler.TryRun(config, $"checkout {config.AssetsRepoBranch}", out CommandResult checkoutResult))
+                    {
+                        throw GenerateInvokeException(checkoutResult);
+                    }
+
+                    if (!GitHandler.TryRun(config, $"stash pop", out CommandResult stashPopResult))
+                    {
+                        throw GenerateInvokeException(stashPopResult);
+                    }
+
+                    if (!GitHandler.TryRun(config, $"add -A .", out CommandResult addResult))
+                    {
+                        throw GenerateInvokeException(addResult);
+                    }
+
+                    if (!GitHandler.TryRun(config, $"commit -m \"Automatic asset update from test-proxy.\"", out CommandResult commitResult))
+                    {
+                        throw GenerateInvokeException(commitResult);
+                    }
+
+                    if (!GitHandler.TryRun(config, $"push origin {config.AssetsRepoBranch}", out CommandResult pushResult))
+                    {
+                        throw GenerateInvokeException(pushResult);
+                    }
+                }
+            }
         }
 
         /// <summary>

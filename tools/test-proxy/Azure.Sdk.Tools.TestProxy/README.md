@@ -47,7 +47,7 @@
       - [ASP.NET and web development](#aspnet-and-web-development)
       - [Windows IIS](#windows-iis)
   - [Asset Sync (Retrieve External Test Recordings)](#asset-sync-retrieve-external-test-recordings)
-    - [The `assets.json`, and how it works with the test-proxy](#the-assetsjson-and-how-it-works-with-the-test-proxy)
+    - [The `assets.json` and how it enables external recordings](#the-assetsjson-and-how-it-enables-external-recordings)
 
 For a detailed explanation and more-or-less spec, check the [README.md](../README.md) one level up from this one.
 
@@ -602,9 +602,32 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
-
-
+![image](https://user-images.githubusercontent.com/45376673/180101415-cf864d95-8a8b-4d43-bb05-42604e9f7622.png)
 
 In the context of a `monorepo`, this means that we store FAR less data per feature.
 
-### The `assets.json`, and how it works with the test-proxy
+### The `assets.json` and how it enables external recordings
+
+An `assets.json` contains _targeting_ information for use by the test-proxy when restoring (or updating) recordings "below" a specific path.
+
+> For the `azure-sdk` team specifically, engineers are encouraged to place their `assets.json` files under a path of form `sdk/<service>/assets.json`
+
+An `assets.json` takes the form:
+
+```jsonc
+{
+  "AssetsRepo": "Azure/azure-sdk-assets-integration",
+  "AssetsRepoPrefixPath": "python/recordings/",
+  "AssetsRepoBranch": "auto/test",
+  "SHA": "786b4f3d380d9c36c91f5f146ce4a7661ffee3b9"
+}
+```
+
+| Property | Description |
+|---|---|
+| AssetsRepo | The full name of the external github repo storing the data. EG: `Azure/azure-sdk-assets` |
+| AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. Populate this property with that pathm EG: `python/recordings`. |
+| AssetsRepoBranch | The branch within the assets repo that your updated recordings will be pushed to. |
+| SHA | The reference SHA the recordings that should be restored from the assets repository. |
+
+Comments within the assets.json are allowed and _maintained_ by the tooling. Feel free to leave notes to yourself. They will not be eliminated.

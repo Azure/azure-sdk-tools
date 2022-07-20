@@ -4,6 +4,10 @@ SPEC_REPO=/spec-repo
 WORK_DIR=/work-dir
 SDK_REPO=/sdk-repo
 
+while [ ! -d "${SPEC_REPO}" ]; do
+    sleep 10
+done
+
 if [ -d "${SPEC_REPO}" ]; then
   while true
   do

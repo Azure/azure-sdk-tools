@@ -35,6 +35,11 @@ export class GitOperationWrapper {
         await this.git.raw(['config', 'core.fileMode', 'false', '--replace-all']);
     }
 
+    public async checkoutPr(prNumber: string) {
+        await this.git.raw(['fetch', 'origin',  '+refs/pull/*:refs/remotes/origin/pr/*']);
+        await this.git.raw(['checkout', '-b', `refs/pull/${prNumber}/merge`]);
+    }
+
     public async getChangedPackageDirectory(): Promise<Set<string>> {
         const changedPackageDirectories: Set<string> = new Set<string>();
         const files = (await this.git.raw(['ls-files', '-mdo', '--exclude-standard'])).trim().split(os.EOL);
@@ -49,8 +54,10 @@ export class GitOperationWrapper {
         return changedPackageDirectories;
     }
 
-    public async cloneRepo(githubRepo: string, logger: Logger) {
-        const child = spawn(`git`, [`clone`, `https://github.com/${githubRepo}.git`], {
+    public async cloneRepo(githubRepo: string, logger: Logger, repoAlias?: string) {
+        const additionalParams = [];
+        if (!!repoAlias) additionalParams.push(repoAlias);
+        const child = spawn(`git`, [`clone`, `https://github.com/${githubRepo}.git`, ...additionalParams], {
             cwd: this.baseDir,
             stdio: ['ignore', 'pipe', 'pipe']
         });
@@ -67,11 +74,18 @@ export class GitOperationWrapper {
         });
     }
 
-    public async cloneBranch(repoUrl: string, branchName: string, logger: Logger) {
-        const child = spawn(`git`, [`clone`, '--branch', branchName, repoUrl], {
+    public async cloneBranch(repoUrl: string, branchName: string, logger: Logger, repoAlias?: string) {
+        const additionalParams = [];
+        if (!!repoAlias) additionalParams.push(repoAlias);
+        const child = spawn(`git`, [`clone`, '--branch', branchName, repoUrl, ...additionalParams], {
             cwd: this.baseDir,
             stdio: ['ignore', 'pipe', 'pipe']
         });
         await this.injectListener(child, logger);
+    }
+
+    public changeBaseDir(baseDir: string) {
+        this.baseDir = baseDir;
+        this.git = simpleGit({ baseDir: baseDir });
     }
 }

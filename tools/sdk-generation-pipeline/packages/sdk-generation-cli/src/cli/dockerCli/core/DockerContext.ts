@@ -17,6 +17,7 @@ export class DockerContext {
     sdkRepo?: string;
     resultOutputFolder?: string;
     autorestConfigFilePath?: string;
+    specLink?: string;
     sdkWorkBranchLink?: string;
     logger: Logger;
 
@@ -35,16 +36,26 @@ export class DockerContext {
         this.sdkRepo = inputParams.sdkRepo;
         this.resultOutputFolder = inputParams.resultOutputFolder;
         this.autorestConfigFilePath = inputParams.autorestConfigFilePath;
+        this.specLink = inputParams.specLink;
         this.sdkWorkBranchLink = inputParams.sdkWorkBranchLink;
         this.logger = initializeLogger(path.join(inputParams.resultOutputFolder, inputParams.dockerLogger), 'docker');
 
         if (this.sdkList?.length === 0 && fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to do grow up development');
             this.mode = DockerRunningModel.GrowUp;
-            this.validateSpecRepo();
+            if (!this.specLink) {
+                try {
+                    this.validateSpecRepo();
+                } catch (e) {
+                    throw new Error(`Cannot get spec repo link by parameter --spec-link, or get mounted swagger repo.`);
+                }
+            } else {
+                this.validateSpecLink();
+            }
+
             this.validateWorkDir();
             if (!!this.sdkWorkBranchLink) {
-                this.validateWorkBranchLink(this.sdkWorkBranchLink);
+                this.validateWorkBranchLink();
             }
         } else if (fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to generate codes and do grow up development in local');
@@ -108,10 +119,17 @@ export class DockerContext {
         }
     }
 
-    private validateWorkBranchLink(sdkWorkBranchLink: string) {
-        const match = sdkWorkBranchLink.match(/(https.*\/([^\/]*))\/tree\/(.*)/);
+    private validateWorkBranchLink() {
+        const match = this.sdkWorkBranchLink.match(/(https.*\/([^\/]*))\/tree\/(.*)/);
         if (match?.length !== 4) {
-            throw new Error(`Get invalid sdk work branch link: ${sdkWorkBranchLink}`);
+            throw new Error(`Get invalid sdk work branch link: ${this.sdkWorkBranchLink}`);
+        }
+    }
+
+    private validateSpecLink() {
+        const match = this.specLink.match(/http.*/);
+        if (!match) {
+            throw new Error(`Get invalid sdk work branch link: ${this.specLink}`);
         }
     }
 }

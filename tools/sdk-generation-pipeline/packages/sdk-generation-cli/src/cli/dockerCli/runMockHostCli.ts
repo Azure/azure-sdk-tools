@@ -2,6 +2,7 @@
 
 import { initializeLogger } from '@azure-tools/sdk-generation-lib';
 import { spawn } from 'child_process';
+import fs from 'fs';
 import * as path from 'path';
 import { Logger } from 'winston';
 
@@ -26,7 +27,7 @@ export function initializeDockerMockHostContext(inputParams: DockerMockHostInput
     return dockerMockHostContext;
 }
 
-export function runMockHost() {
+export async function runMockHost() {
     const inputParams: DockerMockHostInput & DockerCliInput = {
         ...dockerCliInput.getProperties(),
         ...dockerMockHostInput.getProperties()
@@ -36,6 +37,17 @@ export function runMockHost() {
         context.logger.log('cmdout', `Cannot start mock server because ${context.specRepo} doesn't exist.`);
         return;
     }
+
+    function sleep(ms) {
+        return new Promise((resolve) => {
+            setTimeout(resolve, ms);
+        });
+    }
+
+    while (!fs.existsSync(context.specRepo)) {
+        await sleep(10000);
+    }
+
     if (!context.readmeMdPath) {
         context.logger.log('cmdout', `Cannot get valid readme, so do not start mock server.`);
         return;

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/testmodeler",
+      "comment": "add --testmodeler.api-scenario-loader-option to make api scenario loader configurable",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@autorest/testmodeler"
+}

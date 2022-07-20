@@ -1,15 +1,6 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Tue, 19 Jul 2022 05:40:34 GMT and should not be manually modified.
-
-## 2.3.0
-Tue, 19 Jul 2022 05:40:34 GMT
-
-### Minor changes
-
-- Use modelerfour@4.23.7 and add securityParameters in ExampleModel for ApiKey securityDefinitions.
-- use apiscenario 1.2 via oav@3.0.3
-- add --testmodeler.api-scenario-loader-option to make api scenario loader configurable
+This log was last generated on Sun, 24 Apr 2022 09:41:30 GMT and should not be manually modified.
 
 ## 2.2.5
 Sun, 24 Apr 2022 09:41:30 GMT

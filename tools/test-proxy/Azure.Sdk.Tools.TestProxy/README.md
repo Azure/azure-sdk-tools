@@ -46,6 +46,7 @@
     - [Visual studio](#visual-studio)
       - [ASP.NET and web development](#aspnet-and-web-development)
       - [Windows IIS](#windows-iis)
+  - [Asset Sync (Retrieve External Test Recordings)](#asset-sync-retrieve-external-test-recordings)
 
 For a detailed explanation and more-or-less spec, check the [README.md](../README.md) one level up from this one.
 
@@ -219,9 +220,10 @@ Please note that if a **absolute** path is presented in header `x-recording-file
 
 Before each individual test runs, a `recordingId` must be retrieved from the test-proxy by POST-ing to the Proxy Server.
 
-```json
-URL: https://localhost:5001/record/start
-BODY {
+```jsonc
+// Targeted URI: https://localhost:5001/record/start
+// request body
+{
     "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
 }
 ```
@@ -254,13 +256,17 @@ After your test has finished and there are no additional requests to be recorded
 
 POST to the proxy server:
 
-```json
-URL: https://localhost:5001/record/stop
-headers: {
+```jsonc
+// Targeted URI: https://localhost:5001/record/start
+
+// header dictionary
+{
     "x-recording-id": "<x-recording-id>",
     "Content-Type": "application/json"
 }
-<optional> body: {
+
+// optional body storing VARIABLE values. See section below for additional detail.
+{
     "key1": "value1",
     "key2": "value2"
 }
@@ -296,9 +302,10 @@ Extremely similar to recording start.
 
 POST to the proxy server:
 
-```json
-URL: https://localhost:5001/playback/start
-BODY: {
+```jsonc
+// Targeted URI: https://localhost:5001/playback/start
+// request body
+{
     "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
 }
 ```
@@ -321,9 +328,10 @@ This really only allows the server to free up a few bits, but:
 
 POST to the proxy server:
 
-```json
-URL: https://localhost:5001/playback/stop
-headers {
+```jsonc
+// targeted URI: https://localhost:5001/playback/stop
+// header dictionary
+{
     "x-recording-id": "<x-recording-id>"
 }
 ```
@@ -334,17 +342,20 @@ If a user does **not** provide a `fileId` via body key `x-recording-file`, the r
 
 Start the recording **without a `x-recording-file` body value**.
 
-```json
-URL: https://localhost:5001/record/start
+```jsonc
+// targeted URI: https://localhost:5001/record/start
+// the request body will be EMPTY
+{}
 ```
 
-The POST will return recordingId `X`.
+The POST will return a valid recordingId value which we will call `X`.
 
 To load this recording for playback...
 
-```json
-URL: https://localhost:5001/playback/start
-headers {
+```jsonc
+// Targeted URI https://localhost:5001/playback/start
+// header dictionary
+{
     "x-recording-id": "X"
 }
 ```
@@ -369,13 +380,14 @@ This is due to the fact that if there are **arguments** to the constructor, the 
 
 Add a simple Uri Sanitizer that leverages lookahead to ensure it's not overly aggressive:
 
-```json
-POST
-url: <proxyURL>/Admin/AddSanitizer
-headers: {
+```jsonc
+// POST TO Targeted URI: <proxyURL>/Admin/AddSanitizer
+// header dictionary
+{
     "x-abstraction-identifier": "UriRegexSanitizer"
 }
-body: {
+// request body
+{
     "value": "fakeaccount",
     "regex": "[a-z]+(?=\\.(?:table|blob|queue)\\.core\\.windows\\.net)"
 }
@@ -383,13 +395,14 @@ body: {
 
 Add a more expansive Header sanitizer that uses a target group instead of filtering by lookahead:
 
-```json
-POST
-url: <proxyURL>/Admin/AddSanitizer
-headers: {
+```jsonc
+// POST to URI <proxyURL>/Admin/AddSanitizer
+// dictionary dictionary
+{
     "x-abstraction-identifier": "HeaderRegexSanitizer"
 }
-body: {
+// request body
+{
     "key": "Location",
     "value": "fakeaccount",
     "regex": "https\\:\\/\\/(?<account>[a-z]+)\\.(?:table|blob|queue)\\.core\\.windows\\.net",
@@ -434,24 +447,23 @@ This is allowed through the use of the `/Admin/Reset` API. A `reset` operation "
 
 #### Reset the session
 
-```json
-POST
-url: <proxyURL>/Admin/Reset
-```
+To reset a session to default customization, `POST` to `Admin/Reset`.
 
 This API operates exclusively on the `Session` level if no recordingId is provided in the header. Any customizations on individual recordings are left untouched.
 
 #### Reset for a specific recordingId
 
-```json
-POST
-url: <proxyURL>/Admin/Reset
-headers: {
+However, if a recordingId is provided in the header dictionary, the reset operation applies to only that individual recording.
+
+```jsonc
+// POST TO url: <proxyURL>/Admin/Reset
+// header dictionary
+{
     "x-recording-id": "<guid>"
 }
 ```
 
-If the recordingId is specified in the header, that individual recording's settings will be cleared. The session level updates will remain unchanged.
+The session level updates will remain unchanged.
 
 ## Recording Options
 
@@ -459,9 +471,7 @@ The test-proxy offers further customization beyond that offered by sanitizers, m
 
 ```jsonc
 // below is an object representing all valid inputs for SetRecordingOptions body
-
-POST /Admin/SetRecordingOptions
-
+// POST to /Admin/SetRecordingOptions
 {
    // boolean value accepted. string or raw.
    "HandleRedirects": "true/false"
@@ -495,22 +505,21 @@ To set this setting, POST to the `/Admin/SetRecordingOptions` route.
 Example:
 
 ```jsonc
-POST https://localhost:5001/Admin/SetRecordingOptions
-
-// Body should be a json dictionary to enable
+// POST to URI: https://localhost:5001/Admin/SetRecordingOptions
+// body is a json dictionary, the value of HandleRedirects can be multiple representation of "true" 
 {
     "HandleRedirects": true
 }
-// to enable alternative
+// ...or 
 {
-    "HandleRedirects": "true"
+    "HandleRedirects": 1
 }
 
-// to disable
+// to disable, it's just the opposite, with similar alternative support
 {
     "HandleRedirects": false
 }
-// to disable alternative
+// ...or 
 {
     "HandleRedirects": "false"
 }

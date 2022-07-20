@@ -37,8 +37,6 @@ namespace Azure.Sdk.Tools.TestProxy
         private static string resolveRepoLocation(string storageLocation = null)
         {
             var envValue = Environment.GetEnvironmentVariable("TEST_PROXY_FOLDER");
-
-            // TODO: absolute the paths first two paths if relative
             return storageLocation ?? envValue ?? Directory.GetCurrentDirectory();
         }
 

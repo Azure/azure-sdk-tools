@@ -309,18 +309,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.EndsWith(" does not exist.", assertion.Message);
         }
 
-        [Fact(Skip = "Skipping due to integration tests not figured out yet.")]
-        public async Task GetDefaultBranchWorksWithValidRepo()
-        {
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
-
-            _defaultStore.DefaultBranch = "not-main";
-            var assetsConfiguration = await _defaultStore.ParseConfigurationFile(Path.Join(testFolder, AssetsJson));
-            var result = await _defaultStore.GetDefaultBranch(assetsConfiguration);
-
-            Assert.Equal("main", result);
-        }
-
         [Fact]
         public async Task GetDefaultBranchFailsWithInvalidRepo()
         {
@@ -443,5 +431,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(result, targetBranch);
         }
+
+        [Fact]
+        //[Fact(Skip = "Skipping due to integration tests not figured out yet.")]
+        public async Task GetDefaultBranchWorksWithValidRepo()
+        {
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+
+            _defaultStore.DefaultBranch = "not-main";
+            var assetsConfiguration = await _defaultStore.ParseConfigurationFile(Path.Join(testFolder, AssetsJson));
+            var result = await _defaultStore.GetDefaultBranch(assetsConfiguration);
+
+            Assert.Equal("main", result);
+        }
+
     }
 }

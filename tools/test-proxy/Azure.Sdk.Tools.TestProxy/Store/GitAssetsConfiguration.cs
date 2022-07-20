@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -66,7 +68,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public string ResolveAssetRepoLocation(bool autoCreate = true)
         {
             var assetsStore = ResolveAssetsStoreLocation(autoCreate: autoCreate);
-            var location = Path.Join(assetsStore, AssetsRepo.Replace("/", "-"));
+
+            var hash = Convert.ToHexString(SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(AssetsJsonRelativeLocation)));
+
+            var location = Path.Join(assetsStore, AssetsRepo.Replace("/", "-"), hash);
             if (!Directory.Exists(location) && autoCreate)
             {
                 Directory.CreateDirectory(location);

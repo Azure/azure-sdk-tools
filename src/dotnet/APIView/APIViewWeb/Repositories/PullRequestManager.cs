@@ -88,7 +88,8 @@ namespace APIViewWeb.Repositories
             string codeFileName = null,
             string baselineCodeFileName = null,
             bool commentOnPR = true,
-            string language = null)
+            string language = null,
+            string project = "public")
         {
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
             var operation = _telemetryClient.StartOperation(requestTelemetry);
@@ -112,7 +113,7 @@ namespace APIViewWeb.Repositories
                 
             using var memoryStream = new MemoryStream();
             using var baselineStream = new MemoryStream();
-            var codeFile = await _reviewManager.GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream, baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream);
+            var codeFile = await _reviewManager.GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream, baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream, project: project);
             CodeFile baseLineCodeFile = null;
             if (baselineStream.Length>0)
             {

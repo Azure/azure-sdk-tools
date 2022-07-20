@@ -23,9 +23,9 @@ namespace APIViewWeb.Repositories
             _devopsAccessToken = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", _configuration["Azure-Devops-PAT"])));
         }
 
-        public async Task<Stream> DownloadPackageArtifact(string repoName, string buildId, string artifactName, string filePath, string format= "file")
+        public async Task<Stream> DownloadPackageArtifact(string repoName, string buildId, string artifactName, string filePath, string project, string format= "file")
         {
-            var downloadUrl = await GetDownloadArtifactUrl(repoName, buildId, artifactName);
+            var downloadUrl = await GetDownloadArtifactUrl(repoName, buildId, artifactName, project);
             if (!string.IsNullOrEmpty(downloadUrl))
             {
                 if (!filePath.StartsWith("/"))
@@ -48,9 +48,9 @@ namespace APIViewWeb.Repositories
             _devopsClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _devopsAccessToken);
         }
 
-        private async Task<string> GetDownloadArtifactUrl(string repoName, string buildId, string artifactName)
+        private async Task<string> GetDownloadArtifactUrl(string repoName, string buildId, string artifactName, string project)
         {
-            var artifactGetReq = GetArtifactRestAPIForRepo(repoName).Replace("{buildId}", buildId).Replace("{artifactName}", artifactName);
+            var artifactGetReq = GetArtifactRestAPIForRepo(repoName).Replace("{buildId}", buildId).Replace("{artifactName}", artifactName).Replace("{project}", project);
             SetDevopsClientHeaders();
             var response = await _devopsClient.GetAsync(artifactGetReq);
             response.EnsureSuccessStatusCode();

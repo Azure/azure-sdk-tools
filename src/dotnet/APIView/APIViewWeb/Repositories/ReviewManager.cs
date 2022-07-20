@@ -586,7 +586,8 @@ namespace APIViewWeb.Repositories
             string codeFileName,
             MemoryStream originalFileStream,
             string baselineCodeFileName = "",
-            MemoryStream baselineStream = null
+            MemoryStream baselineStream = null,
+            string project = "public"
             )
         {
             Stream stream = null;
@@ -594,12 +595,12 @@ namespace APIViewWeb.Repositories
             if (string.IsNullOrEmpty(codeFileName))
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
-                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, "file");
+                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, format: "file", project: project);
                 codeFile = await CreateCodeFile(Path.GetFileName(originalFileName), stream, false, originalFileStream);
             }
             else
             {
-                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, "zip");
+                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, format: "zip", project: project);
                 var archive = new ZipArchive(stream);
                 foreach (var entry in archive.Entries)
                 {
@@ -632,11 +633,12 @@ namespace APIViewWeb.Repositories
             string repoName,
             string packageName,
             string codeFileName,
-            bool compareAllRevisions
+            bool compareAllRevisions,
+            string project
             )
         {
             using var memoryStream = new MemoryStream();
-            var codeFile = await GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream);
+            var codeFile = await GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream, project: project);
             return await CreateMasterReviewAsync(user, codeFile, originalFileName, label, memoryStream, compareAllRevisions);
         }
 

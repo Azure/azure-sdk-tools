@@ -7,11 +7,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 {
     public class NullStore : IAssetsStore
     {
-        public Task Push(string assetsJsonPath, string contextPath) { return null; }
+        public Task Push(string assetsJsonPath) { return null; }
 
-        public Task Restore(string assetsJsonPath, string contextPath) { return null; }
+        public Task Restore(string assetsJsonPath) { return null; }
 
-        public Task Reset(string assetsJsonPath, string contextPath) { return null; }
+        public Task Reset(string assetsJsonPath) { return null; }
 
         public AssetsConfiguration ParseConfigurationFile(string assetsJsonPath)
         {

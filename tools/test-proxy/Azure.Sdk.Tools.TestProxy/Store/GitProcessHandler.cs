@@ -16,6 +16,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public Exception CommandException;
     }
 
+    /// <summary>
+    /// This class offers an easy wrapper abstraction for shelling out to git.
+    /// </summary>
     public class GitProcessHandler
     {
         public virtual ProcessStartInfo CreateGitProcessInfo(GitAssetsConfiguration config)
@@ -34,6 +37,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return startInfo;
         }
 
+        /// <summary>
+        /// Invokes git.exe against a GitAssetsConfiguration.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="arguments"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
         public virtual bool TryRun(GitAssetsConfiguration config, string arguments, out CommandResult result)
         {
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(config);
@@ -41,14 +51,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
-                // TODO: verbose logging add here
-                Console.WriteLine($"git {processStartInfo.Arguments}");
+                DebugLogger.LogInformation($"git {arguments}");
                 var process = Process.Start(processStartInfo);
                 string stdOut = process.StandardOutput.ReadToEnd();
                 string stdErr = process.StandardError.ReadToEnd();
                 process.WaitForExit();
 
                 int returnCode = process.ExitCode;
+
+                DebugLogger.LogDebug($"StdOut: {stdOut}");
+                DebugLogger.LogDebug($"StdErr: {stdErr}");
+                DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
 
                 result = new CommandResult()
                 {
@@ -57,10 +70,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     StdOut = stdErr,
                     Arguments = arguments
                 };
-
             }
             catch (Exception e)
             {
+                DebugLogger.LogDebug(e.Message);
+
                 result = new CommandResult()
                 {
                     ExitCode = -1,

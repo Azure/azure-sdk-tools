@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
 
-            await _recordingHandler.Store.Reset(pathToAssets, _recordingHandler.ContextDirectory);
+            await _recordingHandler.Store.Reset(pathToAssets);
         }
 
         [HttpPost]
@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
 
-            await _recordingHandler.Store.Restore(pathToAssets, _recordingHandler.ContextDirectory);
+            await _recordingHandler.Store.Restore(pathToAssets);
         }
 
         public async Task HandleRequest()

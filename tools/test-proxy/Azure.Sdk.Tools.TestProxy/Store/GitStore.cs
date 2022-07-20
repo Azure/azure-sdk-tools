@@ -40,9 +40,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Pushes a set of changed files to the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
-        /// <param name="contextPath"></param>
         /// <returns></returns>
-        public async Task Push(string pathToAssetsJson, string contextPath) {
+        public async Task Push(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var pendingChanges = DetectPendingChanges(config);
             var onLatestSHA = true;
@@ -132,9 +131,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Restores a set of recordings from the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
-        /// <param name="contextPath"></param>
         /// <returns></returns>
-        public async Task Restore(string pathToAssetsJson, string contextPath) {
+        public async Task Restore(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = config.IsAssetsRepoInitialized();
 
@@ -150,9 +148,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Resets a cloned assets repository to the default contained within the assets.json targeted commit.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
-        /// <param name="contextPath"></param>
         /// <returns></returns>
-        public async Task Reset(string pathToAssetsJson, string contextPath) {
+        public async Task Reset(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = config.IsAssetsRepoInitialized();
             var allowReset = true;
@@ -188,9 +185,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
+        /// <summary>
+        /// Given a CommandResult, generate an HttpException.
+        /// </summary>
+        /// <param name="result"></param>
+        /// <returns></returns>
         public HttpException GenerateInvokeException(CommandResult result)
         {
-            var message = $"Invocation of \"git {result.Arguments}\" had a non-zero exit code {result.ExitCode}.\nStdOut: {result.StdErr}\nStdErr: {result.StdErr}";
+            var message = $"Invocation of \"git {result.Arguments}\" had a non-zero exit code {result.ExitCode}.\nStdOut: {result.StdOut}\nStdErr: {result.StdErr}\n";
 
             return new HttpException(HttpStatusCode.BadRequest, message);
         }

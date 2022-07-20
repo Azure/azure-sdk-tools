@@ -75,13 +75,13 @@ namespace Azure.Sdk.Tools.TestProxy
                 switch (command.ToLowerInvariant())
                 {
                     case "save":
-                        DefaultStore.Push(assetsJsonPath, TargetLocation);
+                        DefaultStore.Push(assetsJsonPath);
                         break;
                     case "restore":
-                        DefaultStore.Restore(assetsJsonPath, TargetLocation);
+                        DefaultStore.Restore(assetsJsonPath);
                         break;
                     case "reset":
-                        DefaultStore.Reset(assetsJsonPath, TargetLocation);
+                        DefaultStore.Reset(assetsJsonPath);
                         break;
                     default:
                         throw new Exception($"One must provide a valid value for argument \"command\". \"{command}\" is not a valid option.");

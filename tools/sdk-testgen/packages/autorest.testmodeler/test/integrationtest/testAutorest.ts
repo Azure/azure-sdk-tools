@@ -108,7 +108,11 @@ describe('Run autorest and compare the output', () => {
             Helper.deleteFolderRecursive(tempOutputFolder);
             fs.mkdirSync(tempOutputFolder, { recursive: true });
 
-            const test = runSingleTest(swaggerDir, rp, [`--output-folder=${tempOutputFolder}`, '--debug', ..._.get(extraOptions, rp, [])], outputFolder, tempOutputFolder);
+            const flags = [`--output-folder=${tempOutputFolder}`, '--debug', ..._.get(extraOptions, rp, [])];
+            if (rp === 'signalr') {
+                flags.push('--testmodeler.export-explicit-type');
+            }
+            const test = runSingleTest(swaggerDir, rp, flags, outputFolder, tempOutputFolder);
             allTests.push(test);
         }
         if ((process.env['PARALELL_TEST'] || 'false').toLowerCase() === 'true') {

@@ -13,6 +13,7 @@ export enum Config {
     useExampleModel = 'testmodeler.use-example-model',
     addArmTemplatePayloadString = 'testmodeler.add-armtemplate-payload-string',
     apiScenarioLoaderOption = 'testmodeler.api-scenario-loader-option',
+    exportExplicitType = 'testmodeler.export-explicit-type',
 }
 
 export const configDefaults = {
@@ -24,6 +25,7 @@ export const configDefaults = {
     [Config.scenarioCodeModelRestCallOnly]: true,
     [Config.useExampleModel]: true,
     [Config.addArmTemplatePayloadString]: false,
+    [Config.exportExplicitType]: false,
 };
 
 export enum TestScenarioVariableNames {

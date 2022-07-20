@@ -101,6 +101,20 @@ test-resources:
     - test: Microsoft.AppPlatform/preview/2020-11-01-preview/scenarios/Spring.yaml
 ```
 
+### --testmodeler.export-explicit-type
+
+Whether to export codemodel with tags on primitive types, default as false. Demonstrate on the output values:
+```
+// with primitive types:
+isDataAction: !!bool false
+count: !!int 64
+
+
+// with no types:
+isDataAction: false
+count: 64
+```
+
 ## Autorest Pipeline Configurations
 
 ```yaml

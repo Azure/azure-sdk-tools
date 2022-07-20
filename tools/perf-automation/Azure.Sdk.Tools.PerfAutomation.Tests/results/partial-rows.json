@@ -1,0 +1,230 @@
+[
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-19T19:25:36.2347141+00:00",
+    "End": "2022-07-19T19:28:18.3128723+00:00",
+    "Language": "java",
+    "LanguageVersion": "1.8.0_312",
+    "Project": "sdk/storage/azure-storage-perf",
+    "LanguageTestName": "downloadblob",
+    "Arguments": "--size 10240 --parallel 64 --warmup 15 --duration 15",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.18.0",
+      "azure-storage-blob-cryptography": "12.17.0",
+      "azure-storage-file-share": "12.14.0",
+      "azure-storage-file-datalake": "12.11.0",
+      "azure-core-http-netty": "1.12.3",
+      "azure-core-http-okhttp": "1.11.0",
+      "azure-core": "1.30.0",
+      "reactor-core": "3.4.19"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 13868.08,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 13594.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 13884.34,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 13705.73,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 13601.98,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 13594.4,
+    "OperationsPerSecondMean": 13730.905999999999,
+    "OperationsPerSecondMedian": 13705.73,
+    "OperationsPerSecondMax": 13884.34
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-19T19:28:18.3130947+00:00",
+    "End": "2022-07-19T19:30:58.5025456+00:00",
+    "Language": "java",
+    "LanguageVersion": "1.8.0_312",
+    "Project": "sdk/storage/azure-storage-perf",
+    "LanguageTestName": "uploadblob",
+    "Arguments": "--size 10240 --parallel 64 --warmup 15 --duration 15",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.18.0",
+      "azure-storage-blob-cryptography": "12.17.0",
+      "azure-storage-file-share": "12.14.0",
+      "azure-storage-file-datalake": "12.11.0",
+      "azure-core-http-netty": "1.12.3",
+      "azure-core-http-okhttp": "1.11.0",
+      "azure-core": "1.30.0",
+      "reactor-core": "3.4.19"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 9725.37,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 9057.07,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 11658.24,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 11671.77,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 11671.22,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 9057.07,
+    "OperationsPerSecondMean": 10756.734,
+    "OperationsPerSecondMedian": 11658.24,
+    "OperationsPerSecondMax": 11671.77
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-19T19:30:58.502633+00:00",
+    "End": "2022-07-19T19:33:37.2800819+00:00",
+    "Language": "java",
+    "LanguageVersion": "1.8.0_312",
+    "Project": "sdk/storage/azure-storage-perf",
+    "LanguageTestName": "listblobs",
+    "Arguments": "--count 5 --parallel 64 --warmup 15 --duration 15",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.18.0",
+      "azure-storage-blob-cryptography": "12.17.0",
+      "azure-storage-file-share": "12.14.0",
+      "azure-storage-file-datalake": "12.11.0",
+      "azure-core-http-netty": "1.12.3",
+      "azure-core-http-okhttp": "1.11.0",
+      "azure-core": "1.30.0",
+      "reactor-core": "3.4.19"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 13719.64,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 13694.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 13749.71,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 13693.23,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": null,
+        "OperationsPerSecond": 13151.49,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 13151.49,
+    "OperationsPerSecondMean": 13601.774,
+    "OperationsPerSecondMedian": 13694.8,
+    "OperationsPerSecondMax": 13749.71
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-19T19:35:28.5407796+00:00",
+    "End": "0001-01-01T00:00:00",
+    "Language": "java",
+    "LanguageVersion": "1.8.0_312",
+    "Project": "sdk/storage/azure-storage-perf",
+    "LanguageTestName": "downloadblob",
+    "Arguments": "--size 10240 --parallel 64 --warmup 15 --duration 15",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "source",
+      "azure-storage-blob-cryptography": "source",
+      "azure-storage-file-share": "source",
+      "azure-storage-file-datalake": "source",
+      "azure-core-http-netty": "source",
+      "azure-core-http-okhttp": "source",
+      "azure-core": "source",
+      "reactor-core": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [],
+    "OperationsPerSecondMin": -1,
+    "OperationsPerSecondMean": -1,
+    "OperationsPerSecondMedian": -1,
+    "OperationsPerSecondMax": -1
+  }
+]

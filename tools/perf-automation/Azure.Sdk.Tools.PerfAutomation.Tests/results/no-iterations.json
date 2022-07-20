@@ -1,0 +1,25 @@
+[
+  {
+    "Service": "sample",
+    "Test": "no-op",
+    "Start": "2022-07-11T22:37:52.9205026-07:00",
+    "End": "0001-01-01T00:00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "common/Perf/Azure.Sample.Perf/Azure.Sample.Perf.csproj",
+    "LanguageTestName": "NoOp",
+    "Arguments": "--warmup 0 --duration 1",
+    "PrimaryPackage": "Azure.Test.Perf",
+    "PackageVersions": {
+      "Azure.Test.Perf": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [],
+    "OperationsPerSecondMin": -1,
+    "OperationsPerSecondMean": -1,
+    "OperationsPerSecondMedian": -1,
+    "OperationsPerSecondMax": -1
+  }
+]

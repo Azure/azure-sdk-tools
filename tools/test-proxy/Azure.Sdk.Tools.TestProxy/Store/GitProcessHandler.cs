@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Invokes git.exe against a GitAssetsConfiguration.
+        /// Invokes git binary against a GitAssetsConfiguration.
         /// </summary>
         /// <param name="config"></param>
         /// <param name="arguments"></param>

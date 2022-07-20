@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             TargetLocation = resolveRepoLocation(storageLocation);
             Resolver = new StoreResolver();
-            DefaultStore = Resolver.ResolveStore(storagePlugin ?? "NullStore");
+            DefaultStore = Resolver.ResolveStore(storagePlugin ?? "GitStore");
 
             if (!String.IsNullOrWhiteSpace(command))
             {

@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             result = new CommandResult()
             {
-                ReturnCode = ErrorCode,
+                ExitCode = ErrorCode,
                 StdErr = ErrorResult,
                 StdOut = RunResult
             };

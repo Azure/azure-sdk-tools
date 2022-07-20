@@ -9,9 +9,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
     public class CommandResult
     {
-        public int ReturnCode;
+        public int ExitCode;
         public string StdErr;
         public string StdOut;
+        public string Arguments;
         public Exception CommandException;
     }
 
@@ -51,9 +52,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 result = new CommandResult()
                 {
-                    ReturnCode = process.ExitCode,
+                    ExitCode = process.ExitCode,
                     StdErr = stdOut,
-                    StdOut = stdErr
+                    StdOut = stdErr,
+                    Arguments = arguments
                 };
 
             }
@@ -61,12 +63,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 result = new CommandResult()
                 {
-                    ReturnCode = -1,
+                    ExitCode = -1,
                     CommandException = e
                 };
             }
 
-            if (result.ReturnCode != 0)
+            if (result.ExitCode != 0)
             {
                 return false;
             }

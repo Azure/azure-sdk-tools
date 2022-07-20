@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     }
 
     /// <summary>
-    /// This class provides a 
+    /// This class provides an abtraction for dealing with git assets that are stored in an external repository. An "assets.json" within a repo folder is used to inform targeting.
     /// </summary>
     public class GitStore : IAssetsStore
     {
@@ -37,22 +37,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         #region push, reset, restore, and other asset repo implementations 
         /// <summary>
-        /// 
+        /// Pushes a set of changed files to the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <param name="contextPath"></param>
         /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
         public async Task Push(string pathToAssetsJson, string contextPath) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            //var gitCommand = GitHandler.CreateGitProcessInfo(config.RepoRoot);
 
-            // need to add further arguments
             throw new NotImplementedException();
         }
 
         /// <summary>
-        /// 
+        /// Restores a set of recordings from the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <param name="contextPath"></param>
@@ -70,7 +67,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// 
+        /// Resets a cloned assets repository to the default contained within the assets.json targeted commit.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <param name="contextPath"></param>
@@ -89,20 +86,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                // TODO: optionally check if a reset should be allowed
-                // if no, set allowReset to false
+                // TODO: Azure/azure-sdk-tools/3698
             }
 
             if (allowReset)
             {
                 if (!GitHandler.TryRun(config, "checkout *", out var checkoutResult))
                 {
-                    // TODO: handle exception or bad code here
+                    throw GenerateInvokeException(checkoutResult);
                 };
 
                 if (!GitHandler.TryRun(config, "git clean -xdf", out var cleanResult))
                 {
-                    // TODO: handle exception here
+                    throw GenerateInvokeException(cleanResult);
                 }
 
                 if (!string.IsNullOrWhiteSpace(config.SHA))
@@ -112,16 +108,23 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
+        public HttpException GenerateInvokeException(CommandResult result)
+        {
+            var message = $"Invocation of \"git {result.Arguments}\" had a non-zero exit code {result.ExitCode}.\nStdOut: {result.StdErr}\nStdErr: {result.StdErr}";
+
+            return new HttpException(HttpStatusCode.BadRequest, message);
+        }
+
         /// <summary>
-        /// 
+        /// Checks an asset repository for pending changes. Equivalent of "git status --porcelain".
         /// </summary>
         /// <param name="config"></param>
         /// <returns></returns>
         public string[] DetectPendingChanges(GitAssetsConfiguration config)
         {
-            if (!GitHandler.TryRun(config, "diff-index --name-only HEAD", out var diffResult))
+            if (!GitHandler.TryRun(config, "status --porcelain", out var diffResult))
             {
-                // TODO: handle exception here
+                throw GenerateInvokeException(diffResult);
             }
 
             if (!string.IsNullOrWhiteSpace(diffResult.StdOut))
@@ -134,7 +137,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// 
+        /// Given a configuration, set the sparse-checkout directory for the config, then attempt checkout of the targeted SHA.
         /// </summary>
         /// <param name="config"></param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
@@ -143,17 +146,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (!GitHandler.TryRun(config, $"sparse-checkout set {checkoutPaths}", out var sparseSetResult))
             {
-                // TODO: handle exception here
+                throw GenerateInvokeException(sparseSetResult);
             }
 
             if (!GitHandler.TryRun(config, $"checkout {config.SHA}", out var checkoutResult))
             {
-                // TODO: handle exception here
+                throw GenerateInvokeException(checkoutResult);
             }
         }
 
         /// <summary>
-        /// 
+        /// Initializes an asset repo for a given configuration. This includes creating the target repo directory, cloning, and taking care of initial restore operations.
         /// </summary>
         /// <param name="config"></param>
         /// <param name="forceInit"></param>
@@ -175,12 +178,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 if (!GitHandler.TryRun(config, $"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .", out var cloneResult))
                 {
-                    // TODO: handle exception here
+                    throw GenerateInvokeException(cloneResult);
                 }
 
                 if (!GitHandler.TryRun(config, $"sparse-checkout init", out var sparseInitResult))
                 {
-                    // TODO: handle exception here
+                    throw GenerateInvokeException(sparseInitResult);
                 }
 
                 CheckoutRepoAtConfig(config);
@@ -214,7 +217,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         #region code repo interactions
         /// <summary>
-        /// 
+        /// Parses a configuration assets.json into a strongly typed representation of the same. A GitAssetConfiguration is used to describe work throughout the GitStore.
         /// </summary>
         /// <param name="assetsJsonPath"></param>
         /// <returns></returns>
@@ -259,7 +262,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Reaches out to a git repo and resolves the default branch
+        /// Reaches out to a git repo and resolves the name of the default branch.
         /// </summary>
         /// <param name="config">A valid and populated GitAssetsConfiguration generated from a assets.json.</param>
         /// <returns>The default branch</returns>
@@ -303,7 +306,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             GitHandler.TryRun(config, $"rev-parse \"origin/{config.AssetsRepoBranch}\"", out var commandResult);
 
-            switch (commandResult.ReturnCode)
+            switch (commandResult.ExitCode)
             {
                 case 0:   // there is indeed a branch that exists with that name
                     return config.AssetsRepoBranch;

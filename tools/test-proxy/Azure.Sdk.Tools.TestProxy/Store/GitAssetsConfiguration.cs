@@ -38,10 +38,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <summary>
         /// The location of the assets repo for this config.
         /// </summary>
-        public string AssetsRepoLocation { get
-            {
-                return ResolveAssetRepoLocation(true);
-            }
+        public string AssetsRepoLocation
+        { 
+            get { return ResolveAssetRepoLocation(autoCreate: true); }
         }
 
         /// <summary>

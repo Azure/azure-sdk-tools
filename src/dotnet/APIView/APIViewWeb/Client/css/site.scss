@@ -405,6 +405,12 @@ code {
     white-space: pre;
 }
 
+.code-inner-indent {
+    margin-left: 25px;
+    border-left: 1px dashed #dee2e6;
+    padding-bottom: 0.45rem;
+}
+
 .code-added {
     background-color: #e6ffed;
 }
@@ -509,24 +515,11 @@ code {
 }
 
 .line-number {
-    width: 1%;
-    min-width: 50px;
     padding-left: 10px;
     padding-right: 12px;
     text-align: right;
     white-space: nowrap;
-    cursor: pointer;
-    vertical-align: top;
-    border-right: 1px solid #DEE2E6;
-    background-color: white;
-    z-index:1;
-    position: sticky;
-    left: 0;
-    color: $pale-green;
-}
-
-.line-number-hidden {
-    display: none;
+    width: auto;
 }
 
 .line-comment-button:hover {
@@ -534,11 +527,9 @@ code {
 }
 
 .line-comment-button {
-    position: relative;
-    z-index: 5;
-    float: right;
-    width: 22px;
-    height: 22px;
+    display: inline-block;
+    width: 21px;
+    height: 21px;
     line-height: 21px;
     color: #fff !important;
     text-align: center;
@@ -552,8 +543,6 @@ code {
     transition: transform .1s ease-in-out;
     transform: scale(.8);
     user-select: none;
-    text-decoration: none;
-    left: 21px;
 }
 
 .line-comment-button-cell {
@@ -562,6 +551,39 @@ code {
     white-space: normal;
     positon: sticky;
     left: 0px;
+}
+
+.line-details-button-cell {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+}
+
+.line-details {
+    border-right: 1px solid;
+    border-right: 1px solid #DEE2E6;
+    background-color: white;
+    color: darkcyan;
+    z-index:1;
+    position: sticky;
+    left: 0;
+    cursor: pointer;
+    width: 1%;
+    white-space: nowrap;
+}
+
+.line-details table {
+    width: 100%;
+}
+
+.line-details td {
+    vertical-align: middle;
+}
+
+.line-details td i{
+    position: relative;
+    left: 6px;
 }
 
 .login-button {
@@ -697,4 +719,13 @@ mark {
 
 .rounded-1 {
     border-radius: 3px !important;
+}
+
+.row-fold-elipsis {
+    margin-left: 8px;
+}
+
+.row-fold-elipsis i {
+    position: relative;
+    top: 2px;
 }

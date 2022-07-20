@@ -7,11 +7,15 @@ namespace ApiView
     {
         public string DisplayString { get; }
         public string ElementId { get; }
+        public string LineClass { get; }
+        public int IndentSize { get; }
 
-        public CodeLine(string html, string id)
+        public CodeLine(string html, string id, string lineClass, int indentSize = 0)
         {
             this.DisplayString = html;
             this.ElementId = id;
+            this.LineClass = lineClass;
+            this.IndentSize = indentSize;
         }
 
         public override string ToString()

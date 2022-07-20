@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
                 var assemblyVersion = assembly.GetName().Version;
 
-                Console.WriteLine($"Built from ${assemblyVersion.Major}.${assemblyVersion.Minor}.${assemblyVersion.Build}-dev.{semanticVersion}");
+                Console.WriteLine($"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}-dev.{semanticVersion}");
 
                 Environment.Exit(0);
             }

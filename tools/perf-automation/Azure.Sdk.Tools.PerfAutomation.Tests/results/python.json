@@ -1,0 +1,1106 @@
+[
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-11T11:03:47.4712877+00:00",
+    "End": "2022-07-11T11:05:12.8362394+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "12.8.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 412,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 407.26,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 411.76,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 417.36,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 411.94,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 407.26,
+    "OperationsPerSecondMean": 412.064,
+    "OperationsPerSecondMedian": 411.94,
+    "OperationsPerSecondMax": 417.36
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-11T11:05:12.8363227+00:00",
+    "End": "2022-07-11T11:10:35.6061167+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "12.8.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 8.79,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 8.49,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 5.13,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 7.48,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 8.45,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 5.13,
+    "OperationsPerSecondMean": 7.668000000000001,
+    "OperationsPerSecondMedian": 8.45,
+    "OperationsPerSecondMax": 8.79
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-11T11:10:35.6061397+00:00",
+    "End": "2022-07-11T11:23:03.5009751+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "12.8.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.08,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.08,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.08,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.08,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.08,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.08,
+    "OperationsPerSecondMean": 0.08,
+    "OperationsPerSecondMedian": 0.08,
+    "OperationsPerSecondMax": 0.08
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-11T11:23:03.5009858+00:00",
+    "End": "2022-07-11T11:44:15.9816047+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "12.8.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.14,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.14,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.12,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.14,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.15,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.12,
+    "OperationsPerSecondMean": 0.138,
+    "OperationsPerSecondMedian": 0.14,
+    "OperationsPerSecondMax": 0.15
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-11T11:44:15.9816608+00:00",
+    "End": "2022-07-11T11:45:39.3045082+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "UploadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "12.8.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 208.97,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 212.57,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 212.74,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 210.39,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 213.32,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 208.97,
+    "OperationsPerSecondMean": 211.598,
+    "OperationsPerSecondMedian": 212.57,
+    "OperationsPerSecondMax": 213.32
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-11T11:45:39.3045207+00:00",
+    "End": "2022-07-11T11:50:22.0600598+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "UploadTest",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "12.8.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 5.37,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 5.42,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 4.78,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 4.43,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 5.53,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 4.43,
+    "OperationsPerSecondMean": 5.106,
+    "OperationsPerSecondMedian": 5.37,
+    "OperationsPerSecondMax": 5.53
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-11T11:50:22.060071+00:00",
+    "End": "2022-07-11T12:02:45.3563152+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "UploadTest",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "12.8.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.06,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.02,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.04,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.02,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.06,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.02,
+    "OperationsPerSecondMean": 0.039999999999999994,
+    "OperationsPerSecondMedian": 0.04,
+    "OperationsPerSecondMax": 0.06
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-11T12:02:45.3563407+00:00",
+    "End": "2022-07-11T12:24:58.5446399+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "UploadTest",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "12.8.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.11,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.14,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.12,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.15,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+        },
+        "OperationsPerSecond": 0.14,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.11,
+    "OperationsPerSecondMean": 0.132,
+    "OperationsPerSecondMedian": 0.14,
+    "OperationsPerSecondMax": 0.15
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-11T12:25:14.6295787+00:00",
+    "End": "2022-07-11T12:26:38.1234864+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 412.25,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 416.78,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 413.02,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 413.41,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 414.83,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 412.25,
+    "OperationsPerSecondMean": 414.058,
+    "OperationsPerSecondMedian": 413.41,
+    "OperationsPerSecondMax": 416.78
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-11T12:26:38.1236442+00:00",
+    "End": "2022-07-11T12:31:25.2654019+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 8.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 8.32,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 9.02,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 9.34,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 8.09,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 8.09,
+    "OperationsPerSecondMean": 8.654,
+    "OperationsPerSecondMedian": 8.5,
+    "OperationsPerSecondMax": 9.34
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-11T12:31:25.2655652+00:00",
+    "End": "2022-07-11T12:44:44.3408194+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.08,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.09,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.06,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.08,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.08,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.06,
+    "OperationsPerSecondMean": 0.078,
+    "OperationsPerSecondMedian": 0.08,
+    "OperationsPerSecondMax": 0.09
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-11T12:44:44.3408279+00:00",
+    "End": "2022-07-11T13:04:43.7579708+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.12,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.14,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.12,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.12,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.1,
+    "OperationsPerSecondMean": 0.12,
+    "OperationsPerSecondMedian": 0.12,
+    "OperationsPerSecondMax": 0.14
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-11T13:04:43.7579969+00:00",
+    "End": "2022-07-11T13:06:09.8279117+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "UploadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 210.36,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 209.21,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 114.88,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 115.75,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 213.38,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 114.88,
+    "OperationsPerSecondMean": 172.716,
+    "OperationsPerSecondMedian": 209.21,
+    "OperationsPerSecondMax": 213.38
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-11T13:06:09.8279236+00:00",
+    "End": "2022-07-11T13:09:37.9783845+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "UploadTest",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 4.65,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 5.29,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 14.18,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 7.47,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 13.87,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 4.65,
+    "OperationsPerSecondMean": 9.092,
+    "OperationsPerSecondMedian": 7.47,
+    "OperationsPerSecondMax": 14.18
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-11T13:09:37.9783952+00:00",
+    "End": "2022-07-11T13:21:21.0385136+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "UploadTest",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.06,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.07,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.07,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.07,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.07,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.06,
+    "OperationsPerSecondMean": 0.068,
+    "OperationsPerSecondMedian": 0.07,
+    "OperationsPerSecondMax": 0.07
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-11T13:21:21.0385221+00:00",
+    "End": "0001-01-01T00:00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-file-share",
+    "LanguageTestName": "UploadTest",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-file-share",
+    "PackageVersions": {
+      "azure-storage-file-share": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.13,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.13,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.12,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.15,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+        },
+        "OperationsPerSecond": 0.13,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.12,
+    "OperationsPerSecondMean": 0.132,
+    "OperationsPerSecondMedian": 0.13,
+    "OperationsPerSecondMax": 0.15
+  }
+]

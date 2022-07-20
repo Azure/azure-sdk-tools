@@ -1944,7 +1944,7 @@ def register(linter):
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
-    linter.register_checker(CheckDocstringParameters(linter))
+    # linter.register_checker(CheckDocstringParameters(linter))
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))

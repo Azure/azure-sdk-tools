@@ -208,12 +208,6 @@ Services:
       Python: ListBlobsTest
       Cpp: ListBlob
 
-  - Test: create-clients
-    Arguments:
-    - --warmup 0 --duration 1
-    TestNames:
-      Net: CreateClients
-
   - Test: download-sas-http-client
     Arguments:
     - --size 10240 --parallel 256

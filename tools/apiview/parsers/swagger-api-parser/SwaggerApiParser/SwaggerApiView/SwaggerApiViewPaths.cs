@@ -82,15 +82,16 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
-        ret.Add(TokenSerializer.FoldableContentStart());
 
         foreach (var (key, value) in this)
         {
             ret.Add(TokenSerializer.Intent(context.intent));
             context.IteratorPath.Add(key);
-            ret.Add(TokenSerializer.NavigableToken(key, CodeFileTokenKind.TypeName, context.IteratorPath.CurrentPath()));
+            ret.Add(TokenSerializer.NavigableToken(key, CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
+            
+            ret.Add(TokenSerializer.FoldableContentStart());
             var idx = 0;
             foreach (var operation in value)
             {
@@ -105,11 +106,10 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
                 context.IteratorPath.PopMulti(3);
                 idx += 1;
             }
+            ret.Add(TokenSerializer.FoldableContentEnd());
 
             context.IteratorPath.Pop();
         }
-        ret.Add(TokenSerializer.FoldableContentEnd());
-
         return ret.ToArray();
     }
 }

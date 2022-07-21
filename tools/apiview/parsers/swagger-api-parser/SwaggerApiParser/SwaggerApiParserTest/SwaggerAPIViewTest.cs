@@ -87,6 +87,22 @@ public class SwaggerApiViewTest
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
     }
+    
+    [Fact]
+    public async Task TestDeviceUpdate()
+    {
+        const string petStoreFilePath = "./fixtures/deviceupdate.json";
+        var petStoreSwaggerSpec = await SwaggerDeserializer.Deserialize(petStoreFilePath);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.DeviceUpdate", "Microsoft.DeviceUpdate");
+        root.AddSwaggerSpec(petStoreSwaggerSpec, Path.GetFullPath(petStoreFilePath), "Microsoft.DeviceUpdate");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./deviceupdate_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
 
 
     [Fact]

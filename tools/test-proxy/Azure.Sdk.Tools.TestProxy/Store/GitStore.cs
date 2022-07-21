@@ -1,5 +1,4 @@
 using System.IO;
-using Azure.Sdk.Tools.TestProxy.Common;
 using System.Net;
 using System;
 using System.Text.Json;
@@ -9,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Linq;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -67,61 +67,34 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 if (onLatestSHA)
                 {
-                    if (!GitHandler.TryRun(config, $"checkout -b {config.AssetsRepoBranch}", out CommandResult checkoutResult))
+                    try
                     {
-                        throw GenerateInvokeException(checkoutResult);
+                        GitHandler.Run(config, $"branch {config.AssetsRepoBranch}");
+                        GitHandler.Run(config, $"checkout {config.AssetsRepoBranch}");
+                        GitHandler.Run(config, $"add -A .");
+                        GitHandler.Run(config, $"commit -m \"Automatic asset update from test-proxy.\"");
+                        GitHandler.Run(config, $"push origin {config.AssetsRepoBranch}");
                     }
-
-                    if (!GitHandler.TryRun(config, $"add -A .", out CommandResult addResult))
+                    catch(GitProcessException e)
                     {
-                        throw GenerateInvokeException(addResult);
-                    }
-
-                    if (!GitHandler.TryRun(config, $"commit -m \"Automatic asset update from test-proxy.\"", out CommandResult commitResult))
-                    {
-                        throw GenerateInvokeException(commitResult);
-                    }
-
-                    if (!GitHandler.TryRun(config, $"push origin {config.AssetsRepoBranch}", out CommandResult pushResult))
-                    {
-                        throw GenerateInvokeException(pushResult);
+                        throw GenerateInvokeException(e.Result);
                     }
                 }
                 else
                 {
-                    if (!GitHandler.TryRun(config, $"stash", out CommandResult stashResult))
+                    try
                     {
-                        throw GenerateInvokeException(stashResult);
+                        GitHandler.Run(config, $"stash");
+                        GitHandler.Run(config, $"fetch origin {config.AssetsRepoBranch}");
+                        GitHandler.Run(config, $"checkout {config.AssetsRepoBranch}");
+                        GitHandler.Run(config, $"stash pop");
+                        GitHandler.Run(config, $"add -A .");
+                        GitHandler.Run(config, $"commit -m \"Automatic asset update from test-proxy.\"");
+                        GitHandler.Run(config, $"push origin {config.AssetsRepoBranch}");
                     }
-
-                    if (!GitHandler.TryRun(config, $"fetch origin {config.AssetsRepoBranch}", out CommandResult fetchResult))
+                    catch (GitProcessException e)
                     {
-                        throw GenerateInvokeException(fetchResult);
-                    }
-
-                    if (!GitHandler.TryRun(config, $"checkout {config.AssetsRepoBranch}", out CommandResult checkoutResult))
-                    {
-                        throw GenerateInvokeException(checkoutResult);
-                    }
-
-                    if (!GitHandler.TryRun(config, $"stash pop", out CommandResult stashPopResult))
-                    {
-                        throw GenerateInvokeException(stashPopResult);
-                    }
-
-                    if (!GitHandler.TryRun(config, $"add -A .", out CommandResult addResult))
-                    {
-                        throw GenerateInvokeException(addResult);
-                    }
-
-                    if (!GitHandler.TryRun(config, $"commit -m \"Automatic asset update from test-proxy.\"", out CommandResult commitResult))
-                    {
-                        throw GenerateInvokeException(commitResult);
-                    }
-
-                    if (!GitHandler.TryRun(config, $"push origin {config.AssetsRepoBranch}", out CommandResult pushResult))
-                    {
-                        throw GenerateInvokeException(pushResult);
+                        throw GenerateInvokeException(e.Result);
                     }
                 }
             }
@@ -168,14 +141,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (allowReset)
             {
-                if (!GitHandler.TryRun(config, "checkout *", out var checkoutResult))
+                try
                 {
-                    throw GenerateInvokeException(checkoutResult);
-                };
-
-                if (!GitHandler.TryRun(config, "git clean -xdf", out var cleanResult))
+                    GitHandler.Run(config, "checkout *");
+                    GitHandler.Run(config, "git clean -xdf");
+                }
+                catch(GitProcessException e)
                 {
-                    throw GenerateInvokeException(cleanResult);
+                    throw GenerateInvokeException(e.Result);
                 }
 
                 if (!string.IsNullOrWhiteSpace(config.SHA))
@@ -226,14 +199,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var checkoutPaths = ResolveCheckoutPaths(config);
 
-            if (!GitHandler.TryRun(config, $"sparse-checkout set {checkoutPaths}", out var sparseSetResult))
+            try
             {
-                throw GenerateInvokeException(sparseSetResult);
+                GitHandler.Run(config, $"sparse-checkout set {checkoutPaths}");
+                GitHandler.Run(config, $"checkout {config.SHA}");
             }
-
-            if (!GitHandler.TryRun(config, $"checkout {config.SHA}", out var checkoutResult))
+            catch(GitProcessException e)
             {
-                throw GenerateInvokeException(checkoutResult);
+                throw GenerateInvokeException(e.Result);
             }
         }
 
@@ -258,18 +231,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (!initialized)
             {
-                if (!GitHandler.TryRun(config, $"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .", out var cloneResult))
+                try
                 {
-                    throw GenerateInvokeException(cloneResult);
+                    GitHandler.Run(config, $"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .");
+                    GitHandler.Run(config, $"sparse-checkout init");
                 }
-
-                if (!GitHandler.TryRun(config, $"sparse-checkout init", out var sparseInitResult))
+                catch(GitProcessException e)
                 {
-                    throw GenerateInvokeException(sparseInitResult);
+                    throw GenerateInvokeException(e.Result);
                 }
 
                 CheckoutRepoAtConfig(config);
-
                 workCompleted = true;
             }
 

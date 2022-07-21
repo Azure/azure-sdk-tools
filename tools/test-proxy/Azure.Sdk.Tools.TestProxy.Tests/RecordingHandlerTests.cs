@@ -20,6 +20,7 @@ using Microsoft.Extensions.Primitives;
 using Xunit;
 using Azure.Core;
 using System.Runtime.InteropServices;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {

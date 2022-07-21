@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using NuGet.DependencyResolver;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -35,6 +37,62 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             startInfo.EnvironmentVariables["PATH"] = Environment.GetEnvironmentVariable("PATH");
 
             return startInfo;
+        }
+
+        /// <summary>
+        /// Invokes a git command. If it fails in any way, throws GitProcessException. Otherwise returns the result of the git invocation.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="arguments"></param>
+        /// <returns></returns>
+        /// <exception cref="GitProcessException">Throws GitProcessException on returnCode != 0 OR if an unexpected exception is thrown during invocation.</exception>
+        public virtual CommandResult Run(GitAssetsConfiguration config, string arguments)
+        {
+            ProcessStartInfo processStartInfo = CreateGitProcessInfo(config);
+            processStartInfo.Arguments = arguments;
+
+            CommandResult result = new CommandResult()
+            {
+                Arguments = arguments
+            };
+
+            try
+            {
+                DebugLogger.LogInformation($"git {arguments}");
+                var process = Process.Start(processStartInfo);
+                string stdOut = process.StandardOutput.ReadToEnd();
+                string stdErr = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+
+                int returnCode = process.ExitCode;
+
+                DebugLogger.LogDebug($"StdOut: {stdOut}");
+                DebugLogger.LogDebug($"StdErr: {stdErr}");
+                DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+
+                result.ExitCode = process.ExitCode;
+                result.StdErr = stdErr;
+                result.StdOut = stdOut;
+
+
+                if (result.ExitCode == 0){
+                    return result;
+                }
+                else
+                {
+                    throw new GitProcessException(result);
+                }
+            }
+            catch (Exception e)
+            {
+                DebugLogger.LogDebug(e.Message);
+
+                result.ExitCode = -1;
+                result.CommandException = e;
+
+                throw new GitProcessException(result);
+            }
         }
 
         /// <summary>
@@ -89,6 +147,5 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             return true;
         }
-
     }
 }

@@ -1,7 +1,7 @@
 using System.IO;
-using Azure.Sdk.Tools.TestProxy.Common;
 using System.Net;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {

@@ -40,18 +40,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         public string AssetsRepoLocation
         { 
-            get { return ResolveAssetRepoLocation(autoCreate: true); }
+            get { return ResolveAssetRepoLocation(); }
         }
 
         /// <summary>
         /// Used to resolve the location of the "assets" store location. This is the folder CONTAINING other cloned repos. No git data will be restored or staged directly within this folder.
         /// </summary>
-        /// <param name="autoCreate"></param>
         /// <returns></returns>
-        public string ResolveAssetsStoreLocation(bool autoCreate = true)
+        public string ResolveAssetsStoreLocation()
         {
             var location = Environment.GetEnvironmentVariable("PROXY_ASSETS_FOLDER") ?? Path.Join(RepoRoot, ".assets");
-            if (!Directory.Exists(location) && autoCreate)
+            if (!Directory.Exists(location))
             {
                 Directory.CreateDirectory(location);
             }
@@ -62,16 +61,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <summary>
         /// Resolves the location of the actual folder containing a cloned repository WITHIN the asset store. Git data will be stored directly within this directory.
         /// </summary>
-        /// <param name="autoCreate"></param>
         /// <returns></returns>
-        public string ResolveAssetRepoLocation(bool autoCreate = true)
+        public string ResolveAssetRepoLocation()
         {
-            var assetsStore = ResolveAssetsStoreLocation(autoCreate: autoCreate);
+            var assetsStore = ResolveAssetsStoreLocation();
 
             var hash = Convert.ToHexString(SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(AssetsJsonRelativeLocation)));
 
             var location = Path.Join(assetsStore, AssetsRepo.Replace("/", "-"), hash);
-            if (!Directory.Exists(location) && autoCreate)
+            if (!Directory.Exists(location))
             {
                 Directory.CreateDirectory(location);
             }
@@ -86,7 +84,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public bool IsAssetsRepoInitialized(bool autoCreate = true)
         {
-            var location = Path.Join(ResolveAssetRepoLocation(autoCreate: autoCreate), ".git");
+            var location = Path.Join(ResolveAssetRepoLocation(), ".git");
 
             return Directory.Exists(location);
         }

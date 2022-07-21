@@ -167,7 +167,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var message = $"Invocation of \"git {result.Arguments}\" had a non-zero exit code {result.ExitCode}.\nStdOut: {result.StdOut}\nStdErr: {result.StdErr}\n";
 
-            return new HttpException(HttpStatusCode.BadRequest, message);
+            return new HttpException(HttpStatusCode.InternalServerError, message);
         }
 
         /// <summary>

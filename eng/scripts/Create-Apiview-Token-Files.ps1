@@ -38,5 +38,5 @@ if ($reviews -ne $null)
 else
 {
     Write-Host "Invalid Input review details Json $($ReviewDetailsJson)"
-    return 1;
+    exit 1;
 }

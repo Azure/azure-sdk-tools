@@ -608,6 +608,12 @@ The `test-proxy` optionally offers integration with other git repositories for *
 
 In the context of a `monorepo`, this means that we store FAR less data per feature.
 
+The test-proxy is an excellent place to integrate external data, as packages within the azure-sdk that have moved to leverage it only pass it a single key when loading a recording. That key is passed in the `x-recording-file` header during a POST to `/Playback/Start/`.
+
+This header will contain a value of where the test framework "expects" the recording to be located, expressed as a relative path. EG `tests/SessionRecords/recording1.json`.
+
+The combination of the the `assets.json` context and this relative path will allow the test-proxy to restore a set of recordings to a path, then _load_ the recording from that newly gathered data. The path to the recording file within the external assets repo can be _predictably_ calculated and retrieved given just the location of the `assets.json` within the code repo, the requested file name during playback or record start, and the properties within the assets.json itself. The diagram above has colors to show how the paths are used in context.
+
 ### The `assets.json` and how it enables external recordings
 
 An `assets.json` contains _targeting_ information for use by the test-proxy when restoring (or updating) recordings "below" a specific path.
@@ -628,7 +634,7 @@ An `assets.json` takes the form:
 | Property | Description |
 |---|---|
 | AssetsRepo | The full name of the external github repo storing the data. EG: `Azure/azure-sdk-assets` |
-| AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. Populate this property with that pathm EG: `python/recordings`. |
+| AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. Populate this property with that path. EG: `python/recordings`. |
 | AssetsRepoBranch | The branch within the assets repo that your updated recordings will be pushed to. |
 | SHA | The reference SHA the recordings that should be restored from the assets repository. |
 

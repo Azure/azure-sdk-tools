@@ -1,11 +1,11 @@
-### original apiView url
+## Current Swagger APIView
 
 [deviceUpdateAPIView](https://apiviewstaging.azurewebsites.net/Assemblies/Review/c357901b037a46d4a3edc8e6cecdbb03)
 
-### group by url
+### 1. group by url
 
 ![](./images/currentPathView.png)
-
-### expand method
+g
+### 2. expand get method
 
 ![](./images/currentOperationView.png)

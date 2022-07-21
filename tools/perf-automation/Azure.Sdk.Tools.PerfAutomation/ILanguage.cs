@@ -9,5 +9,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
         Task<(string output, string error, string context)> SetupAsync(string project, string languageVersion, IDictionary<string, string> packageVersions);
         Task<IterationResult> RunAsync(string project, string languageVersion, IDictionary<string, string> packageVersions, string testName, string arguments, string context);
         Task CleanupAsync(string project);
+        IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions);
     }
 }

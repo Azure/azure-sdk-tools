@@ -19,7 +19,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 14397.45,
         "StandardOutput": "",
@@ -28,7 +32,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 13524.26,
         "StandardOutput": "",
@@ -37,7 +45,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 14962.98,
         "StandardOutput": "",
@@ -46,7 +58,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 14998.55,
         "StandardOutput": "",
@@ -55,7 +71,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 13642.44,
         "StandardOutput": "",
@@ -88,7 +108,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 160.38,
         "StandardOutput": "",
@@ -97,7 +121,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 166.8,
         "StandardOutput": "",
@@ -106,7 +134,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 164.1,
         "StandardOutput": "",
@@ -115,7 +147,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 161.43,
         "StandardOutput": "",
@@ -124,7 +160,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 161.63,
         "StandardOutput": "",
@@ -157,7 +197,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.1,
         "StandardOutput": "",
@@ -166,7 +210,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.11,
         "StandardOutput": "",
@@ -175,7 +223,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.1,
         "StandardOutput": "",
@@ -184,7 +236,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.1,
         "StandardOutput": "",
@@ -193,7 +249,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.11,
         "StandardOutput": "",
@@ -226,7 +286,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.85,
         "StandardOutput": "",
@@ -235,7 +299,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.83,
         "StandardOutput": "",
@@ -244,7 +312,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.86,
         "StandardOutput": "",
@@ -253,7 +325,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.81,
         "StandardOutput": "",
@@ -262,7 +338,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.88,
         "StandardOutput": "",
@@ -295,7 +375,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 12541.48,
         "StandardOutput": "",
@@ -304,7 +388,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 12786.13,
         "StandardOutput": "",
@@ -313,7 +401,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 12867.9,
         "StandardOutput": "",
@@ -322,7 +414,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 13373.45,
         "StandardOutput": "",
@@ -331,7 +427,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 13425.91,
         "StandardOutput": "",
@@ -364,7 +464,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 76.91,
         "StandardOutput": "",
@@ -373,7 +477,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 76.55,
         "StandardOutput": "",
@@ -382,7 +490,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 78.76,
         "StandardOutput": "",
@@ -391,7 +503,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 76.73,
         "StandardOutput": "",
@@ -400,7 +516,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 80.93,
         "StandardOutput": "",
@@ -433,7 +553,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.09,
         "StandardOutput": "",
@@ -442,7 +566,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.09,
         "StandardOutput": "",
@@ -451,7 +579,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.09,
         "StandardOutput": "",
@@ -460,7 +592,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.09,
         "StandardOutput": "",
@@ -469,7 +605,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.09,
         "StandardOutput": "",
@@ -502,7 +642,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.55,
         "StandardOutput": "",
@@ -511,7 +655,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.64,
         "StandardOutput": "",
@@ -520,7 +668,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.6,
         "StandardOutput": "",
@@ -529,7 +681,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.64,
         "StandardOutput": "",
@@ -538,7 +694,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+          "Azure.Core": "1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6",
+          "Azure.Storage.Common": "12.11.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.61,
         "StandardOutput": "",
@@ -571,7 +731,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 16179.54,
         "StandardOutput": "",
@@ -580,7 +744,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 15209.52,
         "StandardOutput": "",
@@ -589,7 +757,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 16100.35,
         "StandardOutput": "",
@@ -598,7 +770,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 16153.63,
         "StandardOutput": "",
@@ -607,7 +783,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 16317.03,
         "StandardOutput": "",
@@ -640,7 +820,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 162.99,
         "StandardOutput": "",
@@ -649,7 +833,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 165.65,
         "StandardOutput": "",
@@ -658,7 +846,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 162.42,
         "StandardOutput": "",
@@ -667,7 +859,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 162.95,
         "StandardOutput": "",
@@ -676,7 +872,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 166.49,
         "StandardOutput": "",
@@ -709,7 +909,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.1,
         "StandardOutput": "",
@@ -718,7 +922,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.1,
         "StandardOutput": "",
@@ -727,7 +935,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.1,
         "StandardOutput": "",
@@ -736,7 +948,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.11,
         "StandardOutput": "",
@@ -745,7 +961,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.12,
         "StandardOutput": "",
@@ -778,7 +998,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.84,
         "StandardOutput": "",
@@ -787,7 +1011,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.85,
         "StandardOutput": "",
@@ -796,7 +1024,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.89,
         "StandardOutput": "",
@@ -805,7 +1037,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.88,
         "StandardOutput": "",
@@ -814,7 +1050,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.84,
         "StandardOutput": "",
@@ -847,7 +1087,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 15008.36,
         "StandardOutput": "",
@@ -856,7 +1100,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 14669.41,
         "StandardOutput": "",
@@ -865,7 +1113,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 14746.2,
         "StandardOutput": "",
@@ -874,7 +1126,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 14854.8,
         "StandardOutput": "",
@@ -883,7 +1139,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 14749.12,
         "StandardOutput": "",
@@ -916,7 +1176,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 143,
         "StandardOutput": "",
@@ -925,7 +1189,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 143.09,
         "StandardOutput": "",
@@ -934,7 +1202,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 142.76,
         "StandardOutput": "",
@@ -943,7 +1215,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 143,
         "StandardOutput": "",
@@ -952,7 +1228,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 142.59,
         "StandardOutput": "",
@@ -985,7 +1265,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.09,
         "StandardOutput": "",
@@ -994,7 +1278,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.08,
         "StandardOutput": "",
@@ -1003,7 +1291,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.09,
         "StandardOutput": "",
@@ -1012,7 +1304,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.09,
         "StandardOutput": "",
@@ -1021,7 +1317,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.09,
         "StandardOutput": "",
@@ -1054,7 +1354,11 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.7,
         "StandardOutput": "",
@@ -1063,7 +1367,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.69,
         "StandardOutput": "",
@@ -1072,7 +1380,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.68,
         "StandardOutput": "",
@@ -1081,7 +1393,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.68,
         "StandardOutput": "",
@@ -1090,7 +1406,11 @@
       },
       {
         "PackageVersions": {
-          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
+          "Azure.Core": "1.26.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Common": "12.12.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Storage.Files.Shares.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d",
+          "Azure.Test.Perf": "1.0.0-alpha.20220708.1+f9604b584eadeaa9dcd188056c0d63f449ed602d"
         },
         "OperationsPerSecond": 0.54,
         "StandardOutput": "",

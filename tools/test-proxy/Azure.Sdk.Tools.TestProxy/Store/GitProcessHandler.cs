@@ -1,7 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Net;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
@@ -36,6 +35,25 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             startInfo.EnvironmentVariables["PATH"] = Environment.GetEnvironmentVariable("PATH");
 
             return startInfo;
+        }
+
+        /// <summary>
+        /// Invokes a git command. If it fails in any way, throws GitProcessException. Otherwise returns the result of the git invocation.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="inputCommands"></param>
+        /// <returns>A list of command results. One can assume success in all of them unless an exception has been thrown</returns>
+        /// <exception cref="GitProcessException">Throws GitProcessException on returnCode != 0 OR if an unexpected exception is thrown during invocation.</exception>
+        public virtual IEnumerable<CommandResult> Run(GitAssetsConfiguration config, params string[] inputCommands)
+        {
+            List<CommandResult> results = new List<CommandResult>();
+
+            foreach (var inputCommand in inputCommands)
+            {
+                results.Add(Run(inputCommand, config));
+            }
+
+            return results;
         }
 
         /// <summary>

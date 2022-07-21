@@ -1921,9 +1921,9 @@ class BlockedImport(BaseChecker):
     take a `azure.core.pipeline.Pipeline` as input to make requests.
     """
     name = "blocked-import"
-    priority = -1  # what is this?
+    priority = -1
     msgs = {
-        "W9992": (
+        "C4749": (
             "This import is not allowed. Consider importing an abstract"
             " alternative from `azure.core`",
             "blocked-import",

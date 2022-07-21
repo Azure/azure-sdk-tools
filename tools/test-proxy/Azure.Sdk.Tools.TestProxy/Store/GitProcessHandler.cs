@@ -4,7 +4,6 @@ using System.IO;
 using System.Net;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
-using NuGet.DependencyResolver;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {

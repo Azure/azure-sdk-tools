@@ -5,7 +5,7 @@
 ### 1. group by url
 
 ![](./images/currentPathView.png)
-g
+
 ### 2. expand get method
 
 ![](./images/currentOperationView.png)

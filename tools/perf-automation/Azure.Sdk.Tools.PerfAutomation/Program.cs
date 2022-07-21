@@ -499,7 +499,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     var versionRows = new List<IList<string>>();
 
                     // Primary package first, core second, remaining sorted alphabetically
-                    var packageNames = requested.Keys.Concat(runtime?.Keys)
+                    var packageNames = requested.Keys.Concat(runtime?.Keys ?? Enumerable.Empty<string>())
                         .Distinct()
                         .OrderBy(n => (n == primaryPackage) ? $"__{n}" : 
                             (n.Contains("core", StringComparison.OrdinalIgnoreCase) ? $"_{n}" : n));

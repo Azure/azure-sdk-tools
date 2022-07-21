@@ -107,20 +107,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // "npm list" may fail with exit code 1, but it succeeds enough to print the versions we care about
             var npmListResult = await Util.RunAsync("npm", "list", projectDirectory, throwOnError: false);
 
-            foreach (var line in npmListResult.StandardOutput.ToLines().Where(l => l.Contains("@azure")))
-            {
-                outputBuilder.AppendLine(line);
-            }
-
-            var runtimePackageVersions = new Dictionary<string, string>(packageVersions.Count);
-            foreach (var package in packageVersions.Keys)
-            {
-                // Package: +-- @azure/storage-blob@12.4.1 -> js\common\temp\node_modules\.pnpm\@azure\storage-blob@12.4.1\node_modules\@azure\storage-blob
-                // Source:  +-- @azure/storage-blob@12.5.0-beta.2 -> \js\sdk\storage\storage-blob
-                var versionMatch = Regex.Match(npmListResult.StandardOutput, @$"{package}@(.*)$", RegexOptions.Multiline);
-                runtimePackageVersions[package] = versionMatch.Groups[1].Value.Trim();
-            }
-
             // 1. cd project
             // 2. npm run perf-test:node -- testName arguments
 
@@ -137,11 +123,46 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             return new IterationResult
             {
-                PackageVersions = runtimePackageVersions,
+                PackageVersions = GetRuntimePackageVersions(testResult.StandardOutput),
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = outputBuilder.ToString(),
                 StandardError = errorBuilder.ToString(),
             };
+        }
+
+        // === Versions ===
+        // @azure-tests/perf-storage-blob@1.0.0 /mnt/vss/_work/1/s/sdk/storage/perf-tests/storage-blob
+        // ├── @azure/core-http@2.2.6 -> /mnt/vss/_work/1/s/sdk/core/core-http
+        // ├── @azure/core-rest-pipeline@1.9.1 -> /mnt/vss/_work/1/s/sdk/core/core-rest-pipeline
+        // ├── @azure/storage-blob@12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob
+        // ├── @azure/test-utils-perf@1.0.0 -> /mnt/vss/_work/1/s/sdk/test-utils/perf            
+        public static Dictionary<string, string> GetRuntimePackageVersions(string standardOutput)
+        {
+            var runtimePackageVersions = new Dictionary<string, string>();
+
+            var versionOutputStart = standardOutput.LastIndexOf("=== Versions ===", StringComparison.OrdinalIgnoreCase);
+            if (versionOutputStart == -1)
+            {
+                return runtimePackageVersions;
+            }
+
+            var versionOutput = standardOutput[versionOutputStart..];
+
+            var matches = Regex.Matches(versionOutput, @"(@azure.*?)@(.*)$", RegexOptions.Multiline);
+            foreach (Match match in matches)
+            {
+                runtimePackageVersions.Add(match.Groups[1].Value, match.Groups[2].Value.Trim());
+            }
+
+            return runtimePackageVersions;
+        }
+
+        public override IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions)
+        {
+            return runtimePackageVersions
+                .Where(kvp => !kvp.Key.StartsWith("@azure-tests/", StringComparison.OrdinalIgnoreCase) &&
+                              !kvp.Key.EndsWith("perf", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public override Task CleanupAsync(string project)

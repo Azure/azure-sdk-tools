@@ -1,0 +1,66 @@
+﻿[07:11:30.905] 
+[07:11:30.905] > @azure-tests/perf-storage-blob@1.0.0 perf-test:node /mnt/vss/_work/1/s/sdk/storage/perf-tests/storage-blob
+[07:11:30.905] > npm run build && node dist-esm/index.spec.js "StorageBlobDownloadTest" "--size" "10240" "--parallel" "64"
+[07:11:30.905] 
+[07:11:31.054] 
+[07:11:31.055] > @azure-tests/perf-storage-blob@1.0.0 build /mnt/vss/_work/1/s/sdk/storage/perf-tests/storage-blob
+[07:11:31.055] > npm run clean && tsc -p .
+[07:11:31.055] 
+[07:11:31.205] 
+[07:11:31.205] > @azure-tests/perf-storage-blob@1.0.0 clean /mnt/vss/_work/1/s/sdk/storage/perf-tests/storage-blob
+[07:11:31.205] > rimraf dist dist-* types *.tgz *.log
+[07:11:31.205] 
+[07:11:34.330] === Versions ===
+[07:11:35.140] @azure-tests/perf-storage-blob@1.0.0 /mnt/vss/_work/1/s/sdk/storage/perf-tests/storage-blob
+[07:11:35.140] ├── @azure/core-http@2.2.6 -> /mnt/vss/_work/1/s/sdk/core/core-http
+[07:11:35.140] ├── @azure/core-rest-pipeline@1.9.1 -> /mnt/vss/_work/1/s/sdk/core/core-rest-pipeline
+[07:11:35.140] ├── @azure/storage-blob@12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob
+[07:11:35.140] ├── @azure/test-utils-perf@1.0.0 -> /mnt/vss/_work/1/s/sdk/test-utils/perf
+[07:11:35.140] === Parsed options ===
+[07:11:35.142] ┌──────────────────────────────┬──────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬───────────┬────────────────────────────────┬──────────────┬───────────┐
+[07:11:35.142] │           (index)            │ required │                                                                   description                                                                   │ shortName │            longName            │ defaultValue │   value   │
+[07:11:35.142] ├──────────────────────────────┼──────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼───────────┼────────────────────────────────┼──────────────┼───────────┤
+[07:11:35.142] │             size             │   true   │                                                                 'Size in bytes'                                                                 │   'sz'    │             'size'             │    10240     │   10240   │
+[07:11:35.142] │             help             │          │                                                      'Shows all of the available options'                                                       │    'h'    │             'help'             │              │ undefined │
+[07:11:35.142] │           parallel           │          │                                              'How many of the same test to call at the same time'                                               │    'p'    │           'parallel'           │      1       │    64     │
+[07:11:35.142] │           duration           │          │                                                       'When to stop calling tests at all'                                                       │    'd'    │           'duration'           │      10      │    10     │
+[07:11:35.142] │            warmup            │          │                                                         'Duration of warmup in seconds'                                                         │    'w'    │            'warmup'            │      5       │     5     │
+[07:11:35.142] │          iterations          │          │                                                'Times to repeat the whole process, after warmup'                                                │    'i'    │          'iterations'          │      1       │     1     │
+[07:11:35.142] │          no-cleanup          │          │                                                             'Disables test cleanup'                                                             │           │          'no-cleanup'          │              │ undefined │
+[07:11:35.142] │         test-proxies         │          │                                                 "URIs of TestProxy servers (separated by ';')"                                                  │           │         'test-proxies'         │  undefined   │ undefined │
+[07:11:35.142] │           insecure           │          │                   'Applied when test-proxies option is defined, connects with https(insecurely by disabling SSL validation)'                    │   'ins'   │           'insecure'           │    false     │   false   │
+[07:11:35.142] │     milliseconds-to-log      │          │                                                         'Log frequency in milliseconds'                                                         │   'mtl'   │     'milliseconds-to-log'      │     1000     │   1000    │
+[07:11:35.142] │ list-transitive-dependencies │          │                                      'List all dependencies, instead of only direct ones, before test run'                                      │   'ltd'   │ 'list-transitive-dependencies' │    false     │   false   │
+[07:11:35.142] │             cpus             │          │ 'Number of CPUs to use. Parallel tests will be split evenly across CPUs. Specify 0 to use the number of logical CPUs available on the machine.' │    'c'    │             'cpus'             │      0       │     0     │
+[07:11:35.143] │      use-worker-threads      │          │      'Set to true to use the Node worker_thread API when running tests across multiple CPUs. Set to false to use child_process (default).'      │           │      'use-worker-threads'      │    false     │   false   │
+[07:11:35.143] └──────────────────────────────┴──────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴───────────┴────────────────────────────────┴──────────────┴───────────┘
+[07:11:35.163] Setting number of CPUs to number of CPUs detected on machine (4).
+[07:11:35.180] === Calling globalSetup() once per CPU for (all) the instance(s) of StorageBlobDownloadTest ===
+[07:11:35.615] === Calling setup() for the 64 instantiated StorageBlobDownloadTest tests ===
+[07:11:35.616] === Starting the perf test ===
+[07:11:35.616] 
+[07:11:35.616] === warmup mode, iteration 1. Logs every 1s ===
+[07:11:35.616] ElapsedTime	Current		Total		Average
+[07:11:36.654] 00:01		1097		1097		1125.53
+[07:11:37.687] 00:02		1437		2534		1268.13
+[07:11:38.702] 00:03		1603		4137		1367.10
+[07:11:39.709] 00:04		1686		5823		1438.49
+[07:11:40.644] === warmup mode, results of iteration 1 ===
+[07:11:40.654] Completed 7,405 operations in a weighted-average of 5.00s (1,480.74 ops/s, 0.001 s/op)
+[07:11:40.655] === Starting the perf test ===
+[07:11:40.655] 
+[07:11:40.655] === test mode, iteration 1. Logs every 1s ===
+[07:11:40.659] ElapsedTime	Current		Total		Average
+[07:11:41.674] 00:01		1714		1714		1742.33
+[07:11:42.704] 00:02		1825		3539		1771.62
+[07:11:43.727] 00:03		1902		5441		1802.25
+[07:11:44.743] 00:04		1968		7409		1835.41
+[07:11:45.753] 00:05		2034		9443		1872.18
+[07:11:46.775] 00:06		2049		11492		1896.79
+[07:11:47.801] 00:07		2023		13515		1909.04
+[07:11:48.810] 00:08		2070		15585		1925.89
+[07:11:49.834] 00:09		2045		17630		1937.27
+[07:11:50.670] === test mode, results of iteration 1 ===
+[07:11:50.671] Completed 19,479 operations in a weighted-average of 10.00s (1,948.1 ops/s, 0.001 s/op)
+[07:11:50.672] === Calling cleanup() for the 64 instantiated StorageBlobDownloadTest tests ===
+[07:11:50.673] === Calling globalCleanup() once per CPU for (all) the instance(s) of StorageBlobDownloadTest ===

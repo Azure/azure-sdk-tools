@@ -1,6 +1,6 @@
-﻿2022-07-19T23:50:52.3774805Z [11:50:52.377] [/mnt/vss/_work/1/s] dotnet /mnt/vss/_work/1/s/artifacts/perf/Azure.Storage.Blobs.Perf.dll DownloadBlob --size 10240 --parallel 64
-2022-07-19T23:50:52.5277506Z [11:50:52.527] === Options ===
-2022-07-19T23:50:52.5457791Z [11:50:52.544] {
+﻿[11:50:52.377] [/mnt/vss/_work/1/s] dotnet /mnt/vss/_work/1/s/artifacts/perf/Azure.Storage.Blobs.Perf.dll DownloadBlob --size 10240 --parallel 64
+[11:50:52.527] === Options ===
+[11:50:52.544] {
 [11:50:52.544]   "MaximumTransferSize": null,
 [11:50:52.544]   "InitialTransferSize": null,
 [11:50:52.544]   "MaximumConcurrency": null,

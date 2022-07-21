@@ -28,33 +28,5 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
 
             CollectionAssert.AreEquivalent(expected, actual);
         }
-
-        private static async Task<string> GetResultsSummary(string path, OutputFormat outputFormat)
-        {
-            List<Result> results;
-            using (var stream = File.OpenRead(path))
-            {
-                results = await JsonSerializer.DeserializeAsync<List<Result>>(stream, options: Program.JsonOptions);
-            }
-
-            return await GetResultsSummary(results, outputFormat);
-        }
-
-        private static async Task<string> GetResultsSummary(IEnumerable<Result> results, OutputFormat outputFormat)
-        {
-            using var memoryStream = new MemoryStream();
-
-            using (var streamWriter = new StreamWriter(memoryStream, leaveOpen: true))
-            {
-                await Program.WriteResultsSummary(streamWriter, results, outputFormat);
-            }
-
-            memoryStream.Seek(0, SeekOrigin.Begin);
-
-            using (var streamReader = new StreamReader(memoryStream))
-            {
-                return await streamReader.ReadToEndAsync();
-            }
-        }
-    }
+   }
 }

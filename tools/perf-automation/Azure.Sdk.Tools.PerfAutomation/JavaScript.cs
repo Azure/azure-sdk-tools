@@ -107,10 +107,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // "npm list" may fail with exit code 1, but it succeeds enough to print the versions we care about
             var npmListResult = await Util.RunAsync("npm", "list", projectDirectory, throwOnError: false);
 
-            // 1. cd project
-            // 2. npm run perf-test:node -- testName arguments
-
-            var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",
+            var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} --list-transitive-dependencies {arguments}",
                 projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);
 
             var match = Regex.Match(testResult.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
@@ -159,7 +156,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions)
         {
-            return runtimePackageVersions
+            return runtimePackageVersions?
                 .Where(kvp => !kvp.Key.StartsWith("@azure-tests/", StringComparison.OrdinalIgnoreCase) &&
                               !kvp.Key.EndsWith("perf", StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);

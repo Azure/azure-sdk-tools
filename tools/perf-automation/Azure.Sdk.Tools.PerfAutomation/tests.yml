@@ -178,6 +178,12 @@ Services:
       JS: StorageBlobDownloadTest
       Python: DownloadTest
       Cpp: DownloadBlob
+      
+  - Test: download-file
+    Arguments:
+    - --size 10485760 --parallel 32
+    TestNames:
+      Java: downloadblobtofile
 
   - Test: upload
     Arguments: *storage-sizes
@@ -190,9 +196,11 @@ Services:
 
   - Test: upload-file
     Arguments:
+    - --size 10485760 --parallel 32
     - --size 268435456 --parallel 1 --warmup 30 --duration 30
     - --size 268435456 --parallel 1 --warmup 30 --duration 30 --max-concurrency 8
     TestNames:
+      Java: uploadfromfile
       Python: UploadFromFileTest
 
   - Test: list-blobs

@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                if(!GitHandler.TryRun(config, $"rev-parse origin/{config.AssetsRepoBranch}", out CommandResult result))
+                if(!GitHandler.TryRun($"rev-parse origin/{config.AssetsRepoBranch}", config, out CommandResult result))
                 {
                     // if we have a nonzero exit code, only code 128 is acceptable.
                     if (result.ExitCode != 128)
@@ -69,11 +69,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     try
                     {
-                        GitHandler.Run(config, $"branch {config.AssetsRepoBranch}");
-                        GitHandler.Run(config, $"checkout {config.AssetsRepoBranch}");
-                        GitHandler.Run(config, $"add -A .");
-                        GitHandler.Run(config, $"commit -m \"Automatic asset update from test-proxy.\"");
-                        GitHandler.Run(config, $"push origin {config.AssetsRepoBranch}");
+                        GitHandler.Run($"branch {config.AssetsRepoBranch}", config);
+                        GitHandler.Run($"checkout {config.AssetsRepoBranch}", config);
+                        GitHandler.Run($"add -A .", config);
+                        GitHandler.Run($"commit -m \"Automatic asset update from test-proxy.\"", config);
+                        GitHandler.Run($"push origin {config.AssetsRepoBranch}", config);
                     }
                     catch(GitProcessException e)
                     {
@@ -84,13 +84,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     try
                     {
-                        GitHandler.Run(config, $"stash");
-                        GitHandler.Run(config, $"fetch origin {config.AssetsRepoBranch}");
-                        GitHandler.Run(config, $"checkout {config.AssetsRepoBranch}");
-                        GitHandler.Run(config, $"stash pop");
-                        GitHandler.Run(config, $"add -A .");
-                        GitHandler.Run(config, $"commit -m \"Automatic asset update from test-proxy.\"");
-                        GitHandler.Run(config, $"push origin {config.AssetsRepoBranch}");
+                        GitHandler.Run($"stash", config);
+                        GitHandler.Run($"fetch origin {config.AssetsRepoBranch}", config);
+                        GitHandler.Run($"checkout {config.AssetsRepoBranch}", config);
+                        GitHandler.Run($"stash pop", config);
+                        GitHandler.Run($"add -A .", config);
+                        GitHandler.Run($"commit -m \"Automatic asset update from test-proxy.\"", config);
+                        GitHandler.Run($"push origin {config.AssetsRepoBranch}", config);
                     }
                     catch (GitProcessException e)
                     {
@@ -143,8 +143,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
-                    GitHandler.Run(config, "checkout *");
-                    GitHandler.Run(config, "git clean -xdf");
+                    GitHandler.Run("checkout *", config);
+                    GitHandler.Run("git clean -xdf", config);
                 }
                 catch(GitProcessException e)
                 {
@@ -177,7 +177,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public string[] DetectPendingChanges(GitAssetsConfiguration config)
         {
-            if (!GitHandler.TryRun(config, "status --porcelain", out var diffResult))
+            if (!GitHandler.TryRun("status --porcelain", config, out var diffResult))
             {
                 throw GenerateInvokeException(diffResult);
             }
@@ -201,8 +201,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
-                GitHandler.Run(config, $"sparse-checkout set {checkoutPaths}");
-                GitHandler.Run(config, $"checkout {config.SHA}");
+                GitHandler.Run($"sparse-checkout set {checkoutPaths}", config);
+                GitHandler.Run($"checkout {config.SHA}", config);
             }
             catch(GitProcessException e)
             {
@@ -233,8 +233,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
-                    GitHandler.Run(config, $"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .");
-                    GitHandler.Run(config, $"sparse-checkout init");
+                    GitHandler.Run($"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .", config);
+                    GitHandler.Run($"sparse-checkout init", config);
                 }
                 catch(GitProcessException e)
                 {
@@ -358,7 +358,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public string ResolveCheckoutBranch(GitAssetsConfiguration config)
         {
-            GitHandler.TryRun(config, $"rev-parse \"origin/{config.AssetsRepoBranch}\"", out var commandResult);
+            GitHandler.TryRun($"rev-parse \"origin/{config.AssetsRepoBranch}\"", config, out var commandResult);
 
             switch (commandResult.ExitCode)
             {

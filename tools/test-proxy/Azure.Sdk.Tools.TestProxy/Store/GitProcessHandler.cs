@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="arguments"></param>
         /// <returns></returns>
         /// <exception cref="GitProcessException">Throws GitProcessException on returnCode != 0 OR if an unexpected exception is thrown during invocation.</exception>
-        public virtual CommandResult Run(GitAssetsConfiguration config, string arguments)
+        public virtual CommandResult Run(string arguments, GitAssetsConfiguration config)
         {
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(config);
             processStartInfo.Arguments = arguments;
@@ -101,7 +101,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="arguments"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public virtual bool TryRun(GitAssetsConfiguration config, string arguments, out CommandResult result)
+        public virtual bool TryRun(string arguments, GitAssetsConfiguration config, out CommandResult result)
         {
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(config);
             processStartInfo.Arguments = arguments;

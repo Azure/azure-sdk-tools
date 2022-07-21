@@ -48,6 +48,8 @@
       - [Windows IIS](#windows-iis)
   - [Asset Sync (Retrieve External Test Recordings)](#asset-sync-retrieve-external-test-recordings)
     - [The `assets.json` and how it enables external recordings](#the-assetsjson-and-how-it-enables-external-recordings)
+    - [Restore, push, reset when proxy is waiting for requests](#restore-push-reset-when-proxy-is-waiting-for-requests)
+    - [Restore, push, reset as a CLI app](#restore-push-reset-as-a-cli-app)
 
 For a detailed explanation and more-or-less spec, check the [README.md](../README.md) one level up from this one.
 
@@ -631,3 +633,31 @@ An `assets.json` takes the form:
 | SHA | The reference SHA the recordings that should be restored from the assets repository. |
 
 Comments within the assets.json are allowed and _maintained_ by the tooling. Feel free to leave notes to yourself. They will not be eliminated.
+
+As one can see in the example image above, the test-proxy does the heavy lifting for push and pull of files to and from the assets repository.
+
+### Restore, push, reset when proxy is waiting for requests
+
+Interactions with the external assets repository are accessible when the proxy is actively serving requests. These are available through routes:
+
+| Route | Description |
+|---|---|
+| `/Playback/Restore` | Retrieve files from external git repo as targeted in the SHA from assets.json |
+| `/Playback/Reset` | Discard pending changes and reset to the original SHA from targeted assets.json. |
+| `/Record/Push` | Push changes if they are pending for files described by targeted assets.json. |
+
+### Restore, push, reset as a CLI app
+
+The test-proxy also offers interactions with the external assets repository as a CLI app. What this means is that one could invoke
+
+```bash
+> test-proxy --command restore --asetsJsonPath <assetsJsonPath>
+```
+
+to pull the necessary recordings files down for a targeted assets.json. The following commands are available.
+
+```bash
+> test-proxy --command reset --asetsJsonPath <assetsJsonPath>
+> test-proxy --command restore --asetsJsonPath <assetsJsonPath>
+> test-proxy --command push --asetsJsonPath <assetsJsonPath>
+```

@@ -1930,8 +1930,8 @@ class BlockedImport(BaseChecker):
             "Do not import this module",
         ),
     }
-    BLOCKED_MODULES = ["aiohttp", "requests"]
-    AZURE_CORE_NAME = "azure.core"
+    BLOCKED_MODULES = ["aiohttp", "requests", "trio"]
+    AZURE_CORE_NAME = "azure.core.pipeline.transport"
 
     def visit_import(self, node):
         """Check that we dont have blocked imports."""

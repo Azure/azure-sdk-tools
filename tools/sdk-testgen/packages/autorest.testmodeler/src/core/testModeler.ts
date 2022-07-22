@@ -16,7 +16,7 @@ export async function processRequest(host: AutorestExtensionHost): Promise<void>
     const config = new TestConfig(await session.getValue(''), configDefaults);
 
     if (config.getValue(Config.exportCodemodel)) {
-        Helper.addCodeModelDump(session, 'test-modeler-pre.yaml');
+        Helper.addCodeModelDump(session, 'test-modeler-pre.yaml', false);
     }
     // const files = await session.listInputs()
     // const codemodel = await session.readFile('code-model-v4.yaml')
@@ -25,9 +25,12 @@ export async function processRequest(host: AutorestExtensionHost): Promise<void>
     codeModel.genMockTests(session);
     await codeModel.loadTestResources(session);
 
-    await Helper.outputToModelerfour(host, session);
+    await Helper.outputToModelerfour(host, session, config.getValue(Config.exportExplicitType));
     if (config.getValue(Config.exportCodemodel)) {
-        Helper.addCodeModelDump(session, 'test-modeler.yaml');
+        Helper.addCodeModelDump(session, 'test-modeler.yaml', false);
+        if (config.getValue(Config.exportExplicitType)) {
+            Helper.addCodeModelDump(session, 'test-modeler-with-tags.yaml', true);
+        }
     }
     await Helper.dump(host);
 }

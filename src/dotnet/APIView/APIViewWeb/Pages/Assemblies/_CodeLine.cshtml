@@ -12,11 +12,16 @@
     };
 
     string foldableClass = Model.CodeLine.LineClass;
-    string [] foldableClassParts = Regex.Split(foldableClass, "\\s+");
-    bool isHeading = foldableClassParts.Any(x => x.EndsWith("-heading"));
-    bool isContent = foldableClassParts.Any(x => x.EndsWith("-content"));
-    string hiddenSectionClass = isContent ? "d-none" : "";
-    string sectionHeadingClass = isHeading ? "border-top" : "";
+    bool isHeading = false;
+    bool isContent = false;
+    string hiddenSectionClass = String.Empty;
+    if (!String.IsNullOrWhiteSpace(foldableClass))
+    {
+        string [] foldableClassParts = Regex.Split(foldableClass, "\\s+");
+        isHeading = foldableClassParts.Any(x => x.EndsWith("-heading"));
+        isContent = foldableClassParts.Any(x => x.EndsWith("-content"));
+        hiddenSectionClass = isContent ? "d-none" : "";
+    }
 }
 
 <tr class="code-line @lineClass @foldableClass @hiddenSectionClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">

@@ -1,0 +1,416 @@
+﻿[
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-06T05:38:34.2152349+00:00",
+    "End": "2022-07-06T05:39:57.8584745+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj",
+    "LanguageTestName": "DownloadFile",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Files.Shares",
+    "PackageVersions": {
+      "Azure.Storage.Files.Shares": "12.9.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.9.0+594b8851940eb859860cff9aaaafbbb092df59d6"
+        },
+        "OperationsPerSecond": 13234.86,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.9.0+594b8851940eb859860cff9aaaafbbb092df59d6"
+        },
+        "OperationsPerSecond": 11393.21,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.9.0+594b8851940eb859860cff9aaaafbbb092df59d6"
+        },
+        "OperationsPerSecond": 16342.09,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.9.0+594b8851940eb859860cff9aaaafbbb092df59d6"
+        },
+        "OperationsPerSecond": 16476.69,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.9.0+594b8851940eb859860cff9aaaafbbb092df59d6"
+        },
+        "OperationsPerSecond": 16526.68,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 11393.21,
+    "OperationsPerSecondMean": 14794.706,
+    "OperationsPerSecondMedian": 16342.09,
+    "OperationsPerSecondMax": 16526.68
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-06T05:39:57.8585825+00:00",
+    "End": "2022-07-06T05:41:19.45948+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj",
+    "LanguageTestName": "UploadFile",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Files.Shares",
+    "PackageVersions": {
+      "Azure.Storage.Files.Shares": "12.9.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.9.0+594b8851940eb859860cff9aaaafbbb092df59d6"
+        },
+        "OperationsPerSecond": 12517.98,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.9.0+594b8851940eb859860cff9aaaafbbb092df59d6"
+        },
+        "OperationsPerSecond": 13013.69,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.9.0+594b8851940eb859860cff9aaaafbbb092df59d6"
+        },
+        "OperationsPerSecond": 12845.16,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.9.0+594b8851940eb859860cff9aaaafbbb092df59d6"
+        },
+        "OperationsPerSecond": 13019.82,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.9.0+594b8851940eb859860cff9aaaafbbb092df59d6"
+        },
+        "OperationsPerSecond": 11919.81,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 11919.81,
+    "OperationsPerSecondMean": 12663.292,
+    "OperationsPerSecondMedian": 12845.16,
+    "OperationsPerSecondMax": 13019.82
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-06T05:41:22.5986711+00:00",
+    "End": "2022-07-06T05:42:44.3379007+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj",
+    "LanguageTestName": "DownloadFile",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Files.Shares",
+    "PackageVersions": {
+      "Azure.Storage.Files.Shares": "12.10.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+        },
+        "OperationsPerSecond": 16763.07,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+        },
+        "OperationsPerSecond": 16810.75,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+        },
+        "OperationsPerSecond": 15969.6,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+        },
+        "OperationsPerSecond": 16801.28,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+        },
+        "OperationsPerSecond": 15169.47,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 15169.47,
+    "OperationsPerSecondMean": 16302.833999999999,
+    "OperationsPerSecondMedian": 16763.07,
+    "OperationsPerSecondMax": 16810.75
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-06T05:42:44.3379324+00:00",
+    "End": "2022-07-06T05:44:05.9370739+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj",
+    "LanguageTestName": "UploadFile",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Files.Shares",
+    "PackageVersions": {
+      "Azure.Storage.Files.Shares": "12.10.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+        },
+        "OperationsPerSecond": 14237.13,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+        },
+        "OperationsPerSecond": 14858,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+        },
+        "OperationsPerSecond": 15071.15,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+        },
+        "OperationsPerSecond": 15297.23,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.10.0+6b5e9e08afc63d6a5eb77587b79e8554668e1926"
+        },
+        "OperationsPerSecond": 15111.38,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 14237.13,
+    "OperationsPerSecondMean": 14914.978,
+    "OperationsPerSecondMedian": 15071.15,
+    "OperationsPerSecondMax": 15297.23
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-06T05:44:34.6876959+00:00",
+    "End": "2022-07-06T05:45:58.410086+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj",
+    "LanguageTestName": "DownloadFile",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Files.Shares",
+    "PackageVersions": {
+      "Azure.Storage.Files.Shares": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220705.2+33755ae01a9af48695d9471811f44c125b92ba22"
+        },
+        "OperationsPerSecond": 16721.33,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220705.2+33755ae01a9af48695d9471811f44c125b92ba22"
+        },
+        "OperationsPerSecond": 16530.45,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220705.2+33755ae01a9af48695d9471811f44c125b92ba22"
+        },
+        "OperationsPerSecond": 16437.48,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220705.2+33755ae01a9af48695d9471811f44c125b92ba22"
+        },
+        "OperationsPerSecond": 16603.17,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220705.2+33755ae01a9af48695d9471811f44c125b92ba22"
+        },
+        "OperationsPerSecond": 16153.63,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 16153.63,
+    "OperationsPerSecondMean": 16489.212,
+    "OperationsPerSecondMedian": 16530.45,
+    "OperationsPerSecondMax": 16721.33
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-06T05:45:58.4101133+00:00",
+    "End": "0001-01-01T00:00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Files.Shares/perf/Azure.Storage.Files.Shares.Perf/Azure.Storage.Files.Shares.Perf.csproj",
+    "LanguageTestName": "UploadFile",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Files.Shares",
+    "PackageVersions": {
+      "Azure.Storage.Files.Shares": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220705.2+33755ae01a9af48695d9471811f44c125b92ba22"
+        },
+        "OperationsPerSecond": 14325.03,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220705.2+33755ae01a9af48695d9471811f44c125b92ba22"
+        },
+        "OperationsPerSecond": 15407.35,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220705.2+33755ae01a9af48695d9471811f44c125b92ba22"
+        },
+        "OperationsPerSecond": 15596.35,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220705.2+33755ae01a9af48695d9471811f44c125b92ba22"
+        },
+        "OperationsPerSecond": 15764.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Files.Shares": "12.11.0-alpha.20220705.2+33755ae01a9af48695d9471811f44c125b92ba22"
+        },
+        "OperationsPerSecond": 15819.89,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 14325.03,
+    "OperationsPerSecondMean": 15382.684,
+    "OperationsPerSecondMedian": 15596.35,
+    "OperationsPerSecondMax": 15819.89
+  }
+]

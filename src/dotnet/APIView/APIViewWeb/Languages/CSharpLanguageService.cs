@@ -86,10 +86,13 @@ namespace APIViewWeb
                                     dependency.Attribute("id").Value,
                                         dependency.Attribute("version").Value)));
                     // filter duplicates and sort
-                    dependencies = dependencies
+                    if (dependencies.Any())
+                    {
+                        dependencies = dependencies
                         .GroupBy(d => d.Name)
                         .Select(d => d.First())
                         .OrderBy(d => d.Name).ToList();
+                    }
                 }
 
                 var assemblySymbol = CompilationFactory.GetCompilation(dllStream, docStream);

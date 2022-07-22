@@ -62,7 +62,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
 
             if (environmentVariables != null)
-            {                
+            {
                 Log.WriteLine($"[{workingDirectory}] Env: {JsonSerializer.Serialize(environmentVariables)}");
             }
 

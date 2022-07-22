@@ -2,6 +2,27 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "2.3.0",
+      "tag": "@autorest/testmodeler_v2.3.0",
+      "date": "Thu, 21 Jul 2022 06:46:35 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Use modelerfour@4.23.7 and add securityParameters in ExampleModel for ApiKey securityDefinitions."
+          },
+          {
+            "comment": "use apiscenario 1.2 via oav@3.0.3"
+          },
+          {
+            "comment": "add --testmodeler.api-scenario-loader-option to make api scenario loader configurable"
+          },
+          {
+            "comment": "Add --testmodeler.export-explicit-type to support explicit types in exported codemodel."
+          }
+        ]
+      }
+    },
+    {
       "version": "2.2.5",
       "tag": "@autorest/testmodeler_v2.2.5",
       "date": "Sun, 24 Apr 2022 09:41:30 GMT",

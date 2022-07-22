@@ -168,6 +168,7 @@ Services:
     - --size 10240 --parallel 64
     - --size 1048576 --parallel 1
     - --size 10485760 --parallel 32
+    - --size 10485760 --parallel 32 --sync
     - --size 20971520 --parallel 1
     - --size 209715200 --parallel 1
     - --size 1073741824 --parallel 1 --warmup 60 --duration 60
@@ -182,6 +183,7 @@ Services:
   - Test: download-file
     Arguments:
     - --size 10485760 --parallel 32
+    - --size 10485760 --parallel 32 --sync
     TestNames:
       Java: downloadblobtofile
 
@@ -197,6 +199,7 @@ Services:
   - Test: upload-file
     Arguments:
     - --size 10485760 --parallel 32
+    - --size 10485760 --parallel 32 --sync
     - --size 268435456 --parallel 1 --warmup 30 --duration 30
     - --size 268435456 --parallel 1 --warmup 30 --duration 30 --max-concurrency 8
     TestNames:
@@ -208,6 +211,7 @@ Services:
     - --count 1 --warmup 0 --duration 1
     - --count 5 --parallel 64
     - --count 500 --parallel 32
+    - --count 500 --parallel 32 --sync
     - --count 50000 --parallel 32 --warmup 60 --duration 60
     TestNames:
       Net: GetBlobs

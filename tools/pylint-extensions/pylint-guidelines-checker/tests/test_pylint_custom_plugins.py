@@ -1974,8 +1974,8 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         function_node_b = node.body[3].body[2]
        
         with self.assertAddsMessages(
-            pylint.testutils.Message(
-                msg_id="client-list-methods-use-paging", node=function_node_b
+            pylint.testutils.MessageTest(
+                msg_id="client-list-methods-use-paging", line=32, node=function_node_b, col_offset=4, end_line=32, end_col_offset=32
             )
         ):
             self.checker.visit_return(function_node.body[2])
@@ -1992,8 +1992,8 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
 
    
         with self.assertAddsMessages(
-            pylint.testutils.Message(
-                msg_id="client-list-methods-use-paging", node=function_node
+            pylint.testutils.MessageTest(
+                msg_id="client-list-methods-use-paging", line=8, node=function_node, col_offset=4, end_line=8, end_col_offset=18
             )
         ):
             self.checker.visit_return(function_node.body[0])

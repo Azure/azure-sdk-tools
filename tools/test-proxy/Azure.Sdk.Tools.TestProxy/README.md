@@ -604,6 +604,8 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
+**Please note**, this feature is under active development as of July 2022 and is not fully integrated or complete.
+
 ![image](https://user-images.githubusercontent.com/45376673/180101415-cf864d95-8a8b-4d43-bb05-42604e9f7622.png)
 
 In the context of a `monorepo`, this means that we store FAR less data per feature.
@@ -667,3 +669,7 @@ to pull the necessary recordings files down for a targeted assets.json. The foll
 > test-proxy --command restore --asetsJsonPath <assetsJsonPath>
 > test-proxy --command push --asetsJsonPath <assetsJsonPath>
 ```
+
+When a `push` activity is completed, the `SHA` value within the targeted `assets.json` will be UPDATED with the new reference to the external assets repository.
+
+As a user, ensure that this new SHA is commit alongside your code changes.

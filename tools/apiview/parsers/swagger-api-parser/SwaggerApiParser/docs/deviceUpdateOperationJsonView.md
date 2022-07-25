@@ -230,3 +230,101 @@
 }
 ```
 </details>
+
+
+###  Definition
+
+<details>
+<summary>Error</summary>
+  
+  ```json
+  {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Server defined error code."
+        },
+        "message": {
+          "type": "string",
+          "description": "A human-readable representation of the error."
+        },
+        "target": {
+          "type": "string",
+          "description": "The target of the error."
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Error"
+          },
+          "description": "An array of errors that led to the reported error."
+        },
+        "innererror": {
+          "$ref": "#/definitions/InnerError",
+          "description": "An object containing more specific information than the current object about the error."
+        },
+        "occurredDateTime": {
+          "type": "string",
+          "description": "Date and time in UTC when the error occurred.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "description": "Error details."
+    }
+  ```
+  
+</details>
+
+<details>
+<summary>DeviceHealthList</summary>
+
+  ``` json
+  {
+      "description": "Array of Device Health, with server paging support.",
+      "type": "object",
+      "properties": {
+        "value": {
+          "description": "The collection of pageable items.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeviceHealth"
+          }
+        },
+        "nextLink": {
+          "description": "The link to the next page of items.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value"
+      ]
+    },
+  
+  ```
+</details>
+
+<details>
+<summary>HealthCheck</summary>
+  
+  ``` json
+  {
+      "description": "Health check",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Health check name"
+        },
+        "result": {
+          "$ref": "#/definitions/HealthCheckResult",
+          "description": "Health check result"
+        }
+      }
+    }
+  ```
+</details>

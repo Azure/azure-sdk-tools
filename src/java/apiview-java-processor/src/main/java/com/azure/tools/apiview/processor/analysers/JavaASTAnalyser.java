@@ -45,6 +45,7 @@ import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
@@ -1369,18 +1370,25 @@ public class JavaASTAnalyser implements Analyser {
         attemptToFindJavadocComment(bodyDeclaration).ifPresent(this::visitJavaDoc);
     }
 
-    private void visitJavaDoc(JavadocComment jd) {
+    private void visitJavaDoc(JavadocComment javadoc) {
         if (!SHOW_JAVADOC) {
             return;
         }
 
         addToken(new Token(DOCUMENTATION_RANGE_START));
-        Arrays.stream(SPLIT_NEWLINE.split(jd.toString())).forEach(line -> {
+        // The default toString() implementation changed after version 3.16.1. Previous implementation
+        // always used a print configuration local to toString() method. The new implementation uses instance level
+        // configuration that can be mutated by other calls like getDeclarationAsString() called from 'makeId()'
+        // (ASTUtils).
+        // The updated configuration from getDeclarationAsString removes the comment option and hence the toString
+        // returns an empty string now. So, here we are using the toString overload that takes a PrintConfiguration
+        // to get the old behavior.
+        String javaDocText = javadoc.toString(new DefaultPrinterConfiguration());
+        Arrays.stream(SPLIT_NEWLINE.split(javaDocText)).forEach(line -> {
             // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
             final String wrappedString = MiscUtils.wrap(line, 120);
             Arrays.stream(SPLIT_NEWLINE.split(wrappedString)).forEach(line2 -> {
                 addToken(makeWhitespace());
-
                 addToken(new Token(COMMENT, line2));
                 addNewLine();
             });

@@ -21,6 +21,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 using APIViewWeb.HostedServices;
+using APIViewWeb.Filters;
 
 namespace APIViewWeb
 {
@@ -48,6 +49,7 @@ namespace APIViewWeb
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddApplicationInsightsTelemetry();
+            services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
 
             services.Configure<CookiePolicyOptions>(options =>
             {

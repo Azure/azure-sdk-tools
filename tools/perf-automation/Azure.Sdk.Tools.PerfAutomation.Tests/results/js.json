@@ -1,0 +1,278 @@
+[
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-11T11:07:18.927965+00:00",
+    "End": "2022-07-11T11:09:01.5922958+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-file-share",
+    "LanguageTestName": "StorageFileShareDownloadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "@azure/storage-file-share",
+    "PackageVersions": {
+      "@azure/storage-file-share": "12.10.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.10.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-file-share@12.10.0/node_modules/@azure/storage-file-share"
+        },
+        "OperationsPerSecond": 1836,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.10.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-file-share@12.10.0/node_modules/@azure/storage-file-share"
+        },
+        "OperationsPerSecond": 1851.71,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.10.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-file-share@12.10.0/node_modules/@azure/storage-file-share"
+        },
+        "OperationsPerSecond": 1852.97,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.10.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-file-share@12.10.0/node_modules/@azure/storage-file-share"
+        },
+        "OperationsPerSecond": 1850.28,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.10.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-file-share@12.10.0/node_modules/@azure/storage-file-share"
+        },
+        "OperationsPerSecond": 1857.43,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 1836,
+    "OperationsPerSecondMean": 1849.6779999999999,
+    "OperationsPerSecondMedian": 1851.71,
+    "OperationsPerSecondMax": 1857.43
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-11T11:09:01.5924066+00:00",
+    "End": "2022-07-11T11:10:44.2660447+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-file-share",
+    "LanguageTestName": "StorageFileShareUploadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "@azure/storage-file-share",
+    "PackageVersions": {
+      "@azure/storage-file-share": "12.10.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.10.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-file-share@12.10.0/node_modules/@azure/storage-file-share"
+        },
+        "OperationsPerSecond": 1030.29,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.10.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-file-share@12.10.0/node_modules/@azure/storage-file-share"
+        },
+        "OperationsPerSecond": 1028.52,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.10.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-file-share@12.10.0/node_modules/@azure/storage-file-share"
+        },
+        "OperationsPerSecond": 1026.37,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.10.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-file-share@12.10.0/node_modules/@azure/storage-file-share"
+        },
+        "OperationsPerSecond": 1030.31,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.10.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-file-share@12.10.0/node_modules/@azure/storage-file-share"
+        },
+        "OperationsPerSecond": 1034.94,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 1026.37,
+    "OperationsPerSecondMean": 1030.086,
+    "OperationsPerSecondMedian": 1030.29,
+    "OperationsPerSecondMax": 1034.94
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "download",
+    "Start": "2022-07-11T11:15:26.9090799+00:00",
+    "End": "2022-07-11T11:17:11.3311068+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-file-share",
+    "LanguageTestName": "StorageFileShareDownloadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "@azure/storage-file-share",
+    "PackageVersions": {
+      "@azure/storage-file-share": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.11.0 -> /mnt/vss/_work/1/s/sdk/storage/storage-file-share"
+        },
+        "OperationsPerSecond": 1858.92,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.11.0 -> /mnt/vss/_work/1/s/sdk/storage/storage-file-share"
+        },
+        "OperationsPerSecond": 1842.95,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.11.0 -> /mnt/vss/_work/1/s/sdk/storage/storage-file-share"
+        },
+        "OperationsPerSecond": 1856.38,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.11.0 -> /mnt/vss/_work/1/s/sdk/storage/storage-file-share"
+        },
+        "OperationsPerSecond": 1837.45,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.11.0 -> /mnt/vss/_work/1/s/sdk/storage/storage-file-share"
+        },
+        "OperationsPerSecond": 1860.57,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 1837.45,
+    "OperationsPerSecondMean": 1851.2540000000001,
+    "OperationsPerSecondMedian": 1856.38,
+    "OperationsPerSecondMax": 1860.57
+  },
+  {
+    "Service": "storage-file-share",
+    "Test": "upload",
+    "Start": "2022-07-11T11:17:11.3311388+00:00",
+    "End": "0001-01-01T00:00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-file-share",
+    "LanguageTestName": "StorageFileShareUploadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "@azure/storage-file-share",
+    "PackageVersions": {
+      "@azure/storage-file-share": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.11.0 -> /mnt/vss/_work/1/s/sdk/storage/storage-file-share"
+        },
+        "OperationsPerSecond": 1030.98,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.11.0 -> /mnt/vss/_work/1/s/sdk/storage/storage-file-share"
+        },
+        "OperationsPerSecond": 1036.7,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.11.0 -> /mnt/vss/_work/1/s/sdk/storage/storage-file-share"
+        },
+        "OperationsPerSecond": 1032.38,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.11.0 -> /mnt/vss/_work/1/s/sdk/storage/storage-file-share"
+        },
+        "OperationsPerSecond": 1036.78,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-file-share": "12.11.0 -> /mnt/vss/_work/1/s/sdk/storage/storage-file-share"
+        },
+        "OperationsPerSecond": 1039.09,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 1030.98,
+    "OperationsPerSecondMean": 1035.1860000000001,
+    "OperationsPerSecondMedian": 1036.7,
+    "OperationsPerSecondMax": 1039.09
+  }
+]

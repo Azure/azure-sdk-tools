@@ -8,12 +8,18 @@ import { comment, serialize } from '@azure-tools/codegen';
 
 export class Helper {
     static dumpBuf: Record<string, any> = {};
-    public static async outputToModelerfour(host: AutorestExtensionHost, session: Session<CodeModel>): Promise<void> {
+    public static async outputToModelerfour(host: AutorestExtensionHost, session: Session<CodeModel>, exportExplicitTypes: boolean): Promise<void> {
         // write the final result first which is hardcoded in the Session class to use to build the model..
         // overwrite the modelerfour which should be fine considering our change is backward compatible
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const modelerfourOptions = await session.getValue('modelerfour', {});
         if (modelerfourOptions['emit-yaml-tags'] !== false) {
+            if (exportExplicitTypes) {
+                codeModelSchema.explicit = (codeModelSchema.explicit || []).concat(codeModelSchema.implicit);
+                codeModelSchema.implicit = [];
+                codeModelSchema.compiledExplicit = (codeModelSchema.compiledExplicit || []).concat(codeModelSchema.compiledImplicit);
+                codeModelSchema.compiledImplicit = [];
+            }
             host.writeFile({
                 filename: 'code-model-v4.yaml',
                 content: serialize(session.model, { schema: codeModelSchema }),
@@ -29,8 +35,8 @@ export class Helper {
         }
     }
 
-    public static addCodeModelDump(session: Session<CodeModel>, fileName: string, debugOnly = true) {
-        this.dumpBuf[(debugOnly ? '__debug/' : '') + fileName] = serialize(session.model);
+    public static addCodeModelDump(session: Session<CodeModel>, fileName: string, withTags: boolean, debugOnly = true) {
+        this.dumpBuf[(debugOnly ? '__debug/' : '') + fileName] = withTags ? serialize(session.model, { schema: codeModelSchema }) : serialize(session.model);
     }
 
     public static async dump(host: AutorestExtensionHost): Promise<void> {

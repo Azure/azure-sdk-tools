@@ -87,64 +87,60 @@ namespace APIViewWeb.Repositories
             string hostName,
             string codeFileName = null,
             string baselineCodeFileName = null,
-            bool commentOnPR = true)
+            bool commentOnPR = true,
+            string language = null,
+            string project = "public")
         {
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
             var operation = _telemetryClient.StartOperation(requestTelemetry);
-            try
+            originalFileName = originalFileName ?? codeFileName;
+            string[] repoInfo = repoName.Split("/");
+            var pullRequestModel = await GetPullRequestModel(prNumber, repoName, packageName, originalFileName, language);
+            if (pullRequestModel == null)
             {
-                originalFileName = originalFileName ?? codeFileName;
-                string[] repoInfo = repoName.Split("/");
-                var pullRequestModel = await GetPullRequestModel(prNumber, repoName, packageName, originalFileName);
-                if (pullRequestModel == null || pullRequestModel.Commits.Any(c=> c== commitSha))
-                {
-                    // PR commit is already processed. No need to reprocess it again.
-                    return "";
-                }
+                return "";
+            }
+            if (pullRequestModel.Commits.Any(c=> c== commitSha))
+            {
+                // PR commit is already processed. No need to reprocess it again.
+                return !string.IsNullOrEmpty(pullRequestModel.ReviewId)? REVIEW_URL.Replace("{hostName}", hostName)
+                        .Replace("{ReviewId}", pullRequestModel.ReviewId) : "";
+            }
 
-                pullRequestModel.Commits.Add(commitSha);
-                //Check if PR owner is part of Azure//Microsoft org in GitHub
-                await AssertPullRequestCreatorPermission(pullRequestModel);
+            pullRequestModel.Commits.Add(commitSha);
+            //Check if PR owner is part of Azure//Microsoft org in GitHub
+            await AssertPullRequestCreatorPermission(pullRequestModel);
                 
-                using var memoryStream = new MemoryStream();
-                using var baselineStream = new MemoryStream();
-                var codeFile = await _reviewManager.GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream, baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream);
-                CodeFile baseLineCodeFile = null;
-                if (baselineStream.Length>0)
-                {
-                    baselineStream.Position = 0;
-                    baseLineCodeFile = await CodeFile.DeserializeAsync(baselineStream);
-                }
-
-                if (codeFile != null)
-                {
-                    await CreateRevisionIfRequired(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel, baseLineCodeFile, baselineStream, baselineCodeFileName);                 
-                }
-                else
-                {
-                    _telemetryClient.TrackTrace("Failed to download artifact. Please recheck build id and artifact path values in API change detection request.");
-                }
-
-                //Generate combined single comment to update on PR.
-                var prReviews = await _pullRequestsRepository.GetPullRequestsAsync(prNumber, repoName);
-                if (commentOnPR)
-                {
-                    await CreateOrUpdateComment(prReviews, repoInfo[0], repoInfo[1], prNumber, hostName);
-                }
-
-                // Return review URL created for current package if exists
-                var review = prReviews.SingleOrDefault(r => r.PackageName == packageName);
-                return review == null ? "" : REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", review.ReviewId);
-            }
-            catch (Exception ex)
+            using var memoryStream = new MemoryStream();
+            using var baselineStream = new MemoryStream();
+            var codeFile = await _reviewManager.GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream, baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream, project: project);
+            CodeFile baseLineCodeFile = null;
+            if (baselineStream.Length>0)
             {
-                _telemetryClient.TrackException(ex);
+                baselineStream.Position = 0;
+                baseLineCodeFile = await CodeFile.DeserializeAsync(baselineStream);
             }
-            finally
+
+            if (codeFile != null)
             {
-                _telemetryClient.StopOperation(operation);
+                await CreateRevisionIfRequired(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel, baseLineCodeFile, baselineStream, baselineCodeFileName);                 
             }
-            return "";
+            else
+            {
+                _telemetryClient.TrackTrace("Failed to download artifact. Please recheck build id and artifact path values in API change detection request.");
+            }
+
+            //Generate combined single comment to update on PR.
+            var prReviews = await _pullRequestsRepository.GetPullRequestsAsync(prNumber, repoName);
+            if (commentOnPR)
+            {
+                await CreateOrUpdateComment(prReviews, repoInfo[0], repoInfo[1], prNumber, hostName);
+            }
+
+            // Return review URL created for current package if exists
+            var review = prReviews.SingleOrDefault(r => r.PackageName == packageName && (r.Language == null || r.Language == language));
+            return review == null ? "" : REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", review.ReviewId);
+            
         }
 
         private async Task CreateOrUpdateComment(List<PullRequestModel> prReviews,string repoOwner, string repoName, int prNumber, string hostName)
@@ -178,9 +174,9 @@ namespace APIViewWeb.Repositories
             }
         }
 
-        private async Task<PullRequestModel> GetPullRequestModel(int prNumber, string repoName, string packageName, string originalFile)
+        private async Task<PullRequestModel> GetPullRequestModel(int prNumber, string repoName, string packageName, string originalFile, string language)
         {
-            var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName);
+            var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName, language);
             if (pullRequestModel == null)
             {
                 string[] repoInfo = repoName.Split("/");
@@ -191,7 +187,8 @@ namespace APIViewWeb.Repositories
                     PullRequestNumber = prNumber,
                     FilePath = originalFile,
                     Author = pullRequest.User.Login,
-                    PackageName = packageName
+                    PackageName = packageName,
+                    Language = language
                 };
             }
             return pullRequestModel;

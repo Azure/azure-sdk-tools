@@ -17,7 +17,7 @@ namespace APIViewWeb
     {
         public override string Name { get; } = "Python";
         public override string Extension { get; } = ".whl";
-        public override string VersionString { get; } = "0.3.1";
+        public override string VersionString { get; } = "0.3.2";
 
         private readonly string _pythonExecutablePath;
         public override string ProcessName => _pythonExecutablePath;

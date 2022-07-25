@@ -62,5 +62,15 @@ namespace Azure.Sdk.Tools.PipelineWitness
         /// Gets or sets the amount of time between iterations of the build definition upload loop
         /// </summary>
         public TimeSpan BuildDefinitionLoopPeriod { get; set; } = TimeSpan.FromMinutes(5);
+
+        /// <summary>
+        /// Gets or sets the number of concurrent log bundle queue workers to register
+        /// </summary>
+        public int BuildLogBundlesWorkerCount { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets the number of concurrent build complete queue workers to register
+        /// </summary>
+        public int BuildCompleteWorkerCount { get; set; } = 1;
     }
 }

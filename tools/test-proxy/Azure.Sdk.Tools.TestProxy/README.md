@@ -46,6 +46,10 @@
     - [Visual studio](#visual-studio)
       - [ASP.NET and web development](#aspnet-and-web-development)
       - [Windows IIS](#windows-iis)
+  - [Asset Sync (Retrieve External Test Recordings)](#asset-sync-retrieve-external-test-recordings)
+    - [The `assets.json` and how it enables external recordings](#the-assetsjson-and-how-it-enables-external-recordings)
+    - [Restore, push, reset when proxy is waiting for requests](#restore-push-reset-when-proxy-is-waiting-for-requests)
+    - [Restore, push, reset as a CLI app](#restore-push-reset-as-a-cli-app)
 
 For a detailed explanation and more-or-less spec, check the [README.md](../README.md) one level up from this one.
 
@@ -219,9 +223,10 @@ Please note that if a **absolute** path is presented in header `x-recording-file
 
 Before each individual test runs, a `recordingId` must be retrieved from the test-proxy by POST-ing to the Proxy Server.
 
-```json
-URL: https://localhost:5001/record/start
-BODY {
+```jsonc
+// Targeted URI: https://localhost:5001/record/start
+// request body
+{
     "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
 }
 ```
@@ -254,13 +259,17 @@ After your test has finished and there are no additional requests to be recorded
 
 POST to the proxy server:
 
-```json
-URL: https://localhost:5001/record/stop
-headers: {
+```jsonc
+// Targeted URI: https://localhost:5001/record/start
+
+// header dictionary
+{
     "x-recording-id": "<x-recording-id>",
     "Content-Type": "application/json"
 }
-<optional> body: {
+
+// optional body storing VARIABLE values. See section below for additional detail.
+{
     "key1": "value1",
     "key2": "value2"
 }
@@ -296,9 +305,10 @@ Extremely similar to recording start.
 
 POST to the proxy server:
 
-```json
-URL: https://localhost:5001/playback/start
-BODY: {
+```jsonc
+// Targeted URI: https://localhost:5001/playback/start
+// request body
+{
     "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
 }
 ```
@@ -321,9 +331,10 @@ This really only allows the server to free up a few bits, but:
 
 POST to the proxy server:
 
-```json
-URL: https://localhost:5001/playback/stop
-headers {
+```jsonc
+// targeted URI: https://localhost:5001/playback/stop
+// header dictionary
+{
     "x-recording-id": "<x-recording-id>"
 }
 ```
@@ -334,17 +345,20 @@ If a user does **not** provide a `fileId` via body key `x-recording-file`, the r
 
 Start the recording **without a `x-recording-file` body value**.
 
-```json
-URL: https://localhost:5001/record/start
+```jsonc
+// targeted URI: https://localhost:5001/record/start
+// the request body will be EMPTY
+{}
 ```
 
-The POST will return recordingId `X`.
+The POST will return a valid recordingId value which we will call `X`.
 
 To load this recording for playback...
 
-```json
-URL: https://localhost:5001/playback/start
-headers {
+```jsonc
+// Targeted URI https://localhost:5001/playback/start
+// header dictionary
+{
     "x-recording-id": "X"
 }
 ```
@@ -369,13 +383,14 @@ This is due to the fact that if there are **arguments** to the constructor, the 
 
 Add a simple Uri Sanitizer that leverages lookahead to ensure it's not overly aggressive:
 
-```json
-POST
-url: <proxyURL>/Admin/AddSanitizer
-headers: {
+```jsonc
+// POST TO Targeted URI: <proxyURL>/Admin/AddSanitizer
+// header dictionary
+{
     "x-abstraction-identifier": "UriRegexSanitizer"
 }
-body: {
+// request body
+{
     "value": "fakeaccount",
     "regex": "[a-z]+(?=\\.(?:table|blob|queue)\\.core\\.windows\\.net)"
 }
@@ -383,13 +398,14 @@ body: {
 
 Add a more expansive Header sanitizer that uses a target group instead of filtering by lookahead:
 
-```json
-POST
-url: <proxyURL>/Admin/AddSanitizer
-headers: {
+```jsonc
+// POST to URI <proxyURL>/Admin/AddSanitizer
+// dictionary dictionary
+{
     "x-abstraction-identifier": "HeaderRegexSanitizer"
 }
-body: {
+// request body
+{
     "key": "Location",
     "value": "fakeaccount",
     "regex": "https\\:\\/\\/(?<account>[a-z]+)\\.(?:table|blob|queue)\\.core\\.windows\\.net",
@@ -434,24 +450,23 @@ This is allowed through the use of the `/Admin/Reset` API. A `reset` operation "
 
 #### Reset the session
 
-```json
-POST
-url: <proxyURL>/Admin/Reset
-```
+To reset a session to default customization, `POST` to `Admin/Reset`.
 
 This API operates exclusively on the `Session` level if no recordingId is provided in the header. Any customizations on individual recordings are left untouched.
 
 #### Reset for a specific recordingId
 
-```json
-POST
-url: <proxyURL>/Admin/Reset
-headers: {
+However, if a recordingId is provided in the header dictionary, the reset operation applies to only that individual recording.
+
+```jsonc
+// POST TO url: <proxyURL>/Admin/Reset
+// header dictionary
+{
     "x-recording-id": "<guid>"
 }
 ```
 
-If the recordingId is specified in the header, that individual recording's settings will be cleared. The session level updates will remain unchanged.
+The session level updates will remain unchanged.
 
 ## Recording Options
 
@@ -459,9 +474,7 @@ The test-proxy offers further customization beyond that offered by sanitizers, m
 
 ```jsonc
 // below is an object representing all valid inputs for SetRecordingOptions body
-
-POST /Admin/SetRecordingOptions
-
+// POST to /Admin/SetRecordingOptions
 {
    // boolean value accepted. string or raw.
    "HandleRedirects": "true/false"
@@ -495,22 +508,21 @@ To set this setting, POST to the `/Admin/SetRecordingOptions` route.
 Example:
 
 ```jsonc
-POST https://localhost:5001/Admin/SetRecordingOptions
-
-// Body should be a json dictionary to enable
+// POST to URI: https://localhost:5001/Admin/SetRecordingOptions
+// body is a json dictionary, the value of HandleRedirects can be multiple representation of "true" 
 {
     "HandleRedirects": true
 }
-// to enable alternative
+// ...or 
 {
-    "HandleRedirects": "true"
+    "HandleRedirects": 1
 }
 
-// to disable
+// to disable, it's just the opposite, with similar alternative support
 {
     "HandleRedirects": false
 }
-// to disable alternative
+// ...or 
 {
     "HandleRedirects": "false"
 }
@@ -587,3 +599,77 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 [Add Internet Information](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
 
 ![image](https://user-images.githubusercontent.com/24213737/152258180-0bac3e7f-910c-45fd-aa5f-fc932fce91e6.png)
+
+## Asset Sync (Retrieve External Test Recordings)
+
+The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
+
+**Please note**, this feature is under active development as of July 2022 and is not fully integrated or complete.
+
+![image](https://user-images.githubusercontent.com/45376673/180101415-cf864d95-8a8b-4d43-bb05-42604e9f7622.png)
+
+In the context of a `monorepo`, this means that we store FAR less data per feature.
+
+The test-proxy is an excellent place to integrate external data, as packages within the azure-sdk that have moved to leverage it only pass it a single key when loading a recording. That key is passed in the `x-recording-file` header during a POST to `/Playback/Start/`.
+
+This header will contain a value of where the test framework "expects" the recording to be located, expressed as a relative path. EG `tests/SessionRecords/recording1.json`.
+
+The combination of the the `assets.json` context and this relative path will allow the test-proxy to restore a set of recordings to a path, then _load_ the recording from that newly gathered data. The path to the recording file within the external assets repo can be _predictably_ calculated and retrieved given just the location of the `assets.json` within the code repo, the requested file name during playback or record start, and the properties within the assets.json itself. The diagram above has colors to show how the paths are used in context.
+
+### The `assets.json` and how it enables external recordings
+
+An `assets.json` contains _targeting_ information for use by the test-proxy when restoring (or updating) recordings "below" a specific path.
+
+> For the `azure-sdk` team specifically, engineers are encouraged to place their `assets.json` files under a path of form `sdk/<service>/assets.json`
+
+An `assets.json` takes the form:
+
+```jsonc
+{
+  "AssetsRepo": "Azure/azure-sdk-assets-integration",
+  "AssetsRepoPrefixPath": "python/recordings/",
+  "AssetsRepoBranch": "auto/test",
+  "SHA": "786b4f3d380d9c36c91f5f146ce4a7661ffee3b9"
+}
+```
+
+| Property | Description |
+|---|---|
+| AssetsRepo | The full name of the external github repo storing the data. EG: `Azure/azure-sdk-assets` |
+| AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. Populate this property with that path. EG: `python/recordings`. |
+| AssetsRepoBranch | The branch within the assets repo that your updated recordings will be pushed to. |
+| SHA | The reference SHA the recordings that should be restored from the assets repository. |
+
+Comments within the assets.json are allowed and _maintained_ by the tooling. Feel free to leave notes to yourself. They will not be eliminated.
+
+As one can see in the example image above, the test-proxy does the heavy lifting for push and pull of files to and from the assets repository.
+
+### Restore, push, reset when proxy is waiting for requests
+
+Interactions with the external assets repository are accessible when the proxy is actively serving requests. These are available through routes:
+
+| Route | Description |
+|---|---|
+| `/Playback/Restore` | Retrieve files from external git repo as targeted in the SHA from assets.json |
+| `/Playback/Reset` | Discard pending changes and reset to the original SHA from targeted assets.json. |
+| `/Record/Push` | Push changes if they are pending for files described by targeted assets.json. |
+
+### Restore, push, reset as a CLI app
+
+The test-proxy also offers interactions with the external assets repository as a CLI app. What this means is that one could invoke
+
+```bash
+> test-proxy --command restore --asetsJsonPath <assetsJsonPath>
+```
+
+to pull the necessary recordings files down for a targeted assets.json. The following commands are available.
+
+```bash
+> test-proxy --command reset --asetsJsonPath <assetsJsonPath>
+> test-proxy --command restore --asetsJsonPath <assetsJsonPath>
+> test-proxy --command push --asetsJsonPath <assetsJsonPath>
+```
+
+When a `push` activity is completed, the `SHA` value within the targeted `assets.json` will be UPDATED with the new reference to the external assets repository.
+
+As a user, ensure that this new SHA is commit alongside your code changes.

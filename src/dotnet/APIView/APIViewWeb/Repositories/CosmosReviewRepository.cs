@@ -141,18 +141,65 @@ namespace APIViewWeb
             {
                 var searchAsQueryStr = ArrayToQueryString<string>(search);
                 var searchAsSingleString = '"' + String.Join(' ', search) + '"';
-                queryStringBuilder.Append($" AND (r.Author IN {searchAsQueryStr}");
-                queryStringBuilder.Append($" OR STRINGEQUALS(r.Revisions[0].Name, {searchAsSingleString}, true)");
-                queryStringBuilder.Append($" OR CONTAINS(r.Name, {searchAsSingleString}, true)");
-                queryStringBuilder.Append($" OR CONTAINS(r.ServiceName, {searchAsSingleString}, true)");
-                queryStringBuilder.Append($" OR CONTAINS(r.PackageDisplayName, {searchAsSingleString}, true)");
-                queryStringBuilder.Append($" OR (CONTAINS(r.Name, \"{search[0]}\", true)");
 
-                for (int i = 1; i < search.Count; i++)
+                var hasExactMatchQuery = search.Any(
+                    s => (
+                    s.StartsWith("package:") || 
+                    s.StartsWith("pr:") || 
+                    s.StartsWith("author:") || 
+                    s.StartsWith("service:") ||
+                    s.StartsWith("name:")
+                ));
+
+                if (hasExactMatchQuery)
                 {
-                    queryStringBuilder.Append($" AND CONTAINS(r.Revisions[0].Name, \"{search[i]}\", true)");
+                    foreach (var item in search)
+                    {
+                        if (item.StartsWith("package:"))
+                        {
+                            var query = '"' + $"{item.Replace("package:", "")}" + '"';
+                            queryStringBuilder.Append($" AND STRINGEQUALS(ARRAY_SLICE(r.Revisions, -1)[0].Files[0].PackageName, {query}, true)");
+                        }
+                        else if (item.StartsWith("author:"))
+                        {
+                            var query = '"' + $"{item.Replace("author:", "")}" + '"';
+                            queryStringBuilder.Append($" AND STRINGEQUALS(r.Author, {query}, true)");
+                        }
+                        else if (item.StartsWith("service:"))
+                        {
+                            var query = '"' + $"{item.Replace("service:", "")}" + '"';
+                            queryStringBuilder.Append($" AND STRINGEQUALS(r.ServiceName, {query}, true)");
+                        }
+                        else if (item.StartsWith("pr:"))
+                        {
+                            var query = '"' + $"{item.Replace("pr:", "")}" + '"';
+                            queryStringBuilder.Append($" AND ENDSWITH(ARRAY_SLICE(r.Revisions, -1)[0].Label, {query}, true)");
+                        }
+                        else if (item.StartsWith("name:"))
+                        {
+                            var query = '"' + $"{item.Replace("name:", "")}" + '"';
+                            queryStringBuilder.Append($" AND CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                        }
+                        else
+                        {
+                            var query = '"' + $"{item}" + '"';
+                            queryStringBuilder.Append($" AND CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                        }
+                    }
                 }
-                queryStringBuilder.Append($"))");
+                else
+                {
+                    queryStringBuilder.Append($" AND (r.Author IN {searchAsQueryStr}");
+                    foreach (var item in search) 
+                    {
+                        var query = '"' + $"{item}" + '"';
+                        queryStringBuilder.Append($" OR CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                        queryStringBuilder.Append($" OR CONTAINS(r.Name, {query}, true)");
+                        queryStringBuilder.Append($" OR CONTAINS(r.ServiceName, {query}, true)");
+                        queryStringBuilder.Append($" OR CONTAINS(r.PackageDisplayName, {query}, true)");
+                    }
+                    queryStringBuilder.Append($")");
+                }
             }
 
             if (languages != null && languages.Count > 0)

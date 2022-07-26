@@ -36,9 +36,9 @@ export class GrowUpJob extends BaseJob {
             return;
         }
         const gitOperationWrapper = new GitOperationWrapper('/');
-        let prLinkMatch = this.context.specLink.match(/http.*\/([^\/]*\/[^\/]*)\/pull\/([0-9]+)/);
-        let branchLinkMatch = this.context.specLink.match(/(https.*\/[^\/]*)\/tree\/(.*)/);
-        let mainBranchMatch = this.context.specLink.match(/http.*\/([^\/]*\/[^\/\.]*)/);
+        const prLinkMatch = this.context.specLink.match(/http.*\/([^\/]*\/[^\/]*)\/pull\/([0-9]+)/);
+        const branchLinkMatch = this.context.specLink.match(/(https.*\/[^\/]*)\/tree\/(.*)/);
+        const mainBranchMatch = this.context.specLink.match(/http.*\/([^\/]*\/[^\/\.]*)/);
         if (prLinkMatch?.length === 3) {
             const repoName = prLinkMatch[1];
             const prNumber = prLinkMatch[2];
@@ -57,7 +57,7 @@ export class GrowUpJob extends BaseJob {
             const repoName = mainBranchMatch[1];
             await gitOperationWrapper.cloneRepo(repoName, this.context.logger, this.context.specRepo);
             gitOperationWrapper.changeBaseDir(this.context.specRepo);
-            await gitOperationWrapper.safeDirectory()
+            await gitOperationWrapper.safeDirectory();
         } else {
             throw new Error(`Get invalid spec link: ${this.context.specLink}`);
         }
@@ -69,5 +69,4 @@ export class GrowUpJob extends BaseJob {
         this.context.logger.info(`Please use vscode to connect this container.`);
         this.doNotExitDockerContainer();
     }
-
 }

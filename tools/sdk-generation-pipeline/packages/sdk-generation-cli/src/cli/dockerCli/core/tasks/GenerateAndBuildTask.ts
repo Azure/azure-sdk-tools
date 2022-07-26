@@ -40,7 +40,8 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
             repoHttpsUrl: this.context.specRepo.repoHttpsUrl,
             relatedReadmeMdFile: relatedReadmeMdFileRelativePath,
             serviceType: this.context.serviceType,
-            autorestConfig: this.context.autorestConfig
+            autorestConfig: this.context.autorestConfig,
+            skipGeneration: this.context.skipGeneration
         };
         const inputJson = JSON.stringify(inputContent, undefined, 2);
         this.context.logger.info(`Get ${path.basename(this.context.generateAndBuildInputJsonFile)}:`);

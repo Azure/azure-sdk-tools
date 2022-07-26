@@ -45,6 +45,7 @@ export class DockerTaskEngineContext {
     changeOwner: boolean;
     mode: DockerRunningModel;
     autorestConfig: string | undefined;
+    skipGeneration: boolean;
 
     public async initialize(dockerContext: DockerContext) {
         // before execute task engine, safe spec repos and sdk repos because they may be owned by others
@@ -78,6 +79,7 @@ export class DockerTaskEngineContext {
         this.changeOwner = dockerTaskEngineConfigProperties.changeOwner;
         this.mode = dockerContext.mode;
         this.autorestConfig = extractAutorestConfigs(dockerContext.autorestConfigFilePath, dockerContext.sdkRepo, dockerContext.logger);
+        this.skipGeneration = dockerContext.skipGeneration;
     }
 
     public async beforeRunTaskEngine() {

@@ -36,7 +36,7 @@ export class GitOperationWrapper {
     }
 
     public async checkoutPr(prNumber: string) {
-        await this.git.raw(['fetch', 'origin',  '+refs/pull/*:refs/remotes/origin/pr/*']);
+        await this.git.raw(['fetch', 'origin', '+refs/pull/*:refs/remotes/origin/pr/*']);
         await this.git.raw(['checkout', '-b', `refs/pull/${prNumber}/merge`]);
     }
 

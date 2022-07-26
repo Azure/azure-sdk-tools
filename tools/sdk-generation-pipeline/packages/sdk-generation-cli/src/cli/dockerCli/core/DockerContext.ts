@@ -19,6 +19,7 @@ export class DockerContext {
     autorestConfigFilePath?: string;
     specLink?: string;
     sdkWorkBranchLink?: string;
+    skipGeneration: boolean;
     logger: Logger;
 
     /*
@@ -38,6 +39,7 @@ export class DockerContext {
         this.autorestConfigFilePath = inputParams.autorestConfigFilePath;
         this.specLink = inputParams.specLink;
         this.sdkWorkBranchLink = inputParams.sdkWorkBranchLink;
+        this.skipGeneration = inputParams.skipGeneration;
         this.logger = initializeLogger(path.join(inputParams.resultOutputFolder, inputParams.dockerLogger), 'docker');
 
         if (this.sdkList?.length === 0 && fs.existsSync(this.workDir)) {

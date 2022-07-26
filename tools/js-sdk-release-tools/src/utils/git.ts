@@ -5,7 +5,7 @@ import {logger} from "./logger";
 const git: SimpleGit = simpleGit();
 const path = require('path');
 
-export async function getChangedPackageDirectory() {
+export async function getChangedPackageDirectory(throwErrorWhenFindingUnexpectedFile: boolean = true) {
     const changedPackageDirectories: Set<string> = new Set<string>();
     const gitStatus = await git.status();
     const files = gitStatus.files;
@@ -16,6 +16,8 @@ export async function getChangedPackageDirectory() {
             if (packageDirectory) {
                 changedPackageDirectories.add(packageDirectory[0]);
             }
+        } else if (throwErrorWhenFindingUnexpectedFile) {
+            throw new Error(`Find unexpected generated file: ${filePath}. Please confirm whether the output-folder is correct.`);
         }
     }
     return changedPackageDirectories;

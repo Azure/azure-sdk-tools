@@ -120,7 +120,7 @@ export async function generateRLCInPipeline(options: {
         packagePath = path.dirname(path.dirname(autorestConfigFilePath));
         relativePackagePath = path.relative(options.sdkRepo, packagePath);
 
-        let cmd = `autorest --version=3.8.2 ${path.basename(autorestConfigFilePath)} --output-folder=${packagePath} --debug`;
+        let cmd = `autorest --version=3.8.2 ${path.basename(autorestConfigFilePath)} --output-folder=${packagePath}`;
         if (options.use) {
             cmd += ` --use=${options.use}`;
         }

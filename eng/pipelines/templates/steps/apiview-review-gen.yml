@@ -35,6 +35,6 @@ steps:
 - pwsh: |
     $requestUrl = ${{parameters.APIViewURL}}/reviewgen/update?path=apiview&buildId=$(Build.BuildId)
     Write-Host $requestUrl
-    $resp = Invoke-WebRequest $requestUrl
+    $resp = Invoke-RestMethod $requestUrl
     Write-Host $resp
   displayName: 'Send Request to APIView'

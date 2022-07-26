@@ -25,8 +25,11 @@ variables:
 jobs:
 - job: CreatePythonReviewCodeFile
   displayName: 'Create Python API review token file'
-  steps:
+
+  variables:
   - template: /eng/pipelines/templates/variables/globals.yml
+
+  steps:
   - template: /eng/pipelines/templates/steps/use-python-version.yml
     parameters:
       versionSpec: '$(PythonVersion)'

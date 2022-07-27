@@ -1993,5 +1993,3 @@ def register(linter):
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
-
-

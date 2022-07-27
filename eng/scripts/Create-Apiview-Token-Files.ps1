@@ -37,7 +37,8 @@ if ($reviews -ne $null)
             New-Item -Path $CodeFilePath -ItemType Directory
         }
 
-        &($ApiviewGenScript) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath
+        $reviewGenScriptPath = Join-Path $PSScriptRoot $ApiviewGenScript
+        &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath
     }
 }
 else

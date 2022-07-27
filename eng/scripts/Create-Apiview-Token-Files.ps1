@@ -17,19 +17,24 @@ param (
 
 Write-Host "Review Details Json: $($ReviewDetailsJson)"
 $reviews = ConvertFrom-Json $ReviewDetailsJson
+Write-Host $reviews
 if ($reviews -ne $null)
 {
     foreach($r in $reviews)
     {
-        $codeDir = New-Item -Path $WorkingDir/$($r.ReviewID)/$($r.RevisionID) -ItemType Directory
+        Write-Host  "Review:$($r.ReviewID)"
+        Write-Host "Revision: $($r.RevisionID)"
+
+        $pkgWorkingDir = Join-Path -Path $WorkingDir $r.ReviewID | Join-Path -ChildPath $r.RevisionID
+        $codeDir = New-Item -Path $pkgWorkingDir -ItemType Directory
         $sourcePath = $StorageBaseUrl + "/" + $r.FileID + $ContainerSas
         Write-Host "Copying $($sourcePath)"
         azcopy cp "$sourcePath" $codeDir/$($r.FileName) --recursive=true
 
         #Create staging path for review and revision ID
-        $CodeFilePath = $StagingPath/$($r.ReviewID)/$($r.RevisionID)
+        $CodeFilePath = Join-Path -Path $StagingPath $r.ReviewID | Join-Path -ChildPath $r.RevisionID
         if (-not (Test-Path -Path $CodeFilePath)) {
-            New-Item -Path $StagingPath/$($r.ReviewID)/$($r.RevisionID) -ItemType Directory
+            New-Item -Path $CodeFilePath -ItemType Directory
         }
 
         &($ApiviewGenScript) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath

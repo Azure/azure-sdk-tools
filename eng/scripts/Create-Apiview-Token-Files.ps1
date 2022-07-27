@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param (
   [Parameter(Mandatory = $true)]
-  [string]$ReviewDetailsJson,
+  [string]$Reviews,
   [Parameter(Mandatory = $true)]
   [string]$StagingPath,
   [Parameter(Mandatory = $true)]
@@ -15,8 +15,8 @@ param (
 )
 
 
-Write-Host "Review Details Json: $($ReviewDetailsJson)"
-$reviews = ConvertFrom-Json $ReviewDetailsJson
+Write-Host "Review Details Json: $($Reviews)"
+$reviews = ConvertFrom-Json $Reviews
 if ($reviews -ne $null)
 {
     foreach($r in $reviews)
@@ -37,6 +37,6 @@ if ($reviews -ne $null)
 }
 else
 {
-    Write-Host "Invalid Input review details Json $($ReviewDetailsJson)"
+    Write-Host "Invalid Input review details Json $($Reviews)"
     exit 1;
 }

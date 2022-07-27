@@ -278,7 +278,7 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void tokeniseMavenPom(Pom mavenPom) {
-        apiListing.addChildItem(new ChildItem(MAVEN_KEY, MAVEN_KEY, TypeKind.ASSEMBLY));
+        apiListing.addChildItem(new ChildItem(MAVEN_KEY, MAVEN_KEY, TypeKind.MAVEN));
 
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, "maven", MAVEN_KEY), SPACE);
@@ -653,7 +653,7 @@ public class JavaASTAnalyser implements Analyser {
             } else if (typeDeclaration.isEnumDeclaration()) {
                 typeKind = TypeKind.ENUM;
             } else if (typeDeclaration.isAnnotationDeclaration()) {
-                typeKind = TypeKind.INTERFACE;
+                typeKind = TypeKind.ANNOTATION;
             } else {
                 typeKind = TypeKind.UNKNOWN;
             }
@@ -1322,7 +1322,7 @@ public class JavaASTAnalyser implements Analyser {
         @Override
         public void visit(CompilationUnit compilationUnit, Map<String, String> arg) {
             compilationUnit.getModule().ifPresent(moduleDeclaration ->
-                apiListing.addChildItem(new ChildItem(MODULE_INFO_KEY, MODULE_INFO_KEY, TypeKind.CLASS)));
+                apiListing.addChildItem(new ChildItem(MODULE_INFO_KEY, MODULE_INFO_KEY, TypeKind.JAVA_MODULE)));
 
             for (final TypeDeclaration<?> typeDeclaration : compilationUnit.getTypes()) {
                 buildTypeHierarchyForNavigation(typeDeclaration);

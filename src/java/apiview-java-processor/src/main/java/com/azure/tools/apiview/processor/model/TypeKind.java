@@ -8,6 +8,10 @@ public enum TypeKind {
     CLASS("class"),
     INTERFACE("interface"),
     ENUM("enum"),
+    ANNOTATION("annotation"),
+    JAVA_MODULE("java_module"),
+    MAVEN("maven"),
+    GRADLE("gradle"),
     UNKNOWN("unknown");
 
     private final String name;

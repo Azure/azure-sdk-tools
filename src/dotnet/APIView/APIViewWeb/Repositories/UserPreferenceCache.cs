@@ -20,6 +20,15 @@ namespace APIViewWeb.Repositories
             _cache.Set(preference.UserName, preference);
         }
 
+        public UserPreferenceModel GetUserPreferences(string userName)
+        {
+            if (_cache.TryGetValue(userName, out UserPreferenceModel _preference))
+            {
+                return _preference;
+            }
+            return null;
+        }
+
         public IEnumerable<string> GetLangauge(string userName)
         {
             if (_cache.TryGetValue(userName, out UserPreferenceModel _preference))

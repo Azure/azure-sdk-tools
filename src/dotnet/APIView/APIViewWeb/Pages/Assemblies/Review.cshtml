@@ -84,13 +84,13 @@
                 @{
                     var popOverContent = $"<b>{Model.ActiveConversations}</b> active revision threads.<br><b>{Model.TotalActiveConversations}</b> total active threads.<br>"
                     + $"<b>Current Revision:</b> <em>{@Model.Revision.DisplayName}</em>";
-                        @if (Model.DiffRevisionId != null)
+                                    @if (Model.DiffRevisionId != null)
                     {
                         popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
                     }
-                        <button type="button" class="btn btn-info btn-sm shadow-sm" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
-                            <i class="far fa-comment-alt mr-2"></i><span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
-                        </button>
+                                    <button type="button" class="btn btn-info btn-sm shadow-sm" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
+                                        <i class="far fa-comment-alt mr-2"></i><span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
+                                    </button>
                 }
             </div>
             <div class="my-1">
@@ -153,13 +153,28 @@
                     </span>
                     <span class="dropdown-item checkbox">
                         <label>
-                            <input type="checkbox" id="hide-line-numbers">
+                            @if (Model.GetUserPreference().HideLineNumbers)
+                            {
+                                <input type="checkbox" id="hide-line-numbers" checked>
+                            }
+                            else
+                            {
+                                <input type="checkbox" id="hide-line-numbers">
+                                
+                            }
                             &nbsp;Hide Line Number
                         </label>
                     </span>
                     <span class="dropdown-item checkbox">
                         <label>
-                            <input type="checkbox" id="hide-left-navigation">
+                            @if (Model.GetUserPreference().HideLeftNavigation)
+                            {
+                                <input type="checkbox" id="hide-left-navigation" checked>
+                            }
+                            else
+                            {
+                                <input type="checkbox" id="hide-left-navigation">  
+                            }
                             &nbsp;Hide Left Navigation
                         </label>
                     </span>
@@ -335,7 +350,16 @@
         </form>
     </div>
     <div class="row px-3" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId" data-language="@Model.Review.Language">
-        <div id="review-left" class="col-2 rounded-1 border">
+        @{
+            var reviewLeftDisplay = String.Empty;
+            var reviewRightSize = "10";
+            if (Model.GetUserPreference().HideLeftNavigation)
+            {
+                reviewLeftDisplay = "d-none";
+                reviewRightSize = "12";
+            }
+        }
+        <div id="review-left" class="col-2 rounded-1 border @reviewLeftDisplay">
             <div class="namespace-view">
                 @if (Model.CodeFile != null)
                 {
@@ -344,9 +368,12 @@
             </div>
         </div>
 
-        <div id="review-right" class="col-10 rounded-1 border">
+        <div id="review-right" class="col-@reviewRightSize rounded-1 border">
             <table class="code-window">
                 <tbody>
+                    @{
+                        TempData["UserPreference"] = Model.GetUserPreference();
+                    }
                     @foreach (var line in Model.Lines)
                     {
                         <partial name="_CodeLine" model="@line" />

@@ -3029,7 +3029,7 @@ class TestCheckBlockedImports(pylint.testutils.CheckerTestCase):
         import_node = astroid.extract_node("import requests")
         with self.assertAddsMessages(
                 pylint.testutils.Message(
-                    msg_id="blocked-import", node=import_node
+                    msg_id="networking-import-outside-azure-core-transport", node=import_node
                 )
         ):
             self.checker.visit_import(import_node)
@@ -3038,7 +3038,7 @@ class TestCheckBlockedImports(pylint.testutils.CheckerTestCase):
         importfrom_node = astroid.extract_node("from aiohttp import get")
         with self.assertAddsMessages(
                 pylint.testutils.Message(
-                    msg_id="blocked-import", node=importfrom_node
+                    msg_id="networking-import-outside-azure-core-transport", node=importfrom_node
                 )
         ):
             self.checker.visit_importfrom(importfrom_node)
@@ -3058,12 +3058,12 @@ class TestCheckBlockedImports(pylint.testutils.CheckerTestCase):
 
         # blocked import, but in core.
         import_node = astroid.extract_node("import requests")
-        import_node.root().name = "azure.core.something.something"
+        import_node.root().name = "azure.core.pipeline.transport"
         with self.assertNoMessages():
-            self.checker.visit_importfrom(import_node)
+            self.checker.visit_import(import_node)
 
         # blocked from import, but in core.
         importfrom_node = astroid.extract_node("from requests.exceptions import HttpException")
-        importfrom_node.root().name = "azure.core"
+        importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)

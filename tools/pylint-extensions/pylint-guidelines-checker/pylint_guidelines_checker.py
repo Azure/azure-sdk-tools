@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4748
+Pylint custom checkers for SDK guidelines: C4717 - C4749
 """
 
 import logging
@@ -1926,10 +1926,10 @@ class BlockedImport(BaseChecker):
     priority = -1
     msgs = {
         "C4749": (
-            "This import is not allowed. Consider importing an abstract"
-            " alternative from `azure.core`",
-            "blocked-import",
-            "Do not import this module",
+            "This import is not allowed here. Consider using an abstract"
+            " alternative from azure.core.pipeline.transport.",
+            "networking-import-outside-azure-core-transport",
+            "This import is only allowed in azure.core.pipeline.transport.",
         ),
     }
     BLOCKED_MODULES = ["aiohttp", "requests", "trio"]
@@ -1944,7 +1944,7 @@ class BlockedImport(BaseChecker):
 
     def visit_importfrom(self, node):
         """Check that we aren't import from a blocked package."""
-        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME):
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME): 
             return
         self._check_import(node.modname, node)
     
@@ -1955,7 +1955,6 @@ class BlockedImport(BaseChecker):
                 self.add_message(
                     msgid=f"blocked-import", node=node, confidence=None
                 )
-                break
 
 
 # if a linter is registered in this function then it will be checked with pylint

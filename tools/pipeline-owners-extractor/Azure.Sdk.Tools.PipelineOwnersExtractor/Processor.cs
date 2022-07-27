@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -62,79 +63,88 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
             await File.WriteAllTextAsync(this.settings.Output, JsonConvert.SerializeObject(outputContent, Formatting.Indented), stoppingToken);
         }
 
-        private async Task<(BuildDefinition Pipeline, string[] Owners)[]> AssociateOwnersToPipelinesAsync(
-            BuildDefinition[] filteredPipelines,
+        private async Task<List<(BuildDefinition Pipeline, List<string> Owners)>> AssociateOwnersToPipelinesAsync(
+            IEnumerable<BuildDefinition> pipelines,
             Dictionary<string, List<CodeOwnerEntry>> codeOwnerEntriesByRepository)
         {
-            var githubPipelineOwners = new List<(BuildDefinition Pipeline, string[] Owners)>();
+            var linkedGithubUsers = await githubToAadResolver.GetPeopleLinksAsync();
 
-            foreach (var pipeline in filteredPipelines)
+            var microsoftAliasMap = linkedGithubUsers.ToDictionary(x => x.GitHub.Login, x => x.Aad.UserPrincipalName, StringComparer.OrdinalIgnoreCase);
+
+            var microsoftPipelineOwners = new List<(BuildDefinition Pipeline, List<string> Owners)>();
+            
+            var unrecognizedGitHubAliases = new HashSet<string>();
+
+            foreach (var pipeline in pipelines)
             {
-                logger.LogInformation("Pipeline Name = {0}", pipeline.Name);
-
                 if (pipeline.Process.Type != PipelineYamlProcessType || !(pipeline.Process is YamlProcess process))
                 {
+                    logger.LogInformation("Skipping non-yaml pipeline '{Pipeline}'", pipeline.Name);
                     continue;
                 }
 
-                if (!pipeline.Repository.Properties.TryGetValue("manageUrl", out var managementUrl))
+                if (pipeline.Repository.Type != "GitHub")
                 {
-                    logger.LogInformation("ManagementURL not found, skipping sync");
+                    logger.LogInformation("Skipping pipeline '{Pipeline}' with {Type} repository", pipeline.Name, pipeline.Repository.Type);
                     continue;
                 }
 
-                if (!codeOwnerEntriesByRepository.TryGetValue(managementUrl, out var codeOwnerEntries))
+                if (!codeOwnerEntriesByRepository.TryGetValue(SanitizeRepositoryUrl(pipeline.Repository.Url.AbsoluteUri), out var codeOwnerEntries))
                 {
-                    logger.LogInformation("CODEOWNERS file not found, skipping sync");
+                    logger.LogInformation("Skipping pipeline '{Pipeline}' because its repo has no CODEOWNERS file", pipeline.Name);
                     continue;
                 }
 
-                logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
+                logger.LogInformation("Processing pipeline '{Pipeline}'", pipeline.Name);
+
+                logger.LogInformation("Searching CODEOWNERS for patch matching {Path}", process.YamlFilename);
                 var codeOwnerEntry = CodeOwnersFile.FindOwnersForClosestMatch(codeOwnerEntries, process.YamlFilename);
                 codeOwnerEntry.FilterOutNonUserAliases();
 
-                logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, codeOwnerEntry.Owners.Count);
+                logger.LogInformation("Matching Path = {Path}, Owner Count = {OwnerCount}", process.YamlFilename, codeOwnerEntry.Owners.Count);
 
                 // Get set of team members in the CODEOWNERS file
-                var codeOwnerPrincipals = codeOwnerEntry.Owners.ToArray();
+                var githubOwners = codeOwnerEntry.Owners.ToArray();
 
-                githubPipelineOwners.Add((pipeline, codeOwnerPrincipals));
+                var microsoftOwners = new List<string>();
+
+                foreach (var githubOwner in githubOwners)
+                {
+                    if (microsoftAliasMap.TryGetValue(githubOwner, out var microsoftOwner))
+                    {
+                        microsoftOwners.Add(microsoftOwner);
+                    }
+                    else
+                    {
+                        unrecognizedGitHubAliases.Add(githubOwner);
+                    }
+                }
+
+                microsoftPipelineOwners.Add((pipeline, microsoftOwners));
             }
 
-            var distinctGithubAliases = githubPipelineOwners.SelectMany(x => x.Owners).Distinct().ToArray();
-
-            var microsoftAliasMap = await distinctGithubAliases
-                .Select(async githubAlias => new
-                {
-                    Github = githubAlias,
-                    Microsoft = await githubToAadResolver.GetUserPrincipalNameFromGithubAsync(githubAlias),
-                })
-                .LimitConcurrencyAsync(10)
-                .ContinueWith(x => x.Result.ToDictionary(x => x.Github, x => x.Microsoft));
-
-            var microsoftPipelineOwners = githubPipelineOwners
-                .Select(x => (
-                    x.Pipeline,
-                    x.Owners
-                        .Select(o => microsoftAliasMap[o])
-                        .Where(o => o != null)
-                        .ToArray()))
-                .ToArray();
+            var mappedCount = microsoftPipelineOwners.SelectMany(x => x.Owners).Distinct().Count();
+            logger.LogInformation("{Mapped} unique pipeline owner aliases mapped to Microsoft users. {Unmapped} count not be mapped.", mappedCount, unrecognizedGitHubAliases.Count);
 
             return microsoftPipelineOwners;
         }
 
         private async Task<Dictionary<string, List<CodeOwnerEntry>>> GetCodeOwnerEntriesAsync(string[] repositoryUrls)
         {
-            var tasks = repositoryUrls.Select(async url => (
-                RepositoryUrl: url,
-                CodeOwners: await this.gitHubService.GetCodeOwnersFile(new Uri(url))
-            ));
+            var tasks = repositoryUrls
+                .Select(SanitizeRepositoryUrl)
+                .Select(async url => (
+                    RepositoryUrl: url,
+                    CodeOwners: await this.gitHubService.GetCodeOwnersFile(new Uri(url))
+                ));
 
             var taskResults = await Task.WhenAll(tasks);
 
-            return taskResults.Where(x => x.CodeOwners != null).ToDictionary(x => x.RepositoryUrl, x => x.CodeOwners);
+            return taskResults.Where(x => x.CodeOwners != null)
+                .ToDictionary(x => x.RepositoryUrl, x => x.CodeOwners, StringComparer.OrdinalIgnoreCase);
         }
+
+        private static string SanitizeRepositoryUrl(string url) => Regex.Replace(url, @"\.git$", string.Empty);
 
         private static string[] GetDistinctRepositoryUrls(IEnumerable<BuildDefinition> pipelines)
         {

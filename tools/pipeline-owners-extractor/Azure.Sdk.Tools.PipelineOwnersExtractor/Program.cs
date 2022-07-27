@@ -18,6 +18,8 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
     {
         public static async Task Main(string[] args)
         {
+            Console.WriteLine("Initializing PipelineOwnersExtractor");
+
             using var host = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>
                 {

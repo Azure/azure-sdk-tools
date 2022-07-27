@@ -16,6 +16,8 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
     const autorestConfig: string | undefined = inputJson['autorestConfig'];
+    const downloadUrlPrefix: string | undefined = inputJson.installInstructionInput?.downloadUrlPrefix;
+    const skipGeneration: boolean | undefined = inputJson['skipGeneration'];
 
     if ((typeof readmeFiles !== 'string') && readmeFiles.length !== 1) {
         throw new Error(`get ${readmeFiles.length} readme files`);
@@ -37,6 +39,8 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
             use: use,
             outputJson: outputJson,
             swaggerRepoUrl: repoHttpsUrl,
+            downloadUrlPrefix: downloadUrlPrefix,
+            skipGeneration: skipGeneration,
             runningEnvironment: runningEnvironment
         });
     } else {
@@ -47,11 +51,12 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
             autorestConfig,
             use: use,
             outputJson: outputJson,
+            skipGeneration: skipGeneration,
             runningEnvironment: runningEnvironment
         })
     }
 
-    fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, undefined, '  '), {encoding: 'utf-8'})
+    fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, null, '  '), {encoding: 'utf-8'})
 }
 
 const optionDefinitions = [

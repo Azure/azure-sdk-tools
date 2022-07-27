@@ -1,0 +1,22 @@
+{{- include "stress-test-addons.chaos-wrapper.tpl" (list . "stress.network-chaos") -}}
+{{- define "stress.network-chaos" -}}
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+
+spec:
+  action: loss
+  direction: to
+  externalTargets:
+    - {{ .Stress.Scenario }}.bing.com
+  mode: one
+  selector:
+    labelSelectors:
+      # .Stress.BaseName is a unique id that can be used for azure resource naming and correlation
+      testInstance: {{ .Stress.BaseName }}
+      chaos: "true"
+    namespaces:
+      - {{ .Release.Namespace }}
+  loss:
+    loss: "100"
+    correlation: "100"
+{{- end -}}

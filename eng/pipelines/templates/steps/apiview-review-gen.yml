@@ -1,0 +1,40 @@
+parameters:
+  - name: Reviews
+    type: string
+    default: ''  
+  - name: APIViewURL
+    type: string
+    default: ''
+  - name: StorageContainerUrl
+    type: string
+    default: ''
+  - name: ApiviewGenScript
+    type: string
+    default: ''
+
+steps:
+- task: Powershell@2
+  displayName: 'Generate APIView Token files'
+  condition: succeededOrFailed()
+  inputs:
+    pwsh: true
+    filePath: $(Build.SourcesDirectory)/eng/scripts/Create-Apiview-Token-Files.ps1
+    arguments: >
+      -ReviewDetailsJson "${{ parameters.Reviews }}"
+      -StagingPath "$(Build.ArtifactStagingDirectory)"
+      -WorkingDir "$(Pipeline.Workspace)"
+      -StorageBaseUrl "${{parameters.StorageContainerUrl}}"
+      -ApiviewGenScript "${{parameters.ApiviewGenScript}}"
+      -ContainerSas "$(apiview-originals-sas)"
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)/'
+    artifactName: 'apiview'
+
+- pwsh: |
+    $requestUrl = ${{parameters.APIViewURL}}/reviewgen/update?path=apiview&buildId=$(Build.BuildId)
+    Write-Host $requestUrl
+    $resp = Invoke-RestMethod $requestUrl
+    Write-Host $resp
+  displayName: 'Send Request to APIView'

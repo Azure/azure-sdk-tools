@@ -5,7 +5,7 @@ using System.Net;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace Azure.Sdk.Tools.TestProxy.Common
+namespace Azure.Sdk.Tools.TestProxy.Common.Exceptions
 {
     public class HttpException : Exception
     {
@@ -13,12 +13,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public HttpException()
         {
-            this.StatusCode = HttpStatusCode.InternalServerError;
+            StatusCode = HttpStatusCode.InternalServerError;
         }
 
         public HttpException(HttpStatusCode statusCode)
         {
-            this.StatusCode = statusCode;
+            StatusCode = statusCode;
         }
 
         public HttpException(int httpStatusCode)
@@ -29,17 +29,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public HttpException(HttpStatusCode statusCode, string message)
             : base(message)
         {
-            this.StatusCode = statusCode;
+            StatusCode = statusCode;
         }
 
         public HttpException(HttpStatusCode statusCode, string message, Exception innerException) : base(message, innerException)
         {
-            this.StatusCode = statusCode;
+            StatusCode = statusCode;
         }
 
         protected HttpException(HttpStatusCode statusCode, SerializationInfo info, StreamingContext context) : base(info, context)
         {
-            this.StatusCode = statusCode;
+            StatusCode = statusCode;
         }
 
     }

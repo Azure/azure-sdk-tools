@@ -2,7 +2,7 @@
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {

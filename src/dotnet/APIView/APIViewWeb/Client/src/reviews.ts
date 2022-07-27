@@ -113,7 +113,7 @@
 
   searchBox.on('input', _.debounce(function(e) {
     updateListedReviews();
-  }, 300));
+  }, 600));
 
   searchButton.on('click', function() {
     updateListedReviews();

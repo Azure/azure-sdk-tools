@@ -77,10 +77,11 @@ namespace APIViewWeb.Controllers
             string label,
             string repoName,
             string packageName,
-            bool compareAllRevisions
+            bool compareAllRevisions,
+            string project
             )
         {
-            var reviewRevision = await _reviewManager.CreateApiReview(User, buildId, artifactName, originalFilePath, label, repoName, packageName, reviewFilePath, compareAllRevisions);
+            var reviewRevision = await _reviewManager.CreateApiReview(User, buildId, artifactName, originalFilePath, label, repoName, packageName, reviewFilePath, compareAllRevisions, project);
             if (reviewRevision != null)
             {
                 var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{reviewRevision.Review.ReviewId}";

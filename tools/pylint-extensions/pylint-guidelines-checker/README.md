@@ -8,7 +8,7 @@ In order to lint for the guidelines, you must make sure you are enabling the `py
 
 It is recommended you run pylint at the library package level to be consistent with how the CI runs pylint.
 
-Check that you are running pylint version >=2.9.3 and astroid version >=2.5.4.
+Check that you are running pylint version >=2.14.5 and astroid version >=2.12.0.
 
 
 0. Install the pylint checker from the azure-sdk development feed.

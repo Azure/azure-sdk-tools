@@ -1,5 +1,17 @@
 # Release History
 
+## 0.1.20 (2022-07-25)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+Fixed a bug introduced in 0.1.18 with `{{ .Stress.BaseName }}` not being deterministic. This meant that chaos policies using `{{ .Stress.BaseName }}` to block DNS entries did not use the same string value as the test template resources. The new BaseName is generated via a sha1 hash of the resource group name (which includes the scenario name, release name and release revision), truncated to length 5, and prefixed with a `s` character for maximum azure resource naming compatibility.
+
+### Other Changes
+
 ## 0.1.19 (2022-06-30)
 
 ### Features Added

@@ -1,7 +1,7 @@
 {
-  "AssetsRepo": "Azure/azure-sdk-assets-integration",
-  "AssetsRepoPrefixPath": "python/recordings/",
+  "AssetsRepo": "Azure/azure-sdk-for-python-assets",
+  "AssetsRepoPrefixPath": "recordings/",
   "AssetsRepoId": "",
   "AssetsRepoBranch": "auto/test",
-  "SHA": "786b4f3d380d9c36c91f5f146ce4a7661ffee3b9"
+  "SHA": "3a56979db2720426a3e911240802f2c8765616f5"
 }

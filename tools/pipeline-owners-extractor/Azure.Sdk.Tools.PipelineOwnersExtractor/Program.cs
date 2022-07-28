@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
@@ -6,7 +8,6 @@ using Azure.Sdk.Tools.NotificationConfiguration;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using Azure.Sdk.Tools.NotificationConfiguration.Services;
 using Azure.Sdk.Tools.PipelineOwnersExtractor.Configuration;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -23,6 +24,8 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
             Console.WriteLine("Initializing PipelineOwnersExtractor");
 
             using var host = Host.CreateDefaultBuilder(args)
+                // This affects config file loading and defaults to Directory.GetCurrentDirectory()
+                .UseContentRoot(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
                 .ConfigureServices((context, services) =>
                 {
                     services.AddSingleton<TokenCredential, DefaultAzureCredential>();

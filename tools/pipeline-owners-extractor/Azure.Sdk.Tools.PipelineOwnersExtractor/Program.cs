@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
             Console.WriteLine("Initializing PipelineOwnersExtractor");
 
@@ -46,12 +46,6 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
 
             Console.WriteLine(JsonConvert.SerializeObject(configuration, Formatting.Indented));
             Console.WriteLine(configuration.GetDebugView());
-
-            return;
-
-            var processor = host.Services.GetRequiredService<Processor>();
-
-            await processor.ExecuteAsync();
         }
 
         private static AzureDevOpsService CreateAzureDevOpsService(IServiceProvider provider)

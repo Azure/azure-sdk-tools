@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>pipeline-codeowner-extractor</ToolCommandName>
+    <ToolCommandName>pipeline-owners-extractor</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,4 +23,3 @@
   </ItemGroup>
 
 </Project>
-

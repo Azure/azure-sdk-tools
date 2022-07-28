@@ -4,7 +4,7 @@
     {
         public string Account { get; set; }
 
-        public string[] Projects { get; set; }
+        public string Projects { get; set; }
 
         public string OpenSourceAadAppId { get; set; }
 

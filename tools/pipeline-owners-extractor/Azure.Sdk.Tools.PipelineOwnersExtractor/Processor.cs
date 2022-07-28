@@ -45,7 +45,8 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
 
         public async Task ExecuteAsync(CancellationToken stoppingToken = default)
         {
-            var pipelineResults = await Task.WhenAll(this.settings.Projects.Select(x => devOpsService.GetPipelinesAsync(x)));
+            var projects = this.settings.Projects.Split(',');
+            var pipelineResults = await Task.WhenAll(projects.Select(x => devOpsService.GetPipelinesAsync(x.Trim())));
 
             // flatten arrays of pipelines by project into an array of pipelines
             var pipelines = pipelineResults

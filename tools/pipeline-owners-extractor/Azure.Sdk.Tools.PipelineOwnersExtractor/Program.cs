@@ -5,6 +5,7 @@ using Azure.Identity;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using Azure.Sdk.Tools.NotificationConfiguration.Services;
 using Azure.Sdk.Tools.PipelineOwnersExtractor.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -25,7 +26,7 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
                 {
                     services.AddSingleton<TokenCredential, DefaultAzureCredential>();
                     services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
-                    services.Configure<PipelineOwnerSettings>(context.Configuration.GetSection("PipelineOwnersExtractor"));
+                    services.Configure<PipelineOwnerSettings>(context.Configuration);
                     services.AddSingleton<IPostConfigureOptions<PipelineOwnerSettings>, PostConfigureKeyVaultSettings<PipelineOwnerSettings>>();
                     services.AddSingleton<GitHubService>();
                     services.AddSingleton(CreateGithubAadConverter);

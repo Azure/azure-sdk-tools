@@ -3028,7 +3028,7 @@ class TestCheckBlockedImports(pylint.testutils.CheckerTestCase):
         # Blocked import ouside of core.
         import_node = astroid.extract_node("import requests")
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id="networking-import-outside-azure-core-transport", node=import_node
                 )
         ):
@@ -3037,7 +3037,7 @@ class TestCheckBlockedImports(pylint.testutils.CheckerTestCase):
         # blocked import from outside of core.
         importfrom_node = astroid.extract_node("from aiohttp import get")
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id="networking-import-outside-azure-core-transport", node=importfrom_node
                 )
         ):

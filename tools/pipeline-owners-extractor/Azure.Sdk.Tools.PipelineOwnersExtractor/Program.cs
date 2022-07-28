@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
+using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.PipelineOwnersExtractor
 {
@@ -35,6 +37,17 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
                     services.AddSingleton<Processor>();
                 })
                 .Build();
+
+            Console.WriteLine($"Environment.CurrentDirectory: { Environment.CurrentDirectory }");
+            Console.WriteLine($"AppDomain.CurrentDomain.BaseDirectory: { AppDomain.CurrentDomain.BaseDirectory }");
+            Console.WriteLine();
+
+            var configuration = (IConfigurationRoot)host.Services.GetRequiredService<IConfiguration>();
+
+            Console.WriteLine(JsonConvert.SerializeObject(configuration, Formatting.Indented));
+            Console.WriteLine(configuration.GetDebugView());
+
+            return;
 
             var processor = host.Services.GetRequiredService<Processor>();
 

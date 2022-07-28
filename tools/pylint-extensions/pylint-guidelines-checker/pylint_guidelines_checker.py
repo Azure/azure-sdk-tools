@@ -1922,7 +1922,7 @@ class BlockedImport(BaseChecker):
     For example, instead of using `requests` to make requests, clients should
     take a `azure.core.pipeline.Pipeline` as input to make requests.
     """
-    name = "blocked-import"
+    name = "networking-import-outside-azure-core-transport"
     priority = -1
     msgs = {
         "C4749": (
@@ -1953,7 +1953,7 @@ class BlockedImport(BaseChecker):
         for blocked in self.BLOCKED_MODULES:
             if name.startswith(blocked):
                 self.add_message(
-                    msgid=f"blocked-import", node=node, confidence=None
+                    msgid=f"networking-import-outside-azure-core-transport", node=node, confidence=None
                 )
 
 

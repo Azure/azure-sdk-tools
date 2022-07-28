@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Extensions.Logging;
+using Models.OpenSourcePortal;
 using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
@@ -51,7 +52,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
         /// <returns>Aad user principal name</returns>
         public string GetUserPrincipalNameFromGithub(string githubUserName)
         {
-            return GetUserPrincipalNameFromGithubAsync(githubUserName).Result;           
+            return GetUserPrincipalNameFromGithubAsync(githubUserName).Result;
         }
 
         public async Task<string> GetUserPrincipalNameFromGithubAsync(string githubUserName)
@@ -65,6 +66,24 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
                 logger.LogWarning("Github username {Username} not found", githubUserName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
+
+            return null;
+        }
+
+        public async Task<UserLink[]> GetPeopleLinksAsync()
+        {
+            try
+            {
+                logger.LogInformation("Calling GET https://repos.opensource.microsoft.com/api/people/links");
+                var responseJsonString = await client.GetStringAsync($"https://repos.opensource.microsoft.com/api/people/links");
+                var allLinks = JsonConvert.DeserializeObject<UserLink[]>(responseJsonString);
+
+                return allLinks;
             }
             catch (Exception ex)
             {

@@ -36,10 +36,10 @@ In this case, you can manually set it in 'Keychain Access' to work around the pr
 1. Click the `dotnet-devcert.pfx` file in 'Finder' to register the keychain directly. Enter the password as “password”
 2. You can check the newly created `localhost` name in the keychain access “system” item
 3. Double-click `localhost` and change Trust to "Always Trust"
-4. Run `$ dotnet dev-certs https —trust` in the terminal, and you can see that the `localhost` checked above has changed from ![x](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FMdyzC%2FbtrIc9Azung%2F83TrRVVDYVaf85gbiAL2VK%2Fimg.png) to ![+](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FbdsBJ8%2FbtrIeMklVrv%2FeHV4xcBVvT476nxofIuaHK%2Fimg.png)
+4. Run `$ dotnet dev-certs https —trust` in the terminal, and you can see that the `localhost` checked above has changed from ![x](_images/keychain-cert-not.png) to ![+](_images/keychain-cert-ok.png)
 
-![keychain-localhost](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FbAGXut%2FbtrH76kMYwt%2F1l9wdL0eFlvCSbdgMeLvp0%2Fimg.jpg)
-![keychain-always-trust](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FnizEL%2FbtrIc91DPbV%2FW4dxwLVwkY0EZq1fOnqS81%2Fimg.png)
+![keychain-localhost](_images/keychain-localhost.png)
+![keychain-always-trust](_images/keychain-trust.png)
 
 Also note that taken to trust this cert will _also apply to installing the dotnet tool directly_. The test-proxy tool will consume the certificate just the same as the docker container does.
 

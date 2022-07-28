@@ -17,13 +17,14 @@ namespace APIViewWeb
         public abstract Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis);
         public virtual bool IsReviewGenByPipeline { get; } = false;
 
-        public readonly CodeFileToken ReviewNotReadyCodeFile = new CodeFileToken("API review is being generated now and it will be available here in few minutes", CodeFileTokenKind.Text);
+        public readonly CodeFileToken ReviewNotReadyCodeFile = new CodeFileToken("API review is being generated for this revision and it will be available in few minutes. Please refresh this page after few minutes to see generated API review.", CodeFileTokenKind.Literal);
         public virtual CodeFile GetReviewGenPendingCodeFile(string fileName) => new CodeFile()
         {
-            Name = Name,
+            Name = fileName,
             PackageName = fileName,
             Language = Name,
-            Tokens = new CodeFileToken[] {ReviewNotReadyCodeFile}
+            Tokens = new CodeFileToken[] {new CodeFileToken("", CodeFileTokenKind.Newline), ReviewNotReadyCodeFile, new CodeFileToken("", CodeFileTokenKind.Newline) },
+            Navigation = new NavigationItem[] { new NavigationItem() { Text = fileName } }
         };
     }
 }

@@ -38,7 +38,7 @@ namespace APIViewWeb.Repositories
 
         private readonly NotificationManager _notificationManager;
 
-        private readonly DevopsArtifactRepository _devopsClient;
+        private readonly DevopsArtifactRepository _devopsArtifactRepository;
 
         private readonly PackageNameManager _packageNameManager;
 
@@ -63,7 +63,7 @@ namespace APIViewWeb.Repositories
             _commentsRepository = commentsRepository;
             _languageServices = languageServices;
             _notificationManager = notificationManager;
-            _devopsClient = devopsClient;
+            _devopsArtifactRepository = devopsClient;
             _packageNameManager = packageNameManager;
         }
 
@@ -727,9 +727,9 @@ namespace APIViewWeb.Repositories
             RunReviewGenPipeline(paramList, languageService.Name);
         }
 
-        public async Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact)
+        public async Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project)
         {
-            var stream = await _devopsClient.DownloadPackageArtifact(repoName, buildId, artifact, format: "zip");
+            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
             var archive = new ZipArchive(stream);
             foreach (var entry in archive.Entries)
             {
@@ -743,7 +743,7 @@ namespace APIViewWeb.Repositories
                 var revisionId = reviewDetails[2];
                 var codeFile = await CodeFile.DeserializeAsync(entry.Open());
 
-                // Update code file with one downlaoded from pipeline
+                // Update code file with one downloaded from pipeline
                 var review = await _reviewsRepository.GetReviewAsync(reviewId);
                 if (review != null)
                 {
@@ -765,7 +765,8 @@ namespace APIViewWeb.Repositories
                 ReadCommentHandling = JsonCommentHandling.Skip
             };
             var reviewParamString = JsonSerializer.Serialize(reviewGenParams, jsonSerializerOptions);
-            await _devopsClient.RunPipeline($"tools - generate-{language}-apireview", 
+            reviewParamString = reviewParamString.Replace("\"", "'");
+            await _devopsArtifactRepository.RunPipeline($"tools - generate-{language}-apireview", 
                 reviewParamString, 
                 _originalsRepository.GetContainerUrl());
         }

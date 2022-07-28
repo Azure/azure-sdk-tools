@@ -9,8 +9,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -22,18 +24,15 @@ namespace APIViewWeb.Repositories
         private readonly IConfiguration _configuration;
 
         private readonly string _devopsAccessToken;
-        private readonly string _organization;
+        private readonly string _pipeline_run_rest;
         private readonly string _hostUrl;
-        private readonly string _project;
-
 
         public DevopsArtifactRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _configuration = configuration;
             _devopsAccessToken = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", _configuration["Azure-Devops-PAT"])));
-            _organization = _configuration["Azure-Devops-Org"];
+            _pipeline_run_rest = _configuration["Azure-Devops-Run-Ripeline-Rest"];
             _hostUrl = _configuration["APIVIew-Host-Url"];
-            _project = _configuration["Azure-Devops-Project"];
         }
 
         public async Task<Stream> DownloadPackageArtifact(string repoName, string buildId, string artifactName, string filePath, string project, string format= "file")
@@ -91,30 +90,13 @@ namespace APIViewWeb.Repositories
 
         public async Task RunPipeline(string pipelineName, string reviewDetails, string originalStorageUrl)
         {
-            var credential = new VssBasicCredential("nobody", _devopsAccessToken);
-            var connection = new VssConnection(new Uri(_organization), credential);
-            var buildClient = connection.GetClient<BuildHttpClient>();
-            var projectClient = connection.GetClient<ProjectHttpClient>();
-
-            var project = await projectClient.GetProject(_project);
-            Console.WriteLine(project.Name);
-            var definitions = await buildClient.GetDefinitionsAsync(pipelineName);
-            if(definitions == null || definitions.Count == 0)
-            {
-                throw new InvalidOperationException("Pipeline not found with name " + pipelineName));
-            }
-            var definition = definitions.First();
-            Console.WriteLine(definition.Name);
-
-            var build = new Build()
-            {
-                Definition = definition,
-                Project = project
-            };
-
-            var dict = new Dictionary<string, string> { { "Reviews", reviewDetails }, { "APIViewUrl", _hostUrl }, { "StorageContainerUrl", originalStorageUrl } };
-            build.Parameters = JsonConvert.SerializeObject(dict);
-            buildClient.QueueBuildAsync(build).Wait();
+            SetDevopsClientHeaders();
+            //Create dictionary of all required parametes to run tools - generate-<language>-apireview pipeline in azure devops
+            var reviewDetailsDict = new Dictionary<string, string> { { "Reviews", reviewDetails }, { "APIViewUrl", _hostUrl }, { "StorageContainerUrl", originalStorageUrl } };
+            var pipelineParams = new Dictionary<string, Dictionary<string, string>> { { "templateParameters", reviewDetailsDict } };
+            var stringContent = new StringContent(JsonConvert.SerializeObject(pipelineParams), Encoding.UTF8, "application/json");
+            var response = await _devopsClient.PostAsync(_pipeline_run_rest, stringContent);
+            response.EnsureSuccessStatusCode();
         }
     }
 }

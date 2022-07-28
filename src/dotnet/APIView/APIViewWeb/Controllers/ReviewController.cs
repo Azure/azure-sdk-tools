@@ -15,7 +15,6 @@ using System.Threading.Tasks;
 
 namespace APIViewWeb.Controllers
 {
-    [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
     public class ReviewController : Controller
     {
         private readonly ReviewManager _reviewManager;
@@ -28,9 +27,9 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId)
+        public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId, string project = "internal")
         {
-            await _reviewManager.UpdateReviewCodeFiles(repoName, buildId, artifactPath);
+            await _reviewManager.UpdateReviewCodeFiles(repoName, buildId, artifactPath, project);
             return Ok();
         }
     }

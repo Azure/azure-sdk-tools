@@ -32,9 +32,11 @@ steps:
     pathtoPublish: '$(Build.ArtifactStagingDirectory)/'
     artifactName: 'apiview'
 
-- pwsh: |
-    $requestUrl = ${{parameters.APIViewURL}}/reviewgen/update?path=apiview&buildId=$(Build.BuildId)
-    Write-Host $requestUrl
-    $resp = Invoke-RestMethod $requestUrl
-    Write-Host $resp
-  displayName: 'Send Request to APIView'
+- task: Powershell@2
+  displayName: 'Send Request to APIView to Update Token files'
+  condition: succeededOrFailed()
+  inputs:
+    pwsh: true
+    filePath: $(Build.SourcesDirectory)/eng/scripts/Apiview-Update-Generated-Review.ps1
+    arguments: >
+      -BuildId $(Build.BuildId)

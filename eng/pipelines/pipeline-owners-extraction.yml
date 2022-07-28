@@ -29,14 +29,10 @@ stages:
           custom: 'tool'
           arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(PipelineOwnersExtractorVersion)" "Azure.Sdk.Tools.PipelineOwnersExtractor"'
           workingDirectory: '$(Agent.BuildDirectory)'
-      - pwsh: |
-          pipeline-owners-extractor --output "$(outputPath)"
-        displayName: 'Run Pipeline Owners Extractor'
-        env:
-          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-          DOTNET_CLI_TELEMETRY_OPTOUT: 1
-          DOTNET_MULTILEVEL_LOOKUP: 0
-          AzureDevOpsPat: $(azure-sdk-notification-tools-pat)
-          OpenSourceAadAppId: $(opensource-aad-app-id)
-          OpenSourceAadSecret: $(opensource-aad-secret)
-          OpenSourceAadTenantId: $(opensource-aad-tenant-id)
+      - task: AzureCLI@2
+        displayName: Run Pipeline Owners Extractor
+        inputs:
+          azureSubscription: 'Azure SDK Engineering System'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: pipeline-owners-extractor --output "$(OutputPath)"

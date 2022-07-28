@@ -40,6 +40,7 @@ namespace APIViewWeb.Repositories
         private readonly IAuthorizationService _authorizationService;
         private readonly int _pullRequestCleanupDays;
         private HashSet<string> _allowedListBotAccounts;
+        private readonly bool _isGitClientAvailable;
 
         public PullRequestManager(
             IAuthorizationService authorizationService,
@@ -59,10 +60,10 @@ namespace APIViewWeb.Repositories
             _devopsArtifactRepository = devopsArtifactRepository;
             _authorizationService = authorizationService;
             var ghToken = _configuration["github-access-token"];
-            if (ghToken != null)
+            if (!string.IsNullOrEmpty(ghToken))
             {
                 _githubClient.Credentials = new Credentials(ghToken);
-
+                _isGitClientAvailable = true;
             }
 
             var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
@@ -411,6 +412,9 @@ namespace APIViewWeb.Repositories
 
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)
         {
+            if (!_isGitClientAvailable)
+                return false;
+
             var repoInfo = prModel.RepoName.Split("/");
             var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prModel.PullRequestNumber);
             // Close review created for pull request if pull request was closed more than _pullRequestCleanupDays days ago

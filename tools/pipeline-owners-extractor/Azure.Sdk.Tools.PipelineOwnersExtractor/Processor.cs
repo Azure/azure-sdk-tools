@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Azure.Sdk.Tools.CodeOwnersParser;
+using Azure.Sdk.Tools.NotificationConfiguration;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using Azure.Sdk.Tools.NotificationConfiguration.Services;
 using Azure.Sdk.Tools.PipelineOwnersExtractor.Configuration;
@@ -136,7 +137,7 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
                 .Select(SanitizeRepositoryUrl)
                 .Select(async url => (
                     RepositoryUrl: url,
-                    CodeOwners: await this.gitHubService.GetCodeOwnersFile(new Uri(url))
+                    CodeOwners: await this.gitHubService.GetCodeownersFile(new Uri(url))
                 ));
 
             var taskResults = await Task.WhenAll(tasks);

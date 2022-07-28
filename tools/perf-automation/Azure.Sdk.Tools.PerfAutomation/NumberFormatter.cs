@@ -27,12 +27,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
 
             double log = Math.Log10(Math.Abs(value));
-            int significantDigits = (int)Math.Ceiling(Math.Max(log, minSignificantDigits));
+            int significantDigits = (int)Math.Max(Math.Ceiling(log), minSignificantDigits);
 
-            double divisor = Math.Pow(10, Math.Ceiling(log - significantDigits));
+            double divisor = Math.Pow(10, Math.Ceiling(log) - significantDigits);
             double rounded = divisor * Math.Round(value / divisor, MidpointRounding.AwayFromZero);
 
-            int decimals = (int)Math.Ceiling(Math.Max(0, significantDigits - log - 1));
+            int decimals = (int)Math.Max(0, significantDigits - Math.Floor(log) - 1);
 
             return groupSeparator ? rounded.ToString($"N{decimals}") : rounded.ToString($"F{decimals}");
         }

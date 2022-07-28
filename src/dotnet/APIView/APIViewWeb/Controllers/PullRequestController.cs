@@ -49,9 +49,9 @@ namespace APIViewWeb.Controllers
                 var reviewUrl = await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: codeFile, baselineCodeFileName: baselineCodeFile, commentOnPR: commentOnPR, language: language);
                 return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
             }
-            catch (AuthorizationFailedException authEx)
+            catch (AuthorizationFailedException)
             {
-                return StatusCode(StatusCodes.Status401Unauthorized, authEx);
+                return StatusCode(StatusCodes.Status401Unauthorized);
             }
         }
 

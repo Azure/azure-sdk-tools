@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
+using Azure.Sdk.Tools.NotificationConfiguration;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using Azure.Sdk.Tools.NotificationConfiguration.Services;
 using Azure.Sdk.Tools.PipelineOwnersExtractor.Configuration;

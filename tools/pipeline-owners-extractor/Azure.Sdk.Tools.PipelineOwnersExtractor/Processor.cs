@@ -125,7 +125,7 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
             }
 
             var mappedCount = microsoftPipelineOwners.SelectMany(x => x.Owners).Distinct().Count();
-            logger.LogInformation("{Mapped} unique pipeline owner aliases mapped to Microsoft users. {Unmapped} count not be mapped.", mappedCount, unrecognizedGitHubAliases.Count);
+            logger.LogInformation("{Mapped} unique pipeline owner aliases mapped to Microsoft users. {Unmapped} could not be mapped.", mappedCount, unrecognizedGitHubAliases.Count);
 
             return microsoftPipelineOwners;
         }

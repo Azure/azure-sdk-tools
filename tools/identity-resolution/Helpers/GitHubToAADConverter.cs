@@ -79,14 +79,11 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
         {
             try
             {
+                logger.LogInformation("Calling GET https://repos.opensource.microsoft.com/api/people/links");
                 var responseJsonString = await client.GetStringAsync($"https://repos.opensource.microsoft.com/api/people/links");
                 var allLinks = JsonConvert.DeserializeObject<UserLink[]>(responseJsonString);
 
                 return allLinks;
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                logger.LogWarning("Github username {Username} not found", "fd");
             }
             catch (Exception ex)
             {

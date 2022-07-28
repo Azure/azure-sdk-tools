@@ -1,0 +1,42 @@
+# Configure notifications in Azure DevOps
+trigger: none
+
+pr: none
+
+stages:
+- stage: Run
+
+  variables:
+  - template: ./templates/variables/globals.yml
+
+  jobs:
+  - job: Run
+    timeoutInMinutes: 120
+    pool:
+      name: azsdk-pool-mms-ubuntu-2004-general
+      vmImage: MMSUbuntu20.04
+
+    variables:
+      Organization: azure-sdk
+      Project: internal
+      DotNetDevOpsFeed: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
+      OutputPath: '$(Agent.BuildDirectory)/pipelineOwners.json'
+    steps:
+      - task: DotNetCoreCLI@2
+        displayName: 'Install Pipeline Owners Extractor'
+        inputs:
+          command: custom
+          custom: 'tool'
+          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(PipelineOwnersExtractorVersion)" "Azure.Sdk.Tools.PipelineOwnersExtractor"'
+          workingDirectory: '$(Agent.BuildDirectory)'
+      - pwsh: |
+          pipeline-owners-extractor --output "$(outputPath)"
+        displayName: 'Run Pipeline Owners Extractor'
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          DOTNET_MULTILEVEL_LOOKUP: 0
+          AzureDevOpsPat: $(azure-sdk-notification-tools-pat)
+          OpenSourceAadAppId: $(opensource-aad-app-id)
+          OpenSourceAadSecret: $(opensource-aad-secret)
+          OpenSourceAadTenantId: $(opensource-aad-tenant-id)

@@ -79,7 +79,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
 
             builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
-            builder.Services.AddHostedService<BuildLogBundleQueueWorker>(settings.BuildLogBundlesWorkerCount);
             builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
         }
 

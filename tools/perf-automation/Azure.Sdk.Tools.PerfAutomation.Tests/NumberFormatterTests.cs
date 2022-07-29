@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         [TestCase(12_345, 6, "12345.0", false)]
         [TestCase(12_345, 7, "12345.00", false)]
 
-        // Bug where numbers where fractional part of log10 was > 0.5
+        // Bug where fractional part of log10 was > 0.5
         [TestCase(8.22929639076288, 4, "8.229")]
 
         // Zero

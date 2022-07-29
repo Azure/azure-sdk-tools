@@ -150,14 +150,25 @@ namespace APIViewWeb.Pages.Assemblies
             if (type.Contains("Automatic")) { filterTypes.Add((int)ReviewType.Automatic); }
             if (type.Contains("PullRequest")) { filterTypes.Add((int)ReviewType.PullRequest); }
 
-            _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
+            UserPreferenceModel userPreference = _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+            if (userPreference != null)
             {
-                UserName = User.GetGitHubLogin(),
-                FilterType = filterTypes.Cast<ReviewType>().ToList(),
-                Language = languages,
-                State = state,
-                Status = status
-            });
+                userPreference.FilterType = filterTypes.Cast<ReviewType>().ToList();
+                userPreference.Language = languages;
+                userPreference.State = state;
+                userPreference.Status = status;
+                _preferenceCache.UpdateUserPreference(userPreference);
+            }
+            else
+            {
+                _preferenceCache.UpdateUserPreference(new UserPreferenceModel {
+                    UserName = User.GetGitHubLogin(),
+                    FilterType = filterTypes.Cast<ReviewType>().ToList(),
+                    Language = languages,
+                    State = state,
+                    Status = status
+                });
+            }
 
             bool? isApproved = null;
             // Resolve Approval State

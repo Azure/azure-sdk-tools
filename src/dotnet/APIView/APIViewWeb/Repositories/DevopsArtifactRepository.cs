@@ -1,15 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.Core.WebApi;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.WebApi;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -94,7 +87,7 @@ namespace APIViewWeb.Repositories
             //Create dictionary of all required parametes to run tools - generate-<language>-apireview pipeline in azure devops
             var reviewDetailsDict = new Dictionary<string, string> { { "Reviews", reviewDetails }, { "APIViewUrl", _hostUrl }, { "StorageContainerUrl", originalStorageUrl } };
             var pipelineParams = new Dictionary<string, Dictionary<string, string>> { { "templateParameters", reviewDetailsDict } };
-            var stringContent = new StringContent(JsonConvert.SerializeObject(pipelineParams), Encoding.UTF8, "application/json");
+            var stringContent = new StringContent(JsonSerializer.Serialize(pipelineParams), Encoding.UTF8, "application/json");
             var response = await _devopsClient.PostAsync(_pipeline_run_rest, stringContent);
             response.EnsureSuccessStatusCode();
         }

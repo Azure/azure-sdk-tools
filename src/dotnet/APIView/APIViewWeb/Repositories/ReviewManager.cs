@@ -757,7 +757,7 @@ namespace APIViewWeb.Repositories
                 }
             }
         }
-        public async void RunReviewGenPipeline(List<ReviewGenPipelineParamModel> reviewGenParams, string language)
+        private async void RunReviewGenPipeline(List<ReviewGenPipelineParamModel> reviewGenParams, string language)
         {
             var jsonSerializerOptions = new JsonSerializerOptions()
             {

@@ -43,10 +43,11 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         // Bug where numbers where fractional part of log10 was > 0.5
         [TestCase(8.22929639076288, 4, "8.229")]
 
-        // Special-case zero
+        // Zero
         [TestCase(0, 1, "0")]
-        [TestCase(0, 2, "0")]
-        [TestCase(0, 3, "0")]
+        [TestCase(0, 2, "0.0")]
+        [TestCase(0, 3, "0.00")]
+        [TestCase(0, 4, "0.000")]
 
         // Negative numbers
         [TestCase(-1, 1, "-1")]

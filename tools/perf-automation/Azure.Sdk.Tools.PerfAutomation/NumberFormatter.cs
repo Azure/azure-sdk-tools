@@ -20,10 +20,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 throw new ArgumentException("Must be greater than zero", nameof(minSignificantDigits));
             }
 
-            // Signficant digits are undefined for the number zero, so hardcode to string "0".
+            // Math below doesn't work for value of 0
             if (value == 0)
             {
-                return "0";
+                return value.ToString($"N{minSignificantDigits - 1}");
             }
 
             double log = Math.Log10(Math.Abs(value));

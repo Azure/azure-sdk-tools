@@ -1,6 +1,6 @@
 ﻿﻿/* Themes
 ------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-.default {
+.light-theme {
     --background-color: #fff;
     --border-color: #dee2e6;
     --text-color: #212529;
@@ -28,7 +28,7 @@
     --code-diagnostics-info-color: lightblue;
 }
 
-:root {
+.dark-theme {
     --background-color: #010409;
     --border-color: #30363d;
     --text-color: #c9d1d9;
@@ -52,7 +52,7 @@
     --class-color: #d2a8ff;
     --code-color: #db3984;
     --code-diagnostics-error-color: darkmagenta;
-    --code-diagnostics-warn-color: darkgoldenrod;
+    --code-diagnostics-warn-color: #846007;
     --code-diagnostics-info-color: darkblue;
 }
 /* Mixins, Media, Include and Keyframes
@@ -934,6 +934,10 @@ mark {
 
 .navbar-dark .navbar-nav .nav-link {
     color: #fff;
+}
+
+.navbar-expand-sm .navbar-nav .dropdown-menu {
+    z-index: 1030;
 }
 /*----------------------------------------------------------------------*/
 

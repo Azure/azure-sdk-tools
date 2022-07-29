@@ -36,3 +36,7 @@ stages:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: pipeline-owners-extractor --output "$(OutputPath)"
+      - publish: $(OutputPath)
+        displayName: Publish pipelineOwners artifact
+        artifact: pipelineOwners
+        condition: succeededOrFailed()

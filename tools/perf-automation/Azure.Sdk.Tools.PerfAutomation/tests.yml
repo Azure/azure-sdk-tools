@@ -168,7 +168,11 @@ Services:
     - --size 10240 --parallel 64
     - --size 1048576 --parallel 1
     - --size 10485760 --parallel 32
+    - --size 10485760 --parallel 32 --client-encryption 1.0
+    - --size 10485760 --parallel 32 --client-encryption 2.0
     - --size 10485760 --parallel 32 --sync
+    - --size 10485760 --parallel 32 --sync --client-encryption 1.0
+    - --size 10485760 --parallel 32 --sync --client-encryption 2.0
     - --size 20971520 --parallel 1
     - --size 209715200 --parallel 1
     - --size 1073741824 --parallel 1 --warmup 60 --duration 60
@@ -237,6 +241,13 @@ Services:
     - --size 10240 --parallel 256
     TestNames:
       Net: DownloadSasUriBlobClient
+
+  - Test: cipher-block-size
+    Arguments:
+    - --parallel 32 --sync --client-encryption 1.0
+    - --parallel 32 --sync --client-encryption 2.0
+    TestNames:
+      Java: cipherblocksize
 
 - Service: storage-blob-track1
   Languages:

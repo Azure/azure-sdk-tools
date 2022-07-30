@@ -57,7 +57,14 @@ SETX SSL_CERT_DIR "C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate"
 SETX REQUESTS_CA_BUNDLE "C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate\dotnet-devcert.pem"
 ```
 
-_Disclaimer:_ __A new terminal__ should be started up to make these variables available. __In a new terminal__, running tests with the test proxy should now work with HTTPS requests.
+_Disclaimer:_ __A new terminal__ should be started up to make these variables available. 
+To check if these variables are indeed in the environment,
+```cmd
+[Environment]::GetEnvironmentVariable('SSL_CERT_DIR')
+[Environment]::GetEnvironmentVariable('REQUESTS_CA_BUNDLE')
+```
+should output your SSL certificate directory and file location path in this new terminal.
+__In this terminal__, with the variables in place, running tests with the test proxy should now work with HTTPS requests.
 
 ## Java
 

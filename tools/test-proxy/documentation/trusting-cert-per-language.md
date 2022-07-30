@@ -64,7 +64,8 @@ To check if these variables are indeed in the environment,
 [Environment]::GetEnvironmentVariable('REQUESTS_CA_BUNDLE')
 ```
 should output your SSL certificate directory and file location path in this new terminal.
-__In this terminal__, with the variables in place, running tests with the test proxy should now work with HTTPS requests.
+__In this and subsequent terminals__, with the variables in place, 
+running tests with the test proxy should now work with HTTPS requests.
 
 ## Java
 

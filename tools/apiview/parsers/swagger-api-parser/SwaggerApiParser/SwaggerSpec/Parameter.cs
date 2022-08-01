@@ -9,6 +9,8 @@ public class Parameter
     public string description { get; set; }
     
     public string type { get; set; }
+    
+    public string format { get; set; }
 
     public BaseSchema schema { get; set; }
 

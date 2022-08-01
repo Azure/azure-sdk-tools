@@ -152,6 +152,18 @@ namespace SwaggerApiParser
             return ret.ToArray();
         }
 
+        public static CodeFileToken[] TokenSerializeAsTableFormat(int rowCount, int columnCount, IEnumerable<String> columnNames, CodeFileToken[] rows)
+        {
+            List<CodeFileToken> ret = new List<CodeFileToken>();
+            
+            ret.Add(TokenSerializer.TableBegin());
+            ret.AddRange(TokenSerializer.TableSize(rowCount, columnCount));
+            ret.AddRange(columnNames.Select(TokenSerializer.TableColumnName));
+            ret.AddRange(rows);
+            ret.Add(TokenSerializer.TableEnd());
+            return ret.ToArray();
+        }
+
 
         public static CodeFileToken Intent(int intent)
         {
@@ -193,6 +205,33 @@ namespace SwaggerApiParser
         public static CodeFileToken FoldableContentStart()
         {
             var ret = new CodeFileToken(null, CodeFileTokenKind.FoldableContentStart);
+            return ret;
+        }
+
+        public static CodeFileToken TableBegin()
+        {
+            var ret = new CodeFileToken(null, CodeFileTokenKind.TableBegin);
+            return ret;
+        }
+
+        public static CodeFileToken TableEnd()
+        {
+            var ret = new CodeFileToken(null, CodeFileTokenKind.TableEnd);
+            return ret;
+        }
+
+        public static CodeFileToken[] TableSize(int row, int column)
+        {
+            var ret = new List<CodeFileToken>();
+            ret.Add(new CodeFileToken(row.ToString(), CodeFileTokenKind.TableRowCount));
+            ret.Add(new CodeFileToken(column.ToString(), CodeFileTokenKind.TableColumnCount));
+
+            return ret.ToArray();
+        }
+
+        public static CodeFileToken TableColumnName(string columnName)
+        {
+            var ret = new CodeFileToken(columnName, CodeFileTokenKind.TableColumnName);
             return ret;
         }
 

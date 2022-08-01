@@ -70,6 +70,7 @@ namespace SwaggerApiParser
                                 description = param.description,
                                 name = param.name,
                                 required = param.required,
+                                format = param.format,
                                 In = param.In,
                                 schema = schemaCache.GetResolvedSchema(param.schema, currentSwaggerFilePath),
                                 Ref = param.Ref,

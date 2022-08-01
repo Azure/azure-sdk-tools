@@ -158,12 +158,12 @@ public class Main {
         apiListing.setLanguage("Java");
         apiListing.setMavenPom(reviewProperties.getMavenPom());
 
-        if(packageName.indexOf("spring") > -1) {
-            apiListing.setVariant(LanguageVariant.Spring);
-        } else if(packageName.indexOf("android") > -1) {
-            apiListing.setVariant(LanguageVariant.Android);
+        if(packageName.contains("spring")) {
+            apiListing.setVariant(LanguageVariant.SPRING);
+        } else if(packageName.contains("android")) {
+            apiListing.setVariant(LanguageVariant.ANDROID);
         } else {
-            apiListing.setVariant(LanguageVariant.Default);
+            apiListing.setVariant(LanguageVariant.DEFAULT);
         }
         System.out.println("  Using '" + apiListing.getVariant() + "' for the language variant");
 

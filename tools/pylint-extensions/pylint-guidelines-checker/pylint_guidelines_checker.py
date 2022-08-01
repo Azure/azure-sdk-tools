@@ -1917,7 +1917,7 @@ class CheckNamingMismatchGeneratedCode(BaseChecker):
         except Exception:
                 logger.debug("Pylint custom checker failed to check if model is aliased.")
 
-class BlockedImport(BaseChecker):
+class NonCoreNetworkImport(BaseChecker):
     """There are certain imports that should only occur in the core package.
     For example, instead of using `requests` to make requests, clients should
     take a `azure.core.pipeline.Pipeline` as input to make requests.
@@ -1977,7 +1977,7 @@ def register(linter):
     linter.register_checker(CheckNamingMismatchGeneratedCode(linter))
     linter.register_checker(CheckAPIVersion(linter))
     linter.register_checker(CheckEnum(linter))
-    linter.register_checker(BlockedImport(linter))
+    linter.register_checker(NonCoreNetworkImport(linter))
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
 
 

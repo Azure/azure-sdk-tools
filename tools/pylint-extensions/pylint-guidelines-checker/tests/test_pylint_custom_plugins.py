@@ -3019,9 +3019,9 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
-class TestCheckBlockedImports(pylint.testutils.CheckerTestCase):
+class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""
-    CHECKER_CLASS = checker.BlockedImport
+    CHECKER_CLASS = checker.NonCoreNetworkImport
 
     def test_disallowed_imports(self):
         """Check that illegal imports raise warnings"""

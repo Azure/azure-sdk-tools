@@ -1,0 +1,15 @@
+// Create table
+.create table PipelineOwners (
+    OrganizationName: string,
+    BuildDefinitionId: long,
+    Owners: dynamic,
+    EtlIngestDate: datetime
+)
+
+// Create table json mapping
+.create table Build ingestion json mapping 'Pipeline_Owners_mapping' ```[
+    { "column": "OrganizationName", "path": "$['organizationName']" },
+    { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },
+    { "column": "Owners", "path": "$['owners']" },
+    { "column": "EtlIngestDate", "path": "$['etlIngestDate']" }
+]```

@@ -153,21 +153,20 @@
                     </span>
                     <span class="dropdown-item checkbox">
                         <label>
-                            @if (Model.GetUserPreference().HideLineNumbers)
+                            @if (Model.GetUserPreference().HideLineNumbers == true)
                             {
                                 <input type="checkbox" id="hide-line-numbers" checked>
                             }
                             else
                             {
-                                <input type="checkbox" id="hide-line-numbers">
-                                
+                                <input type="checkbox" id="hide-line-numbers" >
                             }
                             &nbsp;Hide Line Number
                         </label>
                     </span>
                     <span class="dropdown-item checkbox">
                         <label>
-                            @if (Model.GetUserPreference().HideLeftNavigation)
+                            @if (Model.GetUserPreference().HideLeftNavigation == true)
                             {
                                 <input type="checkbox" id="hide-left-navigation" checked>
                             }
@@ -353,7 +352,7 @@
         @{
             var reviewLeftDisplay = String.Empty;
             var reviewRightSize = "10";
-            if (Model.GetUserPreference().HideLeftNavigation)
+            if (Model.GetUserPreference().HideLeftNavigation == true)
             {
                 reviewLeftDisplay = "d-none";
                 reviewRightSize = "12";

@@ -241,11 +241,12 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         public IActionResult OnGetUpdatePageSettings(bool hideLineNumbers = false, bool hideLeftNavigation = false)
-        {
-            UserPreferenceModel userPreference = _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
-            userPreference.HideLineNumbers = hideLineNumbers;
-            userPreference.HideLeftNavigation = hideLeftNavigation;
-            _preferenceCache.UpdateUserPreference(userPreference);
+        {   
+            _preferenceCache.UpdateUserPreference(new UserPreferenceModel() {
+                UserName = User.GetGitHubLogin(),
+                HideLeftNavigation = hideLeftNavigation,
+                HideLineNumbers = hideLineNumbers
+            });
             return new EmptyResult();
         }
 

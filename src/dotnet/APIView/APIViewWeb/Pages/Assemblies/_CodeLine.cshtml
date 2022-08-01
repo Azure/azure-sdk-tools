@@ -31,7 +31,7 @@
     <td class="line-details">
         <table>
             <tr>
-                @if(userPreference.HideLineNumbers)
+                @if(userPreference.HideLineNumbers == true)
                 {
                     <td class="line-number @lineClass d-none"><span>@Model.LineNumber</span></td>
                 }

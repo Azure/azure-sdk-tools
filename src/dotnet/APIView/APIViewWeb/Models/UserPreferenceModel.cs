@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using CsvHelper.Configuration.Attributes;
 
 namespace APIViewWeb.Models
@@ -17,8 +18,8 @@ namespace APIViewWeb.Models
         [Name("Status")]
         public IEnumerable<string> Status { get; set; }
         [Name("HideLineNumbers")]
-        public bool HideLineNumbers { get; set; } = false;
+        public bool? HideLineNumbers { get; set; }
         [Name("HideLeftNavigation")]
-        public bool HideLeftNavigation { get; set; } = false;
+        public bool? HideLeftNavigation { get; set; }
     }
 }

@@ -258,9 +258,9 @@ namespace APIViewWeb.Repositories
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
             }
 
-            var languageService = _languageServices.Single(s => s.IsSupportedFile(name));
+            var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
             //Run pipeline to generateteh review if sandbox is enabled
-            if (languageService.IsReviewGenByPipeline)
+            if (languageService != null && languageService.IsReviewGenByPipeline)
             {
                 // Run offline review gen for review and reviewCodeFileModel
                 GenerateReviewOffline(review, revision.RevisionId, codeFile.ReviewFileId, name);

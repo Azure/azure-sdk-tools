@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         protected string WorkingDirectory => Program.Config.WorkingDirectories[Language];
 
         public abstract Task CleanupAsync(string project);
-        
+
         public abstract Task<IterationResult> RunAsync(
             string project,
             string languageVersion,

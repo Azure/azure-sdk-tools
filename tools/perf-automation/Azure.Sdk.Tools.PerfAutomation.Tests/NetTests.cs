@@ -1,10 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Azure.Sdk.Tools.PerfAutomation.Models;
 using NUnit.Framework;
 
 namespace Azure.Sdk.Tools.PerfAutomation.Tests
@@ -28,5 +23,5 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
 
             CollectionAssert.AreEquivalent(expected, actual);
         }
-   }
+    }
 }

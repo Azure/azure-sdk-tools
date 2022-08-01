@@ -491,7 +491,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     .Select(p => _languages[group.Key.Language].FilterRuntimePackageVersions(p));
 
                 var packageVersions = group.First().RequestedPackageVersions.Zip(runtimePackageVersions);
-                
+
                 foreach (var (requested, runtime) in packageVersions)
                 {
                     // requested is guaranteed to be non-null, runtime may be null
@@ -501,7 +501,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     // Primary package first, core second, remaining sorted alphabetically
                     var packageNames = requested.Keys.Concat(runtime?.Keys ?? Enumerable.Empty<string>())
                         .Distinct()
-                        .OrderBy(n => (n == primaryPackage) ? $"__{n}" : 
+                        .OrderBy(n => (n == primaryPackage) ? $"__{n}" :
                             (n.Contains("core", StringComparison.OrdinalIgnoreCase) ? $"_{n}" : n));
 
                     foreach (var packageName in packageNames)

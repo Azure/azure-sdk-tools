@@ -3,6 +3,15 @@ entries:
   stress-test-addons:
   - apiVersion: v2
     appVersion: v0.1
+    created: "2022-07-25T18:49:51.1630068-04:00"
+    description: Baseline resources and templates for stress testing clusters
+    digest: a9f896b09084c2ce2f2b361cf944c5b13473ea2f343e395482fdf4ff0c53f0f7
+    name: stress-test-addons
+    urls:
+    - https://stresstestcharts.blob.core.windows.net/helm/stress-test-addons-0.1.20.tgz
+    version: 0.1.20
+  - apiVersion: v2
+    appVersion: v0.1
     created: "2022-06-30T15:09:19.3110544-04:00"
     description: Baseline resources and templates for stress testing clusters
     digest: b8248b376dba388aec32a77ec5ba8fd76b59b7fa0916c83b924466bc77280af4
@@ -145,4 +154,4 @@ entries:
     urls:
     - https://stresstestcharts.blob.core.windows.net/helm/stress-test-addons-0.1.2.tgz
     version: 0.1.2
-generated: "2022-06-30T15:09:19.3033354-04:00"
+generated: "2022-07-25T18:49:51.1548109-04:00"

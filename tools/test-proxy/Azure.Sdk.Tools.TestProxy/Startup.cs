@@ -37,8 +37,6 @@ namespace Azure.Sdk.Tools.TestProxy
         private static string resolveRepoLocation(string storageLocation = null)
         {
             var envValue = Environment.GetEnvironmentVariable("TEST_PROXY_FOLDER");
-
-            // TODO: absolute the paths first two paths if relative
             return storageLocation ?? envValue ?? Directory.GetCurrentDirectory();
         }
 
@@ -68,20 +66,20 @@ namespace Azure.Sdk.Tools.TestProxy
 
             TargetLocation = resolveRepoLocation(storageLocation);
             Resolver = new StoreResolver();
-            DefaultStore = Resolver.ResolveStore(storagePlugin ?? "NullStore");
+            DefaultStore = Resolver.ResolveStore(storagePlugin ?? "GitStore");
 
             if (!String.IsNullOrWhiteSpace(command))
             {
                 switch (command.ToLowerInvariant())
                 {
                     case "save":
-                        DefaultStore.Push(assetsJsonPath, TargetLocation);
+                        DefaultStore.Push(assetsJsonPath);
                         break;
                     case "restore":
-                        DefaultStore.Restore(assetsJsonPath, TargetLocation);
+                        DefaultStore.Restore(assetsJsonPath);
                         break;
                     case "reset":
-                        DefaultStore.Reset(assetsJsonPath, TargetLocation);
+                        DefaultStore.Reset(assetsJsonPath);
                         break;
                     default:
                         throw new Exception($"One must provide a valid value for argument \"command\". \"{command}\" is not a valid option.");

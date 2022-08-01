@@ -552,7 +552,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     row.Add(resultSummary.Test);
                     row.Add(resultSummary.Arguments);
 
-                    var operationsPerSecondStrings = operationsPerSecond(resultSummary).Select(o => $"{o.operationsPerSecond:F2}");
+                    var operationsPerSecondStrings = operationsPerSecond(resultSummary)
+                        .Select(o => $"{NumberFormatter.Format(o.operationsPerSecond, 4, groupSeparator: outputFormat != OutputFormat.Csv)}");
                     var operationsPerSecondDifferencesStrings = operationsPerSecondDifferences(resultSummary).Select(o => $"{o * 100:N2}%");
 
                     var values = operationsPerSecondStrings.Take(1).Concat(operationsPerSecondStrings.Skip(1)

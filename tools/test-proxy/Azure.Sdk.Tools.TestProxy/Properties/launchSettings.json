@@ -10,10 +10,10 @@
   "profiles": {
     "Azure.Sdk.Tools.TestProxy": {
       "commandName": "Project",
-      "launchBrowser": false,
+      "commandLineArgs": "--help",
       "environmentVariables": {
-        "Logging__LogLevel__Microsoft": "Information",
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Logging__LogLevel__Microsoft": "Information"
       },
       "applicationUrl": "https://localhost:5001;http://localhost:5000"
     }

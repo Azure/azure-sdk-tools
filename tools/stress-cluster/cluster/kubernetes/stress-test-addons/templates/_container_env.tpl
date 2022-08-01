@@ -14,6 +14,8 @@ env:
     value: /mnt/share/$(POD_NAMESPACE)/$(POD_NAME)/
   - name: DEBUG_SHARE_ROOT
     value: /mnt/share/
+  - name: SCENARIO_NAME
+    value: {{ .Stress.Scenario }}
 volumeMounts:
   - name: test-env-{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
     mountPath: /mnt/outputs

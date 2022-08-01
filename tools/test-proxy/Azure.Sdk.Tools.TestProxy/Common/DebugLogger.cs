@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     /// set methodology to get access to the same logging stack as the controllers. This static class allows class libraries 
     /// that are not part of the ASP.NET server stack directly to still log useful information.
     /// 
-    ///  and ConfigureLogger(loggerFactory) should definitely be called in Startup.cs Configure() function.
+    /// To utilize this, ensure that ConfigureLogger(loggerFactory) is called in Startup.cs Configure() function.
     /// 
     /// Yes, we could instantiate a new RecordingHandler for each recording as it comes in, but that is 
     ///  A) Not the most fun to debug issues with
@@ -30,9 +30,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             if (logger == null)
             {
-                logger = factory.CreateLogger<HttpRequestInteractions>();
+                logger = factory.CreateLogger("DebugLogging");
             }
-
         }
 
         /// <summary>

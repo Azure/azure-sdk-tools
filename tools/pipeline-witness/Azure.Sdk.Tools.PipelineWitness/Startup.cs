@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             });
 
             builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<ProjectHttpClient>());
-            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<BuildHttpClient>());
+            builder.Services.AddSingleton<BuildHttpClient>(provider => provider.GetRequiredService<VssConnection>().GetClient<EnhancedBuildHttpClient>());
             builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<TestResultsHttpClient>());
 
             builder.Services.AddLogging();
@@ -79,7 +79,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
 
             builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
-            builder.Services.AddHostedService<BuildLogBundleQueueWorker>(settings.BuildLogBundlesWorkerCount);
             builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
         }
 

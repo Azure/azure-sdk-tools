@@ -134,13 +134,6 @@ namespace APIViewWeb.Pages.Assemblies
             return Partial("_CodeLinePartial");
         }
 
-        public async Task<ActionResult> OnPostRefreshModelAsync(string id)
-        {
-            await _manager.UpdateReviewAsync(User, id);
-
-            return RedirectToPage(new { id = id });
-        }
-
         public async Task<ActionResult> OnPostToggleClosedAsync(string id)
         {
             await _manager.ToggleIsClosedAsync(User, id);

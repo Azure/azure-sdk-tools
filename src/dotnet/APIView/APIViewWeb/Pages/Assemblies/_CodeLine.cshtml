@@ -1,6 +1,7 @@
 ﻿@using ApiView
 @using APIView.DIff
 @using System.Text.RegularExpressions
+@using APIViewWeb.Models;
 @model APIViewWeb.Models.CodeLineModel
 @{
     bool isRemoved = Model.Kind == DiffLineKind.Removed;
@@ -22,14 +23,23 @@
         isContent = foldableClassParts.Any(x => x.EndsWith("-content"));
         hiddenSectionClass = isContent ? "d-none" : "";
     }
+
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel;
 }
 
 <tr class="code-line @lineClass @foldableClass @hiddenSectionClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
     <td class="line-details">
         <table>
             <tr>
-                <td class="line-number @lineClass"><span>@Model.LineNumber</span></td>
-                <td class="line-details-button-cell">
+                @if(userPreference.HideLineNumbers == true)
+                {
+                    <td class="line-number @lineClass d-none"><span>@Model.LineNumber</span></td>
+                }
+                else
+                {
+                    <td class="line-number @lineClass"><span>@Model.LineNumber</span></td>
+                }
+                <td class="line-details-button-cell @lineClass">
                     @if (!isRemoved && Model.CodeLine.ElementId != null)
                     {
                         <a class="line-comment-button">+</a>
@@ -39,7 +49,7 @@
                        <a class="line-comment-button" style="visibility: hidden;">+</a> // Added for visual consistency
                     }
                 </td>
-                <td class="line-details-button-cell">
+                <td class="line-details-button-cell @lineClass">
                     @if (isHeading)
                     {
                         <span class="row-fold-caret"><i class="fa-solid fa-angle-right"></i></span>

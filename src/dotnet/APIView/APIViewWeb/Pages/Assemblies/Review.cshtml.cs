@@ -134,13 +134,6 @@ namespace APIViewWeb.Pages.Assemblies
             return Partial("_CodeLinePartial");
         }
 
-        public async Task<ActionResult> OnPostRefreshModelAsync(string id)
-        {
-            await _manager.UpdateReviewAsync(User, id);
-
-            return RedirectToPage(new { id = id });
-        }
-
         public async Task<ActionResult> OnPostToggleClosedAsync(string id)
         {
             await _manager.ToggleIsClosedAsync(User, id);
@@ -159,6 +152,18 @@ namespace APIViewWeb.Pages.Assemblies
             await _manager.ToggleApprovalAsync(User, id, revisionId);
             return RedirectToPage(new { id = id });
         }
+
+        public IActionResult OnGetUpdatePageSettings(bool hideLineNumbers = false, bool hideLeftNavigation = false)
+        {
+            _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
+            {
+                UserName = User.GetGitHubLogin(),
+                HideLeftNavigation = hideLeftNavigation,
+                HideLineNumbers = hideLineNumbers
+            });
+            return new EmptyResult();
+        }
+
         public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null, string revisionId = null)
         {
             var routingData = new Dictionary<string, string>();
@@ -167,6 +172,11 @@ namespace APIViewWeb.Pages.Assemblies
             routingData["doc"] = (showDocumentation ?? false).ToString();
             routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
             return routingData;
+        }
+
+        public UserPreferenceModel GetUserPreference()
+        {
+            return _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
         }
 
         private ReviewRevisionModel GetReviewRevision(string revisionId = null)

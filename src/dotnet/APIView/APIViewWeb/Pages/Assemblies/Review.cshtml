@@ -38,7 +38,23 @@
                             <span><img class="mx-1" src="~/icons/go-original.svg" width="40" alt="@Model.Review.Language"></span>
                             break;
                         case "java":
-                            <span><img class="mx-1" src="~/icons/java-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            if(@Model.Review.Variant != null){
+                                switch(@Model.Review.Variant.ToLower())
+                                {
+                                    case "spring":
+                                        <span><img class="mx-1" src="~/icons/java-spring-original.svg" width="40" alt="@Model.Review.Language"></span>
+                                        break;
+                                    case "android":
+                                        <span><img class="mx-1" src="~/icons/java-android-original.svg" width="40" alt="@Model.Review.Language"></span>
+                                        break;
+                                    default:
+                                        <span><img class="mx-1" src="~/icons/java-original.svg" width="40" alt="@Model.Review.Language"></span>
+                                        break;
+                                }
+                            } else
+                            {
+                                <span><img class="mx-1" src="~/icons/java-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            }
                             break;
                         case "swift":
                             <span><img class="mx-1" src="~/icons/swift-original.svg" width="40" alt="@Model.Review.Language"></span>

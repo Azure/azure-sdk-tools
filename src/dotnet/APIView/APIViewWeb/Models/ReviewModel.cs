@@ -79,6 +79,9 @@ namespace APIViewWeb
         public string Language => Revisions.LastOrDefault()?.Files.LastOrDefault()?.Language;
 
         [JsonIgnore]
+        public string Variant => Revisions.LastOrDefault()?.Files.LastOrDefault()?.Variant;
+
+        [JsonIgnore]
         public string PackageName {
             get
             {

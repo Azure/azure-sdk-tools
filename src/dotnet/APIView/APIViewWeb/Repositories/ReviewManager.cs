@@ -345,6 +345,7 @@ namespace APIViewWeb.Repositories
         private void InitializeFromCodeFile(ReviewCodeFileModel file, CodeFile codeFile)
         {
             file.Language = codeFile.Language;
+            file.Variant = codeFile.Variant;
             file.VersionString = codeFile.VersionString;
             file.Name = codeFile.Name;
             file.PackageName = codeFile.PackageName;

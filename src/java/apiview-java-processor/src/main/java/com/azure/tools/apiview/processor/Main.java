@@ -157,6 +157,15 @@ public class Main {
         apiListing.setLanguage("Java");
         apiListing.setMavenPom(reviewProperties.getMavenPom());
 
+        if(packageName.indexOf("spring") > -1) {
+            apiListing.setVariant("Spring");
+        } else if(packageName.indexOf("android") > -1) {
+            apiListing.setVariant("Android");
+        } else {
+            apiListing.setVariant("Default");
+        }
+        System.out.println("  Using '" + apiListing.getVariant() + "' for the language variant");
+
         final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
 
         // Read all files within the jar file so that we can create a list of files to analyse

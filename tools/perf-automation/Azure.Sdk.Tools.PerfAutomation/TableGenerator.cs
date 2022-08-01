@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                     // Right-align numbers and percentages, left-align everything else
                     if (double.TryParse(cell, out var _) ||
-                        (cell.EndsWith('%') && double.TryParse(cell.Substring(0, cell.Length - 1), out var _)))
+                        (cell != null && cell.EndsWith('%') && double.TryParse(cell.Substring(0, cell.Length - 1), out var _)))
                     {
                         sb.AppendFormat($" {{0,{columnWidths[i]}}} ", cell);
                     }

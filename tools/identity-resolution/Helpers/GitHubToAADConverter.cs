@@ -1,8 +1,11 @@
 using System;
+using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Extensions.Logging;
+using Models.OpenSourcePortal;
 using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
@@ -49,17 +52,45 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
         /// <returns>Aad user principal name</returns>
         public string GetUserPrincipalNameFromGithub(string githubUserName)
         {
+            return GetUserPrincipalNameFromGithubAsync(githubUserName).Result;
+        }
+
+        public async Task<string> GetUserPrincipalNameFromGithubAsync(string githubUserName)
+        {
             try
             {
-                var responseJsonString = client.GetStringAsync($"https://repos.opensource.microsoft.com/api/people/links/github/{githubUserName}").Result;
+                var responseJsonString = await client.GetStringAsync($"https://repos.opensource.microsoft.com/api/people/links/github/{githubUserName}");
                 dynamic contentJson = JsonConvert.DeserializeObject(responseJsonString);
                 return contentJson.aad.userPrincipalName;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                logger.LogWarning("Github username {Username} not found", githubUserName);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
-                return null;
             }
+
+            return null;
+        }
+
+        public async Task<UserLink[]> GetPeopleLinksAsync()
+        {
+            try
+            {
+                logger.LogInformation("Calling GET https://repos.opensource.microsoft.com/api/people/links");
+                var responseJsonString = await client.GetStringAsync($"https://repos.opensource.microsoft.com/api/people/links");
+                var allLinks = JsonConvert.DeserializeObject<UserLink[]>(responseJsonString);
+
+                return allLinks;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
+
+            return null;
         }
     }
 }

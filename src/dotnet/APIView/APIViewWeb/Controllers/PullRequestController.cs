@@ -41,8 +41,18 @@ namespace APIViewWeb.Controllers
             {
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
-            var reviewUrl = await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: codeFile, baselineCodeFileName: baselineCodeFile, commentOnPR: commentOnPR, language: language);
-            return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
+
+            //Handle only authorization exception and send 401 as status code.
+            //All other exception should not be handled so we will have required info in app insights.
+            try
+            {
+                var reviewUrl = await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: codeFile, baselineCodeFileName: baselineCodeFile, commentOnPR: commentOnPR, language: language);
+                return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
+            }
+            catch (AuthorizationFailedException)
+            {
+                return StatusCode(StatusCodes.Status401Unauthorized);
+            }
         }
 
         private bool ValidateInputParams()

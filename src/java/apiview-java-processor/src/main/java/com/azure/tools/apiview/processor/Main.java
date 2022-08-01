@@ -6,6 +6,7 @@ import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.azure.tools.apiview.processor.model.DiagnosticKind;
+import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -158,11 +159,11 @@ public class Main {
         apiListing.setMavenPom(reviewProperties.getMavenPom());
 
         if(packageName.indexOf("spring") > -1) {
-            apiListing.setVariant("Spring");
+            apiListing.setVariant(LanguageVariant.Spring);
         } else if(packageName.indexOf("android") > -1) {
-            apiListing.setVariant("Android");
+            apiListing.setVariant(LanguageVariant.Android);
         } else {
-            apiListing.setVariant("Default");
+            apiListing.setVariant(LanguageVariant.Default);
         }
         System.out.println("  Using '" + apiListing.getVariant() + "' for the language variant");
 

@@ -32,9 +32,9 @@
                         imageSource = "icons/go-original.svg";
                         break;
                     case "java":
-                        if(@Model.Review.Variant != null)
+                        if(@Model.Review.LanguageVariant != null)
                         {
-                            switch(@Model.Review.Variant.ToLower())
+                            switch(@Model.Review.LanguageVariant.ToLower())
                             {
                                 case "spring":
                                     imageSource = "icons/java-spring-original.svg";
@@ -67,11 +67,11 @@
                 }
                 if (String.IsNullOrEmpty(imageSource))
                 {
-                    <span class="badge badge-info"><em>@Model.Review.Language @Model.Review.Variant</em></span> 
+                    <span class="badge badge-info"><em>@Model.Review.Language @Model.Review.LanguageVariant</em></span> 
                 }
                 else
                 {
-                    <span><img class="mr-2 mt-1 p-1 border rounded" src="~/@imageSource" width="34" alt="@Model.Review.Language @Model.Review.Variant" /></span>   
+                    <span><img class="mr-2 mt-1 p-1 border rounded" src="~/@imageSource" width="34" alt="@Model.Review.Language @Model.Review.LanguageVariant" /></span>   
                 } 
             }
             <p class="h6 mb-0 mr-auto">

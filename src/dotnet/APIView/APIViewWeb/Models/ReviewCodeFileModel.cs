@@ -22,7 +22,7 @@ namespace APIViewWeb
 
         public string VersionString { get; set; }
 
-        public string Variant { get; set; }
+        public string LanguageVariant { get; set; }
 
         public bool HasOriginal { get; set; }
 

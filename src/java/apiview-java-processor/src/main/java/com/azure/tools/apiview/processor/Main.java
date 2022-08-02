@@ -158,14 +158,14 @@ public class Main {
         apiListing.setLanguage("Java");
         apiListing.setMavenPom(reviewProperties.getMavenPom());
 
-        if(packageName.contains("spring")) {
-            apiListing.setVariant(LanguageVariant.SPRING);
-        } else if(packageName.contains("android")) {
-            apiListing.setVariant(LanguageVariant.ANDROID);
+        if(groupId.contains("spring")) {
+            apiListing.setLanguageVariant(LanguageVariant.SPRING);
+        } else if(groupId.contains("android")) {
+            apiListing.setLanguageVariant(LanguageVariant.ANDROID);
         } else {
-            apiListing.setVariant(LanguageVariant.DEFAULT);
+            apiListing.setLanguageVariant(LanguageVariant.DEFAULT);
         }
-        System.out.println("  Using '" + apiListing.getVariant() + "' for the language variant");
+        System.out.println("  Using '" + apiListing.getLanguageVariant() + "' for the language variant");
 
         final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
 

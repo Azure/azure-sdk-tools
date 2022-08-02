@@ -1,8 +1,14 @@
 ﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -10,6 +16,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public class SanitizerTests
     {
         public OAuthResponseSanitizer OAuthResponseSanitizer = new OAuthResponseSanitizer();
+        private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
         public string lookaheadReplaceRegex = @"[a-z]+(?=\.(?:table|blob|queue)\.core\.windows\.net)";
         public string capturingGroupReplaceRegex = @"https\:\/\/(?<account>[a-z]+)\.(?:table|blob|queue)\.core\.windows\.net";
@@ -47,6 +54,56 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(expectedCount, session.Session.Entries.Count);
         }
+
+        [Theory]
+        [InlineData("")]
+        public void EntryOmissionSanitizerNoOpsOnNonMatch()
+        {
+            // confirm that we silently let stuff pass when not matching?
+        }
+
+        [Theory]
+        [InlineData("input body")]
+        public void EntryOmissionSanitizerCorrectlySanitizes()
+        {
+            // confirm that we omit sections that match
+        }
+
+        [Theory]
+        [InlineData("input body")]
+        public async Task CanCreateOverAPI(string inputObject)
+        {
+            // confirm that we can handle a request that creates the sanitizer dynamically
+
+            //RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            //var httpContext = new DefaultHttpContext();
+            //httpContext.Request.Headers["x-abstraction-identifier"] = "CustomDefaultMatcher";
+            //httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"excludedHeaders\": \"Content-Type,Content-Length\", \"ignoredHeaders\": \"Connection\", \"compareBodies\": false, \"ignoredQueryParameters\": \"api-version,location\" }");
+
+            //// content length must be set for the body to be parsed in SetMatcher
+            //httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            //var controller = new Admin(testRecordingHandler, _nullLogger)
+            //{
+            //    ControllerContext = new ControllerContext()
+            //    {
+            //        HttpContext = httpContext
+            //    }
+            //};
+            //await controller.SetMatcher();
+            //var matcher = testRecordingHandler.Matcher;
+            //Assert.True(matcher is CustomDefaultMatcher);
+
+            //var compareBodies = (bool)typeof(RecordMatcher).GetField("_compareBodies", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(matcher);
+            //Assert.False(compareBodies);
+
+            //Assert.Contains("Content-Type", matcher.ExcludeHeaders);
+            //Assert.Contains("Content-Length", matcher.ExcludeHeaders);
+            //Assert.Contains("Connection", matcher.IgnoredHeaders);
+            //Assert.Contains("api-version", matcher.IgnoredQueryParameters);
+            //Assert.Contains("location", matcher.IgnoredQueryParameters);
+        }
+
 
         [Fact]
         public void UriRegexSanitizerReplacesTableName()

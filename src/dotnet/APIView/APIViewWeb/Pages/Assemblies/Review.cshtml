@@ -277,7 +277,7 @@
             </div>
             *@
             <div class="form-group col-md-6 mb-0">
-                <label class="mb-0 ml-1"><small>REVISION:</small></label>
+                <label class="mb-0 ml-1"><small>Revision:</small></label>
                 <select class="selectpicker show-tick show-menu-arrow shadow-sm" data-style="btn-light btn-sm border" data-selected-text-format="value" data-live-search="true" data-size="10" data-width="100%" data-container="body" id="revisions-bootstraps-select" data-tick-icon="fa-solid fa-check">
                     @foreach (var revision in Model.Review.Revisions.Reverse())
                     {
@@ -312,7 +312,7 @@
                             doc = @Model.ShowDocumentation,
                             diffOnly = @Model.ShowDiffOnly
                         });
-                        <label class="mb-0 ml-1"><a href="@urlValue"><small>DIFF WITH:</small></a></label>
+                        <label class="mb-0 ml-1"><a href="@urlValue"><small>Diff With:</small></a></label>
                     }
                     else
                     {
@@ -323,7 +323,7 @@
                             doc = @Model.ShowDocumentation,
                             diffOnly = @Model.ShowDiffOnly
                         });
-                        <label class="mb-0 ml-1"><a href="@urlValue"><small>DIFF:</small></a></label>
+                        <label class="mb-0 ml-1"><a href="@urlValue"><small>Diff:</small></a></label>
                     }
                     <select class="selectpicker show-tick show-menu-arrow shadow-sm" data-style="btn-light btn-sm border border-left" data-size="10" data-width="100%" data-live-search="true" data-container="body" aria-label="Diff Review" id="diff-bootstraps-select" data-tick-icon="fa-solid fa-check">
                         if (@Model.DiffRevisionId == null)

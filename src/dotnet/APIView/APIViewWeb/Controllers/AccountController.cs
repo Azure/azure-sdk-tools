@@ -2,12 +2,21 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using APIViewWeb.Repositories;
+using APIViewWeb.Models;
+
 
 namespace APIViewWeb.Controllers
 {
     [AllowAnonymous]
     public class AccountController : Controller
     {
+        private readonly UserPreferenceCache _preferenceCache;
+        public AccountController(UserPreferenceCache preferenceCache)
+        {
+            _preferenceCache = preferenceCache;
+        }
+
         [HttpGet]
         public async Task<IActionResult> Login(string returnUrl = "/")
         {
@@ -24,6 +33,20 @@ namespace APIViewWeb.Controllers
         {
             await HttpContext.SignOutAsync();
             return RedirectToPage("/Login");
+        }
+
+        [HttpPut]
+        [Authorize("RequireOrganization")]
+        public ActionResult UpdateSettings(bool? hideLineNumbers = null, bool? hideLeftNavigation = null, string theme = "light-theme")
+        {
+            _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
+            {
+                UserName = User.GetGitHubLogin(),
+                HideLeftNavigation = hideLeftNavigation,
+                HideLineNumbers = hideLineNumbers,
+                Theme = theme
+            });
+            return Ok();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿import Split from "split.js";
+import { updatePageSettings } from "./helpers";
 
 $(() => {  
   const SEL_DOC_CLASS = ".documentation";
@@ -7,8 +8,6 @@ $(() => {
   const SHOW_DOC_HREF = ".show-document";
   const SHOW_DIFFONLY_CHECKBOX = ".show-diffonly-checkbox";
   const SHOW_DIFFONLY_HREF = ".show-diffonly";
-  const HIDE_LINE_NUMBERS = "#hide-line-numbers";
-  const HIDE_LEFT_NAVIGATION = "#hide-left-navigation";
 
   hideCheckboxIfNoDocs();
 
@@ -43,18 +42,6 @@ $(() => {
     }
   }
 
-  // Updated Page Setting by Updating UserPreference 
-  function updatePageSettings(callBack) {
-    var hideLineNumbers = $(HIDE_LINE_NUMBERS).prop("checked");
-    var hideLeftNavigation = $(HIDE_LEFT_NAVIGATION).prop("checked");
-    var uri = `?handler=updatepagesettings&hideLineNumbers=${hideLineNumbers}&hideLeftNavigation=${hideLeftNavigation}`;
-
-    $.ajax({
-      type: "GET",
-      url: uri
-    }).done(callBack());
-  }
-
   /* ADD EVENT LISTENER FOR TOGGLING LEFT NAVIGATION
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   addEventListener("load", () => {
@@ -83,13 +70,13 @@ $(() => {
     $(SHOW_DIFFONLY_HREF)[0].click();
   });
 
-  $(HIDE_LINE_NUMBERS).on("click", e => {
+  $("#hide-line-numbers").on("click", e => {
     updatePageSettings(function(){
       $(".line-number").toggleClass("d-none");
     });
   });
 
-  $(HIDE_LEFT_NAVIGATION).on("click", e => {
+  $("#hide-left-navigation").on("click", e => {
     updatePageSettings(function(){
       var leftContainer = $("#review-left");
       var rightContainer = $("#review-right");

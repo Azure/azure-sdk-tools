@@ -15,7 +15,8 @@ namespace APIViewWeb.Helpers
                 .ForMember(dest => dest.State, opt => opt.MapFrom((src, dest) => src.State != null ? src.State : dest.State))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom((src, dest) => src.Status != null ? src.Status : dest.Status))
                 .ForMember(dest => dest.HideLineNumbers, opt => opt.MapFrom((src, dest) => src.HideLineNumbers != null ? src.HideLineNumbers : dest.HideLineNumbers))
-                .ForMember(dest => dest.HideLeftNavigation, opt => opt.MapFrom((src, dest) => src.HideLeftNavigation != null ? src.HideLeftNavigation : dest.HideLeftNavigation));
+                .ForMember(dest => dest.HideLeftNavigation, opt => opt.MapFrom((src, dest) => src.HideLeftNavigation != null ? src.HideLeftNavigation : dest.HideLeftNavigation))
+                .ForMember(dest => dest.Theme, opt => opt.MapFrom((src, dest) => src.Theme != null ? src.Theme : dest.Theme));
         }
     }
 }

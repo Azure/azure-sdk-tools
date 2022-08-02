@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     public class RegexEntrySanitizer : RecordedTestSanitizer
     {
         private Regex rx;
-        private string target;
+        private string section;
         private string[] validValues = new string[] { "uri", "header", "body" };
 
         public string ValidValues
@@ -28,9 +28,9 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="regex">During sanitization, any entry where the 'target' is matched by the regex will be fully omitted. Request/Reponse both.</param>
         public RegexEntrySanitizer(string target, string regex)
         {
-           
-            target = target.ToLowerInvariant();
-            if (!validValues.Contains(target))
+            section = target.ToLowerInvariant();
+
+            if (!validValues.Contains(section))
             {
                 throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"When defining which section of a request the regex should target, only values [ {ValidValues} ] are valid.");
             }
@@ -40,12 +40,10 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public bool CheckMatch(RecordEntry x)
         {
-            bool result = false;
-            switch (target)
+            switch (section)
             {
                 case "uri":
-                    result = rx.IsMatch(x.RequestUri);
-                    break;
+                    return rx.IsMatch(x.RequestUri);
                 case "header":
                     foreach (var headerKey in x.Request.Headers.Keys)
                     {
@@ -57,25 +55,24 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                         
                         if (rx.IsMatch(originalValue))
                         {
-                            result = true;
+                            return true;
                         }
                     }
                     break;
                 case "body":
                     if (x.Request.TryGetBodyAsText(out string text))
                     {
-                        result = rx.IsMatch(text);
+                        return rx.IsMatch(text);
                     }
                     else
                     {
-                        result = false;
+                        return false;
                     }
-                    break;
                 default:
                     throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The RegexEntrySanitizer can only match against a target of [ {ValidValues} ].");
             }
 
-            return result;
+            return false;
         }
 
         public override void Sanitize(RecordSession session)

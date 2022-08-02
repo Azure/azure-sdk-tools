@@ -148,7 +148,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var matches = Regex.Matches(versionOutput, @"(@azure.*?)@(.*)$", RegexOptions.Multiline);
             foreach (Match match in matches)
             {
-                runtimePackageVersions.Add(match.Groups[1].Value, match.Groups[2].Value.Trim());
+                var name = match.Groups[1].Value;
+                var version = match.Groups[2].Value.Trim();
+
+                if (version.Contains("node_modules", StringComparison.OrdinalIgnoreCase))
+                {
+                    version = version.Substring(0, version.IndexOf(' '));
+                }
+
+                runtimePackageVersions.Add(name, version);
             }
 
             return runtimePackageVersions;

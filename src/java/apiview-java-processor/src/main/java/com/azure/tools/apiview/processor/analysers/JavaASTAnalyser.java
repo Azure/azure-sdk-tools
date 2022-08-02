@@ -70,6 +70,8 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptToFindJavadocComment;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
@@ -1388,11 +1390,15 @@ public class JavaASTAnalyser implements Analyser {
             // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
             final String wrappedString = MiscUtils.wrap(line, 120);
             Arrays.stream(SPLIT_NEWLINE.split(wrappedString)).forEach(line2 -> {
+                if (line2.contains("&")) {
+                    line2 = StringEscapeUtils.unescapeHtml(line2);
+                }
                 addToken(makeWhitespace());
                 addToken(new Token(COMMENT, line2));
                 addNewLine();
             });
         });
+        addToken(makeWhitespace());
         addToken(new Token(DOCUMENTATION_RANGE_END));
     }
 

@@ -75,18 +75,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        [InlineData("uri", "", 1)]
-        [InlineData("body", "", 1)]
-        [InlineData("headers", "", 1)]
+        [InlineData("body", "(listtable09bf2a3d|listtable19bf2a3d)", 9)]
+        [InlineData("uri", "fakeazsdktestaccount", 0)]
+        [InlineData("body", "listtable09bf2a3d", 10)]
+        [InlineData("header", "a50f2f9c-b830-11eb-b8c8-10e7c6392c5a", 10)]
         public void RegexEntrySanitizerCorrectlySanitizes(string target, string regex, int endCount)
         {
-            //var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
-            //var sanitizer = new RegexEntrySanitizer(target, regex);
-            //var expectedCount = session.Session.Entries.Count;
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var sanitizer = new RegexEntrySanitizer(target, regex);
+            var expectedCount = session.Session.Entries.Count;
 
-            //session.Session.Sanitize(sanitizer);
+            session.Session.Sanitize(sanitizer);
 
-            //Assert.Equal(endCount, session.Session.Entries.Count);
+            Assert.Equal(endCount, session.Session.Entries.Count);
         }
 
         [Fact]

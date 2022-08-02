@@ -32,7 +32,25 @@
                         imageSource = "icons/go-original.svg";
                         break;
                     case "java":
-                        imageSource = "icons/java-original.svg";
+                        if(@Model.Review.LanguageVariant != null)
+                        {
+                            switch(@Model.Review.LanguageVariant.ToLower())
+                            {
+                                case "spring":
+                                    imageSource = "icons/java-spring-original.svg";
+                                    break;
+                                case "android":
+                                    imageSource = "icons/java-android-original.svg";
+                                    break;
+                                default:
+                                    imageSource = "icons/java-original.svg";
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            imageSource = "icons/java-original.svg";
+                        }
                         break;
                     case "swift":
                         imageSource = "icons/swift-original.svg";
@@ -49,11 +67,11 @@
                 }
                 if (String.IsNullOrEmpty(imageSource))
                 {
-                    <span class="badge badge-info"><em>@Model.Review.Language</em></span> 
+                    <span class="badge badge-info"><em>@Model.Review.Language @Model.Review.LanguageVariant</em></span> 
                 }
                 else
                 {
-                    <span><img class="mr-2 mt-1 p-1 border rounded" src="~/@imageSource" width="34" alt="@Model.Review.Language" /></span>   
+                    <span><img class="mr-2 mt-1 p-1 border rounded" src="~/@imageSource" width="34" alt="@Model.Review.Language @Model.Review.LanguageVariant" /></span>   
                 } 
             }
             <p class="h6 mb-0 mr-auto">

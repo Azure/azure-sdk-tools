@@ -105,6 +105,14 @@ steps:
         echo "##vso[task.setvariable variable=prLink;]${prLink}"
         echo "##vso[task.setvariable variable=branchName;]${branchName}"
         echo "##vso[task.setvariable variable=packageName;]${packageName}"
+        packageFolder=`echo ${package} | jq -r '.packageFolder'`
+        serviceDir=`echo $packageFolder | awk '{split($0,array,"/");print array[2]}' `
+        if [ "${{ parameters.sdk }}" = "js" ] && [ "${{ parameters.serviceType }}" = "resource-manager" ];then
+          echo "##vso[task.setvariable variable=releasePipeline;]${{ parameters.sdk }} - ${serviceDir} - mgmt"
+        else
+          echo "##vso[task.setvariable variable=releasePipeline;]${{ parameters.sdk }} - ${serviceDir}"
+        fi
+
         git reset HEAD~
       #done
     workingDirectory: $(SDK_REPO)
@@ -136,9 +144,10 @@ steps:
 
       if [ -n "$(prLink)" ];then
         newtaskresult=$(cat $(System.ArtifactsDirectory)/completed/result.json | \
-          jq --arg prNumber $(prNumber) --arg prLink $(prLink) --arg branchName $(branchName) \
-          --arg packageName $(packageName) \
-          '.result += {prNumber:$prNumber, prLink:$prLink, branchName:$branchName} |
+          jq --arg prNumber "$(prNumber)" --arg prLink "$(prLink)" --arg branchName "$(branchName)" \
+          --arg packageName "$(packageName)" --arg serviceType "${{ parameters.serviceType }}" \
+          --arg releasePipeline "$(releasePipeline)" \
+          '.result += {prNumber:$prNumber, prLink:$prLink, branchName:$branchName, serviceType:$serviceType, releasePipeline:$releasePipeline} |
           .package += [{packageName:$packageName}]' )
         echo ${newtaskresult} > $(System.ArtifactsDirectory)/completed/result.json
       fi

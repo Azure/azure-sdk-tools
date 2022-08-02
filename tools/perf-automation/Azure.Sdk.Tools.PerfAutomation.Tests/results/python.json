@@ -19,7 +19,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 412,
         "StandardOutput": "",
@@ -28,7 +39,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 407.26,
         "StandardOutput": "",
@@ -37,7 +59,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 411.76,
         "StandardOutput": "",
@@ -46,7 +79,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 417.36,
         "StandardOutput": "",
@@ -55,7 +99,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 411.94,
         "StandardOutput": "",
@@ -88,7 +143,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 8.79,
         "StandardOutput": "",
@@ -97,7 +163,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 8.49,
         "StandardOutput": "",
@@ -106,7 +183,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 5.13,
         "StandardOutput": "",
@@ -115,7 +203,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 7.48,
         "StandardOutput": "",
@@ -124,7 +223,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 8.45,
         "StandardOutput": "",
@@ -157,7 +267,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.08,
         "StandardOutput": "",
@@ -166,7 +287,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.08,
         "StandardOutput": "",
@@ -175,7 +307,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.08,
         "StandardOutput": "",
@@ -184,7 +327,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.08,
         "StandardOutput": "",
@@ -193,7 +347,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.08,
         "StandardOutput": "",
@@ -226,7 +391,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.14,
         "StandardOutput": "",
@@ -235,7 +411,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.14,
         "StandardOutput": "",
@@ -244,7 +431,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.12,
         "StandardOutput": "",
@@ -253,7 +451,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.14,
         "StandardOutput": "",
@@ -262,7 +471,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.15,
         "StandardOutput": "",
@@ -295,7 +515,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 208.97,
         "StandardOutput": "",
@@ -304,7 +535,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 212.57,
         "StandardOutput": "",
@@ -313,7 +555,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 212.74,
         "StandardOutput": "",
@@ -322,7 +575,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 210.39,
         "StandardOutput": "",
@@ -331,7 +595,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 213.32,
         "StandardOutput": "",
@@ -364,7 +639,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 5.37,
         "StandardOutput": "",
@@ -373,7 +659,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 5.42,
         "StandardOutput": "",
@@ -382,7 +679,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 4.78,
         "StandardOutput": "",
@@ -391,7 +699,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 4.43,
         "StandardOutput": "",
@@ -400,7 +719,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 5.53,
         "StandardOutput": "",
@@ -433,7 +763,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.06,
         "StandardOutput": "",
@@ -442,7 +783,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.02,
         "StandardOutput": "",
@@ -451,7 +803,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.04,
         "StandardOutput": "",
@@ -460,7 +823,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.02,
         "StandardOutput": "",
@@ -469,7 +843,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.06,
         "StandardOutput": "",
@@ -502,7 +887,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.11,
         "StandardOutput": "",
@@ -511,7 +907,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.14,
         "StandardOutput": "",
@@ -520,7 +927,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.12,
         "StandardOutput": "",
@@ -529,7 +947,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.15,
         "StandardOutput": "",
@@ -538,7 +967,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "azure-storage-file-share==12.8.0"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.8.0"
         },
         "OperationsPerSecond": 0.14,
         "StandardOutput": "",
@@ -571,7 +1011,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 412.25,
         "StandardOutput": "",
@@ -580,7 +1031,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 416.78,
         "StandardOutput": "",
@@ -589,7 +1051,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 413.02,
         "StandardOutput": "",
@@ -598,7 +1071,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 413.41,
         "StandardOutput": "",
@@ -607,7 +1091,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 414.83,
         "StandardOutput": "",
@@ -640,7 +1135,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 8.5,
         "StandardOutput": "",
@@ -649,7 +1155,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 8.32,
         "StandardOutput": "",
@@ -658,7 +1175,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 9.02,
         "StandardOutput": "",
@@ -667,7 +1195,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 9.34,
         "StandardOutput": "",
@@ -676,7 +1215,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 8.09,
         "StandardOutput": "",
@@ -709,7 +1259,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.08,
         "StandardOutput": "",
@@ -718,7 +1279,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.09,
         "StandardOutput": "",
@@ -727,7 +1299,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.06,
         "StandardOutput": "",
@@ -736,7 +1319,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.08,
         "StandardOutput": "",
@@ -745,7 +1339,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.08,
         "StandardOutput": "",
@@ -778,7 +1383,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.12,
         "StandardOutput": "",
@@ -787,7 +1403,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.14,
         "StandardOutput": "",
@@ -796,7 +1423,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.1,
         "StandardOutput": "",
@@ -805,7 +1443,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.12,
         "StandardOutput": "",
@@ -814,7 +1463,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.12,
         "StandardOutput": "",
@@ -847,7 +1507,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 210.36,
         "StandardOutput": "",
@@ -856,7 +1527,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 209.21,
         "StandardOutput": "",
@@ -865,7 +1547,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 114.88,
         "StandardOutput": "",
@@ -874,7 +1567,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 115.75,
         "StandardOutput": "",
@@ -883,7 +1587,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 213.38,
         "StandardOutput": "",
@@ -916,7 +1631,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 4.65,
         "StandardOutput": "",
@@ -925,7 +1651,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 5.29,
         "StandardOutput": "",
@@ -934,7 +1671,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 14.18,
         "StandardOutput": "",
@@ -943,7 +1691,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 7.47,
         "StandardOutput": "",
@@ -952,7 +1711,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 13.87,
         "StandardOutput": "",
@@ -985,7 +1755,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.06,
         "StandardOutput": "",
@@ -994,7 +1775,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.07,
         "StandardOutput": "",
@@ -1003,7 +1795,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.07,
         "StandardOutput": "",
@@ -1012,7 +1815,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.07,
         "StandardOutput": "",
@@ -1021,7 +1835,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.07,
         "StandardOutput": "",
@@ -1054,7 +1879,18 @@
     "Iterations": [
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.13,
         "StandardOutput": "",
@@ -1063,7 +1899,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.13,
         "StandardOutput": "",
@@ -1072,7 +1919,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.12,
         "StandardOutput": "",
@@ -1081,7 +1939,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.15,
         "StandardOutput": "",
@@ -1090,7 +1959,18 @@
       },
       {
         "PackageVersions": {
-          "azure-storage-file-share": "-e git+https://github.com/Azure/azure-sdk-for-python@78020f658a4c2e3f7e919e2a50d1845bf3651c0e#egg=azure_storage_file_share&subdirectory=sdk/storage/azure-storage-file-share"
+          "azure-common": "1.1.28",
+          "azure-core": "1.25.0",
+          "azure-devtools": "1.2.1 -> /mnt/vss/_work/1/s/tools/azure-devtools/src",
+          "azure-identity": "1.10.0",
+          "azure-mgmt-core": "1.3.1",
+          "azure-mgmt-keyvault": "10.0.0",
+          "azure-mgmt-resource": "21.1.0",
+          "azure-mgmt-storage": "20.0.0",
+          "azure-sdk-tools": "0.0.0 -> /mnt/vss/_work/1/s/tools/azure-sdk-tools",
+          "azure-storage-blob": "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob",
+          "azure-storage-common": "1.4.0",
+          "azure-storage-file-share": "12.10.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-file-share"
         },
         "OperationsPerSecond": 0.13,
         "StandardOutput": "",

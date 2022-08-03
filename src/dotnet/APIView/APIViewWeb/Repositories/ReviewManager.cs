@@ -557,7 +557,7 @@ namespace APIViewWeb.Repositories
 
         public async Task UpdateReviewBackground()
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", fetchAllPages: true);
             foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
@@ -673,7 +673,7 @@ namespace APIViewWeb.Repositories
 
         public async Task AutoArchiveReviews(int archiveAfterMonths)
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual);
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual, fetchAllPages: true);
             // Find all inactive reviews
             reviews = reviews.Where(r => r.LastUpdated.AddMonths(archiveAfterMonths) < DateTime.Now);
             foreach (var review in reviews)

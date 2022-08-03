@@ -29,5 +29,7 @@ namespace APIView
         TableRowCount = 22,
         TableColumnCount = 23,
         TableColumnName = 24,
+        TableCellBegin = 25,
+        TableCellEnd = 26,
     }
 }

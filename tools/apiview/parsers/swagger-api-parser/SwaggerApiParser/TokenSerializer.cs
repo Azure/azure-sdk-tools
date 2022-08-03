@@ -171,6 +171,15 @@ namespace SwaggerApiParser
             return ret;
         }
 
+        public static CodeFileToken[] TableCell(IEnumerable<CodeFileToken> tokens)
+        {
+            List<CodeFileToken> ret = new List<CodeFileToken>();
+            ret.Add(new CodeFileToken(null, CodeFileTokenKind.TableCellBegin));
+            ret.AddRange(tokens);
+            ret.Add(new CodeFileToken(null, CodeFileTokenKind.TableCellEnd));
+            return ret.ToArray();
+        }
+
         public static CodeFileToken[] OneLineToken(int intent, IEnumerable<CodeFileToken> contentTokens)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();

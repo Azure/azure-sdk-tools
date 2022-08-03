@@ -101,7 +101,7 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
         List<CodeFileToken> ret = new List<CodeFileToken>();
         foreach (var parameter in this)
         {
-            ret.Add(new CodeFileToken(parameter.name, CodeFileTokenKind.MemberName));
+            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(parameter.name, CodeFileTokenKind.MemberName)}));
             var parameterType = parameter.type;
 
             if (parameter.format != null)
@@ -109,10 +109,10 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
                 parameterType += "/" + parameter.format;
             }
 
-            ret.Add(new CodeFileToken(parameterType, CodeFileTokenKind.Keyword));
+            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(parameterType, CodeFileTokenKind.Keyword)}));
             var required = parameter.required;
-            ret.Add(new CodeFileToken(required.ToString(), CodeFileTokenKind.Literal));
-            ret.Add(new CodeFileToken(parameter.description, CodeFileTokenKind.Literal));
+            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(required.ToString(), CodeFileTokenKind.Literal)}));
+            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(parameter.description, CodeFileTokenKind.Literal)}));
         }
 
         return ret.ToArray();

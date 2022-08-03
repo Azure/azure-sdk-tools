@@ -1,6 +1,9 @@
 # Release History
 
-## Version 0.3.2 (Unreleased)
+## Version 0.3.3 (2022-08-03)
+Fixed issue in module order to get consistent order
+
+## Version 0.3.2 (2022-07-19)
 Fixed issue where comments would appear incorrectly on overloaded functions.
 Fixed issue where inherited overloads would not appear in APIView.
 

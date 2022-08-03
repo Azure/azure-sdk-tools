@@ -3,11 +3,9 @@
 
 using APIView;
 using APIView.Model;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace ApiView
 {
@@ -32,6 +30,9 @@ namespace ApiView
             bool isSkipDiffRange = false;
             Stack<SectionType> nodesInProcess = new Stack<SectionType>();
             int lineNumber = 0;
+            (int Count, int Curr) tableColumnCount = (0, 0);
+            (int Count, int Curr) tableRowCount = (0, 0);
+            bool isTableContent = false;
             TreeNode<CodeLine> section = null;
 
             foreach (var token in node)
@@ -62,7 +63,7 @@ namespace ApiView
                                     section = section.AddChild(codeLine);
                                 }
                             }
-                            else 
+                            else
                             {
                                 section.AddChild(codeLine);
                             }
@@ -128,6 +129,44 @@ namespace ApiView
                             section = null;
                         }
                         break;
+
+                    case CodeFileTokenKind.TableBegin:
+                        stringBuilder.Append("<table class=\"table\">");
+                        break;
+
+                    case CodeFileTokenKind.TableColumnCount:
+                        tableColumnCount.Count = Convert.ToInt16(token.Value);
+                        break;
+
+                    case CodeFileTokenKind.TableRowCount:
+                        tableRowCount.Count = Convert.ToInt16(token.Value);
+                        break;
+
+                    case CodeFileTokenKind.TableColumnName:
+                        tableColumnCount.Curr++;
+                        if (tableColumnCount.Curr == 1)
+                        {
+                            stringBuilder.Append("<thead><tr>");
+                            stringBuilder.Append($"<th scope=\"col\">{token.Value}</th>");
+                        }
+                        else if (tableColumnCount.Curr == tableColumnCount.Count)
+                        {
+                            stringBuilder.Append($"<th scope=\"col\">{token.Value}</th>");
+                            stringBuilder.Append("</tr></thead>");
+                            tableColumnCount.Curr = 0;
+                            isTableContent = true;
+                        }
+                        else
+                        {
+                            stringBuilder.Append($"<th scope=\"col\">{token.Value}</th>");
+                        }
+                        break;
+
+                    case CodeFileTokenKind.TableEnd:
+                        stringBuilder.Append("</table>");
+                        isTableContent = false;
+                        break;
+
                     default:
                         if (token.DefinitionId != null)
                         {

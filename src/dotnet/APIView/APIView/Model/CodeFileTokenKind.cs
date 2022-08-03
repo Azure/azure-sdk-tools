@@ -23,6 +23,11 @@ namespace APIView
         SkipDiffRangeEnd = 16,
         FoldableSectionHeading = 17,
         FoldableSectionContentStart = 18,
-        FoldableSectionContentEnd = 19
+        FoldableSectionContentEnd = 19,
+        TableBegin = 20,
+        TableEnd = 21,
+        TableRowCount = 22,
+        TableColumnCount = 23,
+        TableColumnName = 24
     }
 }

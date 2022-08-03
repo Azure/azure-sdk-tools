@@ -4,9 +4,10 @@
 @using System
 @using System.Text.RegularExpressions
 @using APIViewWeb.Helpers
+@using APIViewWeb.Models
 @{
     ViewData["Title"] = "Reviews";
-    ViewData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin());
+    ViewData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
 }
 @section Scripts
 {

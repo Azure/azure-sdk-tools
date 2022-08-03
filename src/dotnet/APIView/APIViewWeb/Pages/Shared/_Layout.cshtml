@@ -24,7 +24,7 @@
     <link id="theme-css" rel="stylesheet" href="~/site.css" asp-append-version="true" />
 </head>
 @{
-    var userPreference = ViewData["UserPreference"] as UserPreferenceModel;
+    var userPreference = (ViewData["UserPreference"] as UserPreferenceModel) ?? new UserPreferenceModel();
     List<string> themes = new List<string>()
     {
         "light-theme",

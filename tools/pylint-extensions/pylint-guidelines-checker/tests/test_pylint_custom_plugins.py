@@ -154,7 +154,7 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             @distributed_trace
             def download_thing(self, some, **kwargs): #@
                 pass
-            
+
             @distributed_trace
             @decorator
             def do_thing(self, some, **kwargs): #@
@@ -2592,7 +2592,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
                     This is Example content.
                     Should support multi-line.
                     Can also include file:
-                    
+                      
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """
@@ -2666,7 +2666,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
                     This is Example content.
                     Should support multi-line.
                     Can also include file:
-                    
+
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
                 def __init__(self):

@@ -21,4 +21,4 @@ jobs:
         Commitish: $(Build.SourceVersion)
         WorkingDirectory: $(System.DefaultWorkingDirectory)/azure-sdk-tools
 
-  - script: ls
+  - script: pwd; ls

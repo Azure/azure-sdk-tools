@@ -1,2 +1,16 @@
-steps:
-- script: echo hello
+variables:
+- template: ../variables/globals.yml
+
+jobs:
+- job: Test
+  timeoutInMinutes: 360
+  steps:
+  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+    parameters:
+      Repositories:
+      - Name: Azure/azure-sdk-for-python
+        Commitish: main
+      Paths:
+      - '/*'
+
+  - script: echo hello

@@ -1,5 +1,5 @@
 variables:
-- template: ../variables/globals.yml
+- template: /eng/pipelines/templates/variables/globals.yml
 
 jobs:
 - job: Test
@@ -7,10 +7,18 @@ jobs:
   steps:
   - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
     parameters:
+      Paths:
+      - '/*'
+      - '!sdk/**/test-recordings/*'
+      - '!sdk/**/recordings/*'
+      - '!sdk/**/SessionRecords/*'
+      - '!sdk/**/session-records/*'
       Repositories:
       - Name: Azure/azure-sdk-for-python
         Commitish: main
-      Paths:
-      - '/*'
+        WorkingDirectory: $(System.DefaultWorkingDirectory)
+      - Name: Azure/azure-sdk-tools
+        Commitish: $(Build.SourceVersion)
+        WorkingDirectory: $(System.DefaultWorkingDirectory)/azure-sdk-tools
 
-  - script: echo hello
+  - script: ls

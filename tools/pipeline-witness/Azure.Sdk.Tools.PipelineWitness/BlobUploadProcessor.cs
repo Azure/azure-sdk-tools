@@ -1,9 +1,12 @@
-﻿namespace Azure.Sdk.Tools.PipelineWitness
+﻿using System.Diagnostics;
+
+namespace Azure.Sdk.Tools.PipelineWitness
 {
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.IO;
+    using System.IO.Compression;
     using System.Linq;
     using System.Net;
     using System.Text;
@@ -32,6 +35,7 @@
         private const string BuildTimelineRecordsContainerName = "buildtimelinerecords";
         private const string BuildDefinitionsContainerName = "builddefinitions";
         private const string BuildFailuresContainerName = "buildfailures";
+        private const string PipelineOwnersContainerName = "pipelineowners";
         private const string TestRunsContainerName = "testruns";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
@@ -52,6 +56,7 @@
         private readonly BlobContainerClient testRunsContainerClient;
         private readonly BlobContainerClient buildDefinitionsContainerClient;
         private readonly BlobContainerClient buildFailuresContainerClient;
+        private readonly BlobContainerClient pipelineOwnersContainerClient; 
         private readonly IOptions<PipelineWitnessSettings> options;
         private readonly Dictionary<string, int?> cachedDefinitionRevisions = new();
         private readonly IFailureAnalyzer failureAnalyzer;        
@@ -82,6 +87,7 @@
             this.buildFailuresContainerClient = blobServiceClient.GetBlobContainerClient(BuildFailuresContainerName);
             this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerName);
             this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
+            this.pipelineOwnersContainerClient = blobServiceClient.GetBlobContainerClient(PipelineOwnersContainerName);
             this.failureAnalyzer = failureAnalyzer;
         }
 
@@ -176,6 +182,119 @@
             {
                 await UploadLogLinesBlobAsync(account, build, log);
             }
+
+            if (build.Definition.Id == options.Value.PipelineOwnersDefinitionId)
+            {
+                await UploadPipelineOwnersBlobAsync(account, build, timeline); 
+            }
+        }
+
+        private async Task UploadPipelineOwnersBlobAsync(string account, Build build, Timeline timeline)
+        {
+            try
+            {
+                var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
+                var blobClient = this.pipelineOwnersContainerClient.GetBlobClient(blobPath);
+
+                if (await blobClient.ExistsAsync())
+                {
+                    this.logger.LogInformation("Skipping existing build failure blob for build {BuildId}", build.Id);
+                    return;
+                }
+
+                var owners = await GetOwnersFromBuildArtifactAsync(build);
+
+                if (owners == null)
+                {
+                    // no need to log anything here. GetOwnersFromBuildArtifactAsync logs a warning before returning null;
+                    return;
+                }
+
+                this.logger.LogInformation("Creating owners blob for build {DefinitionId} change {ChangeId}", build.Id, timeline.ChangeId);
+
+                var stringBuilder = new StringBuilder();
+
+                foreach (var owner in owners)
+                {
+                    var contentLine = JsonConvert.SerializeObject(new
+                    {
+                        OrganizationName = account,
+                        BuildDefinitionId = owner.Key,
+                        Owners = owner.Value,
+                        Timestamp = new DateTimeOffset(build.FinishTime.Value).ToUniversalTime(),
+                        EtlIngestDate = DateTimeOffset.UtcNow
+                    }, jsonSettings);
+
+                    stringBuilder.AppendLine(contentLine);
+                }
+
+                await blobClient.UploadAsync(new BinaryData(stringBuilder.ToString()));
+            }
+            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+            {
+                this.logger.LogInformation("Ignoring exception from existing owners blob for build {BuildId}", build.Id);
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Error processing owners artifact from build {BuildId}", build.Id);
+                throw;
+            }
+        }
+
+        private async Task<Dictionary<int, string[]>> GetOwnersFromBuildArtifactAsync(Build build)
+        {
+            var artifactName = this.options.Value.PipelineOwnersArtifactName;
+            var filePath = this.options.Value.PipelineOwnersFilePath;
+
+            try
+            {
+                await using var artifactStream = await this.buildClient.GetArtifactContentZipAsync(build.Project.Id, build.Id, artifactName);
+                using var zip = new ZipArchive(artifactStream);
+
+                var fileEntry = zip.GetEntry(filePath);
+
+                if (fileEntry == null)
+                {
+                    this.logger.LogWarning("Artifact {ArtifactName} in build {BuildId} didn't contain the expected file {FilePath}", artifactName, build.Id, filePath);
+                    return null;
+                }
+
+                await using var contentStream = fileEntry.Open();
+                using var contentReader = new StreamReader(contentStream);
+                var content = await contentReader.ReadToEndAsync();
+
+                if (string.IsNullOrEmpty(content))
+                {
+                    this.logger.LogWarning("The file {filePath} in artifact {ArtifactName} in build {BuildId} contained no content", filePath, artifactName, build.Id);
+                    return null;
+                }
+
+                var ownersDictionary = JsonConvert.DeserializeObject<Dictionary<int, string[]>>(content);
+
+                if (ownersDictionary == null)
+                {
+                    this.logger.LogWarning("The file {filePath} in artifact {ArtifactName} in build {BuildId} contained a null json object", filePath, artifactName, build.Id);
+                }
+
+                return ownersDictionary;
+            }
+            catch (ArtifactNotFoundException ex)
+            {
+                this.logger.LogWarning(ex, "Build {BuildId} did not contain the expected artifact {ArtifactName}", build.Id, artifactName);
+            }
+            catch (InvalidDataException ex)
+            {
+                this.logger.LogWarning(ex, "Unable to read ZIP contents from artifact {ArtifactName} in build {BuildId}", artifactName, build.Id);
+
+                // rethrow the exception so the queue message will be retried.
+                throw;
+            }
+            catch (JsonSerializationException ex)
+            {
+                this.logger.LogWarning(ex, "Problem deserializing JSON from artifact {ArtifactName} in build {BuildId}", artifactName, build.Id);
+            }
+
+            return null;
         }
 
         private async Task UploadBuildFailureBlobAsync(string account, Build build, Timeline timeline)
@@ -217,7 +336,8 @@
                         RecordId = failure.Record.Id,
                         BuildTimelineId = timeline.Id,
                         ErrorClassification = failure.Classification,
-                     }, jsonSettings);
+                        EtlIngestDate = DateTimeOffset.UtcNow
+                    }, jsonSettings);
                      stringBuilder.AppendLine(contentLine);
                 }
 
@@ -241,16 +361,16 @@
             foreach (var definition in definitions)
             {
                 var cacheKey = $"{definition.Project.Id}:{definition.Id}";
-                
+
                 if (!this.cachedDefinitionRevisions.TryGetValue(cacheKey, out var cachedRevision) || cachedRevision != definition.Revision)
-                { 
+                {
                     await UploadBuildDefinitionBlobAsync(account, definition);
                 }
 
                 this.cachedDefinitionRevisions[cacheKey] = definition.Revision;
             }
         }
-
+        
         private async Task UploadBuildDefinitionBlobAsync(string account, BuildDefinition definition)
         {
             var blobPath = $"{definition.Project.Name}/{definition.Id}-{definition.Revision}.jsonl";

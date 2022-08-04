@@ -258,9 +258,9 @@ namespace APIViewWeb.Repositories
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
             }
 
-            var languageService = _languageServices.Single(s => s.IsSupportedFile(name));
+            var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
             //Run pipeline to generateteh review if sandbox is enabled
-            if (languageService.IsReviewGenByPipeline)
+            if (languageService != null && languageService.IsReviewGenByPipeline)
             {
                 // Run offline review gen for review and reviewCodeFileModel
                 GenerateReviewOffline(review, revision.RevisionId, codeFile.ReviewFileId, name);
@@ -361,6 +361,7 @@ namespace APIViewWeb.Repositories
         private void InitializeFromCodeFile(ReviewCodeFileModel file, CodeFile codeFile)
         {
             file.Language = codeFile.Language;
+            file.LanguageVariant = codeFile.LanguageVariant;
             file.VersionString = codeFile.VersionString;
             file.Name = codeFile.Name;
             file.PackageName = codeFile.PackageName;
@@ -573,7 +574,7 @@ namespace APIViewWeb.Repositories
 
         public async Task UpdateReviewBackground()
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", fetchAllPages: true);
             foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
@@ -689,7 +690,7 @@ namespace APIViewWeb.Repositories
 
         public async Task AutoArchiveReviews(int archiveAfterMonths)
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual);
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual, fetchAllPages: true);
             // Find all inactive reviews
             reviews = reviews.Where(r => r.LastUpdated.AddMonths(archiveAfterMonths) < DateTime.Now);
             foreach (var review in reviews)

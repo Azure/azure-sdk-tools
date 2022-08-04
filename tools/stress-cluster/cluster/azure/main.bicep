@@ -25,7 +25,7 @@ resource group 'Microsoft.Resources/resourceGroups@2020-10-01' = {
 }
 
 // Add unique suffix to monitoring resource names to simplify cross-resource queries.
-// https://docs.microsoft.com/en-us/azure/azure-monitor/logs/cross-workspace-query#identifying-an-application
+// https://docs.microsoft.com/azure/azure-monitor/logs/cross-workspace-query#identifying-an-application
 var resourceSuffix = uniqueString(group.id)
 
 module logWorkspace 'monitoring/log-analytics-workspace.bicep' = {
@@ -106,8 +106,8 @@ var appInsightsConnectionStringSecretName = 'appInsightsConnectionString-${resou
 var appInsightsConnectionStringSecretValue = 'APPLICATIONINSIGHTS_CONNECTION_STRING="${appInsights.outputs.connectionString}"\n'
 
 // Storage account information used for kubernetes fileshare volume mounting via the azure files csi driver
-// See https://docs.microsoft.com/en-us/azure/aks/azure-files-volume#create-a-kubernetes-secret
-// See https://docs.microsoft.com/en-us/azure/aks/azure-files-csi
+// See https://docs.microsoft.com/azure/aks/azure-files-volume#create-a-kubernetes-secret
+// See https://docs.microsoft.com/azure/aks/azure-files-csi
 var debugStorageKeySecretName = 'debugStorageKey-${resourceSuffix}'
 var debugStorageKeySecretValue = '${storage.outputs.key}'
 var debugStorageAccountSecretName = 'debugStorageAccount-${resourceSuffix}'

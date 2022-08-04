@@ -44,7 +44,7 @@ namespace APIViewWeb
             return reviews.FirstOrDefault();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, ReviewType? filterType = null)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, ReviewType? filterType = null, bool fetchAllPages = false)
         {
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE (IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed ");
 
@@ -67,7 +67,11 @@ namespace APIViewWeb
             }
 
             // Limit to top 50
-            queryStringBuilder.Append("OFFSET 0 LIMIT 50");
+            if (!fetchAllPages)
+            {
+                queryStringBuilder.Append("OFFSET 0 LIMIT 50");
+            }
+            
 
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())

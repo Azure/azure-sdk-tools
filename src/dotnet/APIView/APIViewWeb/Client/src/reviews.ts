@@ -1,5 +1,4 @@
 ﻿$(() => {
-  // Search
   const defaultPageSize = 50;
   const reviewsFilterPartial = $( '#reviews-filter-partial' );
   const languageFilter = $( '#language-filter-bootstraps-select' );
@@ -77,10 +76,9 @@
     });
   }
 
-  // Triggers partial page update to retriev properties for poulating filter dropdowns
+  // Fetches data for populating dropdown options
   function updateFilterDropDown(filter, query)
   {
-    // update tags dropdown select
     var uri = `?handler=reviews${query}`;
     var urlParams = new URLSearchParams(location.search);
     if (urlParams.has(query))
@@ -97,20 +95,20 @@
     });
   }
 
-  // Update content of dropdown on page load
+  // Fetch content of dropdown on page load
   $(document).ready(function() {
-    updateFilterDropDown(languageFilter, "languages");
+    updateFilterDropDown(languageFilter, "languages"); // Pulls languages data from DB
     addPaginationEventHandlers();
   });
 
-
-  // Update when any dropdown is changed
+  // Update list of reviews when any dropdown is changed
   [languageFilter, stateFilter, statusFilter, typeFilter].forEach(function(value, index) {
     value.on('hidden.bs.select', function() {
       updateListedReviews();
     });
   });
 
+  // Update list of reviews based on search input
   searchBox.on('input', _.debounce(function(e) {
     updateListedReviews();
   }, 600));
@@ -119,6 +117,7 @@
     updateListedReviews();
   });
 
+  // Reset list of reviews as well as filters
   resetButton.on('click', function(e) {
     (<any>languageFilter).selectpicker('deselectAll');
     (<any>stateFilter).selectpicker('deselectAll').selectpicker('val', 'Open');

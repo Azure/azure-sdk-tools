@@ -17,8 +17,8 @@ Table of Contents
 This directory contains all configuration used for stress test cluster buildout (azure and kubernetes buildout), as well
 as a set of common stress test config boilerplate (helm library).
 
-The `./azure` directory contains [Azure Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview)
-files for deploying Azure resources (mainly [AKS clusters](https://azure.microsoft.com/en-us/services/kubernetes-service/)
+The `./azure` directory contains [Azure Bicep](https://docs.microsoft.com/azure/azure-resource-manager/bicep/overview)
+files for deploying Azure resources (mainly [AKS clusters](https://azure.microsoft.com/services/kubernetes-service/)
 to support stress testing (for dev/playground and/or production).
 
 Azure Bicep comes pre-installed with the Azure CLI, and is a DSL for generating ARM templates.
@@ -34,8 +34,8 @@ easier to make and roll out config changes to tests across repos by using helm c
 
 # Dependencies
 
-- [Powershell Core](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004)
-- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- [Powershell Core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004)
+- [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
 - [helm](https://helm.sh)
 - [kind](https://github.com/kubernetes-sigs/kind/releases) (if testing locally)

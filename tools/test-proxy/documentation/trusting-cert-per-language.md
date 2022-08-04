@@ -43,21 +43,29 @@ This will copy the [test proxy certificate](https://github.com/Azure/azure-sdk-f
 under `azure-sdk-for-python/.certificate` as a `pem` file.
 
 The only remaining step is to set two environment variables to point to this certificate. The script will output the environment variables and values that you'll
-need to set once it finishes running. For example:
-```
+need to set once it finishes running. For example where `YOUR DIRECTORY` specifies where you've cloned the repo:
+```cmd
 Set the following certificate paths:
-        SSL_CERT_DIR=C:\azure-sdk-for-python\.certificate
-        REQUESTS_CA_BUNDLE=C:\azure-sdk-for-python\.certificate\dotnet-devcert.pem
+        SSL_CERT_DIR=C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate
+        REQUESTS_CA_BUNDLE=C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate\dotnet-devcert.pem
 ```
 
-Persistently set these environment variables. For example, in a Windows command prompt, use the `SETX` command (not the `SET` command) to set these variables.
+Persistently set these environment variables. In a Windows Powershell command prompt as an administrator, use the `SETX` command (not the `SET` command) to set these variables.
 Using the example above, you would run:
 ```cmd
-SETX SSL_CERT_DIR "C:\azure-sdk-for-python\.certificate"
-SETX REQUESTS_CA_BUNDLE "C:\azure-sdk-for-python\.certificate\dotnet-devcert.pem"
+SETX SSL_CERT_DIR "C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate"
+SETX REQUESTS_CA_BUNDLE "C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate\dotnet-devcert.pem"
 ```
 
-A new process should be started up to make these variables available. In a new terminal, running tests with the test proxy should now work with HTTPS requests.
+_Disclaimer:_ __A new terminal__ should be started up to make these variables available. 
+To check if these variables are indeed in the environment,
+```powershell
+[Environment]::GetEnvironmentVariable('SSL_CERT_DIR')
+[Environment]::GetEnvironmentVariable('REQUESTS_CA_BUNDLE')
+```
+should output your SSL certificate directory and file location path in this new terminal.
+
+In this and subsequent terminals, with the variables in place, running tests with the test proxy should now work with HTTPS requests.
 
 ## Java
 

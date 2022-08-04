@@ -38,6 +38,20 @@ namespace APIViewWeb.Pages.Assemblies
             List<string> search = null, List<string> languages=null, List<string> state =null,
             List<string> status =null, List<string> type =null, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
+            if (search.Count == 0 && languages.Count == 0 && state.Count == 0 && status.Count == 0 && type.Count == 0)
+            {
+                UserPreferenceModel userPreference = _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+                if (userPreference != null)
+                {
+                    languages = userPreference.Language.ToList();
+                    state = userPreference.State.ToList();
+                    status = userPreference.Status.ToList();
+                    type = new List<string>();
+                    if (userPreference.FilterType.Contains(ReviewType.Manual)) { type.Add("Manual"); }
+                    if (userPreference.FilterType.Contains(ReviewType.Automatic)) { type.Add("Automatic"); }
+                    if (userPreference.FilterType.Contains(ReviewType.PullRequest)) { type.Add("PullRequest"); }
+                }
+            }
             await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
         }
 
@@ -51,6 +65,14 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<PartialViewResult> OnGetReviewsLanguagesAsync(List<string> selectedLanguages = null)
         {
+            if (selectedLanguages.Count == 0)
+            {
+                UserPreferenceModel userPreference = _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+                if (userPreference != null)
+                {
+                    selectedLanguages = userPreference.Language.ToList();
+                }
+            }
             ReviewsProperties.Languages.All = await _manager.GetReviewPropertiesAsync("Revisions[0].Files[0].Language");
             selectedLanguages = selectedLanguages.Select(x => HttpUtility.UrlDecode(x)).ToList();
             ReviewsProperties.Languages.Selected = selectedLanguages;
@@ -128,11 +150,12 @@ namespace APIViewWeb.Pages.Assemblies
             if (type.Contains("Automatic")) { filterTypes.Add((int)ReviewType.Automatic); }
             if (type.Contains("PullRequest")) { filterTypes.Add((int)ReviewType.PullRequest); }
 
-            _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
-            {
+            _preferenceCache.UpdateUserPreference(new UserPreferenceModel {
                 UserName = User.GetGitHubLogin(),
                 FilterType = filterTypes.Cast<ReviewType>().ToList(),
-                Language = languages
+                Language = languages,
+                State = state,
+                Status = status
             });
 
             bool? isApproved = null;

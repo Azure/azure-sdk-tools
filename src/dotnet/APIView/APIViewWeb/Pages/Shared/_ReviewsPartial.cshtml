@@ -46,7 +46,25 @@
                                             <img class="mx-1" src="~/icons/go-original.svg" alt="@review.Language">
                                             break;
                                         case "java":
-                                            <img class="mx-1" src="~/icons/java-original.svg" alt="@review.Language">
+                                            if(@review.LanguageVariant != null)
+                                            {
+                                                switch(@review.LanguageVariant.ToLower())
+                                                {
+                                                    case "spring":
+                                                        <img class="mx-1" src="~/icons/java-spring-original.svg" alt="@review.Language @review.LanguageVariant">
+                                                        break;
+                                                    case "android":
+                                                        <img class="mx-1" src="~/icons/java-android-original.svg" alt="@review.Language @review.LanguageVariant">
+                                                        break;
+                                                    default:
+                                                        <img class="mx-1" src="~/icons/java-original.svg" alt="@review.Language">
+                                                        break;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <img class="mx-1" src="~/icons/java-original.svg" alt="@review.Language">
+                                            }
                                             break;
                                         case "swift":
                                             <img class="mx-1" src="~/icons/swift-original.svg" alt="@review.Language">

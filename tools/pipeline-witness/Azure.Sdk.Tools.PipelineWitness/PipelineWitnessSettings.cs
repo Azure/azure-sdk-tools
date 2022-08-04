@@ -65,5 +65,20 @@ namespace Azure.Sdk.Tools.PipelineWitness
         /// Gets or sets the number of concurrent build complete queue workers to register
         /// </summary>
         public int BuildCompleteWorkerCount { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets the artifact name used by the pipeline owners extraction build 
+        /// </summary>
+        public string PipelineOwnersArtifactName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the file name used by the pipeline owners extraction build 
+        /// </summary>
+        public string PipelineOwnersFilePath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the definition id of the pipeline owners extraction build 
+        /// </summary>
+        public int PipelineOwnersDefinitionId { get; set; }
     }
 }

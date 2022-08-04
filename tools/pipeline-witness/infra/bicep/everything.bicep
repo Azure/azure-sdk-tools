@@ -72,31 +72,29 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
     }
     accessTier: 'Hot'
   }
-}
-
-resource storageAccount_blobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' = {
-  parent: storageAccount
-  name: 'default'
-  properties: {
-    changeFeed: {
-      enabled: false
+  resource blobServices 'blobServices' = {
+    name: 'default'
+    properties: {
+      changeFeed: {
+        enabled: false
+      }
+      restorePolicy: {
+        enabled: false
+      }
+      containerDeleteRetentionPolicy: {
+        enabled: true
+        days: 7
+      }
+      cors: {
+        corsRules: []
+      }
+      deleteRetentionPolicy: {
+        allowPermanentDelete: false
+        enabled: true
+        days: 7
+      }
+      isVersioningEnabled: false
     }
-    restorePolicy: {
-      enabled: false
-    }
-    containerDeleteRetentionPolicy: {
-      enabled: true
-      days: 7
-    }
-    cors: {
-      corsRules: []
-    }
-    deleteRetentionPolicy: {
-      allowPermanentDelete: false
-      enabled: true
-      days: 7
-    }
-    isVersioningEnabled: false
   }
 }
 
@@ -182,20 +180,18 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
     enableAutoStop: false
     publicIPType: 'IPv4'
   }
-}
-
-resource kustoDatabase 'Microsoft.Kusto/Clusters/Databases@2022-02-01' = {
-  parent: kustoCluster
-  name: kustoDatabaseName
-  kind: 'ReadWrite'
-  properties: {
-    hotCachePeriod: 'P31D'
+  resource database 'Databases' = {
+    name: kustoDatabaseName
+    kind: 'ReadWrite'
+    properties: {
+      hotCachePeriod: 'P31D'
+    }
   }
 }
 
 // Resources per table
 resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = [for table in tables: {
-  parent: storageAccount_blobServices
+  parent: storageAccount::blobServices
   name: table.container
   properties: {
     immutableStorageWithVersioning: {
@@ -242,7 +238,7 @@ resource eventGridSubscriptions 'Microsoft.EventGrid/systemTopics/eventSubscript
 }]
 
 resource kustoDataConnections 'Microsoft.Kusto/Clusters/Databases/DataConnections@2022-02-01' = [for (table, i) in tables: {
-  parent: kustoDatabase
+  parent: kustoCluster::database
   name: '${table.name}Blobs'
   kind: 'EventGrid'
   properties: {

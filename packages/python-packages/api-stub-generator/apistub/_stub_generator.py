@@ -186,7 +186,7 @@ class StubGenerator:
                 modules.extend(["{0}.{1}".format(module_name, x) for x in sub_modules])
 
         logging.debug("Modules in package: {}".format(modules))
-        return modules
+        return sorted(modules)
 
 
     def _generate_tokens(self, pkg_root_path, package_name, namespace, *, source_url):

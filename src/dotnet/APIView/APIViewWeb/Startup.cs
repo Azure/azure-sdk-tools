@@ -194,6 +194,7 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, PullRequestPermissionRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)

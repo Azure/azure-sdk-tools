@@ -30,7 +30,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
 
 Technologies used:
 
-1. [Azure AKS](https://docs.microsoft.com/en-us/azure/aks/)
+1. [Azure AKS](https://docs.microsoft.com/azure/aks/)
 1. [Kubernetes](https://kubernetes.io/)
 1. [Chaos Mesh](https://chaos-mesh.org/)
 
@@ -41,8 +41,8 @@ You will need the following tools to create and run tests:
 1. [Docker](https://docs.docker.com/get-docker/)
 1. [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
 1. [Helm](https://helm.sh/docs/intro/install/)
-1. [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
-1. [Powershell Core](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) (if using Linux)
+1. [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)
+1. [Powershell Core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) (if using Linux)
 
 ## Access
 
@@ -422,7 +422,7 @@ spec:
 
 For more detailed examples, see:
 
-- [Chaos Experiments](https://chaos-mesh.org/docs/chaos_experiments/networkchaos_experiment) docs for all possible types
+- [Chaos Experiments](https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/) docs for all possible types
 - `./examples/network_stress_example/templates/network_loss.yaml` for an example network loss manifest within a helm chart
 - The [Faults via Dashboard section](#faults-via-dashboard) for generating the configs from the UI
 
@@ -507,7 +507,7 @@ script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/st
 This script handles: cluster and container registry access, building the stress test helm package, installing helm
 package dependencies, and building and pushing docker images. The script must be run via powershell or powershell core.
 
-If using bash or another linux terminal, a [powershell core](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) shell can be invoked via `pwsh`.
+If using bash or another linux terminal, a [powershell core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) shell can be invoked via `pwsh`.
 
 The first invocation of the script must be run with the `-Login` flag to set up cluster and container registry access.
 
@@ -575,7 +575,7 @@ kubectl logs -n <stress test namespace> <stress test pod name>
 
 ## Configuring faults
 
-Faults can be configured via kubernetes manifests or via the UI (which is a helper for building the manifests under the hood). For docs on the manifest schema, see [here](https://chaos-mesh.org/docs/user_guides/run_chaos_experiment).
+Faults can be configured via kubernetes manifests or via the UI (which is a helper for building the manifests under the hood). For docs on the manifest schema, see [here](https://chaos-mesh.org/docs/define-chaos-experiment-scope/).
 
 ### Faults via Dashboard
 

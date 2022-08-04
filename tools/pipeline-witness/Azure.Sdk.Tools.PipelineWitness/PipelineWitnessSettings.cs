@@ -6,27 +6,25 @@ namespace Azure.Sdk.Tools.PipelineWitness
 {
     public class PipelineWitnessSettings
     {
+        /// <summary>
+        /// Gets or sets the uri of the key vault to use
+        /// </summary>
         public string KeyVaultUri { get; set; }
 
+        /// <summary>
+        /// Gets or sets uri of the storage account use for queue processing
+        /// </summary>
         public string QueueStorageAccountUri { get; set; }
 
-
+        /// <summary>
+        /// Gets or sets uri of the blob storage account use for blob export
+        /// </summary>
         public string BlobStorageAccountUri { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the build complete queue
         /// </summary>
         public string BuildCompleteQueueName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name of the build log bundles queue
-        /// </summary>
-        public string BuildLogBundlesQueueName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the number of build logs to add to each log bundle message
-        /// </summary>
-        public int BuildLogBundleSize { get; set; } = 50;
 
         /// <summary>
         /// Gets or sets the amount of time a message should be invisible in the queue while being processed
@@ -64,13 +62,23 @@ namespace Azure.Sdk.Tools.PipelineWitness
         public TimeSpan BuildDefinitionLoopPeriod { get; set; } = TimeSpan.FromMinutes(5);
 
         /// <summary>
-        /// Gets or sets the number of concurrent log bundle queue workers to register
-        /// </summary>
-        public int BuildLogBundlesWorkerCount { get; set; } = 1;
-
-        /// <summary>
         /// Gets or sets the number of concurrent build complete queue workers to register
         /// </summary>
         public int BuildCompleteWorkerCount { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets the artifact name used by the pipeline owners extraction build 
+        /// </summary>
+        public string PipelineOwnersArtifactName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the file name used by the pipeline owners extraction build 
+        /// </summary>
+        public string PipelineOwnersFilePath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the definition id of the pipeline owners extraction build 
+        /// </summary>
+        public int PipelineOwnersDefinitionId { get; set; }
     }
 }

@@ -67,7 +67,17 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 for (var i = 0; i < columnWidths.Count; i++)
                 {
                     var cell = (row.Count > i) ? row[i] : null;
-                    sb.AppendFormat($" {{0,-{columnWidths[i]}}} ", cell);
+
+                    // Right-align numbers and percentages, left-align everything else
+                    if (double.TryParse(cell, out var _) ||
+                        (cell != null && cell.EndsWith('%') && double.TryParse(cell.Substring(0, cell.Length - 1), out var _)))
+                    {
+                        sb.AppendFormat($" {{0,{columnWidths[i]}}} ", cell);
+                    }
+                    else
+                    {
+                        sb.AppendFormat($" {{0,-{columnWidths[i]}}} ", cell);
+                    }
                     sb.Append('|');
                 }
                 sb.AppendLine();

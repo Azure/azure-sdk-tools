@@ -1,7 +1,7 @@
 param location string = 'westus2'
 param storageAccountName string = 'azsdkengsyspipelinelogs'
 param eventgridTopicName string = 'azsdkengsyspipelinelogs-53d9a67c-c733-4988-b9af-db8a0db1434c'
-param aventHubNamespaceName string = 'ADX-EG-azsdkengsys'
+param eventHubNamespaceName string = 'ADX-EG-azsdkengsys'
 param kustoClusterName string = 'azsdkengsys'
 param kustoDatabaseName string = 'Pipelines'
 

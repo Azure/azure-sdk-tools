@@ -39,7 +39,7 @@ steps:
           -v $(SDK_REPO):/sdk-repo \
           -v /tmp/output:/tmp/output \
           $(DOCKER_IMAGE) \
-          --readme=${{ parameters.readmeFile }}
+          --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
       else
         echo '${{ parameters.sdkConfig }}' > /tmp/output/autorest.md
         configLen=`cat /tmp/output/autorest.md | wc -L`
@@ -51,7 +51,7 @@ steps:
             -v $(SDK_REPO):/sdk-repo \
             -v /tmp/output:/tmp/output \
             $(DOCKER_IMAGE) \
-            --readme=${{ parameters.readmeFile }}
+            --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
         else
           docker run --privileged \
             -v $(SPEC_REPO):/spec-repo \
@@ -59,7 +59,7 @@ steps:
             -v /tmp/output/autorest.md:/autorest.md \
             -v /tmp/output:/tmp/output \
             $(DOCKER_IMAGE) \
-            --readme=${{ parameters.readmeFile }}
+            --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
         fi
       fi
 

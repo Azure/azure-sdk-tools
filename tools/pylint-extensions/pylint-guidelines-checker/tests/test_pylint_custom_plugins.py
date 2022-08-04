@@ -1944,21 +1944,21 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
     def test_finds_method_returning_something_else_async(self):
         class_node, function_node_a, function_node_b = astroid.extract_node("""
         from azure.core.polling import LROPoller
+        from typinh import list
         
         class SomeClient(): #@
             async def list_thing(self, **kwargs): #@
                 return list()
             async def list_thing2(self, **kwargs): #@
-                from azure.core.polling import LROPoller
                 return LROPoller()
         """)
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=24
+                msg_id="client-list-methods-use-paging", line=6, node=function_node_a, col_offset=4, end_line=6, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=7, node=function_node_b,  col_offset=4, end_line=7, end_col_offset=25
+                msg_id="client-list-methods-use-paging", line=8, node=function_node_b,  col_offset=4, end_line=8, end_col_offset=25
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
@@ -2003,7 +2003,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         node = astroid.parse(file.read())
         file.close()
 
-        function_node = node.body[2].body[0]
+        function_node = node.body[4].body[0]
 
    
         with self.assertNoMessages():
@@ -3019,57 +3019,23 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
-class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
-    """Test that we are blocking disallowed imports and allowing allowed imports."""
-    CHECKER_CLASS = checker.NonCoreNetworkImport
+class TestDocstrings(pylint.testutils.CheckerTestCase):
+    CHECKER_CLASS = checker.CheckDocstringParameters
 
-    def test_disallowed_imports(self):
-        """Check that illegal imports raise warnings"""
-        # Blocked import ouside of core.
-        import_node = astroid.extract_node("import requests")
+    def test_docstring(self):
+        class_node = astroid.extract_node(
+            """
+            def __eq__(self, other):
+                ''' '''
+                if isinstance(other, self.__class__):
+                    return self.__dict__ == other.__dict__
+                return False
+            """
+        )
+
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="networking-import-outside-azure-core-transport",
-                    line=1,
-                    node=import_node,
-                    col_offset=0,
+                    msg_id="docstring-missing-param",
                 )
         ):
-            self.checker.visit_import(import_node)
-
-        # blocked import from outside of core.
-        importfrom_node = astroid.extract_node("from aiohttp import get")
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="networking-import-outside-azure-core-transport",
-                    line=1,
-                    node=importfrom_node,
-                    col_offset=0,
-                )
-        ):
-            self.checker.visit_importfrom(importfrom_node)
-
-
-    def test_allowed_imports(self):
-        """Check that allowed imports don't raise warnings."""
-        # import not in the blocked list.
-        import_node = astroid.extract_node("import math")
-        with self.assertNoMessages():
-            self.checker.visit_import(import_node)
-
-        # from import not in the blocked list.
-        importfrom_node = astroid.extract_node("from azure.core.pipeline import Pipeline")
-        with self.assertNoMessages():
-            self.checker.visit_importfrom(importfrom_node)
-
-        # blocked import, but in core.
-        import_node = astroid.extract_node("import requests")
-        import_node.root().name = "azure.core.pipeline.transport"
-        with self.assertNoMessages():
-            self.checker.visit_import(import_node)
-
-        # blocked from import, but in core.
-        importfrom_node = astroid.extract_node("from requests.exceptions import HttpException")
-        importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
-        with self.assertNoMessages():
-            self.checker.visit_importfrom(importfrom_node)
+            self.checker.visit_functiondef(class_node)

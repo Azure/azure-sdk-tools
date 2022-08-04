@@ -54,27 +54,15 @@ stages:
             workingDirectory: $(TypeScriptGeneratorDirectory)
             displayName: "Build typescript generator"
 
+          - script: |
+              npm pack $(TypeScriptGeneratorDirectory)
+              cp ./*.tgz $(Build.ArtifactStagingDirectory)/apiview
+            displayName: "Pack typescript generator"
+
           - task: PublishBuildArtifacts@1
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-              artifactName: ${{ parameters.ArtifactName }}
-              
-      - ${{ if not(eq(length(parameters.TestSteps), 0)) }}:
-        - job: 'Test'
-
-          dependsOn:
-            - 'Build'
-
-          pool:
-            name: azsdk-pool-mms-ubuntu-2004-general
-            vmImage: MMSUbuntu20.04
-
-          steps:
-            - template: /eng/pipelines/templates/steps/use-python-version.yml
-              parameters:
-                versionSpec: '${{ parameters.PythonVersion }}'
-
-            - ${{ parameters.TestSteps }}
+              artifactName: apiview
 
   - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
     - stage: 'Release'
@@ -82,15 +70,14 @@ stages:
       condition: Succeeded()
       jobs:
       - job: PublishPackage
-        displayName: 'Publish ${{ parameters.PackageName }} package to devops feed'
+        displayName: 'Publish ts-genapi package to devops feed'
         pool:
           name: azsdk-pool-mms-ubuntu-2004-general
           vmImage: MMSUbuntu20.04
         steps:
         - checkout: none
         - download: current
-        - task: UsePythonVersion@0
-
+        
         - script: |
             set -e
             pip install twine

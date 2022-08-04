@@ -4,6 +4,16 @@ variables:
 jobs:
 - job: Test
   timeoutInMinutes: 360
+  strategy:
+    matrix:
+      Net:
+        RepoName: 'Azure/azure-sdk-for-net'
+      Python:
+        RepoName: 'Azure/azure-sdk-for-python'
+  # TODO: Move to perf pool before merging
+  pool:
+    name: 'Azure Pipelines'
+    vmImage: 'ubuntu-20.04'
   steps:
   - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
     parameters:
@@ -14,7 +24,7 @@ jobs:
       - '!sdk/**/SessionRecords/*'
       - '!sdk/**/session-records/*'
       Repositories:
-      - Name: Azure/azure-sdk-for-python
+      - Name: $(RepoName)
         Commitish: main
         WorkingDirectory: $(System.DefaultWorkingDirectory)
       - Name: Azure/azure-sdk-tools

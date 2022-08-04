@@ -154,7 +154,6 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             @distributed_trace
             def download_thing(self, some, **kwargs): #@
                 pass
-
             @distributed_trace
             @decorator
             def do_thing(self, some, **kwargs): #@
@@ -175,7 +174,6 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             @distributed_trace_async
             async def download_thing(self, some, **kwargs): #@
                 pass
-
             @distributed_trace_async
             @decorator
             async def do_thing(self, some, **kwargs): #@
@@ -350,7 +348,6 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
             @distributed_trace
             def download_thing(self, some, **kwargs): #@
                 pass
-
             @distributed_trace
             @decorator
             def do_thing(self, some, **kwargs): #@
@@ -370,7 +367,6 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
             @distributed_trace_async
             async def download_thing(self, some, **kwargs): #@
                 pass
-
             @distributed_trace_async
             @decorator
             async def do_thing(self, some, **kwargs): #@
@@ -389,7 +385,6 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
             @staticmethod
             def download_thing(self, some, **kwargs): #@
                 pass
-
             @staticmethod
             async def do_thing(self, some, **kwargs): #@
                 pass
@@ -955,10 +950,8 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
             def do_thing_a(self, one, two, three, four, five): #@
                 # type: (str, str, str, str, str) -> None
                 pass
-
             def do_thing_b(self, one, two):  # type: (str, str) -> int #@
                 pass
-
             def do_thing_c(self, #@
                            one,  # type: str
                            two,  # type: str
@@ -981,10 +974,8 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
             async def do_thing_a(self, one, two, three, four, five): #@
                 # type: (str, str, str, str, str) -> None
                 pass
-
             async def do_thing_b(self, one, two):  # type: (str, str) -> int #@
                 pass
-
             async def do_thing_c(self, #@
                            one,  # type: str
                            two,  # type: str
@@ -1007,7 +998,6 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
             def do_thing_a(self): #@
                 # type: () -> None
                 pass
-
             def do_thing_b(self) -> None: #@
                 pass
         """)
@@ -1022,7 +1012,6 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
             async def do_thing_a(self): #@
                 # type: () -> None
                 pass
-
             async def do_thing_b(self) -> None: #@
                 pass
         """)
@@ -1098,7 +1087,6 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         class SomeClient(): #@
             def do_thing_a(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict): #@
                 pass
-
             def do_thing_b(self, one, two, three, four, five): #@
                 # type: (str, str, str, str, str)
                 pass
@@ -1120,7 +1108,6 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         class SomeClient(): #@
             async def do_thing_a(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict): #@
                 pass
-
             async def do_thing_b(self, one, two, three, four, five): #@
                 # type: (str, str, str, str, str)
                 pass
@@ -1142,7 +1129,6 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         class SomeClient(): #@
             def do_thing_a(self, one, two, three, four, five) -> None: #@
                 pass
-
             def do_thing_b(self, one, two, three, four, five): #@
                 # type: -> None
                 pass
@@ -1164,7 +1150,6 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         class SomeClient(): #@
             async def do_thing_a(self, one, two, three, four, five) -> None: #@
                 pass
-
             async def do_thing_b(self, one, two, three, four, five): #@
                 # type: -> None
                 pass
@@ -1224,7 +1209,6 @@ class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils
             config.logging_policy = StorageLoggingPolicy(**kwargs)
             config.proxy_policy = ProxyPolicy(**kwargs)
             return config
-
         @staticmethod
         def create_config(credential, api_version=None, **kwargs): #@
             # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
@@ -1250,7 +1234,6 @@ class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils
             config.logging_policy = StorageLoggingPolicy() #@
             config.proxy_policy = ProxyPolicy() #@
             return config
-
         @staticmethod
         def create_config(credential, api_version=None, **kwargs): #@
             # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
@@ -1289,7 +1272,6 @@ class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils
             config.logging_policy = StorageLoggingPolicy()
             config.proxy_policy = ProxyPolicy()
             return config
-
         @staticmethod
         def some_other_method(credential, api_version=None, **kwargs): #@
             # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
@@ -1944,7 +1926,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
     def test_finds_method_returning_something_else_async(self):
         class_node, function_node_a, function_node_b = astroid.extract_node("""
         from azure.core.polling import LROPoller
-        from typinh import list
+        from typing import list
         
         class SomeClient(): #@
             async def list_thing(self, **kwargs): #@
@@ -2003,7 +1985,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         node = astroid.parse(file.read())
         file.close()
 
-        function_node = node.body[4].body[0]
+        function_node = node.body[2].body[0]
 
    
         with self.assertNoMessages():
@@ -2475,7 +2457,6 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(pylint.testutils.Check
             @staticmethod
             def __download_thing(self, some, **kwargs): #@
                 pass
-
             @staticmethod
             async def __do_thing(self, some, **kwargs): #@
                 pass
@@ -2502,7 +2483,6 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
             def function_foo(x, y, z):
                 '''docstring
                 .. admonition:: Example:
-
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """
@@ -2520,7 +2500,6 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
                     This is Example content.
                     Should support multi-line.
                     Can also include file:
-
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """
@@ -2574,7 +2553,6 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
             async def function_foo(x, y, z):
                 '''docstring
                 .. admonition:: Example:
-
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """
@@ -2592,7 +2570,6 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
                     This is Example content.
                     Should support multi-line.
                     Can also include file:
-
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """
@@ -2646,7 +2623,6 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
             class SomeClient(object):
                 '''docstring
                 .. admonition:: Example:
-
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
                 def __init__(self):
@@ -2666,7 +2642,6 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
                     This is Example content.
                     Should support multi-line.
                     Can also include file:
-
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
                 def __init__(self):
@@ -2846,7 +2821,6 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
             from enum import Enum
             from six import with_metaclass
             from azure.core import CaseInsensitiveEnumMeta
-
             class MyBadEnum(with_metaclass(CaseInsensitiveEnumMeta, str, Enum)): 
                 One = "one"
               """
@@ -2864,7 +2838,6 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
             """
             from enum import Enum
             from azure.core import CaseInsensitiveEnumMeta
-
             class MyBadEnum(str, Enum, metaclass=CaseInsensitiveEnumMeta): 
                 One = "one"
             
@@ -2882,7 +2855,6 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
         class_node = astroid.extract_node(
             """
             from enum import Enum
-
             class MyGoodEnum(str, Enum): 
                 ONE = "one"
             """
@@ -2899,7 +2871,6 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
             """
             from enum import Enum
             from azure.core import CaseInsensitiveEnumMeta
-
             class MyGoodEnum(str, Enum, metaclass=CaseInsensitiveEnumMeta): 
                 ONE = "one"
             """
@@ -3019,23 +2990,57 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
-class TestDocstrings(pylint.testutils.CheckerTestCase):
-    CHECKER_CLASS = checker.CheckDocstringParameters
+class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed imports and allowing allowed imports."""
+    CHECKER_CLASS = checker.NonCoreNetworkImport
 
-    def test_docstring(self):
-        class_node = astroid.extract_node(
-            """
-            def __eq__(self, other):
-                ''' '''
-                if isinstance(other, self.__class__):
-                    return self.__dict__ == other.__dict__
-                return False
-            """
-        )
-
+    def test_disallowed_imports(self):
+        """Check that illegal imports raise warnings"""
+        # Blocked import ouside of core.
+        import_node = astroid.extract_node("import requests")
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="docstring-missing-param",
+                    msg_id="networking-import-outside-azure-core-transport",
+                    line=1,
+                    node=import_node,
+                    col_offset=0,
                 )
         ):
-            self.checker.visit_functiondef(class_node)
+            self.checker.visit_import(import_node)
+
+        # blocked import from outside of core.
+        importfrom_node = astroid.extract_node("from aiohttp import get")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="networking-import-outside-azure-core-transport",
+                    line=1,
+                    node=importfrom_node,
+                    col_offset=0,
+                )
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+
+    def test_allowed_imports(self):
+        """Check that allowed imports don't raise warnings."""
+        # import not in the blocked list.
+        import_node = astroid.extract_node("import math")
+        with self.assertNoMessages():
+            self.checker.visit_import(import_node)
+
+        # from import not in the blocked list.
+        importfrom_node = astroid.extract_node("from azure.core.pipeline import Pipeline")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # blocked import, but in core.
+        import_node = astroid.extract_node("import requests")
+        import_node.root().name = "azure.core.pipeline.transport"
+        with self.assertNoMessages():
+            self.checker.visit_import(import_node)
+
+        # blocked from import, but in core.
+        importfrom_node = astroid.extract_node("from requests.exceptions import HttpException")
+        importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)

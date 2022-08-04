@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     /// <summary>
     /// This sanitizer applies at the session level, just before saving a recording to disk.
     /// 
-    /// It cleans out all request/response pairs that that match the defined settings. A match against URI, Header, or Body regex will result in the entire RecordEntry being recorded from the recording.
+    /// It cleans out all request/response pairs that that match the defined settings. A match against URI, Header, or Body regex will result in the entire RecordEntry being omit from the recording.
     /// </summary>
     public class RegexEntrySanitizer : RecordedTestSanitizer
     {

@@ -665,6 +665,14 @@ code {
     white-space: pre;
 }
 
+.code-inner > table {
+    display: inline-block;
+}
+
+.code-inner td, .code-inner th {
+    border: 1px solid #dee2e6;
+}
+
 .code-inner-indent {
     margin-left: 25px;
     border-left: 1px dashed #dee2e6;

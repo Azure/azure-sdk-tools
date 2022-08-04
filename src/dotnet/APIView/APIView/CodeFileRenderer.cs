@@ -32,7 +32,6 @@ namespace ApiView
             int lineNumber = 0;
             (int Count, int Curr) tableColumnCount = (0, 0);
             (int Count, int Curr) tableRowCount = (0, 0);
-            bool isTableContent = false;
             TreeNode<CodeLine> section = null;
 
             foreach (var token in node)
@@ -131,7 +130,7 @@ namespace ApiView
                         break;
 
                     case CodeFileTokenKind.TableBegin:
-                        stringBuilder.Append("<table class=\"table\">");
+                        stringBuilder.Append("<table class=\"table table-sm\">");
                         break;
 
                     case CodeFileTokenKind.TableColumnCount:
@@ -143,28 +142,56 @@ namespace ApiView
                         break;
 
                     case CodeFileTokenKind.TableColumnName:
-                        tableColumnCount.Curr++;
-                        if (tableColumnCount.Curr == 1)
+                        if (tableColumnCount.Curr == 0)
                         {
                             stringBuilder.Append("<thead><tr>");
                             stringBuilder.Append($"<th scope=\"col\">{token.Value}</th>");
+                            tableColumnCount.Curr++;
                         }
-                        else if (tableColumnCount.Curr == tableColumnCount.Count)
+                        else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
                         {
                             stringBuilder.Append($"<th scope=\"col\">{token.Value}</th>");
-                            stringBuilder.Append("</tr></thead>");
+                            stringBuilder.Append("</tr></thead><tbody>");
                             tableColumnCount.Curr = 0;
-                            isTableContent = true;
                         }
                         else
                         {
                             stringBuilder.Append($"<th scope=\"col\">{token.Value}</th>");
+                            tableColumnCount.Curr++;
+                        }
+                        break;
+
+                    case CodeFileTokenKind.TableCellBegin:
+                        if (tableColumnCount.Curr == 0)
+                        {
+                            stringBuilder.Append($"<tr><td>");
+                            tableColumnCount.Curr++;
+                        }
+                        else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
+                        {
+                            stringBuilder.Append($"<td>");
+                            tableColumnCount.Curr = 0;
+                            tableRowCount.Curr++;
+                        }
+                        else
+                        {
+                            stringBuilder.Append($"<td>");
+                            tableColumnCount.Curr++;
+                            tableRowCount.Curr++;
+                        }
+                        break;
+
+                    case CodeFileTokenKind.TableCellEnd:
+                        stringBuilder.Append($"</td>");
+                        if (tableColumnCount.Curr == 0)
+                        {
+                            stringBuilder.Append($"</tr>");
                         }
                         break;
 
                     case CodeFileTokenKind.TableEnd:
+                        stringBuilder.Append($"</tbody>");
                         stringBuilder.Append("</table>");
-                        isTableContent = false;
                         break;
 
                     default:

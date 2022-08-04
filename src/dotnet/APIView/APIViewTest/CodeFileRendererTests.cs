@@ -419,5 +419,143 @@ namespace APIViewUnitTests
                 Assert.Equal(14, item.Data.LineNumber);
             });
         }
+
+        [Fact]
+        public void Render_MixedLevelTokenWithTables_ReturnsMixedLevelTree()
+        {
+            // Arrange
+            CodeFile codeFile = new CodeFile();
+            CodeFileToken[] token = new CodeFileToken[] {
+                new CodeFileToken("HeadingLine_1", CodeFileTokenKind.FoldableSectionHeading),
+                new CodeFileToken("", CodeFileTokenKind.Newline),
+                new CodeFileToken(null, CodeFileTokenKind.FoldableSectionContentStart),
+                new CodeFileToken(" ", CodeFileTokenKind.Whitespace),
+                new CodeFileToken("LiteralLine_1", CodeFileTokenKind.Literal),
+                new CodeFileToken(":", CodeFileTokenKind.Punctuation),
+                new CodeFileToken("", CodeFileTokenKind.Newline),
+                new CodeFileToken("", CodeFileTokenKind.TableBegin),
+                new CodeFileToken("2", CodeFileTokenKind.TableRowCount),
+                new CodeFileToken("3", CodeFileTokenKind.TableColumnCount),
+                new CodeFileToken("Column_1", CodeFileTokenKind.TableColumnName),
+                new CodeFileToken("Column_2", CodeFileTokenKind.TableColumnName),
+                new CodeFileToken("Column_3", CodeFileTokenKind.TableColumnName),
+                new CodeFileToken("", CodeFileTokenKind.TableCellBegin),
+                new CodeFileToken("TableCell_11", CodeFileTokenKind.Literal),
+                new CodeFileToken("", CodeFileTokenKind.TableCellEnd),
+                new CodeFileToken("", CodeFileTokenKind.TableCellBegin),
+                new CodeFileToken("TableCell_12", CodeFileTokenKind.Literal),
+                new CodeFileToken("", CodeFileTokenKind.TableCellEnd),
+                new CodeFileToken("", CodeFileTokenKind.TableCellBegin),
+                new CodeFileToken("TableCell_13", CodeFileTokenKind.Literal),
+                new CodeFileToken("", CodeFileTokenKind.TableCellEnd),
+                new CodeFileToken("", CodeFileTokenKind.TableCellBegin),
+                new CodeFileToken("TableCell_21", CodeFileTokenKind.Literal),
+                new CodeFileToken("", CodeFileTokenKind.TableCellEnd),
+                new CodeFileToken("", CodeFileTokenKind.TableCellBegin),
+                new CodeFileToken("TableCell_22", CodeFileTokenKind.Literal),
+                new CodeFileToken("", CodeFileTokenKind.TableCellEnd),
+                new CodeFileToken("", CodeFileTokenKind.TableCellBegin),
+                new CodeFileToken("TableCell_23", CodeFileTokenKind.Literal),
+                new CodeFileToken("", CodeFileTokenKind.TableCellEnd),
+                new CodeFileToken("", CodeFileTokenKind.TableEnd),
+                new CodeFileToken("", CodeFileTokenKind.Newline),
+                new CodeFileToken("HeadingLine_11", CodeFileTokenKind.FoldableSectionHeading),
+                new CodeFileToken("", CodeFileTokenKind.Newline),
+                new CodeFileToken(null, CodeFileTokenKind.FoldableSectionContentStart),
+                new CodeFileToken(" ", CodeFileTokenKind.Whitespace),
+                new CodeFileToken("LiteralLine_111", CodeFileTokenKind.Literal),
+                new CodeFileToken(":", CodeFileTokenKind.Punctuation),
+                new CodeFileToken("", CodeFileTokenKind.Newline),
+                new CodeFileToken("", CodeFileTokenKind.TableBegin),
+                new CodeFileToken("1", CodeFileTokenKind.TableRowCount),
+                new CodeFileToken("3", CodeFileTokenKind.TableColumnCount),
+                new CodeFileToken("Column_1", CodeFileTokenKind.TableColumnName),
+                new CodeFileToken("Column_2", CodeFileTokenKind.TableColumnName),
+                new CodeFileToken("Column_3", CodeFileTokenKind.TableColumnName),
+                new CodeFileToken("", CodeFileTokenKind.TableCellBegin),
+                new CodeFileToken("TableCell_11", CodeFileTokenKind.Literal),
+                new CodeFileToken("", CodeFileTokenKind.TableCellEnd),
+                new CodeFileToken("", CodeFileTokenKind.TableCellBegin),
+                new CodeFileToken("TableCell_12", CodeFileTokenKind.Literal),
+                new CodeFileToken("", CodeFileTokenKind.TableCellEnd),
+                new CodeFileToken("", CodeFileTokenKind.TableCellBegin),
+                new CodeFileToken("TableCell_13", CodeFileTokenKind.Literal),
+                new CodeFileToken("", CodeFileTokenKind.TableCellEnd),
+                new CodeFileToken("", CodeFileTokenKind.TableEnd),
+                new CodeFileToken("", CodeFileTokenKind.Newline),
+                new CodeFileToken(null, CodeFileTokenKind.FoldableSectionContentEnd),
+                new CodeFileToken(null, CodeFileTokenKind.FoldableSectionContentEnd),
+                new CodeFileToken("", CodeFileTokenKind.Newline)
+            };
+
+            codeFile.Tokens = token;
+            CodeFileRenderer codeFileRenderer = new CodeFileRenderer();
+            var tableStub = "<table class=\"table table-sm\">" +
+                                "<thead>" +
+                                    "<tr>" +
+                                        "<th scope=\"col\">Column_1</th>" +
+                                        "<th scope=\"col\">Column_2</th>" +
+                                        "<th scope=\"col\">Column_3</th>" +
+                                    "</tr>" +
+                                "</thead>" +
+                                "<tbody>" +
+                                    "<tr>" +
+                                        "<td>TableCell_11</td>" +
+                                        "<td>TableCell_12</td>" +
+                                        "<td>TableCell_13</td>" +
+                                    "</tr>";
+            
+            var table1 = tableStub +
+                            "<tr>" +
+                                "<td>TableCell_21</td>" +
+                                "<td>TableCell_22</td>" +
+                                "<td>TableCell_23</td>" +
+                            "</tr>" +
+                        "</tbody>" +
+                    "</table>";
+
+            var table2 = tableStub +
+                            "</tbody>" +
+                        "</table>";
+
+            // Act
+            var result = codeFileRenderer.Render(codeFile);
+            var codeLines = result.CodeLines;
+            var sections = result.Sections;
+            var sectionsAsList = sections[0].ToList();
+
+            // Assert
+            Assert.Equal(2, codeLines.Length);
+            Assert.Single(sections);
+            Assert.Equal("HeadingLine_1", codeLines[0].DisplayString);
+            Assert.Equal(1, codeLines[0].LineNumber);
+            Assert.Equal(0, codeLines[0].SectionKey);
+
+            Assert.Collection(sectionsAsList,
+            item => {
+                Assert.Equal("HeadingLine_1", item.Data.DisplayString);
+                Assert.Equal(1, item.Data.LineNumber);
+            },
+            item => {
+                Assert.Equal(" LiteralLine_1:", item.Data.DisplayString);
+                Assert.Equal(2, item.Data.LineNumber);
+            },
+            item => {
+                Assert.Equal(table1, item.Data.DisplayString);
+                Assert.Equal(3, item.Data.LineNumber);
+            },
+            item => {
+                Assert.Equal("HeadingLine_11", item.Data.DisplayString);
+                Assert.Equal(4, item.Data.LineNumber);
+            },
+            item => {
+                Assert.Equal(" LiteralLine_111:", item.Data.DisplayString);
+                Assert.Equal(5, item.Data.LineNumber);
+            },
+            item => {
+                Assert.Equal(table2, item.Data.DisplayString);
+                Assert.Equal(6, item.Data.LineNumber);
+            });
+        }
     }
 }

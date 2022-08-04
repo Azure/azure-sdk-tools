@@ -110,7 +110,7 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
 
 // Event Hub
 resource eventhubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
-  name: aventHubNamespaceName
+  name: eventHubNamespaceName
   location: location
   sku: {
     name: 'Standard'

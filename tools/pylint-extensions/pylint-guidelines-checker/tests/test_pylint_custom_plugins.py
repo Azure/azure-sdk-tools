@@ -154,6 +154,7 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             @distributed_trace
             def download_thing(self, some, **kwargs): #@
                 pass
+            
             @distributed_trace
             @decorator
             def do_thing(self, some, **kwargs): #@
@@ -174,6 +175,7 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             @distributed_trace_async
             async def download_thing(self, some, **kwargs): #@
                 pass
+
             @distributed_trace_async
             @decorator
             async def do_thing(self, some, **kwargs): #@
@@ -348,6 +350,7 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
             @distributed_trace
             def download_thing(self, some, **kwargs): #@
                 pass
+
             @distributed_trace
             @decorator
             def do_thing(self, some, **kwargs): #@
@@ -367,6 +370,7 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
             @distributed_trace_async
             async def download_thing(self, some, **kwargs): #@
                 pass
+
             @distributed_trace_async
             @decorator
             async def do_thing(self, some, **kwargs): #@
@@ -385,6 +389,7 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
             @staticmethod
             def download_thing(self, some, **kwargs): #@
                 pass
+
             @staticmethod
             async def do_thing(self, some, **kwargs): #@
                 pass
@@ -950,8 +955,10 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
             def do_thing_a(self, one, two, three, four, five): #@
                 # type: (str, str, str, str, str) -> None
                 pass
+
             def do_thing_b(self, one, two):  # type: (str, str) -> int #@
                 pass
+
             def do_thing_c(self, #@
                            one,  # type: str
                            two,  # type: str
@@ -974,8 +981,10 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
             async def do_thing_a(self, one, two, three, four, five): #@
                 # type: (str, str, str, str, str) -> None
                 pass
+
             async def do_thing_b(self, one, two):  # type: (str, str) -> int #@
                 pass
+
             async def do_thing_c(self, #@
                            one,  # type: str
                            two,  # type: str
@@ -998,6 +1007,7 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
             def do_thing_a(self): #@
                 # type: () -> None
                 pass
+
             def do_thing_b(self) -> None: #@
                 pass
         """)
@@ -1012,6 +1022,7 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
             async def do_thing_a(self): #@
                 # type: () -> None
                 pass
+
             async def do_thing_b(self) -> None: #@
                 pass
         """)
@@ -1087,6 +1098,7 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         class SomeClient(): #@
             def do_thing_a(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict): #@
                 pass
+
             def do_thing_b(self, one, two, three, four, five): #@
                 # type: (str, str, str, str, str)
                 pass
@@ -1108,6 +1120,7 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         class SomeClient(): #@
             async def do_thing_a(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict): #@
                 pass
+
             async def do_thing_b(self, one, two, three, four, five): #@
                 # type: (str, str, str, str, str)
                 pass
@@ -1129,6 +1142,7 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         class SomeClient(): #@
             def do_thing_a(self, one, two, three, four, five) -> None: #@
                 pass
+
             def do_thing_b(self, one, two, three, four, five): #@
                 # type: -> None
                 pass
@@ -1150,6 +1164,7 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         class SomeClient(): #@
             async def do_thing_a(self, one, two, three, four, five) -> None: #@
                 pass
+
             async def do_thing_b(self, one, two, three, four, five): #@
                 # type: -> None
                 pass
@@ -1209,6 +1224,7 @@ class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils
             config.logging_policy = StorageLoggingPolicy(**kwargs)
             config.proxy_policy = ProxyPolicy(**kwargs)
             return config
+
         @staticmethod
         def create_config(credential, api_version=None, **kwargs): #@
             # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
@@ -1234,6 +1250,7 @@ class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils
             config.logging_policy = StorageLoggingPolicy() #@
             config.proxy_policy = ProxyPolicy() #@
             return config
+
         @staticmethod
         def create_config(credential, api_version=None, **kwargs): #@
             # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
@@ -1272,6 +1289,7 @@ class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils
             config.logging_policy = StorageLoggingPolicy()
             config.proxy_policy = ProxyPolicy()
             return config
+
         @staticmethod
         def some_other_method(credential, api_version=None, **kwargs): #@
             # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
@@ -2457,6 +2475,7 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(pylint.testutils.Check
             @staticmethod
             def __download_thing(self, some, **kwargs): #@
                 pass
+
             @staticmethod
             async def __do_thing(self, some, **kwargs): #@
                 pass
@@ -2483,6 +2502,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
             def function_foo(x, y, z):
                 '''docstring
                 .. admonition:: Example:
+
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """
@@ -2500,6 +2520,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
                     This is Example content.
                     Should support multi-line.
                     Can also include file:
+
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """
@@ -2553,6 +2574,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
             async def function_foo(x, y, z):
                 '''docstring
                 .. admonition:: Example:
+
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """
@@ -2570,6 +2592,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
                     This is Example content.
                     Should support multi-line.
                     Can also include file:
+                    
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """
@@ -2623,6 +2646,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
             class SomeClient(object):
                 '''docstring
                 .. admonition:: Example:
+
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
                 def __init__(self):
@@ -2642,6 +2666,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
                     This is Example content.
                     Should support multi-line.
                     Can also include file:
+                    
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
                 def __init__(self):
@@ -2821,6 +2846,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
             from enum import Enum
             from six import with_metaclass
             from azure.core import CaseInsensitiveEnumMeta
+
             class MyBadEnum(with_metaclass(CaseInsensitiveEnumMeta, str, Enum)): 
                 One = "one"
               """
@@ -2838,6 +2864,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
             """
             from enum import Enum
             from azure.core import CaseInsensitiveEnumMeta
+
             class MyBadEnum(str, Enum, metaclass=CaseInsensitiveEnumMeta): 
                 One = "one"
             
@@ -2855,6 +2882,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
         class_node = astroid.extract_node(
             """
             from enum import Enum
+
             class MyGoodEnum(str, Enum): 
                 ONE = "one"
             """
@@ -2871,6 +2899,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
             """
             from enum import Enum
             from azure.core import CaseInsensitiveEnumMeta
+
             class MyGoodEnum(str, Enum, metaclass=CaseInsensitiveEnumMeta): 
                 ONE = "one"
             """

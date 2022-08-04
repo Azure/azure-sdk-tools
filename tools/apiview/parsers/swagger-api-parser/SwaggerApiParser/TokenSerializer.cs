@@ -167,7 +167,7 @@ namespace SwaggerApiParser
 
         public static CodeFileToken Intent(int intent)
         {
-            var ret = new CodeFileToken(String.Concat(Enumerable.Repeat(IntentText, intent)), CodeFileTokenKind.Whitespace) {DefinitionId = (intentNumber++).ToString()};
+            var ret = new CodeFileToken(String.Concat(Enumerable.Repeat(IntentText, intent)), CodeFileTokenKind.Whitespace);
             return ret;
         }
 

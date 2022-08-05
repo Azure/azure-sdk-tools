@@ -607,7 +607,9 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             try
             {
-                return X509Certificate2.CreateFromPem(settings.TLSValidationCert, string.Empty);
+                var fields = PemEncoding.Find(settings.TLSValidationCert);
+                var base64Data = settings.TLSValidationCert[fields.Base64Data];
+                return new X509Certificate2(Encoding.ASCII.GetBytes(base64Data));
             }
             catch (Exception e)
             {

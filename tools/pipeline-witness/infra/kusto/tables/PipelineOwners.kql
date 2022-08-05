@@ -1,0 +1,17 @@
+// Create table
+.create-merge table PipelineOwners (
+    OrganizationName: string,
+    BuildDefinitionId: long,
+    Owners: dynamic,
+    Timestamp: datetime,
+    EtlIngestDate: datetime
+)
+
+// Create table json mapping
+.create-or-alter table PipelineOwners ingestion json mapping 'PipelineOwners_mapping' ```[
+    { "column": "OrganizationName", "path": "$['organizationName']" },
+    { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },
+    { "column": "Owners", "path": "$['owners']" },
+    { "column": "Timestamp", "path": "$['timestamp']" },
+    { "column": "EtlIngestDate", "path": "$['etlIngestDate']" }
+]```

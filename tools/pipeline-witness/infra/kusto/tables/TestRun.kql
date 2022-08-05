@@ -1,5 +1,5 @@
 // Create table
-.create table TestRun (
+.create-merge table TestRun (
     OrganizationName: string,
     ProjectId: string,
     TestRunId: int,
@@ -34,7 +34,7 @@
 )
 
 // Create table json mapping
-.create table TestRun ingestion json mapping 'TestRun_mapping' ```[
+.create-or-alter table TestRun ingestion json mapping 'TestRun_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "TestRunId", "path": "$['testRunId']" },

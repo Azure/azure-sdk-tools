@@ -1,5 +1,5 @@
 // Create table
-.create table BuildTimelineRecord (
+.create-merge table BuildTimelineRecord (
     OrganizationName: string,
     ProjectId: string,
     BuildId: long,
@@ -34,7 +34,7 @@
 )
 
 // Create table json mapping
-.create table BuildTimelineRecord ingestion json mapping 'BuildTimelineRecord_mapping' ```[
+.create-or-alter table BuildTimelineRecord ingestion json mapping 'BuildTimelineRecord_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "BuildId", "path": "$['buildId']" },

@@ -1,6 +1,4 @@
-.drop materialized-view ManagedDefinition
-
-.create materialized-view with (backfill=true,autoUpdateSchema=true) ManagedDefinition on table BuildDefinition {
+.create-or-alter function ManagedDefinition {
 BuildDefinition
     | where Variables contains "meta"
     | extend metas = parse_json(Variables)
@@ -8,6 +6,5 @@ BuildDefinition
     | extend Feature = metas["meta.component"].value
     | extend Category = metas["meta.category"].value
     | project-away metas
-    // keep only the row with the largest rev # per definition/project
     | summarize arg_max(BuildDefinitionRevision, *) by BuildDefinitionId, ProjectId
 }

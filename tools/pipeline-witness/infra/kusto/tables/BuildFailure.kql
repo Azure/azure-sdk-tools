@@ -1,5 +1,5 @@
 // Create table
-.create table BuildFailure (
+.create-merge table BuildFailure (
     OrganizationName: string,
     ProjectId: string,
     ProjectName: string,
@@ -16,7 +16,7 @@
 )
 
 // Create table json mapping
-.create table BuildFailure ingestion json mapping 'BuildFailure_mapping' ```[
+.create-or-alter table BuildFailure ingestion json mapping 'BuildFailure_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "ProjectName", "path": "$['projectName']" },

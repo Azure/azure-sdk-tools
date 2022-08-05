@@ -1,5 +1,5 @@
 // Create table
-.create table BuildDefinition (
+.create-merge table BuildDefinition (
     OrganizationName: string,
     ProjectId: string,
     BuildDefinitionId: long,
@@ -61,7 +61,7 @@
 )
 
 // Create table json mapping
-.create table BuildDefinition ingestion json mapping 'BuildDefinition_mapping' ```[
+.create-or-alter table BuildDefinition ingestion json mapping 'BuildDefinition_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },

@@ -1,9 +1,6 @@
-param location string = 'westus2'
-param storageAccountName string = 'azsdkengsyspipelinelogs'
-param eventgridTopicName string = 'azsdkengsyspipelinelogs-53d9a67c-c733-4988-b9af-db8a0db1434c'
-param eventHubNamespaceName string = 'ADX-EG-azsdkengsys'
-param kustoClusterName string = 'azsdkengsys'
-param kustoDatabaseName string = 'Pipelines'
+param location string
+param resourceName string
+param kustoDatabaseName string
 
 var tables = [
   {
@@ -36,9 +33,11 @@ var tables = [
   }
 ]
 
+var tablesKustoScript = loadTextContent('tables.kql')
+
 // Storage Account
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
-  name: storageAccountName
+  name: resourceName
   location: location
   sku: {
     name: 'Standard_RAGRS'
@@ -100,7 +99,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
 
 // Event Grid
 resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
-  name: eventgridTopicName
+  name: resourceName
   location: location
   properties: {
     source: storageAccount.id
@@ -110,7 +109,7 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
 
 // Event Hub
 resource eventhubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
-  name: eventHubNamespaceName
+  name: resourceName
   location: location
   sku: {
     name: 'Standard'
@@ -126,30 +125,11 @@ resource eventhubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = 
     maximumThroughputUnits: 0
     kafkaEnabled: true
   }
-  resource ruleset 'networkRuleSets' = {
-    name: 'default'
-    properties: {
-      publicNetworkAccess: 'Enabled'
-      defaultAction: 'Allow'
-      virtualNetworkRules: []
-      ipRules: []
-    }
-  }
-  resource authRules 'authorizationRules' = {
-    name: 'RootManageSharedAccessKey'
-    properties: {
-      rights: [
-        'Listen'
-        'Manage'
-        'Send'
-      ]
-    }
-  }
 }
 
 // Kusto Cluster
 resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
-  name: kustoClusterName
+  name: resourceName
   location: location
   sku: {
     name: 'Standard_E2a_v4'
@@ -182,6 +162,7 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
   }
   resource database 'Databases' = {
     name: kustoDatabaseName
+    location: location
     kind: 'ReadWrite'
     properties: {
       hotCachePeriod: 'P31D'
@@ -190,6 +171,15 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
 }
 
 // Resources per table
+resource kustoTables 'Microsoft.Kusto/clusters/databases/scripts@2022-02-01' = {
+  name: 'intitializeTables'
+  parent: kustoCluster::database
+  properties: {
+      scriptContent: tablesKustoScript
+      forceUpdateTag: uniqueString(tablesKustoScript)
+  }
+}
+
 resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = [for table in tables: {
   parent: storageAccount::blobServices
   name: table.container
@@ -205,7 +195,7 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
 
 resource eventHubs 'Microsoft.EventHub/namespaces/eventhubs@2022-01-01-preview' = [for (table, i) in tables: {
   parent: eventhubNamespace
-  name: '${table.name}Blobs'
+  name: table.container
   properties: {
     messageRetentionInDays: 7
     partitionCount: 8
@@ -215,7 +205,7 @@ resource eventHubs 'Microsoft.EventHub/namespaces/eventhubs@2022-01-01-preview' 
 
 resource eventGridSubscriptions 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2022-06-15' = [for (table, i) in tables: {
   parent: eventGridTopic
-  name: '${table.name}Blobs'
+  name: table.container
   properties: {
     destination: {
       properties: {
@@ -239,7 +229,8 @@ resource eventGridSubscriptions 'Microsoft.EventGrid/systemTopics/eventSubscript
 
 resource kustoDataConnections 'Microsoft.Kusto/Clusters/Databases/DataConnections@2022-02-01' = [for (table, i) in tables: {
   parent: kustoCluster::database
-  name: '${table.name}Blobs'
+  name: table.container
+  location: location
   kind: 'EventGrid'
   properties: {
     ignoreFirstRecord: false

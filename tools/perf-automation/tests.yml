@@ -6,6 +6,7 @@ resources:
     name: Azure/azure-sdk-for-net
     ref: main
 
+# Copy/paste template
 # jobs:
 # - template: tests-template.yml
 #   parameters:
@@ -20,9 +21,22 @@ resources:
 #       parameters:
 #         EnableNuGetCache: false
 
+# SDK template from language repo
+# /sdk/storage/Azure.Storage.Blobs/perf.yml@azure-sdk-for-net (Line: 23, Col: 1): Unexpected value 'extends'
+# jobs:
+# - template: /sdk/storage/Azure.Storage.Blobs/perf.yml@azure-sdk-for-net
+#   parameters:
+#     Tests: '^(download)$'
+#     Arguments: '(10240)'
+#     Iterations: 1
+
+# Shared template from language repo
 jobs:
-- template: /sdk/storage/Azure.Storage.Blobs/perf.yml@azure-sdk-for-net
+- template: /eng/pipelines/templates/jobs/perf.yml@azure-sdk-for-net
   parameters:
+    ServiceDirectory: 'storage/Azure.Storage.Blobs'
+    Services: '^storage-blob$'
+    PackageVersions: '12|source'
     Tests: '^(download)$'
     Arguments: '(10240)'
     Iterations: 1

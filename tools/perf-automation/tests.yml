@@ -4,6 +4,7 @@ variables:
   # TODO: Move to perf pool before merging
   Pool: 'Azure Pipelines'
   OSVmImage: 'ubuntu-20.04'
+  PythonVersion: '3.7'
 
 jobs:
 - job: Test
@@ -48,13 +49,11 @@ jobs:
   - template: /eng/pipelines/templates/steps/install-dotnet.yml
     parameters:
       EnableNuGetCache: false
-    condition: and(succeeded(), eq(variables['RepoName'], 'Azure/azure-sdk-for-net'))
 
   - task: UsePythonVersion@0
     displayName: "Use Python $(PythonVersion)"
     inputs:
       versionSpec: $(PythonVersion)
-    condition: and(succeeded(), eq(variables['RepoName'], 'Azure/azure-sdk-for-python'))
 
   - template: /eng/common/TestResources/deploy-test-resources.yml
     parameters:

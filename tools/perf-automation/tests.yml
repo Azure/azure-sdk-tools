@@ -87,9 +87,6 @@ jobs:
       --arguments '(10240)'
       --iterations 1
     workingDirectory: azure-sdk-tools/tools/perf-automation/Azure.Sdk.Tools.PerfAutomation
-    env:
-      ${{ each var in parameters.EnvVars }}:
-        ${{ var.key }}: ${{ var.value }}
     displayName: Run perf tests
 
   - pwsh: |

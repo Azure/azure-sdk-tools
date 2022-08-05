@@ -1,4 +1,7 @@
 parameters:
+- name: Variables
+  type: object
+  default: []
 - name: RepoName
   type: string
 - name: Language
@@ -12,8 +15,11 @@ parameters:
   default: []
 
 variables:
-  Pool: 'Azure Pipelines'
-  OSVmImage: 'ubuntu-20.04'
+- ${{ parameters.Variables }}
+- name: Pool
+  value: 'Azure Pipelines'
+- name: OSVmImage
+  value: 'ubuntu-20.04'
 
 jobs:
 - job: Test

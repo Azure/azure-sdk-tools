@@ -9,6 +9,8 @@ resources:
 jobs:
 - template: tests-template.yml
   parameters:
+    Variables:
+    - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
     RepoName: 'Azure/azure-sdk-for-net'
     Language: 'Net'
     ServiceDirectory: 'storage/Azure.Storage.Blobs'

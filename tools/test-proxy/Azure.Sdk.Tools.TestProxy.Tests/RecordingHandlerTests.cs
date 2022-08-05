@@ -827,7 +827,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.StartsWith(errorText, assertion.Message);
         }
 
-        [IgnoreOnLinuxFact]
+        [Fact]
         public void TestSetRecordingOptionsValidTlsCert()
         {
             var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
@@ -838,7 +838,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.SetRecordingOptions(inputBody, null);
         }
 
-        [IgnoreOnLinuxFact]
+        [Fact]
         public void TestSetRecordingOptionsMultipleCertOptions()
         {
             var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");

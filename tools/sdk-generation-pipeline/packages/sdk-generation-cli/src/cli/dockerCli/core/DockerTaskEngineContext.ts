@@ -68,7 +68,8 @@ export class DockerTaskEngineContext {
             headSha: dockerTaskEngineConfigProperties.headSha ?? dockerContext.isPublicRepo?
                 await new GitOperationWrapper(dockerContext.specRepo).getHeadSha() : '',
             headRef: dockerTaskEngineConfigProperties.headRef ?? await new GitOperationWrapper(dockerContext.specRepo).getHeadRef(),
-            repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl?? (await new GitOperationWrapper(dockerContext.specRepo).getRemote())?? `https://github.com/Azure/azure-rest-api-specs`
+            repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl?? (await new GitOperationWrapper(dockerContext.specRepo).getRemote())??
+                `https://github.com/Azure/azure-rest-api-specs`
         };
         this.serviceType = dockerContext.readmeMdPath.includes('data-plane') && dockerTaskEngineConfigProperties.serviceType ? 'data-plane': 'resource-manager';
         this.tag = dockerContext.tag;

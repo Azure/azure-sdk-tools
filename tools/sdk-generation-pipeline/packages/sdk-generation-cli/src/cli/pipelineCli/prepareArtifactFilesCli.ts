@@ -42,11 +42,6 @@ async function prepareSourceCode(
     artifactDir: string
 ) {
     for (const p of generateAndBuildOutput.packages) {
-        const result = p.result;
-        if (result === TaskResultStatus.Failure) {
-            logger.warn(`Build ${p.packageName} failed, skipped it`);
-            continue;
-        }
         const packageName = p.packageName;
         const packagePaths = p.path;
 
@@ -72,11 +67,6 @@ async function prepareSourceCode(
 
 async function prepareArtifacts(generateAndBuildOutput: GenerateAndBuildOutput, language: string, artifactDir: string) {
     for (const p of generateAndBuildOutput.packages) {
-        const result = p.result;
-        if (result === TaskResultStatus.Failure) {
-            logger.warn(`Build ${p.packageName} failed, skipped it`);
-            continue;
-        }
         const artifacts = p.artifacts;
         if (!artifacts) {
             // artifacts is optional

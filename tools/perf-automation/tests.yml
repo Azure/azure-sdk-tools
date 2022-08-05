@@ -45,16 +45,16 @@ resources:
 jobs:
 - template: /eng/common/pipelines/templates/jobs/perf.yml
   parameters:
-  Variables:
-  - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
-  Language: 'Net'
-  InstallLanguageSteps:
-  - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
-    parameters:
-      EnableNuGetCache: false
-  ServiceDirectory: 'storage/Azure.Storage.Blobs'
-  Services: '^storage-blob$'
-  PackageVersions: '12|source'
-  Tests: '^(download)$'
-  Arguments: '(10240)'
-  Iterations: 1
+    Variables:
+    - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
+    Language: 'Net'
+    InstallLanguageSteps:
+    - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
+      parameters:
+        EnableNuGetCache: false
+    ServiceDirectory: 'storage/Azure.Storage.Blobs'
+    Services: '^storage-blob$'
+    PackageVersions: '12|source'
+    Tests: '^(download)$'
+    Arguments: '(10240)'
+    Iterations: 1

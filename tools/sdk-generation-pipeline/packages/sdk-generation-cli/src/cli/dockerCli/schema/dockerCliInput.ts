@@ -16,6 +16,7 @@ export class DockerCliInput {
     specLink: string;
     sdkWorkBranchLink: string;
     skipGeneration: boolean;
+    isPublicRepo: boolean;
 }
 
 export const dockerCliInput = convict<DockerCliInput>({
@@ -101,5 +102,12 @@ export const dockerCliInput = convict<DockerCliInput>({
         arg: 'skip-generation',
         format: Boolean,
         doc: `Whether skip generation`
+    },
+    isPublicRepo: {
+        default: true,
+        env: 'IS_PUBLIC_REPO',
+        arg: 'is-public-repo',
+        format: Boolean,
+        doc: `Whether Spec Repo is public. IT's related to authentication when running docker in pipeline. In other scenarios, it's always false`
     }
 });

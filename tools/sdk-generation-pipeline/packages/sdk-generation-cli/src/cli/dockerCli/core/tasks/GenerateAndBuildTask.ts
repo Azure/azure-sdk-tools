@@ -1,9 +1,13 @@
 import {
-    addFileLog, GenerateAndBuildInput,
+    addFileLog,
+    GenerateAndBuildInput,
     GenerateAndBuildOptions,
     getGenerateAndBuildOutput,
-    getTask, removeFileLog, requireJsonc,
-    runScript
+    getTask,
+    removeFileLog,
+    requireJsonc,
+    runScript,
+    TaskResultStatus
 } from '@azure-tools/sdk-generation-lib';
 import fs from 'fs';
 import path from 'path';
@@ -56,7 +60,7 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
         });
         removeFileLog(this.context.logger, 'generateAndBuild');
         this.context.taskResults['generateAndBuild'] = executeResult;
-        if (executeResult === 'failed') {
+        if (executeResult === TaskResultStatus.Failure) {
             throw new Error(`Execute generateAndBuild script failed.`);
         }
         if (fs.existsSync(this.context.generateAndBuildOutputJsonFile)) {
@@ -66,8 +70,15 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
             const packageFolders: string[] = [];
             for (const p of generateAndBuildOutputJson.packages) {
                 packageFolders.push(p.packageFolder);
+                if (p.result === TaskResultStatus.Failure) {
+                    this.context.taskResults['generateAndBuild'] = TaskResultStatus.Failure;
+                }
             }
             this.context.packageFolders = packageFolders;
+        }
+
+        if (this.context.taskResults['generateAndBuild'] === TaskResultStatus.Failure) {
+            throw new Error(`Execute generateAndBuild script failed.`);
         }
     }
 }

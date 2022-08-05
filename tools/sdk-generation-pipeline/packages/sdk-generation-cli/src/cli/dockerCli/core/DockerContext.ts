@@ -20,6 +20,7 @@ export class DockerContext {
     specLink?: string;
     sdkWorkBranchLink?: string;
     skipGeneration: boolean;
+    isPublicRepo: boolean;
     logger: Logger;
 
     /*
@@ -45,6 +46,7 @@ export class DockerContext {
         if (this.sdkList?.length === 0 && fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to do grow up development');
             this.mode = DockerRunningModel.GrowUp;
+            this.isPublicRepo = false;
             if (!this.specLink) {
                 try {
                     this.validateSpecRepo();
@@ -62,12 +64,14 @@ export class DockerContext {
         } else if (fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to generate codes and do grow up development in local');
             this.mode = DockerRunningModel.CodeGenAndGrowUp;
+            this.isPublicRepo = false;
             this.validateSpecRepo();
             this.validateReadmeMdPath();
             this.validateSdk();
         } else {
             this.logger.info('Preparing environment to generate codes in pipeline');
             this.mode = DockerRunningModel.Pipeline;
+            this.isPublicRepo = inputParams.isPublicRepo;
             this.validateSdkRepo();
             this.validateSpecRepo();
             this.validateReadmeMdPath();

@@ -27,6 +27,11 @@ export class GitOperationWrapper {
         return headRef;
     }
 
+    public async getRemote() {
+        const remote = await this.git.getConfig('remote.origin.url');
+        return remote?.value?.replace('.git', '');
+    }
+
     public async safeDirectory() {
         await this.git.addConfig('safe.directory', this.baseDir, true, 'global');
     }

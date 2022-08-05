@@ -14,12 +14,12 @@ parameters:
   type: stepList
   default: []
 
-variables:
-- ${{ parameters.Variables }}
-- name: Pool
-  value: 'Azure Pipelines'
-- name: OSVmImage
-  value: 'ubuntu-20.04'
+# variables:
+# - ${{ parameters.Variables }}
+# - name: Pool
+#   value: 'Azure Pipelines'
+# - name: OSVmImage
+#   value: 'ubuntu-20.04'
 
 jobs:
 - job: Test

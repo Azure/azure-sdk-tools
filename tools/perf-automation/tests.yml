@@ -1,11 +1,3 @@
-# TODO: Refactor /eng/common/pipelines/templates/jobs/perf.yml to avoid duplicating code into this yml
-
-variables:
-  # TODO: Move to perf pool before merging
-  Pool: 'Azure Pipelines'
-  OSVmImage: 'ubuntu-20.04'
-  PythonVersion: '3.7'
-
 resources:
   repositories:
   - repository: azure-sdk-for-net
@@ -15,119 +7,13 @@ resources:
     ref: main
 
 jobs:
-- job: Test
-  timeoutInMinutes: 360
-  strategy:
-    matrix:
-      Net:
-        RepoName: 'Azure/azure-sdk-for-net'
-        Language: 'Net'
-        ServiceDirectory: 'storage/Azure.Storage.Blobs'
-        PackageVersions: 12|source
-      Python:
-        RepoName: 'Azure/azure-sdk-for-python'
-        Language: 'Python'
-        ServiceDirectory: 'storage/azure-storage-blob'
-        PackageVersions: 12|source
-  pool:
-    name: $(Pool)
-    vmImage: $(OSVmImage)
-  steps:
-  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-    parameters:
-      Paths:
-      - '/*'
-      - '!sdk/**/test-recordings/*'
-      - '!sdk/**/recordings/*'
-      - '!sdk/**/SessionRecords/*'
-      - '!sdk/**/session-records/*'
-      Repositories:
-      - Name: $(RepoName)
-        Commitish: main
-        WorkingDirectory: $(System.DefaultWorkingDirectory)
-      - Name: Azure/azure-sdk-tools
-        Commitish: $(Build.SourceVersion)
-        WorkingDirectory: $(System.DefaultWorkingDirectory)/azure-sdk-tools
-
-  - template: /eng/common/pipelines/templates/steps/verify-agent-os.yml
-    parameters:
-      AgentImage: $(OSVmImage)
-
-  - script: dotnet --info
-    displayName: dotnet --info
-
-  # Language-specific install steps
-  # TODO: Convert variable to template parameter
-  # - ${{ if eq(variables.Language, 'Net') }}:
-  - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
-    parameters:
-      EnableNuGetCache: false
-
-  # TODO: Convert variable to template parameter
-  # - ${{ if eq(variables.Language, 'Python') }}:
-  - task: UsePythonVersion@0
-    displayName: "Use Python $(PythonVersion)"
-    inputs:
-      versionSpec: $(PythonVersion)
-
-  - script: dotnet --info
-    displayName: dotnet --info
-
-  - template: /eng/common/TestResources/deploy-test-resources.yml
-    parameters:
-      ServiceDirectory: $(ServiceDirectory)
-      Location: westus
-      ResourceType: perf
-
-  - pwsh: |
-      set-content -path config.yml -value "WorkingDirectories:"
-      add-content -path config.yml -value "  $(Language): $(Agent.BuildDirectory)/s"
-    workingDirectory: azure-sdk-tools/tools/perf-automation/Azure.Sdk.Tools.PerfAutomation
-    displayName: Create config.yml
-
-  - script: >-
-      dotnet run -- run
-      --no-sync
-      --languages $(Language)
-      --services "^storage-blob$"
-      --package-versions "$(PackageVersions)"
-      --tests "^download$"
-      --arguments '(10240)'
-      --iterations 1
-    workingDirectory: azure-sdk-tools/tools/perf-automation/Azure.Sdk.Tools.PerfAutomation
-    displayName: Run perf tests
-
-  - pwsh: |
-      get-content results.txt
-    workingDirectory: azure-sdk-tools/tools/perf-automation/Azure.Sdk.Tools.PerfAutomation/results
-    displayName: Print results.txt
-    condition: always()
-
-  - pwsh: |
-      get-content results.csv
-    workingDirectory: azure-sdk-tools/tools/perf-automation/Azure.Sdk.Tools.PerfAutomation/results
-    displayName: Print results.csv
-    condition: always()
-
-  - pwsh: |
-      get-content results.md
-    workingDirectory: azure-sdk-tools/tools/perf-automation/Azure.Sdk.Tools.PerfAutomation/results
-    displayName: Print results.md
-    condition: always()
-
-  - pwsh: |
-      get-content results.json
-    workingDirectory: azure-sdk-tools/tools/perf-automation/Azure.Sdk.Tools.PerfAutomation/results
-    displayName: Print results.json
-    condition: always()
-
-  - task: PublishPipelineArtifact@1
-    inputs:
-      targetPath: azure-sdk-tools/tools/perf-automation/Azure.Sdk.Tools.PerfAutomation/results
-      artifactName: results-$(Language)
-    condition: always()
-
-  - template: /eng/common/TestResources/remove-test-resources.yml
-    parameters:
-      ServiceDirectory: $(ServiceDirectory)
-      ResourceType: perf
+- template: tests-template.yml
+  parameters:
+    RepoName: 'Azure/azure-sdk-for-net'
+    Language: 'Net'
+    ServiceDirectory: 'storage/Azure.Storage.Blobs'
+    PackageVersions: 12|source
+    InstallLanguageSteps:
+    - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
+      parameters:
+        EnableNuGetCache: false

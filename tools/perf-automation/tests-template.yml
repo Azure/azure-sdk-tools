@@ -20,9 +20,9 @@ jobs:
   variables:
   - ${{ parameters.Variables }}
   - name: Pool
-    value: 'Azure Pipelines'
+    value: 'azsdk-pool-mms-ubuntu-2004-perf'
   - name: OSVmImage
-    value: 'ubuntu-20.04'
+    value: 'MMSUbuntu20.04'
   pool:
     name: $(Pool)
     vmImage: $(OSVmImage)

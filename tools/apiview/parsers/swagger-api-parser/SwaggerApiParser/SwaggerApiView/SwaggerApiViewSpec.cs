@@ -30,7 +30,7 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
         List<CodeFileToken> ret = new List<CodeFileToken>();
 
         // Token Serialize "General" section.
-        ret.Add(TokenSerializer.Intent(context.intent));
+        // ret.Add(TokenSerializer.Intent(context.intent));
         context.IteratorPath.Add("General");
         ret.Add(TokenSerializer.NavigableToken("General", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
         ret.Add(TokenSerializer.Colon());
@@ -41,7 +41,7 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
 
 
         // Token serialize "Paths" section.
-        ret.Add(TokenSerializer.Intent(context.intent));
+        // ret.Add(TokenSerializer.Intent(context.intent));
         context.IteratorPath.Add("Paths");
         ret.Add(TokenSerializer.NavigableToken("Path", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentPath()));
         ret.Add(TokenSerializer.Colon());

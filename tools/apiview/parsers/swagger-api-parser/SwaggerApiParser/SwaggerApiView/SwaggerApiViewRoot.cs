@@ -49,7 +49,7 @@ public class SwaggerApiViewRoot : ITokenSerializable
         List<CodeFileToken> ret = new List<CodeFileToken>();
         foreach (var kv in this.SwaggerApiViewSpecs)
         {
-            ret.Add(TokenSerializer.Intent(context.intent));
+            // ret.Add(TokenSerializer.Intent(context.intent));
             var fileName = Path.GetFileName(kv.Key);
             ret.Add(new CodeFileToken(fileName, CodeFileTokenKind.Keyword));
             ret.Add(TokenSerializer.Colon());

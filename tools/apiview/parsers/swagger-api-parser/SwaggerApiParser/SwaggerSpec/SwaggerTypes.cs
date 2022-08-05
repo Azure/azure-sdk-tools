@@ -53,7 +53,7 @@ namespace SwaggerApiParser
             List<CodeFileToken> ret = new List<CodeFileToken>();
             if (schema.originalRef != null)
             {
-                ret.Add(TokenSerializer.Intent(context.intent));
+                // ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken(Utils.GetDefinitionType(schema.originalRef), CodeFileTokenKind.TypeName));
                 ret.Add(TokenSerializer.NewLine());
                 context.intent++;
@@ -67,7 +67,7 @@ namespace SwaggerApiParser
 
             if (schema.allOfProperities?.Count != 0 && schema.allOf != null)
             {
-                ret.Add(TokenSerializer.Intent(context.intent));
+                // ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken("allOf", CodeFileTokenKind.Keyword));
                 ret.Add(TokenSerializer.Colon());
                 ret.Add(TokenSerializer.NewLine());
@@ -75,7 +75,7 @@ namespace SwaggerApiParser
                 {
                     if (allOfSchema != null)
                     {
-                        ret.Add(TokenSerializer.Intent(context.intent + 1));
+                        // ret.Add(TokenSerializer.Intent(context.intent + 1));
                         ret.Add(new CodeFileToken(Utils.GetDefinitionType(allOfSchema.Ref), CodeFileTokenKind.TypeName));
                         ret.Add(TokenSerializer.NewLine());
                     }
@@ -86,7 +86,7 @@ namespace SwaggerApiParser
 
             if (schema.type == "array")
             {
-                ret.Add(TokenSerializer.Intent(context.intent));
+                // ret.Add(TokenSerializer.Intent(context.intent));
                 TokenSerializeArray(context, ret, schema);
             }
 
@@ -102,7 +102,7 @@ namespace SwaggerApiParser
 
             foreach (var kv in properties)
             {
-                ret.Add(TokenSerializer.Intent(context.intent));
+                // ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Literal));
                 ret.Add(TokenSerializer.Colon());
 
@@ -116,7 +116,7 @@ namespace SwaggerApiParser
                 else if (kv.Value.Ref != null)
                 {
                     ret.Add(TokenSerializer.NewLine());
-                    ret.Add(TokenSerializer.Intent(context.intent + 1));
+                    // ret.Add(TokenSerializer.Intent(context.intent + 1));
                     ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
                     var refName = kv.Value.Ref;
                     ret.Add(new CodeFileToken(refName.Split("/").Last(), CodeFileTokenKind.TypeName));

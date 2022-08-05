@@ -12,7 +12,7 @@ public class SwaggerApiViewResponse : ITokenSerializable
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
-        ret.Add(TokenSerializer.Intent(context.intent));
+        // ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(new CodeFileToken(this.statusCode, CodeFileTokenKind.Keyword));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
@@ -20,7 +20,7 @@ public class SwaggerApiViewResponse : ITokenSerializable
         ret.AddRange(TokenSerializer.TokenSerialize(this, context.intent + 1, new string[] {"description"}));
         if (this.schema != null)
         {
-            ret.Add(TokenSerializer.Intent(context.intent + 1));
+            // ret.Add(TokenSerializer.Intent(context.intent + 1));
             ret.Add(new CodeFileToken("Schema", CodeFileTokenKind.Keyword));
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());

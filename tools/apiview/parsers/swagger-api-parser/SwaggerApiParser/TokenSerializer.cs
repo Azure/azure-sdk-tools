@@ -106,7 +106,7 @@ namespace SwaggerApiParser
 
             if (t.IsPrimitive || t == typeof(Decimal) || t == typeof(String))
             {
-                ret.Add(Intent(intent));
+                // ret.Add(Intent(intent));
                 ret.Add(new CodeFileToken(obj.ToString(), CodeFileTokenKind.Literal));
                 ret.Add(TokenSerializer.NewLine());
                 return ret.ToArray();
@@ -122,7 +122,7 @@ namespace SwaggerApiParser
 
 
                 Type propType = prop.PropertyType;
-                ret.Add(Intent(intent));
+                // ret.Add(Intent(intent));
                 ret.Add(new CodeFileToken(prop.Name, CodeFileTokenKind.Literal));
                 ret.Add(Colon());
 
@@ -167,7 +167,8 @@ namespace SwaggerApiParser
 
         public static CodeFileToken Intent(int intent)
         {
-            var ret = new CodeFileToken(String.Concat(Enumerable.Repeat(IntentText, intent)), CodeFileTokenKind.Whitespace);
+            // var ret = new CodeFileToken(String.Concat(Enumerable.Repeat(IntentText, intent)), CodeFileTokenKind.Whitespace);
+            var ret = new CodeFileToken(intent.ToString(), CodeFileTokenKind.Whitespace);
             return ret;
         }
 
@@ -183,7 +184,7 @@ namespace SwaggerApiParser
         public static CodeFileToken[] OneLineToken(int intent, IEnumerable<CodeFileToken> contentTokens)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
-            ret.Add(TokenSerializer.Intent(intent));
+            // ret.Add(TokenSerializer.Intent(intent));
             ret.AddRange(contentTokens);
             ret.Add(NewLine());
             return ret.ToArray();

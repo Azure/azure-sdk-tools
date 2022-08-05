@@ -26,7 +26,7 @@ public class SwaggerApiViewParameter : ITokenSerializable
             return TokenSerializer.TokenSerialize(this, context.intent, new string[] {"Ref"});
         }
 
-        ret.Add(TokenSerializer.Intent(context.intent));
+        // ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(new CodeFileToken(name, CodeFileTokenKind.Literal));
         ret.Add(TokenSerializer.Colon());
         ret.Add(new CodeFileToken(this.type, CodeFileTokenKind.Keyword));
@@ -62,7 +62,7 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
             return ret.ToArray();
         }
 
-        ret.Add(TokenSerializer.Intent(context.intent));
+        // ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(TokenSerializer.NavigableToken(this.type, CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath(this.type)));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
@@ -85,7 +85,7 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
             return System.Array.Empty<CodeFileToken>();
         }
 
-        ret.Add(TokenSerializer.Intent(context.intent));
+        // ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(TokenSerializer.NavigableToken(this.type, CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath(this.type)));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());

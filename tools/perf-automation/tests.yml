@@ -6,16 +6,23 @@ resources:
     name: Azure/azure-sdk-for-net
     ref: main
 
+# jobs:
+# - template: tests-template.yml
+#   parameters:
+#     Variables:
+#     - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
+#     RepoName: 'Azure/azure-sdk-for-net'
+#     Language: 'Net'
+#     ServiceDirectory: 'storage/Azure.Storage.Blobs'
+#     PackageVersions: 12|source
+#     InstallLanguageSteps:
+#     - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
+#       parameters:
+#         EnableNuGetCache: false
+
 jobs:
-- template: tests-template.yml
+- template: /sdk/storage/Azure.Storage.Blobs/perf.yml@azure-sdk-for-net
   parameters:
-    Variables:
-    - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
-    RepoName: 'Azure/azure-sdk-for-net'
-    Language: 'Net'
-    ServiceDirectory: 'storage/Azure.Storage.Blobs'
-    PackageVersions: 12|source
-    InstallLanguageSteps:
-    - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
-      parameters:
-        EnableNuGetCache: false
+    Tests: '^(download)$'
+    Arguments: '(10240)'
+    Iterations: 1

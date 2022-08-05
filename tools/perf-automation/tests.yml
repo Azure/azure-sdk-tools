@@ -54,16 +54,18 @@ jobs:
       AgentImage: $(OSVmImage)
 
   # Language-specific install steps
-  - ${{ if eq(variables.Language, 'Net') }}:
-    - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
-      parameters:
-        EnableNuGetCache: false
+  # TODO: Convert variable to template parameter
+  # - ${{ if eq(variables.Language, 'Net') }}:
+  - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
+    parameters:
+      EnableNuGetCache: false
 
-  - ${{ if eq(variables.Language, 'Python') }}:
-    - task: UsePythonVersion@0
-      displayName: "Use Python $(PythonVersion)"
-      inputs:
-        versionSpec: $(PythonVersion)
+  # TODO: Convert variable to template parameter
+  # - ${{ if eq(variables.Language, 'Python') }}:
+  - task: UsePythonVersion@0
+    displayName: "Use Python $(PythonVersion)"
+    inputs:
+      versionSpec: $(PythonVersion)
 
   - template: /eng/common/TestResources/deploy-test-resources.yml
     parameters:

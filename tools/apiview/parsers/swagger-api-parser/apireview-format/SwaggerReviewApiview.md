@@ -1,11 +1,12 @@
 ###  `/deviceUpdate/{instanceId}/management/deviceClasses/{deviceClassId}`
 
-PATCH
+#### PATCH
 
 
 Description: Update device class details.
+
 OperationId: DeviceManagement_UpdateDeviceClass
-x-ms-long-running-operation: true
+
   
 ### Consumes: application/merge-patch+json
 

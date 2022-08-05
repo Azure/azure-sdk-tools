@@ -6,6 +6,14 @@ variables:
   OSVmImage: 'ubuntu-20.04'
   PythonVersion: '3.7'
 
+resources:
+  repositories:
+  - repository: azure-sdk-for-net
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-net
+    ref: main
+
 jobs:
 - job: Test
   timeoutInMinutes: 360
@@ -46,14 +54,16 @@ jobs:
       AgentImage: $(OSVmImage)
 
   # Language-specific install steps
-  - template: /eng/pipelines/templates/steps/install-dotnet.yml
-    parameters:
-      EnableNuGetCache: false
+  - ${{ if eq(variables.Language, 'Net') }}:
+    - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
+      parameters:
+        EnableNuGetCache: false
 
-  - task: UsePythonVersion@0
-    displayName: "Use Python $(PythonVersion)"
-    inputs:
-      versionSpec: $(PythonVersion)
+  - ${{ if eq(variables.Language, 'Python') }}:
+    - task: UsePythonVersion@0
+      displayName: "Use Python $(PythonVersion)"
+      inputs:
+        versionSpec: $(PythonVersion)
 
   - template: /eng/common/TestResources/deploy-test-resources.yml
     parameters:

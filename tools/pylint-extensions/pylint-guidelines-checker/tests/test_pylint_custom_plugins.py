@@ -1944,21 +1944,21 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
     def test_finds_method_returning_something_else_async(self):
         class_node, function_node_a, function_node_b = astroid.extract_node("""
         from azure.core.polling import LROPoller
+        from typing import list
         
         class SomeClient(): #@
             async def list_thing(self, **kwargs): #@
                 return list()
             async def list_thing2(self, **kwargs): #@
-                from azure.core.polling import LROPoller
                 return LROPoller()
         """)
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=24
+                msg_id="client-list-methods-use-paging", line=6, node=function_node_a, col_offset=4, end_line=6, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=7, node=function_node_b,  col_offset=4, end_line=7, end_col_offset=25
+                msg_id="client-list-methods-use-paging", line=8, node=function_node_b,  col_offset=4, end_line=8, end_col_offset=25
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
@@ -2592,7 +2592,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
                     This is Example content.
                     Should support multi-line.
                     Can also include file:
-
+                      
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """

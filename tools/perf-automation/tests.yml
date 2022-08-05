@@ -6,6 +6,25 @@ resources:
     name: Azure/azure-sdk-for-net
     ref: main
 
+# Shared template from eng/common
+jobs:
+- template: /eng/common/pipelines/templates/jobs/perf2.yml
+  parameters:
+    RepoName: 'Azure/azure-sdk-for-net'
+    Variables:
+    - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
+    Language: 'Net'
+    InstallLanguageSteps:
+    - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
+      parameters:
+        EnableNuGetCache: false
+    ServiceDirectory: 'storage/Azure.Storage.Blobs'
+    Services: '^storage-blob$'
+    PackageVersions: '12|source'
+    Tests: '^(download)$'
+    Arguments: '(10240)'
+    Iterations: 1
+
 # Copy/paste template
 # jobs:
 # - template: tests-template.yml
@@ -31,6 +50,7 @@ resources:
 #     Iterations: 1
 
 # Shared template from language repo
+# Error: Unexpected value 'extends'
 # jobs:
 # - template: /eng/pipelines/templates/jobs/perf.yml@azure-sdk-for-net
 #   parameters:
@@ -40,21 +60,3 @@ resources:
 #     Tests: '^(download)$'
 #     Arguments: '(10240)'
 #     Iterations: 1
-
-# Shared template from eng/common
-jobs:
-- template: /eng/common/pipelines/templates/jobs/perf.yml
-  parameters:
-    Variables:
-    - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
-    Language: 'Net'
-    InstallLanguageSteps:
-    - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
-      parameters:
-        EnableNuGetCache: false
-    ServiceDirectory: 'storage/Azure.Storage.Blobs'
-    Services: '^storage-blob$'
-    PackageVersions: '12|source'
-    Tests: '^(download)$'
-    Arguments: '(10240)'
-    Iterations: 1

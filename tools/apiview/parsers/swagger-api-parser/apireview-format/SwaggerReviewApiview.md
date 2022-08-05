@@ -1,18 +1,17 @@
 ###  `/deviceUpdate/{instanceId}/management/deviceClasses/{deviceClassId}`
 
-<details>
-<summary>PATCH </summary>
+PATCH
 
-```
-  Description: Update device class details.
-  OperationId: DeviceManagement_UpdateDeviceClass
-  x-ms-long-running-operation: true
+
+Description: Update device class details.
+OperationId: DeviceManagement_UpdateDeviceClass
+x-ms-long-running-operation: true
   
-  ### Consumes: application/merge-patch+json
+### Consumes: application/merge-patch+json
 
-  #### Path parameters:
+#### Path parameters:
 
-  | Name | Type/Format | Required | Description |
+| Name | Type/Format | Required | Description |
 | ---- | ----------- | -------- | ----------- |
 | `instanceId` | `string` | ✅ | Account instance identifier. |
 | `deviceClassId` | `string` | ✅ | Device class identifier. |
@@ -75,6 +74,3 @@
 | | `message` | `string` | | A human-readable representation of the error. |
 | | `errorDetail` | `string` | | The internal error or exception message. |
 | | `innererror` | _InnerError_ | | An object containing more specific information than the current object about the error. |
-
-```
-</details>

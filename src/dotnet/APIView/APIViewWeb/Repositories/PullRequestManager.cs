@@ -293,6 +293,20 @@ namespace APIViewWeb.Repositories
                     var prevRevisionId = review.Revisions.Last().RevisionId;
                     review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel, true);
                     review.ReviewId = pullRequestModel.ReviewId;
+                    //Remove previous revisions with revision ID.
+                    //Currently revision ID is getting duplicated when a PR api review is created for a brand new package.
+                    //In case of brand new package, we don't have any baseline from automatic review. So it uses previous PR api review as baseline and
+                    //below revision ID copy step makes duplicate revision IDs in such cases.
+                    //We should ensure that no revision exists in review with previous revision ID before we update new revision
+                    ReviewRevisionModel duplicateRev = null;
+                    do
+                    {
+                        duplicateRev = review.Revisions.FirstOrDefault(r => r.RevisionId == prevRevisionId);
+                        if (duplicateRev != null)
+                        {
+                            review.Revisions.Remove(duplicateRev);
+                        }
+                    } while (duplicateRev != null);
                     newRevision.RevisionId = prevRevisionId;
                 }
             }

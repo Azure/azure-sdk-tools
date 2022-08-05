@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             Util.DeleteIfExists(PublishDirectory);
 
-            var processArguments = $"publish -c release -f {languageVersion} -o {PublishDirectory} {additionalBuildArguments} {project}";
+            var processArguments = $"publish -c release -f {languageVersion} -o {PublishDirectory} -p:EnableSourceLink=false {additionalBuildArguments} {project}";
 
             var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: WorkingDirectory);
 

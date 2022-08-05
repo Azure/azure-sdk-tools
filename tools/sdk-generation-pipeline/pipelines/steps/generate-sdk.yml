@@ -62,10 +62,6 @@ steps:
             --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
         fi
       fi
-
-      if [ $? -ne 0 ]; then
-          exit 1
-      fi
     displayName: Generate sdk
 
   - bash: |

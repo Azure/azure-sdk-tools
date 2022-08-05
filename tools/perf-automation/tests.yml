@@ -53,6 +53,9 @@ jobs:
     parameters:
       AgentImage: $(OSVmImage)
 
+  - script: dotnet --info
+    displayName: dotnet --info
+
   # Language-specific install steps
   # TODO: Convert variable to template parameter
   # - ${{ if eq(variables.Language, 'Net') }}:
@@ -66,6 +69,9 @@ jobs:
     displayName: "Use Python $(PythonVersion)"
     inputs:
       versionSpec: $(PythonVersion)
+
+  - script: dotnet --info
+    displayName: dotnet --info
 
   - template: /eng/common/TestResources/deploy-test-resources.yml
     parameters:

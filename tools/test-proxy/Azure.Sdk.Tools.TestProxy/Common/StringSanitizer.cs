@@ -24,6 +24,21 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
+        /// <summary>
+        /// Quick and easy abstraction for checking regex validity. Passing null explicitly will result in a True return.
+        /// </summary>
+        /// <param name="regex">A regular expression.</param>
+        public static Regex GetRegex(string regex)
+        {
+            try
+            {
+                return new Regex(regex);
+            }
+            catch (Exception e)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Expression of value {regex} does not successfully compile. Failure Details: {e.Message}");
+            }
+        }
 
         /// <summary>
         /// General purpose string replacement. Simple abstraction of string.Replace().

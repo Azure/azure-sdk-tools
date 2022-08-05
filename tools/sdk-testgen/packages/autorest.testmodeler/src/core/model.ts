@@ -51,7 +51,7 @@ export class MockTestDefinitionModel {
     exampleGroups: ExampleGroup[] = [];
     public static groupByOperationGroup(exampleGroups: ExampleGroup[]): Record<string, ExampleGroup[]> {
         return exampleGroups.reduce((r, exampleGroup) => {
-            const groupKey = exampleGroup.operationId.split('_')[0];
+            const groupKey = exampleGroup.operationGroup.$key;
             r[groupKey] = r[groupKey] || [];
             r[groupKey].push(exampleGroup);
             return r;

@@ -10,7 +10,7 @@ resources:
 jobs:
 - template: /eng/common/pipelines/templates/jobs/perf-base.yml
   parameters:
-    JobName: 'Perf-Net'
+    JobName: 'Perf_Net'
     LanguageRepoName: 'Azure/azure-sdk-for-net'
     LanguageRepoCommitish: 'main'
     ToolsRepoCommitish: $(Build.SourceVersion)

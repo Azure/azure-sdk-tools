@@ -5,17 +5,28 @@ resources:
     endpoint: Azure
     name: Azure/azure-sdk-for-net
     ref: main
+  - repository: azure-sdk-for-python
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-python
+    ref: main
 
 variables:
   Services: '^storage-blob$'
+  PackageVersions: '12|source'
+  Tests: '^(download)$'
+  Arguments: '(10240)'
+  Iterations: 1
+  LanguageRepoCommitish: 'main'
+  ToolsRepoCommitish: $(Build.SourceVersion)
 
 jobs:
 - template: /eng/common/pipelines/templates/jobs/perf-base.yml
   parameters:
     JobName: 'Perf_Net'
     LanguageRepoName: 'Azure/azure-sdk-for-net'
-    LanguageRepoCommitish: 'main'
-    ToolsRepoCommitish: $(Build.SourceVersion)
+    LanguageRepoCommitish: $(LanguageRepoCommitish)
+    ToolsRepoCommitish: $(ToolsRepoCommitish)
     Variables:
     - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
     Language: 'Net'
@@ -25,7 +36,30 @@ jobs:
         EnableNuGetCache: false
     ServiceDirectory: 'storage/Azure.Storage.Blobs'
     Services: $(Services)
-    PackageVersions: '12|source'
-    Tests: '^(download)$'
-    Arguments: '(10240)'
-    Iterations: 1
+    PackageVersions: $(PackageVersions)
+    Tests: $(Tests)
+    Arguments: $(Arguments)
+    Iterations: $(Iterations)
+
+- template: /eng/common/pipelines/templates/jobs/perf-base.yml
+  parameters:
+    JobName: 'Perf_Python'
+    LanguageRepoName: 'Azure/azure-sdk-for-python'
+    LanguageRepoCommitish: $(LanguageRepoCommitish)
+    ToolsRepoCommitish: $(ToolsRepoCommitish)
+    Variables:
+    - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-python
+    - name: PythonVersion
+      value: '3.7'
+    Language: 'Net'
+    InstallLanguageSteps:
+    - task: UsePythonVersion@0
+      displayName: "Use Python $(PythonVersion)"
+      inputs:
+        versionSpec: $(PythonVersion)
+    ServiceDirectory: 'storage/azure-storage-blob'
+    Services: $(Services)
+    PackageVersions: $(PackageVersions)
+    Tests: $(Tests)
+    Arguments: $(Arguments)
+    Iterations: $(Iterations)

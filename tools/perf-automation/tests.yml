@@ -24,12 +24,12 @@ jobs:
 - template: /eng/common/pipelines/templates/jobs/perf-base.yml
   parameters:
     JobName: 'Perf_Net'
+    Language: 'Net'
     LanguageRepoName: 'Azure/azure-sdk-for-net'
     LanguageRepoCommitish: $(LanguageRepoCommitish)
     ToolsRepoCommitish: $(ToolsRepoCommitish)
     Variables:
     - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
-    Language: 'Net'
     InstallLanguageSteps:
     - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
       parameters:
@@ -44,6 +44,7 @@ jobs:
 - template: /eng/common/pipelines/templates/jobs/perf-base.yml
   parameters:
     JobName: 'Perf_Python'
+    Language: 'Python'
     LanguageRepoName: 'Azure/azure-sdk-for-python'
     LanguageRepoCommitish: $(LanguageRepoCommitish)
     ToolsRepoCommitish: $(ToolsRepoCommitish)
@@ -51,7 +52,6 @@ jobs:
     - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-python
     - name: PythonVersion
       value: '3.7'
-    Language: 'Net'
     InstallLanguageSteps:
     - task: UsePythonVersion@0
       displayName: "Use Python $(PythonVersion)"

@@ -10,7 +10,7 @@ resources:
 jobs:
 - template: /eng/common/pipelines/templates/jobs/perf-base.yml
   parameters:
-    JobName: 'Perf Net'
+    JobName: 'Perf-Net'
     LanguageRepoName: 'Azure/azure-sdk-for-net'
     LanguageRepoCommitish: 'main'
     ToolsRepoCommitish: $(Build.SourceVersion)
@@ -27,39 +27,3 @@ jobs:
     Tests: '^(download)$'
     Arguments: '(10240)'
     Iterations: 1
-
-# Copy/paste template
-# jobs:
-# - template: tests-template.yml
-#   parameters:
-#     Variables:
-#     - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
-#     RepoName: 'Azure/azure-sdk-for-net'
-#     Language: 'Net'
-#     ServiceDirectory: 'storage/Azure.Storage.Blobs'
-#     PackageVersions: 12|source
-#     InstallLanguageSteps:
-#     - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
-#       parameters:
-#         EnableNuGetCache: false
-
-# SDK template from language repo
-# /sdk/storage/Azure.Storage.Blobs/perf.yml@azure-sdk-for-net (Line: 23, Col: 1): Unexpected value 'extends'
-# jobs:
-# - template: /sdk/storage/Azure.Storage.Blobs/perf.yml@azure-sdk-for-net
-#   parameters:
-#     Tests: '^(download)$'
-#     Arguments: '(10240)'
-#     Iterations: 1
-
-# Shared template from language repo
-# Error: Unexpected value 'extends'
-# jobs:
-# - template: /eng/pipelines/templates/jobs/perf.yml@azure-sdk-for-net
-#   parameters:
-#     ServiceDirectory: 'storage/Azure.Storage.Blobs'
-#     Services: '^storage-blob$'
-#     PackageVersions: '12|source'
-#     Tests: '^(download)$'
-#     Arguments: '(10240)'
-#     Iterations: 1

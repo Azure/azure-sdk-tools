@@ -16,7 +16,7 @@ variables:
   PackageVersions: '12|source'
   Tests: '^(download)$'
   Arguments: '(10240)'
-  Iterations: 1
+  Iterations: '1'
   LanguageRepoCommitish: 'main'
   ToolsRepoCommitish: $(Build.SourceVersion)
 

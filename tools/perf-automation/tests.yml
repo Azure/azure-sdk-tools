@@ -39,7 +39,7 @@ jobs:
     PackageVersions: $(PackageVersions)
     Tests: $(Tests)
     Arguments: $(Arguments)
-    Iterations: $(Iterations)
+    Iterations: ${{ variables.Iterations }}
 
 - template: /eng/common/pipelines/templates/jobs/perf-base.yml
   parameters:
@@ -62,4 +62,4 @@ jobs:
     PackageVersions: $(PackageVersions)
     Tests: $(Tests)
     Arguments: $(Arguments)
-    Iterations: $(Iterations)
+    Iterations: ${{ variables.Iterations }}

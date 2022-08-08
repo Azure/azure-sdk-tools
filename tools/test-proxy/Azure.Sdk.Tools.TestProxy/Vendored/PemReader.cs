@@ -9,6 +9,8 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Azure.Sdk.Tools.TestProxy.Vendored
 {
+    /// This code was ripped directly from https://github.com/Azure/azure-sdk-for-net/blob/873d4dc419512f42b9c70d104bdcc1983badfd1b/sdk/core/Azure.Core/src/Shared/PemReader.cs
+
     /// <summary>
     /// Reads PEM streams to parse PEM fields or load certificates.
     /// </summary>

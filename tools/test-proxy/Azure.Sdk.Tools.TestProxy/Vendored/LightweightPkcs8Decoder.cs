@@ -4,8 +4,11 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
+
 namespace Azure.Sdk.Tools.TestProxy.Vendored
 {
+    /// This code was ripped directly from https://github.com/Azure/azure-sdk-for-net/blob/873d4dc419512f42b9c70d104bdcc1983badfd1b/sdk/core/Azure.Core/src/Shared/LightweightPkcs8Decoder.cs
+
     /// <summary>
     /// This is a very targeted PKCS#8 decoder for use when reading a PKCS# encoded RSA private key from an
     /// DER encoded ASN.1 blob. In an ideal world, we would be able to call AsymmetricAlgorithm.ImportPkcs8PrivateKey

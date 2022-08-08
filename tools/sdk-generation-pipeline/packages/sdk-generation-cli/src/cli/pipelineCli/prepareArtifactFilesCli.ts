@@ -1,16 +1,29 @@
 #!/usr/bin/env node
 import {
+    CompletedEvent,
     GenerateAndBuildOutput,
+    generateTotalResult,
     getGenerateAndBuildOutput,
+    getTaskResults,
+    InProgressEvent,
     logger,
+    PipelineRunEvent,
     requireJsonc,
     SDK,
+    SDKPipelineStatus,
+    TaskResult,
     TaskResultStatus,
+    Trigger,
 } from '@azure-tools/sdk-generation-lib';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { PrepareArtifactFilesInput, prepareArtifactFilesInput } from '../../cliSchema/prepareArtifactFilesCliConfig';
+import {
+    PrepareArtifactFilesInput,
+    prepareArtifactFilesInput,
+    prepareResultArtifactInput,
+    PrepareResultArtifactInput,
+} from '../../cliSchema/prepareArtifactFilesCliConfig';
 import { getFileListInPackageFolder } from '../../utils/git';
 
 function copyFile(filePath: string, targetDir: string) {
@@ -29,11 +42,6 @@ async function prepareSourceCode(
     artifactDir: string
 ) {
     for (const p of generateAndBuildOutput.packages) {
-        const result = p.result;
-        if (result === TaskResultStatus.Failure) {
-            logger.warn(`Build ${p.packageName} failed, skipped it`);
-            continue;
-        }
         const packageName = p.packageName;
         const packagePaths = p.path;
 
@@ -59,11 +67,6 @@ async function prepareSourceCode(
 
 async function prepareArtifacts(generateAndBuildOutput: GenerateAndBuildOutput, language: string, artifactDir: string) {
     for (const p of generateAndBuildOutput.packages) {
-        const result = p.result;
-        if (result === TaskResultStatus.Failure) {
-            logger.warn(`Build ${p.packageName} failed, skipped it`);
-            continue;
-        }
         const artifacts = p.artifacts;
         if (!artifacts) {
             // artifacts is optional
@@ -80,7 +83,8 @@ async function prepareArtifacts(generateAndBuildOutput: GenerateAndBuildOutput, 
 
 function validateInput(config: PrepareArtifactFilesInput) {
     if (!fs.existsSync(config.generateAndBuildOutputFile)) {
-        throw new Error(`generateAndBuildOutputFile:${config.generateAndBuildOutputFile} isn's exist!`);
+        logger.error(`generateAndBuildOutputFile:${config.generateAndBuildOutputFile} isn's exist!`);
+        process.exit(0);
     }
     if (!fs.existsSync(config.artifactDir)) {
         throw new Error(`Invalid artifactDir:${config.artifactDir}!`);
@@ -90,7 +94,7 @@ function validateInput(config: PrepareArtifactFilesInput) {
     }
 }
 
-async function main() {
+async function prepareSourceCodeAndArtifacts() {
     prepareArtifactFilesInput.validate();
     const config: PrepareArtifactFilesInput = prepareArtifactFilesInput.getProperties();
 
@@ -101,6 +105,96 @@ async function main() {
 
     await prepareSourceCode(generateAndBuildOutput, config.language, config.artifactDir);
     await prepareArtifacts(generateAndBuildOutput, config.language, config.artifactDir);
+}
+
+function validateResultInput(config: PrepareResultArtifactInput) {
+    if (!fs.existsSync(config.artifactDir)) {
+        throw new Error(`Invalid artifactDir:${config.artifactDir}!`);
+    }
+}
+
+function getTrigger(config: PrepareResultArtifactInput): Trigger {
+    let trigger: Trigger;
+    try {
+        trigger = JSON.parse(config.trigger);
+    } catch (error) {
+        logger.error(`Wrong json format:` + config.trigger);
+        throw new Error(error);
+    }
+
+    return trigger;
+}
+
+function prepareResult(pipelineStatus: SDKPipelineStatus) {
+    prepareResultArtifactInput.validate();
+    const config: PrepareResultArtifactInput = prepareResultArtifactInput.getProperties();
+
+    validateResultInput(config);
+    const trigger: Trigger = getTrigger(config);
+    let event: PipelineRunEvent = undefined;
+
+    switch (pipelineStatus) {
+        case 'in_progress':
+            event = {
+                status: 'in_progress',
+                trigger: trigger,
+                pipelineBuildId: config.pipelineBuildId,
+            } as InProgressEvent;
+            break;
+        case 'completed':
+            if (!config.resultsPath || !config.logPath) {
+                throw new Error(`Invalid completed event parameter!`);
+            }
+
+            const taskResults: TaskResult[] = getTaskResults(config.resultsPath);
+            const taskTotalResult: TaskResult = generateTotalResult(taskResults, config.pipelineBuildId);
+            event = {
+                status: 'completed',
+                trigger: trigger,
+                pipelineBuildId: config.pipelineBuildId,
+                logPath: config.logPath,
+                result: taskTotalResult,
+            } as CompletedEvent;
+            break;
+        default:
+            throw new Error(`Unsupported status: ` + (pipelineStatus as string));
+    }
+
+    fs.writeFileSync(config.artifactDir + `/` + pipelineStatus + `/result.json`, JSON.stringify(event, null, 2), {
+        encoding: 'utf-8',
+    });
+}
+
+async function main() {
+    const args = parseArgs(process.argv);
+    const pipelineStatus = args['pipelineStatus'];
+
+    if (pipelineStatus === 'completed') {
+        prepareResult(pipelineStatus);
+        await prepareSourceCodeAndArtifacts();
+    } else if (pipelineStatus === 'in_progress') {
+        prepareResult(pipelineStatus);
+    } else {
+        throw new Error(`Unknown pipelineStatus:${pipelineStatus}!`);
+    }
+}
+
+/**
+ * Parse a list of command line arguments.
+ * @param argv List of cli args(process.argv)
+ */
+const flagRegex = /^--([^=:]+)([=:](.+))?$/;
+export function parseArgs(argv: string[]) {
+    const result: any = {};
+    for (const arg of argv) {
+        const match = flagRegex.exec(arg);
+        if (match) {
+            const key = match[1];
+            const rawValue = match[3];
+            result[key] = rawValue;
+        }
+    }
+    return result;
 }
 
 main().catch((e) => {

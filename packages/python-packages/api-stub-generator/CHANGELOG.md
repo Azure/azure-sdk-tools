@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.4 (Unreleased)
+Fixed issue so that APIView is still generated even if pylint parsing fails.
+
 ## Version 0.3.3 (2022-08-03)
 Fixed issue in module order to get consistent order
 

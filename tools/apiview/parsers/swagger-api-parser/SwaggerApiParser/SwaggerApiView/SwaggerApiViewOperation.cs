@@ -31,18 +31,18 @@ public class SwaggerApiViewOperation : ITokenSerializable
         List<CodeFileToken> ret = new List<CodeFileToken>();
 
         ret.Add(TokenSerializer.FoldableContentStart());
-
-        // ret.Add(TokenSerializer.Intent(context.intent));
-        ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
-        ret.Add(TokenSerializer.NewLine());
-
-
+        
         if (this.description != null)
         {
             // ret.Add(TokenSerializer.Intent(context.intent));
             ret.Add(new CodeFileToken(this.description, CodeFileTokenKind.Literal));
             ret.Add(TokenSerializer.NewLine());
         }
+
+        // ret.Add(TokenSerializer.Intent(context.intent));
+        ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
+        ret.Add(TokenSerializer.NewLine());
+
 
         if (this.summary != null)
         {

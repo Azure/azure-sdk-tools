@@ -21,7 +21,7 @@ variables:
   ToolsRepoCommitish: $(Build.SourceVersion)
 
 jobs:
-- template: /eng/common/pipelines/templates/jobs/perf-base.yml
+- template: /eng/common/pipelines/templates/jobs/perf.yml
   parameters:
     JobName: 'Perf_Net'
     Language: 'Net'

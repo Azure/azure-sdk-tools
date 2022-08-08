@@ -15,23 +15,24 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly UsageSampleManager _samplesManager;
         private readonly ReviewManager _reviewManager;
         private const string ENDPOINT_SETTING = "Endpoint";
-        private readonly BlobCodeFileRepository _codeFileRepository;
 
         public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
         public UsageSampleModel Sample { get; private set; }
+        public string NewSampleContent { get; set; }
 
         public UsageSamplePageModel(
             IConfiguration configuration,
-            BlobCodeFileRepository codeFileRepository,
             UsageSampleManager samplesManager,
             ReviewManager reviewManager)
         {
-            _codeFileRepository = codeFileRepository;
             _samplesManager = samplesManager;
             _reviewManager = reviewManager;
             Endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
         }
+
+        [FromForm]
+        public UploadModel Upload { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -39,6 +40,27 @@ namespace APIViewWeb.Pages.Assemblies
             Review = await _reviewManager.GetReviewAsync(User, id);
             Sample = await _samplesManager.GetReviewUsageSampleAsync(id);
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostUploadAsync()
+        {
+            if (!ModelState.IsValid)
+            {
+                return RedirectToPage();
+            }
+
+            var file = Upload.Files.SingleOrDefault();
+
+            if (file != null)
+            {
+                using (var openReadStream = file.OpenReadStream())
+                {
+                    var reviewModel = await _samplesManager.CreateReviewUsageSampleAsync(Review.ReviewId, openReadStream);
+                    return RedirectToPage();
+                }
+            }
+
+            return RedirectToPage();
         }
 
     }

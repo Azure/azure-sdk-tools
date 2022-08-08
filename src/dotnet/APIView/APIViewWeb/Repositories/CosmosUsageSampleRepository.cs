@@ -25,14 +25,7 @@ namespace APIViewWeb
 
         public async Task<UsageSampleModel> GetUsageSampleAsync(string sampleId)
         {
-            try
-            {
-                return await _samplesContainer.ReadItemAsync<UsageSampleModel>(sampleId, new PartitionKey(sampleId));
-            }
-            catch
-            {
-                return new UsageSampleModel(sampleId, null);
-            }
+            return await _samplesContainer.ReadItemAsync<UsageSampleModel>(sampleId, new PartitionKey(sampleId));
         }
         
         public async Task DeleteUsageSampleAsync(UsageSampleModel Sample)

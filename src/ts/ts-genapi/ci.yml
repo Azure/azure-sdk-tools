@@ -25,6 +25,7 @@ variables:
   NodeVersion: '16.x'
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
   ArtifactName: 'apiview'
+  FeedRegistry: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
 
 stages:
   - stage: 'Build'
@@ -79,19 +80,19 @@ stages:
         - checkout: none
         - download: current
         
-        # - pwsh: |
-        #     $detectedPackageName=Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
-        #     Write-Host "Detected package name: $($detectedPackageName)"
-        #     echo "##vso[task.setvariable variable=Package.Archive]$detectedPackageName"
-        #     $npmToken="$(azure-sdk-devops-npm-token)"
-        #     $registry="'public/azure-sdk-for-js'"
+        - pwsh: |
+            $detectedPackageName=Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
+            Write-Host "Detected package name: $($detectedPackageName)"
+            echo "##vso[task.setvariable variable=Package.Archive]$detectedPackageName"
+            $registry="'$(FeedRegistry)'"
+            $regAuth=$registry.replace("https:","")
+            $npmReg = $regAuth.replace("registry/","");
+            $env:NPM_TOKEN=$(azure-sdk-devops-npm-token)
 
-        #     $npmReg = $regAuth.replace("registry/","");
-        #     $env:NPM_TOKEN=$npmToken
-        #     npm config set $regAuth`:username=azure-sdk
-        #     npm config set $regAuth`:_password=`$`{NPM_TOKEN`}
-        #     npm config set $regAuth`:email=not_set
-        #     npm config set $npmReg`:username=azure-sdk
-        #     npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
-        #     npm config set $npmReg`:email=not_set
-        #   displayName: Publish package
+            npm config set $regAuth`:username=azure-sdk
+            npm config set $regAuth`:_password=`$`{NPM_TOKEN`}
+            npm config set $regAuth`:email=not_set
+            npm config set $npmReg`:username=azure-sdk
+            npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
+            npm config set $npmReg`:email=not_set
+          displayName: Publish package

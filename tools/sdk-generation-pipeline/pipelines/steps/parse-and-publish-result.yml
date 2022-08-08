@@ -46,21 +46,6 @@ steps:
     condition: always()
 
   - bash: |
-      #TODO: delete this bash
-      ls -al /tmp/output/
-      echo "show generateAndBuild-task-result.json"
-      cat /tmp/output/generateAndBuild-task-result.json | echo "don't quite even failed"
-    displayName: Check output dir
-    condition: always()
-
-  - bash: |
-      #TODO: delete this bash
-      echo "will show git info"
-      git status
-    displayName: Show git info
-    workingDirectory: $(SDK_REPO)
-
-  - bash: |
       echo "will create PR"
       git config --global user.email "$(GIT_USER_EMAIL)"
       git config --global user.name "$(GIT_USER_NAME)"
@@ -83,7 +68,6 @@ steps:
         fi
         git checkout -b ${branchName}
         pushSdkRepoUrl=$(echo $(sdkRepoUrl) | sed "s#https://#https://$(REPO_OWNER):$(azuresdk-github-pat)@#")
-        #TODO: push PR to Azure if is release to Azure no Azure SDK
         pushSdkRepoUrl=$(echo ${pushSdkRepoUrl} | sed "s#$(SDK_OWNER)#$(SDK_PUSH_OWNER)#")
         git push ${pushSdkRepoUrl} --force
         echo "git push finished:$?"
@@ -138,7 +122,7 @@ steps:
           "/tmp/output/generateAndBuild-task-result.json",
           "/tmp/output/mockTest-task-result.json"]'
 
-      #TODO: delete next line
+      #check parse result and completion status
       cat /tmp/output/generateAndBuild-task-result.json
       cat $(System.ArtifactsDirectory)/completed/result.json
 
@@ -152,7 +136,7 @@ steps:
         echo ${newtaskresult} > $(System.ArtifactsDirectory)/completed/result.json
       fi
 
-      #TODO: delete next line
+      #recheck jq result
       cat $(System.ArtifactsDirectory)/completed/result.json
     displayName: Prepare artifact
     workingDirectory: $(SDK_REPO)

@@ -115,6 +115,12 @@
         {
             "DefinitionId": null,
             "NavigateToId": null,
+            "Value": "ClassLibrary1.Class1",
+            "Kind": 17
+        },               
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
             "Value": " ",
             "Kind": 2
         },
@@ -130,6 +136,12 @@
             "Value": null,
             "Kind": 1
         },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 18
+        }, 
         {
             "DefinitionId": null,
             "NavigateToId": null,
@@ -328,6 +340,12 @@
             "NavigateToId": null,
             "Value": null,
             "Kind": 1
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 19
         }
     ],
     "Navigation": [

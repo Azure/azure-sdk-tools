@@ -17,7 +17,7 @@ ENV M2_HOME /usr/maven
 ENV MAVEN_HOME=/usr/maven
 ENV PATH $M2_HOME/bin:$PATH
 RUN mkdir -p "$MAVEN_HOME"
-RUN curl -fL -o maven.tgz https://dlcdn.apache.org/maven/maven-3/3.8.5/binaries/apache-maven-3.8.5-bin.tar.gz
+RUN curl -fL -o maven.tgz https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz
 RUN tar --extract --file maven.tgz --directory "$MAVEN_HOME" --strip-components 1 --no-same-owner
 RUN rm maven.tgz
 
@@ -53,7 +53,7 @@ RUN npm install -g typescript
 RUN npm install -g @microsoft/rush
 RUN npm install -g autorest
 
-RUN mkdir "/mock-host" && cd /mock-host && npm install @azure-tools/mock-service-host
+RUN mkdir "/mock-host" && cd /mock-host && npm install @azure-tools/mock-service-host@0.1.16
 
 # install chrome
 RUN curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb

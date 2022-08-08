@@ -1,0 +1,1934 @@
+[
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T07:09:00.5287517+00:00",
+    "End": "2022-07-30T07:10:45.2364796+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobDownloadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 1962,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 2003,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 1959,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 1977,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 1991,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 1959,
+    "OperationsPerSecondMean": 1978.4,
+    "OperationsPerSecondMedian": 1977,
+    "OperationsPerSecondMax": 2003
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T07:10:45.2365825+00:00",
+    "End": "2022-07-30T07:13:06.6953738+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobDownloadTest",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 30.46,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 54.74,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 25.65,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 21.29,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 23.11,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 21.29,
+    "OperationsPerSecondMean": 31.05,
+    "OperationsPerSecondMedian": 25.65,
+    "OperationsPerSecondMax": 54.74
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T07:13:06.6953954+00:00",
+    "End": "2022-07-30T07:13:29.3821536+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobDownloadTest",
+    "Arguments": "--size 10485760 --parallel 32 --sync",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": -1,
+    "OperationsPerSecondMean": -1,
+    "OperationsPerSecondMedian": -1,
+    "OperationsPerSecondMax": -1
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T07:13:29.3821666+00:00",
+    "End": "2022-07-30T07:26:14.1306082+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobDownloadTest",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.04227,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.09761,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.09439,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.09199,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.1025,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.04227,
+    "OperationsPerSecondMean": 0.085752,
+    "OperationsPerSecondMedian": 0.09439,
+    "OperationsPerSecondMax": 0.1025
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T07:26:14.1306161+00:00",
+    "End": "2022-07-30T07:42:09.5289315+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobDownloadTest",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.3555,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.2555,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.3256,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.2432,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.1881,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.1881,
+    "OperationsPerSecondMean": 0.27358,
+    "OperationsPerSecondMedian": 0.2555,
+    "OperationsPerSecondMax": 0.3555
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T07:42:09.5289822+00:00",
+    "End": "2022-07-30T07:43:54.5275427+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobUploadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 1671,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 2081,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 2071,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 2077,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 2078,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 1671,
+    "OperationsPerSecondMean": 1995.6,
+    "OperationsPerSecondMedian": 2077,
+    "OperationsPerSecondMax": 2081
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T07:43:54.5275542+00:00",
+    "End": "2022-07-30T07:45:46.3107285+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobUploadTest",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 59.53,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 57.55,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 57.47,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 131.3,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 76.67,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 57.47,
+    "OperationsPerSecondMean": 76.504,
+    "OperationsPerSecondMedian": 59.53,
+    "OperationsPerSecondMax": 131.3
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T07:45:46.3108873+00:00",
+    "End": "2022-07-30T07:46:09.0398432+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobUploadTest",
+    "Arguments": "--size 10485760 --parallel 32 --sync",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": -1,
+    "OperationsPerSecondMean": -1,
+    "OperationsPerSecondMedian": -1,
+    "OperationsPerSecondMax": -1
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T07:46:09.0398556+00:00",
+    "End": "2022-07-30T07:57:29.4482484+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobUploadTest",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.09707,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.1057,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.1157,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.1162,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.1329,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.09707,
+    "OperationsPerSecondMean": 0.113514,
+    "OperationsPerSecondMedian": 0.1157,
+    "OperationsPerSecondMax": 0.1329
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T07:57:29.4482583+00:00",
+    "End": "2022-07-30T08:26:49.183729+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobUploadTest",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.1942,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.4389,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.4707,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.2242,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.5001,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.1942,
+    "OperationsPerSecondMean": 0.36562,
+    "OperationsPerSecondMedian": 0.4389,
+    "OperationsPerSecondMax": 0.5001
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T08:26:49.1879476+00:00",
+    "End": "2022-07-30T08:28:42.2518815+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobListTest",
+    "Arguments": "--count 5 --parallel 64",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 941,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 951.1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 938.3,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 946.3,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 945.1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 938.3,
+    "OperationsPerSecondMean": 944.36,
+    "OperationsPerSecondMedian": 945.1,
+    "OperationsPerSecondMax": 951.1
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T08:28:42.2518896+00:00",
+    "End": "2022-07-30T08:31:01.6860929+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobListTest",
+    "Arguments": "--count 500 --parallel 32",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 30.64,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 30.65,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 30.31,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 30.59,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 30.64,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 30.31,
+    "OperationsPerSecondMean": 30.565999999999995,
+    "OperationsPerSecondMedian": 30.64,
+    "OperationsPerSecondMax": 30.65
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T08:31:01.6861034+00:00",
+    "End": "2022-07-30T08:31:27.4438612+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobListTest",
+    "Arguments": "--count 500 --parallel 32 --sync",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": -1,
+    "OperationsPerSecondMean": -1,
+    "OperationsPerSecondMedian": -1,
+    "OperationsPerSecondMax": -1
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T08:31:27.4438715+00:00",
+    "End": "2022-07-30T09:01:21.8998944+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobListTest",
+    "Arguments": "--count 50000 --parallel 32 --warmup 60 --duration 60",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "12.11.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.3241,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.3156,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.3277,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.3197,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob"
+        },
+        "OperationsPerSecond": 0.3189,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.3156,
+    "OperationsPerSecondMean": 0.3212,
+    "OperationsPerSecondMedian": 0.3197,
+    "OperationsPerSecondMax": 0.3277
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T09:06:22.8643729+00:00",
+    "End": "2022-07-30T09:08:13.2554201+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobDownloadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 1404,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 1405,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 1441,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 1387,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 1388,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 1387,
+    "OperationsPerSecondMean": 1405,
+    "OperationsPerSecondMedian": 1404,
+    "OperationsPerSecondMax": 1441
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T09:08:13.2554323+00:00",
+    "End": "2022-07-30T09:10:11.6924224+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobDownloadTest",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 107.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 112.2,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 84.08,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 67.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 106.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 67.5,
+    "OperationsPerSecondMean": 95.556,
+    "OperationsPerSecondMedian": 106.5,
+    "OperationsPerSecondMax": 112.2
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T09:10:11.6924319+00:00",
+    "End": "2022-07-30T09:10:37.6291437+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobDownloadTest",
+    "Arguments": "--size 10485760 --parallel 32 --sync",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": -1,
+    "OperationsPerSecondMean": -1,
+    "OperationsPerSecondMedian": -1,
+    "OperationsPerSecondMax": -1
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T09:10:37.6291585+00:00",
+    "End": "2022-07-30T09:26:13.8510809+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobDownloadTest",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.06055,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.00943,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.1039,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.09997,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.1052,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.00943,
+    "OperationsPerSecondMean": 0.07581000000000002,
+    "OperationsPerSecondMedian": 0.09997,
+    "OperationsPerSecondMax": 0.1052
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T09:26:13.8510905+00:00",
+    "End": "2022-07-30T09:42:10.0376978+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobDownloadTest",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.5866,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.4461,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.3755,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.3895,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.3733,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.3733,
+    "OperationsPerSecondMean": 0.4342,
+    "OperationsPerSecondMedian": 0.3895,
+    "OperationsPerSecondMax": 0.5866
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T09:42:10.0378912+00:00",
+    "End": "2022-07-30T09:44:01.5988171+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobUploadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 1481,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 1484,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 1499,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 1507,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 1490,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 1481,
+    "OperationsPerSecondMean": 1492.2,
+    "OperationsPerSecondMedian": 1490,
+    "OperationsPerSecondMax": 1507
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T09:44:01.5992639+00:00",
+    "End": "2022-07-30T09:46:02.6658372+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobUploadTest",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 126.9,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 138.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 138.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 131.9,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 120.2,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 120.2,
+    "OperationsPerSecondMean": 131.24,
+    "OperationsPerSecondMedian": 131.9,
+    "OperationsPerSecondMax": 138.8
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T09:46:02.6658436+00:00",
+    "End": "2022-07-30T09:46:28.8581437+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobUploadTest",
+    "Arguments": "--size 10485760 --parallel 32 --sync",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": -1,
+    "OperationsPerSecondMean": -1,
+    "OperationsPerSecondMedian": -1,
+    "OperationsPerSecondMax": -1
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T09:46:28.8581554+00:00",
+    "End": "2022-07-30T09:59:21.1694156+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobUploadTest",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.02769,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.09511,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.02611,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.09231,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.1058,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.02611,
+    "OperationsPerSecondMean": 0.069404,
+    "OperationsPerSecondMedian": 0.09231,
+    "OperationsPerSecondMax": 0.1058
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T09:59:21.1694217+00:00",
+    "End": "2022-07-30T10:14:05.9633532+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobUploadTest",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.7044,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.339,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.1926,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.269,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.4261,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.1926,
+    "OperationsPerSecondMean": 0.38622000000000006,
+    "OperationsPerSecondMedian": 0.339,
+    "OperationsPerSecondMax": 0.7044
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T10:14:05.9635721+00:00",
+    "End": "2022-07-30T10:15:57.2733333+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobListTest",
+    "Arguments": "--count 5 --parallel 64",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 939.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 935.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 927.1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 931.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 948,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 927.1,
+    "OperationsPerSecondMean": 936.3,
+    "OperationsPerSecondMedian": 935.5,
+    "OperationsPerSecondMax": 948
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T10:15:57.2733413+00:00",
+    "End": "2022-07-30T10:18:12.5291835+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobListTest",
+    "Arguments": "--count 500 --parallel 32",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 30.97,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 30.58,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 30.68,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 30.72,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 30.64,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 30.58,
+    "OperationsPerSecondMean": 30.717999999999996,
+    "OperationsPerSecondMedian": 30.68,
+    "OperationsPerSecondMax": 30.97
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T10:18:12.5291912+00:00",
+    "End": "2022-07-30T10:18:38.7223216+00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobListTest",
+    "Arguments": "--count 500 --parallel 32 --sync",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": -1,
+    "OperationsPerSecondMean": -1,
+    "OperationsPerSecondMedian": -1,
+    "OperationsPerSecondMax": -1
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T10:18:38.7223299+00:00",
+    "End": "0001-01-01T00:00:00",
+    "Language": "js",
+    "LanguageVersion": "14.19.0",
+    "Project": "sdk/storage/perf-tests/storage-blob",
+    "LanguageTestName": "StorageBlobListTest",
+    "Arguments": "--count 50000 --parallel 32 --warmup 60 --duration 60",
+    "PrimaryPackage": "@azure/storage-blob",
+    "PackageVersions": {
+      "@azure/storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.3264,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.3209,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.323,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.3223,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "@azure/storage-blob": "12.11.1 -> /mnt/vss/_work/1/s/sdk/storage/storage-blob"
+        },
+        "OperationsPerSecond": 0.3295,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.3209,
+    "OperationsPerSecondMean": 0.32442000000000004,
+    "OperationsPerSecondMedian": 0.323,
+    "OperationsPerSecondMax": 0.3295
+  }
+]

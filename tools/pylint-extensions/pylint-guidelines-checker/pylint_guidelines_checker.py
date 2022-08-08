@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4748
+Pylint custom checkers for SDK guidelines: C4717 - C4749
 """
 
 import logging
@@ -875,8 +875,8 @@ class ClientListMethodsUseCorePaging(BaseChecker):
 
     def __init__(self, linter=None):
         super(ClientListMethodsUseCorePaging, self).__init__(linter)
-
-    def visit_functiondef(self, node):
+    
+    def visit_return(self, node):
         """Visits every method in the client and checks that any list_ methods return
         an ItemPaged or AsyncItemPaged value.
 
@@ -885,22 +885,24 @@ class ClientListMethodsUseCorePaging(BaseChecker):
         :return: None
         """
         try:
-            if node.parent.name.endswith("Client") and node.parent.name not in self.ignore_clients and node.is_method():
-                if node.name.startswith("list"):
+            if node.parent.parent.name.endswith("Client") and node.parent.parent.name not in self.ignore_clients and node.parent.is_method():
+                if node.parent.name.startswith("list"):
+                    paging_class = False
+
                     try:
-                        # infer_call_result gives the method return value as a string
-                        returns = next(node.infer_call_result()).as_string()
-                        if returns.find("ItemPaged") == -1 and returns.find("AsyncItemPaged") == -1:
-                            self.add_message(
-                                msgid="client-list-methods-use-paging", node=node, confidence=None
-                            )
-                    except (astroid.exceptions.InferenceError, AttributeError): # astroid can't always infer the return
+                        if any(v for v in node.value.infer() if "def by_page" in v.as_string()):
+                            paging_class = True
+                    except (astroid.exceptions.InferenceError, AttributeError, TypeError): # astroid can't always infer the return
                         logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
-                        pass
-        except AttributeError:
+                        return 
+
+                    if not paging_class:
+                        self.add_message(
+                            msgid="client-list-methods-use-paging", node=node.parent, confidence=None
+                        )
+        except (AttributeError, TypeError):
             logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
             pass
-
 
 class ClientLROMethodsUseCorePolling(BaseChecker):
     __implements__ = IAstroidChecker
@@ -1914,7 +1916,45 @@ class CheckNamingMismatchGeneratedCode(BaseChecker):
     
         except Exception:
                 logger.debug("Pylint custom checker failed to check if model is aliased.")
-                pass
+
+class NonCoreNetworkImport(BaseChecker):
+    """There are certain imports that should only occur in the core package.
+    For example, instead of using `requests` to make requests, clients should
+    take a `azure.core.pipeline.Pipeline` as input to make requests.
+    """
+    name = "networking-import-outside-azure-core-transport"
+    priority = -1
+    msgs = {
+        "C4749": (
+            "This import is not allowed here. Consider using an abstract"
+            " alternative from azure.core.pipeline.transport.",
+            "networking-import-outside-azure-core-transport",
+            "This import is only allowed in azure.core.pipeline.transport.",
+        ),
+    }
+    BLOCKED_MODULES = ["aiohttp", "requests", "trio"]
+    AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
+
+    def visit_import(self, node):
+        """Check that we dont have blocked imports."""
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME):
+            return
+        for import_, _ in node.names:
+            self._check_import(import_, node)
+
+    def visit_importfrom(self, node):
+        """Check that we aren't import from a blocked package."""
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME): 
+            return
+        self._check_import(node.modname, node)
+    
+    def _check_import(self, name, node):
+        """Check if an import is blocked."""
+        for blocked in self.BLOCKED_MODULES:
+            if name.startswith(blocked):
+                self.add_message(
+                    msgid=f"networking-import-outside-azure-core-transport", node=node, confidence=None
+                )
 
 
 # if a linter is registered in this function then it will be checked with pylint
@@ -1937,18 +1977,18 @@ def register(linter):
     linter.register_checker(CheckNamingMismatchGeneratedCode(linter))
     linter.register_checker(CheckAPIVersion(linter))
     linter.register_checker(CheckEnum(linter))
+    linter.register_checker(NonCoreNetworkImport(linter))
+    linter.register_checker(ClientListMethodsUseCorePaging(linter))
+
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
-    linter.register_checker(CheckDocstringParameters(linter))
+    # linter.register_checker(CheckDocstringParameters(linter))
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))
     # linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
     # linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
-    # linter.register_checker(ClientListMethodsUseCorePaging(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
-
-

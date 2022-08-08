@@ -1,14 +1,10 @@
-using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.Matchers;
-using Azure.Sdk.Tools.TestProxy.Sanitizers;
-using Azure.Sdk.Tools.TestProxy.Transforms;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Xunit;
 

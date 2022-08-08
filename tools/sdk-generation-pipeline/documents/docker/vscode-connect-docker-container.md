@@ -12,6 +12,7 @@ Please follow the following steps to connect your vscode to docker container.
 2. Select your running docker image, and attach to it.
 3. After vscode connects to docker container, open folder `/work-dir/{sdk-repository}`. 
    1. For .Net, you can only open the generated SDK namespace folder, such as `Azure.Verticals.AgriFood.Farming`.
+   2. For Java, you can only open the generated package, such as `azure-resourcemanager-agrifood`.
 
 Then you can write your codes in vscode.
 
@@ -20,8 +21,4 @@ Then you can write your codes in vscode.
 
     Answer: Vscode C# extension is based on OmniSharp, which sometimes make us confused. To resolve it:
     1. Run `dotnet build` to rebuild the project
-    2. In vscode, press `ctrl + shift + p` and then type `Restart Omnisharp`.
-
-2. Vscode cannot load java project correctly.
-
-    Answer: Java repository is very large and vscode extension for Java needs to spend much time to load the project. You can check the progress in the terminal of `Java Build Status`.
+    2. In vscode, press `F1` and then type `Restart Omnisharp`.

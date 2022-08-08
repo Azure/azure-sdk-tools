@@ -33,6 +33,10 @@ export default class Mocker {
             return new Date().toUTCString()
         }
 
+        if (paramSpec.format === 'duration') {
+            return 'PT72H'
+        }
+
         if ('enum' in paramSpec) {
             if (paramSpec.enum.lengh > 0) {
                 logger.error(`${paramName}'s enum can not be empty`)

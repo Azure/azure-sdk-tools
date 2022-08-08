@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -105,7 +106,9 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
 
-            _recordingHandler.SetRecordingOptions(options);
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+
+            _recordingHandler.SetRecordingOptions(options, recordingId);
         }
 
         public object GetSanitizer(string name, JsonDocument body)

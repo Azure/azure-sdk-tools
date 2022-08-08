@@ -31,9 +31,7 @@ type Pkg struct {
 	diagnostics []Diagnostic
 	files       map[string][]byte
 	fs          *token.FileSet
-	moduleName  string
 	p           *ast.Package
-	path        string
 	relName     string
 
 	// typeAliases keys are the names of types defined in other packages which this package exports by alias.
@@ -52,16 +50,15 @@ func NewPkg(dir, moduleName string) (*Pkg, error) {
 	pk := &Pkg{
 		c:           newContent(),
 		diagnostics: []Diagnostic{},
-		moduleName:  moduleName,
-		path:        dir,
 		typeAliases: map[string]string{},
 		types:       map[string]typeDef{},
 	}
-	if _, after, found := strings.Cut(dir, moduleName); found {
+	if _, after, found := strings.Cut(dir, filepath.Clean(moduleName)); found {
 		pk.relName = moduleName
 		if after != "" {
 			pk.relName += after
 		}
+		pk.relName = strings.ReplaceAll(pk.relName, "\\", "/")
 	} else {
 		return nil, errors.New(dir + " isn't part of module " + moduleName)
 	}
@@ -141,6 +138,12 @@ func (p *Pkg) indexFile(f *ast.File) {
 				// "type ETag string"
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name)
+			case *ast.IndexExpr, *ast.IndexListExpr:
+				// "type Client GenericClient[BaseClient]"
+				// "type Client CompositeClient[BaseClient1, BaseClient2]"
+				txt := p.getText(t.Pos(), t.End())
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.InterfaceType:
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t)

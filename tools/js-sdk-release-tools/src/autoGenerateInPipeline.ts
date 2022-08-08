@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import * as path from 'path';
 import {generateMgmt} from "./hlc/generateMgmt";
 import {logger} from "./utils/logger";
 import {generateRLCInPipeline} from "./llc/generateRLCInPipeline/generateRLCInPipeline";
@@ -14,6 +15,9 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     const readmeFiles: string[] | string = inputJson['relatedReadmeMdFiles']? inputJson['relatedReadmeMdFiles']: inputJson['relatedReadmeMdFile'];
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
+    const autorestConfig: string | undefined = inputJson['autorestConfig'];
+    const downloadUrlPrefix: string | undefined = inputJson.installInstructionInput?.downloadUrlPrefix;
+    const skipGeneration: boolean | undefined = inputJson['skipGeneration'];
 
     if ((typeof readmeFiles !== 'string') && readmeFiles.length !== 1) {
         throw new Error(`get ${readmeFiles.length} readme files`);
@@ -35,20 +39,24 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
             use: use,
             outputJson: outputJson,
             swaggerRepoUrl: repoHttpsUrl,
+            downloadUrlPrefix: downloadUrlPrefix,
+            skipGeneration: skipGeneration,
             runningEnvironment: runningEnvironment
         });
     } else {
         await generateRLCInPipeline({
             sdkRepo: String(shell.pwd()),
-            swaggerRepo: specFolder,
+            swaggerRepo: path.isAbsolute(specFolder)? specFolder : path.join(String(shell.pwd()), specFolder),
             readmeMd: readmeMd,
+            autorestConfig,
             use: use,
             outputJson: outputJson,
+            skipGeneration: skipGeneration,
             runningEnvironment: runningEnvironment
         })
     }
 
-    fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, undefined, '  '), {encoding: 'utf-8'})
+    fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, null, '  '), {encoding: 'utf-8'})
 }
 
 const optionDefinitions = [

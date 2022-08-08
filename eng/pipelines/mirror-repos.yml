@@ -68,11 +68,6 @@ jobs:
               Azure/azure-sdk-for-c-pr:
               azure-sdk/azure-sdk-for-c:
 
-          Azure/azure-cli:
-            Branch: dev
-            TargetRepos:
-              Azure/azure-cli-pr:
-
           Azure/azure-cli-extensions:
             TargetRepos:
               Azure/azure-cli-extensions-pr:

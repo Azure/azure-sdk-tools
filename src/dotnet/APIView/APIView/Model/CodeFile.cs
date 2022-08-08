@@ -34,6 +34,8 @@ namespace ApiView
 
         public string Language { get; set; }
 
+        public string LanguageVariant { get; set; }
+
         public string PackageName { get; set; }
 
         public string ServiceName { get; set; }

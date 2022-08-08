@@ -13,11 +13,11 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
 using APIViewWeb.Models;
-using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Repositories
 {
@@ -52,8 +52,9 @@ namespace APIViewWeb.Repositories
             CosmosCommentsRepository commentsRepository,
             IEnumerable<LanguageService> languageServices,
             NotificationManager notificationManager,
-            DevopsArtifactRepository devopsArtifactRepository,
-            PackageNameManager packageNameManager)
+            DevopsArtifactRepository devopsClient,
+            PackageNameManager packageNameManager,
+            IConfiguration configuration)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -62,7 +63,7 @@ namespace APIViewWeb.Repositories
             _commentsRepository = commentsRepository;
             _languageServices = languageServices;
             _notificationManager = notificationManager;
-            _devopsArtifactRepository = devopsArtifactRepository;
+            _devopsArtifactRepository = devopsClient;
             _packageNameManager = packageNameManager;
         }
 
@@ -83,6 +84,34 @@ namespace APIViewWeb.Repositories
         public Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool closed, string language, string packageName = null, ReviewType filterType = ReviewType.Manual)
         {
             return _reviewsRepository.GetReviewsAsync(closed, language, packageName: packageName, filterType: filterType);
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, IEnumerable<ReviewType> filterTypes)
+        {
+            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterTypes);
+        }
+
+        public async Task<IEnumerable<string>> GetReviewPropertiesAsync(string propertyName)
+        {
+            return await _reviewsRepository.GetReviewFirstLevelPropertiesAsync(propertyName);
+        }
+
+        public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
+            List<string> search, List<string> languages, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
+        {
+            var result = await _reviewsRepository.GetReviewsAsync(search, languages, isClosed, filterTypes, isApproved, offset, limit, orderBy);
+
+            // Calculate and add Previous and Next and Current page to the returned result
+            var totalPages = (int)Math.Ceiling((double)result.TotalCount / (double)limit);
+            var currentPage = (offset == 0) ? 1 : ((offset / limit) + 1);
+
+            (IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage) resultToReturn = (
+                Reviews: result.Reviews, TotalCount: result.TotalCount, TotalPages: totalPages,
+                CurrentPage: currentPage,
+                PreviousPage: (currentPage == 1) ? null : currentPage - 1,
+                NextPage: (currentPage >= totalPages) ? null : currentPage + 1
+            );
+            return resultToReturn;
         }
 
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
@@ -168,24 +197,25 @@ namespace APIViewWeb.Repositories
                         // We have added a new property FileName which is only set for new reviews
                         // All older reviews needs to be handled by checking review name field
                         var fileName = file.FileName ?? (Path.HasExtension(review.Name) ? review.Name : file.Name);
-                        var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
-                        await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
-                        // update only version string
-                        file.VersionString = codeFile.VersionString;
+                        if (languageService.IsReviewGenByPipeline)
+                        {
+                            GenerateReviewOffline(review, revision.RevisionId, file.ReviewFileId, fileName);
+                        }
+                        else
+                        {
+                            var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
+                            await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
+                            // update only version string
+                            file.VersionString = codeFile.VersionString;
+                            await _reviewsRepository.UpsertReviewAsync(review);
+                        }                        
                     }
                     catch (Exception ex) {
                         _telemetryClient.TrackTrace("Failed to update review " + review.ReviewId);
                         _telemetryClient.TrackException(ex);
                     }                    
                 }
-            }
-            await _reviewsRepository.UpsertReviewAsync(review);
-        }
-
-        internal async Task UpdateReviewAsync(ClaimsPrincipal user, string id)
-        {
-            var review = await GetReviewAsync(user, id);
-            await UpdateReviewAsync(review);
+            }            
         }
 
         public async Task AddRevisionAsync(
@@ -228,9 +258,16 @@ namespace APIViewWeb.Repositories
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
             }
 
+            var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
+            //Run pipeline to generateteh review if sandbox is enabled
+            if (languageService != null && languageService.IsReviewGenByPipeline)
+            {
+                // Run offline review gen for review and reviewCodeFileModel
+                GenerateReviewOffline(review, revision.RevisionId, codeFile.ReviewFileId, name);
+            }
+
             // auto subscribe revision creation user
             await _notificationManager.SubscribeAsync(review, user);
-
             await _reviewsRepository.UpsertReviewAsync(review);
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(revision, user);
         }
@@ -244,7 +281,7 @@ namespace APIViewWeb.Repositories
             using var memoryStream = new MemoryStream();
             var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
             var reviewCodeFileModel = await CreateReviewCodeFileModel(revisionId, memoryStream, codeFile);
-            reviewCodeFileModel.FileName = originalName;
+            reviewCodeFileModel.FileName = originalName;            
             return reviewCodeFileModel;
         }
 
@@ -257,12 +294,18 @@ namespace APIViewWeb.Repositories
             var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(originalName));
             await fileStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
-
-            CodeFile codeFile = await languageService.GetCodeFileAsync(
+            CodeFile codeFile = null;
+            if (languageService.IsReviewGenByPipeline)
+            {
+                codeFile = languageService.GetReviewGenPendingCodeFile(originalName);
+            }
+            else
+            {
+                codeFile = await languageService.GetCodeFileAsync(
                 originalName,
                 memoryStream,
                 runAnalysis);
-
+            }
             return codeFile;
         }
 
@@ -308,12 +351,17 @@ namespace APIViewWeb.Repositories
         {
             var review = await GetReviewAsync(user, id);
             review.IsClosed = !review.IsClosed;
+            if (review.FilterType == ReviewType.Automatic)
+            {
+                throw new AuthorizationFailedException();
+            }
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
         private void InitializeFromCodeFile(ReviewCodeFileModel file, CodeFile codeFile)
         {
             file.Language = codeFile.Language;
+            file.LanguageVariant = codeFile.LanguageVariant;
             file.VersionString = codeFile.VersionString;
             file.Name = codeFile.Name;
             file.PackageName = codeFile.PackageName;
@@ -526,7 +574,7 @@ namespace APIViewWeb.Repositories
 
         public async Task UpdateReviewBackground()
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", fetchAllPages: true);
             foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
@@ -555,7 +603,8 @@ namespace APIViewWeb.Repositories
             string codeFileName,
             MemoryStream originalFileStream,
             string baselineCodeFileName = "",
-            MemoryStream baselineStream = null
+            MemoryStream baselineStream = null,
+            string project = "public"
             )
         {
             Stream stream = null;
@@ -563,12 +612,12 @@ namespace APIViewWeb.Repositories
             if (string.IsNullOrEmpty(codeFileName))
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
-                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, "file");
+                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, format: "file", project: project);
                 codeFile = await CreateCodeFile(Path.GetFileName(originalFileName), stream, false, originalFileStream);
             }
             else
             {
-                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, "zip");
+                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, format: "zip", project: project);
                 var archive = new ZipArchive(stream);
                 foreach (var entry in archive.Entries)
                 {
@@ -601,11 +650,12 @@ namespace APIViewWeb.Repositories
             string repoName,
             string packageName,
             string codeFileName,
-            bool compareAllRevisions
+            bool compareAllRevisions,
+            string project
             )
         {
             using var memoryStream = new MemoryStream();
-            var codeFile = await GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream);
+            var codeFile = await GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream, project: project);
             return await CreateMasterReviewAsync(user, codeFile, originalFileName, label, memoryStream, compareAllRevisions);
         }
 
@@ -638,14 +688,9 @@ namespace APIViewWeb.Repositories
             return response.Values.ToList();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, ReviewType filterType)
-        {
-            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
-        }
-
         public async Task AutoArchiveReviews(int archiveAfterMonths)
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual);
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual, fetchAllPages: true);
             // Find all inactive reviews
             reviews = reviews.Where(r => r.LastUpdated.AddMonths(archiveAfterMonths) < DateTime.Now);
             foreach (var review in reviews)
@@ -667,6 +712,64 @@ namespace APIViewWeb.Repositories
                     _telemetryClient.StopOperation(operation);
                 }
             }
+        }
+        private void GenerateReviewOffline(ReviewModel review, string revisionId, string fileId, string fileName)
+        {
+            var param = new ReviewGenPipelineParamModel()
+            {
+                FileID = fileId,
+                ReviewID = review.ReviewId,
+                RevisionID = revisionId,
+                FileName = fileName
+            };
+            var paramList = new List<ReviewGenPipelineParamModel>();
+            paramList.Add(param);
+            var languageService = _languageServices.Single(s => s.Name == review.Language);
+            RunReviewGenPipeline(paramList, languageService.Name);
+        }
+
+        public async Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project)
+        {
+            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
+            var archive = new ZipArchive(stream);
+            foreach (var entry in archive.Entries)
+            {
+                var reviewFilePath = entry.FullName;
+                var reviewDetails = reviewFilePath.Split("/");
+
+                if (reviewDetails.Length < 4 || !reviewFilePath.EndsWith(".json"))
+                    continue;
+
+                var reviewId = reviewDetails[1];
+                var revisionId = reviewDetails[2];
+                var codeFile = await CodeFile.DeserializeAsync(entry.Open());
+
+                // Update code file with one downloaded from pipeline
+                var review = await _reviewsRepository.GetReviewAsync(reviewId);
+                if (review != null)
+                {
+                    var revision = review.Revisions.SingleOrDefault(review => review.RevisionId == revisionId);
+                    if (revision != null)
+                    {
+                        await _codeFileRepository.UpsertCodeFileAsync(revisionId, revision.SingleFile.ReviewFileId, codeFile);
+                        revision.Files.FirstOrDefault().VersionString = codeFile.VersionString;
+                        await _reviewsRepository.UpsertReviewAsync(review);
+                    }
+                }
+            }
+        }
+        private async void RunReviewGenPipeline(List<ReviewGenPipelineParamModel> reviewGenParams, string language)
+        {
+            var jsonSerializerOptions = new JsonSerializerOptions()
+            {
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip
+            };
+            var reviewParamString = JsonSerializer.Serialize(reviewGenParams, jsonSerializerOptions);
+            reviewParamString = reviewParamString.Replace("\"", "'");
+            await _devopsArtifactRepository.RunPipeline($"tools - generate-{language}-apireview", 
+                reviewParamString, 
+                _originalsRepository.GetContainerUrl());
         }
     }
 }

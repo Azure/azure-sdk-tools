@@ -17,6 +17,7 @@ import {
     Schema,
     SchemaResponse,
     SchemaType,
+    SecurityScheme,
     codeModelSchema,
 } from '@autorest/codemodel';
 import { AutorestExtensionHost, Session, startSession } from '@autorest/extension-base';
@@ -29,8 +30,8 @@ export enum ExtensionName {
     xMsExamples = 'x-ms-examples',
 }
 export interface ExampleExtensionResponse {
-    body: any;
-    headers: Record<string, any>;
+    body?: any;
+    headers?: Record<string, any>;
 }
 export interface ExampleExtension {
     parameters?: Record<string, any>;
@@ -50,7 +51,7 @@ export class MockTestDefinitionModel {
     exampleGroups: ExampleGroup[] = [];
     public static groupByOperationGroup(exampleGroups: ExampleGroup[]): Record<string, ExampleGroup[]> {
         return exampleGroups.reduce((r, exampleGroup) => {
-            const groupKey = exampleGroup.operationId.split('_')[0];
+            const groupKey = exampleGroup.operationGroup.$key;
             r[groupKey] = r[groupKey] || [];
             r[groupKey].push(exampleGroup);
             return r;
@@ -217,6 +218,16 @@ export class ExampleParameter {
     }
 }
 
+export class SecurityParameter {
+    schema: SecurityScheme; // Ref to security.schmas[x]
+    rawValue: any;
+
+    public constructor(schema: SecurityScheme, rawValue: any) {
+        this.schema = schema;
+        this.rawValue = rawValue;
+    }
+}
+
 export class ExampleResponse {
     body?: ExampleValue;
     headers?: Record<string, any>;
@@ -238,6 +249,7 @@ export class ExampleModel {
     operation: Operation;
     clientParameters: ExampleParameter[] = [];
     methodParameters: ExampleParameter[] = [];
+    securityParameters?: SecurityParameter[] = undefined;
     responses: Record<string, ExampleResponse> = {}; // statusCode-->ExampleResponse
     originalFile: string;
 
@@ -314,6 +326,18 @@ export class TestCodeModeler {
             }
         }
 
+        for (const paramName of Object.keys(parametersInExample)) {
+            for (const securitySchema of this.codeModel.security.schemes) {
+                if (Object.prototype.hasOwnProperty.call(securitySchema, 'name') && paramName === securitySchema['name']) {
+                    if (exampleModel.securityParameters === undefined) {
+                        exampleModel.securityParameters = [];
+                    }
+                    exampleModel.securityParameters.push(new SecurityParameter(securitySchema, parametersInExample[paramName]));
+                    break;
+                }
+            }
+        }
+
         function findResponseSchema(statusCode: string): SchemaResponse {
             for (const response of operation.responses || []) {
                 if ((response.protocol.http?.statusCodes || []).indexOf(statusCode) >= 0) {
@@ -346,7 +370,7 @@ export class TestCodeModeler {
         }
         this.codeModel.operationGroups.forEach((operationGroup) => {
             operationGroup.operations.forEach((operation) => {
-                const operationId = operationGroup.language.default.name + '_' + operation.language.default.name;
+                const operationId = operation.operationId ? operation.operationId : operationGroup.language.default.name + '_' + operation.language.default.name;
                 // TODO: skip non-json http bodys for now. Need to validate example type with body schema to support it.
                 const mediaTypes = operation.requests[0]?.protocol?.http?.mediaTypes;
                 if (mediaTypes && mediaTypes.indexOf('application/json') < 0) {
@@ -447,15 +471,10 @@ export class TestCodeModeler {
                 step.exampleModel = this.createExampleModel(
                     session,
                     {
-                        parameters: step.requestParameters,
-                        responses: {
-                            [step.statusCode]: {
-                                body: step.expectedResponse,
-                                headers: {},
-                            },
-                        },
+                        parameters: step.parameters,
+                        responses: step.responses,
                     },
-                    step.exampleName,
+                    step.exampleFile,
                     operation,
                     operationGroup,
                 );
@@ -554,7 +573,7 @@ export class TestCodeModeler {
             const stepModel = step as StepRestCallModel;
             this.initiateRestCall(session, stepModel);
             if (codeModelRestcallOnly && !stepModel.exampleModel) {
-                throw new Error(`Can't find operationId ${step.operationId}[step ${step.exampleName}] in codeModel!`);
+                throw new Error(`Can't find operationId ${step.operationId}[step ${step.step}] in codeModel!`);
             }
         } else if (step.type === OavStepType.armTemplate) {
             testDef.useArmTemplate = true;
@@ -575,24 +594,26 @@ export class TestCodeModeler {
         }
     }
 
+    public createApiScenarioLoaderOption(fileRoot: string) {
+        const options = {
+            useJsonParser: false,
+            checkUnderFileRoot: false,
+            fileRoot: fileRoot,
+            swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
+            eraseXmsExamples: false,
+        };
+        return { ...options, ...this.testConfig.getValue(Config.apiScenarioLoaderOption, {}) };
+    }
+
     public async loadTestResourcesFromConfig(session: Session<TestCodeModel>, fileRoot: string) {
         for (const testResource of this.testConfig.getValue(Config.testResources)) {
-            if (fs.existsSync(path.join(fileRoot, testResource[Config.test]))) {
-                try {
-                    const loader = ApiScenarioLoader.create({
-                        useJsonParser: false,
-                        checkUnderFileRoot: false,
-                        fileRoot: fileRoot,
-                        swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
-                    });
-                    const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
-                    this.initiateTestDefinition(session, testDef);
-                    this.codeModel.testModel.scenarioTests.push(testDef);
-                } catch (error) {
-                    session.warning(`Exception occured when load testdef ${testResource[Config.test]}: ${error}`, ['Test Modeler']);
-                }
-            } else {
-                session.warning(`Unexisted test resource scenario file: ${testResource[Config.test]}`, ['Test Modeler']);
+            try {
+                const loader = ApiScenarioLoader.create(this.createApiScenarioLoaderOption(fileRoot));
+                const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
+                this.initiateTestDefinition(session, testDef);
+                this.codeModel.testModel.scenarioTests.push(testDef);
+            } catch (error) {
+                session.warning(`Exception occured when load testdef ${testResource[Config.test]}: ${error}`, ['Test Modeler']);
             }
         }
     }
@@ -609,14 +630,10 @@ export class TestCodeModeler {
                         if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) {
                             continue;
                         }
-                        const scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
+                        let scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
                         try {
-                            const loader = ApiScenarioLoader.create({
-                                useJsonParser: false,
-                                checkUnderFileRoot: false,
-                                fileRoot: fileRoot,
-                                swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
-                            });
+                            const loader = ApiScenarioLoader.create(this.createApiScenarioLoaderOption(fileRoot));
+                            scenarioPathName = scenarioPathName.split('\\').join('/');
                             const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
 
                             this.initiateTestDefinition(session, testDef, codemodelRestCallOnly);

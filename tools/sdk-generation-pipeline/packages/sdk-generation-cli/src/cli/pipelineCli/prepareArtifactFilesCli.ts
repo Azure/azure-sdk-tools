@@ -24,7 +24,7 @@ import {
     prepareResultArtifactInput,
     PrepareResultArtifactInput,
 } from '../../cliSchema/prepareArtifactFilesCliConfig';
-import { getFileListInPackageFolder } from '../../utils/git';
+import { GitOperationWrapper } from '../../utils/GitOperationWrapper';
 
 function copyFile(filePath: string, targetDir: string) {
     if (!fs.existsSync(filePath)) {
@@ -41,6 +41,7 @@ async function prepareSourceCode(
     language: string,
     artifactDir: string
 ) {
+    const gitOperationWrapper: GitOperationWrapper = new GitOperationWrapper();
     for (const p of generateAndBuildOutput.packages) {
         const packageName = p.packageName;
         const packagePaths = p.path;
@@ -52,7 +53,7 @@ async function prepareSourceCode(
             }
 
             if (fs.lstatSync(packagePath).isDirectory()) {
-                for (const filePath of getFileListInPackageFolder(packagePath)) {
+                for (const filePath of await gitOperationWrapper.getFileListInPackageFolder(packagePath)) {
                     copyFile(
                         `${path.join(packagePath, filePath)}`,
                         `${artifactDir}/${language}/sourceCode/${packageName}`

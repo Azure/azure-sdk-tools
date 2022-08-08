@@ -59,7 +59,7 @@ Create following Azure resources in your Azure subscription.
 #### Azure storage account
 
  - Create a storage account in Azure. [Azure storage account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
- - Create two blob storage containers with names as follows within the storage account created in previous step: `originals` and `codefiles`
+ - Create three blob storage containers with names as follows within the storage account created in previous step: `originals`, `codefiles`, and `usagesamples`
 
 #### Azure Cosmos DB
  - Create a Cosmos DB account in Azure and then create a database with name `APIView` in this account. Once database is created successfully then create three containers in `APIView` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
@@ -69,6 +69,7 @@ Create following Azure resources in your Azure subscription.
    | Reviews             | /id                |
    | Comments            | /ReviewId          |
    | PullRequests        | /PullRequestNumber |
+   | UsageSamples        | /ReviewId          |
    
 
 

@@ -329,8 +329,13 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-file-share
       PackageVersions:
+<<<<<<< HEAD
       - '@azure/storage-file-share': 12.11.0
       - '@azure/storage-file-share': source
+=======
+      - "@azure/storage-file-share": 12.11.0
+      - "@azure/storage-file-share": source
+>>>>>>> a3382e0b (parent 2d7456e53b5bf2efa310c5fb85d6e1a31389ff7a)
     Python:
       Project: sdk/storage/azure-storage-file-share
       PrimaryPackage: azure-storage-file-share

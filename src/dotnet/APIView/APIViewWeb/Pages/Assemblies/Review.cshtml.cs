@@ -62,6 +62,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public int TotalActiveConversations { get; set; }
 
+        public int UsageSampleConversations { get; set; }
+
         [BindProperty(SupportsGet = true)]
         public string DiffRevisionId { get; set; }
 
@@ -116,6 +118,7 @@ namespace APIViewWeb.Pages.Assemblies
 
             ActiveConversations = ComputeActiveConversations(fileHtmlLines, Comments);
             TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
+            UsageSampleConversations = Comments.Threads.Count(t => t.Comments.First().IsUsageSampleComment);
             var filterPreference = _preferenceCache.GetFilterType(User.GetGitHubLogin(), Review.FilterType);
             ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName, filterPreference);
             return Page();

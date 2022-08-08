@@ -65,7 +65,6 @@ steps:
     displayName: Generate sdk
 
   - bash: |
-      #TODO: delete this bash
       echo "check output dir"
       ls /tmp/output
       echo "show docker.log"
@@ -100,4 +99,4 @@ steps:
       echo "show mockTestOutput.json"
       cat /tmp/output/mockTestOutput.json | echo "don't quite even failed"
     displayName: Check output dir
-    condition: always()
+    condition: ne('$(DEBUGMODE)', 'true')

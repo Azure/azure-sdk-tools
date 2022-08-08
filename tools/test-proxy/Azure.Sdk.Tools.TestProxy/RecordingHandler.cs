@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
+using Azure.Sdk.Tools.TestProxy.Vendored;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
@@ -607,9 +608,8 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             try
             {
-                var fields = PemEncoding.Find(settings.TLSValidationCert);
-                var base64Data = settings.TLSValidationCert[fields.Base64Data];
-                return new X509Certificate2(Encoding.ASCII.GetBytes(base64Data));
+                var span = new ReadOnlySpan<char>(settings.TLSValidationCert.ToCharArray());
+                return PemReader.LoadCertificate(span, null, PemReader.KeyType.Auto, true);
             }
             catch (Exception e)
             {

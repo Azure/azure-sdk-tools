@@ -78,6 +78,7 @@ namespace APIViewWeb
             services.AddSingleton<CosmosCommentsRepository>();
             services.AddSingleton<CosmosPullRequestsRepository>();
             services.AddSingleton<DevopsArtifactRepository>();
+            services.AddSingleton<CosmosUsageSampleRepository>();
 
             services.AddSingleton<ReviewManager>();
             services.AddSingleton<CommentsManager>();
@@ -85,6 +86,7 @@ namespace APIViewWeb
             services.AddSingleton<PullRequestManager>();
             services.AddSingleton<PackageNameManager>();
             services.AddSingleton<UserPreferenceCache>();
+            services.AddSingleton<UsageSampleManager>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();

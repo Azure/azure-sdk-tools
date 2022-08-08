@@ -1,0 +1,26 @@
+@page "{id?}"
+@model APIViewWeb.Pages.Assemblies.UsageSamplePageModel
+@{
+    Layout = "ReviewLayout";
+    ViewData["Title"] = "Usage Samples";
+}
+<div class="container-fluid">
+    <div class="mx-5 mt-2">
+        <div class="row">
+            <div class="col p-2" data-review-id=@Model.Review.ReviewId>
+                @if (Model.Sample.SampleContent == null)
+                {
+                    <div class="text-muted">There is no sample present in the review.</div>
+                    <button> Add a Usage Sample </button>
+                }
+                else
+                {
+                    <div class="border rounded">
+                        <p> There is a sample but you haven't coded this yet </p>
+                    </div>
+                }
+            </div>
+        </div>
+        <partial name="_CommentFormPartial" />
+    </div>
+</div>

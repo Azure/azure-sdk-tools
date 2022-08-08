@@ -67,10 +67,15 @@ class PylintParser:
             if plugin_failed:
                 logging.error(f"Unable to load pylint_guidelines_checker. Check that it is installed.")
         except json.JSONDecodeError as err:
+            from apistub import DiagnosticLevel
             logging.error(f"Error decoding pylint output:\n{stderr_str}")
             logging.error(f"Error content:\n{err}")
-            logging.error(f"==STDOUT==\n{stdout_lines}")
-            raise err
+            logging.error(f"==STDOUT==\n{stdout_lines}\n==END STDOUT==")
+            # instead of raising an error, we will log a pylint error
+            error = PylintError(pkg_name, text="Failure parsing pylint output. Please post an issue in the `Azure/azure-sdk-tools` repository.")
+            error.level = DiagnosticLevel.ERROR
+            cls.items = []
+            return
         cls.items = [PylintError(pkg_name, **x) for x in json_items if x["message-id"][1:3] == PylintParser.AZURE_CHECKER_CODE]
 
     @classmethod

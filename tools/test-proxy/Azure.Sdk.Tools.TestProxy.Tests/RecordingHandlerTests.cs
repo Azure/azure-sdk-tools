@@ -943,7 +943,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             );
 
             Assert.StartsWith("Unable to instantiate a valid cert from the value provided in Transport settings key", assertion.Message);
-            Assert.Contains("No PEM encoded data found. (Parameter 'pemData')", assertion.Message);
+            Assert.Contains("The certificate is missing the public key", assertion.Message);
         }
         #endregion
     }

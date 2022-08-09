@@ -28,6 +28,8 @@ namespace SwaggerApiParser
                 {
                     schemaCache.AddSchema(swaggerFilePath, definition.Key, definition.Value);
                 }
+
+                ret.SwaggerApiViewDefinitions.Add(definition.Key, definition.Value);
             }
 
             foreach (var (currentPath, operations) in swaggerSpec.paths)

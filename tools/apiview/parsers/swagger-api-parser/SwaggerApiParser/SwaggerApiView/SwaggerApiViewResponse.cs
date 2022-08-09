@@ -21,9 +21,10 @@ public class SwaggerApiViewResponse : ITokenSerializable
         if (this.schema != null)
         {
             // ret.Add(TokenSerializer.Intent(context.intent + 1));
-            ret.Add(new CodeFileToken("Schema", CodeFileTokenKind.Keyword));
-            ret.Add(TokenSerializer.Colon());
-            ret.Add(TokenSerializer.NewLine());
+            // ret.Add(new CodeFileToken("Schema", CodeFileTokenKind.Keyword));
+            // ret.Add(TokenSerializer.Colon());
+            // ret.Add(TokenSerializer.NewLine());
+            
             ret.AddRange(this.schema.TokenSerialize(new SerializeContext(context.intent + 2, context.IteratorPath)));
         }
 

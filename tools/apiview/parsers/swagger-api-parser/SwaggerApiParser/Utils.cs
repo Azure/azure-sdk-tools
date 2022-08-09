@@ -172,7 +172,7 @@ namespace SwaggerApiParser
 
         public static string GetDefinitionType(string Ref)
         {
-            return Ref.Split("/").Last();
+            return Ref == null ? "" : Ref.Split("/").Last();
         }
     }
 }

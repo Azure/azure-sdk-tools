@@ -13,6 +13,8 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
 
     public SwaggerApiViewGeneral SwaggerApiViewGeneral { get; set; }
     public SwaggerApiViewPaths Paths { get; set; }
+    
+    public SwaggerApiViewDefinitions SwaggerApiViewDefinitions { get; set; }
 
 
     public string fileName;
@@ -23,6 +25,7 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
     {
         this.Paths = new SwaggerApiViewPaths();
         this.SwaggerApiViewGeneral = new SwaggerApiViewGeneral();
+        this.SwaggerApiViewDefinitions = new SwaggerApiViewDefinitions();
     }
 
     public CodeFileToken[] TokenSerialize(SerializeContext context)
@@ -49,6 +52,15 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
         var pathTokens = this.Paths.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath));
         ret.AddRange(pathTokens);
         context.IteratorPath.Pop();
+        
+        context.IteratorPath.Add("Definitions");
+        ret.Add(TokenSerializer.NavigableToken("Definitions", CodeFileTokenKind.FoldableContentStart, context.IteratorPath.CurrentPath()));
+        ret.Add(TokenSerializer.Colon());
+        ret.Add(TokenSerializer.NewLine());
+        var definitionTokens = this.SwaggerApiViewDefinitions.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath));
+        ret.AddRange(definitionTokens);
+        context.IteratorPath.Pop();
+        
 
         return ret.ToArray();
     }

@@ -1,9 +1,10 @@
+using System;
 using System.Collections.Generic;
 using APIView;
 
 namespace SwaggerApiParser;
 
-public class SwaggerApiViewDefinitions : List<Definition>, INavigable
+public class SwaggerApiViewDefinitions : Dictionary<String, Definition>, INavigable, ITokenSerializable
 {
     public NavigationItem BuildNavigationItem(IteratorPath iteratorPath = null)
     {
@@ -12,5 +13,17 @@ public class SwaggerApiViewDefinitions : List<Definition>, INavigable
         List<NavigationItem> children = new List<NavigationItem>();
 
         return ret;
+    }
+
+    public CodeFileToken[] TokenSerialize(SerializeContext context)
+    {
+        List<CodeFileToken> ret = new List<CodeFileToken>();
+        ret.Add(TokenSerializer.FoldableContentStart());
+        foreach (var kv in this)
+        {
+            ret.AddRange(kv.Value.TokenSerialize(context));
+        }
+        ret.Add(TokenSerializer.FoldableContentEnd());
+        return ret.ToArray();
     }
 }

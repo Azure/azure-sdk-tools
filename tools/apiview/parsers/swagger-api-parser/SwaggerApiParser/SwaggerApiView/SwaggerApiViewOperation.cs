@@ -35,11 +35,15 @@ public class SwaggerApiViewOperation : ITokenSerializable
         if (this.description != null)
         {
             // ret.Add(TokenSerializer.Intent(context.intent));
+            ret.Add(TokenSerializer.NavigableToken("description", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
+            ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken(this.description, CodeFileTokenKind.Literal));
             ret.Add(TokenSerializer.NewLine());
         }
 
         // ret.Add(TokenSerializer.Intent(context.intent));
+        ret.Add(TokenSerializer.NavigableToken("operationId", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
+        ret.Add(TokenSerializer.Colon());
         ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
         ret.Add(TokenSerializer.NewLine());
 
@@ -65,9 +69,9 @@ public class SwaggerApiViewOperation : ITokenSerializable
         ret.Add(TokenSerializer.NewLine());
 
         // ret.Add(TokenSerializer.Intent(context.intent));
-        ret.Add(TokenSerializer.NavigableToken("Parameters", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
-        ret.Add(TokenSerializer.Colon());
-        ret.Add(TokenSerializer.NewLine());
+        // ret.Add(TokenSerializer.NavigableToken("Parameters", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
+        // ret.Add(TokenSerializer.Colon());
+        // ret.Add(TokenSerializer.NewLine());
 
         // ret.Add(TokenSerializer.FoldableContentStart());
         ret.AddRange(PathParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));

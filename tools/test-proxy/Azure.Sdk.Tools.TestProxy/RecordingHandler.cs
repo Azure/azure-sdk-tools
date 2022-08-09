@@ -656,12 +656,24 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 clientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage httpRequestMessage, X509Certificate2 cert, X509Chain x509Chain, SslPolicyErrors sslPolicyErrors) =>
                 {
-                    bool isChainValid = certificateChain.Build(cert);
-                    if (!isChainValid) return false;
-                    var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
-                        .Any(x => x.Certificate.Thumbprint == ledgerCert.Thumbprint);
+                    if (!string.IsNullOrWhiteSpace(customizations.TSLValidationCertHost) && httpRequestMessage.RequestUri.Host != customizations.TSLValidationCertHost)
+                    {
+                        if (sslPolicyErrors == SslPolicyErrors.None)
+                        {
+                            return true;
+                        }
 
-                    return isCertSignedByTheTlsCert;
+                        return false;
+                    }
+                    else
+                    {
+                        bool isChainValid = certificateChain.Build(cert);
+                        if (!isChainValid) return false;
+                        var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
+                            .Any(x => x.Certificate.Thumbprint == ledgerCert.Thumbprint);
+
+                        return isCertSignedByTheTlsCert;
+                    }
                 };
             }
             else if (insecure)

@@ -4,6 +4,7 @@
 
 # Git Hub integration and bot rules
 /.github/                        @jsquire @ronniegeraghty
+/.github/CODEOWNERS              @azure/azure-sdk-eng
 
 ###########
 # Eng Sys

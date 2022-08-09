@@ -48,13 +48,7 @@ namespace APIViewWeb
             }
             catch
             {
-                var file = new UsageSampleFileModel();
-                var sample = new UsageSampleModel(reviewId, file.UsageSampleFileId);
-                await _samplesContainer.UpsertItemAsync(sample);
-
-                itemQueryIterator = _samplesContainer.GetItemQueryIterator<UsageSampleModel>(query);
-                var newResult = await itemQueryIterator.ReadNextAsync();
-                return newResult.Resource.First();
+                return new UsageSampleModel(reviewId, null);
             }
         }
 

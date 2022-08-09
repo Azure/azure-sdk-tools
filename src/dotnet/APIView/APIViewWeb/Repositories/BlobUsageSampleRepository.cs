@@ -28,9 +28,7 @@ namespace APIViewWeb
             }
             catch
             {
-                await UploadUsageSampleAsync(sampleFileId, new MemoryStream(Encoding.UTF8.GetBytes("No Sample.")));
-                var info = await GetBlobClient(sampleFileId).DownloadAsync();
-                return info.Value.Content;
+                return new MemoryStream(Encoding.UTF8.GetBytes("No Sample."));
             }
         }
 

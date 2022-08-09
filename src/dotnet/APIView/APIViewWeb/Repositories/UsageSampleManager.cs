@@ -41,7 +41,6 @@ namespace APIViewWeb.Repositories
 
         public async Task<string> GetUsageSampleContentAsync(string fileId)
         {
-
             var file = await _sampleFilesRepository.GetUsageSampleAsync(fileId);
 
             if(file == null) return null;
@@ -52,27 +51,36 @@ namespace APIViewWeb.Repositories
             return htmlString;
         }
 
-        public async Task<UsageSampleModel> CreateReviewUsageSampleAsync(string reviewId, string sample)
+        public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(string reviewId, string sample)
         {
+            if (sample == "No Sample.")
+            {
+                await DeleteUsageSampleAsync(reviewId);
+                return new UsageSampleModel(reviewId, null);
+            }
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(sample));
 
-            return await CreateReviewUsageSampleAsync(reviewId, stream);
+            return await UpsertReviewUsageSampleAsync(reviewId, stream);
         }
 
-        public async Task<UsageSampleModel> CreateReviewUsageSampleAsync(string reviewId, Stream fileStream)
+        public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(string reviewId, Stream fileStream)
         {
+            // remove the old file (if present)
+            UsageSampleModel Sample = await _samplesRepository.GetUsageSampleAsync(reviewId);
+            if(Sample.UsageSampleFileId != null)
+            {
+                await _sampleFilesRepository.DeleteUsageSampleAsync(Sample.UsageSampleFileId);
+            }
 
-            UsageSampleModel sample = await _samplesRepository.GetUsageSampleAsync(reviewId);
+            // Create new file and upsert the updated model
             UsageSampleFileModel SampleFile = new UsageSampleFileModel();
 
-            await _sampleFilesRepository.DeleteUsageSampleAsync(sample.UsageSampleFileId);
+            Sample.UsageSampleFileId = SampleFile.UsageSampleFileId;
 
-            sample.UsageSampleFileId = SampleFile.UsageSampleFileId;
-
-            await _samplesRepository.UpsertUsageSampleAsync(sample);
+            await _samplesRepository.UpsertUsageSampleAsync(Sample);
             await _sampleFilesRepository.UploadUsageSampleAsync(SampleFile.UsageSampleFileId, fileStream);
 
-            return sample;
+            return Sample;
         }
 
         public async Task DeleteUsageSampleAsync(string reviewId) 

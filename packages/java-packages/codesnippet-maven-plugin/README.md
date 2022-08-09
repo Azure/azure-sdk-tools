@@ -12,7 +12,7 @@ First, reference the plugin in your maven project's `pom.xml` file.
 <plugin>
   <groupId>com.azure.tools</groupId>
   <artifactId>codesnippet-maven-plugin</artifactId>
-  <version>1.0.0-beta.1</version>
+  <version>1.0.0-beta.8</version>
   <configuration>
     <codesnippetGlob>**/src/samples/java/**/*.java</codesnippetGlob>
     <codesnippetRootDirectory>${project.basedir}/src/samples/java</codesnippetRootDirectory>

@@ -46,7 +46,7 @@ namespace ApiView
 
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
 
-        public List<CodeFileToken[]> Sections { get; set; }
+        public List<CodeFileToken[]> LeafSections { get; set; }
 
         public NavigationItem[] Navigation { get; set; }
 
@@ -68,7 +68,7 @@ namespace ApiView
                 var index = 0;
                 var tokens = codeFile.Tokens;
                 var newTokens = new List<CodeFileToken>();
-                var allSections = new List<CodeFileToken[]>();
+                var leafSections = new List<CodeFileToken[]>();
                 var section = new List<CodeFileToken>();
                 var isLeaf = false;
 
@@ -78,24 +78,30 @@ namespace ApiView
                     if (token.Kind == CodeFileTokenKind.FoldableSectionHeading)
                     {
                         section.Add(token);
-                        newTokens.AddRange(section);
-                        section.Clear();
                         isLeaf = false;
                     }
                     else if (token.Kind == CodeFileTokenKind.FoldableSectionContentStart)
                     {
                         section.Add(token);
+                        newTokens.AddRange(section);
+                        section.Clear();
                         isLeaf = true;
                     }
                     else if (token.Kind == CodeFileTokenKind.FoldableSectionContentEnd)
                     {
-                        section.Add(token);
                         if (isLeaf)
                         {
-                            allSections.Add(section.ToArray());
+                            leafSections.Add(section.ToArray());
                             section.Clear();
                             isLeaf = false;
+
+                            // leafSectionKeyToken and newLineToken will be used to identify the appriopriate index in leafSections
+                            var leafSectionKeyToken = new CodeFileToken($"{leafSections.Count()}", CodeFileTokenKind.Literal);
+                            var newLineToken = new CodeFileToken("", CodeFileTokenKind.Newline);
+                            section.Add(leafSectionKeyToken);
+                            section.Add(newLineToken);
                         }
+                        section.Add(token);
                     }
                     else
                     {
@@ -105,7 +111,7 @@ namespace ApiView
                 }
                 newTokens.AddRange(section);
                 codeFile.Tokens = newTokens.ToArray();
-                codeFile.Sections = allSections;
+                codeFile.LeafSections = leafSections;
             }
             return codeFile;
         }

@@ -495,7 +495,7 @@ public final class SnippetReplacer {
         }
 
         for (Map.Entry<String, List<String>> missingBeginTag : missingBeginTags.entrySet()) {
-            errorMessage.append("The following codesnippet aliases in file' ")
+            errorMessage.append("The following codesnippet aliases in file '")
                 .append(missingBeginTag.getKey())
                 .append("' didn't have a matching BEGIN alias:")
                 .append(System.lineSeparator());

@@ -3,7 +3,9 @@
 
 using APIView;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -44,6 +46,8 @@ namespace ApiView
 
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
 
+        public List<CodeFileToken[]> Sections { get; set; }
+
         public NavigationItem[] Navigation { get; set; }
 
         public CodeDiagnostic[] Diagnostics { get; set; }
@@ -53,11 +57,57 @@ namespace ApiView
             return new CodeFileRenderer().Render(this).CodeLines.ToString();
         }
 
-        public static async Task<CodeFile> DeserializeAsync(Stream stream)
+        public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)
         {
-            return await JsonSerializer.DeserializeAsync<CodeFile>(
+            var codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(
                 stream,
                 JsonSerializerOptions);
+
+            if (hasSections)
+            {
+                var index = 0;
+                var tokens = codeFile.Tokens;
+                var newTokens = new List<CodeFileToken>();
+                var allSections = new List<CodeFileToken[]>();
+                var section = new List<CodeFileToken>();
+                var isLeaf = false;
+
+                while (index < tokens.Length)
+                {
+                    var token = tokens[index];
+                    if (token.Kind == CodeFileTokenKind.FoldableSectionHeading)
+                    {
+                        section.Add(token);
+                        newTokens.AddRange(section);
+                        section.Clear();
+                        isLeaf = false;
+                    }
+                    else if (token.Kind == CodeFileTokenKind.FoldableSectionContentStart)
+                    {
+                        section.Add(token);
+                        isLeaf = true;
+                    }
+                    else if (token.Kind == CodeFileTokenKind.FoldableSectionContentEnd)
+                    {
+                        section.Add(token);
+                        if (isLeaf)
+                        {
+                            allSections.Add(section.ToArray());
+                            section.Clear();
+                            isLeaf = false;
+                        }
+                    }
+                    else
+                    {
+                        section.Add(token);
+                    }
+                    index++;
+                }
+                newTokens.AddRange(section);
+                codeFile.Tokens = newTokens.ToArray();
+                codeFile.Sections = allSections;
+            }
+            return codeFile;
         }
 
         public async Task SerializeAsync(Stream stream)

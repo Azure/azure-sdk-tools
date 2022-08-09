@@ -10,29 +10,14 @@ namespace APIViewWeb
     public class UsageSampleModel
     {
         [JsonProperty("id")]
-        public string SampleId { get; set; } 
+        public string SampleId { get; set; } = IdHelper.GenerateId();
+        public string ReviewId { get; set; }
+        public string UsageSampleFileId { get; set; }
 
-        public string SampleContent { get; set; }
-
-        public string UsageSampleFileId { get; set; } = IdHelper.GenerateId();
-
-        public UsageSampleModel(string revId, Stream sampleContent)
+        public UsageSampleModel(string revId, string fileId)
         {
-            SampleId = revId;
-            if (sampleContent != null) 
-            { 
-                String content = sampleContent.ToString(); // Write to file later.
-                SampleContent = parseMDtoHTML(content);
-            }
-            else
-            {
-                SampleContent = null;
-            }
-        }
-
-        private string parseMDtoHTML(string md)
-        {
-            return md;
+            ReviewId = revId;
+            UsageSampleFileId = fileId;
         }
 
     }

@@ -21,48 +21,66 @@ namespace APIViewWeb.Repositories
     {
         //private readonly IAuthorizationService _authorizationService;
         private readonly CosmosUsageSampleRepository _samplesRepository;
+        private readonly BlobUsageSampleRepository _sampleFilesRepository;
 
         public UsageSampleManager(
             //IAuthorizationService authorizationService, 
-            CosmosUsageSampleRepository samplesRepository)
+            CosmosUsageSampleRepository samplesRepository,
+            BlobUsageSampleRepository sampleFilesRepository)
         {
             //_authorizationService = authorizationService;
             _samplesRepository = samplesRepository;
+            _sampleFilesRepository = sampleFilesRepository;
         }
 
-        public async Task<UsageSampleModel> GetReviewUsageSampleAsync(string sampleId)
+        public async Task<UsageSampleModel> GetReviewUsageSampleAsync(string reviewId)
         {
-            var sample = await _samplesRepository.GetUsageSampleAsync(sampleId);
-            // await _sampleFilesRepository.GetUsageSampleAsync(sample.UsageSampleFileId);
+            var sample = await _samplesRepository.GetUsageSampleAsync(reviewId);
             return sample;
         }
-        
-        public async Task<UsageSampleModel> CreateReviewUsageSampleAsync(string sampleId, string sample)
+
+        public async Task<string> GetUsageSampleContentAsync(string fileId)
         {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
 
-            writer.Write(sample);
-            writer.Flush();
-            stream.Position = 0;
+            var file = await _sampleFilesRepository.GetUsageSampleAsync(fileId);
 
-            return await CreateReviewUsageSampleAsync(sampleId, stream);
+            if(file == null) return null;
+
+            StreamReader reader = new StreamReader(file);
+            string htmlString = reader.ReadToEnd();
+
+            return htmlString;
         }
 
-        public async Task<UsageSampleModel> CreateReviewUsageSampleAsync(string sampleId, Stream fileStream)
+        public async Task<UsageSampleModel> CreateReviewUsageSampleAsync(string reviewId, string sample)
         {
-            UsageSampleModel newSample = new UsageSampleModel(sampleId, fileStream);
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(sample));
 
-            await _samplesRepository.UpsertUsageSampleAsync(newSample);
-
-            return newSample;
+            return await CreateReviewUsageSampleAsync(reviewId, stream);
         }
 
-        public async Task DeleteUsageSampleAsync(string sampleId) 
+        public async Task<UsageSampleModel> CreateReviewUsageSampleAsync(string reviewId, Stream fileStream)
         {
-            var sampleModel = await _samplesRepository.GetUsageSampleAsync(sampleId);
+
+            UsageSampleModel sample = await _samplesRepository.GetUsageSampleAsync(reviewId);
+            UsageSampleFileModel SampleFile = new UsageSampleFileModel();
+
+            await _sampleFilesRepository.DeleteUsageSampleAsync(sample.UsageSampleFileId);
+
+            sample.UsageSampleFileId = SampleFile.UsageSampleFileId;
+
+            await _samplesRepository.UpsertUsageSampleAsync(sample);
+            await _sampleFilesRepository.UploadUsageSampleAsync(SampleFile.UsageSampleFileId, fileStream);
+
+            return sample;
+        }
+
+        public async Task DeleteUsageSampleAsync(string reviewId) 
+        {
+            var sampleModel = await _samplesRepository.GetUsageSampleAsync(reviewId);
 
             await _samplesRepository.DeleteUsageSampleAsync(sampleModel);
+            await _sampleFilesRepository.DeleteUsageSampleAsync(sampleModel.UsageSampleFileId);
         }
 
     }

@@ -8,7 +8,7 @@
     <div class="mx-5 mt-2">
         <div class="row">
             <div class="col p-2" data-review-id=@Model.Review.ReviewId>
-                @if (Model.Sample.SampleContent == null)
+                @if (Model.Sample == null || Model.SampleContent == "No Sample.")
                 {
                     <div class="text-muted">There is no sample present in the review. 
                         <br /> <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add Usage Sample</button> 
@@ -17,7 +17,15 @@
                 else
                 {
                     <div class="border rounded">
-                        <p> There is a sample but you haven't coded this yet </p>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Replace Usage Sample</button> 
+                        <form asp-page-handler="Upload" method="post">
+                            <input asp-for="Upload.sampleString" hidden value="No Sample." />
+                            <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                            <button type="submit" name="submit" value="Submit" class="btn btn-primary">Remove Usage Sample</button>
+                        </form>
+                    </div>
+                    <div class="border rounded">
+                        <p> @Model.SampleContent </p>
                     </div>
                 }
             </div>
@@ -53,21 +61,22 @@
                             <div class="tab-content border rounded p-3">
                                 <div class="tab-pane active" id="md-text">
                                     <div class="new-comment-content">
-                                        <form data-post-update="usagesamples" class="new-thread-comment-form" method="post" asp-controller="UsageSample" asp-action="Add">
-                                            <input name="reviewId" hidden value="@Model.Review.ReviewId"/> 
+                                        <form asp-page-handler="Upload" method="post">
                                             <div class="new-sample-content">
-                                                <textarea class="new-thread-comment-text form-control" name="sampleText" rows="5" placeholder="Enter your markdown formatted usage sample here"></textarea>
+                                                <textarea asp-for="Upload.sampleString" class="new-thread-comment-text form-control" rows="5" placeholder="Enter your markdown formatted usage sample here"></textarea>
                                             </div>
+                                            <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
                                             <button type="submit" name="submit" value="Submit" class="comment-submit-button btn btn-outline-dark">Add Sample</button>
                                         </form>
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="md-file">
                                     <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
+                                        <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
                                         <div class="form-group">
                                             <div class="custom-file">
-                                                <input asp-for="Upload.Files" type="file" class="custom-file-input">
-                                                <label asp-for="Upload.Files" class="custom-file-label">Select usage sample for this review</label>
+                                                <input asp-for="Upload.File" type="file" class="custom-file-input">
+                                                <label asp-for="Upload.File" class="custom-file-label">Select usage sample for this review</label>
                                             </div>
                                         </div>
                                         <div class="modal-footer">

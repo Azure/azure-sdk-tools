@@ -19,7 +19,7 @@ namespace APIViewWeb.Pages.Assemblies
         public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
         public UsageSampleModel Sample { get; private set; }
-        public string NewSampleContent { get; set; }
+        public string SampleContent { get; set; }
 
         public UsageSamplePageModel(
             IConfiguration configuration,
@@ -32,13 +32,14 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         [FromForm]
-        public UploadModel Upload { get; set; }
+        public UsageSampleUploadModel Upload { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
             TempData["Page"] = "samples";
             Review = await _reviewManager.GetReviewAsync(User, id);
             Sample = await _samplesManager.GetReviewUsageSampleAsync(id);
+            SampleContent = await _samplesManager.GetUsageSampleContentAsync(Sample.UsageSampleFileId);
             return Page();
         }
 
@@ -49,15 +50,21 @@ namespace APIViewWeb.Pages.Assemblies
                 return RedirectToPage();
             }
 
-            var file = Upload.Files.SingleOrDefault();
+            var file = Upload.File;
+            var sampleString = Upload.sampleString;
+            var reviewId = Upload.ReviewId;
 
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    var reviewModel = await _samplesManager.CreateReviewUsageSampleAsync(Review.ReviewId, openReadStream);
+                    await _samplesManager.CreateReviewUsageSampleAsync(reviewId, openReadStream);
                     return RedirectToPage();
                 }
+            }
+            else if (sampleString != null)
+            {
+                await _samplesManager.CreateReviewUsageSampleAsync(reviewId, sampleString);
             }
 
             return RedirectToPage();

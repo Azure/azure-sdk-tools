@@ -20,22 +20,42 @@ namespace APIViewWeb
         public CosmosUsageSampleRepository(IConfiguration configuration)
         {
             var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
-            _samplesContainer = client.GetContainer("APIView", "usagesamples");
+            _samplesContainer = client.GetContainer("APIView", "UsageSamples");
         }
 
-        public async Task<UsageSampleModel> GetUsageSampleAsync(string sampleId)
+        public async Task<UsageSampleModel> GetUsageSampleAsync(string reviewId)
         {
-            return await _samplesContainer.ReadItemAsync<UsageSampleModel>(sampleId, new PartitionKey(sampleId));
+            return await GetUsageSamplesFromQueryAsync($"SELECT * FROM UsageSamples c WHERE c.ReviewId = '{reviewId}'", reviewId);
         }
         
         public async Task DeleteUsageSampleAsync(UsageSampleModel Sample)
         {
-            await _samplesContainer.DeleteItemAsync<UsageSampleModel>(Sample.SampleId, new PartitionKey(Sample.SampleId));
+            await _samplesContainer.DeleteItemAsync<UsageSampleModel>(Sample.SampleId, new PartitionKey(Sample.ReviewId));
         }
         
         public async Task UpsertUsageSampleAsync(UsageSampleModel sampleModel)
         {
-            await _samplesContainer.UpsertItemAsync(sampleModel, new PartitionKey(sampleModel.SampleId));
+            await _samplesContainer.UpsertItemAsync(sampleModel, new PartitionKey(sampleModel.ReviewId));
+        }
+
+        private async Task<UsageSampleModel> GetUsageSamplesFromQueryAsync(string query, string reviewId)
+        {
+            var itemQueryIterator = _samplesContainer.GetItemQueryIterator<UsageSampleModel>(query);
+            var result = await itemQueryIterator.ReadNextAsync();
+            try
+            {
+                return result.Resource.First();
+            }
+            catch
+            {
+                var file = new UsageSampleFileModel();
+                var sample = new UsageSampleModel(reviewId, file.UsageSampleFileId);
+                await _samplesContainer.UpsertItemAsync(sample);
+
+                itemQueryIterator = _samplesContainer.GetItemQueryIterator<UsageSampleModel>(query);
+                var newResult = await itemQueryIterator.ReadNextAsync();
+                return newResult.Resource.First();
+            }
         }
 
     }

@@ -26,15 +26,5 @@ steps:
 
   - bash: |
       echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/$(SDK_OWNER)/azure-sdk-for-${{parameters.sdk}}.git"
-      if [ ${{parameters.sdk}} = "js" ]; then
-        echo "##vso[task.setvariable variable=sdkMainBranch;]js-dpg"
-      elif [ ${{parameters.sdk}} = "net" ]; then
-        echo "##vso[task.setvariable variable=sdkMainBranch;]yc/dpgauto"
-      elif [ ${{parameters.sdk}} = "python" ]; then
-        echo "##vso[task.setvariable variable=sdkMainBranch;]dpg-readme-sdkGeneration"
-      elif [ ${{parameters.sdk}} = "java" ]; then
-        echo "##vso[task.setvariable variable=sdkMainBranch;]dpg-readme-codegen"
-      else
-        echo "##vso[task.setvariable variable=sdkMainBranch;]$(sdkRepoBaseBranch)"
-      fi
+      echo "##vso[task.setvariable variable=sdkMainBranch;]$(sdkRepoBaseBranch)"
     displayName: Set sdk repo

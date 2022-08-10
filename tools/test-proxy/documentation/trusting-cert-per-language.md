@@ -43,6 +43,8 @@ In this case, you can manually set it in 'Keychain Access' to work around the pr
 
 Also note that taken to trust this cert will _also apply to installing the dotnet tool directly_. The test-proxy tool will consume the certificate just the same as the docker container does.
 
+On a Mac(OS X), If port 5000 is the problem, you need to check the 'AirPlay' sharing feature in settings or kill port process. [see here](https://github.com/Azure/azure-sdk-tools/pull/3739#issuecomment-1207217025)
+
 ## Go
 
 [Reference This Document](https://forfuncsake.github.io/post/2017/08/trust-extra-ca-cert-in-go-app/) for a walkthrough on how to add the certificate to the `trusted pool`.

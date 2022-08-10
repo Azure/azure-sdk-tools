@@ -42,7 +42,8 @@ export function parseGenerateLog(
     pipelineBuildId: string,
     taskName: string,
     logfile: string,
-    logFilter: LogFilter
+    logFilter: LogFilter,
+    taskExeResult: TaskResultStatus
 ): TaskResultCommon {
     let errorNum = 0;
     let warnNum = 0;
@@ -86,7 +87,8 @@ export function parseGenerateLog(
         pipelineBuildId: pipelineBuildId,
         errorCount: errorNum,
         warningCount: warnNum,
-        messages: messages
+        messages: messages,
+        result: taskExeResult
     };
 
     return result;
@@ -110,7 +112,7 @@ export function createTaskResult(
             warningCount: 0
         };
     } else {
-        commonResult = parseGenerateLog(pipelineBuildId, taskname, logfile, logFilter);
+        commonResult = parseGenerateLog(pipelineBuildId, taskname, logfile, logFilter, taskExeResult);
     }
     if (taskname === AzureSDKTaskName.MockTest || taskname === AzureSDKTaskName.LiveTest) {
         if (taskOutput === undefined) {

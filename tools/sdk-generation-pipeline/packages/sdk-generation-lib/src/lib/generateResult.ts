@@ -88,7 +88,7 @@ export function parseGenerateLog(
         errorCount: errorNum,
         warningCount: warnNum,
         messages: messages,
-        result: taskExeResult,
+        result: taskExeResult
     };
 
     return result;

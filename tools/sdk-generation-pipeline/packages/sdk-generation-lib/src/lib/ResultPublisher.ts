@@ -50,7 +50,7 @@ export class ResultDBPublisher {
             ssl: this.context.ssl,
             synchronize: this.context.synchronize,
             logging: this.context.logging,
-            entities: [TaskResultEntity, CodeGeneration],
+            entities: [TaskResultEntity, CodeGeneration]
         });
     }
 
@@ -101,9 +101,9 @@ export class ResultBlobPublisher {
         const logsAndResultPathArray = JSON.parse(logsAndResultPath);
         for (const file of logsAndResultPathArray) {
             if (fs.existsSync(file)) {
-                const blobName: string = file.includes('.json')
-                    ? `${this.pipelineBuildId}/logs/${this.sdkGenerationName}-${taskName}-result.json`
-                    : `${this.pipelineBuildId}/logs/${this.sdkGenerationName}-${taskName}.log`;
+                const blobName: string = file.includes('.json') ?
+                    `${this.pipelineBuildId}/logs/${this.sdkGenerationName}-${taskName}-result.json` :
+                    `${this.pipelineBuildId}/logs/${this.sdkGenerationName}-${taskName}.log`;
                 await this.azureBlobClient.publishBlob(file, blobName);
                 logger.info(`Publish ${file} Success !!!`);
             } else {

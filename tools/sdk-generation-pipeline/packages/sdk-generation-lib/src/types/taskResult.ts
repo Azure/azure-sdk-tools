@@ -1,23 +1,23 @@
 import * as fs from 'fs';
 import { Column, Entity, ObjectIdColumn } from 'typeorm';
 
+import { logger } from '../utils/logger';
+import { requireJsonc } from '../utils/requireJsonc';
 import { getTaskBasicConfig, TaskBasicConfig } from './taskBasicConfig';
 import { GenerateAndBuildOutput } from './taskInputAndOuputSchemaTypes/GenerateAndBuildOutput';
 import { InitOutput } from './taskInputAndOuputSchemaTypes/InitOutput';
-import { logger } from '../utils/logger';
-import { requireJsonc } from '../utils/requireJsonc';
 import { TestOutput } from './taskInputAndOuputSchemaTypes/TestOutput';
 
 @Entity('sdkGenerationResults')
 export class TaskResultEntity {
     @ObjectIdColumn()
-    id: string;
+        id: string;
     @Column()
-    key: string;
+        key: string;
     @Column()
-    pipelineBuildId: string;
+        pipelineBuildId: string;
     @Column()
-    taskResult: TaskResult;
+        taskResult: TaskResult;
 }
 
 export enum TaskResultStatus {
@@ -106,7 +106,7 @@ export function setTaskResult(config: TaskBasicConfig, taskName: string) {
         pipelineBuildId: '',
         result: TaskResultStatus.Success,
         errorCount: 0,
-        warningCount: 0,
+        warningCount: 0
     };
 }
 
@@ -124,7 +124,7 @@ export function generateTotalResult(taskResults: TaskResult[], pipelineBuildId: 
         pipelineBuildId: pipelineBuildId,
         result: TaskResultStatus.Success,
         errorCount: 0,
-        messages: [],
+        messages: []
     };
 
     if (taskResults.length === 0) {

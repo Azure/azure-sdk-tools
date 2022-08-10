@@ -10,6 +10,8 @@ $(() => {
   const HIDE_LINE_NUMBERS = "#hide-line-numbers";
   const HIDE_LEFT_NAVIGATION = "#hide-left-navigation";
 
+  const TOGGLE_DOCUMENTATION = ".toggle-documentation";
+
   hideCheckboxIfNoDocs();
 
   /* FUNCTIONS
@@ -81,6 +83,24 @@ $(() => {
 
   $(SHOW_DIFFONLY_CHECKBOX).on("click", e => {
     $(SHOW_DIFFONLY_HREF)[0].click();
+  });
+
+  $(TOGGLE_DOCUMENTATION).on("click", function(e){
+    // remove data-documented-by previous actually hide
+    const documentedBy = $(this).data('documented-by');
+    const row = $(this).parent().parent().parent().parent().parent().parent();
+    const table = row.parent();
+    for(var i = 1; i <= documentedBy; i++) {
+      $(table.children()[row.index() - i]).toggle();
+    }
+
+    if($(this).text() == "-") {
+      this.innerText = "+";
+    } else {
+      this.innerText = "-";
+    }
+    // console.log($(this).parent().parent().parent().parent().parent().parent());
+    // console.log($(this).parent().parent().parent().parent().parent().parent().index());
   });
 
   $(HIDE_LINE_NUMBERS).on("click", e => {

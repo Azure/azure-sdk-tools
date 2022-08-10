@@ -39,8 +39,9 @@ namespace ApiView
                 if (enableSkipDiff && isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
                     continue;
 
-                if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
-                    continue;
+                // if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
+                if (isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
+                        continue;
 
                 switch(token.Kind)
                 {

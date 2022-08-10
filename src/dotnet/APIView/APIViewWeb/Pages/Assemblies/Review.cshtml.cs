@@ -186,20 +186,43 @@ namespace APIViewWeb.Pages.Assemblies
                     diffLine.Kind != DiffLineKind.Removed ?
                         diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
                         Array.Empty<CodeDiagnostic>(),
-                    ++index
+                    ++index,
+                    new int[] { } // temp!
                 )).ToArray();
         }
 
         private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments)
         {
+            List<int> documentedBy = new List<int>();
             return lines.Select(
-                (line, index) => new CodeLineModel(
-                    DiffLineKind.Unchanged,
-                    line,
-                    comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
-                    diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
-                    ++index
-                )).ToArray();
+                (line, index) =>
+                {
+                    index++;
+                    if (line.DisplayString.Contains("code-comment"))
+                    {
+                        documentedBy.Add(index);
+                        return new CodeLineModel(
+                            DiffLineKind.Unchanged,
+                            line,
+                            comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
+                            diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
+                            index,
+                            new int[] {}
+                        );
+                    } else
+                    {
+                        CodeLineModel c = new CodeLineModel(
+                            DiffLineKind.Unchanged,
+                            line,
+                            comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
+                            diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
+                            index,
+                            documentedBy.ToArray()
+                        );
+                        documentedBy = new List<int>();
+                        return c;
+                    }
+                }).ToArray();
         }
 
         private int ComputeActiveConversations(CodeLine[] lines, ReviewCommentsModel comments)

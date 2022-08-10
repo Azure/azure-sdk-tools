@@ -22,6 +22,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public string TLSValidationCert { get; set; }
 
         /// <summary>
+        /// When providing a TLS Validation Cert, that validation cert will often only apply to a single hostname. Providing this hostname as an argument ensures
+        /// that this TLSValidationCert will only be utilized when attempting to reach out to the value contained in TLSValidationCertHost.
+        /// </summary>
+        public string TSLValidationCertHost { get; set; }
+
+        /// <summary>
         /// Each certificate pair contained within this list should be added to the clientHandler for the server or an individual recording.
         /// </summary>
         public List<PemPair> Certificates { get; set; }

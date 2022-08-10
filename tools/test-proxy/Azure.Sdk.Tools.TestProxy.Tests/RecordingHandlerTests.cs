@@ -927,6 +927,21 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Contains("Unable to instantiate a new X509 certificate from the provided value and key.", assertion.Message);
         }
 
+
+        [Fact]
+        public void TestSetRecordingOptionsTransportWithTLSCert()
+        {
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\", \"TLSValidationCertHost\":\"azure.blobs.windows.net\", \"Certificates\": [ {{ \"PemValue\": \"{1}\", \"PemKey\": \"{2}\" }}]}}}}", certValue, pemValue, pemKey);
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
+
+            testRecordingHandler.SetRecordingOptions(inputBody);
+        }
+
         [Fact]
         public void TestSetRecordingOptionsInValidTransportWithTLSCert()
         {

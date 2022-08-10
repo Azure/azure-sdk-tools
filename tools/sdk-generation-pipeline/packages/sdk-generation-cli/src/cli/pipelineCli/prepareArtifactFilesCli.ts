@@ -41,7 +41,6 @@ async function prepareSourceCode(
     language: string,
     artifactDir: string
 ) {
-    const gitOperationWrapper: GitOperationWrapper = new GitOperationWrapper();
     for (const p of generateAndBuildOutput.packages) {
         const packageName = p.packageName;
         const packagePaths = p.path;
@@ -53,6 +52,8 @@ async function prepareSourceCode(
             }
 
             if (fs.lstatSync(packagePath).isDirectory()) {
+                const gitOperationWrapper: GitOperationWrapper = new GitOperationWrapper(packagePath);
+
                 for (const filePath of await gitOperationWrapper.getFileListInPackageFolder(packagePath)) {
                     copyFile(
                         `${path.join(packagePath, filePath)}`,

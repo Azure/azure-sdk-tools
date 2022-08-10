@@ -21,9 +21,10 @@ class Diagnostic:
     id_counter = 1
 
     def __init__(self, *, obj: "PylintError", target_id: str):
-        self.diagnostic_id = "AZ_PY_{}".format(Diagnostic.id_counter)
+        diagnostic_number = Diagnostic.id_counter
+        self.diagnostic_id = f"AZ_PY_{diagnostic_number}"
         Diagnostic.id_counter += 1
-        self.text = f"({self.diagnostic_id}) {obj.message} [{obj.symbol}]"
+        self.text = f"{obj.message} [{obj.symbol}]"
         self.help_link_uri = obj.help_link
         self.target_id = target_id
         self.level = obj.level

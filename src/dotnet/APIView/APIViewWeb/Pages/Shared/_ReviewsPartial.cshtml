@@ -26,7 +26,7 @@
                                 @if (review.Language != null)
                                 {
                                     string iconClassName = "icon-" + @review.Language.ToLower();
-                                    if(@review.LanguageVariant != null && @review.LanguageVariant.ToLower() != "default")
+                                   @if (!string.IsNullOrEmpty(review.LanguageVariant) && review.LanguageVariant.ToLower() != "default")
                                     {
                                         iconClassName += "-" + @review.LanguageVariant.ToLower();
                                     }

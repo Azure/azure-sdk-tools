@@ -3,26 +3,22 @@ param (
   [string]$OutputPath
 )
 
-function Merge-Files([string[]]$FileSpecs) {
-  $lines = @()
-
-  foreach ($fileSpec in $FileSpecs) {
-    $files = Get-Item -Path $fileSpec
-
-    foreach ($file in $files) {
-        $Lines += '/////////////////////////////////////////////////////////////////////////////////////////'
-        $Lines += "// Imported from $(Resolve-Path $file.FullName -Relative)"
-        $Lines += ''
-        $Lines += Get-Content $file
-        $Lines += ''
-        $Lines += ''
-    }
+function ReadFiles([IO.FileInfo[]] $files) {
+  foreach ($file in $files) {
+      Write-Output '/////////////////////////////////////////////////////////////////////////////////////////'
+      Write-Output "// Imported from $(Resolve-Path $file.FullName -Relative)"
+      Write-Output ''
+      Get-Content $file
+      Write-Output ''
+      Write-Output ''
   }
-
-  return $lines
 }
 
-Merge-Files `
-  "$PSScriptRoot/tables/*.kql", `
-  "$PSScriptRoot/functions/*.kql" `
-| Set-Content $OutputPath
+$lines = @()
+
+$lines += ReadFiles (Get-ChildItem -Path "$PSScriptRoot/tables/" -Include "*.kql" -Recurse)
+$lines += ReadFiles (Get-ChildItem -Path "$PSScriptRoot/functions/" -Include "*.kql" -Exclude "DashboardQuery.kql", "ManagedDefinitionBuild.kql" -Recurse)
+$lines += ReadFiles (Get-Item -Path "$PSScriptRoot/functions/DashboardQuery.kql")
+$lines += ReadFiles (Get-Item -Path "$PSScriptRoot/functions/ManagedDefinitionBuild.kql")
+
+$lines | Set-Content $OutputPath

@@ -1,6 +1,6 @@
 .create-or-alter materialized-view with (docstring = 'Log extracted metrics') Metrics on table BuildLogLine
 {
-    BuildLogLine
+BuildLogLine
     | where Message has_all ("logmetric", "name", "value", "timestamp")
     | where Message startswith "logmetric:"
     | extend json = todynamic(extract(@"^(?i:logmetric):\s*(.*?)\s*$", 1, Message))

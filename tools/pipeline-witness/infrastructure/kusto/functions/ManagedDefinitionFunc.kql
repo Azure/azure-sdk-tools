@@ -1,6 +1,6 @@
-.create-or-alter function ManagedDefinition
-{
-    LatestDefinition
+.create-or-alter function ManagedDefinitionFunc()
+{ 
+    LatestDefinition()
     | where Variables contains "meta"
     | extend metas = parse_json(Variables)
     | extend Platform = metas["meta.platform"].value

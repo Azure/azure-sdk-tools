@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using APIView;
 
 namespace SwaggerApiParser;
@@ -21,10 +23,21 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
-        ret.Add(TokenSerializer.FoldableContentStart());
-        ret.AddRange(TokenSerializer.TokenSerialize(this, context.intent));
+
+        ret.AddRange(TokenSerializer.KeyValueTokens("swagger", swagger));
+        ret.Add(new CodeFileToken("info", CodeFileTokenKind.FoldableParentToken));
+        ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
-        ret.Add(TokenSerializer.FoldableContentEnd());
+        ret.AddRange(info.TokenSerialize(context));
+
+        var schemesStr = String.Join(",", schemes);
+        ret.AddRange(TokenSerializer.KeyValueTokens("schemes", schemesStr));
+
+        var consumesStr = String.Join(",", consumes);
+        ret.AddRange(TokenSerializer.KeyValueTokens("consumes", consumesStr));
+        
+        var producesStr = String.Join(",", produces);
+        ret.AddRange(TokenSerializer.KeyValueTokens("produces", producesStr));
         return ret.ToArray();
     }
 

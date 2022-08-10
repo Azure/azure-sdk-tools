@@ -206,6 +206,19 @@ namespace SwaggerApiParser
             return ret;
         }
 
+        public static CodeFileToken[] KeyValueTokens(String key, String value, bool newLine=true)
+        {
+            List<CodeFileToken> ret = new List<CodeFileToken>();
+            ret.Add(new CodeFileToken(key, CodeFileTokenKind.Literal));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(new CodeFileToken(value, CodeFileTokenKind.Literal));
+            if (newLine)
+            {
+                ret.Add(TokenSerializer.NewLine());
+            }
+            return ret.ToArray();
+        }
+
         public static CodeFileToken FoldableParentToken(String value)
         {
             var ret = new CodeFileToken(value, CodeFileTokenKind.FoldableParentToken);

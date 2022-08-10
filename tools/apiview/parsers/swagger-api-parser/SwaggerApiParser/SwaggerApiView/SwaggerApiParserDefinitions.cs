@@ -21,6 +21,9 @@ public class SwaggerApiViewDefinitions : Dictionary<String, Definition>, INaviga
         ret.Add(TokenSerializer.FoldableContentStart());
         foreach (var kv in this)
         {
+            ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Literal));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(TokenSerializer.NewLine());
             ret.AddRange(kv.Value.TokenSerialize(context));
         }
         ret.Add(TokenSerializer.FoldableContentEnd());

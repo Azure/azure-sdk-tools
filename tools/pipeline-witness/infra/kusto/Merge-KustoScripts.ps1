@@ -22,6 +22,7 @@ function Merge-Files([string[]]$FileSpecs) {
   return $lines
 }
 
-
-Merge-Files "$PSScriptRoot/tables/*.kql" | Set-Content (Join-Path $OutputPath 'tables.kql')
-Merge-Files "$PSScriptRoot/views/*.kql", "$PSScriptRoot/functions/*.kql" | Set-Content (Join-Path $OutputPath 'functions.kql')
+Merge-Files `
+  "$PSScriptRoot/tables/*.kql", `
+  "$PSScriptRoot/functions/*.kql" `
+| Set-Content $OutputPath

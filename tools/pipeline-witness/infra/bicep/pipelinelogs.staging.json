@@ -5,11 +5,14 @@
     "location": {
       "value": "westus2"
     },
-    "resourceName": {
-      "value": "pahallislogs"
+    "storageAccountName": {
+      "value": "pipelinelogsstaging"
+    },
+    "kustoClusterName": {
+      "value": "azsdkengsys"
     },
     "kustoDatabaseName": {
-      "value": "Pipelines"
+      "value": "Staging"
     }
   }
 }

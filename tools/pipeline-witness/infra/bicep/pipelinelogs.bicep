@@ -1,5 +1,6 @@
 param location string
-param resourceName string
+param storageAccountName string
+param kustoClusterName string
 param kustoDatabaseName string
 
 var tables = [
@@ -33,11 +34,11 @@ var tables = [
   }
 ]
 
-var tablesKustoScript = loadTextContent('tables.kql')
+var kustoScript = loadTextContent('pipelinelogs.kql')
 
 // Storage Account
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
-  name: resourceName
+  name: storageAccountName
   location: location
   sku: {
     name: 'Standard_RAGRS'
@@ -99,7 +100,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
 
 // Event Grid
 resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
-  name: resourceName
+  name: storageAccount.name
   location: location
   properties: {
     source: storageAccount.id
@@ -109,7 +110,7 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
 
 // Event Hub
 resource eventhubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
-  name: resourceName
+  name: storageAccount.name
   location: location
   sku: {
     name: 'Standard'
@@ -129,7 +130,7 @@ resource eventhubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = 
 
 // Kusto Cluster
 resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
-  name: resourceName
+  name: kustoClusterName
   location: location
   sku: {
     name: 'Standard_E2a_v4'
@@ -171,12 +172,12 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
 }
 
 // Resources per table
-resource kustoTables 'Microsoft.Kusto/clusters/databases/scripts@2022-02-01' = {
-  name: 'intitializeTables'
+resource kustoScriptInvocation 'Microsoft.Kusto/clusters/databases/scripts@2022-02-01' = {
+  name: 'intitializeDatabase'
   parent: kustoCluster::database
   properties: {
-      scriptContent: tablesKustoScript
-      forceUpdateTag: uniqueString(tablesKustoScript)
+      scriptContent: kustoScript
+      forceUpdateTag: uniqueString(kustoScript)
   }
 }
 
@@ -243,4 +244,5 @@ resource kustoDataConnections 'Microsoft.Kusto/Clusters/Databases/DataConnection
     blobStorageEventType: 'Microsoft.Storage.BlobCreated'
     databaseRouting: 'Single'
   }
+  dependsOn: [ kustoScriptInvocation ]
 }]

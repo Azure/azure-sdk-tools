@@ -12,8 +12,7 @@ import {
     SDK,
     SDKPipelineStatus,
     TaskResult,
-    TaskResultStatus,
-    Trigger,
+    Trigger
 } from '@azure-tools/sdk-generation-lib';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -21,8 +20,8 @@ import * as path from 'path';
 import {
     PrepareArtifactFilesInput,
     prepareArtifactFilesInput,
-    prepareResultArtifactInput,
     PrepareResultArtifactInput,
+    prepareResultArtifactInput
 } from '../../cliSchema/prepareArtifactFilesCliConfig';
 import { GitOperationWrapper } from '../../utils/GitOperationWrapper';
 
@@ -136,34 +135,34 @@ function prepareResult(pipelineStatus: SDKPipelineStatus) {
     let event: PipelineRunEvent = undefined;
 
     switch (pipelineStatus) {
-        case 'in_progress':
-            event = {
-                status: 'in_progress',
-                trigger: trigger,
-                pipelineBuildId: config.pipelineBuildId,
-            } as InProgressEvent;
-            break;
-        case 'completed':
-            if (!config.resultsPath || !config.logPath) {
-                throw new Error(`Invalid completed event parameter!`);
-            }
+    case 'in_progress':
+        event = {
+            status: 'in_progress',
+            trigger: trigger,
+            pipelineBuildId: config.pipelineBuildId
+        } as InProgressEvent;
+        break;
+    case 'completed':
+        if (!config.resultsPath || !config.logPath) {
+            throw new Error(`Invalid completed event parameter!`);
+        }
 
-            const taskResults: TaskResult[] = getTaskResults(config.resultsPath);
-            const taskTotalResult: TaskResult = generateTotalResult(taskResults, config.pipelineBuildId);
-            event = {
-                status: 'completed',
-                trigger: trigger,
-                pipelineBuildId: config.pipelineBuildId,
-                logPath: config.logPath,
-                result: taskTotalResult,
-            } as CompletedEvent;
-            break;
-        default:
-            throw new Error(`Unsupported status: ` + (pipelineStatus as string));
+        const taskResults: TaskResult[] = getTaskResults(config.resultsPath);
+        const taskTotalResult: TaskResult = generateTotalResult(taskResults, config.pipelineBuildId);
+        event = {
+            status: 'completed',
+            trigger: trigger,
+            pipelineBuildId: config.pipelineBuildId,
+            logPath: config.logPath,
+            result: taskTotalResult
+        } as CompletedEvent;
+        break;
+    default:
+        throw new Error(`Unsupported status: ` + (pipelineStatus as string));
     }
 
     fs.writeFileSync(config.artifactDir + `/` + pipelineStatus + `/result.json`, JSON.stringify(event, null, 2), {
-        encoding: 'utf-8',
+        encoding: 'utf-8'
     });
 }
 

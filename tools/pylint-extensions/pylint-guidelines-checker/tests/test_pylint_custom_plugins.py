@@ -3037,6 +3037,30 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_import(import_node)
 
+        import_node = astroid.extract_node("import azure.core.pipeline.transport as transport")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="networking-import-outside-azure-core-transport",
+                    line=1,
+                    node=import_node,
+                    col_offset=0,
+                )
+        ):
+            self.checker.visit_import(import_node)
+
+        import_node = astroid.extract_node("import azure.core.pipeline.transport.AioHttpTransport")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="networking-import-outside-azure-core-transport",
+                    line=1,
+                    node=import_node,
+                    col_offset=0,
+                )
+        ):
+            self.checker.visit_import(import_node)
+
+
+
         # blocked import from outside of core.
         importfrom_node = astroid.extract_node("from aiohttp import get")
         with self.assertAddsMessages(
@@ -3048,6 +3072,18 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
                 )
         ):
             self.checker.visit_importfrom(importfrom_node)
+
+        importfrom_node = astroid.extract_node("from azure.core.pipeline.transport import RequestsTransport")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="networking-import-outside-azure-core-transport",
+                    line=1,
+                    node=importfrom_node,
+                    col_offset=0,
+                )
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
 
 
     def test_allowed_imports(self):
@@ -3073,3 +3109,4 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
         importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
+

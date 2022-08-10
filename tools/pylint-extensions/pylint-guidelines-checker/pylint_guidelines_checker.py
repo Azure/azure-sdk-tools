@@ -1932,8 +1932,8 @@ class NonCoreNetworkImport(BaseChecker):
             "This import is only allowed in azure.core.pipeline.transport.",
         ),
     }
-    BLOCKED_MODULES = ["aiohttp", "requests", "trio"]
     AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
+    BLOCKED_MODULES = ["aiohttp", "requests", "trio", "azure.core.pipeline.transport"]
 
     def visit_import(self, node):
         """Check that we dont have blocked imports."""

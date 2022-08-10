@@ -11,7 +11,7 @@
             @if (Model.Review.Language != null)
             {
                 string iconClassName = "icon-" + @Model.Review.Language.ToLower();
-                if(@Model.Review.LanguageVariant != null && @Model.Review.LanguageVariant.ToLower() != "default")
+                @if (!string.IsNullOrEmpty(Model.Review.LanguageVariant) && Model.Review.LanguageVariant.ToLower() != "default")
                 {
                     iconClassName += "-" + @Model.Review.LanguageVariant.ToLower();
                 }

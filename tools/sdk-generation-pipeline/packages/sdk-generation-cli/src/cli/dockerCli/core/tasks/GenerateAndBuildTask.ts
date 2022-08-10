@@ -76,9 +76,5 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
             }
             this.context.packageFolders = packageFolders;
         }
-
-        if (this.context.taskResults['generateAndBuild'] === TaskResultStatus.Failure) {
-            throw new Error(`Execute generateAndBuild script failed.`);
-        }
     }
 }

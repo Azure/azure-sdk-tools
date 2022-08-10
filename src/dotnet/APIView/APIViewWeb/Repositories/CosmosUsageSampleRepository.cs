@@ -10,6 +10,7 @@ using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using APIViewWeb.Models;
 using Microsoft.Extensions.Configuration;
+using System.Security.Claims;
 
 namespace APIViewWeb
 {
@@ -48,7 +49,7 @@ namespace APIViewWeb
             }
             catch
             {
-                return new UsageSampleModel(reviewId, null);
+                return new UsageSampleModel(null, reviewId, null);
             }
         }
 

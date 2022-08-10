@@ -28,7 +28,7 @@ namespace APIViewWeb
             }
             catch
             {
-                return new MemoryStream(Encoding.UTF8.GetBytes("No Sample."));
+                return null;
             }
         }
 

@@ -1,9 +1,5 @@
-﻿using System;
-using System.Linq;
-using Newtonsoft.Json;
-using APIViewWeb.Models;
-using APIViewWeb.Repositories;
-using System.IO;
+﻿using Newtonsoft.Json;
+using System.Security.Claims;
 
 namespace APIViewWeb
 {
@@ -13,9 +9,14 @@ namespace APIViewWeb
         public string SampleId { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
         public string UsageSampleFileId { get; set; }
+        public string Author { get; set; }
 
-        public UsageSampleModel(string revId, string fileId)
+        public UsageSampleModel(ClaimsPrincipal user, string revId, string fileId)
         {
+            if(user != null)
+            {
+                Author = user.GetGitHubLogin();
+            }
             ReviewId = revId;
             UsageSampleFileId = fileId;
         }

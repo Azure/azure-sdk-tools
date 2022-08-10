@@ -40,7 +40,6 @@ namespace APIViewWeb.Pages.Assemblies
             Review = await _reviewManager.GetReviewAsync(User, id);
             Sample = await _samplesManager.GetReviewUsageSampleAsync(id);
             SampleContent = await _samplesManager.GetUsageSampleContentAsync(Sample.UsageSampleFileId);
-            SampleContent = SampleContent.Replace("\n", "<br />").Replace("\r", "");
             return Page();
         }
 
@@ -59,13 +58,12 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    await _samplesManager.UpsertReviewUsageSampleAsync(reviewId, openReadStream);
-                    return RedirectToPage();
+                    await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, openReadStream);
                 }
             }
-            else if (sampleString != null)
+            else if (sampleString != "")
             {
-                await _samplesManager.UpsertReviewUsageSampleAsync(reviewId, sampleString);
+                await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, sampleString);
             }
 
             return RedirectToPage();

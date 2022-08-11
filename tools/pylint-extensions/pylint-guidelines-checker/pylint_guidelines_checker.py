@@ -2006,6 +2006,7 @@ def register(linter):
     linter.register_checker(CheckEnum(linter))
     linter.register_checker(NonCoreNetworkImport(linter))
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
+    linter.register_checker(NonAbstractTransportImport(linter))
 
 
 

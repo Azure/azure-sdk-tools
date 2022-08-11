@@ -119,7 +119,9 @@ var apiViewFile: IApiViewFile = {
     Name: name,
     Navigation: navigation,
     Tokens: builder.tokens,
-    PackageName: apiModel.packages[0].name
+    PackageName: apiModel.packages[0].name,
+    VersionString: "1.0.3",
+    Language: "JavaScript"
 }
 
 writeFile(process.argv[3], JSON.stringify(apiViewFile), err => {

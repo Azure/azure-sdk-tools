@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using APIView.DIff;
 using Xunit;
 
-namespace APIViewTest
+namespace APIViewUnitTests
 {
     public class DiffTests
     {

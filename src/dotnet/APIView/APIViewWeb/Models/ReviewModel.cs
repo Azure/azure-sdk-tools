@@ -73,11 +73,13 @@ namespace APIViewWeb
             }
         }
 
-        [JsonIgnore]
         public DateTime LastUpdated => Revisions.LastOrDefault()?.CreationDate ?? CreationDate;
 
         [JsonIgnore]
         public string Language => Revisions.LastOrDefault()?.Files.LastOrDefault()?.Language;
+
+        [JsonIgnore]
+        public string LanguageVariant => Revisions.LastOrDefault()?.Files.LastOrDefault()?.LanguageVariant;
 
         [JsonIgnore]
         public string PackageName {

@@ -3,7 +3,7 @@ Table of Contents
 * [Dependencies](#dependencies)
 * [Deploying Cluster(s)](#deploying-clusters)
    * [Dev Cluster](#dev-cluster)
-   * [Test Cluster](#test-cluster)
+   * [Playground Cluster](#playground-cluster)
    * [Prod Cluster](#prod-cluster)
    * [Local Cluster](#local-cluster)
 * [Deploying Stress Test Addons](#deploying-stress-test-addons)
@@ -17,9 +17,9 @@ Table of Contents
 This directory contains all configuration used for stress test cluster buildout (azure and kubernetes buildout), as well
 as a set of common stress test config boilerplate (helm library).
 
-The `./azure` directory contains [Azure Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview)
-files for deploying Azure resources (mainly [AKS clusters](https://azure.microsoft.com/en-us/services/kubernetes-service/)
-to support stress testing (for dev/test and/or production).
+The `./azure` directory contains [Azure Bicep](https://docs.microsoft.com/azure/azure-resource-manager/bicep/overview)
+files for deploying Azure resources (mainly [AKS clusters](https://azure.microsoft.com/services/kubernetes-service/)
+to support stress testing (for dev/playground and/or production).
 
 Azure Bicep comes pre-installed with the Azure CLI, and is a DSL for generating ARM templates.
 
@@ -34,8 +34,8 @@ easier to make and roll out config changes to tests across repos by using helm c
 
 # Dependencies
 
-- [Powershell Core](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004)
-- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- [Powershell Core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004)
+- [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
 - [helm](https://helm.sh)
 - [kind](https://github.com/kubernetes-sigs/kind/releases) (if testing locally)
@@ -78,13 +78,13 @@ Avoid checking in the updated dev values, they are for local use only.
 <tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -Environment dev
 ```
 
-## Test Cluster
+## Playground Cluster
 
-The test cluster is the main ad-hoc cluster made available to SDK developers and partners. Changes to this cluster
+The playground cluster is the main ad-hoc cluster made available to SDK developers and partners. Changes to this cluster
 should be made carefully and announced in advance in order not to disrupt people's work.
 
 ```
-./provision.ps1 -env test
+./provision.ps1 -env pg
 ```
 
 ## Prod Cluster

@@ -38,7 +38,7 @@ export const generateResultCliInput = convict<GenerateResultCliInput>({
     exeResult: {
         default: null,
         nullable: true,
-        format: ['success', 'failure'],
+        format: ['succeeded', 'failed'],
         arg: 'exeResult'
     },
     taskOutputPath: {

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/documentation/api-scenario/references/v1.2/schema.json
 scope: ResourceGroup
 
 variables:
@@ -56,13 +57,11 @@ scenarios:
 
       - step: Services_Get
         exampleFile: ../examples/Services_Get.json
-        resourceName: myservice
 
       - step: Services_Update
-        resourceName: myservice
-        operationId: Services_Update
-        resourceUpdate:
-          - replace: /tags
+        exampleFile: ../examples/Services_Update.json
+        requestUpdate:
+          - replace: /resource/tags
             value:
               hello: world
               created-by: api-test
@@ -83,8 +82,8 @@ scenarios:
         exampleFile: ../examples/Certificates_CreateOrUpdate.json
         variables:
           certificateName: asc-certificate
-        resourceUpdate:
-          - replace: /properties
+        requestUpdate:
+          - replace: /certificateResource/properties
             value:
               vaultUri: https://integration-test-prod.vault.azure.net/
               keyVaultCertName: pfx-cert
@@ -109,8 +108,8 @@ scenarios:
 
       - step: ConfigServers_UpdatePut
         exampleFile: ../examples/ConfigServers_UpdatePut.json
-        resourceUpdate:
-          - replace: /properties/configServer/gitProperty
+        requestUpdate:
+          - replace: /configServerResource/properties/configServer/gitProperty
             value:
               uri: https://github.com/VSChina/asc-config-server-test-public.git
               label: master
@@ -118,8 +117,8 @@ scenarios:
 
       - step: ConfigServers_UpdatePatch
         exampleFile: ../examples/ConfigServers_UpdatePatch.json
-        resourceUpdate:
-          - replace: /properties/configServer/gitProperty
+        requestUpdate:
+          - replace: /configServerResource/properties/configServer/gitProperty
             value:
               uri: https://github.com/azure-samples/spring-petclinic-microservices-config
 
@@ -129,69 +128,63 @@ scenarios:
       # Monitoring
       - step: MonitoringSettings_UpdatePut
         exampleFile: ../examples/MonitoringSettings_UpdatePut.json
-        resourceUpdate:
-          - replace: /properties
+        requestUpdate:
+          - replace: /monitoringSettingResource/properties
             value:
               traceEnabled: true
               appInsightsInstrumentationKey: "$(insightsInstrumentationKey)"
               appInsightsSamplingRate: 50.0
-        resourceName: monitorSetting
 
       - step: MonitoringSettings_Get
         exampleFile: ../examples/MonitoringSettings_Get.json
 
       - step: MonitoringSettings_UpdatePatch
-        resourceName: monitorSetting
-        operationId: MonitoringSettings_UpdatePatch
-        resourceUpdate:
-          - replace: /properties/appInsightsSamplingRate
+        exampleFile: ../examples/MonitoringSettings_UpdatePatch.json
+        requestUpdate:
+          - replace: /monitoringSettingResource/properties/appInsightsSamplingRate
             value: 100
 
       # Apps
       - step: Apps_Create
         exampleFile: ../examples/Apps_CreateOrUpdate.json
-        resourceUpdate:
-          - remove: /properties/temporaryDisk
-          - remove: /properties/persistentDisk
-          - replace: /properties/public
+        requestUpdate:
+          - remove: /appResource/properties/temporaryDisk
+          - remove: /appResource/properties/persistentDisk
+          - replace: /appResource/properties/public
             value: false
 
       - step: Apps_Get
         exampleFile: ../examples/Apps_Get.json
-        resourceName: app01
 
       - step: Deployments_CreateOrUpdate_Default
         exampleFile: ../examples/Deployments_CreateOrUpdate.json
         variables:
           deploymentName: default
-        resourceUpdate:
-          - replace: /properties/source/type
+        requestUpdate:
+          - replace: /deploymentResource/properties/source/type
             value: Jar
-          - replace: /properties/source/relativePath
+          - replace: /deploymentResource/properties/source/relativePath
             value: "<default>"
 
       - step: Deployments_Get
         exampleFile: ../examples/Deployments_Get.json
         variables:
           deploymentName: default
-        resourceName: default
 
       - step: Apps_Update_ActiveDeployment # PATCH
-        resourceName: app01
-        operationId: Apps_Update
-        resourceUpdate:
-          - replace: /properties/activeDeploymentName
+        exampleFile: ../examples/Apps_Update.json
+        requestUpdate:
+          - replace: /appResource/properties/activeDeploymentName
             value: default
 
       - step: Apps_Update_Disk # PATCH
-        resourceName: app01
-        operationId: Apps_Update
-        resourceUpdate:
-          - replace: /properties/temporaryDisk
+        exampleFile: ../examples/Apps_Update.json
+        requestUpdate:
+          - replace: /appResource/properties/temporaryDisk
             value: { "sizeInGB": 3, "mountPath": "/tmpdisk" }
-          - replace: /properties/persistentDisk
+          - replace: /appResource/properties/persistentDisk
             value: { "sizeInGB": 10, "mountPath": "/data" }
-          - replace: /properties/public
+          - replace: /appResource/properties/public
             value: true
 
       - step: Apps_List
@@ -202,22 +195,22 @@ scenarios:
         exampleFile: ../examples/Bindings_CreateOrUpdate.json
         variables:
           bindingName: mysql-binding
-        resourceUpdate:
-          - replace: /properties/resourceId
+        requestUpdate:
+          - replace: /bindingResource/properties/resourceId
             value: "/subscriptions/b46590cb-a111-4b84-935f-c305aaf1f424/resourceGroups/mary-west/providers/Microsoft.DBforMySQL/servers/fake-sql"
-          - replace: /properties/key
+          - replace: /bindingResource/properties/key
             value: $(mysqlKey)
-          - replace: /properties/bindingParameters
+          - replace: /bindingResource/properties/bindingParameters
             value: { "databaseName": "mysqldb", "username": "test" }
 
       - step: Bindings_Update # PATCH
         exampleFile: ../examples/Bindings_Update.json
         variables:
           bindingName: mysql-binding
-        resourceUpdate:
-          - replace: /properties/key
+        requestUpdate:
+          - replace: /bindingResource/properties/key
             value: $(mysqlKey)
-          - replace: /properties/bindingParameters
+          - replace: /bindingResource/properties/bindingParameters
             value: { "databaseName": "mysqldb2", "username": "test2" }
 
       - step: Bindings_Get
@@ -244,16 +237,16 @@ scenarios:
         exampleFile: ../examples/CustomDomains_CreateOrUpdate.json
         variables:
           domainName: $(dnsCname).$(customDomainName)
-        resourceUpdate:
-          - replace: /properties
+        requestUpdate:
+          - replace: /domainResource/properties
             value: { "certName": "asc-certificate" }
 
       - step: CustomDomains_Update
         exampleFile: ../examples/CustomDomains_Update.json
         variables:
           domainName: $(dnsCname).$(customDomainName)
-        resourceUpdate:
-          - replace: /properties
+        requestUpdate:
+          - replace: /domainResource/properties
             value: { "certName": "asc-certificate" } # TODO: use another cert
 
       - step: CustomDomains_Get
@@ -286,20 +279,18 @@ scenarios:
         exampleFile: ../examples/Deployments_CreateOrUpdate.json
         variables:
           deploymentName: blue
-        resourceName: deploymentBlue
-        resourceUpdate:
-          - replace: /sku/capacity
+        requestUpdate:
+          - replace: /deploymentResource/sku/capacity
             value: 2
-          - replace: /properties/source/type
+          - replace: /deploymentResource/properties/source/type
             value: Jar
-          - replace: /properties/source/relativePath
+          - replace: /deploymentResource/properties/source/relativePath
             value: $(relativePath)
 
       - step: Apps_Update # PATCH
-        resourceName: app01
-        operationId: Apps_Update
-        resourceUpdate:
-          - replace: /properties/activeDeploymentName
+        exampleFile: ../examples/Apps_Update.json
+        requestUpdate:
+          - replace: /appResource/properties/activeDeploymentName
             value: blue
 
       - step: Deployments_Restart

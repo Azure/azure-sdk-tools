@@ -107,3 +107,6 @@ lib
 # Project
 **/test/**/*.yaml
 **/test/**/*.json
+
+# api scenario files
+*.yaml

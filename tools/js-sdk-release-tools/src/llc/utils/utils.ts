@@ -163,3 +163,19 @@ export async function getInputFromCommandWithDefaultValue(parameter: string, def
     }
 }
 
+export function changeRequiredReadmePath(requiredReadme: any, swaggerRepo: string) {
+    if (Array.isArray(requiredReadme)) {
+        requiredReadme = requiredReadme.map(readme => {
+            if (swaggerRepo.includes('specification') && readme.startsWith('specification')) {
+                return path.join(swaggerRepo, '..', readme);
+            } else {
+                return path.join(swaggerRepo, readme);
+            }
+        });
+    } else if (typeof requiredReadme === 'string' || requiredReadme instanceof String) {
+        requiredReadme = [path.join(swaggerRepo, requiredReadme as string)];
+    } else {
+        throw new Error(`Get invalid required in comment: ${requiredReadme}`);
+    }
+    return requiredReadme;
+}

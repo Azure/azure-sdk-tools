@@ -1,12 +1,14 @@
 ﻿using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
+using Azure.Sdk.Tools.TestProxy.Vendored;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,6 +18,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Security;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -43,14 +48,37 @@ namespace Azure.Sdk.Tools.TestProxy
             "Proxy-Connection",
         };
 
+        public HttpClient BaseRedirectableClient = Startup.Insecure ?
+            new HttpClient(new HttpClientHandler() { ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
+            {
+                Timeout = TimeSpan.FromSeconds(600),
+            } :
+            new HttpClient()
+            {
+                Timeout = TimeSpan.FromSeconds(600)
+            };
+
+        public HttpClient BaseRedirectlessClient = Startup.Insecure ?
+            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false, ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
+            {
+                Timeout = TimeSpan.FromSeconds(600),
+            } :
+            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false })
+            {
+                Timeout = TimeSpan.FromSeconds(600)
+            };
+
+        public HttpClient RedirectlessClient;
+        public HttpClient RedirectableClient;
+
         public List<RecordedTestSanitizer> Sanitizers { get; set; }
 
         public List<ResponseTransform> Transforms { get; set; }
 
         public RecordMatcher Matcher { get; set; }
 
-        public readonly ConcurrentDictionary<string, (string File, ModifiableRecordSession ModifiableSession)> RecordingSessions
-            = new ConcurrentDictionary<string, (string, ModifiableRecordSession)>();
+        public readonly ConcurrentDictionary<string, ModifiableRecordSession> RecordingSessions
+            = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
         public readonly ConcurrentDictionary<string, ModifiableRecordSession> InMemorySessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
@@ -81,38 +109,36 @@ namespace Azure.Sdk.Tools.TestProxy
         #region recording functionality
         public void StopRecording(string sessionId, IDictionary<string, string> variables = null, bool saveRecording = true)
         {
-            if (!RecordingSessions.TryRemove(sessionId, out var fileAndSession))
+            if (!RecordingSessions.TryRemove(sessionId, out var recordingSession))
             {
                 return;
             }
 
-            var (file, session) = fileAndSession;
-
-            foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
+            foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(recordingSession.AdditionalSanitizers))
             {
-                session.Session.Sanitize(sanitizer);
+                recordingSession.Session.Sanitize(sanitizer);
             }
 
-            if(variables != null)
+            if (variables != null)
             {
-                foreach(var kvp in variables)
+                foreach (var kvp in variables)
                 {
-                    session.Session.Variables[kvp.Key] = kvp.Value;
+                    recordingSession.Session.Variables[kvp.Key] = kvp.Value;
                 }
             }
 
             if (saveRecording)
             {
-                if (String.IsNullOrEmpty(file))
+                if (String.IsNullOrEmpty(recordingSession.Path))
                 {
-                    if (!InMemorySessions.TryAdd(sessionId, session))
+                    if (!InMemorySessions.TryAdd(sessionId, recordingSession))
                     {
                         throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new in-memory session under id {sessionId}.");
                     }
                 }
                 else
                 {
-                    var targetPath = GetRecordingPath(file);
+                    var targetPath = GetRecordingPath(recordingSession.Path);
 
                     // Create directories above file if they don't already exist
                     var directory = Path.GetDirectoryName(targetPath);
@@ -124,7 +150,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     using var stream = System.IO.File.Create(targetPath);
                     var options = new JsonWriterOptions { Indented = true };
                     var writer = new Utf8JsonWriter(stream, options);
-                    session.Session.Serialize(writer);
+                    recordingSession.Session.Serialize(writer);
                     writer.Flush();
                     stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
 
@@ -135,7 +161,12 @@ namespace Azure.Sdk.Tools.TestProxy
         public void StartRecording(string sessionId, HttpResponse outgoingResponse)
         {
             var id = Guid.NewGuid().ToString();
-            var session = (sessionId ?? String.Empty, new ModifiableRecordSession(new RecordSession()));
+
+            var session = new ModifiableRecordSession(new RecordSession())
+            {
+                Path = sessionId ?? String.Empty,
+                Client = null
+            };
 
             if (!RecordingSessions.TryAdd(id, session))
             {
@@ -145,7 +176,7 @@ namespace Azure.Sdk.Tools.TestProxy
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
-        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient redirectlessClient, HttpClient redirectableClient)
+        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
             await DebugLogger.LogRequestDetailsAsync(incomingRequest);
 
@@ -160,14 +191,13 @@ namespace Azure.Sdk.Tools.TestProxy
 
             HttpResponseMessage upstreamResponse = null;
 
-
             if (HandleRedirects)
             {
-                upstreamResponse = await redirectableClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+                upstreamResponse = await (session.Client ?? RedirectableClient).SendAsync(upstreamRequest).ConfigureAwait(false);
             }
             else
             {
-                upstreamResponse = await redirectlessClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+                upstreamResponse = await (session.Client ?? RedirectlessClient).SendAsync(upstreamRequest).ConfigureAwait(false);
             }
 
             byte[] body = Array.Empty<byte>();
@@ -185,7 +215,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode != EntryRecordMode.DontRecord)
             {
-                session.ModifiableSession.Session.Entries.Add(entry);
+                session.Session.Entries.Add(entry);
 
                 Interlocked.Increment(ref Startup.RequestsRecorded);
             }
@@ -310,7 +340,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         continue;
                     }
 
-                    if(!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
+                    if (!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
                     {
                         throw new HttpException(
                             HttpStatusCode.BadRequest,
@@ -319,7 +349,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                 }
 
-                if(header.Key == "x-recording-upstream-host-header")
+                if (header.Key == "x-recording-upstream-host-header")
                 {
                     upstreamRequest.Headers.Host = header.Value;
                 }
@@ -355,7 +385,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 using var stream = System.IO.File.OpenRead(path);
                 using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement))
+                {
+                    Path = path
+                };
             }
 
             if (!PlaybackSessions.TryAdd(id, session))
@@ -387,7 +420,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to retrieve in-memory session {session.SourceRecordingId}.");
                 }
 
-                Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);                
+                Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);
 
                 if (!InMemorySessions.TryRemove(session.SourceRecordingId, out _))
                 {
@@ -416,7 +449,6 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 remove = bool.Parse(removeHeader);
             }
-
 
             var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
 
@@ -467,7 +499,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region SetRecordingOptions and store functionality
-        public void SetRecordingOptions(IDictionary<string, object> options = null)
+        public void SetRecordingOptions(IDictionary<string, object> options = null, string sessionId = null)
         {
             if (options != null)
             {
@@ -522,14 +554,165 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                     else
                     {
-                        throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value to the key \"AssetsStore\" in the recording options dictionary.");
+                        throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value when providing the key \"AssetsStore\" in the recording options dictionary.");
                     }
                 }
 
+                if (options.TryGetValue("Transport", out var transportConventions))
+                {
+                    if (transportConventions != null)
+                    {
+                        try
+                        {
+                            string transportObject;
+                            if (transportConventions is JsonElement je)
+                            {
+                                transportObject = je.ToString();
+                            }
+                            else
+                            {
+                                throw new Exception("'Transport' object was not a JsonElement");
+                            }
+
+                            var serializerOptions = new JsonSerializerOptions
+                            {
+                                ReadCommentHandling = JsonCommentHandling.Skip,
+                                AllowTrailingCommas = true,
+                            };
+                            var customizations = JsonSerializer.Deserialize<TransportCustomizations>(transportObject, serializerOptions);
+
+                            SetTransportOptions(customizations, sessionId);
+                        }
+                        catch (HttpException)
+                        {
+                            throw;
+                        }
+                        catch (Exception e)
+                        {
+                            throw new HttpException(HttpStatusCode.BadRequest, $"Unable to deserialize the contents of the \"Transport\" key. Visible object: {transportConventions}. Json Deserialization Error: {e.Message}");
+                        }
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value when providing the key \"Transport\" in the recording options dictionary.");
+                    }
+                }
             }
             else
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.");
+            }
+        }
+
+        public X509Certificate2 GetValidationCert(TransportCustomizations settings)
+        {
+            try
+            {
+                var span = new ReadOnlySpan<char>(settings.TLSValidationCert.ToCharArray());
+                return PemReader.LoadCertificate(span, null, PemReader.KeyType.Auto, true);
+            }
+            catch (Exception e)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to instantiate a valid cert from the value provided in Transport settings key \"TLSValidationCert\". Value: \"{settings.TLSValidationCert}\". Message: \"{e.Message}\".");
+            }
+        }
+
+        public HttpClientHandler GetTransport(bool allowAutoRedirect, TransportCustomizations customizations, bool insecure = false)
+        {
+            var clientHandler = new HttpClientHandler()
+            {
+                AllowAutoRedirect = allowAutoRedirect
+            };
+
+            if (customizations.Certificates != null)
+            {
+                foreach (var certPair in customizations.Certificates)
+                {
+                    try
+                    {
+
+                        var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
+                        cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
+                        clientHandler.ClientCertificates.Add(cert);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Unable to instantiate a new X509 certificate from the provided value and key. Failure Message: \"{e.Message}\".");
+                    }
+                }
+            }
+
+            if (customizations.TLSValidationCert != null && !insecure)
+            {
+                var ledgerCert = GetValidationCert(customizations);
+
+                X509Chain certificateChain = new();
+                certificateChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                certificateChain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
+                certificateChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                certificateChain.ChainPolicy.VerificationTime = DateTime.Now;
+                certificateChain.ChainPolicy.UrlRetrievalTimeout = new TimeSpan(0, 0, 0);
+                certificateChain.ChainPolicy.ExtraStore.Add(ledgerCert);
+
+                clientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage httpRequestMessage, X509Certificate2 cert, X509Chain x509Chain, SslPolicyErrors sslPolicyErrors) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(customizations.TSLValidationCertHost) && httpRequestMessage.RequestUri.Host != customizations.TSLValidationCertHost)
+                    {
+                        if (sslPolicyErrors == SslPolicyErrors.None)
+                        {
+                            return true;
+                        }
+
+                        return false;
+                    }
+                    else
+                    {
+                        bool isChainValid = certificateChain.Build(cert);
+                        if (!isChainValid) return false;
+                        var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
+                            .Any(x => x.Certificate.Thumbprint == ledgerCert.Thumbprint);
+
+                        return isCertSignedByTheTlsCert;
+                    }
+                };
+            }
+            else if (insecure)
+            {
+                clientHandler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
+            }
+
+            return clientHandler;
+        }
+
+        public void SetTransportOptions(TransportCustomizations customizations, string sessionId)
+        {
+            var timeoutSpan = TimeSpan.FromSeconds(600);
+
+            // this will look a bit strange until we take care of #3488 due to the fact that this AllowAutoRedirect customizable from two places
+            if (!string.IsNullOrWhiteSpace(sessionId))
+            {
+                var customizedClientHandler = GetTransport(customizations.AllowAutoRedirect, customizations);
+
+                RecordingSessions[sessionId].Client = new HttpClient(customizedClientHandler)
+                {
+                    Timeout = timeoutSpan
+                };
+            }
+            else
+            {
+                // after #3488 we will swap to a single client instead of both of these
+                var redirectableCustomizedHandler = GetTransport(true, customizations, Startup.Insecure);
+                var redirectlessCustomizedHandler = GetTransport(false, customizations, Startup.Insecure);
+
+                RedirectableClient = new HttpClient(redirectableCustomizedHandler)
+                {
+                    Timeout = timeoutSpan
+                };
+
+                RedirectlessClient = new HttpClient(redirectlessCustomizedHandler)
+                {
+                    Timeout = timeoutSpan
+                };
             }
         }
 
@@ -576,9 +759,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
             {
-                lock (recordingSession.ModifiableSession)
+                lock (recordingSession)
                 {
-                    recordingSession.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
+                    recordingSession.AdditionalSanitizers.Add(sanitizer);
                 }
             }
 
@@ -590,7 +773,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            if (inMemSession == null && recordingSession == (null, null) && playbackSession == null)
+            if (inMemSession == null && recordingSession == null && playbackSession == null)
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
             }
@@ -627,7 +810,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
                 if (RecordingSessions.TryGetValue(recordingId, out var recordSession))
                 {
-                    recordSession.ModifiableSession.ResetExtensions();
+                    recordSession.ResetExtensions();
                 }
                 if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
                 {
@@ -647,7 +830,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     sb.Append($"There are a total of {countTotal} active sessions. Remove these sessions before hitting Admin/Reset." + Environment.NewLine);
 
-                    if(countPlayback > 0)
+                    if (countPlayback > 0)
                     {
                         sb.Append("Active Playback Sessions: [");
                         lock (PlaybackSessions)
@@ -677,7 +860,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         sb.Append("]. ");
                     }
 
-                    throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());               
+                    throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());
                 }
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
@@ -703,6 +886,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 };
 
                 Matcher = new RecordMatcher();
+
+                RedirectableClient = BaseRedirectableClient;
+                RedirectlessClient = BaseRedirectlessClient;
             }
         }
 
@@ -748,7 +934,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
             var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
             var hostValue = GetHeader(request, "x-recording-upstream-base-uri");
-            
+
             // There is an ongoing issue where some libraries send a URL with two leading // after the hostname.
             // This will just handle the error explicitly rather than letting it slip through and cause random issues during record/playback sessions.
             if (rawTarget.StartsWith("//"))

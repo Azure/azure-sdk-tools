@@ -4,6 +4,7 @@
 using System;
 using System.Net;
 using System.Runtime.Serialization;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {

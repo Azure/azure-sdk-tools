@@ -1,5 +1,15 @@
 # Release History
 
+## Version 0.3.4 (Unreleased)
+Fixed issue so that APIView is still generated even if pylint parsing fails.
+
+## Version 0.3.3 (2022-08-03)
+Fixed issue in module order to get consistent order
+
+## Version 0.3.2 (2022-07-19)
+Fixed issue where comments would appear incorrectly on overloaded functions.
+Fixed issue where inherited overloads would not appear in APIView.
+
 ## Version 0.3.1 (2022-05-12)
 Fixed issue where pylintrc file was not included in the distribution.
 

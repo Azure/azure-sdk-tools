@@ -87,7 +87,7 @@ stages:
             $registry="'$(FeedRegistry)'"
             $regAuth=$registry.replace("https:","")
             $npmReg = $regAuth.replace("registry/","");
-            $env:NPM_TOKEN=$(azure-sdk-devops-npm-token)
+            $env:NPM_TOKEN="$(azure-sdk-devops-npm-token)"
 
             npm config set $regAuth`:username=azure-sdk
             npm config set $regAuth`:_password=`$`{NPM_TOKEN`}

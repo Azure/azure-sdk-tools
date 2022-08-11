@@ -1933,7 +1933,7 @@ class NonCoreNetworkImport(BaseChecker):
         ),
     }
     AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
-    BLOCKED_MODULES = ["aiohttp", "requests", "trio", "azure.core.pipeline.transport"]
+    BLOCKED_MODULES = ["aiohttp", "requests", "trio"]
 
     def visit_import(self, node):
         """Check that we dont have blocked imports."""
@@ -1956,6 +1956,33 @@ class NonCoreNetworkImport(BaseChecker):
                     msgid=f"networking-import-outside-azure-core-transport", node=node, confidence=None
                 )
 
+class NonAbstractTransportImport(BaseChecker):
+    name = "non-abstract-transport-import"
+    priority = -1
+    msgs = {
+        "C4750": (
+            "Only import abstract transports.",
+            "non-abstract-transport-import",
+            "Only import abstract transports. Let core or end-user decide which transport to use.",
+        ),
+    }
+    AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
+    ABSTRACT_CLASSES = {"HttpTransport", "HttpRequest", "HttpResponse", "AsyncHttpTransport", "AsyncHttpResponse"}
+
+
+    def visit_importfrom(self, node):
+        """Check that we aren't import from a blocked package."""
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME): 
+            return
+        if node.modname == self.AZURE_CORE_TRANSPORT_NAME: 
+            for name, _ in node.names:
+                if name not in self.ABSTRACT_CLASSES:
+                    self.add_message(
+                        msgid=f"non-abstract-transport-import",
+                        node=node,
+                        confidence=None,
+                    )
+    
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):

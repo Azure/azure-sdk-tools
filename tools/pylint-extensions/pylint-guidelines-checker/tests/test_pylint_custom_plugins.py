@@ -3109,8 +3109,7 @@ class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
             self.checker.visit_importfrom(importfrom_node)
 
         # blocked from import, but in core.
-        importfrom_node = astroid.extract_node("from azure.core.pipeline.transport import RequestsTransport, AioHttpTransport, AioHttpTransportResponse"
-        )
+        importfrom_node = astroid.extract_node("from azure.core.pipeline.transport import RequestsTransport, AioHttpTransport, AioHttpTransportResponse")
         importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)

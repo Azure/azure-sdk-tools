@@ -1932,8 +1932,8 @@ class NonCoreNetworkImport(BaseChecker):
             "This import is only allowed in azure.core.pipeline.transport.",
         ),
     }
-    AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
     BLOCKED_MODULES = ["aiohttp", "requests", "trio"]
+    AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
 
     def visit_import(self, node):
         """Check that we dont have blocked imports."""
@@ -1957,6 +1957,9 @@ class NonCoreNetworkImport(BaseChecker):
                 )
 
 class NonAbstractTransportImport(BaseChecker):
+    """Rule to check that we aren't import transports outside of `azure.core.pipeline.transport`.
+    Transport selection should be up to `azure.core` or the end-user, not individual SDKs.
+    """
     name = "non-abstract-transport-import"
     priority = -1
     msgs = {
@@ -1968,7 +1971,6 @@ class NonAbstractTransportImport(BaseChecker):
     }
     AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
     ABSTRACT_CLASSES = {"HttpTransport", "HttpRequest", "HttpResponse", "AsyncHttpTransport", "AsyncHttpResponse"}
-
 
     def visit_importfrom(self, node):
         """Check that we aren't import from a blocked package."""
@@ -1982,7 +1984,6 @@ class NonAbstractTransportImport(BaseChecker):
                         node=node,
                         confidence=None,
                     )
-    
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):

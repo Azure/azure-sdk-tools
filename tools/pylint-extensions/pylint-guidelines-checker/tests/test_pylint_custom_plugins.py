@@ -3049,6 +3049,7 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_importfrom(importfrom_node)
 
+
     def test_allowed_imports(self):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.
@@ -3103,12 +3104,12 @@ class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
-        # blocked from import, but in core.
+        # Import abstract classes
         importfrom_node = astroid.extract_node("from azure.core.pipeline.transport import HttpTransport, HttpRequest, HttpResponse, AsyncHttpTransport, AsyncHttpResponse")
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
-        # blocked from import, but in core.
+        # Import non-abstract classes, but from in `azure.core.pipeline.transport`.
         importfrom_node = astroid.extract_node("from azure.core.pipeline.transport import RequestsTransport, AioHttpTransport, AioHttpTransportResponse")
         importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
         with self.assertNoMessages():

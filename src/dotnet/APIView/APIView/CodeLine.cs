@@ -19,6 +19,15 @@ namespace ApiView
             this.SectionKey = sectionKey;
         }
 
+        public CodeLine(CodeLine codeLine, string html = null, string id = null, string lineClass = null, int? lineNumber = null, int? sectionKey = null)
+        {
+            this.DisplayString = html ?? codeLine.DisplayString;
+            this.ElementId = id ?? codeLine.ElementId;
+            this.LineClass = lineClass ?? codeLine.LineClass;
+            this.LineNumber = lineNumber ?? codeLine.LineNumber;
+            this.SectionKey = sectionKey ?? codeLine.SectionKey;
+        }
+
         public override string ToString()
         {
             return DisplayString + " [" + ElementId + "]";

@@ -151,7 +151,7 @@ $(() => {
       $.ajax({
         url: uri
       }).done(function (partialViewResult) {
-        sectionContent.html(partialViewResult);
+        sectionContent.replaceWith(partialViewResult);
         toggleSectionContent(headingRow, sectionContent, caretDirection, caretIcon);
         sectionContent.addClass("content-loaded");
       });

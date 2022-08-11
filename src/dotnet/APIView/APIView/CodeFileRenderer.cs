@@ -21,6 +21,14 @@ namespace ApiView
             return new RenderResult(codeLines.ToArray(), sections);
         }
 
+        public CodeLine[] Render(CodeFileToken[] tokens)
+        {
+            var codeLines = new List<CodeLine>();
+            var sections = new Dictionary<int, TreeNode<CodeLine>>();
+            Render(codeLines, tokens, false, false, sections);
+            return codeLines.ToArray();
+        }
+
         private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff, Dictionary<int,TreeNode<CodeLine>> sections)
         {
             var stringBuilder = new StringBuilder();

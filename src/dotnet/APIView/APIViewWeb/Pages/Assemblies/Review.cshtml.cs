@@ -129,9 +129,12 @@ namespace APIViewWeb.Pages.Assemblies
             Review = await _manager.GetReviewAsync(User, id);
             Revision = GetReviewRevision(revisionId);
             var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
-            var CodeLineSection = renderedCodeFile.RenderResult.Sections[sectionId];
-            TempData["CodeLineSection"] = CodeLineSection;
-            return Partial("_CodeLinePartial");
+            var htmlLines = renderedCodeFile.GetCodeLineSection(sectionId);
+            var fileDiagnostics = renderedCodeFile.CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
+            Comments = await _commentsManager.GetReviewCommentsAsync(id);
+            Lines = CreateLines(fileDiagnostics, htmlLines, Comments);
+            TempData["CodeLineSection"] = Lines;
+            return Partial("_CodeLinePartial", sectionId);
         }
 
         public async Task<ActionResult> OnPostToggleClosedAsync(string id)
@@ -246,7 +249,7 @@ namespace APIViewWeb.Pages.Assemblies
                     diffLine.Kind != DiffLineKind.Removed ?
                         diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
                         Array.Empty<CodeDiagnostic>(),
-                    ++index
+                    diffLine.Line.LineNumber ?? ++index
                 )).ToArray();
         }
 
@@ -258,7 +261,7 @@ namespace APIViewWeb.Pages.Assemblies
                     line,
                     comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
                     diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
-                    ++index
+                    line.LineNumber ?? ++index
                 )).ToArray();
         }
 

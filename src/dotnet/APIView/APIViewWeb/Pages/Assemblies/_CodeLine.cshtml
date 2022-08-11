@@ -15,12 +15,10 @@
 
     bool isHeading = false;
     string headingClass = String.Empty;
-    string contentClass = String.Empty;
     if (Model.CodeLine.SectionKey != null)
     {
         isHeading = true;
         headingClass = $"code-line-section-heading-{Model.CodeLine.SectionKey}";
-        contentClass = $"code-line-section-content-{Model.CodeLine.SectionKey}";
     }
 
     var userPreference = ViewData["UserPreference"] as UserPreferenceModel;
@@ -77,9 +75,7 @@
 </tr>
 @if (isHeading)
 {
-    <tr class="code-line @contentClass d-none">
-        <partial name="_CodeLinePartial" />
-    </tr> 
+    <partial name="_CodeLinePartial" model="@Model.CodeLine.SectionKey" />
 }
 @if (Model.Diagnostics.Any())
 {

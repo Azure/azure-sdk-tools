@@ -96,7 +96,7 @@ namespace ApiView
                             isLeaf = false;
 
                             // leafSectionKeyToken and newLineToken will be used to identify the appriopriate index in leafSections
-                            var leafSectionKeyToken = new CodeFileToken($"{leafSections.Count()}", CodeFileTokenKind.Literal);
+                            var leafSectionKeyToken = new CodeFileToken($"{(leafSections.Count() - 1)}", CodeFileTokenKind.Literal);
                             var newLineToken = new CodeFileToken("", CodeFileTokenKind.Newline);
                             section.Add(leafSectionKeyToken);
                             section.Add(newLineToken);

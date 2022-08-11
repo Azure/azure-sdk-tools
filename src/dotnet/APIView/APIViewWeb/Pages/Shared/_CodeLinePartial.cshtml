@@ -1,44 +1,27 @@
-﻿@using APIView.Model
-@using ApiView
+﻿@using ApiView
 @using System.Collections
+@using System.Text
+@using APIViewWeb.Models
+@model int
 @{
-    var codeLineSection = TempData["CodeLineSection"] as TreeNode<CodeLine>;
-}
-@if (codeLineSection != null)
-{
-    <td class="line-details">
-        <table>
-            <tr>
-                <td class="line-number"><span></span></td>
-                <td class="line-details-button-cell">
-                    <a class="line-comment-button" style="visibility: hidden;">+</a>
-                </td>
-                <td class="line-details-button-cell">
-                </td>
-            </tr>
-        </table>
-    </td>
-    <td class="code-line-section-inner-content">
-        @{
-            var htmlMarkUp = String.Empty;
-            using(IEnumerator<TreeNode<CodeLine>> enumerator = codeLineSection.GetEnumerator())
-            {
-                enumerator.MoveNext();
-                while(enumerator.MoveNext())
-                {
-                    var node = enumerator.Current;
-                    var indent = String.Empty;
-                    for (var i = 0; i < node.Level; i++)
-                    {
-                        indent += "<span class='code-inner-indent'></span>";
-                    }
-                    htmlMarkUp += "<div>";
-                    htmlMarkUp += indent;
-                    htmlMarkUp += $"<span class='code-inner'>{@Html.Raw(node.Data.DisplayString)}</span>";
-                    htmlMarkUp += "</div>";
-                }
-            }
-         }
-         @Html.Raw(htmlMarkUp)
-    </td>
+    var codeLineSection = TempData["CodeLineSection"] as CodeLineModel [];
+    var contentClass = $"code-line-section-content-{Model}";
+    @if (codeLineSection == null)
+    {
+        <tr class="code-line @contentClass d-none"></tr>
+    }
+    else
+    {
+        foreach (var codeLineModel in codeLineSection)
+        {
+            var codeLine = codeLineModel.CodeLine;
+            var lineClass = (codeLine.LineClass == null) ? contentClass : $"{contentClass} {codeLine.LineClass.Trim()}";
+            var updatedCodeLine = new CodeLine(codeLine, lineClass: lineClass);
+            var updatedCodeLineModel = new CodeLineModel(
+                codeLineModel.Kind, updatedCodeLine, codeLineModel.CommentThread,
+                codeLineModel.Diagnostics, codeLineModel.LineNumber);
+
+            <partial name="_CodeLine" model="@updatedCodeLineModel" />
+        }
+    }
 }

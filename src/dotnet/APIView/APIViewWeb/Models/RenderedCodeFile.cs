@@ -1,8 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using ApiView;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using ApiView;
+using APIView.Model;
 
 namespace APIViewWeb.Models
 {
@@ -71,6 +74,63 @@ namespace APIViewWeb.Models
             }
 
             return _renderedText;
+        }
+
+        public CodeLine[] GetCodeLineSection(int sectionId)
+        {
+            var section = RenderResult.Sections[sectionId];
+            var result = new List<CodeLine>();
+
+            using (IEnumerator<TreeNode<CodeLine>> enumerator = section.GetEnumerator())
+            {
+                enumerator.MoveNext();
+                while (enumerator.MoveNext())
+                {
+                    var node = enumerator.Current;
+                    var lineClass = new List<string>();
+
+                    // Add classes for managing tree hierachy
+                    if (node.Children.Count > 0)
+                        lineClass.Add($"lvl_{node.Level}_Parent");
+
+                    if (!node.IsRoot)
+                        lineClass.Add($"lvl_{node.Level}_Child");
+
+                    var lineClasses = String.Join(' ', lineClass);
+
+                    if (!String.IsNullOrWhiteSpace(node.Data.LineClass))
+                        lineClasses = node.Data.LineClass.Trim() + $" {lineClasses}";
+
+                    if (node.IsLeaf)
+                    {
+                        int leafSectionId;
+                        bool parseWorked = Int32.TryParse(node.Data.DisplayString, out leafSectionId);
+
+                        if (parseWorked && CodeFile.LeafSections.Count > leafSectionId)
+                        {
+                            var leafSection = CodeFile.LeafSections[leafSectionId];
+                            var renderedLeafSection = CodeFileHtmlRenderer.Normal.Render(leafSection);
+                            foreach (var codeLine in renderedLeafSection)
+                            {
+                                if (!String.IsNullOrWhiteSpace(codeLine.LineClass))
+                                {
+                                    lineClasses = codeLine.LineClass.Trim() + $" {lineClasses}";
+                                }
+                                result.Add(new CodeLine(codeLine, lineClass: lineClasses));
+                            }
+                        }
+                        else
+                        {
+                            result.Add(new CodeLine(node.Data, lineClasses));
+                        }
+                    }
+                    else 
+                    {
+                        result.Add(new CodeLine(node.Data, lineClasses));
+                    }
+                }
+            }
+            return result.ToArray();
         }
     }
 }

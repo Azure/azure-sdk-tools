@@ -25,7 +25,7 @@
                             <td class="align-middle pl-4 pt-0 pb-0">
                                 @if (review.Language != null)
                                 {
-                                    string iconClassName = "icon-" + review.Language.ToLower();
+                                    string iconClassName = "icon-" + FilenameSafeStringParser.ParseLanguageName(review.Language);
                                     @if (!string.IsNullOrEmpty(review.LanguageVariant) && review.LanguageVariant.ToLower() != "default")
                                     {
                                         iconClassName += "-" + @review.LanguageVariant.ToLower();

@@ -14,15 +14,18 @@ namespace APIViewWeb.Repositories
         private readonly IAuthorizationService _authorizationService;
         private readonly CosmosUsageSampleRepository _samplesRepository;
         private readonly BlobUsageSampleRepository _sampleFilesRepository;
+        private readonly CosmosCommentsRepository _commentsRepository;
 
         public UsageSampleManager(
             IAuthorizationService authorizationService, 
             CosmosUsageSampleRepository samplesRepository,
-            BlobUsageSampleRepository sampleFilesRepository)
+            BlobUsageSampleRepository sampleFilesRepository,
+            CosmosCommentsRepository commentsRepository)
         {
             _authorizationService = authorizationService;
             _samplesRepository = samplesRepository;
             _sampleFilesRepository = sampleFilesRepository;
+            _commentsRepository = commentsRepository;
         }
 
         public async Task<UsageSampleModel> GetReviewUsageSampleAsync(string reviewId)
@@ -91,6 +94,14 @@ namespace APIViewWeb.Repositories
 
             await AssertUsageSampleOwnerAsync(user, sampleModel);
 
+            var comments = await _commentsRepository.GetCommentsAsync(reviewId);
+            foreach (var comment in comments)
+            {
+                if (comment.IsSampleComment)
+                {
+                    await _commentsRepository.DeleteCommentAsync(comment);
+                }
+            }
             await _samplesRepository.DeleteUsageSampleAsync(sampleModel);
             await _sampleFilesRepository.DeleteUsageSampleAsync(sampleModel.UsageSampleFileId);
         }

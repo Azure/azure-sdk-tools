@@ -15,20 +15,27 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly UsageSampleManager _samplesManager;
         private readonly ReviewManager _reviewManager;
         private const string ENDPOINT_SETTING = "Endpoint";
+        private readonly CommentsManager _commentsManager;
+        private readonly NotificationManager _notificationManager;
 
         public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
         public UsageSampleModel Sample { get; private set; }
         public string SampleContent { get; set; }
+        public CommentThreadModel Thread { get; set; }
 
         public UsageSamplePageModel(
             IConfiguration configuration,
             UsageSampleManager samplesManager,
-            ReviewManager reviewManager)
+            ReviewManager reviewManager,
+            CommentsManager commentsManager,
+            NotificationManager notificationManager)
         {
             _samplesManager = samplesManager;
             _reviewManager = reviewManager;
             Endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
+            _commentsManager = commentsManager;
+            _notificationManager = notificationManager;
         }
 
         [FromForm]
@@ -40,6 +47,8 @@ namespace APIViewWeb.Pages.Assemblies
             Review = await _reviewManager.GetReviewAsync(User, id);
             Sample = await _samplesManager.GetReviewUsageSampleAsync(id);
             SampleContent = await _samplesManager.GetUsageSampleContentAsync(Sample.UsageSampleFileId);
+            var comments = await _commentsManager.GetReviewCommentsAsync(id);
+            Thread = ParseThread(comments.Threads);
             return Page();
         }
 
@@ -53,6 +62,7 @@ namespace APIViewWeb.Pages.Assemblies
             var file = Upload.File;
             var sampleString = Upload.sampleString;
             var reviewId = Upload.ReviewId;
+            var deleting = Upload.Deleting;
 
             if (file != null)
             {
@@ -61,7 +71,7 @@ namespace APIViewWeb.Pages.Assemblies
                     await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, openReadStream);
                 }
             }
-            else if (sampleString != "")
+            else if (sampleString != null || deleting)
             {
                 await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, sampleString);
             }
@@ -69,5 +79,25 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage();
         }
 
+        private CommentThreadModel ParseThread(IEnumerable<CommentThreadModel> threads)
+        {
+            var comments = new List<CommentModel>();
+
+            foreach (var thread in threads)
+            {
+                foreach (var comment in thread.Comments)
+                {
+                    if (comment.IsSampleComment)
+                    {
+                        if(comment.SampleId == Sample.SampleId)
+                        {
+                            comments.Add(comment);
+                        }
+                    }
+                    
+                }
+            }
+            return new CommentThreadModel(Review.ReviewId, Sample.SampleId, comments);
+        }
     }
 }

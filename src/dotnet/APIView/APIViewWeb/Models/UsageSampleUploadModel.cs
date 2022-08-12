@@ -16,5 +16,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         [BindProperty]
         public IFormFile File { get; set; }
+
+        [BindProperty]
+        public bool Deleting { get; set; } = false;
     }
 }

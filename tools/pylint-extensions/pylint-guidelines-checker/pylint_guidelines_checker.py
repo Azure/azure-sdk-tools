@@ -1943,7 +1943,7 @@ class NonCoreNetworkImport(BaseChecker):
             self._check_import(import_, node)
 
     def visit_importfrom(self, node):
-        """Check that we aren't import from a blocked package."""
+        """Check that we aren't importing from a blocked package."""
         if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME): 
             return
         self._check_import(node.modname, node)
@@ -1957,7 +1957,7 @@ class NonCoreNetworkImport(BaseChecker):
                 )
 
 class NonAbstractTransportImport(BaseChecker):
-    """Rule to check that we aren't import transports outside of `azure.core.pipeline.transport`.
+    """Rule to check that we aren't importing transports outside of `azure.core.pipeline.transport`.
     Transport selection should be up to `azure.core` or the end-user, not individual SDKs.
     """
     name = "non-abstract-transport-import"
@@ -1973,7 +1973,7 @@ class NonAbstractTransportImport(BaseChecker):
     ABSTRACT_CLASSES = {"HttpTransport", "HttpRequest", "HttpResponse", "AsyncHttpTransport", "AsyncHttpResponse"}
 
     def visit_importfrom(self, node):
-        """Check that we aren't import from a blocked package."""
+        """Check that we aren't importing from a blocked package."""
         if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME): 
             return
         if node.modname == self.AZURE_CORE_TRANSPORT_NAME: 

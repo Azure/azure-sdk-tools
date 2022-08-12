@@ -111,6 +111,8 @@ func NewModule(dir string) (*Module, error) {
 				level = DiagnosticLevelWarning
 			}
 
+			var aliasedStruct *ast.StructType
+
 			var t TokenMaker
 			if source == nil {
 				t = p.c.addSimpleType(*p, alias, p.Name(), originalName)
@@ -120,8 +122,11 @@ func NewModule(dir string) (*Module, error) {
 					t = p.c.addInterface(*def.p, alias, p.Name(), n)
 				case *ast.StructType:
 					t = p.c.addStruct(*def.p, alias, p.Name(), def.n)
+					hoistMethodsForType(source, alias, p)
+					aliasedStruct = n
 				case *ast.Ident:
 					t = p.c.addSimpleType(*p, alias, p.Name(), def.n.Type.(*ast.Ident).Name)
+					hoistMethodsForType(source, alias, p)
 				default:
 					fmt.Printf("unexpected node type %T\n", def.n.Type)
 					t = p.c.addSimpleType(*p, alias, p.Name(), originalName)
@@ -129,6 +134,28 @@ func NewModule(dir string) (*Module, error) {
 			} else {
 				fmt.Println("found no definition for " + qn)
 			}
+
+			if aliasedStruct != nil {
+				// ensure that all struct field types that are structs are also aliased from this package
+				for _, field := range aliasedStruct.Fields.List {
+					// FieldName *FieldType
+					fieldTypeName := unwrapStructFieldTypeName(field)
+
+					if fieldTypeName != "" {
+						// ensure that our package exports this type
+						if _, ok := p.typeAliases[fieldTypeName]; !ok {
+							if t != nil {
+								p.diagnostics = append(p.diagnostics, Diagnostic{
+									Level:    DiagnosticLevelError,
+									TargetID: t.ID(),
+									Text:     "missing alias for nested type " + fieldTypeName,
+								})
+							}
+						}
+					}
+				}
+			}
+
 			if t != nil {
 				p.diagnostics = append(p.diagnostics, Diagnostic{
 					Level:    level,
@@ -139,6 +166,29 @@ func NewModule(dir string) (*Module, error) {
 		}
 	}
 	return &m, nil
+}
+
+func unwrapStructFieldTypeName(field *ast.Field) string {
+	var ident *ast.Ident
+	if se, ok := field.Type.(*ast.StarExpr); ok {
+		ident, _ = se.X.(*ast.Ident)
+	} else {
+		ident, _ = field.Type.(*ast.Ident)
+	}
+
+	// !IsExported() is a hacky way to ignore primitive types
+	if ident == nil || !ident.IsExported() {
+		return ""
+	}
+
+	return ident.Name
+}
+
+func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg) {
+	methods := pkg.c.findMethods(typeName)
+	for sig, fn := range methods {
+		target.c.Funcs[sig] = fn.ForAlias(target.Name())
+	}
 }
 
 func parseModFile(dir string) (*modfile.File, error) {

@@ -323,6 +323,26 @@ func (c *content) filterDeclarations(typ string, decls map[string]Declaration, t
 	return results
 }
 
+// findMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.
+func (c *content) findMethods(s string) map[string]Func {
+	methods := map[string]Func{}
+	for key, fn := range c.Funcs {
+		name := fn.Name()
+		if unicode.IsLower(rune(name[0])) {
+			continue
+		}
+		_, n := getReceiver(key)
+		if before, _, found := strings.Cut(n, "["); found {
+			// ignore type parameters when matching receivers to types
+			n = before
+		}
+		if s == n || "*"+s == n {
+			methods[key] = fn
+		}
+	}
+	return methods
+}
+
 // searchForMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.
 func (c *content) searchForMethods(s string, tokenList *[]Token) {
 	methods := map[string]Func{}

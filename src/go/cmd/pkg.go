@@ -9,7 +9,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -200,7 +199,7 @@ func (pkg Pkg) getText(start token.Pos, end token.Pos) string {
 	p := pkg.fs.Position(start)
 	// check if the file has been loaded, if not then load it
 	if _, ok := pkg.files[p.Filename]; !ok {
-		b, err := ioutil.ReadFile(p.Filename)
+		b, err := os.ReadFile(p.Filename)
 		if err != nil {
 			panic(err)
 		}

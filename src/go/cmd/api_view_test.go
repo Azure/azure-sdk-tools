@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,7 +22,7 @@ func TestFuncDecl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := ioutil.ReadFile("./output/testfuncdecl.json")
+	file, err := os.ReadFile("./output/testfuncdecl.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +50,7 @@ func TestInterface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := ioutil.ReadFile("./output/testinterface.json")
+	file, err := os.ReadFile("./output/testinterface.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +78,7 @@ func TestStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := ioutil.ReadFile("./output/teststruct.json")
+	file, err := os.ReadFile("./output/teststruct.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +106,7 @@ func TestConst(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := ioutil.ReadFile("./output/testconst.json")
+	file, err := os.ReadFile("./output/testconst.json")
 	if err != nil {
 		t.Fatal(err)
 	}

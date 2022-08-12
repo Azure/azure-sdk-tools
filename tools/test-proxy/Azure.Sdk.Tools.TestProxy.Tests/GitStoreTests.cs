@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public class GitStoretests
     {
         #region variable defs
-        private static string AssetsJson = "assets.json";
+        public static string AssetsJson = "assets.json";
         private GitStore _defaultStore = new GitStore();
         private string[] basicFolderStructure = new string[]
         {

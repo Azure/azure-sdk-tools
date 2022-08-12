@@ -83,18 +83,32 @@ namespace APIViewWeb.Models
 
             using (IEnumerator<TreeNode<CodeLine>> enumerator = section.GetEnumerator())
             {
+                int childCount = 0;
+                int prevLevel = 1;
                 enumerator.MoveNext();
                 while (enumerator.MoveNext())
                 {
                     var node = enumerator.Current;
                     var lineClass = new List<string>();
+                    var indent = node.Level;
+
+                    // Keep track of the number of children in each level
+                    if (prevLevel < node.Level)
+                    {
+                        childCount = 0;
+                        prevLevel = node.Level;
+                    }
+                    childCount++;
 
                     // Add classes for managing tree hierachy
                     if (node.Children.Count > 0)
-                        lineClass.Add($"lvl_{node.Level}_Parent");
+                        lineClass.Add($"lvl_{node.Level}_parent_{childCount}");
 
                     if (!node.IsRoot)
-                        lineClass.Add($"lvl_{node.Level}_Child");
+                        lineClass.Add($"lvl_{node.Level}_child_{childCount}");
+
+                    if (node.Level > 1)
+                        lineClass.Add("d-none");
 
                     var lineClasses = String.Join(' ', lineClass);
 
@@ -116,17 +130,17 @@ namespace APIViewWeb.Models
                                 {
                                     lineClasses = codeLine.LineClass.Trim() + $" {lineClasses}";
                                 }
-                                result.Add(new CodeLine(codeLine, lineClass: lineClasses));
+                                result.Add(new CodeLine(codeLine, lineClass: lineClasses, indent: indent));
                             }
                         }
                         else
                         {
-                            result.Add(new CodeLine(node.Data, lineClasses));
+                            result.Add(new CodeLine(node.Data, lineClass: lineClasses, indent: indent));
                         }
                     }
                     else 
                     {
-                        result.Add(new CodeLine(node.Data, lineClasses));
+                        result.Add(new CodeLine(node.Data, lineClass: lineClasses, indent: indent));
                     }
                 }
             }

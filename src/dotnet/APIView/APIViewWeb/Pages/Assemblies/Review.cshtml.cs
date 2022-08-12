@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView;
 using APIView.DIff;
+using APIViewWeb.Helpers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -134,6 +135,7 @@ namespace APIViewWeb.Pages.Assemblies
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
             Lines = CreateLines(fileDiagnostics, htmlLines, Comments);
             TempData["CodeLineSection"] = Lines;
+            ViewData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
             return Partial("_CodeLinePartial", sectionId);
         }
 

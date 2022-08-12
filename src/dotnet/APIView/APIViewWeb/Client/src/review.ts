@@ -111,52 +111,154 @@ $(() => {
 
   /* COLLAPSIBLE CODE LINES (EXPAND AND COLLAPSE FEATURE)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  function toggleSectionContent(headingRow, sectionContent, caretDirection, caretIcon ) {
-    sectionContent.toggleClass("d-none");
-
+  function toggleSectionContent(headingRow, sectionContent, caretDirection, caretIcon) {
     if (caretDirection.endsWith("right")) {
       caretIcon.removeClass("fa-angle-right");
       caretIcon.addClass("fa-angle-down");
+      headingRow.find(".row-fold-elipsis").addClass("d-none");
+
+      $.each(sectionContent, function (index, value) {
+        let rowClasses = $(value).attr("class");
+        if (rowClasses) {
+          let treeLvlClass = rowClasses.split(' ').filter(c => c.startsWith('lvl_1_parent'));
+          if (treeLvlClass.length > 0)
+            $(value).removeClass("d-none");
+        }
+      });
     }
     else {
       caretIcon.removeClass("fa-angle-down");
       caretIcon.addClass("fa-angle-right");
-    }
+      headingRow.find(".row-fold-elipsis").removeClass("d-none");
 
-    headingRow.find(".row-fold-elipsis").toggleClass("d-none");
+      $.each(sectionContent, function (index, value) {
+        let rowClasses = $(value).attr("class");
+        if (rowClasses) {
+          let parentRowClass = rowClasses.split(' ').filter(c => c.match(/.*lvl_[0-9]+_parent.*/));
+          if (parentRowClass.length > 0) {
+            $(value).find(".row-fold-elipsis").removeClass("d-none");
+            let caretIcon = $(value).find(".row-fold-caret").children("i");
+            caretIcon.removeClass("fa-angle-down");
+            caretIcon.addClass("fa-angle-right");
+          }
+        }
+        $(value).addClass("d-none");
+      });
+    }
   }
 
-  $('.row-fold-elipsis, .row-fold-caret').on('click', function () {
-    var headingRow = $(this).parents('.code-line');
+  function toggleSubSectionContent(headingRow, subSectionLevel, subSectionHeadingId, subSectionContentClass, caretDirection, caretIcon) {
+    var subSectionDescendants = $(`.${subSectionContentClass}`);
+
+    if (caretDirection.endsWith("right")) {
+      caretIcon.removeClass("fa-angle-right");
+      caretIcon.addClass("fa-angle-down");
+      headingRow.find(".row-fold-elipsis").addClass("d-none");
+
+      var showRow = false;
+
+      $.each(subSectionDescendants, function (index, value) {
+        if ($(value).hasClass(`lvl_${subSectionLevel}_parent_${subSectionHeadingId}`))
+          showRow = true;
+
+        if ($(value).hasClass(`lvl_${subSectionLevel}_parent_${Number(subSectionHeadingId) + 1}`))
+          return false;
+
+        if (showRow) {
+          let rowClasses = $(value).attr("class");
+          if (rowClasses) {
+            let treeLvlClass = rowClasses.split(' ').filter(c => c.startsWith(`lvl_${Number(subSectionLevel) + 1}_child`));
+            if (treeLvlClass.length > 0) {
+              $(value).removeClass("d-none");
+            }
+          }
+        } 
+      });
+    }
+    else {
+      caretIcon.removeClass("fa-angle-down");
+      caretIcon.addClass("fa-angle-right");
+      headingRow.find(".row-fold-elipsis").removeClass("d-none");
+
+      var hideRow = false;
+
+      $.each(subSectionDescendants, function (index, value) {
+        if ($(value).hasClass(`lvl_${subSectionLevel}_parent_${subSectionHeadingId}`))
+          hideRow = true;
+
+        if ($(value).hasClass(`lvl_${subSectionLevel}_parent_${Number(subSectionHeadingId) + 1}`))
+          return false;
+
+        if (hideRow) {
+          let descendantClasses = $(value).attr("class")?.split(' ').filter(c => c.match(/.*lvl_[0-9]+_child.*/))[0];
+          if (descendantClasses) {
+            let descendantLevel = descendantClasses.split('_')[1];
+            if (/^\d+$/.test(descendantLevel)) {
+              if (Number(descendantLevel) > Number(subSectionLevel))
+                $(value).addClass("d-none");
+            }
+          }
+        }
+      });
+    }
+  }
+
+  function addToggleEventHandlers() {
+    $('.row-fold-elipsis, .row-fold-caret').on('click', event, toggleCodeLines);
+  }
+
+  function toggleCodeLines(event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    var headingRow = $(event.currentTarget).parents('.code-line');
     var headingRowClasses = headingRow.attr('class');
     var caretIcon = headingRow.find(".row-fold-caret").children("i");
     var caretClasses = caretIcon.attr("class");
     var caretDirection = caretClasses ? caretClasses.split(' ').filter(c => c.startsWith('fa-angle-'))[0] : "";
-    var sectionId = headingRowClasses ? headingRowClasses.split(' ').filter(c => c.startsWith('code-line-section-heading-'))[0].replace("code-line-section-heading-", "") : "";
-    var sectionContent = $(`.code-line-section-content-${sectionId}`);
+    var subSectionHeadingClass = headingRowClasses ? headingRowClasses.split(' ').filter(c => c.startsWith('code-line-section-heading-'))[0] : "";
+    var subSectionContentClass = headingRowClasses ? headingRowClasses.split(' ').filter(c => c.startsWith('code-line-section-content-'))[0] : "";
 
-    if (sectionContent.hasClass("content-loaded")) {
-      toggleSectionContent(headingRow, sectionContent, caretDirection, caretIcon);
-    }
-    else {
-      var uri = '?handler=codelinesection';
-      var uriPath = location.pathname.split('/');
-      var reviewId = uriPath[uriPath.length - 1];
-      var revisionId = new URLSearchParams(location.search).get("revisionId");
-      uri = uri + '&id=' + reviewId + '&sectionId=' + sectionId;
-      if (revisionId) {
-        uri = uri + '&revisionId=' + revisionId;
+    if (subSectionHeadingClass) {
+      var sectionId = subSectionHeadingClass.replace("code-line-section-heading-", "")
+      if (/^\d+$/.test(sectionId)) {
+        var sectionContent = $(`.code-line-section-content-${sectionId}`);
+        if (sectionContent.hasClass("section-loaded")) {
+          toggleSectionContent(headingRow, sectionContent, caretDirection, caretIcon);
+        }
+        else {
+          var uri = '?handler=codelinesection';
+          var uriPath = location.pathname.split('/');
+          var reviewId = uriPath[uriPath.length - 1];
+          var revisionId = new URLSearchParams(location.search).get("revisionId");
+          uri = uri + '&id=' + reviewId + '&sectionId=' + sectionId;
+          if (revisionId) {
+            uri = uri + '&revisionId=' + revisionId;
+          }
+
+          $.ajax({
+            url: uri
+          }).done(function (partialViewResult) {
+            sectionContent.replaceWith(partialViewResult);
+            toggleSectionContent(headingRow, sectionContent, caretDirection, caretIcon);
+            addToggleEventHandlers();
+          });
+        }
       }
-
-      $.ajax({
-        url: uri
-      }).done(function (partialViewResult) {
-        sectionContent.replaceWith(partialViewResult);
-        toggleSectionContent(headingRow, sectionContent, caretDirection, caretIcon);
-        sectionContent.addClass("content-loaded");
-      });
     }
-  });
+
+    if (subSectionContentClass) {
+      var subSectionClass = headingRowClasses ? headingRowClasses.split(' ').filter(c => c.match(/.*lvl_[0-9]+_parent.*/))[0] : "";
+      if (subSectionClass) {
+        var subSectionLevel = subSectionClass.split('_')[1];
+        var subSectionHeadingId = subSectionClass.split('_')[3];
+        if (/^\d+$/.test(subSectionLevel) && /^\d+$/.test(subSectionHeadingId)) {
+          toggleSubSectionContent(headingRow, subSectionLevel, subSectionHeadingId, subSectionContentClass, caretDirection, caretIcon);
+        }
+      }
+    }
+  }
+
+  addToggleEventHandlers();
 
   /* ENABLE TOOLTIP AND POPOVER
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/

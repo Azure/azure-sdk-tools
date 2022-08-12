@@ -33,15 +33,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
             new FailureClassifier("Access to the path", "Cache Cannot Access Path"),
         };
 
-        public CacheFailureClassifier(VssConnection vssConnection)
-        {
-            this.vssConnection = vssConnection;
-            buildClient = vssConnection.GetClient<BuildHttpClient>();
-        }
-
-        private VssConnection vssConnection;
-        private BuildHttpClient buildClient;
-
         public async Task ClassifyAsync(FailureAnalyzerContext context)
         {
             var failedTasks = from r in context.Timeline.Records

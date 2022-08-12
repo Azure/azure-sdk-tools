@@ -1,33 +1,32 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
+using Azure.Sdk.Tools.PipelineWitness.Services;
+using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.TestManagement.WebApi;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.Immutable;
-    using System.IO;
-    using System.IO.Compression;
-    using System.Linq;
-    using System.Net;
-    using System.Text;
-    using System.Text.RegularExpressions;
-    using System.Threading.Tasks;
-
-    using Azure.Sdk.Tools.PipelineWitness.Services;
-    using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
-    using Azure.Storage.Blobs;
-    using Azure.Storage.Blobs.Models;
-    using Azure.Storage.Queues;
-    using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Options;
-    using Microsoft.TeamFoundation.Build.WebApi;
-    using Microsoft.TeamFoundation.TestManagement.WebApi;
-    using Microsoft.VisualStudio.Services.TestResults.WebApi;
-
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
-    using Newtonsoft.Json.Serialization;
-
     public class BlobUploadProcessor
     {
         private const string BuildsContainerName = "builds";
@@ -37,7 +36,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private const string BuildFailuresContainerName = "buildfailures";
         private const string PipelineOwnersContainerName = "pipelineowners";
         private const string TestRunsContainerName = "testruns";
-
+        
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
         {
@@ -45,11 +44,11 @@ namespace Azure.Sdk.Tools.PipelineWitness
             Converters = { new StringEnumConverter(new CamelCaseNamingStrategy()) },
             Formatting = Formatting.None,
         };
-
+        
         private readonly ILogger<BlobUploadProcessor> logger;
+        private readonly TelemetryClient telemetryClient;
         private readonly BuildLogProvider logProvider;
-        private readonly TestResultsHttpClient testResultsClient;
-        private readonly BuildHttpClient buildClient;
+        private readonly DevOpsClient devOpsClient;
         private readonly BlobContainerClient buildLogLinesContainerClient;
         private readonly BlobContainerClient buildsContainerClient;
         private readonly BlobContainerClient buildTimelineRecordsContainerClient;
@@ -63,10 +62,10 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         public BlobUploadProcessor(
             ILogger<BlobUploadProcessor> logger,
+            TelemetryClient telemetryClient,
             BuildLogProvider logProvider,
             BlobServiceClient blobServiceClient,
-            BuildHttpClient buildClient,
-            TestResultsHttpClient testResultsClient,
+            DevOpsClient devOpsClient,
             IOptions<PipelineWitnessSettings> options,
             IFailureAnalyzer failureAnalyzer)
         {
@@ -76,10 +75,10 @@ namespace Azure.Sdk.Tools.PipelineWitness
             }
 
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.telemetryClient = telemetryClient ?? throw new ArgumentNullException(nameof(telemetryClient));
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.logProvider = logProvider ?? throw new ArgumentNullException(nameof(logProvider));
-            this.buildClient = buildClient ?? throw new ArgumentNullException(nameof(buildClient));
-            this.testResultsClient = testResultsClient ?? throw new ArgumentNullException(nameof(testResultsClient));
+            this.devOpsClient = devOpsClient ?? throw new ArgumentNullException(nameof(devOpsClient));
             this.buildsContainerClient = blobServiceClient.GetBlobContainerClient(BuildsContainerName);
             this.buildTimelineRecordsContainerClient = blobServiceClient.GetBlobContainerClient(BuildTimelineRecordsContainerName);
             this.buildLogLinesContainerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
@@ -100,7 +99,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 this.logger.LogWarning("Unable to process run due to missing build. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
                 return;
             }
-
+            
             var skipBuild = false;
 
             // Project name is used in blob paths and cannot be empty
@@ -152,23 +151,23 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 return;
             }
 
-            await UploadBuildBlobAsync(account, build);
+            await this.telemetryClient.TraceAsync(() => UploadBuildBlobAsync(account, build));
+            
+            await this.telemetryClient.TraceAsync(() => UploadTestRunBlobsAsync(account, build));
 
-            await UploadTestRunBlobsAsync(account, build);
-
-            var timeline = await this.buildClient.GetBuildTimelineAsync(projectId, buildId);
-
+            var timeline = await this.devOpsClient.GetBuildTimelineAsync(projectId, buildId);
+            
             if (timeline == null)
             {
                 logger.LogWarning("No timeline available for build {Project}: {BuildId}", build.Project.Name, build.Id);
             }
             else
             {
-                await UploadTimelineBlobAsync(account, build, timeline);
-                await UploadBuildFailureBlobAsync(account, build, timeline);
+                await this.telemetryClient.TraceAsync(() => UploadTimelineBlobAsync(account, build, timeline));
+                await this.telemetryClient.TraceAsync(() => UploadBuildFailureBlobAsync(account, build, timeline));
             }
 
-            var logs = await buildClient.GetBuildLogsAsync(build.Project.Id, build.Id);
+            var logs = await devOpsClient.GetBuildLogsAsync(build.Project.Id, build.Id);
 
             if (logs == null || logs.Count == 0)
             {
@@ -180,12 +179,12 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             foreach (var log in buildLogInfos)
             {
-                await UploadLogLinesBlobAsync(account, build, log);
+                await this.telemetryClient.TraceAsync(() => UploadLogLinesBlobAsync(account, build, log));
             }
 
             if (build.Definition.Id == options.Value.PipelineOwnersDefinitionId)
             {
-                await UploadPipelineOwnersBlobAsync(account, build, timeline); 
+                await this.telemetryClient.TraceAsync(() => UploadPipelineOwnersBlobAsync(account, build, timeline)); 
             }
         }
 
@@ -248,7 +247,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             try
             {
-                await using var artifactStream = await this.buildClient.GetArtifactContentZipAsync(build.Project.Id, build.Id, artifactName);
+                await using var artifactStream = await this.devOpsClient.GetArtifactContentZipAsync(build.Project.Id, build.Id, artifactName);
                 using var zip = new ZipArchive(artifactStream);
 
                 var fileEntry = zip.GetEntry(filePath);
@@ -356,7 +355,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         public async Task UploadBuildDefinitionBlobsAsync(string account, string projectName)
         {
-            var definitions = await buildClient.GetFullDefinitionsAsync2(project: projectName);
+            var definitions = await this.devOpsClient.GetFullDefinitionsAsync2(project: projectName);
 
             foreach (var definition in definitions)
             {
@@ -364,7 +363,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
                 if (!this.cachedDefinitionRevisions.TryGetValue(cacheKey, out var cachedRevision) || cachedRevision != definition.Revision)
                 {
-                    await UploadBuildDefinitionBlobAsync(account, definition);
+                    await this.telemetryClient.TraceAsync(() => UploadBuildDefinitionBlobAsync(account, definition));
                 }
 
                 this.cachedDefinitionRevisions[cacheKey] = definition.Revision;
@@ -700,7 +699,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
                 // Over an open read stream and an open write stream, one line at a time, read, process, and write to
                 // blob storage
-                using (var logStream = await this.logProvider.GetLogStreamAsync(build.Project.Name, build.Id, log.LogId))
+                using (var logStream = await this.logProvider.GetLogStreamAsync(build.Project.Id, build.Id, log.LogId))
                 using (var logReader = new StreamReader(logStream))
                 using (var blobStream = await blobClient.OpenWriteAsync(overwrite: true, new BlobOpenWriteOptions()))
                 using (var blobWriter = new StreamWriter(blobStream))
@@ -789,7 +788,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
                     do
                     {
-                        var page = await testResultsClient.QueryTestRunsAsync2(
+                        var page = await this.devOpsClient.QueryTestRunsAsync2(
                             build.Project.Id,
                             rangeStart,
                             rangeEnd,
@@ -799,7 +798,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
                         foreach (var testRun in page)
                         {
-                            await UploadTestRunBlobAsync(account, build, testRun);
+                            await this.telemetryClient.TraceAsync(() => UploadTestRunBlobAsync(account, build, testRun));
                         }
 
                         continuationToken = page.ContinuationToken;
@@ -889,7 +888,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             try
             {
-                build = await buildClient.GetBuildAsync(projectId, buildId);
+                build = await this.devOpsClient.GetBuildAsync(projectId, buildId);
             }
             catch (BuildNotFoundException)
             {

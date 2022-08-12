@@ -2,26 +2,26 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.Services.WebApi;
 using System.Diagnostics;
+using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
+using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Options;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
     public class AzurePipelinesBuildDefinitionWorker : BackgroundService
     {
-        private readonly ILogger<AzurePipelinesBuildDefinitionWorker> logger;
-        private readonly BlobUploadProcessor runProcessor;
+        private readonly TelemetryClient telemetryClient;
+        private readonly BlobUploadProcessor blobUploadProcessor;
         private readonly IOptions<PipelineWitnessSettings> options;
 
         public AzurePipelinesBuildDefinitionWorker(
-            ILogger<AzurePipelinesBuildDefinitionWorker> logger,
-            BlobUploadProcessor runProcessor,
+            TelemetryClient telemetryClient,
+            BlobUploadProcessor blobUploadProcessor,
             IOptions<PipelineWitnessSettings> options)
         {
-            this.logger = logger;
-            this.runProcessor = runProcessor;
+            this.telemetryClient = telemetryClient;
+            this.blobUploadProcessor = blobUploadProcessor;
             this.options = options;
         }
 
@@ -32,16 +32,29 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 var stopWatch = Stopwatch.StartNew();
                 var settings = this.options.Value;
 
-                foreach (var project in settings.Projects)
+                try
                 {
-                    await this.runProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
+                    await this.telemetryClient.TraceAsync(() => ProcessBuildDefinitionsAsync(settings));
+                }
+                catch (Exception ex)
+                {
+                    this.telemetryClient.TrackException(ex);
                 }
 
                 var duration = settings.BuildDefinitionLoopPeriod - stopWatch.Elapsed;
+
                 if (duration > TimeSpan.Zero)
                 {
-                    await Task.Delay(duration);
+                    await Task.Delay(duration, stoppingToken);
                 }
+            }
+        }
+
+        private async Task ProcessBuildDefinitionsAsync(PipelineWitnessSettings settings)
+        {
+            foreach (var project in settings.Projects)
+            {
+                await this.blobUploadProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
             }
         }
     }

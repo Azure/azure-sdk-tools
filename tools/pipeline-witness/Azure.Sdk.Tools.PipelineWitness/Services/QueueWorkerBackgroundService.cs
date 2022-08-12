@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Microsoft.ApplicationInsights;
@@ -15,9 +15,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
     internal abstract class QueueWorkerBackgroundService : BackgroundService
     {
-        private const string ActivitySourceName = "Azure.Sdk.Tools.PipelineWitness.Queue";
-        private static readonly ActivitySource activitySource = new ActivitySource(ActivitySourceName);
-
         private readonly ILogger logger;
         private readonly QueueServiceClient queueServiceClient;
         private readonly string queueName;
@@ -47,57 +44,52 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             this.logger.LogInformation("Starting ExecuteAsync for {TypeName}", this.GetType().Name);
-
+            
             var poisonQueueName = $"{this.queueName}-poison";
 
             var queueClient = this.queueServiceClient.GetQueueClient(this.queueName);
             var poisonQueueClient = this.queueServiceClient.GetQueueClient(poisonQueueName);
 
-            await queueClient.CreateIfNotExistsAsync();
-            await poisonQueueClient.CreateIfNotExistsAsync();
+            await queueClient.CreateIfNotExistsAsync(cancellationToken: stoppingToken);
+            await poisonQueueClient.CreateIfNotExistsAsync(cancellationToken: stoppingToken);
 
             while (true)
             {
-                using var loopActivity = activitySource.CreateActivity("MessageLoopIteration", ActivityKind.Internal) ?? new Activity("MessageLoopIteration");
-                loopActivity?.AddBaggage("QueueName", queueClient.Name);
-                
-                using var loopOperation = this.telemetryClient.StartOperation<RequestTelemetry>(loopActivity);
-
-                var options = this.options.CurrentValue;
-
-                this.logger.LogDebug("Getting next message from queue {QueueName}", queueClient.Name);
-
-                try
+                await this.telemetryClient.TraceAsync("MessageLoopIteration", "Internal", async () =>
                 {
-                    // We consider a message leased when it's made invisible in the queue and the current process has a
-                    // valid PopReceipt for the message. The PopReceipt is used to perform subsequent operations on the
-                    // "leased" message.
-                    QueueMessage message = await queueClient.ReceiveMessageAsync(options.MessageLeasePeriod);
+                    Activity.Current?.AddBaggage("QueueName", this.queueName);
+                    var options = this.options.CurrentValue;
 
-                    if (message == null)
-                    {
-                        this.logger.LogDebug("The queue returned no message. Waiting {Delay}.", options.EmptyQueuePollDelay);
-                        await Task.Delay(options.EmptyQueuePollDelay, stoppingToken);
-                        continue;
-                    }
+                    this.logger.LogDebug("Getting next message from queue {QueueName}", queueClient.Name);
 
-                    if (message.InsertedOn.HasValue)
+                    try
                     {
-                        this.telemetryClient.TrackMetric(new MetricTelemetry
+                        // We consider a message leased when it's made invisible in the queue and the current process has a
+                        // valid PopReceipt for the message. The PopReceipt is used to perform subsequent operations on the
+                        // "leased" message.
+                        QueueMessage message = await queueClient.ReceiveMessageAsync(options.MessageLeasePeriod);
+
+                        if (message == null)
                         {
-                            Name = $"{this.queueName} MessageLatencyMs",
-                            Sum = DateTimeOffset.Now.Subtract(message.InsertedOn.Value).TotalMilliseconds
-                        });
-                    }
+                            this.logger.LogDebug("The queue returned no message. Waiting {Delay}.", options.EmptyQueuePollDelay);
+                            await Task.Delay(options.EmptyQueuePollDelay, stoppingToken);
+                            return;
+                        }
 
-                    using (var activity = activitySource.CreateActivity("ProcessMessage", ActivityKind.Internal) ?? new Activity("ProcessMessage"))
-                    {
-                        activity?.AddBaggage("MessageId", message.MessageId);
-
-                        using var operation = this.telemetryClient.StartOperation<RequestTelemetry>(activity);
-
-                        try
+                        if (message.InsertedOn.HasValue)
                         {
+                            this.telemetryClient.TrackMetric(new MetricTelemetry
+                            {
+                                Name = $"{this.queueName} MessageLatencyMs",
+                                Sum = DateTimeOffset.Now.Subtract(message.InsertedOn.Value).TotalMilliseconds
+                            });
+                        }
+
+                        // After the message is dequeued from the queue, create RequestTelemetry to track its processing.
+                        await this.telemetryClient.TraceRequestAsync("ProcessMessage", async telemetry =>
+                        {
+                            telemetry.Id = message.MessageId;
+
                             this.logger.LogDebug("The queue returned a message.\n  Queue: {Queue}\n  Message: {MessageId}\n  Dequeue Count: {DequeueCount}\n  Pop Receipt: {PopReceipt}", queueClient.Name, message.MessageId, message.DequeueCount, message.PopReceipt);
 
                             using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
@@ -122,13 +114,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                             {
                                 this.logger.LogDebug("Message processed successfully. Removing message from queue.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", message.MessageId, queueClient.Name, latestPopReceipt);
                                 await queueClient.DeleteMessageAsync(message.MessageId, latestPopReceipt, stoppingToken);
-                                activity?.SetStatus(ActivityStatusCode.Ok);
-                                operation.Telemetry.Success = true;
                             }
                             else
                             {
-                                activity?.SetStatus(ActivityStatusCode.Error);
-                                operation.Telemetry.Success = false;
                                 if (message.DequeueCount > options.MaxDequeueCount)
                                 {
                                     this.logger.LogError("Message {MessageId} exceeded maximum dequeue count. Moving to poison queue {QueueName}", message.MessageId, poisonQueueClient.Name);
@@ -141,21 +129,17 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                                     this.logger.LogError("Resetting message visibility timeout to {SleepPeriod}.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", options.MessageErrorSleepPeriod, message.MessageId, queueClient.Name, latestPopReceipt);
                                     await queueClient.UpdateMessageAsync(message.MessageId, latestPopReceipt, message.Body, options.MessageErrorSleepPeriod, cancellationToken: stoppingToken);
                                 }
+
+                                throw new MessageProcessingException("Error processing message", processTask.Exception);
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            this.logger.LogError(ex, "Exception thrown while procesing queue message.");
-                            activity?.SetStatus(ActivityStatusCode.Error);
-                            operation.Telemetry.Success = false;
-                        }
+                        });
                     }
-                }
-                catch (Exception ex)
-                {
-                    this.logger.LogError(ex, "Exception thrown while procesing message loop.");
-                    await Task.Delay(options.MessageErrorSleepPeriod, stoppingToken);
-                }
+                    catch (Exception ex)
+                    {
+                        this.logger.LogError(ex, "Exception thrown while processing message loop.");
+                        await Task.Delay(options.MessageErrorSleepPeriod, stoppingToken);
+                    }
+                });
             }
         }
 

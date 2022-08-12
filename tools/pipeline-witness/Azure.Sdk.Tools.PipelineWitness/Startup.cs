@@ -48,9 +48,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 return connection;
             });
 
-            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<ProjectHttpClient>());
-            builder.Services.AddSingleton<BuildHttpClient>(provider => provider.GetRequiredService<VssConnection>().GetClient<EnhancedBuildHttpClient>());
+            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<EnhancedBuildHttpClient>() as BuildHttpClient);
             builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<TestResultsHttpClient>());
+            builder.Services.AddSingleton<DevOpsClient>();
 
             builder.Services.AddLogging();
             builder.Services.AddMemoryCache();

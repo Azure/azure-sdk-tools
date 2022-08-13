@@ -88,7 +88,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                         // After the message is dequeued from the queue, create RequestTelemetry to track its processing.
                         await this.telemetryClient.TraceRequestAsync("ProcessMessage", async telemetry =>
                         {
-                            telemetry.Id = message.MessageId;
+                            Activity.Current?.AddBaggage("MessageId", message.MessageId);
 
                             this.logger.LogDebug("The queue returned a message.\n  Queue: {Queue}\n  Message: {MessageId}\n  Dequeue Count: {DequeueCount}\n  Pop Receipt: {PopReceipt}", queueClient.Name, message.MessageId, message.DequeueCount, message.PopReceipt);
 

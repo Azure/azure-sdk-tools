@@ -88,7 +88,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         public virtual async Task<Stream> GetBuildLogAsync(Guid project, int buildId, int logId)
         {
             return await this.telemetryClient.TraceAsync(
-                nameof(GetBuildAsync),
+                nameof(GetBuildLogAsync),
                 OperationType,
                 () => this.buildHttpClient.GetBuildLogAsync(project, buildId, logId));
         }

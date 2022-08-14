@@ -235,6 +235,10 @@ $(() => {
             uri = uri + '&revisionId=' + revisionId;
           }
 
+          var loadingMarkUp = "<td class='spinner-border spinner-border-sm ml-5' role='status'><span class='sr-only'>Loading...</span></td>"
+          sectionContent.html(loadingMarkUp);
+          sectionContent.removeClass("d-none");
+
           $.ajax({
             url: uri
           }).done(function (partialViewResult) {

@@ -43,7 +43,15 @@
     var cellContent = String.Empty;
     for (int i = 0; i < Model.CodeLine.Indent; i++)
     {
-        cellContent += "<span class='code-inner-indent'></span>";
+        if (isSectionHeading || isSubSectionHeading)
+        {
+            cellContent += @"<svg height='20' width='20'>
+                                    <line x1='0' y1='50%' x2='100%' y2='50%' style='stroke:rgb(217,217,214);stroke-width:1' />
+                                </svg>";
+        }else
+        {
+            cellContent += @"<span class='code-inner-indent'></span>";
+        }
     }
     cellContent += Model.CodeLine.DisplayString;
 }

@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using ApiView;
+using APIView;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Markdig.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
@@ -21,8 +25,8 @@ namespace APIViewWeb.Pages.Assemblies
         public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
         public UsageSampleModel Sample { get; private set; }
-        public string SampleContent { get; set; }
-        public CommentThreadModel Thread { get; set; }
+        public CodeLineModel[] SampleContent { get; set; }
+        public ReviewCommentsModel Comments { get; set; }
 
         public UsageSamplePageModel(
             IConfiguration configuration,
@@ -46,9 +50,8 @@ namespace APIViewWeb.Pages.Assemblies
             TempData["Page"] = "samples";
             Review = await _reviewManager.GetReviewAsync(User, id);
             Sample = await _samplesManager.GetReviewUsageSampleAsync(id);
-            SampleContent = await _samplesManager.GetUsageSampleContentAsync(Sample.UsageSampleFileId);
-            var comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Thread = ParseThread(comments.Threads);
+            Comments = await _commentsManager.GetUsageSampleCommentsAsync(id);
+            SampleContent = ParseLines(Sample.UsageSampleFileId, Comments).Result;
             return Page();
         }
 
@@ -79,25 +82,32 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage();
         }
 
-        private CommentThreadModel ParseThread(IEnumerable<CommentThreadModel> threads)
+        private async Task<CodeLineModel[]> ParseLines(string fileId, ReviewCommentsModel comments)
         {
-            var comments = new List<CommentModel>();
-
-            foreach (var thread in threads)
+            if(Sample.UsageSampleFileId == null)
             {
-                foreach (var comment in thread.Comments)
-                {
-                    if (comment.IsSampleComment)
-                    {
-                        if(comment.SampleId == Sample.SampleId)
-                        {
-                            comments.Add(comment);
-                        }
-                    }
-                    
-                }
+                return new CodeLineModel[0];
             }
-            return new CommentThreadModel(Review.ReviewId, Sample.SampleId, comments);
+
+            var content = (await _samplesManager.GetUsageSampleContentAsync(fileId)).Split("\n");
+
+            int skip = 0;
+            if (content.Last() == "")
+            {
+                skip = 1;
+            }
+            
+            CodeLineModel[] lines = new CodeLineModel[content.Length-skip];
+            CodeDiagnostic[] cd = Array.Empty<CodeDiagnostic>();
+            
+            for (int i = 0; i < content.Length-skip; i++)
+            {
+                var line = new CodeLine(content[i], content[i], "");
+                comments.TryGetThreadForLine(i.ToString(), out var thread);
+                lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i+1);
+            }
+
+            return lines;
         }
     }
 }

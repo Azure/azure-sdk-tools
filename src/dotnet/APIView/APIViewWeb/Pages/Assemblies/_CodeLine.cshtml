@@ -25,20 +25,33 @@
     }
 
     var userPreference = TempData["UserPreference"] as UserPreferenceModel;
+    bool? showDocumentation = TempData["ShowDocumentation"] as bool?;
+    string codeLineDisplay = showDocumentation == false && Model.CodeLine.IsDocumentation ? "hidden-row" : "";
 }
 
-<tr class="code-line @lineClass @foldableClass @hiddenSectionClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+<tr class="code-line @lineClass @foldableClass @hiddenSectionClass @codeLineDisplay" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
     <td class="line-details">
         <table>
             <tr>
                 <!-- display if comment is above, and if comment checkbox NOT selected (maybe?) or maybe just default on -->
-                @if(Model.DocumentedBy.Length > 0)
+                @if(Model.DocumentedByLines.Length > 0)
                 {
-                    <td class="line-details-button-cell"><button class="toggle-documentation" data-documented-by="@Model.DocumentedBy.Length">-</button></td>
-                } else
-                {
-                    <td class="line-details-button-cell d-none"><button class="toggle-documentation" data-documented-by="0">-</button></td>
+                    <td class="line-details-button-cell">
+                        @if (showDocumentation == true)
+                        {
+                            <a class="line-toggle-documentation-button" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
+                                -
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="line-toggle-documentation-button" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
+                                +
+                            </a>
+                        }
+                    </td>
                 }
+
                 @if(userPreference.HideLineNumbers == true)
                 {
                     <td class="line-number @lineClass d-none"><span>@Model.LineNumber</span></td>
@@ -50,7 +63,7 @@
                 <td class="line-details-button-cell @lineClass">
                     @if (!isRemoved && Model.CodeLine.ElementId != null)
                     {
-                        <a class="line-comment-button">+</a>
+                        <a class="line-comment-button icon icon-speech-bubble"></a>
                     }
                     else
                     {

@@ -9,13 +9,15 @@ namespace ApiView
         public string ElementId { get; }
         public string LineClass { get; }
         public int IndentSize { get; }
+        public bool IsDocumentation { get; }
 
-        public CodeLine(string html, string id, string lineClass, int indentSize = 0)
+        public CodeLine(string html, string id, string lineClass, int indentSize = 0, bool isDocumentation = false)
         {
             this.DisplayString = html;
             this.ElementId = id;
             this.LineClass = lineClass;
             this.IndentSize = indentSize;
+            this.IsDocumentation = isDocumentation;
         }
 
         public override string ToString()

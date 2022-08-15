@@ -14,14 +14,14 @@ namespace ApiView
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
-        public CodeLine[] Render(CodeFile file, bool showDocumentation = false, bool enableSkipDiff = false)
+        public CodeLine[] Render(CodeFile file, bool enableSkipDiff = false)
         {
             var list = new List<CodeLine>();
-            Render(list, file.Tokens, showDocumentation, enableSkipDiff);
+            Render(list, file.Tokens, enableSkipDiff);
             return list.ToArray();
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff)
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool enableSkipDiff)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
@@ -32,6 +32,7 @@ namespace ApiView
             string lastHeadingEncountered = null;
             HashSet<string> lineIds = new HashSet<string>(); // Used to ensure there are no duplicate IDs
             int indentSize = 0;
+            bool isComment = false;
 
             foreach (var token in node)
             {
@@ -39,7 +40,6 @@ namespace ApiView
                 if (enableSkipDiff && isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
                     continue;
 
-                // if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
                 if (isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
                         continue;
 
@@ -69,7 +69,8 @@ namespace ApiView
                             lineClass = lineClass.Trim();
                         }
 
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize));
+                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize, isComment));
+                        isComment = false;
                         currentId = null;
                         stringBuilder.Clear();
                         break;
@@ -123,6 +124,10 @@ namespace ApiView
                         if (token.DefinitionId != null)
                         {
                             currentId = token.DefinitionId;
+                        }
+                        if(token.Kind == CodeFileTokenKind.Comment)
+                        {
+                            isComment = true;
                         }
                         RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;

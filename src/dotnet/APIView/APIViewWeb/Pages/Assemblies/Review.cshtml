@@ -390,6 +390,7 @@
                 <tbody>
                     @{
                         TempData["UserPreference"] = Model.GetUserPreference();
+                        TempData["ShowDocumentation"] = Model.ShowDocumentation;
                     }
                     @foreach (var line in Model.Lines)
                     {

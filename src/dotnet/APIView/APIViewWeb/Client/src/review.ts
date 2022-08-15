@@ -9,8 +9,7 @@ $(() => {
   const SHOW_DIFFONLY_HREF = ".show-diffonly";
   const HIDE_LINE_NUMBERS = "#hide-line-numbers";
   const HIDE_LEFT_NAVIGATION = "#hide-left-navigation";
-
-  const TOGGLE_DOCUMENTATION = ".toggle-documentation";
+  const TOGGLE_DOCUMENTATION = ".line-toggle-documentation-button";
 
   hideCheckboxIfNoDocs();
 
@@ -86,21 +85,18 @@ $(() => {
   });
 
   $(TOGGLE_DOCUMENTATION).on("click", function(e){
-    // remove data-documented-by previous actually hide
     const documentedBy = $(this).data('documented-by');
-    const row = $(this).parent().parent().parent().parent().parent().parent();
-    const table = row.parent();
-    for(var i = 1; i <= documentedBy; i++) {
-      $(table.children()[row.index() - i]).toggle();
+    const codeLines = $(".code-window > tbody > .code-line");
+    
+    for(var i = 0; i < documentedBy.length; i++) {
+      $(codeLines[documentedBy[i] - 1]).toggle();
     }
 
-    if($(this).text() == "-") {
+    if($(this).text() === "-") {
       this.innerText = "+";
     } else {
       this.innerText = "-";
     }
-    // console.log($(this).parent().parent().parent().parent().parent().parent());
-    // console.log($(this).parent().parent().parent().parent().parent().parent().index());
   });
 
   $(HIDE_LINE_NUMBERS).on("click", e => {

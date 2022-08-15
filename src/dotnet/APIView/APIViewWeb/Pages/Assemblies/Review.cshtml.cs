@@ -94,7 +94,7 @@ namespace APIViewWeb.Pages.Assemblies
             CodeFile = renderedCodeFile.CodeFile;
 
             var fileDiagnostics = CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
-            var fileHtmlLines = renderedCodeFile.Render(ShowDocumentation);
+            var fileHtmlLines = renderedCodeFile.Render();
 
             if (DiffRevisionId != null)
             {
@@ -102,9 +102,9 @@ namespace APIViewWeb.Pages.Assemblies
 
                 var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
 
-                var previousHtmlLines = previousRevisionFile.RenderReadOnly(ShowDocumentation);
-                var previousRevisionTextLines = previousRevisionFile.RenderText(ShowDocumentation);
-                var fileTextLines = renderedCodeFile.RenderText(ShowDocumentation);
+                var previousHtmlLines = previousRevisionFile.RenderReadOnly();
+                var previousRevisionTextLines = previousRevisionFile.RenderText();
+                var fileTextLines = renderedCodeFile.RenderText();
 
                 var diffLines = InlineDiff.Compute(
                     previousRevisionTextLines,
@@ -193,14 +193,14 @@ namespace APIViewWeb.Pages.Assemblies
 
         private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments)
         {
-            List<int> documentedBy = new List<int>();
+            List<int> documentedByLines = new List<int>();
             return lines.Select(
                 (line, index) =>
                 {
                     index++;
-                    if (line.DisplayString.Contains("code-comment"))
+                    if (line.IsDocumentation)
                     {
-                        documentedBy.Add(index);
+                        documentedByLines.Add(index);
                         return new CodeLineModel(
                             DiffLineKind.Unchanged,
                             line,
@@ -209,7 +209,8 @@ namespace APIViewWeb.Pages.Assemblies
                             index,
                             new int[] {}
                         );
-                    } else
+                    }
+                    else
                     {
                         CodeLineModel c = new CodeLineModel(
                             DiffLineKind.Unchanged,
@@ -217,9 +218,9 @@ namespace APIViewWeb.Pages.Assemblies
                             comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
                             diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
                             index,
-                            documentedBy.ToArray()
+                            documentedByLines.ToArray()
                         );
-                        documentedBy = new List<int>();
+                        documentedByLines = new List<int>();
                         return c;
                     }
                 }).ToArray();

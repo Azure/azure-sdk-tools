@@ -530,13 +530,9 @@ code {
     display: inline-block;
     width: 21px;
     height: 21px;
-    line-height: 21px;
-    color: #fff !important;
-    text-align: center;
-    text-indent: 0;
     cursor: pointer;
-    background-color: #0366d6;
-    background-image: linear-gradient(#0372ef, #0366d6);
+    background: #0366d6 url(/icons/comment.svg) no-repeat center center;
+    background-size: 90%;
     border-radius: 3px;
     box-shadow: 0 1px 4px rgba(27, 31, 35, .15);
     opacity: 0;
@@ -551,6 +547,22 @@ code {
     white-space: normal;
     positon: sticky;
     left: 0px;
+}
+
+.line-toggle-documentation-button {
+    display: inline-block;
+    width: 21px;
+    height: 21px;
+    line-height: 21px;
+    color: #fff !important;
+    text-align: center;
+    text-indent: 0;
+    cursor: pointer;
+    background-color: #0366d6;
+    background-image: linear-gradient(#0372ef, #0366d6);
+    border-radius: 3px;
+    box-shadow: 0 1px 4px rgba(27, 31, 35, .15);
+    user-select: none;
 }
 
 .line-details-button-cell {

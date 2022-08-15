@@ -10,27 +10,35 @@ namespace SwaggerApiParser
     {
     }
 
-    public class Definition : BaseSchema
-    {
-    }
-
     public class SchemaTableItem
     {
-        public String Model;
-        public String Field;
-        public String TypeFormat;
-        public Boolean Required;
-        public String Description;
+        public String Model { get; set; }
+        public String Field { get; set; }
+        public String TypeFormat { get; set; }
+
+        public String Keywords { get; set; }
+        public String Description { get; set; }
+
 
         public CodeFileToken[] TokenSerialize()
         {
-            var requiredString = this.Required ? "true" : "";
             List<CodeFileToken> ret = new List<CodeFileToken>();
-            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(this.Model, CodeFileTokenKind.MemberName)}));
-            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(this.Field, CodeFileTokenKind.Literal)}));
-            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(this.TypeFormat, CodeFileTokenKind.Keyword)}));
-            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(requiredString, CodeFileTokenKind.Literal)}));
-            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(this.Description, CodeFileTokenKind.Literal)}));
+            string[] serializedFields = new[] {"Model", "Field", "TypeFormat", "Keywords", "Description"};
+            ret.AddRange(this.TokenSerializeWithOptions(serializedFields));
+            return ret.ToArray();
+        }
+
+        public CodeFileToken[] TokenSerializeWithOptions(string[] serializedFields)
+        {
+            List<CodeFileToken> ret = new List<CodeFileToken>();
+            foreach (var property in this.GetType().GetProperties())
+            {
+                if (serializedFields.Contains(property.Name))
+                {
+                    ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(property.GetValue(this, null)?.ToString(), CodeFileTokenKind.Literal)}));
+                }
+            }
+
             return ret.ToArray();
         }
     }
@@ -70,6 +78,19 @@ namespace SwaggerApiParser
             return this.Ref != null;
         }
 
+        public List<String> GetKeywords()
+        {
+            List<string> keywords = new List<string>();
+            return keywords;
+        }
+
+        public String GetOriginRef()
+        {
+            return "";
+            return this.originalRef ?? this.Ref;
+        }
+
+
         public string GetTypeFormat()
         {
             var typeFormat = this.format != null ? $"/{this.format}" : "";
@@ -90,14 +111,14 @@ namespace SwaggerApiParser
             return this.type + typeFormat;
         }
 
-        private CodeFileToken[] TokenSerializeInternal(SerializeContext context, BaseSchema schema, ref List<SchemaTableItem> flattenedTableItems)
+        private CodeFileToken[] TokenSerializeInternal(SerializeContext context, BaseSchema schema, ref List<SchemaTableItem> flattenedTableItems, Boolean serializeRef = true)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
-            if (schema.originalRef != null)
+            if (serializeRef || schema.GetOriginRef() != null)
             {
                 // ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken(Utils.GetDefinitionType(schema.originalRef), CodeFileTokenKind.TypeName));
-                flattenedTableItems.Add(new SchemaTableItem() {Model = Utils.GetDefinitionType(schema.originalRef), TypeFormat = this.GetTypeFormat(), Description = this.description});
+                flattenedTableItems.Add(new SchemaTableItem() {Model = Utils.GetDefinitionType(schema.originalRef), Description = this.description});
                 ret.Add(TokenSerializer.NewLine());
                 context.intent++;
             }
@@ -105,7 +126,7 @@ namespace SwaggerApiParser
 
             if (schema.properties?.Count != 0)
             {
-                TokenSerializeProperties(context, schema, schema.properties, ret, ref flattenedTableItems);
+                TokenSerializeProperties(context, schema, schema.properties, ret, ref flattenedTableItems, serializeRef);
             }
 
             if (schema.allOfProperities?.Count != 0 && schema.allOf != null)
@@ -124,19 +145,28 @@ namespace SwaggerApiParser
                     }
                 }
 
-                TokenSerializeProperties(new SerializeContext(context.intent + 2, context.IteratorPath), schema, schema.allOfProperities, ret, ref flattenedTableItems);
+                TokenSerializeProperties(new SerializeContext(context.intent + 2, context.IteratorPath), schema, schema.allOfProperities, ret, ref flattenedTableItems, serializeRef);
             }
 
             if (schema.type == "array")
             {
                 // ret.Add(TokenSerializer.Intent(context.intent));
-                TokenSerializeArray(context, ret, schema, ref flattenedTableItems);
+
+                SchemaTableItem arrayItem = new SchemaTableItem {Description = schema.description};
+                var arrayType = schema.items.type != null ? $"array<{schema.items.type}>" : $"array<{Utils.GetDefinitionType(schema.items.originalRef)}>";
+                arrayItem.TypeFormat = arrayType;
+                flattenedTableItems.Add(arrayItem);
+                if (serializeRef || schema.items.GetOriginRef() == null)
+                {
+                    TokenSerializeArray(context, ret, schema, ref flattenedTableItems, serializeRef);
+                }
             }
 
             return ret.ToArray();
         }
 
-        private static void TokenSerializeProperties(SerializeContext context, BaseSchema schema, Dictionary<string, BaseSchema> properties, List<CodeFileToken> ret, ref List<SchemaTableItem> flattenedTableItems)
+        private static void TokenSerializeProperties(SerializeContext context, BaseSchema schema, Dictionary<string, BaseSchema> properties, List<CodeFileToken> ret, ref List<SchemaTableItem> flattenedTableItems,
+            Boolean serializeRef = true)
         {
             if (properties == null)
             {
@@ -145,9 +175,6 @@ namespace SwaggerApiParser
 
             foreach (var kv in properties)
             {
-                SchemaTableItem item = new SchemaTableItem {Field = kv.Key, Description = kv.Value.description, TypeFormat = kv.Value.GetTypeFormat()};
-                flattenedTableItems.Add(item);
-
                 // ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Literal));
                 ret.Add(TokenSerializer.Colon());
@@ -155,8 +182,13 @@ namespace SwaggerApiParser
                 // Normal case: If properties is has values. Serialize each key value pair in properties.
                 if ((kv.Value.properties != null && kv.Value.properties?.Count != 0))
                 {
+                    SchemaTableItem item = new SchemaTableItem {Field = kv.Key, Description = kv.Value.description, Keywords = String.Join(",", kv.Value.GetKeywords()), TypeFormat = kv.Value.GetTypeFormat()};
+                    flattenedTableItems.Add(item);
                     ret.Add(TokenSerializer.NewLine());
-                    ret.AddRange(schema.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), kv.Value, ref flattenedTableItems));
+                    if (serializeRef || kv.Value.GetOriginRef() == null)
+                    {
+                        ret.AddRange(schema.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), kv.Value, ref flattenedTableItems, serializeRef));
+                    }
                 }
                 // Circular reference case: the ref won't be expanded. 
                 else if (kv.Value.Ref != null)
@@ -171,19 +203,33 @@ namespace SwaggerApiParser
                 // Array case: Serialize array.
                 else if (kv.Value.type == "array")
                 {
-                    TokenSerializeArray(context, ret, kv.Value, ref flattenedTableItems);
+                    SchemaTableItem arrayItem = new SchemaTableItem();
+                    arrayItem.Field = kv.Key;
+                    arrayItem.Description = kv.Value.description;
+                    var arrayType = (kv.Value.items.originalRef == null && kv.Value.items.Ref == null)
+                        ? $"array<{kv.Value.items.type}>"
+                        : $"array<{Utils.GetDefinitionType(kv.Value.items.originalRef ?? Utils.GetDefinitionType(kv.Value.items.Ref))}>";
+                    arrayItem.TypeFormat = arrayType;
+                    flattenedTableItems.Add(arrayItem);
+                    if (serializeRef || kv.Value.GetOriginRef() == null)
+                    {
+                        TokenSerializeArray(context, ret, kv.Value, ref flattenedTableItems, serializeRef);
+                    }
                 }
                 else
                 {
+                    SchemaTableItem item = new SchemaTableItem {Field = kv.Key, Description = kv.Value.description, TypeFormat = kv.Value.GetTypeFormat()};
+                    flattenedTableItems.Add(item);
                     ret.Add(new CodeFileToken(kv.Value.type, CodeFileTokenKind.Keyword));
                     ret.Add(TokenSerializer.NewLine());
                 }
             }
         }
 
-        private static void TokenSerializeArray(SerializeContext context, List<CodeFileToken> ret, BaseSchema arraySchema, ref List<SchemaTableItem> flattenedTableItems)
+        private static void TokenSerializeArray(SerializeContext context, List<CodeFileToken> ret, BaseSchema arraySchema, ref List<SchemaTableItem> flattenedTableItems, Boolean serializeRef)
         {
             ret.Add(new CodeFileToken("array", CodeFileTokenKind.Keyword));
+
             if (arraySchema.items.type != null)
             {
                 ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
@@ -198,29 +244,32 @@ namespace SwaggerApiParser
                 ret.Add(new CodeFileToken(refName.Split("/").Last(), CodeFileTokenKind.TypeName));
                 ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
                 ret.Add(TokenSerializer.NewLine());
-                ret.AddRange(arraySchema.items.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), arraySchema.items, ref flattenedTableItems));
+                ret.AddRange(arraySchema.items.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), arraySchema.items, ref flattenedTableItems, serializeRef));
             }
+        }
+
+        public void TokenSerializePropertyIntoTableItems(SerializeContext context, ref List<SchemaTableItem> retTableItems, Boolean serializeRef = true, string[] columns = null)
+        {
+            if (retTableItems == null)
+            {
+                retTableItems = new List<SchemaTableItem>();
+                this.TokenSerializeInternal(context, this, ref retTableItems, serializeRef);
+            }
+            // var ret = this.TokenSerializeInternal(context, this, ref flattenedSchema);
         }
 
         public CodeFileToken[] TokenSerialize(SerializeContext context)
         {
-            if (this.tableItems == null)
-            {
-                this.tableItems = new List<SchemaTableItem>();
-                this.TokenSerializeInternal(context, this, ref this.tableItems);
-            }
-            // var ret = this.TokenSerializeInternal(context, this, ref flattenedSchema);
-
-            Console.WriteLine(this.tableItems);
+            string[] columns = new[] {"Model", "Field", "Type/Format", "Keywords", "Description"};
+            this.TokenSerializePropertyIntoTableItems(context, ref this.tableItems, true);
+            var tableRet = new List<CodeFileToken>();
+            
             var tableRows = new List<CodeFileToken>();
             foreach (var tableItem in this.tableItems)
             {
                 tableRows.AddRange(tableItem.TokenSerialize());
             }
-
-            string[] columns = new[] {"Model", "Field", "Type/Format", "Required", "Description"};
-            var tableRet = new List<CodeFileToken>();
-            tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(this.tableItems.Count, 5, columns, tableRows.ToArray()));
+            tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(this.tableItems.Count, columns.Length, columns, tableRows.ToArray()));
             tableRet.Add(TokenSerializer.NewLine());
             return tableRet.ToArray();
         }

@@ -30,12 +30,15 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
         ret.Add(TokenSerializer.NewLine());
         ret.AddRange(info.TokenSerialize(context));
 
-        var schemesStr = String.Join(",", schemes);
-        ret.AddRange(TokenSerializer.KeyValueTokens("schemes", schemesStr));
+        if (schemes != null)
+        {
+            var schemesStr = String.Join(",", schemes);
+            ret.AddRange(TokenSerializer.KeyValueTokens("schemes", schemesStr));
+        }
 
         var consumesStr = String.Join(",", consumes);
         ret.AddRange(TokenSerializer.KeyValueTokens("consumes", consumesStr));
-        
+
         var producesStr = String.Join(",", produces);
         ret.AddRange(TokenSerializer.KeyValueTokens("produces", producesStr));
         return ret.ToArray();

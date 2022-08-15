@@ -64,6 +64,7 @@ public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperati
         }
 
         ret.ChildItems = operationIdNavigations.ToArray();
+        iteratorPath.Pop();
         return ret;
     }
 

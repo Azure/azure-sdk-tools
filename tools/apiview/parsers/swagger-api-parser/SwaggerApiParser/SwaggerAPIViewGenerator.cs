@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace SwaggerApiParser
 {
@@ -28,8 +29,6 @@ namespace SwaggerApiParser
                 {
                     schemaCache.AddSchema(swaggerFilePath, definition.Key, definition.Value);
                 }
-
-                ret.SwaggerApiViewDefinitions.Add(definition.Key, definition.Value);
             }
 
             foreach (var (currentPath, operations) in swaggerSpec.paths)
@@ -49,6 +48,7 @@ namespace SwaggerApiParser
                         operationId = value.operationId,
                         description = value.description,
                         summary = value.summary,
+                        tags = value.tags,
                         operationIdPrefix = Utils.GetOperationIdPrefix(value.operationId),
                         operationIdAction = Utils.GetOperationIdAction(value.operationId),
                         PathParameters = new SwaggerApiViewOperationParameters("PathParameters"),
@@ -114,6 +114,28 @@ namespace SwaggerApiParser
 
                     ret.Paths.AddSwaggerApiViewOperation(op);
                 }
+            }
+
+            foreach (var definition in swaggerSpec.definitions)
+            {
+                ret.SwaggerApiViewDefinitions.Add(definition.Key, definition.Value);
+            }
+
+            foreach (var kv in swaggerSpec.parameters)
+            {
+                var param = kv.Value;
+                var swaggerApiViewParameter = new SwaggerApiViewParameter
+                {
+                    description = param.description,
+                    name = param.name,
+                    required = param.required,
+                    format = param.format,
+                    In = param.In,
+                    schema = schemaCache.GetResolvedSchema(param.schema, swaggerFilePath),
+                    Ref = param.Ref,
+                    type = param.type
+                };
+                ret.SwaggerApiViewGlobalParameters.Add(kv.Key, swaggerApiViewParameter);
             }
 
             ret.Paths.SortByMethod();

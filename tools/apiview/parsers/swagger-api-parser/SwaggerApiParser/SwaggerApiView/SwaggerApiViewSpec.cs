@@ -13,8 +13,10 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
 
     public SwaggerApiViewGeneral SwaggerApiViewGeneral { get; set; }
     public SwaggerApiViewPaths Paths { get; set; }
-    
+
     public SwaggerApiViewDefinitions SwaggerApiViewDefinitions { get; set; }
+
+    public SwaggerApiViewGlobalParameters SwaggerApiViewGlobalParameters { get; set; }
 
 
     public string fileName;
@@ -26,6 +28,7 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
         this.Paths = new SwaggerApiViewPaths();
         this.SwaggerApiViewGeneral = new SwaggerApiViewGeneral();
         this.SwaggerApiViewDefinitions = new SwaggerApiViewDefinitions();
+        this.SwaggerApiViewGlobalParameters = new SwaggerApiViewGlobalParameters();
     }
 
     public CodeFileToken[] TokenSerialize(SerializeContext context)
@@ -52,7 +55,7 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
         var pathTokens = this.Paths.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath));
         ret.AddRange(pathTokens);
         context.IteratorPath.Pop();
-        
+
         context.IteratorPath.Add("Definitions");
         ret.Add(TokenSerializer.NavigableToken("Definitions", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
         ret.Add(TokenSerializer.Colon());
@@ -60,7 +63,13 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
         var definitionTokens = this.SwaggerApiViewDefinitions.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath));
         ret.AddRange(definitionTokens);
         context.IteratorPath.Pop();
-        
+
+        context.IteratorPath.Add("Parameters");
+        ret.Add(TokenSerializer.NavigableToken("Parameters", CodeFileTokenKind.FoldableParentToken, definitionId: context.IteratorPath.CurrentPath()));
+        ret.Add(TokenSerializer.Colon());
+        ret.Add(TokenSerializer.NewLine());
+        ret.AddRange(this.SwaggerApiViewGlobalParameters.TokenSerialize(context));
+
 
         return ret.ToArray();
     }
@@ -72,6 +81,8 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
 
         ret.Add(this.SwaggerApiViewGeneral.BuildNavigationItem(iteratorPath));
         ret.Add(this.Paths.BuildNavigationItem(iteratorPath));
+        ret.Add(this.SwaggerApiViewDefinitions.BuildNavigationItem(iteratorPath));
+        ret.Add(this.SwaggerApiViewGlobalParameters.BuildNavigationItem(iteratorPath));
         return ret.ToArray();
     }
 

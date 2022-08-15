@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using APIView;
+using Microsoft.VisualBasic;
 
 namespace SwaggerApiParser;
 
@@ -17,6 +19,17 @@ public class SwaggerApiViewParameter : ITokenSerializable
 
     public BaseSchema schema { get; set; }
 
+    public List<string> GetKeywords()
+    {
+        List<string> ret = new List<string>();
+        if (this.required)
+        {
+            ret.Add("required");
+        }
+
+        return ret;
+    }
+
 
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
@@ -27,15 +40,23 @@ public class SwaggerApiViewParameter : ITokenSerializable
         }
 
         // ret.Add(TokenSerializer.Intent(context.intent));
-        ret.Add(new CodeFileToken(name, CodeFileTokenKind.Literal));
-        ret.Add(TokenSerializer.Colon());
-        ret.Add(new CodeFileToken(this.type, CodeFileTokenKind.Keyword));
-        ret.Add(TokenSerializer.NewLine());
-        if (this.schema != null)
+
+        string[] columns = new[] {"name", "Type/Format", "In", "Keywords", "Description"};
+
+        List<CodeFileToken> tableRows = new List<CodeFileToken>();
+        tableRows.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(this.name, CodeFileTokenKind.Literal)}));
+        var parameterType = this.type;
+        if (this.format != null)
         {
-            ret.AddRange(this.schema.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
+            parameterType += "/" + format;
         }
 
+        tableRows.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(parameterType, CodeFileTokenKind.Literal)}));
+        tableRows.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(this.In, CodeFileTokenKind.Literal)}));
+        tableRows.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(String.Join(",", this.GetKeywords()), CodeFileTokenKind.Literal)}));
+        tableRows.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(this.description, CodeFileTokenKind.Literal)}));
+        ret.AddRange(TokenSerializer.TokenSerializeAsTableFormat(1, 5, columns, tableRows.ToArray()));
+        ret.Add(TokenSerializer.NewLine());
         return ret.ToArray();
     }
 
@@ -70,9 +91,10 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
         // ret.Add(TokenSerializer.FoldableContentStart());
         foreach (var parameter in this)
         {
-            ret.AddRange(parameter.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
+            // ret.AddRange(parameter.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         }
-        // ret.Add(TokenSerializer.FoldableContentEnd());
+
+        ret.Add(TokenSerializer.FoldableContentEnd());
 
         return ret.ToArray();
     }
@@ -89,7 +111,7 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
         ret.Add(TokenSerializer.NavigableToken(this.type, CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath(this.type)));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
-        string[] columns = new[] {"Name", "Type/Format", "Required", "Description"};
+        string[] columns = new[] {"Name", "Type/Format", "Keywords", "Description"};
         var tableRows = this.TokenSerializeTableRows(context);
         ret.AddRange(TokenSerializer.TokenSerializeAsTableFormat(this.Count, 4, columns, tableRows));
         ret.Add(TokenSerializer.NewLine());
@@ -110,8 +132,7 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
             }
 
             ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(parameterType, CodeFileTokenKind.Keyword)}));
-            var required = parameter.required;
-            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(required.ToString(), CodeFileTokenKind.Literal)}));
+            ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(String.Join(",", parameter.GetKeywords()), CodeFileTokenKind.Literal)}));
             ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(parameter.description, CodeFileTokenKind.Literal)}));
         }
 

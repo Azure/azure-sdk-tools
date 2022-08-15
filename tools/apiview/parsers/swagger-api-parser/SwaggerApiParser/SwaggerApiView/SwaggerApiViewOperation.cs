@@ -10,12 +10,15 @@ public class SwaggerApiViewOperation : ITokenSerializable
     public string operationIdPrefix;
     public string operationIdAction { get; set; }
     public string description { get; set; }
+    
+    public List<string> tags { get; set; }
 
     public string summary { get; set; }
     public string method { get; set; }
     public string path { get; set; }
 
     public Boolean xMsLongRunningOperation { get; set; }
+    
     public Operation operation { get; set; }
 
     public SwaggerApiViewOperationParameters PathParameters { get; set; }
@@ -46,6 +49,12 @@ public class SwaggerApiViewOperation : ITokenSerializable
         ret.Add(TokenSerializer.Colon());
         ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
         ret.Add(TokenSerializer.NewLine());
+       
+        ret.Add(new CodeFileToken("tags", CodeFileTokenKind.Keyword));
+        ret.Add(TokenSerializer.Colon());
+        ret.Add(new CodeFileToken(string.Join(",", tags), CodeFileTokenKind.Literal));
+        ret.Add(TokenSerializer.NewLine());
+        
 
 
         if (this.summary != null)

@@ -117,12 +117,19 @@ $(() => {
       caretIcon.addClass("fa-angle-down");
       headingRow.find(".row-fold-elipsis").addClass("d-none");
 
+      if (sectionContent.length == 1) {
+        var sectionContentClass = sectionContent[0].className.replace(/\s/g, '.');
+        sectionContent = $(`.${sectionContentClass}`);
+      }
+
       $.each(sectionContent, function (index, value) {
         let rowClasses = $(value).attr("class");
         if (rowClasses) {
-          let treeLvlClass = rowClasses.split(' ').filter(c => c.startsWith('lvl_1_parent'));
-          if (treeLvlClass.length > 0)
+          let treeLvlClass = rowClasses.split(' ').filter(c => c.startsWith('lvl_1_'));
+          if (treeLvlClass.length > 0) {
             $(value).removeClass("d-none");
+            $(value).find("svg").attr("height", `${$(value).height()}`);
+          }
         }
       });
     }
@@ -170,6 +177,8 @@ $(() => {
             let treeLvlClass = rowClasses.split(' ').filter(c => c.startsWith(`lvl_${Number(subSectionLevel) + 1}_child`));
             if (treeLvlClass.length > 0) {
               $(value).removeClass("d-none");
+              let rowHeight = $(value).height() ?? 0;
+              $(value).find("svg").attr("height", `${rowHeight}`);
             }
           }
         } 
@@ -235,8 +244,8 @@ $(() => {
             uri = uri + '&revisionId=' + revisionId;
           }
 
-          var loadingMarkUp = "<td class='spinner-border spinner-border-sm ml-5' role='status'><span class='sr-only'>Loading...</span></td>"
-          sectionContent.html(loadingMarkUp);
+          var loadingMarkUp = "<td class='spinner-border spinner-border-sm ml-4' role='status'><span class='sr-only'>Loading...</span></td>"
+          sectionContent.children("td").after(loadingMarkUp);
           sectionContent.removeClass("d-none");
 
           $.ajax({

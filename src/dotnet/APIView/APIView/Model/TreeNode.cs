@@ -25,6 +25,8 @@ namespace APIView.Model
             }
         }
 
+        public int PositionAmongSiblings { get; set; } = 1;
+
         public TreeNode(T codeLine)
         {
             this.Data = codeLine;
@@ -35,6 +37,7 @@ namespace APIView.Model
         {
             TreeNode<T> childNode = new TreeNode<T>(child);
             childNode.Parent = this;
+            childNode.PositionAmongSiblings = this.Children.Count + 1;
             this.Children.Add(childNode);
             return childNode;
         }

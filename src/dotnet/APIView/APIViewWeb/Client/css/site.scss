@@ -654,7 +654,7 @@ code {
 }
 
 .code {
-    padding-right: 10px;
+    padding: 0px;
     position: relative;
     vertical-align: top;
 }
@@ -665,18 +665,17 @@ code {
     white-space: pre;
 }
 
+.code-inner > svg {
+    float: left;
+}
+
 .code-inner > table {
     display: inline-block;
+    position: relative;
 }
 
 .code-inner td, .code-inner th {
     border: 1px solid #dee2e6;
-}
-
-.code-inner-indent {
-    margin-left: 20px;
-    border-left: 1px dashed #dee2e6;
-    padding-bottom: 0.45rem;
 }
 
 .code-added {

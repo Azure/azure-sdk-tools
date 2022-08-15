@@ -43,14 +43,17 @@
     var cellContent = String.Empty;
     for (int i = 0; i < Model.CodeLine.Indent; i++)
     {
-        if (isSectionHeading || isSubSectionHeading)
+        if ((isSectionHeading || isSubSectionHeading) && (i == Model.CodeLine.Indent - 1))
         {
-            cellContent += @"<svg height='20' width='20'>
-                                    <line x1='0' y1='50%' x2='100%' y2='50%' style='stroke:rgb(217,217,214);stroke-width:1' />
-                                </svg>";
+            cellContent += @"<svg height='23' width='23'>
+                                <line x1='0' y1='50%' x2='90%' y2='50%' style='stroke:rgb(217,217,214);stroke-width:1' />
+                                <line x1='0' y1='0' x2='0' y2='100%' style='stroke:rgb(217,217,214);stroke-width:1.5' />
+                            </svg>";
         }else
         {
-            cellContent += @"<span class='code-inner-indent'></span>";
+            cellContent += @"<svg height='23' width='23'>
+                                <line x1='0' y1='0' x2='0' y2='100%' style='stroke:rgb(217,217,214);stroke-width:1.5' />
+                            </svg>";
         }
     }
     cellContent += Model.CodeLine.DisplayString;
@@ -95,15 +98,22 @@
         }
         @if (Model.Kind == DiffLineKind.Removed)
         {
-            <span class="code-inner">&nbsp;-&nbsp;@Html.Raw(cellContent)</span>
+            var codeRemovedSign = @"<svg height='23' width='23'>
+                                    <text x='40%' y='70%'>-</text>
+                                </svg>";
+            <div class="code-inner">@Html.Raw(codeRemovedSign)@Html.Raw(cellContent)</div>
         }
         else if(Model.Kind == DiffLineKind.Added)
         {
-            <span class="code-inner">&nbsp;+&nbsp;@Html.Raw(cellContent)</span>
+            var codeAddedSign = @"<svg height='23' width='23'>
+                                        <text x='40%' y='70%'>+</text>
+                                    </svg>";
+            <div class="code-inner">@Html.Raw(codeAddedSign)@Html.Raw(cellContent)</div>
         }
         else 
         {
-            <span class="code-inner">&nbsp;&nbsp;&nbsp;@Html.Raw(cellContent)@Html.Raw(collapseMenu)</span> 
+            var initialIndent = "<svg height='23' width='23'></svg>";
+            <div class="code-inner">@Html.Raw(initialIndent)@Html.Raw(cellContent)@Html.Raw(collapseMenu)</div> 
         }
     </td>
 </tr>

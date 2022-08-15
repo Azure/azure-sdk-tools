@@ -83,8 +83,6 @@ namespace APIViewWeb.Models
 
             using (IEnumerator<TreeNode<CodeLine>> enumerator = section.GetEnumerator())
             {
-                int childCount = 0;
-                int prevLevel = 1;
                 enumerator.MoveNext();
                 while (enumerator.MoveNext())
                 {
@@ -92,20 +90,12 @@ namespace APIViewWeb.Models
                     var lineClass = new List<string>();
                     var indent = node.Level;
 
-                    // Keep track of the number of children in each level
-                    if (prevLevel < node.Level)
-                    {
-                        childCount = 0;
-                        prevLevel = node.Level;
-                    }
-                    childCount++;
-
                     // Add classes for managing tree hierachy
                     if (node.Children.Count > 0)
-                        lineClass.Add($"lvl_{node.Level}_parent_{childCount}");
+                        lineClass.Add($"lvl_{node.Level}_parent_{node.PositionAmongSiblings}");
 
                     if (!node.IsRoot)
-                        lineClass.Add($"lvl_{node.Level}_child_{childCount}");
+                        lineClass.Add($"lvl_{node.Level}_child_{node.PositionAmongSiblings}");
 
                     if (node.Level > 1)
                         lineClass.Add("d-none");

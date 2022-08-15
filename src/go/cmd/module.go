@@ -176,6 +176,8 @@ func unwrapStructFieldTypeName(field *ast.Field) string {
 	var ident *ast.Ident
 	if se, ok := field.Type.(*ast.StarExpr); ok {
 		ident, _ = se.X.(*ast.Ident)
+	} else if at, ok := field.Type.(*ast.ArrayType); ok {
+		ident, _ = at.Elt.(*ast.Ident)
 	} else {
 		ident, _ = field.Type.(*ast.Ident)
 	}

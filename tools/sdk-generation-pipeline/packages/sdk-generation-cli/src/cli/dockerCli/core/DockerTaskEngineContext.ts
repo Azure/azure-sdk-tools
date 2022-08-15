@@ -87,6 +87,9 @@ export class DockerTaskEngineContext {
         if (!!this.resultOutputFolder && !fs.existsSync(this.resultOutputFolder)) {
             fs.mkdirSync(this.resultOutputFolder, { recursive: true });
         }
+        if (!!this.sdkRepo && fs.existsSync(this.sdkRepo)) {
+            await new GitOperationWrapper(this.sdkRepo).disableFileMode();
+        }
         this.logger.info(`Start to run task engine in ${path.basename(this.sdkRepo)}`);
     }
 

@@ -10,6 +10,7 @@ using APIViewWeb.Repositories;
 using Markdig.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Pages.Assemblies
@@ -49,8 +50,8 @@ namespace APIViewWeb.Pages.Assemblies
         {
             TempData["Page"] = "samples";
             Review = await _reviewManager.GetReviewAsync(User, id);
-            Sample = await _samplesManager.GetReviewUsageSampleAsync(id);
             Comments = await _commentsManager.GetUsageSampleCommentsAsync(id);
+            Sample = await _samplesManager.GetReviewUsageSampleAsync(id);
             SampleContent = ParseLines(Sample.UsageSampleFileId, Comments).Result;
             return Page();
         }
@@ -99,15 +100,35 @@ namespace APIViewWeb.Pages.Assemblies
             
             CodeLineModel[] lines = new CodeLineModel[content.Length-skip];
             CodeDiagnostic[] cd = Array.Empty<CodeDiagnostic>();
-            
             for (int i = 0; i < content.Length-skip; i++)
             {
-                var line = new CodeLine(content[i], content[i], "");
+                int advance = 0;
+                string lineContent = "";
+                if (content[i].StartsWith("<pre>"))
+                {
+                    StringBuilder sb = new StringBuilder();
+                    do
+                    {
+                        sb.Append(content[i+advance]);
+                        advance++;
+                    }
+                    while (!content[i+advance].EndsWith("</pre>"));
+                    lineContent = sb.ToString();
+                }
+                else
+                {
+                    lineContent = content[i];
+                }
+
+                var line = new CodeLine(lineContent, "usage-sample-line-" + (i+1).ToString() , "");
                 comments.TryGetThreadForLine(i.ToString(), out var thread);
                 lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i+1);
+                i += advance;
             }
 
-            return lines;
+            var finalLines = Array.FindAll(lines, e => !(e.Diagnostics == null));
+
+            return finalLines;
         }
     }
 }

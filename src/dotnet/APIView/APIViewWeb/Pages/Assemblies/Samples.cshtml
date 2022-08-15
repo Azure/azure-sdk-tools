@@ -4,106 +4,122 @@
     Layout = "ReviewLayout";
     ViewData["Title"] = "Usage Samples";
 }
-<div class="container-fluid">
-    <div class="mx-5 mt-2">
-        <div class="row">
-            <div class="col p-2" data-review-id=@Model.Review.ReviewId>
-                @if (Model.Sample == null || Model.SampleContent.Length == 0)
-                {
-                    <div class="text-muted border rounded">There is no sample present in the review. <hr />
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add Usage Sample</button> 
-                    </div>
-                }
-                else
-                {
-                    <div class="border rounded">
-                        <i> Current sample uploaded by <strong> <a username="@Model.Sample.Author"> @Model.Sample.Author </a></strong></i> <br />
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Replace Usage Sample</button>
-                        @if (Model.Sample.Author == User.GetGitHubLogin())
-                        {
-                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModel">Delete Usage Sample</button>
-                        }
-                    </div>
-                    <div class="border-rounded">
-                        <table class="code-window">
-                            <tbody>
-                                @foreach (var line in Model.SampleContent)
-                                {
-                                    <partial name="_CodeLine" model="@line" />
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
+<link rel="stylesheet" href="~/usagesample.css">
+
+@if (Model.Sample == null)
+{
+    <div class="container-fluid">
+        <div class="mx-5 mt-2">
+            <div class="text-muted border rounded">
+                <p> <strong> Usage Samples are not available for this APIView deployment. </strong></p>
             </div>
-            <partial name="_SampleCommentFormPartial" />
         </div>
     </div>
-</div>
-
-<div class="container-fluid">
-    <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    @if(Model.SampleContent == null)
+}
+else
+{
+    <div class="container-fluid">
+        <div class="mx-5 mt-2">
+            <div class="row">
+                <div class="col p-2" data-review-id=@Model.Review.ReviewId>
+                    @if (Model.SampleContent.Length == 0) 
                     {
-                        <h5 class="modal-title">Add Usage Sample</h5>
+                        <div class="text-muted border rounded">
+                            There is no sample present in the review. <hr />
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add Usage Sample</button>
+                        </div>
                     }
                     else
                     {
-                        <h5 class="modal-title">Overwrite Usage Sample</h5>
+                        <div class="border rounded usage-sample">
+                            <i> Current sample uploaded by <strong> <a username="@Model.Sample.Author"> @Model.Sample.Author </a></strong></i> <br />
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Replace Usage Sample</button>
+                            @if (Model.Sample.Author == User.GetGitHubLogin())
+                            {
+                                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModel">Delete Usage Sample</button>
+                            }
+                        </div>
+                        <div class="border rounded usage-sample">
+                            <table class="code-window">
+                                <tbody>
+                                    @foreach (var line in Model.SampleContent)
+                                    {
+                                        <partial name="_CodeLine" model="@line" />
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
                 </div>
-                <div class="modal-body">
+                <partial name="_SampleCommentFormPartial" />
+            </div>
+        </div>
+    </div>
 
-                    <div class="form-group">
-                        <label>Pick an upload method:</label>
+    <div class="container-fluid">
+        <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        @if(Model.SampleContent == null)
+                        {
+                            <h5 class="modal-title">Add Usage Sample</h5>
+                        }
+                        else
+                        {
+                            <h5 class="modal-title">Overwrite Usage Sample</h5>
+                        }
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
 
-                        <ul class="nav nav-pills nav-fill mb-3">
-                            <li class="nav-item">
-                                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#md-text">Markdown Text</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#md-file">Markdown File</a>
-                            </li>
-                        </ul>
+                        <div class="form-group">
+                            <label>Pick an upload method:</label>
 
-                        <!-- Tab panes -->
-                        <div class="tab-content border rounded p-3">
-                            <div class="tab-pane active" id="md-text">
-                                <div class="new-comment-content">
-                                    <form asp-page-handler="Upload" method="post">
-                                        <div class="form-group">
-                                            <div class="new-sample-content">
-                                                <textarea asp-for="Upload.sampleString" class="new-thread-comment-text form-control" rows="5" placeholder="Enter your markdown formatted usage sample here"></textarea>
+                            <ul class="nav nav-pills nav-fill mb-3">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="home-tab" data-toggle="tab" href="#md-text">Markdown Text</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#md-file">Markdown File</a>
+                                </li>
+                            </ul>
+
+                            <!-- Tab panes -->
+                            <div class="tab-content border rounded p-3">
+                                <div class="tab-pane active" id="md-text">
+                                    <div class="new-comment-content">
+                                        <form asp-page-handler="Upload" method="post">
+                                            <div class="form-group">
+                                                <div class="new-sample-content">
+                                                    <textarea asp-for="Upload.sampleString" class="new-thread-comment-text form-control" rows="5" placeholder="Enter your markdown formatted usage sample here"></textarea>
+                                                </div>
+                                                <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
                                             </div>
-                                            <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;">Add sample</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="md-file">
+                                    <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
+                                        <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                                        <div class="form-group">
+                                            <div class="custom-file">
+                                                <input asp-for="Upload.File" type="file" class="custom-file-input">
+                                                <label asp-for="Upload.File" class="custom-file-label">Select usage sample for this review</label>
+                                            </div>
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-                                            <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;">Add sample</button>
+                                            <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i>Upload</button>
                                         </div>
                                     </form>
                                 </div>
-                            </div>
-                            <div class="tab-pane" id="md-file">
-                                <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
-                                    <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
-                                    <div class="form-group">
-                                        <div class="custom-file">
-                                            <input asp-for="Upload.File" type="file" class="custom-file-input">
-                                            <label asp-for="Upload.File" class="custom-file-label">Select usage sample for this review</label>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-                                        <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i>Upload</button>
-                                    </div>
-                                </form>
                             </div>
                         </div>
                     </div>
@@ -111,35 +127,35 @@
             </div>
         </div>
     </div>
-</div>
 
-<div class="container-fluid">
-    <div class="modal fade" id="deleteModel" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Delete Usage Sample</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="tab-content border rounded p-3">
-                        <h3 class="modal-dialog"> This action can not be undone. </h3>
+    <div class="container-fluid">
+        <div class="modal fade" id="deleteModel" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Delete Usage Sample</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="form-group">
-                        <form asp-page-handler="Upload" method="post">
-                            <input asp-for="Upload.sampleString" hidden value="@null" />
-                            <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
-                            <input asp-for="Upload.Deleting" hidden type="text" value="@true" />
-                            <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-                            <button type="submit" name="submit" value="Submit" class="btn btn-danger">Remove Usage Sample</button>
-                        </form>
+                    <div class="modal-body">
+                        <div class="tab-content border rounded p-3">
+                            <h3 class="modal-dialog"> This action can not be undone. </h3>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="form-group">
+                            <form asp-page-handler="Upload" method="post">
+                                <input asp-for="Upload.sampleString" hidden value="@null" />
+                                <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                                <input asp-for="Upload.Deleting" hidden type="text" value="@true" />
+                                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                                <button type="submit" name="submit" value="Submit" class="btn btn-danger">Remove Usage Sample</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+}

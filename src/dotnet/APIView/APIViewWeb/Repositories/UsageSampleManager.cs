@@ -58,7 +58,9 @@ namespace APIViewWeb.Repositories
             if (SampleModel.UsageSampleFileId != null)
             {
                 await _sampleFilesRepository.DeleteUsageSampleAsync(SampleModel.UsageSampleFileId);
+                await _samplesRepository.DeleteUsageSampleAsync(SampleModel);
             }
+            SampleModel = new UsageSampleModel(user, reviewId, sample);
 
             Markdig.MarkdownPipeline pipeline = new Markdig.MarkdownPipelineBuilder()
                 //.UseAdvancedExtensions()

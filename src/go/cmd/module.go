@@ -111,8 +111,6 @@ func NewModule(dir string) (*Module, error) {
 				level = DiagnosticLevelWarning
 			}
 
-			var aliasedStruct *ast.StructType
-
 			var t TokenMaker
 			if source == nil {
 				t = p.c.addSimpleType(*p, alias, p.Name(), originalName)
@@ -123,7 +121,27 @@ func NewModule(dir string) (*Module, error) {
 				case *ast.StructType:
 					t = p.c.addStruct(*def.p, alias, p.Name(), def.n)
 					hoistMethodsForType(source, alias, p)
-					aliasedStruct = n
+					// ensure that all struct field types that are structs are also aliased from this package
+					for _, field := range n.Fields.List {
+						fieldTypeName := unwrapStructFieldTypeName(field)
+						if fieldTypeName == "" {
+							// we can ignore this field
+							continue
+						}
+
+						// ensure that our package exports this type
+						if _, ok := p.typeAliases[fieldTypeName]; ok {
+							// found an alias
+							continue
+						}
+
+						// no alias, add a diagnostic
+						p.diagnostics = append(p.diagnostics, Diagnostic{
+							Level:    DiagnosticLevelError,
+							TargetID: t.ID(),
+							Text:     "missing alias for nested type " + fieldTypeName,
+						})
+					}
 				case *ast.Ident:
 					t = p.c.addSimpleType(*p, alias, p.Name(), def.n.Type.(*ast.Ident).Name)
 					hoistMethodsForType(source, alias, p)
@@ -133,32 +151,6 @@ func NewModule(dir string) (*Module, error) {
 				}
 			} else {
 				fmt.Println("found no definition for " + qn)
-			}
-
-			if aliasedStruct != nil {
-				// ensure that all struct field types that are structs are also aliased from this package
-				for _, field := range aliasedStruct.Fields.List {
-					fieldTypeName := unwrapStructFieldTypeName(field)
-					if fieldTypeName == "" {
-						// we can ignore this field
-						continue
-					}
-
-					// ensure that our package exports this type
-					if _, ok := p.typeAliases[fieldTypeName]; ok {
-						// found an alias
-						continue
-					}
-
-					// no alias, add a diagnostic
-					if t != nil {
-						p.diagnostics = append(p.diagnostics, Diagnostic{
-							Level:    DiagnosticLevelError,
-							TargetID: t.ID(),
-							Text:     "missing alias for nested type " + fieldTypeName,
-						})
-					}
-				}
 			}
 
 			if t != nil {

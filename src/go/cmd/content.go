@@ -345,28 +345,16 @@ func (c *content) findMethods(s string) map[string]Func {
 
 // searchForMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.
 func (c *content) searchForMethods(s string, tokenList *[]Token) {
-	methods := map[string]Func{}
+	methods := c.findMethods(s)
 	methodNames := []string{}
-	for key, fn := range c.Funcs {
-		name := fn.Name()
-		if unicode.IsLower(rune(name[0])) {
-			continue
-		}
-		_, n := getReceiver(key)
-		if before, _, found := strings.Cut(n, "["); found {
-			// ignore type parameters when matching receivers to types
-			n = before
-		}
-		if s == n || "*"+s == n {
-			methods[key] = fn
-			methodNames = append(methodNames, key)
-			delete(c.Funcs, key)
-		}
+	for key := range methods {
+		methodNames = append(methodNames, key)
 	}
 	sort.Strings(methodNames)
 	for _, name := range methodNames {
 		fn := methods[name]
 		*tokenList = append(*tokenList, fn.MakeTokens()...)
+		delete(c.Funcs, name)
 	}
 }
 

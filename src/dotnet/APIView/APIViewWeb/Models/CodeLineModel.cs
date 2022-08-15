@@ -24,7 +24,6 @@ namespace APIViewWeb.Models
         public CommentThreadModel CommentThread { get; }
         public DiffLineKind Kind { get; }
         public int LineNumber { get; }
-
         public int[] DocumentedByLines { get; }
     }
 }

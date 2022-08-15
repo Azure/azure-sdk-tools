@@ -187,7 +187,7 @@ namespace APIViewWeb.Pages.Assemblies
                         diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
                         Array.Empty<CodeDiagnostic>(),
                     ++index,
-                    new int[] { } // temp!
+                    new int[] { }
                 )).ToArray();
         }
 

@@ -173,16 +173,25 @@ func unwrapStructFieldTypeName(field *ast.Field) string {
 		return ""
 	}
 
+	// start with the field expression
+	exp := field.Type
+
+	// if it's an array, get the element expression.
+	// current codegen doesn't support *[]Type so no need to handle it.
+	if at, ok := exp.(*ast.ArrayType); ok {
+		// FieldName []FieldType
+		// FieldName []*FieldType
+		exp = at.Elt
+	}
+
+	// from here we either have a pointer-to-type or type
 	var ident *ast.Ident
-	if se, ok := field.Type.(*ast.StarExpr); ok {
+	if se, ok := exp.(*ast.StarExpr); ok {
 		// FieldName *FieldType
 		ident, _ = se.X.(*ast.Ident)
-	} else if at, ok := field.Type.(*ast.ArrayType); ok {
-		// FieldName []FieldType
-		ident, _ = at.Elt.(*ast.Ident)
 	} else {
 		// FieldName FieldType
-		ident, _ = field.Type.(*ast.Ident)
+		ident, _ = exp.(*ast.Ident)
 	}
 
 	// !IsExported() is a hacky way to ignore primitive types

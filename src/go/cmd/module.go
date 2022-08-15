@@ -139,6 +139,10 @@ func NewModule(dir string) (*Module, error) {
 				// ensure that all struct field types that are structs are also aliased from this package
 				for _, field := range aliasedStruct.Fields.List {
 					// FieldName *FieldType
+					if field.Names != nil && !field.Names[0].IsExported() {
+						// field isn't exported so skip it
+						continue
+					}
 					fieldTypeName := unwrapStructFieldTypeName(field)
 
 					if fieldTypeName != "" {

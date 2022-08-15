@@ -138,11 +138,6 @@ func NewModule(dir string) (*Module, error) {
 			if aliasedStruct != nil {
 				// ensure that all struct field types that are structs are also aliased from this package
 				for _, field := range aliasedStruct.Fields.List {
-					// FieldName *FieldType
-					if field.Names != nil && !field.Names[0].IsExported() {
-						// field isn't exported so skip it
-						continue
-					}
 					fieldTypeName := unwrapStructFieldTypeName(field)
 					if fieldTypeName == "" {
 						// we can ignore this field
@@ -178,21 +173,33 @@ func NewModule(dir string) (*Module, error) {
 	return &m, nil
 }
 
+// returns the type name for the specified struct field.
+// if the field can be ignored, an empty string is returned.
 func unwrapStructFieldTypeName(field *ast.Field) string {
+	if field.Names != nil && !field.Names[0].IsExported() {
+		// field isn't exported so skip it
+		return ""
+	}
+
 	var ident *ast.Ident
 	if se, ok := field.Type.(*ast.StarExpr); ok {
+		// FieldName *FieldType
 		ident, _ = se.X.(*ast.Ident)
 	} else if at, ok := field.Type.(*ast.ArrayType); ok {
+		// FieldName []FieldType
 		ident, _ = at.Elt.(*ast.Ident)
 	} else {
+		// FieldName FieldType
 		ident, _ = field.Type.(*ast.Ident)
 	}
 
 	// !IsExported() is a hacky way to ignore primitive types
+	// FieldName bool
 	if ident == nil || !ident.IsExported() {
 		return ""
 	}
 
+	// returns FieldType
 	return ident.Name
 }
 

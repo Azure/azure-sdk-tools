@@ -194,19 +194,20 @@ namespace APIViewWeb.Pages.Assemblies
         private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments)
         {
             List<int> documentedByLines = new List<int>();
+            int lineNumberExcludingDocumentation = 0;
             return lines.Select(
                 (line, index) =>
                 {
-                    index++;
                     if (line.IsDocumentation)
                     {
-                        documentedByLines.Add(index);
+                        // documentedByLines must include the index of a line, assuming that documentation lines are counted
+                        documentedByLines.Add(++index);
                         return new CodeLineModel(
                             DiffLineKind.Unchanged,
                             line,
                             comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
                             diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
-                            index,
+                            lineNumberExcludingDocumentation,
                             new int[] {}
                         );
                     }
@@ -217,7 +218,7 @@ namespace APIViewWeb.Pages.Assemblies
                             line,
                             comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
                             diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
-                            index,
+                            ++lineNumberExcludingDocumentation,
                             documentedByLines.ToArray()
                         );
                         documentedByLines = new List<int>();

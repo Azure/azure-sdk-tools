@@ -3,7 +3,7 @@
 $(() => {  
   const SEL_DOC_CLASS = ".documentation";
   const SHOW_DOC_CHECK_COMPONENT = "#show-documentation-component";
-  const SHOW_DOC_CHECKBOX = ".show-doc-checkbox";
+  const SHOW_DOC_CHECKBOX = "#show-doc-checkbox";
   const SHOW_DOC_HREF = ".show-document";
   const SHOW_DIFFONLY_CHECKBOX = ".show-diffonly-checkbox";
   const SHOW_DIFFONLY_HREF = ".show-diffonly";
@@ -77,26 +77,40 @@ $(() => {
   /* TOGGLE PAGE OPTIONS
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $(SHOW_DOC_CHECKBOX).on("click", e => {
-    $(SHOW_DOC_HREF)[0].click();
+    if((e.target as HTMLInputElement).checked) {
+      // $(".code-line").css("display", "table-row");
+      const lines = $(".code-window > tbody > .code-line");
+      const buttons = $(TOGGLE_DOCUMENTATION);
+      for(let i = 0; i < lines.length; i++) {
+        if (i < 3) {
+          $(lines[i]).show();
+          $(buttons[i]).css("backgroundImage", "url(/icons/chevron-up.svg)");
+        }
+      }
+      (
+        function f(index: number) {
+          if(index >= lines.length) {
+            return;
+          }
+          $(lines[index]).show();
+          $(buttons[index]).css("backgroundImage", "url(/icons/chevron-up.svg)");
+          setTimeout(f, 3000, ++index);
+        }
+      )(3);
+    } else {
+      // 
+      $(".code-window > tbody > .code-line > .code > .code-inner > .code-comment").parent().parent().parent().css("display", "none");
+      $(".code-window > tbody > .code-line > .code > .code-inner > .documentation").parent().parent().parent().css("display", "none");
+      $(TOGGLE_DOCUMENTATION).css("backgroundImage", "url(/icons/chevron-right.svg)");
+    }
+  });
+
+  $(SHOW_DOC_HREF).on("click", e => {
+    $(SHOW_DOC_CHECKBOX)[0].click();
   });
 
   $(SHOW_DIFFONLY_CHECKBOX).on("click", e => {
     $(SHOW_DIFFONLY_HREF)[0].click();
-  });
-
-  $(TOGGLE_DOCUMENTATION).on("click", function(e){
-    const documentedBy = $(this).data('documented-by');
-    const codeLines = $(".code-window > tbody > .code-line");
-    
-    for(var i = 0; i < documentedBy.length; i++) {
-      $(codeLines[documentedBy[i] - 1]).toggle();
-    }
-
-    if($(this).text() === "-") {
-      this.innerText = "+";
-    } else {
-      this.innerText = "-";
-    }
   });
 
   $(HIDE_LINE_NUMBERS).on("click", e => {
@@ -125,6 +139,26 @@ $(() => {
         rightContainer.addClass("col-12");
       }
     });
+  });
+
+  /* TOGGLE DOCUMENTATION DROPDOWN
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  $(TOGGLE_DOCUMENTATION).on("click", function(e){
+    const documentedBy = $(this).data('documented-by');
+    const codeLines = $(".code-window > tbody > .code-line");
+    
+    for(var i = 0; i < documentedBy.length; i++) {
+      $(codeLines[documentedBy[i] - 1]).toggle();
+    }
+
+    if($(this).css('backgroundImage').includes("chevron-right")) {
+      $(this).css('backgroundImage', 'url(/icons/chevron-up.svg)');
+    } else {
+      $(this).css('backgroundImage', 'url(/icons/chevron-right.svg)');
+    }
+
+    // scroll button to center of screen, so that the line is visible after toggling folding
+    $(this).get(0).scrollIntoView({ block: "center"});
   });
 
   /* DROPDOWN FILTER FOR REVIEW, REVISIONS AND DIFF (UPDATES REVIEW PAGE ON CHANGE)

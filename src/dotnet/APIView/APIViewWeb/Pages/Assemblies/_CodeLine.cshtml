@@ -33,26 +33,7 @@
     <td class="line-details">
         <table>
             <tr>
-                <!-- display if comment is above, and if comment checkbox NOT selected (maybe?) or maybe just default on -->
-                @if(Model.DocumentedByLines.Length > 0)
-                {
-                    <td class="line-details-button-cell">
-                        @if (showDocumentation == true)
-                        {
-                            <a class="line-toggle-documentation-button" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
-                                -
-                            </a>
-                        }
-                        else
-                        {
-                            <a class="line-toggle-documentation-button" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
-                                +
-                            </a>
-                        }
-                    </td>
-                }
-
-                @if(userPreference.HideLineNumbers == true)
+                @if(userPreference.HideLineNumbers == true || Model.CodeLine.IsDocumentation)
                 {
                     <td class="line-number @lineClass d-none"><span>@Model.LineNumber</span></td>
                 }
@@ -63,11 +44,28 @@
                 <td class="line-details-button-cell @lineClass">
                     @if (!isRemoved && Model.CodeLine.ElementId != null)
                     {
-                        <a class="line-comment-button icon icon-speech-bubble"></a>
+                        <a class="line-comment-button">+</a>
                     }
                     else
                     {
                        <a class="line-comment-button" style="visibility: hidden;">+</a> // Added for visual consistency
+                    }
+                </td>
+                <td class="line-details-button-cell">
+                    @if(Model.DocumentedByLines.Length > 0)
+                    {
+                        if (showDocumentation == true)
+                        {
+                            <span class="line-toggle-documentation-button" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
+                                &nbsp;
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="line-toggle-documentation-button" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
+                                &nbsp;
+                            </span>
+                        }
                     }
                 </td>
                 <td class="line-details-button-cell @lineClass">

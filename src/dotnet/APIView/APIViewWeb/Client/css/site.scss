@@ -530,9 +530,13 @@ code {
     display: inline-block;
     width: 21px;
     height: 21px;
+    line-height: 21px;
+    color: #fff !important;
+    text-align: center;
+    text-indent: 0;
     cursor: pointer;
-    background: #0366d6 url(/icons/comment.svg) no-repeat center center;
-    background-size: 90%;
+    background-color: #0366d6;
+    background-image: linear-gradient(#0372ef, #0366d6);
     border-radius: 3px;
     box-shadow: 0 1px 4px rgba(27, 31, 35, .15);
     opacity: 0;
@@ -549,6 +553,10 @@ code {
     left: 0px;
 }
 
+.line-toggle-documentation-button:hover {
+    transform: scale(1);
+}
+
 .line-toggle-documentation-button {
     display: inline-block;
     width: 21px;
@@ -558,10 +566,14 @@ code {
     text-align: center;
     text-indent: 0;
     cursor: pointer;
-    background-color: #0366d6;
-    background-image: linear-gradient(#0372ef, #0366d6);
+    background: #0366d6;
+    background-image: url(/icons/chevron-right.svg);
+    background-repeat: no-repeat;
+    background-position: center center;
     border-radius: 3px;
     box-shadow: 0 1px 4px rgba(27, 31, 35, .15);
+    transition: transform .1s ease-in-out;
+    transform: scale(.8);
     user-select: none;
 }
 

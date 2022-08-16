@@ -32,15 +32,11 @@ namespace ApiView
             string lastHeadingEncountered = null;
             HashSet<string> lineIds = new HashSet<string>(); // Used to ensure there are no duplicate IDs
             int indentSize = 0;
-            bool isDocumentation = false;
 
             foreach (var token in node)
             {
                 // Skip all tokens till range end
                 if (enableSkipDiff && isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
-                    continue;
-
-                if (isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
                     continue;
 
                 switch(token.Kind)
@@ -69,8 +65,7 @@ namespace ApiView
                             lineClass = lineClass.Trim();
                         }
 
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize, isDocumentation));
-                        isDocumentation = false;
+                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize, isDocumentationRange));
                         currentId = null;
                         stringBuilder.Clear();
                         break;
@@ -124,10 +119,6 @@ namespace ApiView
                         if (token.DefinitionId != null)
                         {
                             currentId = token.DefinitionId;
-                        }
-                        if(token.Kind == CodeFileTokenKind.Comment)
-                        {
-                            isDocumentation = true;
                         }
                         RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;

@@ -14,13 +14,14 @@ public class SwaggerSpec
     public string host { get; set; }
 
     public string basePath { get; set; }
+    
+    public Security security { get; set; }
     public List<string> schemes { get; set; }
     public List<string> consumes { get; set; }
     public List<string> produces { get; set; }
 
-    public List<object> security { get; set; }
 
-    public Dictionary<string, object> securityDefinitions { get; set; }
+    public SecurityDefinitions securityDefinitions { get; set; }
     public Dictionary<string, Dictionary<string, Operation>> paths { get; set; }
 
     public Dictionary<string, Parameter> parameters { get; set; }
@@ -28,6 +29,9 @@ public class SwaggerSpec
     public Dictionary<string, Response> responses { get; set; }
 
     [JsonPropertyName("x-ms-paths")] public Dictionary<string, Dictionary<string, Operation>> xMsPaths { get; set; }
+    
+    [JsonPropertyName("x-ms-parameterized-host")]
+    public XMsParameterizedHost xMsParameterizedHost { get; set; }
 
     public Dictionary<string, Definition> definitions { get; set; }
 

@@ -87,7 +87,7 @@ namespace SwaggerApiParser
         /// IndentWriter provides helpful features for writing blocks of indented
         /// text (like source code, JSON, etc.).
         /// </summary>
-        internal partial class IndentWriter
+        public partial class IndentWriter
         {
             /// <summary>
             /// The buffer where tokens are written.  It is obtained by the

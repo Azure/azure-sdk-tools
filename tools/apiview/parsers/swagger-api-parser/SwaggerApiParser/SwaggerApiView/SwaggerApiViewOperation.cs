@@ -13,9 +13,14 @@ public class SwaggerApiViewOperation : ITokenSerializable
     
     public List<string> tags { get; set; }
 
+    public List<string> procudes { get; set; }
+    
+    public List<string> consumes { get; set; }
     public string summary { get; set; }
     public string method { get; set; }
     public string path { get; set; }
+    
+    public XMsPageable xMSPageable { get; set; }
 
     public Boolean xMsLongRunningOperation { get; set; }
     
@@ -38,9 +43,18 @@ public class SwaggerApiViewOperation : ITokenSerializable
         if (this.description != null)
         {
             // ret.Add(TokenSerializer.Intent(context.intent));
-            ret.Add(TokenSerializer.NavigableToken("description", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
+            ret.Add(TokenSerializer.NavigableToken("description", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("description")));
             ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken(this.description, CodeFileTokenKind.Literal));
+            ret.Add(TokenSerializer.NewLine());
+        }
+        
+        if (this.summary != null)
+        {
+            // ret.Add(TokenSerializer.Intent(context.intent));
+            ret.Add(TokenSerializer.NavigableToken("summary", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("summary")));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(new CodeFileToken(this.summary, CodeFileTokenKind.Literal));
             ret.Add(TokenSerializer.NewLine());
         }
 
@@ -54,15 +68,6 @@ public class SwaggerApiViewOperation : ITokenSerializable
         ret.Add(TokenSerializer.Colon());
         ret.Add(new CodeFileToken(string.Join(",", tags), CodeFileTokenKind.Literal));
         ret.Add(TokenSerializer.NewLine());
-        
-
-
-        if (this.summary != null)
-        {
-            // ret.Add(TokenSerializer.Intent(context.intent));
-            ret.Add(new CodeFileToken(this.summary, CodeFileTokenKind.Literal));
-            ret.Add(TokenSerializer.NewLine());
-        }
 
 
         if (this.xMsLongRunningOperation)
@@ -72,6 +77,24 @@ public class SwaggerApiViewOperation : ITokenSerializable
             ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken("true", CodeFileTokenKind.Literal));
             ret.Add(TokenSerializer.NewLine());
+        }
+
+        if (this.xMSPageable != null)
+        {
+            ret.Add(new CodeFileToken("x-ms-pageable", CodeFileTokenKind.Keyword));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(new CodeFileToken(this.xMSPageable.nextLinkName, CodeFileTokenKind.Literal));
+            ret.Add(TokenSerializer.NewLine());
+        }
+
+        if (this.procudes!=null)
+        {
+            ret.AddRange(TokenSerializer.KeyValueTokens("produces", string.Join(",", this.procudes)));
+        }
+
+        if (this.consumes != null)
+        {
+            ret.AddRange(TokenSerializer.KeyValueTokens("consumes", string.Join(",", this.consumes)));
         }
 
         // new line for `Parameters` section.

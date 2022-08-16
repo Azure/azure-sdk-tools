@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace SwaggerApiParser
 {
@@ -17,7 +16,10 @@ namespace SwaggerApiParser
                     host = swaggerSpec.host,
                     schemes = swaggerSpec.schemes,
                     consumes = swaggerSpec.consumes,
-                    produces = swaggerSpec.produces
+                    produces = swaggerSpec.produces,
+                    security = swaggerSpec.security,
+                    securityDefinitions = swaggerSpec.securityDefinitions,
+                    xMsParameterizedHost = swaggerSpec.xMsParameterizedHost
                 },
                 fileName = Path.GetFileName(swaggerFilePath),
                 packageName = packageName
@@ -49,6 +51,9 @@ namespace SwaggerApiParser
                         description = value.description,
                         summary = value.summary,
                         tags = value.tags,
+                        procudes = value.produces,
+                        consumes = value.consumes,
+                        xMSPageable = value.xMsPageable,
                         operationIdPrefix = Utils.GetOperationIdPrefix(value.operationId),
                         operationIdAction = Utils.GetOperationIdAction(value.operationId),
                         PathParameters = new SwaggerApiViewOperationParameters("PathParameters"),
@@ -116,26 +121,32 @@ namespace SwaggerApiParser
                 }
             }
 
-            foreach (var definition in swaggerSpec.definitions)
+            if (swaggerSpec.definitions != null)
             {
-                ret.SwaggerApiViewDefinitions.Add(definition.Key, definition.Value);
+                foreach (var definition in swaggerSpec.definitions)
+                {
+                    ret.SwaggerApiViewDefinitions.Add(definition.Key, definition.Value);
+                }
             }
 
-            foreach (var kv in swaggerSpec.parameters)
+            if (swaggerSpec.parameters != null)
             {
-                var param = kv.Value;
-                var swaggerApiViewParameter = new SwaggerApiViewParameter
+                foreach (var kv in swaggerSpec.parameters)
                 {
-                    description = param.description,
-                    name = param.name,
-                    required = param.required,
-                    format = param.format,
-                    In = param.In,
-                    schema = schemaCache.GetResolvedSchema(param.schema, swaggerFilePath),
-                    Ref = param.Ref,
-                    type = param.type
-                };
-                ret.SwaggerApiViewGlobalParameters.Add(kv.Key, swaggerApiViewParameter);
+                    var param = kv.Value;
+                    var swaggerApiViewParameter = new SwaggerApiViewParameter
+                    {
+                        description = param.description,
+                        name = param.name,
+                        required = param.required,
+                        format = param.format,
+                        In = param.In,
+                        schema = schemaCache.GetResolvedSchema(param.schema, swaggerFilePath),
+                        Ref = param.Ref,
+                        type = param.type
+                    };
+                    ret.SwaggerApiViewGlobalParameters.Add(kv.Key, swaggerApiViewParameter);
+                }
             }
 
             ret.Paths.SortByMethod();

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ApiView;
 using APIView;
+using Octokit;
 
 namespace SwaggerApiParser;
 
@@ -56,21 +57,26 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
         ret.AddRange(pathTokens);
         context.IteratorPath.Pop();
 
-        context.IteratorPath.Add("Definitions");
-        ret.Add(TokenSerializer.NavigableToken("Definitions", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
-        ret.Add(TokenSerializer.Colon());
-        ret.Add(TokenSerializer.NewLine());
-        var definitionTokens = this.SwaggerApiViewDefinitions.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath));
-        ret.AddRange(definitionTokens);
-        context.IteratorPath.Pop();
 
-        context.IteratorPath.Add("Parameters");
-        ret.Add(TokenSerializer.NavigableToken("Parameters", CodeFileTokenKind.FoldableParentToken, definitionId: context.IteratorPath.CurrentPath()));
-        ret.Add(TokenSerializer.Colon());
-        ret.Add(TokenSerializer.NewLine());
-        ret.AddRange(this.SwaggerApiViewGlobalParameters.TokenSerialize(context));
+        if (this.SwaggerApiViewDefinitions != null && this.SwaggerApiViewDefinitions.Count > 0)
+        {
+            context.IteratorPath.Add("Definitions");
+            ret.Add(TokenSerializer.NavigableToken("Definitions", CodeFileTokenKind.FoldableParentToken, context.IteratorPath.CurrentPath()));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(TokenSerializer.NewLine());
+            var definitionTokens = this.SwaggerApiViewDefinitions.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath));
+            ret.AddRange(definitionTokens);
+            context.IteratorPath.Pop();
+        }
 
-
+        if (this.SwaggerApiViewGlobalParameters != null && this.SwaggerApiViewGlobalParameters.Count > 0)
+        {
+            context.IteratorPath.Add("Parameters");
+            ret.Add(TokenSerializer.NavigableToken("Parameters", CodeFileTokenKind.FoldableParentToken, definitionId: context.IteratorPath.CurrentPath()));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(TokenSerializer.NewLine());
+            ret.AddRange(this.SwaggerApiViewGlobalParameters.TokenSerialize(context));
+        }
         return ret.ToArray();
     }
 
@@ -81,8 +87,16 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
 
         ret.Add(this.SwaggerApiViewGeneral.BuildNavigationItem(iteratorPath));
         ret.Add(this.Paths.BuildNavigationItem(iteratorPath));
-        ret.Add(this.SwaggerApiViewDefinitions.BuildNavigationItem(iteratorPath));
-        ret.Add(this.SwaggerApiViewGlobalParameters.BuildNavigationItem(iteratorPath));
+        if (this.SwaggerApiViewDefinitions != null && this.SwaggerApiViewDefinitions.Count > 0)
+        {
+            ret.Add(this.SwaggerApiViewDefinitions.BuildNavigationItem(iteratorPath));
+        }
+
+        if (this.SwaggerApiViewGlobalParameters != null && this.SwaggerApiViewGlobalParameters.Count > 0)
+        {
+            ret.Add(this.SwaggerApiViewGlobalParameters.BuildNavigationItem(iteratorPath));
+        }
+
         return ret.ToArray();
     }
 

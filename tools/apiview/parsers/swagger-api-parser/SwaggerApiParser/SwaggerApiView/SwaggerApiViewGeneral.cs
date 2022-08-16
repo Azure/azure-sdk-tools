@@ -11,6 +11,12 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
     public Info info { set; get; }
 
     public string host { get; set; }
+
+    public Security security { get; set; }
+
+    public SecurityDefinitions securityDefinitions { get; set; }
+    
+    public XMsParameterizedHost xMsParameterizedHost { get; set; }
     public List<string> schemes { get; set; }
     public List<string> consumes { get; set; }
     public List<string> produces { get; set; }
@@ -36,11 +42,59 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
             ret.AddRange(TokenSerializer.KeyValueTokens("schemes", schemesStr));
         }
 
-        var consumesStr = String.Join(",", consumes);
-        ret.AddRange(TokenSerializer.KeyValueTokens("consumes", consumesStr));
+        if (consumes != null)
+        {
+            var consumesStr = String.Join(",", consumes);
+            ret.AddRange(TokenSerializer.KeyValueTokens("consumes", consumesStr));
+        }
 
-        var producesStr = String.Join(",", produces);
-        ret.AddRange(TokenSerializer.KeyValueTokens("produces", producesStr));
+        if (produces != null)
+        {
+            var producesStr = String.Join(",", produces);
+            ret.AddRange(TokenSerializer.KeyValueTokens("produces", producesStr));
+        }
+
+        if (security != null)
+        {
+            string securityStr = "";
+            foreach (var it in security)
+            {
+                foreach (var kv in it)
+                {
+                    securityStr += kv.Key + ": [" + string.Join(",", kv.Value) + "]";
+                }
+            }
+
+            ret.AddRange(TokenSerializer.KeyValueTokens("security", securityStr));
+        }
+
+        if (securityDefinitions != null)
+        {
+            ret.Add(new CodeFileToken("securityDefinitions", CodeFileTokenKind.FoldableParentToken));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(TokenSerializer.NewLine());
+            ret.Add(TokenSerializer.FoldableContentStart());
+            foreach (var kv in securityDefinitions)
+            {
+                ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.FoldableParentToken));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(TokenSerializer.NewLine());
+                ret.AddRange(TokenSerializer.TokenSerializeAsJson(kv.Value, true));
+            }
+            ret.Add(TokenSerializer.FoldableContentEnd());
+        }
+
+        if (xMsParameterizedHost!=null)
+        {
+            ret.Add(new CodeFileToken("x-ms-parameterized-host", CodeFileTokenKind.FoldableParentToken));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(TokenSerializer.NewLine());
+            ret.Add(TokenSerializer.FoldableContentStart());
+            ret.AddRange(xMsParameterizedHost.TokenSerialize(context));
+            ret.Add(TokenSerializer.FoldableContentEnd());
+        }
+
+
         return ret.ToArray();
     }
 

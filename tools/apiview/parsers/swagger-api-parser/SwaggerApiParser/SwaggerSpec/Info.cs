@@ -10,6 +10,8 @@ public class Info : ITokenSerializable
     public string description { get; set; }
     public string termsOfService { get; set; }
 
+    public ExternalDocs externalDocs { get; set; }
+
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
@@ -17,7 +19,22 @@ public class Info : ITokenSerializable
         ret.AddRange(TokenSerializer.KeyValueTokens("title", title));
         ret.AddRange(TokenSerializer.KeyValueTokens("version", version));
         ret.AddRange(TokenSerializer.KeyValueTokens("description", description));
-        ret.AddRange(TokenSerializer.KeyValueTokens("termsOfService", termsOfService));
+
+        if (termsOfService != null)
+        {
+            ret.AddRange(TokenSerializer.KeyValueTokens("termsOfService", termsOfService));
+        }
+
+        if (externalDocs != null)
+        {
+            ret.Add(new CodeFileToken("externalDocs", CodeFileTokenKind.FoldableParentToken));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(TokenSerializer.NewLine());
+            ret.Add(TokenSerializer.FoldableContentStart());
+            ret.AddRange(externalDocs.TokenSerialize(context));
+            ret.Add(TokenSerializer.FoldableContentEnd());
+        }
+
         ret.Add(TokenSerializer.FoldableContentEnd());
         return ret.ToArray();
     }

@@ -58,7 +58,14 @@ namespace SwaggerApiParser
 
         // public Boolean additionalProperties { get; set; }
         public bool readOnly { get; set; }
+        
+        public bool writeOnly { get; set; }
+        
         public string discriminator { get; set; }
+        
+        [JsonPropertyName("x-ms-nullable")]
+        public bool xMsNullable { get; set; }
+        
         public Dictionary<string, BaseSchema> properties { get; set; }
         public Dictionary<string, BaseSchema> allOfProperities { get; set; }
 
@@ -67,6 +74,10 @@ namespace SwaggerApiParser
 
         public List<string> required { get; set; }
 
+        public bool IsPropertyRequired(string propertyName)
+        {
+            return this.required != null && this.required.Contains(propertyName);
+        }
 
         [JsonPropertyName("$ref")] public string Ref { get; set; }
 
@@ -81,6 +92,21 @@ namespace SwaggerApiParser
         public List<String> GetKeywords()
         {
             List<string> keywords = new List<string>();
+            if (this.readOnly)
+            {
+                keywords.Add("readOnly");
+            }
+
+            if (this.writeOnly)
+            {
+                keywords.Add("writeOnly");
+            }
+
+            if (this.xMsNullable)
+            {
+                keywords.Add("x-ms-nullable");
+            }
+
             return keywords;
         }
 
@@ -165,6 +191,22 @@ namespace SwaggerApiParser
             return ret.ToArray();
         }
 
+        private static List<string> GetPropertyKeywordsFromBaseSchema(BaseSchema baseSchema, string propertyName, BaseSchema schema)
+        {
+            var keywords = new HashSet<string>();
+            if (baseSchema.IsPropertyRequired(propertyName))
+            {
+                keywords.Add("required");
+            }
+
+            foreach (var it in schema.GetKeywords())
+            {
+                keywords.Add(it);
+            }
+
+            return keywords.ToList();
+        }
+
         private static void TokenSerializeProperties(SerializeContext context, BaseSchema schema, Dictionary<string, BaseSchema> properties, List<CodeFileToken> ret, ref List<SchemaTableItem> flattenedTableItems,
             Boolean serializeRef = true)
         {
@@ -182,7 +224,8 @@ namespace SwaggerApiParser
                 // Normal case: If properties is has values. Serialize each key value pair in properties.
                 if ((kv.Value.properties != null && kv.Value.properties?.Count != 0))
                 {
-                    SchemaTableItem item = new SchemaTableItem {Field = kv.Key, Description = kv.Value.description, Keywords = String.Join(",", kv.Value.GetKeywords()), TypeFormat = kv.Value.GetTypeFormat()};
+                    var keywords = GetPropertyKeywordsFromBaseSchema(schema, kv.Key, kv.Value);
+                    SchemaTableItem item = new SchemaTableItem {Field = kv.Key, Description = kv.Value.description, Keywords = String.Join(",", keywords), TypeFormat = kv.Value.GetTypeFormat()};
                     flattenedTableItems.Add(item);
                     ret.Add(TokenSerializer.NewLine());
                     if (serializeRef || kv.Value.GetOriginRef() == null)
@@ -210,6 +253,8 @@ namespace SwaggerApiParser
                         ? $"array<{kv.Value.items.type}>"
                         : $"array<{Utils.GetDefinitionType(kv.Value.items.originalRef ?? Utils.GetDefinitionType(kv.Value.items.Ref))}>";
                     arrayItem.TypeFormat = arrayType;
+                    var keywords = GetPropertyKeywordsFromBaseSchema(schema, kv.Key, kv.Value);
+                    arrayItem.Keywords = string.Join(",", keywords);
                     flattenedTableItems.Add(arrayItem);
                     if (serializeRef || kv.Value.GetOriginRef() == null)
                     {
@@ -218,7 +263,8 @@ namespace SwaggerApiParser
                 }
                 else
                 {
-                    SchemaTableItem item = new SchemaTableItem {Field = kv.Key, Description = kv.Value.description, TypeFormat = kv.Value.GetTypeFormat()};
+                    var keywords = GetPropertyKeywordsFromBaseSchema(schema, kv.Key, kv.Value);
+                    SchemaTableItem item = new SchemaTableItem {Field = kv.Key, Description = kv.Value.description, TypeFormat = kv.Value.GetTypeFormat(), Keywords = string.Join(",", keywords)};
                     flattenedTableItems.Add(item);
                     ret.Add(new CodeFileToken(kv.Value.type, CodeFileTokenKind.Keyword));
                     ret.Add(TokenSerializer.NewLine());
@@ -263,12 +309,13 @@ namespace SwaggerApiParser
             string[] columns = new[] {"Model", "Field", "Type/Format", "Keywords", "Description"};
             this.TokenSerializePropertyIntoTableItems(context, ref this.tableItems, true);
             var tableRet = new List<CodeFileToken>();
-            
+
             var tableRows = new List<CodeFileToken>();
             foreach (var tableItem in this.tableItems)
             {
                 tableRows.AddRange(tableItem.TokenSerialize());
             }
+
             tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(this.tableItems.Count, columns.Length, columns, tableRows.ToArray()));
             tableRet.Add(TokenSerializer.NewLine());
             return tableRet.ToArray();

@@ -91,6 +91,24 @@ namespace SwaggerApiParser
 
         private static int intentNumber = 0;
 
+        public static CodeFileToken[] TokenSerializeAsJson(JsonElement jsonElement, bool isFoldable=false)
+        {
+            List<CodeFileToken> ret = new List<CodeFileToken>();
+            Visitor visitor = new Visitor();
+            visitor.Visit(jsonElement);
+            if (isFoldable)
+            {
+                ret.Add(TokenSerializer.FoldableContentStart());
+            }
+            ret.AddRange(visitor.Writer.ToTokens());
+            ret.Add(TokenSerializer.NewLine());
+            if (isFoldable)
+            {
+                ret.Add(TokenSerializer.FoldableContentEnd());
+            }
+            return ret.ToArray();
+        }
+
         /*
          * TokenSerialize obj into CodeFileTokens.
          * Each line begin with intent
@@ -267,7 +285,7 @@ namespace SwaggerApiParser
 
     public class Visitor
     {
-        private SwaggerTokenSerializer.IndentWriter _writer = new();
+        public SwaggerTokenSerializer.IndentWriter Writer = new();
         private IteratorPath iteratorPath = new();
 
 
@@ -276,7 +294,7 @@ namespace SwaggerApiParser
             Visitor visitor = new();
 
             visitor.Visit(document.RootElement);
-            return visitor._writer.ToTokens();
+            return visitor.Writer.ToTokens();
         }
 
         /// <summary>
@@ -285,7 +303,7 @@ namespace SwaggerApiParser
         /// <param name="element">The JSON value.</param>
         /// <param name="scopeStart"></param>
         /// <param name="scopeEnd"></param>
-        private void Visit(JsonElement element, string scopeStart = "{ ", string scopeEnd = " }")
+        public void Visit(JsonElement element, string scopeStart = "{ ", string scopeEnd = " }")
         {
             switch (element.ValueKind)
             {
@@ -318,7 +336,7 @@ namespace SwaggerApiParser
         {
             bool multiLine = !FitsOnOneLine(obj);
 
-            using (_writer.Scope(scopeStart, scopeEnd, multiLine))
+            using (this.Writer.Scope(scopeStart, scopeEnd, multiLine))
             {
                 // Optionally sort the values
                 IEnumerable<JsonProperty> values = obj.EnumerateObject();
@@ -332,42 +350,42 @@ namespace SwaggerApiParser
 
                     var isCollapsible = IsCurObjCollapsible(property.Name);
                     // Write the property name
-                    _writer.Write(CodeFileTokenKind.Punctuation, "\"");
+                    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
                     var propertyType = isCollapsible ? CodeFileTokenKind.TypeName : CodeFileTokenKind.MemberName;
-                    _writer.Write(propertyType, property.Name);
+                    this.Writer.Write(propertyType, property.Name);
 
 
                     // Create an ID for this property
                     string id = this.iteratorPath.CurrentPath();
-                    _writer.AnnotateDefinition(id);
+                    this.Writer.AnnotateDefinition(id);
                     if (isCollapsible)
                     {
-                        _writer.Write(CodeFileTokenKind.FoldableParentToken, id);
+                        this.Writer.Write(CodeFileTokenKind.FoldableParentToken, id);
                     }
 
                     // Visit the value
                     if (isCollapsible)
                     {
-                        _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
-                        this._writer.WriteLine();
-                        this._writer.Write(CodeFileTokenKind.FoldableContentStart, null);
+                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\": ");
+                        this.Writer.WriteLine();
+                        this.Writer.Write(CodeFileTokenKind.FoldableContentStart, null);
                         Visit(property.Value);
                         if (property.Name != values.Last().Name)
                         {
-                            _writer.Write(CodeFileTokenKind.Punctuation, ", ");
-                            if (multiLine) { _writer.WriteLine(); }
+                            this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                            if (multiLine) { this.Writer.WriteLine(); }
                         }
 
-                        this._writer.Write(CodeFileTokenKind.FoldableContentEnd, null);
+                        this.Writer.Write(CodeFileTokenKind.FoldableContentEnd, null);
                     }
                     else
                     {
-                        _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
+                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\": ");
                         Visit(property.Value);
                         if (property.Name != values.Last().Name)
                         {
-                            _writer.Write(CodeFileTokenKind.Punctuation, ", ");
-                            if (multiLine) { _writer.WriteLine(); }
+                            this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                            if (multiLine) { this.Writer.WriteLine(); }
                         }
                     }
 
@@ -392,7 +410,7 @@ namespace SwaggerApiParser
         private void VisitArray(JsonElement array, string scopeStart = "[ ", string scopeEnd = " ]")
         {
             bool multiLine = !FitsOnOneLine(array);
-            using (_writer.Scope(scopeStart, scopeEnd, multiLine))
+            using (this.Writer.Scope(scopeStart, scopeEnd, multiLine))
             {
                 int index = 0;
                 SwaggerTokenSerializer.Fenceposter fencepost = new();
@@ -401,8 +419,8 @@ namespace SwaggerApiParser
                 {
                     if (fencepost.RequiresSeparator)
                     {
-                        _writer.Write(CodeFileTokenKind.Punctuation, ", ");
-                        if (multiLine) { _writer.WriteLine(); }
+                        this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                        if (multiLine) { this.Writer.WriteLine(); }
                     }
 
                     this.iteratorPath.Add(index.ToString());
@@ -422,27 +440,27 @@ namespace SwaggerApiParser
             switch (value.ValueKind)
             {
                 case JsonValueKind.Null:
-                    _writer.Write(CodeFileTokenKind.Keyword, "null");
+                    this.Writer.Write(CodeFileTokenKind.Keyword, "null");
                     break;
                 case JsonValueKind.Undefined:
-                    _writer.Write(CodeFileTokenKind.Keyword, "undefined");
+                    this.Writer.Write(CodeFileTokenKind.Keyword, "undefined");
                     break;
                 case JsonValueKind.True:
-                    _writer.Write(CodeFileTokenKind.Keyword, "true");
+                    this.Writer.Write(CodeFileTokenKind.Keyword, "true");
                     break;
                 case JsonValueKind.False:
-                    _writer.Write(CodeFileTokenKind.Keyword, "false");
+                    this.Writer.Write(CodeFileTokenKind.Keyword, "false");
                     break;
                 case JsonValueKind.Number:
-                    _writer.Write(CodeFileTokenKind.Literal, value.GetDouble().ToString());
+                    this.Writer.Write(CodeFileTokenKind.Literal, value.GetDouble().ToString());
                     break;
                 case JsonValueKind.String:
-                    _writer.Write(CodeFileTokenKind.Punctuation, "\"");
-                    _writer.Write(CodeFileTokenKind.StringLiteral, value.GetString());
+                    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+                    this.Writer.Write(CodeFileTokenKind.StringLiteral, value.GetString());
                     this.iteratorPath.Add(value.GetString());
-                    this._writer.AnnotateDefinition(this.iteratorPath.CurrentPath());
+                    this.Writer.AnnotateDefinition(this.iteratorPath.CurrentPath());
                     this.iteratorPath.Pop();
-                    _writer.Write(CodeFileTokenKind.Punctuation, "\"");
+                    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
                     break;
                 default:
                     throw new InvalidOperationException($"Expected a literal JSON element, not {value.ValueKind}.");

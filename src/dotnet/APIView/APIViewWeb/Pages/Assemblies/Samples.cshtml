@@ -24,27 +24,30 @@ else
                 <div class="col p-2" data-review-id=@Model.Review.ReviewId>
                     @if (Model.SampleContent.Length == 0) 
                     {
-                        <div class="text-muted border rounded">
-                            There is no sample present in the review. <hr />
+                        <div class="text-muted">
+                            <p> There is no sample present in the review. </p>
                             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add Usage Sample</button>
                         </div>
                     }
                     else
                     {
-                        <div class="border rounded usage-sample">
-                            <i> Current sample uploaded by <strong> <a username="@Model.Sample.Author"> @Model.Sample.Author </a></strong></i> <br />
-                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Replace Usage Sample</button>
-                            @if (Model.Sample.Author == User.GetGitHubLogin())
-                            {
-                                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModel">Delete Usage Sample</button>
-                            }
+                        <div class="usage-sample">
+                            <i> Current sample uploaded by <strong> <a username="@Model.Sample.Author"> @Model.Sample.Author </a></strong></i> 
+                            <span class="float-right">
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Replace Usage Sample</button>
+                                @if (Model.Sample.Author == User.GetGitHubLogin())
+                                {
+                                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModel">Delete Usage Sample</button>
+                                }
+                            </span>
                         </div>
-                        <div class="border rounded usage-sample">
+                        <div class="usage-sample border rounded">
                             <table class="code-window">
                                 <tbody>
                                     @foreach (var line in Model.SampleContent)
                                     {
-                                        <partial name="_CodeLine" model="@line" />
+                                        <partial name="_codeline" model="@line" />
+                                        @*@line.CodeLine.DisplayString*@
                                     }
                                 </tbody>
                             </table>

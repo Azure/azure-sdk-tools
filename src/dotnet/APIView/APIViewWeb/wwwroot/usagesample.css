@@ -1,3 +1,3 @@
-.usage-sample{padding:4px !important;margin:5px !important}.usage-sample .code-line{padding:0px !important;margin:0px !important;font-size:85% !important;line-height:10px !important}.usage-sample h1{font-size:200% !important;font-weight:600 !important}.usage-sample .line-number{font-size:125%}.language-java{background-color:#d3d3d3}
+.usage-sample{padding:4px;margin:10px}.usage-sample+.border+.rounded{margin-top:15px !important}.usage-sample .code-line{padding:0px;margin:0px;font-size:85%;line-height:10px}.usage-sample .line-number{font-size:125%}code{font-size:100%}.code-inner{height:100%}
 
 /*# sourceMappingURL=usagesample.css.map*/

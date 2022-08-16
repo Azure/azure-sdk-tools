@@ -5,6 +5,8 @@ using System.IO;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Markdig;
+using Markdig.SyntaxHighlighting;
 using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb.Repositories
@@ -62,12 +64,12 @@ namespace APIViewWeb.Repositories
             }
             SampleModel = new UsageSampleModel(user, reviewId, sample);
 
-            Markdig.MarkdownPipeline pipeline = new Markdig.MarkdownPipelineBuilder()
-                //.UseAdvancedExtensions()
-                //.UseColorCode()
+            MarkdownPipeline pipeline = new MarkdownPipelineBuilder()
+                .UseAdvancedExtensions()
+                .UseSyntaxHighlighting()
                 .Build();
 
-            string htmlSample = Markdig.Markdown.ToHtml(sample, pipeline);
+            string htmlSample = Markdown.ToHtml(sample, pipeline);
 
             // Create new file and upsert the updated model
             UsageSampleFileModel SampleFile = new UsageSampleFileModel();

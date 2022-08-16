@@ -51,6 +51,16 @@ namespace APIViewWeb.Pages.Assemblies
             TempData["Page"] = "samples";
             Review = await _reviewManager.GetReviewAsync(User, id);
             Comments = await _commentsManager.GetUsageSampleCommentsAsync(id);
+            //try
+            //{
+            //    Sample = await _samplesManager.GetReviewUsageSampleAsync(id);
+            //    SampleContent = ParseLines(Sample.UsageSampleFileId, Comments).Result;
+            //}
+            //catch
+            //{
+            //    Sample = null;
+            //    SampleContent = null;
+            //}
             Sample = await _samplesManager.GetReviewUsageSampleAsync(id);
             SampleContent = ParseLines(Sample.UsageSampleFileId, Comments).Result;
             return Page();
@@ -90,45 +100,31 @@ namespace APIViewWeb.Pages.Assemblies
                 return new CodeLineModel[0];
             }
 
-            var content = (await _samplesManager.GetUsageSampleContentAsync(fileId)).Split("\n");
+            string[] content = (await _samplesManager.GetUsageSampleContentAsync(fileId)).Split("\n");
 
             int skip = 0;
-            if (content.Last() == "")
+            while ((content.GetValue(content.Length - 1 - skip).ToString()) == "")
             {
-                skip = 1;
+                skip++;
             }
             
             CodeLineModel[] lines = new CodeLineModel[content.Length-skip];
             CodeDiagnostic[] cd = Array.Empty<CodeDiagnostic>();
             for (int i = 0; i < content.Length-skip; i++)
             {
-                int advance = 0;
-                string lineContent = "";
-                if (content[i].StartsWith("<pre>"))
+                string lineContent = content[i];
+
+                if(lineContent == "&nbsp;&nbsp;&nbsp;")
                 {
-                    StringBuilder sb = new StringBuilder();
-                    do
-                    {
-                        sb.Append(content[i+advance]);
-                        advance++;
-                    }
-                    while (!content[i+advance].EndsWith("</pre>"));
-                    lineContent = sb.ToString();
-                }
-                else
-                {
-                    lineContent = content[i];
+                    continue;
                 }
 
-                var line = new CodeLine(lineContent, "usage-sample-line-" + (i+1).ToString() , "");
-                comments.TryGetThreadForLine(i.ToString(), out var thread);
-                lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i+1);
-                i += advance;
+                var line = new CodeLine(lineContent, Sample.SampleId + "-line-" + (i+1).ToString() , "");
+                comments.TryGetThreadForLine(Sample.SampleId + "-line-" + (i+1).ToString(), out var thread);
+                lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i + 1);
             }
 
-            var finalLines = Array.FindAll(lines, e => !(e.Diagnostics == null));
-
-            return finalLines;
+            return Array.FindAll(lines, e => !(e.Diagnostics == null));
         }
     }
 }

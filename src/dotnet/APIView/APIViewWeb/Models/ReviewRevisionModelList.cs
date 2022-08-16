@@ -36,6 +36,11 @@ namespace APIViewWeb.Models
             }
         }
 
+        public void RemoveAll(System.Predicate<ReviewRevisionModel> match)
+        {
+            _list.RemoveAll(match);
+        }
+
         public void Clear()
         {
             _list.Clear();

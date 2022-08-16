@@ -298,9 +298,7 @@ namespace APIViewWeb.Repositories
                     //In case of brand new package, we don't have any baseline from automatic review. So it uses previous PR api review as baseline and
                     //below revision ID copy step makes duplicate revision IDs in such cases.
                     //We should ensure that no revision exists in review with previous revision ID before we update new revision
-                    var revisionsToRetain = review.Revisions.Where(r => r.RevisionId != prevRevisionId);
-                    review.Revisions.Clear();
-                    review.Revisions.AddRange(revisionsToRetain);
+                    review.Revisions.RemoveAll(r => r.RevisionId == prevRevisionId);
                     newRevision.RevisionId = prevRevisionId;
                 }
             }

@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -19,7 +19,7 @@ func CreateAPIView(pkgDir, outputDir string) error {
 	}
 	filename := filepath.Join(outputDir, review.Name+".json")
 	file, _ := json.MarshalIndent(review, "", " ")
-	err = ioutil.WriteFile(filename, file, 0644)
+	err = os.WriteFile(filename, file, 0644)
 	if err != nil {
 		return err
 	}

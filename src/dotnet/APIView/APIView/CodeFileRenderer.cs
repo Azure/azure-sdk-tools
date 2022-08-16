@@ -41,6 +41,7 @@ namespace ApiView
             (int Count, int Curr) tableColumnCount = (0, 0);
             (int Count, int Curr) tableRowCount = (0, 0);
             TreeNode<CodeLine> section = null;
+            int leafSectionPlaceHolderNumber = 0;
 
             foreach (var token in node)
             {
@@ -56,6 +57,11 @@ namespace ApiView
                     case CodeFileTokenKind.Newline:
                         int ? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count: null;
                         CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey);
+                        if (leafSectionPlaceHolderNumber != 0)
+                        {
+                            lineNumber += leafSectionPlaceHolderNumber - 1;
+                            leafSectionPlaceHolderNumber = 0;
+                        }
                         if (nodesInProcess.Count > 0)
                         {
                             if (nodesInProcess.Peek().Equals(SectionType.Heading))
@@ -200,6 +206,11 @@ namespace ApiView
                     case CodeFileTokenKind.TableEnd:
                         stringBuilder.Append($"</tbody>");
                         stringBuilder.Append("</table>");
+                        break;
+
+                    case CodeFileTokenKind.LeafSectionPlaceholder:
+                        stringBuilder.Append(token.Value);
+                        leafSectionPlaceHolderNumber = (int)token.NumberOfLinesinLeafSection;
                         break;
 
                     default:

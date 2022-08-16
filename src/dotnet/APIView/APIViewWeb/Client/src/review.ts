@@ -113,10 +113,7 @@ $(() => {
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   function toggleSectionContent(headingRow, sectionContent, caretDirection, caretIcon) {
     if (caretDirection.endsWith("right")) {
-      caretIcon.removeClass("fa-angle-right");
-      caretIcon.addClass("fa-angle-down");
-      headingRow.find(".row-fold-elipsis").addClass("d-none");
-
+      // In case the section passed has already been replaced with more rows
       if (sectionContent.length == 1) {
         var sectionContentClass = sectionContent[0].className.replace(/\s/g, '.');
         sectionContent = $(`.${sectionContentClass}`);
@@ -125,90 +122,121 @@ $(() => {
       $.each(sectionContent, function (index, value) {
         let rowClasses = $(value).attr("class");
         if (rowClasses) {
-          let treeLvlClass = rowClasses.split(' ').filter(c => c.startsWith('lvl_1_'));
-          if (treeLvlClass.length > 0) {
+          if (rowClasses.match(/lvl_1_/)) { // Only show first level rows of the section
             $(value).removeClass("d-none");
             $(value).find("svg").attr("height", `${$(value).height()}`);
           }
         }
       });
+
+      // Update section heading icons to open state
+      caretIcon.removeClass("fa-angle-right");
+      caretIcon.addClass("fa-angle-down");
+      caretIcon.css("color", "darkorange");
+      headingRow.find(".row-fold-elipsis").addClass("d-none");
     }
     else {
-      caretIcon.removeClass("fa-angle-down");
-      caretIcon.addClass("fa-angle-right");
-      headingRow.find(".row-fold-elipsis").removeClass("d-none");
-
       $.each(sectionContent, function (index, value) {
         let rowClasses = $(value).attr("class");
         if (rowClasses) {
-          let parentRowClass = rowClasses.split(' ').filter(c => c.match(/.*lvl_[0-9]+_parent.*/));
-          if (parentRowClass.length > 0) {
+          if (rowClasses.match(/lvl_[0-9]+_parent_/)) {
+            // Update all heading/parent rows to closed state before hiding it
             $(value).find(".row-fold-elipsis").removeClass("d-none");
             let caretIcon = $(value).find(".row-fold-caret").children("i");
             caretIcon.removeClass("fa-angle-down");
             caretIcon.addClass("fa-angle-right");
+            caretIcon.css("color", "darkcyan");
           }
         }
         $(value).addClass("d-none");
       });
+
+      // Update section heading icons to closed state
+      caretIcon.removeClass("fa-angle-down");
+      caretIcon.addClass("fa-angle-right");
+      caretIcon.css("color", "darkcyan");
+      headingRow.find(".row-fold-elipsis").removeClass("d-none");
     }
   }
 
-  function toggleSubSectionContent(headingRow, subSectionLevel, subSectionHeadingId, subSectionContentClass, caretDirection, caretIcon) {
+  function toggleSubSectionContent(headingRow, subSectionLevel, subSectionHeadingPosition, subSectionContentClass, caretDirection, caretIcon, lineNumber) {
     var subSectionDescendants = $(`.${subSectionContentClass}`);
 
     if (caretDirection.endsWith("right")) {
-      caretIcon.removeClass("fa-angle-right");
-      caretIcon.addClass("fa-angle-down");
-      headingRow.find(".row-fold-elipsis").addClass("d-none");
-
-      var showRow = false;
+      var startShowing = false;
 
       $.each(subSectionDescendants, function (index, value) {
-        if ($(value).hasClass(`lvl_${subSectionLevel}_parent_${subSectionHeadingId}`))
-          showRow = true;
+        var rowClasses = $(value).attr("class");
+        var rowLineNumber = $(value).find(".line-number>span").text();
+        if (rowClasses) {
+          if (rowClasses.match(new RegExp(`lvl_${subSectionLevel}_parent_${subSectionHeadingPosition}`)) && rowLineNumber == lineNumber)
+            startShowing = true;
 
-        if ($(value).hasClass(`lvl_${subSectionLevel}_parent_${Number(subSectionHeadingId) + 1}`))
-          return false;
-
-        if (showRow) {
-          let rowClasses = $(value).attr("class");
-          if (rowClasses) {
-            let treeLvlClass = rowClasses.split(' ').filter(c => c.startsWith(`lvl_${Number(subSectionLevel) + 1}_child`));
-            if (treeLvlClass.length > 0) {
+          if (startShowing && (rowClasses.match(new RegExp(`lvl_${subSectionLevel}_parent_${Number(subSectionHeadingPosition) + 1}`))
+            || rowClasses.match(new RegExp(`lvl_${subSectionLevel}_child_${Number(subSectionHeadingPosition) + 1}`))
+            || rowClasses.match(new RegExp(`lvl_${Number(subSectionLevel) - 1}_`))))
+            return false;
+            
+          // Show only immediate descendants
+          if (startShowing) {
+            if (rowClasses.match(new RegExp(`lvl_${Number(subSectionLevel) + 1}_`))) {
+              console.log("matched");
               $(value).removeClass("d-none");
               let rowHeight = $(value).height() ?? 0;
               $(value).find("svg").attr("height", `${rowHeight}`);
             }
           }
-        } 
+        }
       });
+
+      // Update section heading icons to open state
+      caretIcon.removeClass("fa-angle-right");
+      caretIcon.addClass("fa-angle-down");
+      caretIcon.css("color", "darkorange");
+      headingRow.find(".row-fold-elipsis").addClass("d-none");
     }
     else {
-      caretIcon.removeClass("fa-angle-down");
-      caretIcon.addClass("fa-angle-right");
-      headingRow.find(".row-fold-elipsis").removeClass("d-none");
-
-      var hideRow = false;
+      var startHiding = false;
 
       $.each(subSectionDescendants, function (index, value) {
-        if ($(value).hasClass(`lvl_${subSectionLevel}_parent_${subSectionHeadingId}`))
-          hideRow = true;
+        var rowClasses = $(value).attr("class");
+        var rowLineNumber = $(value).find(".line-number>span").text();
+        if (rowClasses) {
+          if (rowClasses.match(new RegExp(`lvl_${subSectionLevel}_parent_${subSectionHeadingPosition}`)) && rowLineNumber == lineNumber)
+            startHiding = true;
 
-        if ($(value).hasClass(`lvl_${subSectionLevel}_parent_${Number(subSectionHeadingId) + 1}`))
-          return false;
+          if (startHiding && (rowClasses.match(new RegExp(`lvl_${subSectionLevel}_parent_${Number(subSectionHeadingPosition) + 1}`))
+            || rowClasses.match(new RegExp(`lvl_${subSectionLevel}_child_${Number(subSectionHeadingPosition) + 1}`))
+            || rowClasses.match(new RegExp(`lvl_${Number(subSectionLevel) - 1}_`))))
+            return false;
 
-        if (hideRow) {
-          let descendantClasses = $(value).attr("class")?.split(' ').filter(c => c.match(/.*lvl_[0-9]+_child.*/))[0];
-          if (descendantClasses) {
-            let descendantLevel = descendantClasses.split('_')[1];
-            if (/^\d+$/.test(descendantLevel)) {
-              if (Number(descendantLevel) > Number(subSectionLevel))
-                $(value).addClass("d-none");
+          if (startHiding) {
+            let descendantClasses = rowClasses.split(' ').filter(c => c.match(/lvl_[0-9]+_child_.*/))[0];
+            if (descendantClasses) {
+              let descendantLevel = descendantClasses.split('_')[1];
+              if (/^\d+$/.test(descendantLevel)) {
+                if (Number(descendantLevel) > Number(subSectionLevel)) {
+                  $(value).addClass("d-none");
+                  if (rowClasses.match(/lvl_[0-9]+_parent_.*/)) {
+                    // Update all heading/parent rows to closed state before hiding it
+                    $(value).find(".row-fold-elipsis").removeClass("d-none");
+                    let caretIcon = $(value).find(".row-fold-caret").children("i");
+                    caretIcon.removeClass("fa-angle-down");
+                    caretIcon.addClass("fa-angle-right");
+                    caretIcon.css("color", "darkcyan");
+                  }
+                }
+              }
             }
           }
         }
       });
+
+      // Update section heading icons to closed state
+      caretIcon.removeClass("fa-angle-down");
+      caretIcon.addClass("fa-angle-right");
+      caretIcon.css("color", "darkcyan");
+      headingRow.find(".row-fold-elipsis").removeClass("d-none");
     }
   }
 
@@ -261,11 +289,12 @@ $(() => {
 
     if (subSectionContentClass) {
       var subSectionClass = headingRowClasses ? headingRowClasses.split(' ').filter(c => c.match(/.*lvl_[0-9]+_parent.*/))[0] : "";
+      var lineNumber = headingRow.find(".line-number>span").text();
       if (subSectionClass) {
         var subSectionLevel = subSectionClass.split('_')[1];
-        var subSectionHeadingId = subSectionClass.split('_')[3];
-        if (/^\d+$/.test(subSectionLevel) && /^\d+$/.test(subSectionHeadingId)) {
-          toggleSubSectionContent(headingRow, subSectionLevel, subSectionHeadingId, subSectionContentClass, caretDirection, caretIcon);
+        var subSectionHeadingPosition = subSectionClass.split('_')[3];
+        if (/^\d+$/.test(subSectionLevel) && /^\d+$/.test(subSectionHeadingPosition)) {
+          toggleSubSectionContent(headingRow, subSectionLevel, subSectionHeadingPosition, subSectionContentClass, caretDirection, caretIcon, lineNumber);
         }
       }
     }

@@ -63,6 +63,8 @@ namespace ApiView
                 stream,
                 JsonSerializerOptions);
 
+            // Spliting out the 'leafSections' of the codeFile is done so as not to have to render large codeFiles at once
+            // Rendering sections in part helps to improve page load time
             if (hasSections)
             {
                 var index = 0;
@@ -71,6 +73,7 @@ namespace ApiView
                 var leafSections = new List<CodeFileToken[]>();
                 var section = new List<CodeFileToken>();
                 var isLeaf = false;
+                var numberOfLinesinLeafSection = 0;
 
                 while (index < tokens.Length)
                 {
@@ -86,6 +89,7 @@ namespace ApiView
                         newTokens.AddRange(section);
                         section.Clear();
                         isLeaf = true;
+                        numberOfLinesinLeafSection = 0;
                     }
                     else if (token.Kind == CodeFileTokenKind.FoldableSectionContentEnd)
                     {
@@ -95,16 +99,22 @@ namespace ApiView
                             section.Clear();
                             isLeaf = false;
 
-                            // leafSectionKeyToken and newLineToken will be used to identify the appriopriate index in leafSections
-                            var leafSectionKeyToken = new CodeFileToken($"{(leafSections.Count() - 1)}", CodeFileTokenKind.Literal);
+                            // leafSectionPlaceholder will be used to identify the appriopriate index and number of lines in the leafSections
+                            // numberOfLinesinLeafSection help keep line numbering consistent with the main 'non-leaf' sections
+                            var leafSectionPlaceholder = new CodeFileToken(
+                                $"{(leafSections.Count() - 1)}", CodeFileTokenKind.LeafSectionPlaceholder, numberOfLinesinLeafSection);
                             var newLineToken = new CodeFileToken("", CodeFileTokenKind.Newline);
-                            section.Add(leafSectionKeyToken);
+                            section.Add(leafSectionPlaceholder);
                             section.Add(newLineToken);
                         }
                         section.Add(token);
                     }
                     else
                     {
+                        if (isLeaf && token.Kind == CodeFileTokenKind.Newline)
+                        {
+                            numberOfLinesinLeafSection++;
+                        }
                         section.Add(token);
                     }
                     index++;

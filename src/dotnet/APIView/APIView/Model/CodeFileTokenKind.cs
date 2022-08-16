@@ -30,6 +30,7 @@ namespace APIView
         TableColumnCount = 23,
         TableColumnName = 24,
         TableCellBegin = 25,
-        TableCellEnd = 26
+        TableCellEnd = 26,
+        LeafSectionPlaceholder = 27
     }
 }

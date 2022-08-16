@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using ApiView;
 using APIView.Model;
 
@@ -114,13 +115,18 @@ namespace APIViewWeb.Models
                         {
                             var leafSection = CodeFile.LeafSections[leafSectionId];
                             var renderedLeafSection = CodeFileHtmlRenderer.Normal.Render(leafSection);
+                            var placeHolderLineNumber = node.Data.LineNumber;
+                            int index = 0;
                             foreach (var codeLine in renderedLeafSection)
                             {
+                                index++;
+                                lineClasses = Regex.Replace(lineClasses, @"_child_[0-9]+", $"_child_{index}");
                                 if (!String.IsNullOrWhiteSpace(codeLine.LineClass))
                                 {
                                     lineClasses = codeLine.LineClass.Trim() + $" {lineClasses}";
                                 }
-                                result.Add(new CodeLine(codeLine, lineClass: lineClasses, indent: indent));
+                                result.Add(new CodeLine(codeLine, lineClass: lineClasses, lineNumber: placeHolderLineNumber, indent: indent));
+                                placeHolderLineNumber++;
                             }
                         }
                         else

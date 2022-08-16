@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using ApiView;
@@ -11,6 +12,7 @@ using Markdig.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Azure.Cosmos.Linq;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Pages.Assemblies
@@ -28,6 +30,7 @@ namespace APIViewWeb.Pages.Assemblies
         public UsageSampleModel Sample { get; private set; }
         public CodeLineModel[] SampleContent { get; set; }
         public ReviewCommentsModel Comments { get; set; }
+        public string SampleOriginal { get; set; }
 
         public UsageSamplePageModel(
             IConfiguration configuration,
@@ -63,6 +66,8 @@ namespace APIViewWeb.Pages.Assemblies
             //}
             Sample = await _samplesManager.GetReviewUsageSampleAsync(id);
             SampleContent = ParseLines(Sample.UsageSampleFileId, Comments).Result;
+            SampleOriginal = await _samplesManager.GetUsageSampleContentAsync(Sample.UsageSampleOriginalFileId);
+            Upload.updateString = SampleOriginal;
             return Page();
         }
 
@@ -77,17 +82,27 @@ namespace APIViewWeb.Pages.Assemblies
             var sampleString = Upload.sampleString;
             var reviewId = Upload.ReviewId;
             var deleting = Upload.Deleting;
+            var updating = Upload.Updating;
+            var updateString = Upload.updateString;
 
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, openReadStream);
+                    await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, openReadStream, updating);
                 }
             }
-            else if (sampleString != null || deleting)
+            else if (sampleString != null)
             {
-                await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, sampleString);
+                await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, sampleString, updating);
+            }
+            else if (updating)
+            {
+                await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, updateString, updating);
+            }
+            else if (deleting)
+            {
+                await _samplesManager.DeleteUsageSampleAsync(User, reviewId);
             }
 
             return RedirectToPage();
@@ -100,28 +115,27 @@ namespace APIViewWeb.Pages.Assemblies
                 return new CodeLineModel[0];
             }
 
-            string[] content = (await _samplesManager.GetUsageSampleContentAsync(fileId)).Split("\n");
-
-            int skip = 0;
-            while ((content.GetValue(content.Length - 1 - skip).ToString()) == "")
-            {
-                skip++;
-            }
+            // This is a very low chance of being triggered- it is a failsafe in the event a crash occurs during an upload operation
+            string rawContent = (await _samplesManager.GetUsageSampleContentAsync(fileId) ?? "The sample has been lost.\nPlease delete this sample and create a new one.").Trim();
+            string[] content = rawContent.Split("\n");
             
-            CodeLineModel[] lines = new CodeLineModel[content.Length-skip];
+            CodeLineModel[] lines = new CodeLineModel[content.Length];
             CodeDiagnostic[] cd = Array.Empty<CodeDiagnostic>();
-            for (int i = 0; i < content.Length-skip; i++)
+            int skipped = 0;
+            for (int i = 0; i < content.Length; i++)
             {
                 string lineContent = content[i];
 
-                if(lineContent == "&nbsp;&nbsp;&nbsp;")
+                lineContent = lineContent.Replace("<pre>", "").Replace("</pre>", "").Replace("</div>", "");
+                if (lineContent.Trim() == "")
                 {
+                    skipped++;
                     continue;
                 }
 
-                var line = new CodeLine(lineContent, Sample.SampleId + "-line-" + (i+1).ToString() , "");
-                comments.TryGetThreadForLine(Sample.SampleId + "-line-" + (i+1).ToString(), out var thread);
-                lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i + 1);
+                var line = new CodeLine(lineContent, Sample.SampleId + "-line-" + (i+ 1-skipped).ToString() , "");
+                comments.TryGetThreadForLine(Sample.SampleId + "-line-" + (i+ 1-skipped).ToString(), out var thread);
+                lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i+1-skipped);
             }
 
             return Array.FindAll(lines, e => !(e.Diagnostics == null));

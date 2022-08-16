@@ -49,7 +49,7 @@ namespace APIViewWeb
             }
             catch
             {
-                return new UsageSampleModel(null, reviewId, null);
+                return new UsageSampleModel(null, reviewId);
             }
         }
 

@@ -34,6 +34,7 @@ else
                         <div class="usage-sample">
                             <i> Current sample uploaded by <strong> <a username="@Model.Sample.Author"> @Model.Sample.Author </a></strong></i> 
                             <span class="float-right">
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#updateModel">Edit Usage Sample</button>
                                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Replace Usage Sample</button>
                                 @if (Model.Sample.Author == User.GetGitHubLogin())
                                 {
@@ -47,7 +48,6 @@ else
                                     @foreach (var line in Model.SampleContent)
                                     {
                                         <partial name="_codeline" model="@line" />
-                                        @*@line.CodeLine.DisplayString*@
                                     }
                                 </tbody>
                             </table>
@@ -155,6 +155,46 @@ else
                                 <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
                                 <button type="submit" name="submit" value="Submit" class="btn btn-danger">Remove Usage Sample</button>
                             </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="modal fade" id="updateModel" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Update Usage Sample</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+
+                        <div class="form-group">
+                            <!-- Tab panes -->
+                            <div class="tab-content border rounded p-3">
+                                <div class="tab-pane active" id="md-text">
+                                    <div class="new-comment-content">
+                                        <form asp-page-handler="Upload" method="post">
+                                            <div class="form-group">
+                                                <div class="new-sample-content">
+                                                    <textarea asp-for="Upload.updateString" class="new-thread-comment-text form-control" rows="5"></textarea>
+                                                </div>
+                                                <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                                                <input asp-for="Upload.Updating" hidden type="text" value="@true" />
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;">Update sample</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

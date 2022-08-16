@@ -12,6 +12,9 @@ namespace APIViewWeb.Pages.Assemblies
         public string sampleString { get; set; }
 
         [BindProperty]
+        public string updateString { get; set; }
+
+        [BindProperty]
         public string ReviewId { get; set; }
 
         [BindProperty]
@@ -19,5 +22,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         [BindProperty]
         public bool Deleting { get; set; } = false;
+
+        [BindProperty]
+        public bool Updating { get; set; } = false;
     }
 }

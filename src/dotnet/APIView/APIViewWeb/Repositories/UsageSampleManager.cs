@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Markdig;
 using Markdig.SyntaxHighlighting;
 using Microsoft.AspNetCore.Authorization;
+using Octokit;
 
 namespace APIViewWeb.Repositories
 {
@@ -48,22 +49,9 @@ namespace APIViewWeb.Repositories
             return htmlString;
         }
 
-        public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, string sample)
+        public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, string sample, bool updating)
         {
-            if (sample == null)
-            {
-                await DeleteUsageSampleAsync(user, reviewId);
-                return new UsageSampleModel(null, reviewId, null);
-            }
-            // remove the old file (if present)
             UsageSampleModel SampleModel = await _samplesRepository.GetUsageSampleAsync(reviewId);
-            if (SampleModel.UsageSampleFileId != null)
-            {
-                await _sampleFilesRepository.DeleteUsageSampleAsync(SampleModel.UsageSampleFileId);
-                await _samplesRepository.DeleteUsageSampleAsync(SampleModel);
-            }
-            SampleModel = new UsageSampleModel(user, reviewId, sample);
-
             MarkdownPipeline pipeline = new MarkdownPipelineBuilder()
                 .UseAdvancedExtensions()
                 .UseSyntaxHighlighting()
@@ -71,25 +59,41 @@ namespace APIViewWeb.Repositories
 
             string htmlSample = Markdown.ToHtml(sample, pipeline);
 
-            // Create new file and upsert the updated model
-            UsageSampleFileModel SampleFile = new UsageSampleFileModel();
-
-            SampleModel.Author = user.GetGitHubLogin();
-            SampleModel.UsageSampleFileId = SampleFile.UsageSampleFileId;
-
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(htmlSample));
+            var originalStream = new MemoryStream(Encoding.UTF8.GetBytes(sample));
 
-            await _samplesRepository.UpsertUsageSampleAsync(SampleModel);
-            await _sampleFilesRepository.UploadUsageSampleAsync(SampleFile.UsageSampleFileId, stream);
 
+            if (!updating)
+            {
+                if (SampleModel.UsageSampleFileId != null)
+                {
+                    await _sampleFilesRepository.DeleteUsageSampleAsync(SampleModel.UsageSampleFileId);
+                    await _sampleFilesRepository.DeleteUsageSampleAsync(SampleModel.UsageSampleOriginalFileId);
+                    await _samplesRepository.DeleteUsageSampleAsync(SampleModel);
+                }
+                SampleModel = new UsageSampleModel(user, reviewId);
+
+                // Create new file and upsert the updated model
+                UsageSampleFileModel SampleFile = new UsageSampleFileModel();
+                UsageSampleFileModel SampleOriginal = new UsageSampleFileModel();
+
+                SampleModel.Author = user.GetGitHubLogin();
+                SampleModel.UsageSampleFileId = SampleFile.UsageSampleFileId;
+                SampleModel.UsageSampleOriginalFileId = SampleOriginal.UsageSampleFileId;
+
+                await _samplesRepository.UpsertUsageSampleAsync(SampleModel);
+            }
+
+            await _sampleFilesRepository.UploadUsageSampleAsync(SampleModel.UsageSampleFileId, stream);
+            await _sampleFilesRepository.UploadUsageSampleAsync(SampleModel.UsageSampleOriginalFileId, originalStream);
             return SampleModel;
         }
 
-        public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, Stream fileStream)
+        public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, Stream fileStream, bool updating)
         {
             StreamReader reader = new StreamReader(fileStream);
             var sample = reader.ReadToEnd();
-            return await UpsertReviewUsageSampleAsync(user, reviewId, sample);
+            return await UpsertReviewUsageSampleAsync(user, reviewId, sample, updating);
         }
 
         public async Task DeleteUsageSampleAsync(ClaimsPrincipal user, string reviewId) 
@@ -108,6 +112,7 @@ namespace APIViewWeb.Repositories
             }
             await _samplesRepository.DeleteUsageSampleAsync(sampleModel);
             await _sampleFilesRepository.DeleteUsageSampleAsync(sampleModel.UsageSampleFileId);
+            await _sampleFilesRepository.DeleteUsageSampleAsync(sampleModel.UsageSampleOriginalFileId);
         }
 
         private async Task AssertUsageSampleOwnerAsync(ClaimsPrincipal user, UsageSampleModel sampleModel)

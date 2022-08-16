@@ -48,6 +48,11 @@ func NewModule(dir string) (*Module, error) {
 	m := Module{Name: filepath.Base(dir), packages: map[string]*Pkg{}}
 
 	baseImportPath := path.Dir(mf.Module.Mod.Path) + "/"
+	if baseImportPath == "./" {
+		// this is a relative path in the tests, so remove this prefix.
+		// if not, then the package name added below won't match the imported packages.
+		baseImportPath = ""
+	}
 	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			if !indexTestdata && strings.Contains(path, "testdata") {
@@ -139,7 +144,7 @@ func NewModule(dir string) (*Module, error) {
 						p.diagnostics = append(p.diagnostics, Diagnostic{
 							Level:    DiagnosticLevelError,
 							TargetID: t.ID(),
-							Text:     "missing alias for nested type " + fieldTypeName,
+							Text:     missingAliasFor + fieldTypeName,
 						})
 					}
 				case *ast.Ident:

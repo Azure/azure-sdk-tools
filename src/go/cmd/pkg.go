@@ -18,6 +18,7 @@ import (
 // diagnostic messages
 const (
 	aliasFor               = "Alias for "
+	missingAliasFor        = "missing alias for nested type "
 	embedsUnexportedStruct = "Anonymously embeds unexported struct "
 	sealedInterface        = "Applications can't implement this interface"
 )

@@ -264,3 +264,34 @@ func TestRecursiveAliasDefinitions(t *testing.T) {
 		})
 	}
 }
+
+func TestAliasDiagnostics(t *testing.T) {
+	review, err := createReview(filepath.Clean("testdata/test_alias_diagnostics"))
+	require.NoError(t, err)
+	require.Equal(t, "Go", review.Language)
+	require.Equal(t, "test_alias_diagnostics", review.Name)
+	require.Equal(t, 6, len(review.Diagnostics))
+	for _, diagnostic := range review.Diagnostics {
+		if diagnostic.TargetID == "test_alias_diagnostics.WidgetValue" {
+			require.Equal(t, DiagnosticLevelInfo, diagnostic.Level)
+			require.Equal(t, aliasFor+"internal.WidgetValue", diagnostic.Text)
+		} else {
+			require.Equal(t, "test_alias_diagnostics.Widget", diagnostic.TargetID)
+			switch diagnostic.Level {
+			case DiagnosticLevelInfo:
+				require.Equal(t, aliasFor+"internal.Widget", diagnostic.Text)
+			case DiagnosticLevelError:
+				switch txt := diagnostic.Text; txt {
+				case missingAliasFor + "WidgetProperties":
+				case missingAliasFor + "WidgetPropertiesP":
+				case missingAliasFor + "WidgetThings":
+				case missingAliasFor + "WidgetThingsP":
+				default:
+					t.Fatalf("unexpected diagnostic text %s", txt)
+				}
+			default:
+				t.Fatalf("unexpected diagnostic level %d", diagnostic.Level)
+			}
+		}
+	}
+}

@@ -1,8 +1,11 @@
 ﻿@page "{id?}"
 @model APIViewWeb.Pages.Assemblies.RevisionsPageModel
+@using APIViewWeb.Helpers
+@using APIViewWeb.Models
 @{
     Layout = "ReviewLayout";
     ViewData["Title"] = "Revisions";
+    ViewData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
 }
 <div class="container-fluid">
     <div class="mx-5 mt-2">
@@ -34,7 +37,7 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
                             <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
                         </div>
                     </form>

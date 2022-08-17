@@ -24,7 +24,7 @@
         hiddenSectionClass = isContent ? "d-none" : "";
     }
 
-    var userPreference = TempData["UserPreference"] as UserPreferenceModel;
+    var userPreference = ViewData["UserPreference"] as UserPreferenceModel;
 }
 
 <tr class="code-line @lineClass @foldableClass @hiddenSectionClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">

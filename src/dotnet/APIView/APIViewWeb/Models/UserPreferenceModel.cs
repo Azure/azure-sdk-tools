@@ -21,5 +21,7 @@ namespace APIViewWeb.Models
         public bool? HideLineNumbers { get; set; }
         [Name("HideLeftNavigation")]
         public bool? HideLeftNavigation { get; set; }
+        [Name("Theme")]
+        public string Theme { get; set; }
     }
 }

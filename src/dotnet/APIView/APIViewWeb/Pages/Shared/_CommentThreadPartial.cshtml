@@ -29,7 +29,7 @@
                                         <a date="@comment.TimeStamp.ToLocalTime()" href="#@comment.CommentId" class="small"></a>
                                     </span>
                                     <span class="float-right mr-1">
-                                        <form class="float-left" data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
+                                        <form class="float-left mr-1" data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
                                             <input type="hidden" name="commentId" value="@comment.CommentId" />
                                             <button type="submit" class="btn btn-light btn-xs btn-upvote" title="@string.Join(", ", comment.Upvotes)" active-if="@comment.Upvotes.Contains(User.GetGitHubLogin())">
                                                 @{
@@ -42,8 +42,8 @@
                                             </button>
                                         </form>
 
-                                        <div class="btn-group dropup float-right">
-                                            <a class="btn btn-sm" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Dropdown Menu Button">
+                                        <div class="dropup float-right">
+                                            <a class="btn btn-xs btn-light p-1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Dropdown Menu Button">
                                                 <i class="fa-solid fa-ellipsis"></i>
                                             </a>
 
@@ -90,13 +90,13 @@
                         @if (Model.IsResolved)
                         {
                             <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
-                                <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Unresolve</button>
+                                <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Unresolve</button>
                             </form>
                         }
                         else
                         {
                             <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve" asp-route-reviewId="@Model.ReviewId">
-                                <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
+                                <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Resolve</button>
                             </form>
                         }
                         <div class="comment-navigation-buttons">

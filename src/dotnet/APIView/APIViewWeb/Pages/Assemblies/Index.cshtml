@@ -3,8 +3,11 @@
 @using APIViewWeb
 @using System
 @using System.Text.RegularExpressions
+@using APIViewWeb.Helpers
+@using APIViewWeb.Models
 @{
     ViewData["Title"] = "Reviews";
+    ViewData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
 }
 @section Scripts
 {
@@ -48,7 +51,7 @@
                     <div class="modal-header">
                         <h5 class="modal-title">Create Review</h5>
                         <button type="button" class="close" data-dismiss="modal">
-                            <span aria-hidden="true">&times;</span>
+                            <span aria-hidden="true"><i class="fa-solid fa-xmark"></i></span>
                         </button>
                     </div>
                     <div class="modal-body">
@@ -208,7 +211,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
                     </div>
                 </form>

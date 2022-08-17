@@ -23,14 +23,19 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
             this.container = container;
         }
 
+        public bool ReleaseOnDispose { get; set; }
+
         public async ValueTask DisposeAsync()
         {
-            try
+            if (ReleaseOnDispose)
             {
-                await this.container.DeleteItemAsync<CosmosLockDocument>(this.id, this.partitionKey, new ItemRequestOptions { IfMatchEtag = this.etag });
-            }
-            catch(CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
+                try
+                {
+                    await this.container.DeleteItemAsync<CosmosLockDocument>(this.id, this.partitionKey, new ItemRequestOptions { IfMatchEtag = this.etag });
+                }
+                catch(CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                }
             }
         }
 

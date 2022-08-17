@@ -7,7 +7,7 @@ using Microsoft.Azure.Cosmos;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
 {
-    class CosmosAsyncLockProvider : IAsyncLockProvider
+    public class CosmosAsyncLockProvider : IAsyncLockProvider
     {
         private readonly Container container;
 

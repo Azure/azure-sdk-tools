@@ -12,12 +12,17 @@ namespace Azure.Sdk.Tools.PipelineWitness
         public string KeyVaultUri { get; set; }
 
         /// <summary>
-        /// Gets or sets uri of the storage account use for queue processing
+        /// Gets or sets uri of the cosmos account to use
+        /// </summary>
+        public string CosmosAccountUri { get; set; }
+
+        /// <summary>
+        /// Gets or sets uri of the storage account to use for queue processing
         /// </summary>
         public string QueueStorageAccountUri { get; set; }
 
         /// <summary>
-        /// Gets or sets uri of the blob storage account use for blob export
+        /// Gets or sets uri of the blob storage account to use for blob export
         /// </summary>
         public string BlobStorageAccountUri { get; set; }
 

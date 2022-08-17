@@ -6,6 +6,8 @@ using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Fluent;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +39,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 builder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
                 builder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))
                     .ConfigureOptions(o => o.MessageEncoding = Storage.Queues.QueueMessageEncoding.Base64);
+
+                builder.AddClient<CosmosClient, CosmosClientOptions>((options, token) => new CosmosClient(settings.CosmosAccountUri, token, options));
             });
 
             builder.Services.AddSingleton<VssConnection>(provider =>

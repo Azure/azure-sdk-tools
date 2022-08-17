@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.WebApi;
 using System.Diagnostics;
 using Microsoft.Extensions.Options;
+using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
@@ -14,6 +15,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         private readonly ILogger<AzurePipelinesBuildDefinitionWorker> logger;
         private readonly BlobUploadProcessor runProcessor;
         private readonly IOptions<PipelineWitnessSettings> options;
+        private IAsyncLockProvider asyncLockProvider;
 
         public AzurePipelinesBuildDefinitionWorker(
             ILogger<AzurePipelinesBuildDefinitionWorker> logger,
@@ -32,15 +34,20 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 var stopWatch = Stopwatch.StartNew();
                 var settings = this.options.Value;
 
-                foreach (var project in settings.Projects)
+                await using var asyncLock = await this.asyncLockProvider.GetLockAsync("UpdateBuildDefinitions", TimeSpan.FromMinutes(60), stoppingToken);
+
+                if (asyncLock != null)
                 {
-                    await this.runProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
+                    foreach (var project in settings.Projects)
+                    {
+                        await this.runProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
+                    }
                 }
 
                 var duration = settings.BuildDefinitionLoopPeriod - stopWatch.Elapsed;
                 if (duration > TimeSpan.Zero)
                 {
-                    await Task.Delay(duration);
+                    await Task.Delay(duration, stoppingToken);
                 }
             }
         }

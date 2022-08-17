@@ -22,6 +22,8 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static com.azure.tools.codesnippetplugin.implementation.SnippetReplacer.JAVADOC_CODESNIPPET_REPLACEMENTS;
+
 @Fork(3)
 @Warmup(iterations = 3, time = 2)
 @Measurement(iterations = 3, time = 10)
@@ -53,20 +55,6 @@ public class CodesnippetReplacementBenchmark {
         put(Pattern.compile("\\)"), "&#41;");
         put(Pattern.compile("/"), "&#47;");
         put(Pattern.compile("\\\\"), "&#92;");
-    }};
-
-    private static final List<CodesnippetReplacement> CODESNIPPET_REPLACEMENT = new ArrayList<CodesnippetReplacement>() {{
-        add(new CodesnippetReplacement("&", "&amp;"));
-        add(new CodesnippetReplacement("\"", "&quot;"));
-        add(new CodesnippetReplacement(">", "&gt;"));
-        add(new CodesnippetReplacement("<", "&lt;"));
-        add(new CodesnippetReplacement("@", "&#64;"));
-        add(new CodesnippetReplacement("\\{", "&#123;"));
-        add(new CodesnippetReplacement("}", "&#125;"));
-        add(new CodesnippetReplacement("\\(", "&#40;"));
-        add(new CodesnippetReplacement("\\)", "&#41;"));
-        add(new CodesnippetReplacement("/", "&#47;"));
-        add(new CodesnippetReplacement("\\\\", "&#92;"));
     }};
 
     private static final List<CodesnippetReplacementPlayground> CODESNIPPET_PLAYGROUND_REPLACEMENT = new ArrayList<CodesnippetReplacementPlayground>() {{
@@ -101,13 +89,7 @@ public class CodesnippetReplacementBenchmark {
     @Benchmark
     public void codesnippetReplacement(Blackhole blackhole) {
         for (String codesnippetLine : CODESNIPPET_LINES) {
-            if (codesnippetLine.isEmpty()) {
-                continue;
-            }
-
-            for (CodesnippetReplacement replacement : CODESNIPPET_REPLACEMENT) {
-                codesnippetLine = replacement.replaceCodesnippet(codesnippetLine);
-            }
+            codesnippetLine = SnippetReplacer.applyReplacements(codesnippetLine, JAVADOC_CODESNIPPET_REPLACEMENTS);
 
             blackhole.consume(codesnippetLine);
         }

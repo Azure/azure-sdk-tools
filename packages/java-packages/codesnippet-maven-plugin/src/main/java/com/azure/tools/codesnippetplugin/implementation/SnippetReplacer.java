@@ -57,13 +57,13 @@ public final class SnippetReplacer {
 
     /**
      * The "verification" operation encapsulated by this function is as follows.
-     *
+     * <p>
      * 1. Scan under the target direction for all discovered code snippet DEFINITIONS 2. Examine all snippet CALLS,
      * finding where updates are needed. 3. Report all discovered snippets in need of update as well as all bad snippet
      * calls
-     *
+     * <p>
      * A "bad snippet call" is simply calling for a snippet whose ID has no definition.
-     *
+     * <p>
      * See {@link #updateCodesnippets(RootAndGlob, List, RootAndGlob, boolean, RootAndGlob, List, boolean, int, boolean, Log)}
      * for details on actually defining and calling snippets.
      */
@@ -405,6 +405,8 @@ public final class SnippetReplacer {
     static Map<String, Codesnippet> getAllSnippets(List<Path> snippetSources)
         throws IOException, MojoExecutionException {
         Map<String, List<Codesnippet>> codesnippets = new HashMap<>();
+        Map<String, List<String>> missingBeginTag = new HashMap<>();
+        Map<String, List<String>> missingEndTag = new HashMap<>();
 
         for (Path samplePath : snippetSources) {
             List<String> fileContent = Files.readAllLines(samplePath, StandardCharsets.UTF_8);
@@ -432,9 +434,17 @@ public final class SnippetReplacer {
                     snippetReader.processLine(line);
                 }
             }
+
+            if (!snippetReader.getMissingEndTags().isEmpty()) {
+                missingEndTag.put(samplePath.toString(), snippetReader.getMissingEndTags());
+            }
+
+            if (!snippetReader.getMissingBeginTags().isEmpty()) {
+                missingBeginTag.put(samplePath.toString(), snippetReader.getMissingBeginTags());
+            }
         }
 
-        String potentialErrorMessage = createDuplicateCodesnippetErrorMessage(codesnippets);
+        String potentialErrorMessage = createInvalidSnippetsErrorMessage(codesnippets, missingEndTag, missingBeginTag);
         if (!potentialErrorMessage.isEmpty()) {
             throw new MojoExecutionException(potentialErrorMessage);
         }
@@ -443,7 +453,8 @@ public final class SnippetReplacer {
             .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get(0)));
     }
 
-    private static String createDuplicateCodesnippetErrorMessage(Map<String, List<Codesnippet>> codesnippets) {
+    private static String createInvalidSnippetsErrorMessage(Map<String, List<Codesnippet>> codesnippets,
+        Map<String, List<String>> missingEndTags, Map<String, List<String>> missingBeginTags) {
         StringBuilder errorMessage = new StringBuilder();
 
         for (Map.Entry<String, List<Codesnippet>> codesnippetsById : codesnippets.entrySet()) {
@@ -465,6 +476,32 @@ public final class SnippetReplacer {
             for (Codesnippet codesnippet : codesnippetsById.getValue()) {
                 errorMessage.append("--> ").append(codesnippet.getDefinitionLocation())
                     .append(System.lineSeparator());
+            }
+
+            errorMessage.append(System.lineSeparator());
+        }
+
+        for (Map.Entry<String, List<String>> missingEndTag : missingEndTags.entrySet()) {
+            errorMessage.append("The following codesnippet aliases in file' ")
+                .append(missingEndTag.getKey())
+                .append("' didn't have a matching END alias:")
+                .append(System.lineSeparator());
+
+            for (String alias : missingEndTag.getValue()) {
+                errorMessage.append(" - ").append(alias).append(System.lineSeparator());
+            }
+
+            errorMessage.append(System.lineSeparator());
+        }
+
+        for (Map.Entry<String, List<String>> missingBeginTag : missingBeginTags.entrySet()) {
+            errorMessage.append("The following codesnippet aliases in file '")
+                .append(missingBeginTag.getKey())
+                .append("' didn't have a matching BEGIN alias:")
+                .append(System.lineSeparator());
+
+            for (String alias : missingBeginTag.getValue()) {
+                errorMessage.append(" - ").append(alias).append(System.lineSeparator());
             }
 
             errorMessage.append(System.lineSeparator());

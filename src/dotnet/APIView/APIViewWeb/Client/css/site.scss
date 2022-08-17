@@ -507,6 +507,64 @@ code {
     height: 16px;
     z-index: 1;
 }
+
+.icon-language {
+    width: 34px;
+    height: 34px;
+}
+
+.icon-csharp {
+    background: url(/icons/csharp-original.svg) center center no-repeat;
+}
+
+.icon-javascript {
+    background: url(/icons/javascript-original.svg) center center no-repeat;
+}
+
+.icon-python {
+    background: url(/icons/python-original.svg) center center no-repeat;
+}
+
+.icon-c {
+    background: url(/icons/c-original.svg) center center no-repeat;
+}
+
+.icon-cplusplus {
+    background: url(/icons/cplusplus-original.svg) center center no-repeat;
+}
+
+.icon-go {
+    background: url(/icons/go-original.svg) center center no-repeat;
+}
+
+.icon-java {
+    background: url(/icons/java-original.svg) center center no-repeat;
+}
+
+.icon-java-spring {
+    background: url(/icons/java-spring-original.svg) center center no-repeat;
+}
+
+.icon-java-android {
+    background: url(/icons/java-android-original.svg) center center no-repeat;
+}
+
+.icon-swift {
+    background: url(/icons/swift-original.svg) center center no-repeat;
+}
+
+.icon-kotlin {
+    background: url(/icons/kotlin-original.svg) center center no-repeat;
+}
+
+.icon-json {
+    background: url(/icons/json-original.svg) center center no-repeat;
+}
+
+.icon-swagger {
+    background: url(/icons/swagger-original.svg) center center no-repeat;
+}
+
 /*---------------------------------------------------------------------*/
 
 .info-text {

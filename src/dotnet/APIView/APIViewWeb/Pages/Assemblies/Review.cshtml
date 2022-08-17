@@ -10,69 +10,12 @@
         <div class="col-lg-12 d-flex px-0">
             @if (Model.Review.Language != null)
             {
-                var imageSource = String.Empty;
-                @switch (Model.Review.Language.ToLower())
+                string iconClassName = "icon-" + Model.Review.GetLanguageCssSafeName();
+                @if (!string.IsNullOrEmpty(Model.Review.LanguageVariant) && Model.Review.LanguageVariant.ToLower() != "default")
                 {
-                    case "c#":
-                        imageSource = "icons/csharp-original.svg";
-                        break;
-                    case "javascript":
-                        imageSource = "icons/javascript-original.svg";
-                        break;
-                    case "python":
-                        imageSource = "icons/python-original.svg";
-                        break;
-                    case "c":
-                        imageSource = "icons/c-original.svg";
-                        break;
-                    case "c++":
-                        imageSource = "icons/cplusplus-original.svg";
-                        break;
-                    case "go":
-                        imageSource = "icons/go-original.svg";
-                        break;
-                    case "java":
-                        if(@Model.Review.LanguageVariant != null)
-                        {
-                            switch(@Model.Review.LanguageVariant.ToLower())
-                            {
-                                case "spring":
-                                    imageSource = "icons/java-spring-original.svg";
-                                    break;
-                                case "android":
-                                    imageSource = "icons/java-android-original.svg";
-                                    break;
-                                default:
-                                    imageSource = "icons/java-original.svg";
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            imageSource = "icons/java-original.svg";
-                        }
-                        break;
-                    case "swift":
-                        imageSource = "icons/swift-original.svg";
-                        break;
-                    case "kotlin":
-                        imageSource = "icons/kotlin-original.svg";
-                        break;
-                    case "json":
-                        imageSource = "icons/json-original.svg";
-                        break;
-                    case "swagger":
-                        imageSource = "icons/swagger-original.svg";
-                        break;
+                    iconClassName += "-" + @Model.Review.LanguageVariant.ToLower();
                 }
-                if (String.IsNullOrEmpty(imageSource))
-                {
-                    <span class="badge badge-info"><em>@Model.Review.Language @Model.Review.LanguageVariant</em></span> 
-                }
-                else
-                {
-                    <span><img class="mr-2 mt-1 p-1 border rounded" src="~/@imageSource" width="34" alt="@Model.Review.Language @Model.Review.LanguageVariant" /></span>   
-                } 
+                <span role="img" class="mr-2 mt-1 p-1 border rounded icon-language @iconClassName" aria-label="@Model.Review.Language @Model.Review.LanguageVariant"></span>
             }
             <p class="h6 mb-0 mr-auto">
                 @if (Model.Review.ServiceName != null)

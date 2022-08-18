@@ -144,7 +144,7 @@ namespace SwaggerApiParser
             {
                 // ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken(Utils.GetDefinitionType(schema.originalRef), CodeFileTokenKind.TypeName));
-                flattenedTableItems.Add(new SchemaTableItem() {Model = Utils.GetDefinitionType(schema.originalRef), Description = this.description});
+                flattenedTableItems.Add(new SchemaTableItem() {Model = Utils.GetDefinitionType(schema.originalRef), TypeFormat = schema.type, Description = schema.description});
                 ret.Add(TokenSerializer.NewLine());
                 context.intent++;
             }
@@ -187,7 +187,6 @@ namespace SwaggerApiParser
                     TokenSerializeArray(context, ret, schema, ref flattenedTableItems, serializeRef);
                 }
             }
-
             return ret.ToArray();
         }
 

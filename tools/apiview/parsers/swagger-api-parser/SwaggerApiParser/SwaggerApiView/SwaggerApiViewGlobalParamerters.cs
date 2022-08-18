@@ -3,7 +3,7 @@ using APIView;
 
 namespace SwaggerApiParser;
 
-public class SwaggerApiViewGlobalParameters : Dictionary<string, SwaggerApiViewParameter>, ITokenSerializable, INavigable
+public class SwaggerApiViewGlobalParameters : SortedDictionary<string, SwaggerApiViewParameter>, ITokenSerializable, INavigable
 {
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {

@@ -4,7 +4,7 @@ using APIView;
 
 namespace SwaggerApiParser;
 
-public class SwaggerApiViewDefinitions : Dictionary<String, Definition>, INavigable, ITokenSerializable
+public class SwaggerApiViewDefinitions : SortedDictionary<String, Definition>, INavigable, ITokenSerializable
 {
     public NavigationItem BuildNavigationItem(IteratorPath iteratorPath = null)
     {

@@ -4,7 +4,7 @@ using APIView;
 
 namespace SwaggerApiParser;
 
-public class SwaggerApiViewPaths : Dictionary<string, List<SwaggerApiViewOperation>>, INavigable, ITokenSerializable
+public class SwaggerApiViewPaths : SortedDictionary<string, List<SwaggerApiViewOperation>>, INavigable, ITokenSerializable
 {
     public void AddSwaggerApiViewOperation(SwaggerApiViewOperation op)
     {

@@ -27,7 +27,7 @@ variables:
 stages:
   - stage: IntegrationTests
     jobs:
-    - job: Integration_Test_
+    - job: Integration_Test
 
       strategy:
         matrix:
@@ -46,9 +46,9 @@ stages:
 
       steps:
         - task: UseDotNet@2
-          displayName: 'Use .NET Core sdk 6.X'
+          displayName: 'Use .NET Core sdk 6.x'
           inputs:
-            version: '6.X'
+            version: '6.x'
 
         - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
           displayName: 'Test'

@@ -20,13 +20,12 @@ export class Helper {
         const modelerfourOptions = await session.getValue('modelerfour', {});
         if (modelerfourOptions['emit-yaml-tags'] !== false) {
             if (exportExplicitTypes) {
-                function isExplictTypes(tag: string): boolean {
-                    return tag && (explicitTypes || []).some((t) => tag.endsWith(t));
-                }
-                codeModelSchema.explicit = codeModelSchema.explicit.concat(codeModelSchema.implicit.filter((t) => isExplictTypes(t.tag)));
-                codeModelSchema.implicit = codeModelSchema.implicit.filter((t) => !isExplictTypes(t.tag));
-                codeModelSchema.compiledExplicit = codeModelSchema.compiledExplicit.concat(codeModelSchema.compiledImplicit.filter((t) => isExplictTypes(t.tag)));
-                codeModelSchema.compiledImplicit = codeModelSchema.compiledImplicit.filter((t) => !isExplictTypes(t.tag));
+                codeModelSchema.explicit = codeModelSchema.explicit.concat(codeModelSchema.implicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)));
+                codeModelSchema.implicit = codeModelSchema.implicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
+                codeModelSchema.compiledExplicit = codeModelSchema.compiledExplicit.concat(
+                    codeModelSchema.compiledImplicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)),
+                );
+                codeModelSchema.compiledImplicit = codeModelSchema.compiledImplicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
             }
             host.writeFile({
                 filename: 'code-model-v4.yaml',
@@ -41,6 +40,10 @@ export class Helper {
                 artifactType: 'code-model-v4-no-tags',
             });
         }
+    }
+
+    private static isExplicitTypes(tag: string, explicitTypes: string[] = undefined): boolean {
+        return tag && (explicitTypes || []).some((t) => tag.endsWith(t));
     }
 
     public static addCodeModelDump(session: Session<CodeModel>, fileName: string, withTags: boolean, debugOnly = true) {

@@ -583,7 +583,7 @@ export class TestCodeModeler {
 
     public async loadTestResources(session: Session<TestCodeModel>) {
         try {
-            var fileRoot = this.testConfig.getSwaggerFolder();
+            let fileRoot = this.testConfig.getSwaggerFolder() || '';
             if (fileRoot.endsWith('/') || fileRoot.endsWith('\\')) {
                 fileRoot = fileRoot.substring(0, fileRoot.length - 1);
             }
@@ -593,7 +593,7 @@ export class TestCodeModeler {
                 await this.loadAvailableTestResources(session, fileRoot);
             }
         } catch (error) {
-            session.warning('Exception occured when load test resource scenario: ${error.stack}', ['Test Modeler']);
+            session.warning(`Exception occured when load test resource scenario: ${error.stack}`, ['Test Modeler']);
         }
     }
 

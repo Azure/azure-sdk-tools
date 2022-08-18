@@ -11,7 +11,7 @@ trigger:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
       - src/swift
-      - src/ts/ts-genapi
+      - tools/apiview/parsers/js-api-parser
 
 pr:
   branches:
@@ -26,7 +26,7 @@ pr:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
       - src/swift
-      - src/ts/ts-genapi
+      - tools/apiview/parsers/js-api-parser
 
 variables:
   DotNetRuntimeVersion: '3.1.x'
@@ -36,7 +36,7 @@ variables:
   TestProjectPath: 'src/dotnet/APIView/**/*Tests.csproj'
   NodeVersion: '12.x'
   BuildConfiguration: 'Release'
-  TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
+  TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parser'
   GoParserPackagePath: 'src/go'
   GoVersion: '1.18'
   NugetSecurityAnalysisWarningLevel: 'none'

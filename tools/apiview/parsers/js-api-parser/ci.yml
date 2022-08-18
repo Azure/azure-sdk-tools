@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - src/ts/ts-genapi
+      - tools/apiview/parsers/js-api-parserts-genapi           
 
 pr:
   branches:
@@ -19,11 +19,11 @@ pr:
       - hotfix/*
   paths:
     include:
-      - src/ts/ts-genapi
+      - tools/apiview/parsers/js-api-parserts-genapi           
 
 variables:
   NodeVersion: '16.x'
-  TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
+  TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parserts-genapi'
   ArtifactName: 'apiview'
   FeedRegistry: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
 

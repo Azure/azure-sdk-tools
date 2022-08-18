@@ -4,7 +4,7 @@ This application tokenises a Javascript project into a format useful for JavaScr
 
 ## Building
 
-1. Go to project directory `<repo root>/src/ts/ts-genapi` and Install npm packages.
+1. Go to project directory `<repo root>/tools/apiview/parsers/js-api-parser` and Install npm packages.
     `npm install
 2. Run `npm run-script build`
 

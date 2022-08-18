@@ -25,7 +25,8 @@ variables:
   - template: /eng/pipelines/templates/variables/globals.yml
 
 stages:
-  - stage: Integration Tests
+  - stage: IntegrationTests
+    name: Integration Tests
     jobs:
     - job: Integration_Test_
 

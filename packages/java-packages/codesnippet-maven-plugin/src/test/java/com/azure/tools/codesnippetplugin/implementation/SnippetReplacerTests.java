@@ -174,4 +174,19 @@ public class SnippetReplacerTests {
         assertTrue(errors.isEmpty());
         assertEquals(expectedString, new String(Files.readAllBytes(codeForReplacement), StandardCharsets.UTF_8));
     }
+
+    @Test
+    public void fullClassCodesnippet() throws Exception {
+        Path snippetSourceFile = getPathToResource("full_class_parse.txt");
+        Path codeForReplacement = getPathToResource("full_class_readme_insertion_before.txt");
+        Path expectedOutCome = getPathToResource("full_class_readme_insertion_after.txt");
+        String expectedString = new String(Files.readAllBytes(expectedOutCome), StandardCharsets.UTF_8);
+
+        Map<String, Codesnippet> foundSnippets = SnippetReplacer.getAllSnippets(
+            new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
+        List<CodesnippetError> errors = SnippetReplacer.updateReadmeCodesnippets(codeForReplacement, foundSnippets);
+
+        assertTrue(errors.isEmpty());
+        assertEquals(expectedString, new String(Files.readAllBytes(codeForReplacement), StandardCharsets.UTF_8));
+    }
 }

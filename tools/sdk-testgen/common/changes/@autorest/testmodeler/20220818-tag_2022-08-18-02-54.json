@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/testmodeler",
+      "comment": "add option --explicit-types to allow customize tagged types in exported code model.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/testmodeler"
+}

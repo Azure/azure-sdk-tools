@@ -583,7 +583,10 @@ export class TestCodeModeler {
 
     public async loadTestResources(session: Session<TestCodeModel>) {
         try {
-            const fileRoot = this.testConfig.getSwaggerFolder();
+            var fileRoot = this.testConfig.getSwaggerFolder();
+            if (fileRoot.endsWith('/') || fileRoot.endsWith('\\')) {
+                fileRoot = fileRoot.substring(0, fileRoot.length - 1);
+            }
             if (Array.isArray(this.testConfig.config[Config.testResources])) {
                 await this.loadTestResourcesFromConfig(session, fileRoot);
             } else {
@@ -607,13 +610,14 @@ export class TestCodeModeler {
 
     public async loadTestResourcesFromConfig(session: Session<TestCodeModel>, fileRoot: string) {
         for (const testResource of this.testConfig.getValue(Config.testResources)) {
+            const testFile = typeof testResource === 'string' ? testResource : testResource[Config.test];
             try {
                 const loader = ApiScenarioLoader.create(this.createApiScenarioLoaderOption(fileRoot));
-                const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
+                const testDef = (await loader.load(testFile)) as TestDefinitionModel;
                 this.initiateTestDefinition(session, testDef);
                 this.codeModel.testModel.scenarioTests.push(testDef);
             } catch (error) {
-                session.warning(`Exception occured when load testdef ${testResource[Config.test]}: ${error}`, ['Test Modeler']);
+                session.warning(`Exception occured when load testdef ${testFile}: ${error}`, ['Test Modeler']);
             }
         }
     }

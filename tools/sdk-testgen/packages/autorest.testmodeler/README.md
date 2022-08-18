@@ -115,6 +115,18 @@ isDataAction: false
 count: 64
 ```
 
+### --testmodeler.explicit-types
+
+A list for types need to explicitly tagged when export-explicit-type is true. The default explicitTypes are ['bool', 'int', 'float', 'timestamp']. Test generators can change it like below:
+
+```
+testmodeler:
+    explicit-types:
+        - bool
+        - int
+        - float
+```
+
 ## Autorest Pipeline Configurations
 
 ```yaml

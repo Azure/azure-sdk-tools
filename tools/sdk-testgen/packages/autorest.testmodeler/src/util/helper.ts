@@ -8,17 +8,25 @@ import { comment, serialize } from '@azure-tools/codegen';
 
 export class Helper {
     static dumpBuf: Record<string, any> = {};
-    public static async outputToModelerfour(host: AutorestExtensionHost, session: Session<CodeModel>, exportExplicitTypes: boolean): Promise<void> {
+    public static async outputToModelerfour(
+        host: AutorestExtensionHost,
+        session: Session<CodeModel>,
+        exportExplicitTypes: boolean,
+        explicitTypes: string[] = undefined,
+    ): Promise<void> {
         // write the final result first which is hardcoded in the Session class to use to build the model..
         // overwrite the modelerfour which should be fine considering our change is backward compatible
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const modelerfourOptions = await session.getValue('modelerfour', {});
         if (modelerfourOptions['emit-yaml-tags'] !== false) {
             if (exportExplicitTypes) {
-                codeModelSchema.explicit = (codeModelSchema.explicit || []).concat(codeModelSchema.implicit);
-                codeModelSchema.implicit = [];
-                codeModelSchema.compiledExplicit = (codeModelSchema.compiledExplicit || []).concat(codeModelSchema.compiledImplicit);
-                codeModelSchema.compiledImplicit = [];
+                function isExplictTypes(tag: string): boolean {
+                    return tag && (explicitTypes || []).some((t) => tag.endsWith(t));
+                }
+                codeModelSchema.explicit = codeModelSchema.explicit.concat(codeModelSchema.implicit.filter((t) => isExplictTypes(t.tag)));
+                codeModelSchema.implicit = codeModelSchema.implicit.filter((t) => !isExplictTypes(t.tag));
+                codeModelSchema.compiledExplicit = codeModelSchema.compiledExplicit.concat(codeModelSchema.compiledImplicit.filter((t) => isExplictTypes(t.tag)));
+                codeModelSchema.compiledImplicit = codeModelSchema.compiledImplicit.filter((t) => !isExplictTypes(t.tag));
             }
             host.writeFile({
                 filename: 'code-model-v4.yaml',

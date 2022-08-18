@@ -17,10 +17,33 @@
               integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" />
     </environment>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <!-- BootStrap Select -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css" />
     <link rel="stylesheet" href="~/site.css" asp-append-version="true" />
+    @using APIViewWeb.Models
+    @using System.Linq
+    @functions {
+        public string getModelType()
+        {
+            return ViewData.ModelMetadata.ModelType.Name;
+        }
+    }
+    @{ var modelType = getModelType();
+        if (modelType == "ReviewPageModel")
+            {
+            @functions {
+                public string getLanguage()
+                    {
+                    Assemblies.ReviewPageModel rpm = ViewData.Model;
+                    return rpm.Review.GetLanguageCssSafeName();
+                    }
+            }
+            var lang = getLanguage();
+            var hrefNew = "~/"+lang+".css";
+            <link rel="stylesheet" href=@hrefNew asp-append-version="true" />
+        }
+    }
 </head>
 <body>
     <header>

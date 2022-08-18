@@ -122,6 +122,7 @@ namespace ApiView
 
                     case CodeFileTokenKind.FoldableSectionHeading:
                         nodesInProcess.Push(SectionType.Heading);
+                        currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
                         RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;
 
@@ -214,10 +215,7 @@ namespace ApiView
                         break;
 
                     default:
-                        if (token.DefinitionId != null)
-                        {
-                            currentId = token.DefinitionId;
-                        }
+                        currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
                         RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;
                 }
@@ -236,6 +234,11 @@ namespace ApiView
         // These methods should not render anything for text renderer so keeping it empty
         protected virtual void StartDocumentationRange(StringBuilder stringBuilder) { }
         protected virtual void CloseDocumentationRange(StringBuilder stringBuilder) { }
+
+        private void UpdateDefinitionId(CodeFileToken token, string currentId)
+        {
+            currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+        }
     }
 
     public struct RenderResult

@@ -11,6 +11,7 @@ using Microsoft.Azure.Cosmos;
 using APIViewWeb.Models;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace APIViewWeb
 {
@@ -24,9 +25,9 @@ namespace APIViewWeb
             _samplesContainer = client.GetContainer("APIView", "UsageSamples");
         }
 
-        public async Task<UsageSampleModel> GetUsageSampleAsync(string reviewId)
+        public async Task<List<UsageSampleModel>> GetUsageSampleAsync(string reviewId)
         {
-            return await GetUsageSamplesFromQueryAsync($"SELECT * FROM UsageSamples c WHERE c.ReviewId = '{reviewId}'", reviewId);
+            return await GetUsageSamplesFromQueryAsync($"SELECT * FROM UsageSamples c WHERE c.ReviewId = '{reviewId}'");
         }
         
         public async Task DeleteUsageSampleAsync(UsageSampleModel Sample)
@@ -39,18 +40,17 @@ namespace APIViewWeb
             await _samplesContainer.UpsertItemAsync(sampleModel, new PartitionKey(sampleModel.ReviewId));
         }
 
-        private async Task<UsageSampleModel> GetUsageSamplesFromQueryAsync(string query, string reviewId)
+        private async Task<List<UsageSampleModel>> GetUsageSamplesFromQueryAsync(string query)
         {
             var itemQueryIterator = _samplesContainer.GetItemQueryIterator<UsageSampleModel>(query);
-            var result = await itemQueryIterator.ReadNextAsync();
-            try
+            List<UsageSampleModel> samples = new List<UsageSampleModel>();
+            while (itemQueryIterator.HasMoreResults)
             {
-                return result.Resource.First();
+                var result = await itemQueryIterator.ReadNextAsync();
+                samples.AddRange(result.Resource);
             }
-            catch
-            {
-                return new UsageSampleModel(null, reviewId);
-            }
+
+            return samples;
         }
 
     }

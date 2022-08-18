@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Markdig;
 using Markdig.SyntaxHighlighting;
 using Microsoft.AspNetCore.Authorization;
-using Octokit;
+using System.Collections.Generic;
 
 namespace APIViewWeb.Repositories
 {
@@ -31,10 +31,9 @@ namespace APIViewWeb.Repositories
             _commentsRepository = commentsRepository;
         }
 
-        public async Task<UsageSampleModel> GetReviewUsageSampleAsync(string reviewId)
+        public async Task<List<UsageSampleModel>> GetReviewUsageSampleAsync(string reviewId)
         {
-            var sample = await _samplesRepository.GetUsageSampleAsync(reviewId);
-            return sample;
+            return await _samplesRepository.GetUsageSampleAsync(reviewId);
         }
 
         public async Task<string> GetUsageSampleContentAsync(string fileId)
@@ -49,9 +48,8 @@ namespace APIViewWeb.Repositories
             return htmlString;
         }
 
-        public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, string sample, bool updating)
+        public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, string sample, int revisionNum, string revisionTitle)
         {
-            UsageSampleModel SampleModel = await _samplesRepository.GetUsageSampleAsync(reviewId);
             MarkdownPipeline pipeline = new MarkdownPipelineBuilder()
                 .UseAdvancedExtensions()
                 .UseSyntaxHighlighting()
@@ -61,51 +59,44 @@ namespace APIViewWeb.Repositories
 
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(htmlSample));
             var originalStream = new MemoryStream(Encoding.UTF8.GetBytes(sample));
+            UsageSampleModel SampleModel = new UsageSampleModel(user, reviewId, revisionNum);
 
+            SampleModel.RevisionTitle = revisionTitle;
 
-            if (!updating)
-            {
-                if (SampleModel.UsageSampleFileId != null)
-                {
-                    await _sampleFilesRepository.DeleteUsageSampleAsync(SampleModel.UsageSampleFileId);
-                    await _sampleFilesRepository.DeleteUsageSampleAsync(SampleModel.UsageSampleOriginalFileId);
-                    await _samplesRepository.DeleteUsageSampleAsync(SampleModel);
-                }
-                SampleModel = new UsageSampleModel(user, reviewId);
+            // Create new file and upsert the updated model
+            UsageSampleFileModel SampleFile = new UsageSampleFileModel();
+            UsageSampleFileModel SampleOriginal = new UsageSampleFileModel();
 
-                // Create new file and upsert the updated model
-                UsageSampleFileModel SampleFile = new UsageSampleFileModel();
-                UsageSampleFileModel SampleOriginal = new UsageSampleFileModel();
+            SampleModel.Author = user.GetGitHubLogin();
+            SampleModel.UsageSampleFileId = SampleFile.UsageSampleFileId;
+            SampleModel.UsageSampleOriginalFileId = SampleOriginal.UsageSampleFileId;
 
-                SampleModel.Author = user.GetGitHubLogin();
-                SampleModel.UsageSampleFileId = SampleFile.UsageSampleFileId;
-                SampleModel.UsageSampleOriginalFileId = SampleOriginal.UsageSampleFileId;
-
-                await _samplesRepository.UpsertUsageSampleAsync(SampleModel);
-            }
+            await _samplesRepository.UpsertUsageSampleAsync(SampleModel);
 
             await _sampleFilesRepository.UploadUsageSampleAsync(SampleModel.UsageSampleFileId, stream);
             await _sampleFilesRepository.UploadUsageSampleAsync(SampleModel.UsageSampleOriginalFileId, originalStream);
             return SampleModel;
         }
 
-        public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, Stream fileStream, bool updating)
+        public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, Stream fileStream, int revisionNum, string revisionTitle)
         {
             StreamReader reader = new StreamReader(fileStream);
             var sample = reader.ReadToEnd();
-            return await UpsertReviewUsageSampleAsync(user, reviewId, sample, updating);
+            return await UpsertReviewUsageSampleAsync(user, reviewId, sample, revisionNum, revisionTitle);
         }
 
-        public async Task DeleteUsageSampleAsync(ClaimsPrincipal user, string reviewId) 
+        public async Task DeleteUsageSampleAsync(ClaimsPrincipal user, string reviewId, string sampleId) 
         {
-            var sampleModel = await _samplesRepository.GetUsageSampleAsync(reviewId);
+            var sampleModels = await _samplesRepository.GetUsageSampleAsync(reviewId);
+            var sampleModel = sampleModels.Find(e => e.SampleId == sampleId);
 
             await AssertUsageSampleOwnerAsync(user, sampleModel);
 
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
             foreach (var comment in comments)
             {
-                if (comment.IsSampleComment)
+                string commentSampleId = comment.ElementId.Split("-")[0];
+                if (comment.IsSampleComment && commentSampleId == sampleId) 
                 {
                     await _commentsRepository.DeleteCommentAsync(comment);
                 }

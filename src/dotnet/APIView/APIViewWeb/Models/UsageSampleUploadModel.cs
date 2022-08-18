@@ -25,5 +25,14 @@ namespace APIViewWeb.Pages.Assemblies
 
         [BindProperty]
         public bool Updating { get; set; } = false;
+
+        [BindProperty]
+        public int RevisionNumber { get; set; }
+
+        [BindProperty]
+        public string SampleId { get; set; }
+
+        [BindProperty]
+        public string RevisionTitle { get; set; }
     }
 }

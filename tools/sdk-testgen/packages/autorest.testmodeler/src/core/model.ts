@@ -281,6 +281,15 @@ export enum OutputVariableModelType {
     object = 'object',
 }
 
+function findResponseSchema(operation: Operation, statusCode: string): SchemaResponse {
+    for (const response of operation.responses || []) {
+        if ((response.protocol.http?.statusCodes || []).indexOf(statusCode) >= 0) {
+            return response as SchemaResponse;
+        }
+    }
+    return undefined;
+}
+
 export class TestCodeModeler {
     public static instance: TestCodeModeler;
     public testConfig: TestConfig;
@@ -338,18 +347,9 @@ export class TestCodeModeler {
             }
         }
 
-        function findResponseSchema(statusCode: string): SchemaResponse {
-            for (const response of operation.responses || []) {
-                if ((response.protocol.http?.statusCodes || []).indexOf(statusCode) >= 0) {
-                    return response as SchemaResponse;
-                }
-            }
-            return undefined;
-        }
-
         for (const [statusCode, response] of Object.entries(exampleExtension.responses)) {
             const exampleExtensionResponse = response;
-            const schemaResponse = findResponseSchema(statusCode);
+            const schemaResponse = findResponseSchema(operation, statusCode);
             if (schemaResponse) {
                 exampleModel.responses[statusCode] = ExampleResponse.createInstance(session, exampleExtensionResponse, schemaResponse.schema, schemaResponse.language);
             }
@@ -486,7 +486,7 @@ export class TestCodeModeler {
                         // JsonPointer use '/' to seperate the token and only can point to one value. Token is a number or a string.
                         const valueParts = variableConfig.fromResponse.split('/');
                         // The root schema is from the http body. We only get value from the '200' response for now.
-                        let currentSchema = step.exampleModel.responses['200'].body.schema;
+                        let currentSchema = findResponseSchema(operation, '200')?.schema;
                         step.outputVariablesModel[variableName] = [];
                         for (let i = 1; i < valueParts.length; i++) {
                             const valuePart = valueParts[i];
@@ -609,12 +609,13 @@ export class TestCodeModeler {
     }
 
     public async loadTestResourcesFromConfig(session: Session<TestCodeModel>, fileRoot: string) {
+        const codemodelRestCallOnly = this.testConfig.getValue(Config.scenarioCodeModelRestCallOnly);
         for (const testResource of this.testConfig.getValue(Config.testResources)) {
             const testFile = typeof testResource === 'string' ? testResource : testResource[Config.test];
             try {
                 const loader = ApiScenarioLoader.create(this.createApiScenarioLoaderOption(fileRoot));
                 const testDef = (await loader.load(testFile)) as TestDefinitionModel;
-                this.initiateTestDefinition(session, testDef);
+                this.initiateTestDefinition(session, testDef, codemodelRestCallOnly);
                 this.codeModel.testModel.scenarioTests.push(testDef);
             } catch (error) {
                 session.warning(`Exception occured when load testdef ${testFile}: ${error}`, ['Test Modeler']);

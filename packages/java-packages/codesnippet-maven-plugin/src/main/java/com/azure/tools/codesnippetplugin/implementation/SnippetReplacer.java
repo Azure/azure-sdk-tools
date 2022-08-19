@@ -541,6 +541,8 @@ public final class SnippetReplacer {
                     modifiedStrings.add(snippetLine);
                 }
             }
+        } else {
+            return snippetText;
         }
 
         return modifiedStrings;

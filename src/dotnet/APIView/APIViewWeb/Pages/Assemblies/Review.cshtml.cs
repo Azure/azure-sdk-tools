@@ -217,7 +217,7 @@ namespace APIViewWeb.Pages.Assemblies
                             ++lineNumberExcludingDocumentation,
                             documentedByLines.ToArray()
                         );
-                        documentedByLines = new List<int>();
+                        documentedByLines.Clear();
                         return c;
                     }
                 }).ToArray();

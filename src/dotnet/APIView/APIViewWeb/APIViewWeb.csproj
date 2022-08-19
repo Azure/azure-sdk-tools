@@ -10,7 +10,7 @@
     <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.27.0.jar</JavaProcessor>
     <PythonProcessor>..\..\..\..\packages\python-packages\api-stub-generator\dist\api_stub_generator-0.1.0-py3-none-any.whl</PythonProcessor>
     <GoProcessor>..\..\..\go\apiviewgo.exe</GoProcessor>
-    <JavaScriptProcessor>..\..\..\ts\ts-genapi\</JavaScriptProcessor>
+    <JavaScriptProcessor>..\..\..\..\tools\apiview\parsers\js-api-parser\</JavaScriptProcessor>
     <TypeScriptToolsVersion>latest</TypeScriptToolsVersion>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
   </PropertyGroup>

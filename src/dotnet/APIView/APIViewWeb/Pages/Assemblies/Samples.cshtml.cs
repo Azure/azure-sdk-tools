@@ -30,7 +30,7 @@ namespace APIViewWeb.Pages.Assemblies
         public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
         public UsageSampleModel Sample { get; private set; }
-        public List<UsageSampleModel> SampleRevisions { get; private set; }
+        public IEnumerable<UsageSampleModel> SampleRevisions { get; private set; }
         public CodeLineModel[] SampleContent { get; set; }
         public ReviewCommentsModel Comments { get; set; }
         public string SampleOriginal { get; set; }
@@ -59,33 +59,32 @@ namespace APIViewWeb.Pages.Assemblies
             Review = await _reviewManager.GetReviewAsync(User, id);
             Comments = await _commentsManager.GetUsageSampleCommentsAsync(id);
             latestRevision = -1;
+
+            // This try-catch is for the case that the deployment is set up incorrectly for usage samples
             try
             {
-                SampleRevisions = await _samplesManager.GetReviewUsageSampleAsync(id);
+                var SampleRevisionList = await _samplesManager.GetReviewUsageSampleAsync(id);
+                SampleRevisions = SampleRevisionList.OrderByDescending(e => e.RevisionNum);
                 if (SampleRevisions.Any())
                 {
-                    if (SampleRevisions.Count > 1)
+                    if (SampleRevisions.Count() > 1)
                     {
-                        for (int i = 0; i < SampleRevisions.Count; i++)
-                        {
-                            if (SampleRevisions[i].RevisionNum > latestRevision)
-                            {
-                                latestRevision = SampleRevisions[i].RevisionNum;
-                            }
-                        }
+                        // get latest revision num (useful for ordering)
+                        latestRevision = SampleRevisions.First().RevisionNum;
 
+                        // if a specific revision was selected, find it
                         if (revisionId != null)
                         {
-                            Sample = SampleRevisions.Find(e => e.SampleId == revisionId);
+                            Sample = SampleRevisions.Where(e => e.SampleId == revisionId).First();
                         }
                         else
                         {
-                            Sample = SampleRevisions.Find(e => e.RevisionNum == latestRevision);
+                            Sample = SampleRevisions.First();
                         }
                     }
                     else
                     {
-                        Sample = SampleRevisions[0];
+                        Sample = SampleRevisions.First();
                         latestRevision = 0;
                     }
 
@@ -94,17 +93,20 @@ namespace APIViewWeb.Pages.Assemblies
                     Upload.updateString = SampleOriginal;
                     if (SampleContent == null)
                     {
-                        Sample.SampleId = "Bad Deployment";
+                        // Potentially bad blob setup, potentially erroneous file fetch
+                        Sample.SampleId = "File Content Missing";
                     }
                 }
                 else
                 {
+                    // No samples.
                     Sample = new UsageSampleModel(null, Review.ReviewId, -1);
                     SampleContent = Array.Empty<CodeLineModel>();
                 }
             }
             catch (CosmosException e)
             {
+                // Error gracefully
                 Sample = new UsageSampleModel(null, null);
                 Sample.SampleId = "Bad Deployment";
             }
@@ -159,34 +161,42 @@ namespace APIViewWeb.Pages.Assemblies
             string rawContent = (await _samplesManager.GetUsageSampleContentAsync(fileId));
             if (rawContent == null)
             {
-                return null;
+                return null; // should only occur if there is a blob error or the file is removed by other means
             }
             rawContent = rawContent.Trim();
             string[] content = rawContent.Split("\n");
             
             CodeLineModel[] lines = new CodeLineModel[content.Length];
-            CodeDiagnostic[] cd = Array.Empty<CodeDiagnostic>();
+            CodeDiagnostic[] cd = Array.Empty<CodeDiagnostic>(); // Avoids errors
             int skipped = 0;
             for (int i = 0; i < content.Length; i++)
             {
                 string lineContent = content[i];
 
-                if (lineContent.StartsWith("<div class="))
+                // remove the newlines before codeblocks
+                if (lineContent.StartsWith("<div class=\"code"))
                 {
                     lineContent = "";
                 }
-                lineContent = lineContent.Replace("<pre>", "").Replace("</pre>", "").Replace("</div>", "");
+
+                // remove pre and closing div elements to clear more excess newlines
+                lineContent = lineContent.Replace("<pre>", "").Replace("</pre>", "").Replace("</div>", "").Replace("\n", "");
                 if (lineContent.Trim() == "")
                 {
+                    // Count lines skipped to keep indexing correct
                     skipped++;
                     continue;
                 }
 
-                var line = new CodeLine(lineContent, Sample.SampleId + "-line-" + (i+ 1-skipped).ToString() , "");
-                comments.TryGetThreadForLine(Sample.SampleId + "-line-" + (i+ 1-skipped).ToString(), out var thread);
+                // Allows the indent to work correctly for spacing purposes
+                lineContent = "<div class=\"internal\">&nbsp;&nbsp;&nbsp;" + lineContent + "</div>";
+
+                var line = new CodeLine(lineContent, Sample.SampleId + "-line-" + (i+1-skipped).ToString() , "");
+                comments.TryGetThreadForLine(Sample.SampleId + "-line-" + (i+1-skipped).ToString(), out var thread);
                 lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i+1-skipped);
             }
 
+            // Removes excess lines added that cause errors
             return Array.FindAll(lines, e => !(e.Diagnostics == null));
         }
     }

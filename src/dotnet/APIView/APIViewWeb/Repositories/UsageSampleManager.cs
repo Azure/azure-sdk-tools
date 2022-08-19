@@ -50,6 +50,7 @@ namespace APIViewWeb.Repositories
 
         public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, string sample, int revisionNum, string revisionTitle)
         {
+            // markdig parser with syntax highlighting
             MarkdownPipeline pipeline = new MarkdownPipelineBuilder()
                 .UseAdvancedExtensions()
                 .UseSyntaxHighlighting()
@@ -72,7 +73,6 @@ namespace APIViewWeb.Repositories
             SampleModel.UsageSampleOriginalFileId = SampleOriginal.UsageSampleFileId;
 
             await _samplesRepository.UpsertUsageSampleAsync(SampleModel);
-
             await _sampleFilesRepository.UploadUsageSampleAsync(SampleModel.UsageSampleFileId, stream);
             await _sampleFilesRepository.UploadUsageSampleAsync(SampleModel.UsageSampleOriginalFileId, originalStream);
             return SampleModel;
@@ -80,6 +80,7 @@ namespace APIViewWeb.Repositories
 
         public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, Stream fileStream, int revisionNum, string revisionTitle)
         {
+            // For file upload. Read stream then continue.
             StreamReader reader = new StreamReader(fileStream);
             var sample = reader.ReadToEnd();
             return await UpsertReviewUsageSampleAsync(user, reviewId, sample, revisionNum, revisionTitle);
@@ -95,8 +96,8 @@ namespace APIViewWeb.Repositories
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
             foreach (var comment in comments)
             {
-                string commentSampleId = comment.ElementId.Split("-")[0];
-                if (comment.IsSampleComment && commentSampleId == sampleId) 
+                string commentSampleId = comment.ElementId.Split("-")[0]; // sample id is stored as first part of ElementId
+                if (comment.IsSampleComment && commentSampleId == sampleId)  // remove all comments from server 
                 {
                     await _commentsRepository.DeleteCommentAsync(comment);
                 }

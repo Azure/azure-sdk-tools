@@ -26,7 +26,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         private readonly NotificationManager _notificationManager;
 
-        private readonly UserPreferenceCache _preferenceCache;
+        public readonly UserPreferenceCache _preferenceCache;
 
         public ReviewPageModel(
             ReviewManager manager,
@@ -261,16 +261,6 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage(new { id = id });
         }
 
-        public IActionResult OnGetUpdatePageSettings(bool hideLineNumbers = false, bool hideLeftNavigation = false)
-        {   
-            _preferenceCache.UpdateUserPreference(new UserPreferenceModel() {
-                UserName = User.GetGitHubLogin(),
-                HideLeftNavigation = hideLeftNavigation,
-                HideLineNumbers = hideLineNumbers
-            });
-            return new EmptyResult();
-        }
-
         public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, string revisionId = null)
         {
             var routingData = new Dictionary<string, string>();
@@ -278,11 +268,6 @@ namespace APIViewWeb.Pages.Assemblies
             routingData["diffRevisionId"] = diffRevisionId;
             routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
             return routingData;
-        }
-
-        public UserPreferenceModel GetUserPreference()
-        {
-            return _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
         }
     }
 }

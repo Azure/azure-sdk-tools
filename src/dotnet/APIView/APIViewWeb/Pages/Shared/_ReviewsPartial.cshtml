@@ -25,63 +25,12 @@
                             <td class="align-middle pl-4 pt-0 pb-0">
                                 @if (review.Language != null)
                                 {
-                                    @switch (review.Language.ToLower())
+                                    string iconClassName = "icon-" + review.GetLanguageCssSafeName();
+                                    @if (!string.IsNullOrEmpty(review.LanguageVariant) && review.LanguageVariant.ToLower() != "default")
                                     {
-                                        case "c#":
-                                            <img class="mx-1" src="~/icons/csharp-original.svg" alt="@review.Language">
-                                            break;
-                                        case "javascript":
-                                            <img class="mx-1" src="~/icons/javascript-original.svg" alt="@review.Language">
-                                            break;
-                                        case "python":
-                                            <img class="mx-1" src="~/icons/python-original.svg" alt="@review.Language">
-                                            break;
-                                        case "c":
-                                            <img class="mx-1" src="~/icons/c-original.svg" alt="@review.Language">
-                                            break;
-                                        case "c++":
-                                            <img class="mx-1" src="~/icons/cplusplus-original.svg" alt="@review.Language">
-                                            break;
-                                        case "go":
-                                            <img class="mx-1" src="~/icons/go-original.svg" alt="@review.Language">
-                                            break;
-                                        case "java":
-                                            if(@review.LanguageVariant != null)
-                                            {
-                                                switch(@review.LanguageVariant.ToLower())
-                                                {
-                                                    case "spring":
-                                                        <img class="mx-1" src="~/icons/java-spring-original.svg" alt="@review.Language @review.LanguageVariant">
-                                                        break;
-                                                    case "android":
-                                                        <img class="mx-1" src="~/icons/java-android-original.svg" alt="@review.Language @review.LanguageVariant">
-                                                        break;
-                                                    default:
-                                                        <img class="mx-1" src="~/icons/java-original.svg" alt="@review.Language">
-                                                        break;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                <img class="mx-1" src="~/icons/java-original.svg" alt="@review.Language">
-                                            }
-                                            break;
-                                        case "swift":
-                                            <img class="mx-1" src="~/icons/swift-original.svg" alt="@review.Language">
-                                            break;
-                                        case "kotlin":
-                                            <img class="mx-1" src="~/icons/kotlin-original.svg" alt="@review.Language">
-                                            break;
-                                        case "json":
-                                            <img class="mx-1" src="~/icons/json-original.svg" alt="@review.Language">
-                                            break;
-                                        case "swagger":
-                                            <img class="mx-1" src="~/icons/swagger-original.svg" alt="@review.Language">
-                                            break;
-                                        default:
-                                            <img class="mx-1" src="~/icons/file-code.svg" alt="@review.Language">
-                                            break;
+                                        iconClassName += "-" + @review.LanguageVariant.ToLower();
                                     }
+                                    <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@review.Language @review.LanguageVariant"></span>
                                 }
                                 <a class="review-name align-middle" asp-page="./Review" asp-route-id="@review.ReviewId">@review.DisplayName.Substring(0, @truncationIndex)</a>
                                 @if (review.IsApproved == true)

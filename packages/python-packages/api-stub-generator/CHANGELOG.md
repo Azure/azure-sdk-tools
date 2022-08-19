@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.3.4 (2022-08-11)
+Fixed issue so that APIView is still generated even if pylint parsing fails.
+Fixed issue where diagnostics could be duplicated on functions with the same name.
+
 ## Version 0.3.3 (2022-08-03)
 Fixed issue in module order to get consistent order
 

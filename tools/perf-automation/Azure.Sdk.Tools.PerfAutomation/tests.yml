@@ -7,19 +7,19 @@
 
   Java:
     DefaultVersions:
-    - 1.8.0_312
+    - 1.8.0_345
     OptionalVersions:
     - 17+35
 
   JS:
     DefaultVersions:
-    - 14.19.0
+    - 14.20.0
     OptionalVersions:
     - 16.14.0
   
   Python:
     DefaultVersions:
-    - 3.7.12
+    - 3.7.13
     OptionalVersions:
     - 3.10.0
 
@@ -59,9 +59,9 @@ Services:
       Project: sdk/core/azure-core-perf
       PrimaryPackage: azure-core
       PackageVersions:
-      - azure-core: 1.30.0
-        azure-core-http-netty: 1.12.3
-        azure-core-http-okhttp: 1.11.0
+      - azure-core: 1.31.0
+        azure-core-http-netty: 1.12.4
+        azure-core-http-okhttp: 1.11.1
       - azure-core: source
         azure-core-http-netty: source
         azure-core-http-okhttp: source
@@ -127,14 +127,14 @@ Services:
       Project: sdk/storage/azure-storage-perf
       PrimaryPackage: azure-storage-blob
       PackageVersions: &java-storage-package-versions
-      - azure-storage-blob: 12.18.0
-        azure-storage-blob-cryptography: 12.17.0
-        azure-storage-file-share: 12.14.0
-        azure-storage-file-datalake: 12.11.0
-        azure-core-http-netty: 1.12.3
-        azure-core-http-okhttp: 1.11.0
-        azure-core: 1.30.0
-        reactor-core: 3.4.19
+      - azure-storage-blob: 12.19.0
+        azure-storage-blob-cryptography: 12.18.0
+        azure-storage-file-share: 12.15.0
+        azure-storage-file-datalake: 12.12.0
+        azure-core-http-netty: 1.12.4
+        azure-core-http-okhttp: 1.11.1
+        azure-core: 1.31.0
+        reactor-core: 3.4.21
       - azure-storage-blob: source
         azure-storage-blob-cryptography: source
         azure-storage-file-share: source
@@ -154,7 +154,7 @@ Services:
       Project: sdk/storage/azure-storage-blob
       PackageVersions:
       # TODO: Pin version of core to align with older version of storage
-      - azure-storage-blob: 12.13.0
+      - azure-storage-blob: 12.13.1
       - azure-storage-blob: source
     Cpp:
       Project: azure-storage-blobs-perf
@@ -299,7 +299,7 @@ Services:
       Project: sdk/storage/perf-tests/storage-file-share
       PackageVersions:
       - "@azure/storage-file-share": 12.11.0
-      - "@azure/storage-file-share": source      
+      - "@azure/storage-file-share": source
     Python:
       Project: sdk/storage/azure-storage-file-share
       PackageVersions:

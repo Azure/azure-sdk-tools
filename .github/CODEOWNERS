@@ -4,6 +4,7 @@
 
 # Git Hub integration and bot rules
 /.github/                        @jsquire @ronniegeraghty
+/.github/CODEOWNERS              @azure/azure-sdk-eng
 
 ###########
 # Eng Sys
@@ -17,14 +18,14 @@
 ###########
 /tools/                          @azure/azure-sdk-eng
 /tools/check-enforcer/           @praveenkuttappan @weshaggard
-/tools/pipeline-witness/         @praveenkuttappan @weshaggard
-/tools/webhook-router/           @praveenkuttappan @weshaggard
-/tools/github-issues/            @praveenkuttappan @weshaggard @AlexGhiondea
-/tools/pipeline-generator/       @weshaggard @benbp
-/tools/test-proxy/               @scbedd @mikeharder
-/tools/stress-cluster/           @benbp @ckairen
-/tools/mock-service-host/        @changlong-liu @tadelesh
-/tools/sdk-testgen/              @changlong-liu @tadelesh
+/tools/github-issues/            @praveenkuttappan @weshaggard
 /tools/js-sdk-release-tools/     @dw511214992 @qiaozha @MaryGao
-/tools/keyvault-mock-attestation @maorleger
-/tools/sdk-generation-pipeline   @dw511214992 @chunyu3 @zzvswxy
+/tools/mock-service-host/        @changlong-liu @tadelesh
+/tools/perf-automation/          @mikeharder @benbp
+/tools/pipeline-generator/       @weshaggard @benbp
+/tools/pipeline-witness/         @praveenkuttappan @weshaggard
+/tools/sdk-generation-pipeline/  @dw511214992 @chunyu3 @zzvswxy
+/tools/sdk-testgen/              @changlong-liu @tadelesh
+/tools/stress-cluster/           @benbp @ckairen
+/tools/test-proxy/               @scbedd @mikeharder
+/tools/webhook-router/           @praveenkuttappan @weshaggard

@@ -23,7 +23,27 @@ dotnet dev-certs https --trust
 
 On a ubuntu-flavored distro of linux, feel free to re-use the import mechanism in the local file `eng/common/testproxy/apply-dev-cert.sh`. Prior to using locally, ensure $CERT_FOLDER environment variable is set to the local directory containing the script. Otherwise it won't be able to access necessary files!
 
+On a Mac(OS X), it may not work properly due to permission problems. You can see the message after execution as follows.
+
+```bash
+ $ dotnet dev-certs https --clean --import eng/common/testproxy/dotnet-devcert.pfx --password="password"
+Cleaning HTTPS development certificates from the machine. This operation might require elevated privileges. If that is the case, a prompt for credentials will be displayed.
+HTTPS development certificates successfully removed from the machine.
+The provided certificate file 'eng/common/testproxy/dotnet-devcert.pfx' is not a valid PFX file or the password is incorrect.
+```
+
+In this case, you can manually set it in 'Keychain Access' to work around the problem.
+1. Click the `dotnet-devcert.pfx` file in 'Finder' to register the keychain directly. Enter the password as “password”
+2. You can check the newly created `localhost` name in the keychain access “system” item
+3. Double-click `localhost` and change Trust to "Always Trust"
+4. Run `$ dotnet dev-certs https --trust` in the terminal, and you can see that the `localhost` checked above has changed from ![x](_images/keychain-cert-not.png) to ![+](_images/keychain-cert-ok.png)
+
+![keychain-localhost](_images/keychain-localhost.png)
+![keychain-always-trust](_images/keychain-trust.png)
+
 Also note that taken to trust this cert will _also apply to installing the dotnet tool directly_. The test-proxy tool will consume the certificate just the same as the docker container does.
+
+On a Mac(OS X), If port 5000 is the problem, you need to check the 'AirPlay' sharing feature in settings or kill port process. [see here](https://github.com/Azure/azure-sdk-tools/pull/3739#issuecomment-1207217025)
 
 ## Go
 

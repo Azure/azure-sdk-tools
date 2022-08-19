@@ -195,6 +195,7 @@ class StubGenerator:
         # Import ModuleNode.
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
         from apistub.nodes._module_node import ModuleNode
+        from apistub.nodes import PylintParser
 
         self.module_dict = {}
         mapping = MetadataMap(pkg_root_path, mapping_path=self.mapping_path)
@@ -221,6 +222,11 @@ class StubGenerator:
         navigation = Navigation(package_name, None)
         navigation.tags = NavigationTag(Kind.type_package)
         apiview.add_navigation(navigation)
+
+        # Generate any global diagnostics
+        global_errors = PylintParser.get_items("GLOBAL")
+        for g in global_errors or []:
+            g.generate_tokens(apiview, "GLOBAL")
 
         # Generate tokens
         modules = self.module_dict.keys()

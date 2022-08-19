@@ -59,6 +59,20 @@ namespace APIViewWeb
         public string GetUserEmail(ClaimsPrincipal user) =>
             NotificationManager.GetUserEmail(user);
 
+        // gets CSS safe language name - such that css classes based on language name would not need any escaped characters
+        public string GetLanguageCssSafeName()
+        {
+            switch (Language.ToLower())
+            {
+                case "c#":
+                    return "csharp";
+                case "c++":
+                    return "cplusplus";
+                default:
+                    return Language.ToLower();
+            }
+        }
+
         [JsonIgnore]
         public string DisplayName
         {

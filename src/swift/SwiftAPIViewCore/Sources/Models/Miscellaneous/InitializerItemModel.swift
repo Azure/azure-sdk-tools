@@ -32,17 +32,23 @@ struct InitializerItemModel: Tokenizable {
     let name: String
     let typeModel: TypeAnnotationModel?
     let defaultValue: String?
+    let hasGetter: Bool
+    let hasSetter: Bool
 
     init(from source: PatternInitializer) {
         name = source.name!
         typeModel = TypeAnnotationModel(from: source.typeModel)
         defaultValue = source.defaultValue
+        hasGetter = false
+        hasSetter = false
     }
 
-    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?) {
+    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?, hasGetter: Bool = false, hasSetter: Bool = false) {
         self.name = name
         self.typeModel = typeModel
         self.defaultValue = defaultValue
+        self.hasGetter = hasGetter
+        self.hasSetter = hasSetter
     }
 
     func tokenize(apiview a: APIViewModel) {
@@ -54,6 +60,18 @@ struct InitializerItemModel: Tokenizable {
         if let defaultValue = defaultValue {
             a.punctuation("=", prefixSpace: true, postfixSpace: true)
             a.literal(defaultValue)
+        }
+
+        if hasGetter && hasSetter {
+            a.punctuation("{", prefixSpace: true, postfixSpace: true)
+            a.keyword("get")
+            a.punctuation(",", postfixSpace: true)
+            a.keyword("set")
+            a.punctuation("}", prefixSpace: true, postfixSpace: true)
+        } else if hasGetter {
+            a.punctuation("{", prefixSpace: true, postfixSpace: true)
+            a.keyword("get")
+            a.punctuation("}", prefixSpace: true, postfixSpace: true)
         }
     }
 }

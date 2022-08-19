@@ -6,18 +6,20 @@
 
     let MessageIconAddedToDom = false;
 
-    $(document).on("click", ".commentable", e => {
-        showCommentBox(e.target.id);
-        e.preventDefault();
-    });
+  $(document).on("click", ".commentable", e => {
+    var rowSectionClasses = getCodeRowSectionClasses(e.target.id);
+    showCommentBox(e.target.id, rowSectionClasses);
+    e.preventDefault();
+  });
 
-    $(document).on("click", ".line-comment-button", e => {
-        let id = getElementId(e.target);
-        if (id) {
-            showCommentBox(id);
-        }
-        e.preventDefault();
-    });
+  $(document).on("click", ".line-comment-button", e => {
+    let id = getElementId(e.target);
+    if (id) {
+      var rowSectionClasses = getCodeRowSectionClasses(id);
+      showCommentBox(id, rowSectionClasses);
+    }
+    e.preventDefault();
+   });
 
     $(document).on("click", ".comment-cancel-button", e => {
         let id = getElementId(e.target);
@@ -51,25 +53,27 @@
     });
 
     $(document).on("submit", "form[data-post-update='comments']", e => {
-        const form = <HTMLFormElement><any>$(e.target);
-        let lineId = getElementId(e.target);
-        if (lineId) {
-            let commentRow = getCommentsRow(lineId);
-            let serializedForm = form.serializeArray();
-            serializedForm.push({ name: "elementId", value: lineId });
-            serializedForm.push({ name: "reviewId", value: getReviewId(e.target) });
-            serializedForm.push({ name: "revisionId", value: getRevisionId(e.target) });
+      const form = <HTMLFormElement><any>$(e.target);
+      let lineId = getElementId(e.target);
+      if (lineId) {
+        let commentRow = getCommentsRow(lineId);
+        let rowSectionClasses = getRowSectionClasses(commentRow[0].classList);
+        let serializedForm = form.serializeArray();
+        serializedForm.push({ name: "elementId", value: lineId });
+        serializedForm.push({ name: "reviewId", value: getReviewId(e.target) });
+        serializedForm.push({ name: "revisionId", value: getRevisionId(e.target) });
+        serializedForm.push({ name: "sectionClass", value: rowSectionClasses });
 
-            $.ajax({
-                type: "POST",
-                url: $(form).prop("action"),
-                data: $.param(serializedForm)
-            }).done(partialViewResult => {
-                updateCommentThread(commentRow, partialViewResult);
-                addCommentThreadNavigation();
-            });
-        }
-        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: $(form).prop("action"),
+            data: $.param(serializedForm)
+        }).done(partialViewResult => {
+            updateCommentThread(commentRow, partialViewResult);
+            addCommentThreadNavigation();
+        });
+      }
+      e.preventDefault();
     });
 
     $(document).on("click", ".review-thread-reply-button", e => {
@@ -178,6 +182,27 @@
         return getParentData(element, "data-line-id");
     }
 
+  function getCodeRowSectionClasses(id: string) {
+    var codeRow = getCodeRow(id);
+    var rowSectionClasses = "";
+    if (codeRow) {
+      rowSectionClasses = getRowSectionClasses(codeRow[0].classList);
+    }
+    return rowSectionClasses;
+  }
+
+  function getRowSectionClasses(classList: DOMTokenList) {
+    const rowSectionClasses: string[] = [];
+    for (const value of classList.values()) {
+      if (value == "section-loaded" || value.startsWith("code-line-section-content") || value.match(/lvl_[0-9]+_(parent|child)_[0-9]+/)) {
+        rowSectionClasses.push(value);
+      }
+    }
+    return rowSectionClasses.join(' ');
+  }
+
+
+
     function getCommentId(element: HTMLElement) {
         return getParentData(element, "data-comment-id");
     }
@@ -219,16 +244,16 @@
         commentsRow.find(".comment-form").hide();
     }
 
-    function showCommentBox(id: string) {
+    function showCommentBox(id: string, classes: string = '') {
         let commentForm;
         let commentsRow = getCommentsRow(id);
 
         if (commentsRow.length === 0) {
-            commentForm = createCommentForm();
-            commentsRow =
-                $(`<tr class="comment-row" data-line-id="${id}">`)
+          commentForm = createCommentForm();
+          commentsRow =
+            $(`<tr class="comment-row ${classes}" data-line-id="${id}">`)
                     .append($("<td colspan=\"3\">")
-                        .append(commentForm));
+                      .append(commentForm));
 
             commentsRow.insertAfter(getDiagnosticsRow(id).get(0) || getCodeRow(id).get(0));
         }

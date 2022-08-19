@@ -133,7 +133,7 @@ namespace APIViewWeb.Pages.Assemblies
             var htmlLines = renderedCodeFile.GetCodeLineSection(sectionId);
             var fileDiagnostics = renderedCodeFile.CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Lines = CreateLines(fileDiagnostics, htmlLines, Comments);
+            Lines = CreateLines(fileDiagnostics, htmlLines, Comments, true);
             TempData["CodeLineSection"] = Lines;
             ViewData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
             return Partial("_CodeLinePartial", sectionId);
@@ -255,13 +255,13 @@ namespace APIViewWeb.Pages.Assemblies
                 )).ToArray();
         }
 
-        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments)
+        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments, bool hideCommentRows = false)
         {
             return lines.Select(
                 (line, index) => new CodeLineModel(
                     DiffLineKind.Unchanged,
                     line,
-                    comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
+                    comments.TryGetThreadForLine(line.ElementId, out var thread, hideCommentRows) ? thread : null,
                     diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
                     line.LineNumber ?? ++index
                 )).ToArray();

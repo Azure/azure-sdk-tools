@@ -7,7 +7,7 @@
 
 @if (Model != null && Model.Comments.Any())
 {
-    <tr class="comment-row" data-line-id="@Model.LineId">
+    <tr class="comment-row @Model.LineClass" data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="3">
             <a class="comment-thread-anchor"></a>
             @if (Model.IsResolved)
@@ -33,10 +33,10 @@
                                             <input type="hidden" name="commentId" value="@comment.CommentId" />
                                             <button type="submit" class="btn btn-light btn-xs btn-upvote" title="@string.Join(", ", comment.Upvotes)" active-if="@comment.Upvotes.Contains(User.GetGitHubLogin())">
                                                 @{
-                                                    <span active-if="@comment.Upvotes.Any()">👍</span>
+                                                        <span active-if="@comment.Upvotes.Any()">👍</span>
                                                     if (comment.Upvotes.Any())
                                                     {
-                                                        <small class="mr-1">@comment.Upvotes.Count</small>
+                                                            <small class="mr-1">@comment.Upvotes.Count</small>
                                                     }
                                                 }
                                             </button>

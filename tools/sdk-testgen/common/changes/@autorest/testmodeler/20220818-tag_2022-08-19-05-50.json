@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/testmodeler",
+      "comment": "fix bugs in loading remote api scenario",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/testmodeler"
+}

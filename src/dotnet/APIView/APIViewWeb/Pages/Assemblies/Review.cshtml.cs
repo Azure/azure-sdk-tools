@@ -64,10 +64,6 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(SupportsGet = true)]
         public string DiffRevisionId { get; set; }
 
-        // Flag to decide whether to  include documentation
-        [BindProperty(Name = "doc", SupportsGet = true)]
-        public bool ShowDocumentation { get; set; }
-
         [BindProperty(Name = "diffOnly", SupportsGet = true)]
         public bool ShowDiffOnly { get; set; }
 
@@ -275,12 +271,11 @@ namespace APIViewWeb.Pages.Assemblies
             return new EmptyResult();
         }
 
-        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null, string revisionId = null)
+        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, string revisionId = null)
         {
             var routingData = new Dictionary<string, string>();
             routingData["revisionId"] = revisionId;
             routingData["diffRevisionId"] = diffRevisionId;
-            routingData["doc"] = (showDocumentation ?? false).ToString();
             routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
             return routingData;
         }

@@ -507,6 +507,15 @@ code {
     height: 16px;
     z-index: 1;
 }
+
+.icon-chevron-right {
+    background: url(/icons/chevron-right.svg) center center no-repeat;
+}
+
+.icon-chevron-up {
+    background: url(/icons/chevron-up.svg) center center no-repeat;
+}
+
 /*---------------------------------------------------------------------*/
 
 .info-text {
@@ -566,10 +575,7 @@ code {
     text-align: center;
     text-indent: 0;
     cursor: pointer;
-    background: #0366d6;
-    background-image: url(/icons/chevron-right.svg);
-    background-repeat: no-repeat;
-    background-position: center center;
+    background-color: #0366d6;
     border-radius: 3px;
     box-shadow: 0 1px 4px rgba(27, 31, 35, .15);
     transition: transform .1s ease-in-out;

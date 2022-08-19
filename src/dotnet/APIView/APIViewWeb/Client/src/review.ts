@@ -78,30 +78,15 @@ $(() => {
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $(SHOW_DOC_CHECKBOX).on("click", e => {
     if((e.target as HTMLInputElement).checked) {
-      // $(".code-line").css("display", "table-row");
-      const lines = $(".code-window > tbody > .code-line");
-      const buttons = $(TOGGLE_DOCUMENTATION);
-      for(let i = 0; i < lines.length; i++) {
-        if (i < 3) {
-          $(lines[i]).show();
-          $(buttons[i]).css("backgroundImage", "url(/icons/chevron-up.svg)");
-        }
-      }
-      (
-        function f(index: number) {
-          if(index >= lines.length) {
-            return;
-          }
-          $(lines[index]).show();
-          $(buttons[index]).css("backgroundImage", "url(/icons/chevron-up.svg)");
-          setTimeout(f, 3000, ++index);
-        }
-      )(3);
+      // show all documentation
+      $(".code-line-documentation").removeClass('hidden-row');
+      $(TOGGLE_DOCUMENTATION).removeClass("icon-chevron-right");
+      $(TOGGLE_DOCUMENTATION).addClass("icon-chevron-up");
     } else {
-      // 
-      $(".code-window > tbody > .code-line > .code > .code-inner > .code-comment").parent().parent().parent().css("display", "none");
-      $(".code-window > tbody > .code-line > .code > .code-inner > .documentation").parent().parent().parent().css("display", "none");
-      $(TOGGLE_DOCUMENTATION).css("backgroundImage", "url(/icons/chevron-right.svg)");
+      // hide all documentation
+      $(".code-line-documentation").addClass("hidden-row");
+      $(TOGGLE_DOCUMENTATION).removeClass("icon-chevron-up");
+      $(TOGGLE_DOCUMENTATION).addClass("icon-chevron-right");
     }
   });
 
@@ -148,14 +133,11 @@ $(() => {
     const codeLines = $(".code-window > tbody > .code-line");
     
     for(var i = 0; i < documentedBy.length; i++) {
-      $(codeLines[documentedBy[i] - 1]).toggle();
+      $(codeLines[documentedBy[i] - 1]).toggleClass("hidden-row");
     }
 
-    if($(this).css('backgroundImage').includes("chevron-right")) {
-      $(this).css('backgroundImage', 'url(/icons/chevron-up.svg)');
-    } else {
-      $(this).css('backgroundImage', 'url(/icons/chevron-right.svg)');
-    }
+    $(this).toggleClass('icon-chevron-right');
+    $(this).toggleClass('icon-chevron-up');
 
     // scroll button to center of screen, so that the line is visible after toggling folding
     $(this).get(0).scrollIntoView({ block: "center"});

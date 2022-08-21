@@ -174,7 +174,7 @@ namespace APIViewWeb.Pages.Assemblies
                 string lineContent = content[i];
 
                 // remove the newlines before codeblocks
-                if (lineContent.StartsWith("<div class=\"code"))
+                if (lineContent.StartsWith("<div class=\"code") || lineContent.StartsWith("<div style=") || lineContent.StartsWith("<div class=\"lang"))
                 {
                     lineContent = "";
                 }

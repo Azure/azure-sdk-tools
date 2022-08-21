@@ -6,72 +6,13 @@
 }
 <link rel="stylesheet" href="~/usagesample.css">
 
-@if (Model.Sample.SampleId == "Bad Deployment") // If the samples container does not exist
+@if (Model.Sample.SampleId == "Bad Deployment" || Model.Sample.SampleId == "File Content Missing") // If the samples container does not exist
 {
     <div class="container-fluid">
         <div class="mx-5 mt-2">
             <div class="text-muted">
                 <p> <strong> Usage Samples are not available for this APIView deployment. </strong></p>
-                <p> Please check the new DOCUMENTING.md to see how to enable them. </p>
-            </div>
-        </div>
-    </div>
-}
-else if (Model.Sample.SampleId == "File Content Missing") // if the file is broken in some way
-{
-    <div class="container-fluid">
-        <div class="mx-5 mt-2">
-            <div class="text-muted">
-                <p class="text-danger"> <strong> Bad blob read.</strong></p>
-                    @* Case 1 - There are other revisions on the server (Thus bad file read) *@
-                    @if(Model.SampleRevisions.Any()) {
-                        <p> However, revisions were found on the server. Please select any but the current one. </p>
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add Usage Sample</button>
-                        @if (Model.Sample.Author == User.GetGitHubLogin())
-                        {
-                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModel">Delete Usage Sample</button>
-                        }
-                        else 
-                        {
-                        <p> Please also alert the sample author, <a username="@Model.Sample.Author"> @Model.Sample.Author </a>, to this issue so they can remove and re-upload.</p>
-                        }
-                        <div class="col-md-4 mt-1 p-0 mx-md-1">
-                            <div class="input-group input-group-sm m-0 p-0 shadow-sm" id="revision-select-box">
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for="revisions-bootstraps-select">Revision</label>
-                                </div>
-                                <select class="selectpicker show-tick p-0" data-style="btn-light btn-sm border rounded-left-0 m-0" data-live-search="false" data-size="10" data-width="calc(100% - 68px)" data-container="body" id="revisions-bootstraps-select">
-                                    @foreach (var revision in Model.SampleRevisions)
-                                    {
-                                        var urlValue = @Url.ActionLink("Samples", "Assemblies", new
-                                        {
-                                            id = @Model.Review.ReviewId,
-                                            revisionId = @revision.SampleId,
-                                        });
-
-                                        string revTitle = revision.RevisionTitle == null ? "Rev " + revision.RevisionNum : "Rev " + revision.RevisionNum + " - " + revision.RevisionTitle;
-
-                                        if (revision.SampleId == Model.Sample.SampleId)
-                                        {
-                                            <option selected value="@urlValue" data-content="@revTitle"></option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@urlValue" data-content="@revTitle"></option>
-                                        }
-                                    }
-                                </select>
-                            </div>
-                        </div>
-                    }
-                    else 
-                    {
-                        @* Case 2 - There are no files on the server. *@
-                        <p> This could be due to either the blob being misconfigured or nonpresent, or by the file not existing on the server. </p>
-                        <p> Please ensure the blob is set up, and if you believe it to be the latter issue (file mistakenly removed), you may try to add a sample.</p>
-                        <p class="text-danger"> This <strong>will</strong> return a server error if the blob is not configured and present.</p>
-                        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#uploadModel">Add Usage Sample</button>
-                    }
+                <p> Please check <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/CONTRIBUTING.md">CONTRIBUTING.md</a> to see how to enable them. </p>
             </div>
         </div>
     </div>
@@ -85,20 +26,20 @@ else
                     @if (Model.SampleContent.Length == 0) 
                     {
                         <div class="text-muted">
-                            <p> There is no sample present in the review. </p>
-                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add Usage Sample</button>
+                            <p> This review does not currently have any usage samples to display. </p>
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add Sample</button>
                         </div>
                     }
                     else
                     {
                         <div class="usage-sample">
-                            <i> Current sample uploaded by <strong> <a username="@Model.Sample.Author"> @Model.Sample.Author </a></strong></i>
+                            <i> Sample uploaded by <strong> <a username="@Model.Sample.Author"> @Model.Sample.Author </a></strong></i>
                             <span class="float-right">
-                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#updateModel">Edit Usage Sample</button>
-                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add Usage Sample</button>
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#updateModel">Edit Sample</button>
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add new Sample</button>
                                 @if (Model.Sample.Author == User.GetGitHubLogin())
                                 {
-                                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModel">Delete Usage Sample</button>
+                                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModel">Delete Sample</button>
                                 }
                             </span>
                             <div class="col-md-4 mt-1 p-0 mx-md-1">
@@ -240,7 +181,7 @@ else
                             <input asp-for="Upload.Deleting" hidden type="text" value="@true" />
                             <input asp-for="Upload.SampleId" hidden type="text" value="@Model.Sample.SampleId" />
                             <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-                            <button type="submit" name="submit" value="Submit" class="btn btn-danger">Remove Usage Sample</button>
+                            <button type="submit" name="submit" value="Submit" class="btn btn-danger">Remove Sample</button>
                         </form>
                     </div>
                 </div>

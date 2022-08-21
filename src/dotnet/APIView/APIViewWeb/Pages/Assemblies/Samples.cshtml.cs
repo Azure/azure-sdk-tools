@@ -26,6 +26,7 @@ namespace APIViewWeb.Pages.Assemblies
         private const string ENDPOINT_SETTING = "Endpoint";
         private readonly CommentsManager _commentsManager;
         private readonly NotificationManager _notificationManager;
+        public readonly UserPreferenceCache _preferenceCache;
 
         public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
@@ -41,13 +42,15 @@ namespace APIViewWeb.Pages.Assemblies
             UsageSampleManager samplesManager,
             ReviewManager reviewManager,
             CommentsManager commentsManager,
-            NotificationManager notificationManager)
+            NotificationManager notificationManager,
+            UserPreferenceCache preferenceCache)
         {
             _samplesManager = samplesManager;
             _reviewManager = reviewManager;
             Endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
+            _preferenceCache = preferenceCache;
         }
 
         [FromForm]

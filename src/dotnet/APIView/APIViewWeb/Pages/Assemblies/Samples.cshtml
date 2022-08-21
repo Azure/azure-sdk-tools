@@ -1,8 +1,12 @@
 @page "{id?}/{revisionId?}"
 @model APIViewWeb.Pages.Assemblies.UsageSamplePageModel
+@using APIViewWeb.Helpers
+@using APIViewWeb.Models
 @{
     Layout = "ReviewLayout";
     ViewData["Title"] = "Usage Samples";
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+    ViewData["UserPreference"] = userPreference;
 }
 <link rel="stylesheet" href="~/usagesample.css">
 

@@ -120,7 +120,7 @@ else
                                     <form asp-page-handler="Upload" method="post">
                                         <div class="form-group">
                                             <label asp-for="Upload.RevisionTitle" class="text-muted"> Enter a sample title (Optional) </label>
-                                            <input asp-for="Upload.RevisionTitle" class="form-control" type="text" autocomplete="off" /> <br />
+                                            <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
                                             <textarea asp-for="Upload.sampleString" class="new-thread-comment-text form-control" rows="25" placeholder="Enter your markdown formatted usage sample here"></textarea>
                                             <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
                                             <input asp-for="Upload.RevisionNumber" hidden value="@Model.latestRevision" />
@@ -135,7 +135,7 @@ else
                             <div class="tab-pane" id="md-file">
                                 <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
                                     <label asp-for="Upload.RevisionTitle" class="text-muted"> Enter a sample title (Optional) </label>
-                                    <input asp-for="Upload.RevisionTitle" class="form-control" type="text" autocomplete="off" > <br />
+                                    <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
                                     <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
                                     <input asp-for="Upload.RevisionNumber" hidden value="@Model.latestRevision" />
                                     <div class="form-group">
@@ -195,7 +195,7 @@ else
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit Usage Sample</h5>
+                    <h5 class="modal-title">Update Usage Sample</h5>
                     <button type="button" class="close" data-dismiss="modal">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -207,7 +207,7 @@ else
                                 <div class="new-comment-content">
                                     <form asp-page-handler="Upload" method="post">
                                         <label asp-for="Upload.RevisionTitle" class="text-muted"> Enter a sample title (Optional) </label>
-                                        <input asp-for="Upload.RevisionTitle" class="form-control" type="text" autocomplete="off" /> <br />
+                                        <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
                                         <div class="form-group">
                                             <div class="new-sample-content">
                                                 <textarea asp-for="Upload.updateString" class="new-thread-comment-text form-control" rows="25"></textarea>

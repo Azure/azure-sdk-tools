@@ -9,7 +9,7 @@ public enum TypeKind {
     INTERFACE("interface"),
     ENUM("enum"),
     ANNOTATION("annotation"),
-    JAVA_MODULE("java_module"),
+    MODULE("module"),
     MAVEN("maven"),
     GRADLE("gradle"),
     UNKNOWN("unknown");

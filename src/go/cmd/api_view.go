@@ -36,7 +36,13 @@ func createReview(pkgDir string) (PackageReview, error) {
 	diagnostics := []Diagnostic{}
 	packageNames := []string{}
 	for name, p := range m.packages {
-		if strings.Contains(p.relName, "internal") || p.c.isEmpty() {
+		// we use a prefixed path separator so that we can handle the "internal" module.
+		//  internal/dig
+		//  internal/errorinfo
+		//  etc.
+		// for other modules, we skip /internal subdirectories
+		//  azcore/internal/...
+		if strings.Contains(p.relName, "/internal") || p.c.isEmpty() {
 			continue
 		}
 		packageNames = append(packageNames, name)

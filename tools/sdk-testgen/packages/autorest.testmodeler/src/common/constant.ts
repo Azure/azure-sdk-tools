@@ -14,6 +14,7 @@ export enum Config {
     addArmTemplatePayloadString = 'testmodeler.add-armtemplate-payload-string',
     apiScenarioLoaderOption = 'testmodeler.api-scenario-loader-option',
     exportExplicitType = 'testmodeler.export-explicit-type',
+    explicitTypes = 'testmodeler.explicit-types',
 }
 
 export const configDefaults = {
@@ -26,6 +27,7 @@ export const configDefaults = {
     [Config.useExampleModel]: true,
     [Config.addArmTemplatePayloadString]: false,
     [Config.exportExplicitType]: false,
+    [Config.explicitTypes]: ['bool', 'int', 'float', 'timestamp'],
 };
 
 export enum TestScenarioVariableNames {

@@ -1,3 +1,5 @@
+param logAnalyticsResource string
+
 @description('The friendly name for the workbook that is used in the Gallery or Saved List.  This name must be unique within a resource group.')
 param workbookDisplayName string
 

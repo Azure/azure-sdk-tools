@@ -149,6 +149,7 @@ stages:
       Iterations: ${{ variables.Iterations }}
 
 - stage: Print_Results
+  jobs:
   - job: Print_Results
     displayName: Print Results
     pool:

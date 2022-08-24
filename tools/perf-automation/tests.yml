@@ -159,6 +159,7 @@ stages:
   - job: Print_Results
     displayName: Print Results
     steps:
+    - checkout: none
 
     - download: current
       patterns: '**/results.txt'

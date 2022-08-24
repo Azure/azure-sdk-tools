@@ -155,6 +155,8 @@ stages:
     name: 'azsdk-pool-mms-ubuntu-2004-general'
     vmImage: 'MMSUbuntu20.04'
   condition: succeededOrFailed()
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
   jobs:
   - job: Print_Results
     displayName: Print Results

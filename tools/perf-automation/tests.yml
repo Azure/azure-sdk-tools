@@ -5,6 +5,16 @@ resources:
     endpoint: Azure
     name: Azure/azure-sdk-for-net
     ref: main
+  - repository: azure-sdk-for-java
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-java
+    ref: main
+  - repository: azure-sdk-for-js
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-js
+    ref: main
   - repository: azure-sdk-for-python
     type: github
     endpoint: Azure
@@ -39,7 +49,54 @@ jobs:
     PackageVersions: $(PackageVersions)
     Tests: $(Tests)
     Arguments: $(Arguments)
-    Iterations: ${{ variables.Iterations }}
+    Iterations: $(Iterations)
+
+- template: /eng/common/pipelines/templates/jobs/perf.yml
+  parameters:
+    JobName: 'Perf_Java'
+    Language: 'Java'
+    LanguageRepoName: 'Azure/azure-sdk-for-java'
+    LanguageRepoCommitish: $(LanguageRepoCommitish)
+    ToolsRepoCommitish: $(ToolsRepoCommitish)
+    Variables:
+    - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-java
+    InstallLanguageSteps:
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSpec: '8'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+      displayName: Install Java 8
+    - script: |
+        java -version
+        mvn --version
+      displayName: Print Java Versions
+    ServiceDirectory: 'storage/azure-storage-blob'
+    Services: $(Services)
+    PackageVersions: $(PackageVersions)
+    Tests: $(Tests)
+    Arguments: $(Arguments)
+    Iterations: $(Iterations)
+
+- template: /eng/common/pipelines/templates/jobs/perf.yml
+  parameters:
+    JobName: 'Perf_JS'
+    Language: 'JS'
+    LanguageRepoName: 'Azure/azure-sdk-for-js'
+    LanguageRepoCommitish: $(LanguageRepoCommitish)
+    ToolsRepoCommitish: $(ToolsRepoCommitish)
+    Variables:
+    - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-js
+    InstallLanguageSteps:
+    - template: /eng/pipelines/templates/steps/use-node-version.yml@azure-sdk-for-js
+      parameters:
+        NodeVersion: 14.x
+    ServiceDirectory: 'storage/storage-blob'
+    Services: $(Services)
+    PackageVersions: $(PackageVersions)
+    Tests: $(Tests)
+    Arguments: $(Arguments)
+    Iterations: $(Iterations)
 
 - template: /eng/common/pipelines/templates/jobs/perf.yml
   parameters:
@@ -62,4 +119,4 @@ jobs:
     PackageVersions: $(PackageVersions)
     Tests: $(Tests)
     Arguments: $(Arguments)
-    Iterations: ${{ variables.Iterations }}
+    Iterations: $(Iterations)

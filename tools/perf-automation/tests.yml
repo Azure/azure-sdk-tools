@@ -167,5 +167,6 @@ stages:
         get-childitem . -recurse -filter results.txt | foreach-object {
           write-host $_
           get-content $_
+          write-host
         }
       displayName: Print Results

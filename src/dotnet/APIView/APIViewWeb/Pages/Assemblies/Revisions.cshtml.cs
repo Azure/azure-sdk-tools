@@ -11,11 +11,13 @@ namespace APIViewWeb.Pages.Assemblies
     public class RevisionsPageModel : PageModel
     {
         private readonly ReviewManager _manager;
+        public readonly UserPreferenceCache _preferenceCache;
 
         public RevisionsPageModel(
-            ReviewManager manager)
+            ReviewManager manager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
+            _preferenceCache = preferenceCache;
         }
 
         public ReviewModel Review { get; set; }

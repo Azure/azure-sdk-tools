@@ -1,8 +1,12 @@
 ﻿@page "{id}/{revisionId?}"
 @model APIViewWeb.Pages.Assemblies.ReviewPageModel
+@using APIViewWeb.Helpers
+@using APIViewWeb.Models
 @{
     Layout = "ReviewLayout";
     ViewData["Title"] = Model.Review.DisplayName;
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+    ViewData["UserPreference"] = userPreference;
 }
 
 <div class="container-fluid">
@@ -10,69 +14,12 @@
         <div class="col-lg-12 d-flex px-0">
             @if (Model.Review.Language != null)
             {
-                var imageSource = String.Empty;
-                @switch (Model.Review.Language.ToLower())
+                string iconClassName = "icon-" + Model.Review.GetLanguageCssSafeName();
+                @if (!string.IsNullOrEmpty(Model.Review.LanguageVariant) && Model.Review.LanguageVariant.ToLower() != "default")
                 {
-                    case "c#":
-                        imageSource = "icons/csharp-original.svg";
-                        break;
-                    case "javascript":
-                        imageSource = "icons/javascript-original.svg";
-                        break;
-                    case "python":
-                        imageSource = "icons/python-original.svg";
-                        break;
-                    case "c":
-                        imageSource = "icons/c-original.svg";
-                        break;
-                    case "c++":
-                        imageSource = "icons/cplusplus-original.svg";
-                        break;
-                    case "go":
-                        imageSource = "icons/go-original.svg";
-                        break;
-                    case "java":
-                        if(@Model.Review.LanguageVariant != null)
-                        {
-                            switch(@Model.Review.LanguageVariant.ToLower())
-                            {
-                                case "spring":
-                                    imageSource = "icons/java-spring-original.svg";
-                                    break;
-                                case "android":
-                                    imageSource = "icons/java-android-original.svg";
-                                    break;
-                                default:
-                                    imageSource = "icons/java-original.svg";
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            imageSource = "icons/java-original.svg";
-                        }
-                        break;
-                    case "swift":
-                        imageSource = "icons/swift-original.svg";
-                        break;
-                    case "kotlin":
-                        imageSource = "icons/kotlin-original.svg";
-                        break;
-                    case "json":
-                        imageSource = "icons/json-original.svg";
-                        break;
-                    case "swagger":
-                        imageSource = "icons/swagger-original.svg";
-                        break;
+                    iconClassName += "-" + @Model.Review.LanguageVariant.ToLower();
                 }
-                if (String.IsNullOrEmpty(imageSource))
-                {
-                    <span class="badge badge-info"><em>@Model.Review.Language @Model.Review.LanguageVariant</em></span> 
-                }
-                else
-                {
-                    <span><img class="mr-2 mt-1 p-1 border rounded" src="~/@imageSource" width="34" alt="@Model.Review.Language @Model.Review.LanguageVariant" /></span>   
-                } 
+                <span role="img" class="mr-2 mt-1 p-1 border rounded icon-language @iconClassName" aria-label="@Model.Review.Language @Model.Review.LanguageVariant"></span>
             }
             <p class="h6 mb-0 mr-auto">
                 @if (Model.Review.ServiceName != null)
@@ -102,13 +49,13 @@
                 @{
                     var popOverContent = $"<b>{Model.ActiveConversations}</b> active revision threads.<br><b>{Model.TotalActiveConversations}</b> total active threads.<br>"
                     + $"<b>Current Revision:</b> <em>{@Model.Revision.DisplayName}</em>";
-                                    @if (Model.DiffRevisionId != null)
+                                        @if (Model.DiffRevisionId != null)
                     {
                         popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
                     }
-                                    <button type="button" class="btn btn-info btn-sm shadow-sm" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
-                                        <i class="far fa-comment-alt mr-2"></i><span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
-                                    </button>
+                                        <button type="button" class="btn btn-info btn-sm shadow-sm" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
+                                            <i class="far fa-comment-alt mr-2"></i><span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
+                                        </button>
                 }
             </div>
             <div class="my-1">
@@ -171,7 +118,7 @@
                     </span>
                     <span class="dropdown-item checkbox">
                         <label>
-                            @if (Model.GetUserPreference().HideLineNumbers == true)
+                            @if (userPreference.HideLineNumbers == true)
                             {
                                 <input type="checkbox" id="hide-line-numbers" checked>
                             }
@@ -184,7 +131,7 @@
                     </span>
                     <span class="dropdown-item checkbox">
                         <label>
-                            @if (Model.GetUserPreference().HideLeftNavigation == true)
+                            @if (userPreference.HideLeftNavigation == true)
                             {
                                 <input type="checkbox" id="hide-left-navigation" checked>
                             }
@@ -370,7 +317,7 @@
         @{
             var reviewLeftDisplay = String.Empty;
             var reviewRightSize = "10";
-            if (Model.GetUserPreference().HideLeftNavigation == true)
+            if (userPreference.HideLeftNavigation == true)
             {
                 reviewLeftDisplay = "d-none";
                 reviewRightSize = "12";
@@ -388,9 +335,6 @@
         <div id="review-right" class="col-@reviewRightSize rounded-1 border">
             <table class="code-window">
                 <tbody>
-                    @{
-                        TempData["UserPreference"] = Model.GetUserPreference();
-                    }
                     @foreach (var line in Model.Lines)
                     {
                         <partial name="_CodeLine" model="@line" />

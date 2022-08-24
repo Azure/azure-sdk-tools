@@ -31,6 +31,10 @@
     "autorestConfig": {
       // The autorest config got from /autorest.md, which is mounted by user
       "type": "string"
+    },
+    "skipGeneration": {
+      // Whether skip generation
+      "type": "boolean"
     }
   },
   "required": ["specFolder", "headSha", "headRef", "repoHttpsUrl", "relatedReadmeMdFile"]

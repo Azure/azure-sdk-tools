@@ -65,7 +65,7 @@ class FunctionNode(NodeEntityBase):
         Regenerate the namespace_id for functions to account for overloads, which
         have the same name.
         """
-        lines = [f"{self.name}("]
+        lines = [f"{self.full_name}("]
         for arg in self.args.values():
             lines.append(f"{arg.argname}:{arg.argtype},")
         for arg in self.kwargs.values():

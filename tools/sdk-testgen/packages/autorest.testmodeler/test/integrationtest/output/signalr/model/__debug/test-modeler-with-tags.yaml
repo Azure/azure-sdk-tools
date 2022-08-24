@@ -4134,6 +4134,7 @@ operationGroups:
             SignalR_CheckNameAvailability:
               parameters:
                 api-version: 2021-06-01-preview
+                fakedParam: null
                 location: eastus
                 parameters:
                   name: mySignalRService
@@ -11674,6 +11675,7 @@ testModel:
               outputVariablesModel: {}
               parameters:
                 api-version: 2021-06-01-preview
+                fakedParam: null
                 location: $(location)
                 parameters:
                   name: $(resourceName)

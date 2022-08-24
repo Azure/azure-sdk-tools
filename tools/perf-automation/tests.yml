@@ -37,6 +37,7 @@ variables:
 
 stages:
 - stage: Test
+  displayName: Test
   jobs:
   - template: /eng/common/pipelines/templates/jobs/perf.yml
     parameters:
@@ -149,20 +150,22 @@ stages:
       Iterations: ${{ variables.Iterations }}
 
 - stage: Print_Results
+  displayName: Print Results
+  pool:
+    name: 'azsdk-pool-mms-ubuntu-2004-general'
+    vmImage: 'MMSUbuntu20.04'
+  condition: succeededOrFailed()
   jobs:
   - job: Print_Results
     displayName: Print Results
-    pool:
-      name: 'azsdk-pool-mms-ubuntu-2004-general'
-      vmImage: 'MMSUbuntu20.04'
     steps:
 
-      - download: current
-        patterns: '**/results.txt'
+    - download: current
+      patterns: '**/results.txt'
 
-      - pwsh: |
-          get-childitem . -recurse -filter results.txt | foreach-object {
-            write-host $_
-            get-content $_
-          }
-        displayName: Print Results
+    - pwsh: |
+        get-childitem . -recurse -filter results.txt | foreach-object {
+          write-host $_
+          get-content $_
+        }
+      displayName: Print Results

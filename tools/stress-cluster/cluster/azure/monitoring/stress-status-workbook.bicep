@@ -74,7 +74,7 @@ var workbookContent = {
             multiSelect: true
             quote: '\''
             delimiter: ','
-            query: 'KubePodInventory\r\n| where ControllerKind =~ "Job"\r\n        and Namespace !in ("kube-system", "stress-infra")\r\n        and ContainerStatusReason in ("Completed", "Error")\r\n| summarize arg_max(TimeGenerated, *)\r\n        by extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0]))\r\n| extend TestName = replace_regex(ControllerName,  \'-[[:digit:]]+\', \'\')\r\n| summarize arg_max(TimeGenerated, *) by TestName, Namespace\r\n| sort by Namespace asc, TestName asc\r\n| project value=extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0])),\r\n        label=TestName, group=Namespace\r\n        \r\n'
+            query: 'KubePodInventory\r\n| where ControllerKind =~ "Job"\r\n        and Namespace !in ("kube-system", "stress-infra")\r\n| summarize arg_max(TimeGenerated, *)\r\n        by extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0]))\r\n| extend TestName = replace_regex(ControllerName,  \'-[[:digit:]]+\', \'\')\r\n| summarize arg_max(TimeGenerated, *) by TestName, Namespace\r\n| sort by Namespace asc, TestName asc\r\n| project value=extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0])),\r\n        label=TestName, group=Namespace\r\n        \r\n'
             crossComponentResources: [
               logAnalyticsResource
             ]
@@ -100,12 +100,12 @@ var workbookContent = {
             label: 'Show errors only'
             type: 10
             isRequired: true
-            value: 'ErrorCompleted'
+            value: 'CompletedPodInitializingErrorImagePullBackOffErrImagePullContainerStatusUnknown'
             typeSettings: {
               additionalResourceOptions: []
               showDefault: false
             }
-            jsonData: '[\r\n    { "value":"Error", "label":"True" },\r\n    { "value":"ErrorCompleted", "label":"False" }\r\n]'
+            jsonData: '[\r\n    { "value":"ErrorImagePullBackOffErrImagePullContainerStatusUnknown", "label":"True" },\r\n    { "value":"CompletedPodInitializingErrorImagePullBackOffErrImagePullContainerStatusUnknown", "label":"False" }\r\n]'
             timeContext: {
               durationMs: 604800000
             }
@@ -118,63 +118,111 @@ var workbookContent = {
       name: 'parameters - 1'
     }
     {
-      type: 3
+      type: 12
       content: {
-        version: 'KqlItem/1.0'
-        query: 'let StatusTable = KubePodInventory\r\n| where ControllerKind =~ "Job"\r\n        and PodCreationTimeStamp {TimeRange}\r\n        and Namespace !in ("kube-system", "stress-infra")\r\n        and ContainerStatusReason in ("Completed", "Error")\r\n        and "{ShowErrorsOnly}" contains ContainerStatusReason\r\n| summarize arg_max(TimeGenerated, *)\r\n        by extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0]))\r\n| extend TestName = replace_regex(ControllerName,  \'-[[:digit:]]+\', \'\')\r\n| sort by Namespace asc, TestName asc, PodCreationTimeStamp asc;\r\n\r\nlet FailTrend = StatusTable\r\n| extend IsError=iff(ContainerStatusReason=="Error", 1, 0)\r\n| summarize FailTrend=make_list(IsError, 10) by TestName, Namespace;\r\n\r\nStatusTable\r\n| summarize arg_max(TimeGenerated, *) by TestName, Namespace\r\n| join (FailTrend) on TestName, Namespace\r\n| sort by Namespace asc, TestName asc, PodCreationTimeStamp desc\r\n| extend Duration=strcat(replace_string(replace_string(tostring(format_timespan(TimeGenerated - PodCreationTimeStamp, \'d-HH:mm\')), \'-\', \'d \'), \':\', \'hr \'), \'m\')\r\n| where extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0])) in ({TestNameParameter})\r\n| project TestName,\r\n        Namespace,\r\n        StartTime=format_datetime(PodCreationTimeStamp, \'MM-dd-yyyy HH:mm\'),\r\n        Status=ContainerStatusReason,\r\n        Duration,\r\n        FailTrend\r\n'
-        size: 3
-        title: 'Stress Test Status'
-        timeContext: {
-          durationMs: 0
-        }
-        timeContextFromParameter: 'TimeRange'
-        queryType: 0
-        resourceType: 'microsoft.operationalinsights/workspaces'
-        crossComponentResources: [
-          logAnalyticsResource
-        ]
-        gridSettings: {
-          formatters: [
-            {
-              columnMatch: 'Status'
-              formatter: 18
-              formatOptions: {
-                thresholdsOptions: 'colors'
-                thresholdsGrid: [
+        version: 'NotebookGroup/1.0'
+        groupType: 'editable'
+        items: [
+          {
+            type: 1
+            content: {
+              json: 'For more detailed information on pods with unknown status, execute the following command:\r\n###### kubectl get pods --namespace &lt;namespace&gt; &lt;podname&gt; -o=json'
+              style: 'info'
+            }
+            name: 'text - 1'
+          }
+          {
+            type: 3
+            content: {
+              version: 'KqlItem/1.0'
+              query: 'let StatusTable = KubePodInventory\r\n| where ControllerKind =~ "Job"\r\n        and PodCreationTimeStamp {TimeRange}\r\n        and Namespace !in ("kube-system", "stress-infra")\r\n        and "{ShowErrorsOnly}" contains ContainerStatusReason\r\n| summarize arg_max(TimeGenerated, *)\r\n        by extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0]))\r\n| extend TestName = replace_regex(ControllerName,  \'-[[:digit:]]+\', \'\')\r\n| sort by Namespace asc, TestName asc, PodCreationTimeStamp asc;\r\n\r\nlet FailTrend = StatusTable\r\n| extend IsError=case(ContainerStatusReason in~ ("Completed", "PodInitializing", ""), 0,\r\n                      ContainerStatusReason in~ ("Error", "ImagePullBackOff", "ErrImagePull"), 2,\r\n                      1)\r\n| summarize FailTrend=make_list(IsError, 10) by TestName, Namespace;\r\n\r\nStatusTable\r\n| summarize arg_max(TimeGenerated, *) by TestName, Namespace\r\n| join (FailTrend) on TestName, Namespace\r\n| sort by Namespace asc, TestName asc, PodCreationTimeStamp desc\r\n| extend Duration=strcat(replace_string(replace_string(tostring(format_timespan(TimeGenerated - PodCreationTimeStamp, \'d-HH:mm\')), \'-\', \'d \'), \':\', \'hr \'), \'m\')\r\n| where extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0])) in ({TestNameParameter})\r\n| extend Status = case(\r\n    ContainerStatus =~ "running", ContainerStatus,\r\n    ContainerStatusReason\r\n)\r\n| project TestName,\r\n        Namespace,\r\n        StartTime=format_datetime(PodCreationTimeStamp, \'MM-dd-yyyy HH:mm\'),\r\n        Status,\r\n        Duration,\r\n        FailTrend\r\n'
+              size: 3
+              title: 'Stress Test Status'
+              timeContextFromParameter: 'TimeRange'
+              queryType: 0
+              resourceType: 'microsoft.operationalinsights/workspaces'
+              crossComponentResources: [
+                logAnalyticsResource
+              ]
+              gridSettings: {
+                formatters: [
                   {
-                    operator: '=='
-                    thresholdValue: 'Completed'
-                    representation: 'green'
-                    text: 'Completed'
+                    columnMatch: 'Status'
+                    formatter: 18
+                    formatOptions: {
+                      thresholdsOptions: 'colors'
+                      thresholdsGrid: [
+                        {
+                          operator: '=='
+                          thresholdValue: 'Completed'
+                          representation: 'green'
+                          text: 'Completed'
+                        }
+                        {
+                          operator: '=='
+                          thresholdValue: 'Error'
+                          representation: 'redDark'
+                          text: 'Error'
+                        }
+                        {
+                          operator: '=='
+                          thresholdValue: 'ErrImagePull'
+                          representation: 'redBright'
+                          text: 'Error Image Pull'
+                        }
+                        {
+                          operator: '=='
+                          thresholdValue: 'ImagePullBackOff'
+                          representation: 'red'
+                          text: 'Image Pull BackOff'
+                        }
+                        {
+                          operator: '=='
+                          thresholdValue: 'PodInitializing'
+                          representation: 'green'
+                          text: 'Pod Initializing'
+                        }
+                        {
+                          operator: '=='
+                          thresholdValue: 'ContainerStatusUnknown'
+                          representation: 'yellow'
+                          text: 'Status Unknown'
+                        }
+                        {
+                          operator: '=='
+                          thresholdValue: 'running'
+                          representation: 'lightBlue'
+                          text: 'Running'
+                        }
+                        {
+                          operator: 'Default'
+                          thresholdValue: null
+                          text: 'N/A'
+                        }
+                      ]
+                    }
+                    tooltipFormat: {
+                      tooltip: 'To get more detailed information on pods with unknown status, execute the following command: kubectl get pods --namespace <namespace> <podname> -o=json'
+                    }
                   }
                   {
-                    operator: '=='
-                    thresholdValue: 'Error'
-                    representation: 'redBright'
-                    text: 'Error'
-                  }
-                  {
-                    operator: 'Default'
-                    thresholdValue: null
-                    text: 'N/A'
+                    columnMatch: 'Trend'
+                    formatter: 10
+                    formatOptions: {
+                      palette: 'greenRed'
+                    }
                   }
                 ]
               }
             }
-            {
-              columnMatch: 'Trend'
-              formatter: 10
-              formatOptions: {
-                palette: 'greenRed'
-              }
+            name: 'query - 0'
+            styleSettings: {
+              showBorder: true
             }
-          ]
-        }
+          }
+        ]
       }
-      name: 'query - 0'
-      styleSettings: {
-        showBorder: true
-      }
+      name: 'group - 3'
     }
   ]
   isLocked: false

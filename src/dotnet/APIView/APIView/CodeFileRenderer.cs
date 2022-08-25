@@ -146,6 +146,7 @@ namespace ApiView
 
                     case CodeFileTokenKind.TableBegin:
                         stringBuilder.Append("<table class=\"table table-sm\">");
+                        currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
                         break;
 
                     case CodeFileTokenKind.TableColumnCount:

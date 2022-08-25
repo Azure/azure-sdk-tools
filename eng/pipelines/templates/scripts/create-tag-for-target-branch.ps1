@@ -23,8 +23,8 @@ if ($TargetBranch -and $TargetBranch -ne $currentBranch) {
   Write-Host "Current branch: $currentBranch, Target branch: $TargetBranch."
   git show-ref --verify --quiet refs/heads/$TargetBranch
   if ($LASTEXITCODE -eq 0) {
-    Write-Host "git checkout $TargetBranch"
-    git checkout $TargetBranch
+    Write-Host "git checkout $TargetBranch -f"
+    git checkout $TargetBranch -f
   }
   else {
     Write-Host "git checkout -b $TargetBranch -t set-url/$TargetBranch -f"

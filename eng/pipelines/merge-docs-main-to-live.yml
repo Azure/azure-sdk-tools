@@ -61,6 +61,16 @@ jobs:
             workingDirectory: $(DocRepoLocation)/${{repo.RepoName}}
           displayName: Validate the changes within allowlist
 
+        - task: Powershell@2
+          inputs:
+            pwsh: true
+            filePath: eng/pipelines/templates/scripts/sync-target-with-base-branch.ps1
+            arguments: 
+              -TargetBranch ${{ parameters.TargetBranch }} `
+              -BaseBranch "$(${{repo.RepoName}})" 
+            workingDirectory: $(DocRepoLocation)/${{repo.RepoName}}
+          displayName: Sync target branch with base branch
+
         - template: /eng/common/pipelines/templates/steps/git-push-changes.yml
           parameters: 
             BaseRepoBranch: ${{ parameters.TargetBranch }}

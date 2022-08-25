@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
+using Azure.Sdk.Tools.TestProxy.Vendored;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
@@ -607,9 +608,8 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             try
             {
-                var fields = PemEncoding.Find(settings.TLSValidationCert);
-                var base64Data = settings.TLSValidationCert[fields.Base64Data];
-                return new X509Certificate2(Encoding.ASCII.GetBytes(base64Data));
+                var span = new ReadOnlySpan<char>(settings.TLSValidationCert.ToCharArray());
+                return PemReader.LoadCertificate(span, null, PemReader.KeyType.Auto, true);
             }
             catch (Exception e)
             {
@@ -656,12 +656,24 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 clientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage httpRequestMessage, X509Certificate2 cert, X509Chain x509Chain, SslPolicyErrors sslPolicyErrors) =>
                 {
-                    bool isChainValid = certificateChain.Build(cert);
-                    if (!isChainValid) return false;
-                    var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
-                        .Any(x => x.Certificate.Thumbprint == ledgerCert.Thumbprint);
+                    if (!string.IsNullOrWhiteSpace(customizations.TSLValidationCertHost) && httpRequestMessage.RequestUri.Host != customizations.TSLValidationCertHost)
+                    {
+                        if (sslPolicyErrors == SslPolicyErrors.None)
+                        {
+                            return true;
+                        }
 
-                    return isCertSignedByTheTlsCert;
+                        return false;
+                    }
+                    else
+                    {
+                        bool isChainValid = certificateChain.Build(cert);
+                        if (!isChainValid) return false;
+                        var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
+                            .Any(x => x.Certificate.Thumbprint == ledgerCert.Thumbprint);
+
+                        return isCertSignedByTheTlsCert;
+                    }
                 };
             }
             else if (insecure)

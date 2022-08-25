@@ -827,7 +827,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.StartsWith(errorText, assertion.Message);
         }
 
-        [IgnoreOnLinuxFact]
+        [Fact]
         public void TestSetRecordingOptionsValidTlsCert()
         {
             var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
@@ -838,7 +838,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.SetRecordingOptions(inputBody, null);
         }
 
-        [IgnoreOnLinuxFact]
+        [Fact]
         public void TestSetRecordingOptionsMultipleCertOptions()
         {
             var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
@@ -927,6 +927,21 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Contains("Unable to instantiate a new X509 certificate from the provided value and key.", assertion.Message);
         }
 
+
+        [Fact]
+        public void TestSetRecordingOptionsTransportWithTLSCert()
+        {
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\", \"TLSValidationCertHost\":\"azure.blobs.windows.net\", \"Certificates\": [ {{ \"PemValue\": \"{1}\", \"PemKey\": \"{2}\" }}]}}}}", certValue, pemValue, pemKey);
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
+
+            testRecordingHandler.SetRecordingOptions(inputBody);
+        }
+
         [Fact]
         public void TestSetRecordingOptionsInValidTransportWithTLSCert()
         {
@@ -943,7 +958,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             );
 
             Assert.StartsWith("Unable to instantiate a valid cert from the value provided in Transport settings key", assertion.Message);
-            Assert.Contains("No PEM encoded data found. (Parameter 'pemData')", assertion.Message);
+            Assert.Contains("The certificate is missing the public key", assertion.Message);
         }
         #endregion
     }

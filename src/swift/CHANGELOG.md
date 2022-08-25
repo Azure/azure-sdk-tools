@@ -1,5 +1,10 @@
 # Release History
 
+## Version 0.1.3 (Unreleased)
+- Support for getter/setter blocks.
+- Fixed issue where read-only properties would appear as
+  read/write due to not displaying `{ get }` syntax.
+
 ## Version 0.1.2 (Unreleased)
 - Fixed issue where empty extension blocks were displayed.
 - Temporarily will allow duplicate IDs. This will result in

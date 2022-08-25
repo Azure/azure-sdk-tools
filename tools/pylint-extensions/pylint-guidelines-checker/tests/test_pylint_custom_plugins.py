@@ -1944,21 +1944,21 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
     def test_finds_method_returning_something_else_async(self):
         class_node, function_node_a, function_node_b = astroid.extract_node("""
         from azure.core.polling import LROPoller
+        from typing import list
         
         class SomeClient(): #@
             async def list_thing(self, **kwargs): #@
                 return list()
             async def list_thing2(self, **kwargs): #@
-                from azure.core.polling import LROPoller
                 return LROPoller()
         """)
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=24
+                msg_id="client-list-methods-use-paging", line=6, node=function_node_a, col_offset=4, end_line=6, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=7, node=function_node_b,  col_offset=4, end_line=7, end_col_offset=25
+                msg_id="client-list-methods-use-paging", line=8, node=function_node_b,  col_offset=4, end_line=8, end_col_offset=25
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
@@ -2592,7 +2592,7 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
                     This is Example content.
                     Should support multi-line.
                     Can also include file:
-
+                      
                     .. literalinclude:: ../samples/sample_detect_language.py
                 '''
             """
@@ -3073,3 +3073,45 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
         importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
+
+
+class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed imports and allowing allowed imports."""
+    CHECKER_CLASS = checker.NonAbstractTransportImport
+
+    def test_disallowed_imports(self):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = astroid.extract_node("from azure.core.pipeline.transport import RequestsTransport")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="non-abstract-transport-import",
+                    line=1,
+                    node=importfrom_node,
+                    col_offset=0,
+                )
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allowed_imports(self):
+        """Check that allowed imports don't raise warnings."""
+        # import not in the blocked list.
+        importfrom_node = astroid.extract_node("from math import PI")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # from import not in the blocked list.
+        importfrom_node = astroid.extract_node("from azure.core.pipeline import Pipeline")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # Import abstract classes
+        importfrom_node = astroid.extract_node("from azure.core.pipeline.transport import HttpTransport, HttpRequest, HttpResponse, AsyncHttpTransport, AsyncHttpResponse")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # Import non-abstract classes, but from in `azure.core.pipeline.transport`.
+        importfrom_node = astroid.extract_node("from azure.core.pipeline.transport import RequestsTransport, AioHttpTransport, AioHttpTransportResponse")
+        importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+

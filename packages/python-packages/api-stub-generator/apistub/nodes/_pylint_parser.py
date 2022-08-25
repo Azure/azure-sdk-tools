@@ -25,9 +25,9 @@ class PylintError:
         self.message = kwargs.pop('message', None)
         self.message_id = kwargs.pop('message-id', None)
         self.help_link = None
-        if self.path.startswith(pkg_name):
+        if self.path and self.path.startswith(pkg_name):
             self.path = self.path[(len(f"{pkg_name}\\\\") - 1):]
-        code = self.symbol[0]
+        code = self.symbol[0] if self.symbol else ""
         self.level = DiagnosticLevel.ERROR if code in "EF" else DiagnosticLevel.WARNING
         self.owner = None
         self._parse_help_link()
@@ -66,12 +66,19 @@ class PylintParser:
             plugin_failed = any([x["symbol"] == "bad-plugin-value" for x in json_items])
             if plugin_failed:
                 logging.error(f"Unable to load pylint_guidelines_checker. Check that it is installed.")
-        except json.JSONDecodeError as err:
+            cls.items = [PylintError(pkg_name, **x) for x in json_items if x["message-id"][1:3] == PylintParser.AZURE_CHECKER_CODE]
+        except Exception as err:
+            from apistub import DiagnosticLevel
             logging.error(f"Error decoding pylint output:\n{stderr_str}")
             logging.error(f"Error content:\n{err}")
-            logging.error(f"==STDOUT==\n{stdout_lines}")
-            raise err
-        cls.items = [PylintError(pkg_name, **x) for x in json_items if x["message-id"][1:3] == PylintParser.AZURE_CHECKER_CODE]
+            logging.error(f"==STDOUT==\n{stdout_lines}\n==END STDOUT==")
+            # instead of raising an error, we will log a pylint error
+            error = PylintError(pkg_name)
+            error.level = DiagnosticLevel.ERROR
+            error.owner = "GLOBAL"
+            error.symbol = "apiview-pylint-parse-error"
+            error.message = "Failure parsing pylint output. Please post an issue in the `Azure/azure-sdk-tools` repository."
+            cls.items = [error]
 
     @classmethod
     def match_items(cls, obj) -> None:
@@ -79,11 +86,11 @@ class PylintParser:
             source_file = inspect.getsourcefile(obj)
             (source_lines, start_line) = inspect.getsourcelines(obj)
             end_line = start_line + len(source_lines) - 1
-        except Exception as err:
+        except Exception:
             return
         for item in cls.items:
             item_path = item.path
-            if source_file.endswith(item_path):
+            if item_path and source_file.endswith(item_path):
                 # nested items will overwrite the ownership of their
                 # containing parent.
                 if item.line >= start_line and item.line <= end_line:
@@ -91,7 +98,8 @@ class PylintParser:
 
     @classmethod
     def get_items(cls, obj) -> List[PylintError]:
-        return [x for x in cls.items if x.owner == str(obj)]
+        items = [x for x in cls.items if x.owner == str(obj)]
+        return items
 
     @classmethod
     def get_unclaimed(cls) -> List[PylintError]:

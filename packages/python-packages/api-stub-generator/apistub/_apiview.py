@@ -54,6 +54,7 @@ class ApiView:
         self.metadata_map = metadata_map or MetadataMap("")
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)
+        self.add_line_marker("GLOBAL")
         if source_url:
             self.set_blank_lines(1)
             self.add_literal(f"# Source URL: {source_url}")

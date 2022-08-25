@@ -184,6 +184,17 @@ func (f Func) ID() string {
 	return f.id
 }
 
+func (f Func) ForAlias(pkg string) Func {
+	clone := f
+	// replace everything to the left of - with the new package name
+	i := strings.Index(clone.id, "-")
+	if i < 0 {
+		panic("missing sig separator in id")
+	}
+	clone.id = pkg + clone.id[i:]
+	return clone
+}
+
 func (f Func) MakeTokens() []Token {
 	list := &[]Token{}
 	if f.embedded {

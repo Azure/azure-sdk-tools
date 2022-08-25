@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
@@ -34,6 +35,21 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             startInfo.EnvironmentVariables["PATH"] = Environment.GetEnvironmentVariable("PATH");
 
+            // TODO
+            // 1. Check the git version >= 2.27.0 https://github.com/Azure/azure-sdk-tools/issues/3955
+            // 2. If on Windows, check whether or not longpath is set
+            // The windows compat pack contains the registry classes for .net core
+            // Note: This may be done in a different way, the links below are for a potential solution
+            // that has not been fully investigated yet.
+            // https://docs.microsoft.com/en-us/dotnet/core/porting/windows-compat-pack
+            // How to add them is here
+            // https://www.nuget.org/packages/Microsoft.Windows.Compatibility#versions-body-tab
+            /*
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // TODO
+            }
+            */
             return startInfo;
         }
 

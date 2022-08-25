@@ -11,8 +11,6 @@ module.exports = {
     navbar: './src/navbar.ts',
     review: './src/review.ts',
     reviews: './src/reviews.ts',
-    main: './src/main.ts',
-    api: './src/api.ts',
     site: './css/site.scss'
   },
   devtool: 'source-map',

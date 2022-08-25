@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import { Column, Entity, ObjectIdColumn } from 'typeorm';
 
+import { logger } from '../utils/logger';
+import { requireJsonc } from '../utils/requireJsonc';
 import { getTaskBasicConfig, TaskBasicConfig } from './taskBasicConfig';
 import { GenerateAndBuildOutput } from './taskInputAndOuputSchemaTypes/GenerateAndBuildOutput';
 import { InitOutput } from './taskInputAndOuputSchemaTypes/InitOutput';
@@ -65,7 +67,7 @@ export type MessageRecord = ResultMessageRecord | RawMessageRecord | MarkdownMes
 export type TaskResultCommon = {
     name: string;
     pipelineBuildId: string;
-    result?: TaskResultStatus;
+    result: TaskResultStatus;
     errorCount?: number;
     warningCount?: number;
     logUrl?: string;
@@ -143,4 +145,17 @@ export function generateTotalResult(taskResults: TaskResult[], pipelineBuildId: 
     }
 
     return totalResult;
+}
+
+export function getTaskResults(taskResultsPath: string): TaskResult[] {
+    const taskResultsPathArray = JSON.parse(taskResultsPath);
+    const taskResults: TaskResult[] = [];
+    for (const taskResultPath of taskResultsPathArray) {
+        if (fs.existsSync(taskResultPath)) {
+            taskResults.push(requireJsonc(taskResultPath));
+        } else {
+            logger.warn(`${taskResultPath} isn't exist, skip.`);
+        }
+    }
+    return taskResults;
 }

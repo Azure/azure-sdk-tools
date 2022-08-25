@@ -1,8 +1,16 @@
 ﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -10,7 +18,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public class SanitizerTests
     {
         public OAuthResponseSanitizer OAuthResponseSanitizer = new OAuthResponseSanitizer();
+        private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
+
+        public string oauthRegex = "\"/oauth2(?:/v2.0)?/token\"";
         public string lookaheadReplaceRegex = @"[a-z]+(?=\.(?:table|blob|queue)\.core\.windows\.net)";
         public string capturingGroupReplaceRegex = @"https\:\/\/(?<account>[a-z]+)\.(?:table|blob|queue)\.core\.windows\.net";
         public string scopeClean = @"scope\=(?<scope>[^&]*)";
@@ -47,6 +58,98 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(expectedCount, session.Session.Entries.Count);
         }
+
+        [Theory]
+        [InlineData("uri", "\"/oauth2(?:/v2.0)?/token\"")]
+        [InlineData("body", "\"/oauth2(?:/v2.0)?/token\"")]
+        [InlineData("header", "\"/oauth2(?:/v2.0)?/token\"")]
+        public void RegexEntrySanitizerNoOpsOnNonMatch(string target, string regex)
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var sanitizer = new RegexEntrySanitizer(target, regex);
+            var expectedCount = session.Session.Entries.Count;
+
+            session.Session.Sanitize(sanitizer);
+
+            Assert.Equal(expectedCount, session.Session.Entries.Count);
+        }
+
+        [Theory]
+        [InlineData("body", "(listtable09bf2a3d|listtable19bf2a3d)", 9)]
+        [InlineData("uri", "fakeazsdktestaccount", 0)]
+        [InlineData("body", "listtable09bf2a3d", 10)]
+        [InlineData("header", "a50f2f9c-b830-11eb-b8c8-10e7c6392c5a", 10)]
+        public void RegexEntrySanitizerCorrectlySanitizes(string target, string regex, int endCount)
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var sanitizer = new RegexEntrySanitizer(target, regex);
+            var expectedCount = session.Session.Entries.Count;
+
+            session.Session.Sanitize(sanitizer);
+
+            Assert.Equal(endCount, session.Session.Entries.Count);
+        }
+
+        [Fact]
+        public void RegexEntrySanitizerCorrectlySanitizesSpecific()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_xml_body.json");
+            var sanitizer = new RegexEntrySanitizer("header", "b24f75a9-b830-11eb-b949-10e7c6392c5a");
+            var expectedCount = session.Session.Entries.Count;
+
+            session.Session.Sanitize(sanitizer);
+
+            Assert.Equal(2, session.Session.Entries.Count);
+            Assert.Equal("b25bf92a-b830-11eb-947a-10e7c6392c5a", session.Session.Entries[0].Request.Headers["x-ms-client-request-id"][0].ToString());
+        }
+
+        [Theory]
+        [InlineData("wrong_name", "", "When defining which section of a request the regex should target, only values")]
+        [InlineData("", ".+", "When defining which section of a request the regex should target, only values")]
+        [InlineData("uri", "\"[\"", "Expression of value")]
+        public void RegexEntrySanitizerThrowsProperExceptions(string target, string regex, string exceptionMessage)
+        {
+            var assertion = Assert.Throws<HttpException>(
+               () => new RegexEntrySanitizer(target, regex)
+            );
+
+            Assert.Contains(exceptionMessage, assertion.Message);
+        }
+
+        [Theory]
+        [InlineData("{ \"target\": \"URI\", \"regex\": \"/oauth2(?:/v2.0)?/token\" }")]
+        [InlineData("{ \"target\": \"uRi\", \"regex\": \"/login\\\\.microsoftonline.com\" }")]
+        [InlineData("{ \"target\": \"bodY\", \"regex\": \"/oauth2(?:/v2.0)?/token\" }")]
+        [InlineData("{ \"target\": \"HEADER\", \"regex\": \"/login\\\\.microsoftonline.com\" }")]
+        public async Task RegexEntrySanitizerCreatesOverAPI(string body)
+        {
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.Sanitizers.Clear();
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "RegexEntrySanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+
+            // content length must be set for the body to be parsed in SetMatcher
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            await controller.AddSanitizer();
+            var sanitizer = testRecordingHandler.Sanitizers[0];
+            Assert.True(sanitizer is RegexEntrySanitizer);
+
+
+            var sanitizerTarget = (string)typeof(RegexEntrySanitizer).GetField("section", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
+            var regex = (Regex)typeof(RegexEntrySanitizer).GetField("rx", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
+        }
+
 
         [Fact]
         public void UriRegexSanitizerReplacesTableName()

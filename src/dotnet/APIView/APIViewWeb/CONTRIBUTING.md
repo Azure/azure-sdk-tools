@@ -24,7 +24,7 @@ Core of the APIView tool is the web app developed using ASP.Net and TypeScript. 
 | C                             | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/CLanguageService.cs                  |
 | C++                           | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/CppLanguageService.cs                |
 | Java                          | https://github.com/Azure/azure-sdk-tools/tree/main/src/java/apiview-java-processor                                              |
-| JS/TS                         | https://github.com/Azure/azure-sdk-tools/tree/main/src/ts/ts-genapi                                                             |
+| JS/TS                         | https://github.com/Azure/azure-sdk-tools/tree/main/tools/apiview/parsers/js-api-parser                                                             |
 | Python                        | https://github.com/Azure/azure-sdk-tools/tree/main/packages/python-packages/api-stub-generator                                  |
 | Go                            | https://github.com/Azure/azure-sdk-tools/tree/main/src/go                                                                       |
 | Swift                         | https://github.com/Azure/azure-sdk-tools/tree/main/src/swift                                                                    |
@@ -180,10 +180,10 @@ Happy coding!!!!
  - Start Visual Studio debug run and create a new review as per the instructions in [APIView README.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md)
 
  #### JS/TS
-  - Got to <azure-sdk-tools repo root>/src/ts/ts-genapi
+  - Got to <azure-sdk-tools repo root>/tools/apiview/parsers/js-api-parser           
   - run `npm install`
   - run `npm run-script build`
-  - Copy compiled `index.js` to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
+  - Copy compiled `export.js` to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
   - Start Visual Studio debug run and create a new review as per the instructions in [APIView README.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md)
 
 

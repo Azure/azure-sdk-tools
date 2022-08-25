@@ -26,6 +26,7 @@ variables:
 
 stages:
   - stage: IntegrationTests
+    displayName: "Asset Sync Integration Tests"
     jobs:
     - job: Integration_Test
 
@@ -63,11 +64,12 @@ stages:
           condition: succeededOrFailed()
           inputs:
             testResultsFiles: '**/*.trx'
-            testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
+            testRunTitle: '$(OS) AssetSync Tests against $(DotNetCoreVersion)'
             testResultsFormat: 'VSTest'
             mergeTestResults: true
 
   - stage: RepoUnitTests
+    displayName: Repo-Specific Unit Tests
     jobs:
     - job: Repo_Unit_Test
 
@@ -105,7 +107,7 @@ stages:
           condition: succeededOrFailed()
           inputs:
             testResultsFiles: '**/*.trx'
-            testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
+            testRunTitle: '$(OS) Repo Tests against $(DotNetCoreVersion)'
             testResultsFormat: 'VSTest'
             mergeTestResults: true
 

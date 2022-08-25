@@ -1,0 +1,6 @@
+^docs-ref-autogen/
+^docs-ref-mapping/
+^docs-ref-services/
+^metadata/
+^preview/
+^package.json$

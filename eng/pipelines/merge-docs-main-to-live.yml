@@ -1,0 +1,73 @@
+parameters:
+- name: WhatIfPreference
+  type: boolean
+  default: false
+
+- name: DocsRepos
+  type: object
+  default:
+    - RepoName: azure-docs-sdk-java
+      RepoOwner: Azure
+      AllowlistPath: eng/pipelines/templates/scripts/docsms-allowlist/java-allowlist.txt
+    - RepoName: azure-docs-sdk-python
+      RepoOwner: MicrosoftDocs
+      AllowlistPath: eng/pipelines/templates/scripts/docsms-allowlist/python-allowlist.txt
+    - RepoName: azure-docs-sdk-node
+      RepoOwner: MicrosoftDocs
+      AllowlistPath: eng/pipelines/templates/scripts/docsms-allowlist/js-allowlist.txt
+
+- name: TargetBranch
+  type: string
+  default: live
+
+jobs:
+  - job: SyncUp
+    pool:
+      vmImage: ubuntu 20.04
+    variables:
+      DocRepoLocation: $(Pipeline.Workspace)/docs
+    steps:
+      - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+      - ${{ each repo in parameters.DocsRepos }}:
+        - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+          parameters:
+            SkipDefaultCheckout: true
+            Repositories:
+            - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
+              Commitish: ${{ parameters.TargetBranch }}
+              WorkingDirectory: $(DocRepoLocation)/${{repo.RepoName}}
+
+        - task: Powershell@2
+          inputs:
+            pwsh: true
+            filePath: eng/pipelines/templates/scripts/create-tag-for-target-branch.ps1
+            arguments: -GithubUrl "https://$(azuresdk-github-pat)@github.com/${{repo.RepoOwner}}/${{repo.RepoName}}.git"
+            workingDirectory: $(DocRepoLocation)/${{repo.RepoName}}
+          displayName: Create tag for branch back up
+
+        - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
+          parameters:
+            WorkingDirectory: $(DocRepoLocation)/${{repo.RepoName}}
+            DefaultBranchVariableName: ${{repo.RepoName}}
+
+        - task: Powershell@2
+          inputs:
+            pwsh: true
+            filePath: eng/pipelines/templates/scripts/validate-changes-on-allowed-path.ps1
+            arguments: 
+              -TargetBranch ${{ parameters.TargetBranch }} `
+              -BaseBranch "$(${{repo.RepoName}})" `
+              -AllowListPath "$(System.DefaultWorkingDirectory)/${{repo.AllowlistPath}}"
+            workingDirectory: $(DocRepoLocation)/${{repo.RepoName}}
+          displayName: Validate the changes within allowlist
+
+        - template: /eng/common/pipelines/templates/steps/git-push-changes.yml
+          parameters: 
+            BaseRepoBranch: ${{ parameters.TargetBranch }}
+            TargetRepoOwner: ${{ repo.RepoOwner }}
+            TargetRepoName: ${{ repo.RepoName }}
+            SkipCheckingForChanges: true
+            CommitMsg: "Merge main to live $(Get-Date)"
+            WorkingDirectory: $(DocRepoLocation)/${{repo.RepoName}}
+            PushForNoChanges: true
+            WhatIfPreference: ${{ parameters.WhatIfPreference }}

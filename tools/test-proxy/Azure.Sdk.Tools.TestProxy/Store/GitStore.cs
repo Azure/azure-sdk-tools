@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -122,6 +123,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
+        // This should only ever be called by the user?
         public async Task Reset(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = config.IsAssetsRepoInitialized();
@@ -201,8 +203,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
-                GitHandler.Run($"sparse-checkout set {checkoutPaths}", config);
-                GitHandler.Run($"checkout {config.SHA}", config);
+                // Set non-cone mode otherwise path filters will not work in git >= 2.37.0
+                // See https://github.blog/2022-06-27-highlights-from-git-2-37/#tidbits
+                GitHandler.Run($"sparse-checkout set --no-cone {checkoutPaths}", config);
+                // The -c advice.detachedHead=false removes the verbose detatched head state
+                // warning that happens when syncing sparse-checkout to a particular SHA
+                GitHandler.Run($"-c advice.detachedHead=false checkout {config.SHA}", config);
             }
             catch(GitProcessException e)
             {
@@ -224,7 +230,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (forceInit)
             {
-                Directory.Delete(assetRepo, true);
+                DirectoryHelper.DeleteGitDirectory(assetRepo);
                 Directory.CreateDirectory(assetRepo);
                 initialized = false;
             }
@@ -233,7 +239,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
-                    GitHandler.Run($"clone --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .", config);
+                    // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
+                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .", config);
                     GitHandler.Run($"sparse-checkout init", config);
                 }
                 catch(GitProcessException e)

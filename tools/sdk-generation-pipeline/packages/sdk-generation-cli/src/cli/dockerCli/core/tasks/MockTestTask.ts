@@ -24,6 +24,7 @@ export class MockTestTask implements SDKGenerationTaskBase {
     }
 
     public async execute() {
+        if (this.context.taskResults?.['generateAndBuild'] !== TaskResultStatus.Success) return;
         const mockTestTask = getTask(path.join(this.context.sdkRepo, this.context.configFilePath), 'mockTest');
         if (!mockTestTask) {
             throw new Error(`Init task is ${mockTestTask}`);

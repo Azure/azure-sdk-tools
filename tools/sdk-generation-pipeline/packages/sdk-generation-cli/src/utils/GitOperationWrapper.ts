@@ -27,12 +27,22 @@ export class GitOperationWrapper {
         return headRef;
     }
 
+    public async getRemote() {
+        const remote = await this.git.getConfig('remote.origin.url');
+        return remote?.value?.replace('.git', '');
+    }
+
     public async safeDirectory() {
         await this.git.addConfig('safe.directory', this.baseDir, true, 'global');
     }
 
     public async disableFileMode() {
         await this.git.raw(['config', 'core.fileMode', 'false', '--replace-all']);
+    }
+
+    public async checkoutPr(prNumber: string) {
+        await this.git.raw(['fetch', 'origin', '+refs/pull/*:refs/remotes/origin/pr/*']);
+        await this.git.raw(['checkout', '-b', `refs/pull/${prNumber}/merge`]);
     }
 
     public async getChangedPackageDirectory(): Promise<Set<string>> {
@@ -49,17 +59,38 @@ export class GitOperationWrapper {
         return changedPackageDirectories;
     }
 
-    public async cloneRepo(githubRepo: string, logger: Logger) {
-        const child = spawn(`git`, [`clone`, `https://github.com/${githubRepo}.git`], {
+    public async cloneRepo(githubRepo: string, logger: Logger, repoAlias?: string) {
+        const additionalParams = [];
+        if (!!repoAlias) additionalParams.push(repoAlias);
+        const child = spawn(`git`, [`clone`, `https://github.com/${githubRepo}.git`, ...additionalParams], {
             cwd: this.baseDir,
             stdio: ['ignore', 'pipe', 'pipe']
         });
+        await this.injectListener(child, logger);
+    }
+
+    private async injectListener(child: any, logger: Logger) {
         child.stdout.on('data', (data) => logger.log('cmdout', data.toString()));
-        child.stderr.on('data', (data) => logger.log('cmderr', data.toString()));
+        child.stderr.on('data', (data) => logger.log('cmdout', data.toString()));
         await new Promise((resolve) => {
             child.on('exit', (code, signal) => {
                 resolve({ code, signal });
             });
         });
+    }
+
+    public async cloneBranch(repoUrl: string, branchName: string, logger: Logger, repoAlias?: string) {
+        const additionalParams = [];
+        if (!!repoAlias) additionalParams.push(repoAlias);
+        const child = spawn(`git`, [`clone`, '--branch', branchName, repoUrl, ...additionalParams], {
+            cwd: this.baseDir,
+            stdio: ['ignore', 'pipe', 'pipe']
+        });
+        await this.injectListener(child, logger);
+    }
+
+    public changeBaseDir(baseDir: string) {
+        this.baseDir = baseDir;
+        this.git = simpleGit({ baseDir: baseDir });
     }
 }

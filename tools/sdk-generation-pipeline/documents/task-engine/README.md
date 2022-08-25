@@ -72,7 +72,8 @@ Input file for generate and build script.
   "headRef": "refs/pull/1234/merge",
   "repoHttpsUrl": "https://github.com/Azure/azure-rest-api-specs.git",
   "relatedReadmeMdFile": "compute/resource-manager/readme.md"
-  "serviceType": "resource-manager"
+  "serviceType": "resource-manager",
+  "skipGeneration": "false"
 }
 ```
 

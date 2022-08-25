@@ -172,4 +172,5 @@ stages:
           get-content $_
           write-host
         }
+      workingDirectory: $(Pipeline.Workspace)
       displayName: Print Results

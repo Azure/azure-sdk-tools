@@ -163,5 +163,99 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             return testFolder.ToString();
         }
+
+
+        /// <summary>
+        /// Remove the test folder created in the call to DescribeTestFolder
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        public static void RemoveTestFolder(string testFolder)
+        {
+            // We can't Directory.Delete(path, true) to recursiverly delete the directory
+            // because the git files under .git\objects\pack have attributes on them that
+            // cause an UnauthorizedAccessException when trying to delete them. Fortunately,
+            // setting the attributes to normal allows them to be deleted.
+            File.SetAttributes(testFolder, FileAttributes.Normal);
+
+            string[] files = Directory.GetFiles(testFolder);
+            string[] dirs = Directory.GetDirectories(testFolder);
+
+            foreach (string file in files)
+            {
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+            }
+
+            foreach (string dir in dirs)
+            {
+                RemoveTestFolder(dir);
+            }
+
+            Directory.Delete(testFolder, false);
+        }
+
+        /// <summary>
+        /// Verify the version, inside the file, for a given file inside of a test folder.
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        /// <param name="fileName">The fileName whose version needs verification</param>
+        /// <param name="expectedVersion">The expected version in the file</param>
+        public static bool VerifyFileVersion(string testFolder, string fileName, int expectedVersion)
+        {
+            string fullFileName = Path.Combine(testFolder, fileName);
+            string stringVersion = "";
+            int intVersion = -1;
+
+            if (!File.Exists(fullFileName))
+            {   string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                throw new ArgumentException(errorString);
+            }
+
+            using (StreamReader reader = new StreamReader(fullFileName))
+            {
+                stringVersion = reader.ReadLine() ?? "";
+            }
+
+            if (Int32.TryParse(stringVersion, out intVersion))
+            {
+                if (expectedVersion == intVersion)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Verify the version, inside the file, for a given file inside of a test folder.
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        /// <param name="fileName">The fileName whose version needs verification</param>
+        /// <param name="expectedVersion">The expected version in the file</param>
+        public static bool IncrementFileVersion(string testFolder, string fileName)
+        {
+            string fullFileName = Path.Combine(testFolder, fileName);
+            string stringVersion = "";
+            int intVersion = -1;
+
+            if (!File.Exists(fullFileName))
+            {
+                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                throw new ArgumentException(errorString);
+            }
+
+            using (StreamReader reader = new StreamReader(fullFileName))
+            {
+                stringVersion = reader.ReadLine() ?? "";
+            }
+
+            if (Int32.TryParse(stringVersion, out intVersion))
+            {
+                File.WriteAllText(fullFileName, (++intVersion).ToString());
+            }
+
+            return false;
+        }
     }
 }

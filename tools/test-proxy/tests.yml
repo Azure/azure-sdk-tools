@@ -69,6 +69,7 @@ stages:
 
   - stage: RepoUnitTests
     displayName: Repo-Specific Unit Tests
+    dependsOn: []
     jobs:
     - job: Repo_Unit_Test
 

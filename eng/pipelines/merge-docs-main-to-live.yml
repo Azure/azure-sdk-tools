@@ -80,4 +80,5 @@ jobs:
             CommitMsg: "Merge main to live $(Get-Date)"
             WorkingDirectory: $(DocRepoLocation)/${{repo.RepoName}}
             PushForNoChanges: true
+            PushArgs: -f
             WhatIfPreference: ${{ parameters.WhatIfPreference }}

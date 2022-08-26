@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public GitProcessHandler GitHandler = new GitProcessHandler();
         public string DefaultBranch = "main";
         public string FileName = "assets.json";
-        public readonly string EnvironmentVariableName = "PROXY_GIT_TOKEN";
+        public static readonly string EnvironmentVariableName = "PROXY_GIT_TOKEN";
 
         public GitStore() 
         {

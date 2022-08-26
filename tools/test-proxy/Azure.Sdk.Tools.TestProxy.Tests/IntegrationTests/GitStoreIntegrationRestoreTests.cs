@@ -37,8 +37,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // Added file2.txt
         // Added file3.txt
         // Expect: each file should be version 1
-        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
-        //[Theory]
+        [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
@@ -90,8 +89,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         //         file2 version 2
         //         file3 version 2
         //         file4 version 1
-        [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
-        //[Theory]
+        [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
@@ -145,8 +143,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         //         file3 deleted
         //         file4 version 1
         //         file5 version 1
-        [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
-        //[Theory]
+        [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",

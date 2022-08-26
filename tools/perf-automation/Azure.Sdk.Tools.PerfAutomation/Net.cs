@@ -74,7 +74,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             Util.DeleteIfExists(PublishDirectory);
 
-            var processArguments = $"publish -c release -f {languageVersion} -o {PublishDirectory} {additionalBuildArguments} {project}";
+            // Disable source link, since it's not needed for perf runs, and also fails in sparse checkout repos
+            var processArguments = $"publish -c release -f {languageVersion} -o {PublishDirectory} -p:EnableSourceLink=false {additionalBuildArguments} {project}";
 
             var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: WorkingDirectory);
 

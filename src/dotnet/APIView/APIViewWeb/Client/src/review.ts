@@ -44,10 +44,9 @@ $(() => {
 
   /* ADD EVENT LISTENER FOR TOGGLING LEFT NAVIGATION
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  addEventListener("load", () => {
-    $(".nav-list-toggle").click(function () {
-      $(this).parents(".nav-list-group").first().toggleClass("nav-list-collapsed");
-    });
+  $(".nav-list-toggle").on('click', function (e) {
+    $(this).parents(".nav-list-group").first().toggleClass("nav-list-collapsed");
+    console.log(e);
   });
 
   /* SPLIT REVIEW PAGE CONTENT

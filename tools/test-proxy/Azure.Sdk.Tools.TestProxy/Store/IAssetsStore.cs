@@ -1,5 +1,6 @@
 using System.IO;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.TestProxy.Console;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {

@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using System.Reflection;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Azure.Sdk.Tools.TestProxy.ConsoleWrapper;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -79,7 +80,8 @@ namespace Azure.Sdk.Tools.TestProxy
                         DefaultStore.Restore(assetsJsonPath);
                         break;
                     case "reset":
-                        DefaultStore.Reset(assetsJsonPath);
+                        ConsoleWrapperImpl consoleWrapper = new ConsoleWrapperImpl();
+                        DefaultStore.Reset(assetsJsonPath, consoleWrapper);
                         break;
                     default:
                         throw new Exception($"One must provide a valid value for argument \"command\". \"{command}\" is not a valid option.");

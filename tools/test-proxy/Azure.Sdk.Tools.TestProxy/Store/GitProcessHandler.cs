@@ -157,8 +157,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 result = new CommandResult()
                 {
                     ExitCode = process.ExitCode,
-                    StdErr = stdOut,
-                    StdOut = stdErr,
+                    StdErr = stdErr,
+                    StdOut = stdOut,
                     Arguments = arguments
                 };
             }

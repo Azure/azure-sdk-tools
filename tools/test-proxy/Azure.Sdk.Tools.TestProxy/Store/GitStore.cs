@@ -10,6 +10,7 @@ using System.Text;
 using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.ConsoleWrapper;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -122,12 +123,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Resets a cloned assets repository to the default contained within the assets.json targeted commit.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
+        /// <param name="consoleWrapper"></param>
         /// <returns></returns>
         // This should only ever be called by the user?
-        public async Task Reset(string pathToAssetsJson) {
+        public async Task Reset(string pathToAssetsJson, IConsoleWrapper consoleWrapper) 
+        {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = config.IsAssetsRepoInitialized();
-            var allowReset = true;
+            var allowReset = false;
 
             if (!initialized)
             {
@@ -138,7 +141,26 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                // TODO: Azure/azure-sdk-tools/3698
+                consoleWrapper.WriteLine("There are pending git chances, are you sure you want to reset? [Y|N]");
+                while (true)
+                {
+                    string response = consoleWrapper.ReadLine();
+                    response = response.ToLower();
+                    if (response.Equals("y"))
+                    {
+                        allowReset = true;
+                        break;
+                    }
+                    else if (response.Equals("n"))
+                    {
+                        allowReset = false;
+                        break;
+                    }
+                    else
+                    {
+                        consoleWrapper.WriteLine("Please answer [Y|N]");
+                    }
+                }
             }
 
             if (allowReset)
@@ -146,7 +168,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     GitHandler.Run("checkout *", config);
-                    GitHandler.Run("git clean -xdf", config);
+                    GitHandler.Run("clean -xdf", config);
                 }
                 catch(GitProcessException e)
                 {
@@ -186,7 +208,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (!string.IsNullOrWhiteSpace(diffResult.StdOut))
             {
-                var individualResults = diffResult.StdOut.Split(Environment.NewLine).Select(x => x.Trim()).ToArray();
+                // Normally, we'd use Environment.NewLine here but this doesn't work on Windows since its NewLine is \r\n and
+                // Git's NewLine is just \n
+                var individualResults = diffResult.StdOut.Split("\n").Select(x => x.Trim()).ToArray();
                 return individualResults;
             }
 

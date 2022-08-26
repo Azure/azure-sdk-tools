@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoBranch"": ""main"",
               ""SHA"": ""fc54d000d0427c4a68bc8962d40f957f59e14577""
         }")]
-        [Trait("Integration", "Reset")]
+        [Trait("Category", "Integration")]
         public async Task Scenario1(string inputJson)
         {
             var folderStructure = new string[]
@@ -114,7 +114,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoBranch"": ""main"",
               ""SHA"": ""fc54d000d0427c4a68bc8962d40f957f59e14577""
         }")]
-        [Trait("Integration", "Reset")]
+        [Trait("Category", "Integration")]
         public async Task Scenario2(string inputJson)
         {
             var folderStructure = new string[]
@@ -179,7 +179,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoBranch"": ""main"",
               ""SHA"": ""9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1""
         }")]
-        [Trait("Integration", "Reset")]
+        [Trait("Category", "Integration")]
         public async Task Scenario3(string inputJson)
         {
             var folderStructure = new string[]
@@ -253,7 +253,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoBranch"": ""main"",
               ""SHA"": ""9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1""
         }")]
-        [Trait("Integration", "Reset")]
+        [Trait("Category", "Integration")]
         public async Task Scenario4(string inputJson)
         {
             var folderStructure = new string[]
@@ -328,7 +328,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoBranch"": ""main"",
               ""SHA"": ""bb2223a3aa0472ff481f8e1850e7647dc39fbfdd""
         }")]
-        [Trait("Integration", "Reset")]
+        [Trait("Category", "Integration")]
         public async Task Scenario5(string inputJson)
         {
             var folderStructure = new string[]

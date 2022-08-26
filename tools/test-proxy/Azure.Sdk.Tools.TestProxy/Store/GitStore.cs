@@ -10,6 +10,7 @@ using System.Text;
 using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Console;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -26,11 +27,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     public class GitStore : IAssetsStore
     {
         private HttpClient httpClient = new HttpClient();
+        private IConsoleWrapper _consoleWrapper;
         public GitProcessHandler GitHandler = new GitProcessHandler();
         public string DefaultBranch = "main";
         public string FileName = "assets.json";
 
-        public GitStore() { }
+        public GitStore() 
+        {
+            _consoleWrapper = new ConsoleWrapper();
+        }
+
+        public GitStore(IConsoleWrapper consoleWrapper)
+        {
+            _consoleWrapper = consoleWrapper;
+        }
 
         public GitStore(GitProcessHandler processHandler) {
             GitHandler = processHandler;
@@ -119,15 +129,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Resets a cloned assets repository to the default contained within the assets.json targeted commit.
+        /// Resets a cloned assets repository to the default contained within the assets.json targeted commit. This
+        /// function should only be called by the user as the server will only use Restore.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
-        // This should only ever be called by the user?
-        public async Task Reset(string pathToAssetsJson) {
+        public async Task Reset(string pathToAssetsJson) 
+        {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = config.IsAssetsRepoInitialized();
-            var allowReset = true;
+            var allowReset = false;
 
             if (!initialized)
             {
@@ -138,7 +149,26 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                // TODO: Azure/azure-sdk-tools/3698
+                _consoleWrapper.WriteLine("There are pending git chances, are you sure you want to reset? [Y|N]");
+                while (true)
+                {
+                    string response = _consoleWrapper.ReadLine();
+                    response = response.ToLowerInvariant();
+                    if (response.Equals("y"))
+                    {
+                        allowReset = true;
+                        break;
+                    }
+                    else if (response.Equals("n"))
+                    {
+                        allowReset = false;
+                        break;
+                    }
+                    else
+                    {
+                        _consoleWrapper.WriteLine("Please answer [Y|N]");
+                    }
+                }
             }
 
             if (allowReset)
@@ -146,7 +176,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     GitHandler.Run("checkout *", config);
-                    GitHandler.Run("git clean -xdf", config);
+                    GitHandler.Run("clean -xdf", config);
                 }
                 catch(GitProcessException e)
                 {
@@ -186,7 +216,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (!string.IsNullOrWhiteSpace(diffResult.StdOut))
             {
-                var individualResults = diffResult.StdOut.Split(Environment.NewLine).Select(x => x.Trim()).ToArray();
+                // Normally, we'd use Environment.NewLine here but this doesn't work on Windows since its NewLine is \r\n and
+                // Git's NewLine is just \n
+                var individualResults = diffResult.StdOut.Split("\n").Select(x => x.Trim()).ToArray();
                 return individualResults;
             }
 

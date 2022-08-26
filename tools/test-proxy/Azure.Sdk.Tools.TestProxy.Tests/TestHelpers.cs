@@ -231,9 +231,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         /// Verify the version, inside the file, for a given file inside of a test folder.
         /// </summary>
         /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
-        /// <param name="fileName">The fileName whose version needs verification</param>
-        /// <param name="expectedVersion">The expected version in the file</param>
-        public static bool IncrementFileVersion(string testFolder, string fileName)
+        /// <param name="fileName">The file whose version needs to be incremented</param>
+        public static void IncrementFileVersion(string testFolder, string fileName)
         {
             string fullFileName = Path.Combine(testFolder, fileName);
             string stringVersion = "";
@@ -254,8 +253,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 File.WriteAllText(fullFileName, (++intVersion).ToString());
             }
+        }
 
-            return false;
+        /// <summary>
+        /// Create a new file with an initial version of 1
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        /// <param name="fileName">The file to be created</param>
+        public static void CreateFileWithInitialVersion(string testFolder, string fileName)
+        {
+            string fullFileName = Path.Combine(testFolder, fileName);
+
+            if (File.Exists(fullFileName))
+            {
+                string errorString = String.Format("FileName {0} already exists", fullFileName);
+                throw new ArgumentException(errorString);
+            }
+
+            File.WriteAllText(fullFileName, "1");
         }
     }
 }

@@ -11,12 +11,12 @@ using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 {
-    // Pull Test Scenarios involving https://github.com/Azure/azure-sdk-assets-integration
+    // Restore Test Scenarios involving https://github.com/Azure/azure-sdk-assets-integration
 
     // Setup:
     // The files live under https://github.com/Azure/azure-sdk-assets-integration/tree/main/pull/scenarios.
     // Each file contains nothing but a single version digit, which is used for verification purposes.
-    // There are 3 pull test scenarios and each uses a different SHA. The scenarios are detailed down
+    // There are restore test scenarios and each uses a different SHA. The scenarios are detailed down
     // below with their test functions.
     public class GitStoreIntegrationRestoreTests
     {
@@ -37,7 +37,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // Added file2.txt
         // Added file3.txt
         // Expect: each file should be version 1
-        [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
+        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
+        //[Theory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
@@ -90,6 +91,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         //         file3 version 2
         //         file4 version 1
         [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
+        //[Theory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
@@ -144,6 +146,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         //         file4 version 1
         //         file5 version 1
         [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
+        //[Theory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",

@@ -270,7 +270,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 throw new ArgumentException(errorString);
             }
 
-            File.WriteAllText(fullFileName, 1.ToString());
+            File.WriteAllText(fullFileName, "1");
         }
     }
 }

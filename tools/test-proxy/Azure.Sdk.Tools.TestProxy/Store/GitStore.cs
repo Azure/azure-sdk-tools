@@ -10,7 +10,7 @@ using System.Text;
 using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.ConsoleWrapper;
+using Azure.Sdk.Tools.TestProxy.Console;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -27,11 +27,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     public class GitStore : IAssetsStore
     {
         private HttpClient httpClient = new HttpClient();
+        private IConsoleWrapper _consoleWrapper;
         public GitProcessHandler GitHandler = new GitProcessHandler();
         public string DefaultBranch = "main";
         public string FileName = "assets.json";
 
-        public GitStore() { }
+        public GitStore() 
+        {
+            _consoleWrapper = new ConsoleWrapper();
+        }
+
+        public GitStore(IConsoleWrapper consoleWrapper)
+        {
+            _consoleWrapper = consoleWrapper;
+        }
 
         public GitStore(GitProcessHandler processHandler) {
             GitHandler = processHandler;
@@ -120,13 +129,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Resets a cloned assets repository to the default contained within the assets.json targeted commit.
+        /// Resets a cloned assets repository to the default contained within the assets.json targeted commit. This
+        /// function should only be called by the user as the server will only use Restore.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
-        /// <param name="consoleWrapper"></param>
         /// <returns></returns>
-        // This should only ever be called by the user?
-        public async Task Reset(string pathToAssetsJson, IConsoleWrapper consoleWrapper) 
+        public async Task Reset(string pathToAssetsJson) 
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = config.IsAssetsRepoInitialized();
@@ -141,11 +149,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                consoleWrapper.WriteLine("There are pending git chances, are you sure you want to reset? [Y|N]");
+                _consoleWrapper.WriteLine("There are pending git chances, are you sure you want to reset? [Y|N]");
                 while (true)
                 {
-                    string response = consoleWrapper.ReadLine();
-                    response = response.ToLower();
+                    string response = _consoleWrapper.ReadLine();
+                    response = response.ToLowerInvariant();
                     if (response.Equals("y"))
                     {
                         allowReset = true;
@@ -158,7 +166,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     }
                     else
                     {
-                        consoleWrapper.WriteLine("Please answer [Y|N]");
+                        _consoleWrapper.WriteLine("Please answer [Y|N]");
                     }
                 }
             }

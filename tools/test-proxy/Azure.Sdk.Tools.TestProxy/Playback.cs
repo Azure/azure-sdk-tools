@@ -3,7 +3,6 @@
 
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
-using Azure.Sdk.Tools.TestProxy.ConsoleWrapper;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -63,8 +62,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
 
-            ConsoleWrapperImpl consoleWrapper = new ConsoleWrapperImpl();
-            await _recordingHandler.Store.Reset(pathToAssets, consoleWrapper);
+            await _recordingHandler.Store.Reset(pathToAssets);
         }
 
         [HttpPost]

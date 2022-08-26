@@ -1,6 +1,6 @@
 using System.IO;
 using System.Threading.Tasks;
-using Azure.Sdk.Tools.TestProxy.ConsoleWrapper;
+using Azure.Sdk.Tools.TestProxy.Console;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -22,7 +22,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Given a configuration, determine the state of the resources present under contextPath, reset those resources to their "fresh" state.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
-        /// <param name="consoleWrapper"></param>
-        public abstract Task Reset(string pathToAssetsJson, IConsoleWrapper consoleWrapper);
+        public abstract Task Reset(string pathToAssetsJson);
     }
 }

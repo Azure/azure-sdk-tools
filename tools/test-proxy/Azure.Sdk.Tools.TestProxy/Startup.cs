@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 using System.Reflection;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Azure.Sdk.Tools.TestProxy.Store;
-using Azure.Sdk.Tools.TestProxy.ConsoleWrapper;
+using Azure.Sdk.Tools.TestProxy.Console;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
                 var assemblyVersion = assembly.GetName().Version;
 
-                Console.WriteLine($"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}-dev.{semanticVersion}");
+                System.Console.WriteLine($"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}-dev.{semanticVersion}");
 
                 Environment.Exit(0);
             }
@@ -80,8 +80,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         DefaultStore.Restore(assetsJsonPath);
                         break;
                     case "reset":
-                        ConsoleWrapperImpl consoleWrapper = new ConsoleWrapperImpl();
-                        DefaultStore.Reset(assetsJsonPath, consoleWrapper);
+                        DefaultStore.Reset(assetsJsonPath);
                         break;
                     default:
                         throw new Exception($"One must provide a valid value for argument \"command\". \"{command}\" is not a valid option.");
@@ -125,12 +124,12 @@ namespace Azure.Sdk.Tools.TestProxy
             if (dump)
             {
                 var config = app.Services?.GetService<IConfiguration>();
-                Console.WriteLine("Dumping Resolved Configuration Values:");
+                System.Console.WriteLine("Dumping Resolved Configuration Values:");
                 if (config != null)
                 {
                     foreach (var c in config.AsEnumerable())
                     {
-                        Console.WriteLine(c.Key + " = " + c.Value);
+                        System.Console.WriteLine(c.Key + " = " + c.Value);
                     }
                 }
             }
@@ -240,21 +239,21 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     if (newLine)
                     {
-                        Console.WriteLine(obj);
+                        System.Console.WriteLine(obj);
                     }
                     else
                     {
-                        Console.Write(obj);
+                        System.Console.Write(obj);
                         needsExtraNewline = true;
                     }
                 }
 
                 if (needsExtraNewline)
                 {
-                    Console.WriteLine();
+                    System.Console.WriteLine();
                 }
 
-                Console.WriteLine();
+                System.Console.WriteLine();
             });
 
             thread.Start();

@@ -1,7 +1,7 @@
-﻿namespace Azure.Sdk.Tools.TestProxy.ConsoleWrapper
+﻿namespace Azure.Sdk.Tools.TestProxy.Console
 {
     /// <summary>
-    /// IConsoleWrapper is just an interace around Console functions. This is necessary for testing
+    /// IConsoleWrapper is just an interface around Console functions. This is necessary for testing
     /// functions, like Reset, which require user input that we need to be able to control.
     /// </summary>
     public interface IConsoleWrapper

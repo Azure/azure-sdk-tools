@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.ConsoleWrapper;
+using Azure.Sdk.Tools.TestProxy.Console;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -22,15 +22,18 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
     // they've been restored to what they were in the original SHA.
     public class GitStoreIntegrationResetTests
     {
+        private GitStore _defaultStore;
+        private ConsoleWrapperTester _consoleWrapperTester;
+
         // Right now, this is necessary for testing purposes but the real server won't have
         // this issue.
         public GitStoreIntegrationResetTests()
         {
             var loggerFactory = new LoggerFactory();
             DebugLogger.ConfigureLogger(loggerFactory);
+            _consoleWrapperTester = new ConsoleWrapperTester();
+            _defaultStore = new GitStore(_consoleWrapperTester);
         }
-
-        private GitStore _defaultStore = new GitStore();
 
         // Scenario 1 - Changes to existing files only are detected and overridden with Reset response Y
         // 1. Restore from SHA fc54d000d0427c4a68bc8962d40f957f59e14577
@@ -39,7 +42,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // 4. Expect: files updated should be at version 2
         // 5. Reset with Y
         // 6. Expect: each file should be at it's initial version, the version that was in the original SHA
-        [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
+        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
         //[Theory]
         [InlineData(
         @"{
@@ -81,8 +84,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
 
                 // Reset the cloned assets, reponse for overwrite = Y
-                ConsoleWrapperTester consoleWrapperTester = new ConsoleWrapperTester("Y");
-                await _defaultStore.Reset(jsonFileLocation, consoleWrapperTester);
+                _consoleWrapperTester.SetReadLineResponse("Y");
+                await _defaultStore.Reset(jsonFileLocation);
 
                 // Verify all files have been set back to their original versions
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
@@ -102,7 +105,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // 4. Expect: files updated should be at version 2
         // 5. Reset with N
         // 6. Expect: file versions should be what they were in step 4
-        [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
+        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
         //[Theory]
         [InlineData(
         @"{
@@ -144,8 +147,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
 
                 // Reset the cloned assets, reponse for overwrite = N
-                ConsoleWrapperTester consoleWrapperTester = new ConsoleWrapperTester("N");
-                await _defaultStore.Reset(jsonFileLocation, consoleWrapperTester);
+                _consoleWrapperTester.SetReadLineResponse("N");
+                await _defaultStore.Reset(jsonFileLocation);
 
                 // Verify all files have been set back to their original versions
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -167,7 +170,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
         // 5. Reset with Y
         // 6. Expect: each file should be at it's initial version, the version that was in the original SHA
-        [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
+        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
         //[Theory]
         [InlineData(
         @"{
@@ -217,8 +220,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
 
                 // Reset the cloned assets, reponse for overwrite = Y
-                ConsoleWrapperTester consoleWrapperTester = new ConsoleWrapperTester("Y");
-                await _defaultStore.Reset(jsonFileLocation, consoleWrapperTester);
+                _consoleWrapperTester.SetReadLineResponse("Y");
+                await _defaultStore.Reset(jsonFileLocation);
 
                 // Verify the only files there are ones from the SHA
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -241,7 +244,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
         // 5. Reset with N
         // 6. Expect: same files and same versions as step 4
-        [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
+        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
         //[Theory]
         [InlineData(
         @"{
@@ -291,8 +294,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
 
                 // Reset the cloned assets, reponse for overwrite = N
-                ConsoleWrapperTester consoleWrapperTester = new ConsoleWrapperTester("N");
-                await _defaultStore.Reset(jsonFileLocation, consoleWrapperTester);
+                _consoleWrapperTester.SetReadLineResponse("N");
+                await _defaultStore.Reset(jsonFileLocation);
 
                 // Verify the only files were not restored from the SHA
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -316,7 +319,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // 6. Expect: same files and same versions as step 4
         // 7. Reset with Y
         // 8. Expect: same files and same versions as step 2
-        [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
+        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
         //[Theory]
         [InlineData(
         @"{
@@ -367,8 +370,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
 
                 // Reset the cloned assets, reponse for overwrite = N
-                ConsoleWrapperTester consoleWrapperTester = new ConsoleWrapperTester("N");
-                await _defaultStore.Reset(jsonFileLocation, consoleWrapperTester);
+                _consoleWrapperTester.SetReadLineResponse("N");
+                await _defaultStore.Reset(jsonFileLocation);
 
                 // Verify the files were not restored from the SHA
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -378,8 +381,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
 
                 // Reset the cloned assets, reponse for overwrite = Y
-                consoleWrapperTester.SetReadLineResponse("Y");
-                await _defaultStore.Reset(jsonFileLocation, consoleWrapperTester);
+                _consoleWrapperTester.SetReadLineResponse("Y");
+                await _defaultStore.Reset(jsonFileLocation);
 
                 // Verify files are from the SHA
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());

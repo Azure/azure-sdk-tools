@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // Added file2.txt
         // Added file3.txt
         // Expect: each file should be version 1
-        [Theory(Skip = "Skipping because we the integration branch permissions set for the test suite to run.")]
+        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
         //[Theory]
         [InlineData(
         @"{

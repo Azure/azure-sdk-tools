@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Azure.Sdk.Tools.TestProxy.ConsoleWrapper
+namespace Azure.Sdk.Tools.TestProxy.Console
 {
     /// <summary>
     /// Implementation of IConsoleWrapper that will be used to test commands, like Reset, that require user input.
@@ -8,6 +8,8 @@ namespace Azure.Sdk.Tools.TestProxy.ConsoleWrapper
     public class ConsoleWrapperTester : IConsoleWrapper
     {
         private string _readLineResponse;
+
+        public ConsoleWrapperTester() { }
 
         /// <summary>
         /// Overloaded constructor takes in a string that'll be returned as the ReadLine response.
@@ -28,11 +30,11 @@ namespace Azure.Sdk.Tools.TestProxy.ConsoleWrapper
         }
         public void Write(string message)
         {
-            Console.Write(message);
+            System.Console.Write(message);
         }
         public void WriteLine(string message)
         {
-            Console.WriteLine(message);
+            System.Console.WriteLine(message);
         }
         public string ReadLine()
         {

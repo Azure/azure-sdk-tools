@@ -24,6 +24,24 @@ pr:
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
 
+resources:
+  repositories:
+  - repository: azure-sdk-for-net
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-net
+    ref: main
+  - repository: azure-sdk-for-js
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-js
+    ref: main
+  - repository: azure-sdk-for-python
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-python
+    ref: main
+
 stages:
   - stage: IntegrationTests
     displayName: "Asset Sync Integration Tests"

@@ -134,7 +134,8 @@ stages:
             version: '6.x'
 
         - template: /eng/pipelines/templates/steps/use-python-version.yml
-          versionSpec: '3.9'
+          parameters:
+            versionSpec: '3.9'
         
         - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
 

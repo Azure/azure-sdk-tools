@@ -72,11 +72,6 @@ stages:
         CLONE_LOCATION: "$(Agent.BuildDirectory)/js_repo"
 
       steps:
-        - task: UseDotNet@2
-          displayName: 'Use .NET Core sdk 6.x'
-          inputs:
-            version: '6.x'
-
         - task: NodeTool@0
           inputs:
             versionSpec: "16.x"
@@ -128,11 +123,6 @@ stages:
         CLONE_LOCATION: "$(Agent.BuildDirectory)/python_repo"
 
       steps:
-        - task: UseDotNet@2
-          displayName: 'Use .NET Core sdk 6.x'
-          inputs:
-            version: '6.x'
-
         - template: /eng/pipelines/templates/steps/use-python-version.yml
           parameters:
             versionSpec: '3.9'

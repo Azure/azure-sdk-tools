@@ -8,38 +8,39 @@ steps:
   - pwsh: |
         ${{ parameters.templateRoot }}/eng/common/scripts/trust-proxy-certificate.ps1
     displayName: 'Language Specific Certificate Trust'
-
   - pwsh: |
-      dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release
-      dotnet tool install --global --prerelease --add-source $(Build.ArtifactStagingDirectory) azure.sdk.tools.testproxy
+      $version = $(Get-Content "${{ parameters.templateRoot }}/eng/common/testproxy/target_version.txt" -Raw).Trim()
+      $overrideVersion = "${{ parameters.targetVersion }}"
+      if($overrideVersion) {
+        Write-Host "Overriding default target proxy version of '$version' with override $overrideVersion."
+        $version = $overrideVersion
+      }
+      dotnet tool install azure.sdk.tools.testproxy `
+        --tool-path $(Build.BinariesDirectory)/test-proxy `
+        --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json `
+        --version $version
     displayName: "Install test-proxy"
-    workingDirectory: $(Build.SourcesDirectory)/tools/test-proxy
-
   - pwsh: |
       Write-Host "##vso[task.prependpath]$(Build.BinariesDirectory)/test-proxy"
     displayName: "Prepend path with test-proxy tool install location"
-
   - ${{ if eq(parameters.runProxy, 'true') }}:
     - pwsh: |
         Write-Host "##vso[task.setvariable variable=ASPNETCORE_Kestrel__Certificates__Default__Path]${{ parameters.templateRoot }}/eng/common/testproxy/dotnet-devcert.pfx"
         Write-Host "##vso[task.setvariable variable=ASPNETCORE_Kestrel__Certificates__Default__Password]password"
         Write-Host "##vso[task.setvariable variable=PROXY_MANUAL_START]true"
       displayName: 'Configure Kestrel and PROXY_MANUAL_START Variables'
-
     - pwsh: |
         Start-Process $(Build.BinariesDirectory)/test-proxy/test-proxy.exe `
           -ArgumentList "--storage-location ${{ parameters.rootFolder }}" `
           -NoNewWindow -PassThru -RedirectStandardOutput ${{ parameters.templateRoot }}/test-proxy.log
       displayName: 'Run the testproxy - windows'
       condition: and(succeeded(), eq(variables['Agent.OS'],'Windows_NT'))
-
     # nohup does NOT continue beyond the current session if you use it within powershell
     - bash: |
         nohup $(Build.BinariesDirectory)/test-proxy/test-proxy > ${{ parameters.templateRoot }}/test-proxy.log &
       displayName: "Run the testproxy - linux/mac"
       condition: and(succeeded(), ne(variables['Agent.OS'],'Windows_NT'))
       workingDirectory: "${{ parameters.rootFolder }}"
-
     - pwsh: |
         for ($i = 0; $i -lt 10; $i++) {
             try {
@@ -53,4 +54,3 @@ steps:
         Write-Error "Could not connect to test proxy."
         exit 1
       displayName: Test Proxy IsAlive
-

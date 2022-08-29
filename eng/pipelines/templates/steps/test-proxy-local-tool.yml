@@ -6,7 +6,10 @@ steps:
 
   - pwsh: |
       dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) -c Release
-      dotnet tool install --global --prerelease --add-source $(Build.ArtifactStagingDirectory) azure.sdk.tools.testproxy
+      dotnet tool install --tool-path $(Build.BinariesDirectory)/test-proxy `
+        --prerelease `
+        --add-source $(Build.ArtifactStagingDirectory) `
+        azure.sdk.tools.testproxy
     displayName: "Install test-proxy from local file"
     workingDirectory: $(Build.SourcesDirectory)/tools/test-proxy
 

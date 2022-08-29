@@ -26,15 +26,15 @@ variables:
 
 # resources:
 #   repositories:
+#     - repository: azure-sdk-for-js
+#       type: github
+#       endpoint: Azure
+#       name: Azure/azure-sdk-for-js
+#       ref: main
 #   - repository: azure-sdk-for-net
 #     type: github
 #     endpoint: Azure
 #     name: Azure/azure-sdk-for-net
-#     ref: main
-#   - repository: azure-sdk-for-js
-#     type: github
-#     endpoint: Azure
-#     name: Azure/azure-sdk-for-js
 #     ref: main
 #   - repository: azure-sdk-for-python
 #     type: github
@@ -43,54 +43,11 @@ variables:
 #     ref: main
 
 stages:
-  - stage: IntegrationTests
-    displayName: "Asset Sync Integration Tests"
-    jobs:
-    - job: Integration_Test
-
-      strategy:
-        matrix:
-          Windows:
-            Pool: 'azsdk-pool-mms-win-2019-general'
-            OS: 'Windows'
-          Linux:
-            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
-            OS: 'Linux'
-          Mac:
-            Pool: 'Azure Pipelines'
-            OS: 'Mac'
-
-      pool:
-        name: $(Pool)
-
-      steps:
-        - task: UseDotNet@2
-          displayName: 'Use .NET Core sdk 6.x'
-          inputs:
-            version: '6.x'
-
-        - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) --filter "Category=Integration" --logger trx $(Build.SourcesDirectory)/tools/test-proxy/'
-          displayName: 'Test'
-          env:
-            DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-            DOTNET_CLI_TELEMETRY_OPTOUT: 1
-            DOTNET_MULTILEVEL_LOOKUP: 0
-            PROXY_GIT_TOKEN: $(azuresdk-github-pat)
-        
-        - task: PublishTestResults@2
-          condition: succeededOrFailed()
-          inputs:
-            testResultsFiles: '**/*.trx'
-            testRunTitle: '$(OS) AssetSync Tests against $(DotNetCoreVersion)'
-            testResultsFormat: 'VSTest'
-            mergeTestResults: true
-
-  # TODO: complete repo tests
-  # - stage: RepoUnitTests
-  #   displayName: Repo-Specific Unit Tests
-  #   dependsOn: []
+  # temporarily disabled while other stage is worked on.
+  # - stage: IntegrationTests
+  #   displayName: "Asset Sync Integration Tests"
   #   jobs:
-  #   - job: Repo_Unit_Test
+  #   - job: Integration_Test
 
   #     strategy:
   #       matrix:
@@ -113,18 +70,81 @@ stages:
   #         inputs:
   #           version: '6.x'
 
-  #       - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) --logger trx $(Build.SourcesDirectory)/tools/test-proxy/'
+  #       - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) --filter "Category=Integration" --logger trx $(Build.SourcesDirectory)/tools/test-proxy/'
   #         displayName: 'Test'
   #         env:
   #           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
   #           DOTNET_CLI_TELEMETRY_OPTOUT: 1
   #           DOTNET_MULTILEVEL_LOOKUP: 0
+  #           PROXY_GIT_TOKEN: $(azuresdk-github-pat)
         
   #       - task: PublishTestResults@2
   #         condition: succeededOrFailed()
   #         inputs:
   #           testResultsFiles: '**/*.trx'
-  #           testRunTitle: '$(OS) Repo Tests against $(DotNetCoreVersion)'
+  #           testRunTitle: '$(OS) AssetSync Tests against $(DotNetCoreVersion)'
   #           testResultsFormat: 'VSTest'
   #           mergeTestResults: true
+
+  - stage: RepoUnitTests
+    displayName: Repo-Specific Unit Tests
+    dependsOn: []
+    jobs:
+    - job: JS Utils Tests
+
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2019-general'
+            OS: 'Windows'
+          Linux:
+            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            OS: 'Linux'
+          Mac:
+            Pool: 'Azure Pipelines'
+            OS: 'Mac'
+
+      pool:
+        name: $(Pool)
+
+      variables:
+        JS_REPO: "Azure/azure-sdk-for-js"
+        CLONE_LOCATION: "$(Agent.BuildDirectory)/js_repo"
+
+      steps:
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core sdk 6.x'
+          inputs:
+            version: '6.x'
+
+        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: true
+
+        - pwsh: |
+            git clone https://github.com/$(JS_REPO) $(CLONE_LOCATION) --depth 1
+          displayName: Clone Repo
+
+        - pwsh: |
+            npm install -g @microsoft/rush
+            rush update && rush build -t .
+          displayName: 'Install Rush, build and install test-utils'
+          workingDirectory: $(CLONE_LOCATION)/sdk/test-utils/
+          env:
+            PROXY_MANUAL_START: "true"
+
+        - pwsh: |
+            rushx test:node
+          displayName: 'Invoke Tests'
+          workingDirectory: $(CLONE_LOCATION)/sdk/test-util/
+          env:
+            PROXY_MANUAL_START: "true"
+
+        - task: PublishTestResults@2
+          condition: succeededOrFailed()
+          inputs:
+            testResultsFiles: '**/*.trx'
+            testRunTitle: '$(OS) Repo Tests against $(DotNetCoreVersion)'
+            testResultsFormat: 'VSTest'
+            mergeTestResults: true
 

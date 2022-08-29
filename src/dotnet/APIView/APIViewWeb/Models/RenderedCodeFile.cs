@@ -8,6 +8,10 @@ namespace APIViewWeb.Models
 {
     public class RenderedCodeFile
     {
+        private CodeLine[] _rendered;
+        private CodeLine[] _renderedReadOnly;
+        private CodeLine[] _renderedText;
+
         public RenderedCodeFile(CodeFile codeFile)
         {
             CodeFile = codeFile;
@@ -17,18 +21,37 @@ namespace APIViewWeb.Models
 
         public CodeLine[] Render()
         {
-            //Always render to avoid cach thrashing
-            return CodeFileHtmlRenderer.Normal.Render(CodeFile);
+            if(_rendered == null)
+            {
+                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile);
+            }
+
+            return _rendered;
         }
 
         public CodeLine[] RenderReadOnly()
         {
-            return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
+            if (_renderedReadOnly == null)
+            {
+                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
+            }
+
+            return _renderedReadOnly;
         }
 
         internal CodeLine[] RenderText(bool skipDiff = false)
         {
-            return CodeFileRenderer.Instance.Render(CodeFile, enableSkipDiff: skipDiff);
+            if(skipDiff)
+            {
+                return CodeFileRenderer.Instance.Render(CodeFile, enableSkipDiff: skipDiff);
+            }
+
+            if (_renderedText == null)
+            {
+                _renderedText = CodeFileRenderer.Instance.Render(CodeFile);
+            }
+
+            return _renderedText;
         }
     }
 }

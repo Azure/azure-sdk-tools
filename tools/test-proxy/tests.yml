@@ -138,6 +138,8 @@ stages:
             versionSpec: '3.9'
         
         - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: false
 
         - pwsh: |
             git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1

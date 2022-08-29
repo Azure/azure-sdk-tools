@@ -131,18 +131,18 @@ stages:
           displayName: Clone Repo
 
         - pwsh: |
-            cd $(CLONE_LOCATION)/sdk/test-utils/
             npm install -g @microsoft/rush@5.48.0
             rush update
             rush build -t .
-          displayName: 'Install Rush, build and install test-utils'
+          displayName: 'Install Rush, build and install proxy tests project'
+          workingDirectory: $(CLONE_LOCATION)/sdk/test-utils/recorder
           env:
             PROXY_MANUAL_START: "true"
 
         - pwsh: |
             rushx test:node
           displayName: 'Invoke Tests'
-          workingDirectory: $(CLONE_LOCATION)/sdk/test-util/
+          workingDirectory: $(CLONE_LOCATION)/sdk/test-utils/recorder
           env:
             PROXY_MANUAL_START: "true"
 

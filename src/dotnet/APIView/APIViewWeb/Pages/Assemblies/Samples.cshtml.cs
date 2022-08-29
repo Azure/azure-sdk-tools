@@ -107,7 +107,7 @@ namespace APIViewWeb.Pages.Assemblies
                     SampleContent = Array.Empty<CodeLineModel>();
                 }
             }
-            catch (CosmosException e)
+            catch (CosmosException)
             {
                 // Error gracefully
                 Sample = new UsageSampleModel(null, null);

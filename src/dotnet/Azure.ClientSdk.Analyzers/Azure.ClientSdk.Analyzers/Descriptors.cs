@@ -16,8 +16,8 @@ namespace Azure.ClientSdk.Analyzers
 
         public static DiagnosticDescriptor AZC0002 = new DiagnosticDescriptor(
             nameof(AZC0002),
-            "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called cancellationToken.",
-            "Client method should have cancellationToken as the last optional parameter (both name and it being optional matters)",
+            "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called cancellationToken or RequestContext parameter called context.",
+            "Client method should have cancellationToken or context as the last optional parameter (both name and it being optional matters)",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-cancellation"
         );

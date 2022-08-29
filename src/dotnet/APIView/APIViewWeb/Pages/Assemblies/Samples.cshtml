@@ -39,11 +39,11 @@ else
                         <div class="usage-sample">
                             <i> Sample uploaded by <strong> <a username="@Model.Sample.Author"> @Model.Sample.Author </a></strong></i>
                             <span class="float-right">
-                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#updateModel">Edit Sample</button>
-                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add new Sample</button>
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#updateModel">Edit Revision</button>
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Add new Revision</button>
                                 @if (Model.Sample.Author == User.GetGitHubLogin())
                                 {
-                                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModel">Delete Sample</button>
+                                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModel">Delete Revision</button>
                                 }
                             </span>
                             <div class="col-md-4 mt-1 p-0 mx-md-1">
@@ -131,7 +131,7 @@ else
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-                                            <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;">Add sample</button>
+                                            <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;">Add Revision</button>
                                         </div>
                                     </form>
                                 </div>
@@ -185,7 +185,7 @@ else
                             <input asp-for="Upload.Deleting" hidden type="text" value="@true" />
                             <input asp-for="Upload.SampleId" hidden type="text" value="@Model.Sample.SampleId" />
                             <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-                            <button type="submit" name="submit" value="Submit" class="btn btn-danger">Remove Sample</button>
+                            <button type="submit" name="submit" value="Submit" class="btn btn-danger">Remove Revision</button>
                         </form>
                     </div>
                 </div>
@@ -223,7 +223,7 @@ else
                                         <p class="text-muted"> This will create a new revision of the sample. </p>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-                                            <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;">Update sample</button>
+                                            <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;">Update Revision</button>
                                         </div>
                                     </form>
                                 </div>

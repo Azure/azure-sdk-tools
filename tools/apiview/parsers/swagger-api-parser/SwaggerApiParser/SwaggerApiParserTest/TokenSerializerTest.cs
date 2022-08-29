@@ -20,7 +20,8 @@ public class TokenSerializerTest
     public Task TestTokenSerializerPrimitiveType()
     {
         const string text = "hello";
-        var ret = TokenSerializer.TokenSerialize(text);
+        SerializeContext context = new SerializeContext();
+        var ret = TokenSerializer.TokenSerialize(text, context);
         
         Assert.Equal(CodeFileTokenKind.Whitespace, ret[0].Kind);
         Assert.Equal(CodeFileTokenKind.Literal, ret[1].Kind);
@@ -32,8 +33,9 @@ public class TokenSerializerTest
     public Task TestTokenSerializerGeneral()
     {
         var general = new SwaggerApiViewGeneral {swagger = "2.0", info = {description = "sample", title = "sample swagger"}};
+        SerializeContext context = new SerializeContext();
 
-        var ret = TokenSerializer.TokenSerialize(general);
+        var ret = TokenSerializer.TokenSerialize(general, context);
 
         // Assert first line format. 
         Assert.Equal(CodeFileTokenKind.Whitespace, ret[0].Kind);
@@ -51,7 +53,9 @@ public class TokenSerializerTest
         var general = new SwaggerApiViewGeneral {swagger = "2.0", info = {description = "sample", title = "sample swagger"}, consumes = new List<string>{"application/json", "text/json"}};
         this.output.WriteLine(general.ToString());
 
-        var ret = TokenSerializer.TokenSerialize(general);
+        SerializeContext context = new SerializeContext();
+
+        var ret = TokenSerializer.TokenSerialize(general, context);
         
         return Task.CompletedTask;
     }

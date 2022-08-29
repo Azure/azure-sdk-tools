@@ -16,17 +16,17 @@ public class XMsParameterizedHost : ITokenSerializable
         List<CodeFileToken> ret = new List<CodeFileToken>();
         if (hostTemplate != null)
         {
-            ret.AddRange(TokenSerializer.KeyValueTokens("hostTemplate", hostTemplate));
+            ret.AddRange(TokenSerializer.KeyValueTokens("hostTemplate", hostTemplate, true, context.IteratorPath.CurrentNextPath("hostTemplate")));
         }
 
         if (useSchemePrefix != null)
         {
-            ret.AddRange(TokenSerializer.KeyValueTokens("useSchemePrefix", useSchemePrefix.ToString()));
+            ret.AddRange(TokenSerializer.KeyValueTokens("useSchemePrefix", useSchemePrefix.ToString(), true,context.IteratorPath.CurrentNextPath("useSchemePrefix")));
         }
 
         if (positionInOperation != null)
         {
-            ret.AddRange(TokenSerializer.KeyValueTokens("positionInOperation", positionInOperation));
+            ret.AddRange(TokenSerializer.KeyValueTokens("positionInOperation", positionInOperation, true, context.IteratorPath.CurrentNextPath("positionInOperation")));
         }
 
         if (parameters != null && parameters.Count>0)

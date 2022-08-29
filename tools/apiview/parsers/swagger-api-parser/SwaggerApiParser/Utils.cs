@@ -174,5 +174,20 @@ namespace SwaggerApiParser
         {
             return Ref == null ? "" : Ref.Split("/").Last();
         }
+
+        public static string GetRefDefinitionIdPath(string Ref)
+        {
+            if (Ref.Contains("parameters"))
+            {
+                return $"-Parameters-{GetDefinitionType(Ref)}";
+            }
+
+            if (Ref.Contains("definitions"))
+            {
+                return $"-Definitions-{GetDefinitionType(Ref)}";
+            }
+
+            return "";
+        }
     }
 }

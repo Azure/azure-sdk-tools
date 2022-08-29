@@ -30,7 +30,7 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
 
-        ret.AddRange(TokenSerializer.KeyValueTokens("swagger", swagger));
+        ret.AddRange(TokenSerializer.KeyValueTokens("swagger", swagger, true, context.IteratorPath.CurrentNextPath("swagger")));
         ret.Add(new CodeFileToken("info", CodeFileTokenKind.FoldableParentToken));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
@@ -39,19 +39,19 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
         if (schemes != null)
         {
             var schemesStr = String.Join(",", schemes);
-            ret.AddRange(TokenSerializer.KeyValueTokens("schemes", schemesStr));
+            ret.AddRange(TokenSerializer.KeyValueTokens("schemes", schemesStr, true,context.IteratorPath.CurrentNextPath("schemes")));
         }
 
         if (consumes != null)
         {
             var consumesStr = String.Join(",", consumes);
-            ret.AddRange(TokenSerializer.KeyValueTokens("consumes", consumesStr));
+            ret.AddRange(TokenSerializer.KeyValueTokens("consumes", consumesStr, true, context.IteratorPath.CurrentNextPath("consumes")));
         }
 
         if (produces != null)
         {
             var producesStr = String.Join(",", produces);
-            ret.AddRange(TokenSerializer.KeyValueTokens("produces", producesStr));
+            ret.AddRange(TokenSerializer.KeyValueTokens("produces", producesStr, true, context.IteratorPath.CurrentNextPath("produces")));
         }
 
         if (security != null)
@@ -65,7 +65,7 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
                 }
             }
 
-            ret.AddRange(TokenSerializer.KeyValueTokens("security", securityStr));
+            ret.AddRange(TokenSerializer.KeyValueTokens("security", securityStr, true, context.IteratorPath.CurrentNextPath("secuirty")));
         }
 
         if (securityDefinitions != null)

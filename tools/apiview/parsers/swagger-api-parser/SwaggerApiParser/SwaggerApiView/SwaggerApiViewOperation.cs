@@ -64,7 +64,7 @@ public class SwaggerApiViewOperation : ITokenSerializable
         ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
         ret.Add(TokenSerializer.NewLine());
        
-        ret.Add(new CodeFileToken("tags", CodeFileTokenKind.Keyword));
+        ret.Add(TokenSerializer.NavigableToken("tags", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("tags")));
         ret.Add(TokenSerializer.Colon());
         ret.Add(new CodeFileToken(string.Join(",", tags), CodeFileTokenKind.Literal));
         ret.Add(TokenSerializer.NewLine());
@@ -73,7 +73,7 @@ public class SwaggerApiViewOperation : ITokenSerializable
         if (this.xMsLongRunningOperation)
         {
             // ret.Add(TokenSerializer.Intent(context.intent));
-            ret.Add(new CodeFileToken("x-ms-long-running-operation", CodeFileTokenKind.Keyword));
+            ret.Add(TokenSerializer.NavigableToken("x-ms-long-running-operation", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-long-running-operation")));
             ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken("true", CodeFileTokenKind.Literal));
             ret.Add(TokenSerializer.NewLine());
@@ -81,7 +81,7 @@ public class SwaggerApiViewOperation : ITokenSerializable
 
         if (this.xMSPageable != null)
         {
-            ret.Add(new CodeFileToken("x-ms-pageable", CodeFileTokenKind.Keyword));
+            ret.Add(TokenSerializer.NavigableToken("x-ms-pageable", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-pageable")));
             ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken(this.xMSPageable.nextLinkName, CodeFileTokenKind.Literal));
             ret.Add(TokenSerializer.NewLine());

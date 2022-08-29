@@ -24,8 +24,8 @@ public class SwaggerApiViewGlobalParameters : SortedDictionary<string, SwaggerAp
     public NavigationItem BuildNavigationItem(IteratorPath iteratorPath = null)
     {
         iteratorPath ??= new IteratorPath();
-        NavigationItem ret = new NavigationItem() {Text = "Parameters"};
         iteratorPath.Add("Parameters");
+        NavigationItem ret = new NavigationItem() {Text = "Parameters", NavigationId = iteratorPath.CurrentPath()};
         List<NavigationItem> children = new List<NavigationItem>();
         foreach (var kv in this)
         {

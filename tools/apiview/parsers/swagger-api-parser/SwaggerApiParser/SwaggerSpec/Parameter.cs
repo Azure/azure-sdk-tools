@@ -3,29 +3,27 @@ using APIView;
 
 namespace SwaggerApiParser;
 
-public class Parameter: ITokenSerializable
+public class Parameter : ITokenSerializable
 {
     public string name { get; set; }
     public bool required { get; set; }
     public string description { get; set; }
-    
+
     public string type { get; set; }
-    
+
     public string format { get; set; }
 
     public BaseSchema schema { get; set; }
-    
+
     [JsonPropertyName("x-ms-parameter-location")]
     public string xMsParameterLocation { get; set; }
-    
+
     [JsonPropertyName("x-ms-skip-url-encoding")]
     public bool xMsSkipUrlEncoding { get; set; }
-    
+
     [JsonPropertyName("x-ms-parameter-grouping")]
     public XMSParameterGrouping XmsParameterGrouping { get; set; }
-    
-    
-    
+
 
     [JsonPropertyName("$ref")] public string Ref { get; set; }
 
@@ -38,7 +36,7 @@ public class Parameter: ITokenSerializable
 
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
-        return TokenSerializer.TokenSerialize(this, 0);
+        return TokenSerializer.TokenSerialize(this, context);
     }
 }
 

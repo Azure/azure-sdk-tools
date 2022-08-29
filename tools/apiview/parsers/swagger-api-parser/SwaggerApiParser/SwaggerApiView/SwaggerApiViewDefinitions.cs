@@ -9,8 +9,8 @@ public class SwaggerApiViewDefinitions : SortedDictionary<String, Definition>, I
     public NavigationItem BuildNavigationItem(IteratorPath iteratorPath = null)
     {
         iteratorPath ??= new IteratorPath();
-        NavigationItem ret = new NavigationItem() {Text = "Definitions"};
         iteratorPath.Add("Definitions");
+        NavigationItem ret = new NavigationItem() {Text = "Definitions", NavigationId = iteratorPath.CurrentPath()};
         List<NavigationItem> children = new List<NavigationItem>();
         foreach (var kv in this)
         {

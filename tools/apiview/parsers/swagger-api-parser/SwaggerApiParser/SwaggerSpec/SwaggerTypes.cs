@@ -306,7 +306,7 @@ namespace SwaggerApiParser
         public CodeFileToken[] TokenSerialize(SerializeContext context)
         {
             string[] columns = new[] {"Model", "Field", "Type/Format", "Keywords", "Description"};
-            this.TokenSerializePropertyIntoTableItems(context, ref this.tableItems, true);
+            this.TokenSerializePropertyIntoTableItems(context, ref this.tableItems);
             var tableRet = new List<CodeFileToken>();
 
             var tableRows = new List<CodeFileToken>();

@@ -28,6 +28,14 @@ namespace SwaggerApiParser
             }
         }
 
+        public string rootPath()
+        {
+            LinkedList<string> root = new LinkedList<string>();
+            root.AddLast("#");
+            root.AddLast(this.paths.ElementAt(1));
+            return Utils.BuildDefinitionId(root);
+        }
+
         public void Add(string node)
         {
             this.paths.AddLast(node);
@@ -91,7 +99,7 @@ namespace SwaggerApiParser
 
         private static int intentNumber = 0;
 
-        public static CodeFileToken[] TokenSerializeAsJson(JsonElement jsonElement, bool isFoldable=false)
+        public static CodeFileToken[] TokenSerializeAsJson(JsonElement jsonElement, bool isFoldable = false)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
             Visitor visitor = new Visitor();
@@ -100,12 +108,14 @@ namespace SwaggerApiParser
             {
                 ret.Add(TokenSerializer.FoldableContentStart());
             }
+
             ret.AddRange(visitor.Writer.ToTokens());
             ret.Add(TokenSerializer.NewLine());
             if (isFoldable)
             {
                 ret.Add(TokenSerializer.FoldableContentEnd());
             }
+
             return ret.ToArray();
         }
 
@@ -115,7 +125,7 @@ namespace SwaggerApiParser
          * One line format: <intent> <token 1> <token 2> ... <newline>
          * 
          */
-        public static CodeFileToken[] TokenSerialize(object obj, int intent = 0, String[] serializePropertyName = null)
+        public static CodeFileToken[] TokenSerialize(object obj, SerializeContext context, String[] serializePropertyName = null)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
             Type t = obj.GetType();
@@ -141,13 +151,22 @@ namespace SwaggerApiParser
 
                 Type propType = prop.PropertyType;
                 // ret.Add(Intent(intent));
-                ret.Add(new CodeFileToken(prop.Name, CodeFileTokenKind.Literal));
+                ret.Add(new CodeFileToken(prop.Name, CodeFileTokenKind.Literal){DefinitionId = context.IteratorPath.CurrentNextPath(prop.Name)});
                 ret.Add(Colon());
+                string navigationToId = null;
+                var valueKind = CodeFileTokenKind.Literal; 
+
+                if (prop.Name == "Ref")
+                {
+                    navigationToId = context.IteratorPath.rootPath() + Utils.GetRefDefinitionIdPath(value.ToString());
+                    valueKind = CodeFileTokenKind.MemberName;
+
+                }
 
 
                 if (propType.IsPrimitive || propType == typeof(Decimal) || propType == typeof(String))
                 {
-                    ret.Add(new CodeFileToken(value.ToString(), CodeFileTokenKind.Literal));
+                    ret.Add(new CodeFileToken(value.ToString(), valueKind) { NavigateToId = navigationToId});
                     ret.Add(NewLine());
                 }
                 else if (propType.IsGenericType || propType.IsArray)
@@ -155,14 +174,14 @@ namespace SwaggerApiParser
                     ret.Add(NewLine());
                     foreach (var item in (IEnumerable)value)
                     {
-                        var child = TokenSerializer.TokenSerialize(item, intent + 1);
+                        var child = TokenSerializer.TokenSerialize(item, new SerializeContext(intent: context.intent + 1, context.IteratorPath));
                         ret.AddRange(child);
                     }
                 }
                 else
                 {
                     ret.Add(NewLine());
-                    var child = TokenSerializer.TokenSerialize(value, intent + 1);
+                    var child = TokenSerializer.TokenSerialize(value, new SerializeContext(intent: context.intent + 1, context.IteratorPath));
                     ret.AddRange(child);
                 }
             }
@@ -173,7 +192,7 @@ namespace SwaggerApiParser
         public static CodeFileToken[] TokenSerializeAsTableFormat(int rowCount, int columnCount, IEnumerable<String> columnNames, CodeFileToken[] rows)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
-            
+
             ret.Add(TokenSerializer.TableBegin());
             ret.AddRange(TokenSerializer.TableSize(rowCount, columnCount));
             ret.AddRange(columnNames.Select(TokenSerializer.TableColumnName));
@@ -224,16 +243,17 @@ namespace SwaggerApiParser
             return ret;
         }
 
-        public static CodeFileToken[] KeyValueTokens(String key, String value, bool newLine=true)
+        public static CodeFileToken[] KeyValueTokens(String key, String value, bool newLine = true, string keyDefinitionId = null)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
-            ret.Add(new CodeFileToken(key, CodeFileTokenKind.Literal));
+            ret.Add(TokenSerializer.NavigableToken(key, CodeFileTokenKind.Literal, keyDefinitionId));
             ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken(value, CodeFileTokenKind.Literal));
             if (newLine)
             {
                 ret.Add(TokenSerializer.NewLine());
             }
+
             return ret.ToArray();
         }
 

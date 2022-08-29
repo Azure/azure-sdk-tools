@@ -16,13 +16,13 @@ public class Info : ITokenSerializable
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
         ret.Add(TokenSerializer.FoldableContentStart());
-        ret.AddRange(TokenSerializer.KeyValueTokens("title", title));
-        ret.AddRange(TokenSerializer.KeyValueTokens("version", version));
-        ret.AddRange(TokenSerializer.KeyValueTokens("description", description));
+        ret.AddRange(TokenSerializer.KeyValueTokens("title", title, true, context.IteratorPath.CurrentNextPath("title")));
+        ret.AddRange(TokenSerializer.KeyValueTokens("version", version, true, context.IteratorPath.CurrentNextPath("version")));
+        ret.AddRange(TokenSerializer.KeyValueTokens("description", description, true, context.IteratorPath.CurrentNextPath("description")));
 
         if (termsOfService != null)
         {
-            ret.AddRange(TokenSerializer.KeyValueTokens("termsOfService", termsOfService));
+            ret.AddRange(TokenSerializer.KeyValueTokens("termsOfService", termsOfService, true, context.IteratorPath.CurrentNextPath("termsOfService")));
         }
 
         if (externalDocs != null)

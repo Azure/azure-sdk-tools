@@ -36,7 +36,11 @@ public class SwaggerApiViewParameter : ITokenSerializable
         List<CodeFileToken> ret = new List<CodeFileToken>();
         if (this.IsRefObj())
         {
-            return TokenSerializer.TokenSerialize(this, context.intent, new string[] {"Ref"});
+            ret.Add(TokenSerializer.NavigableToken("ref", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("ref")));
+            ret.Add(TokenSerializer.Colon());
+            string navigationToId = context.IteratorPath.rootPath() + Utils.GetRefDefinitionIdPath(this.Ref);
+            ret.Add(new CodeFileToken(this.Ref, CodeFileTokenKind.Literal){NavigateToId = navigationToId});
+            return ret.ToArray();
         }
 
         // ret.Add(TokenSerializer.Intent(context.intent));

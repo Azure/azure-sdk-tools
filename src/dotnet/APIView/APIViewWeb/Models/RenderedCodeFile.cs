@@ -21,7 +21,7 @@ namespace APIViewWeb.Models
 
         public CodeLine[] Render()
         {
-            if(_rendered == null)
+            if (_rendered == null)
             {
                 _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile);
             }
@@ -41,7 +41,7 @@ namespace APIViewWeb.Models
 
         internal CodeLine[] RenderText(bool skipDiff = false)
         {
-            if(skipDiff)
+            if (skipDiff)
             {
                 return CodeFileRenderer.Instance.Render(CodeFile, enableSkipDiff: skipDiff);
             }

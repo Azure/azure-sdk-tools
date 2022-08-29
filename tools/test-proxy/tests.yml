@@ -120,7 +120,7 @@ stages:
         - task: NodeTool@0
           inputs:
             versionSpec: "16.x"
-          displayName: "Use Node ${{ parameters.NodeVersion }}"
+          displayName: "Use Node 16.x"
 
         - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
           parameters:

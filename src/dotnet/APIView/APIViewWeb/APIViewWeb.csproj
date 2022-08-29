@@ -26,11 +26,14 @@
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="CsvHelper" Version="27.2.1" />
-    <!-- Adding NU1701 suppression as these two libraries have not updated to more modern versions of .net, although in testing they work as required. -->
+    <!-- Adding NU1701 suppression as these three libraries have not updated to more modern versions of .net, although in testing they work as required. -->
     <PackageReference Include="Markdig" Version="0.30.3">
       <NoWarn>NU1701</NoWarn>
     </PackageReference>
     <PackageReference Include="Markdig.SyntaxHighlighting" Version="1.1.7">
+      <NoWarn>NU1701</NoWarn>
+    </PackageReference>
+    <PackageReference Include="ColorCode.Portable" Version="1.0.3">
       <NoWarn>NU1701</NoWarn>
     </PackageReference>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.12.0-beta4" />

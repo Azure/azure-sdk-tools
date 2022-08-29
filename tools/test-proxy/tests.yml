@@ -90,7 +90,7 @@ stages:
     displayName: Repo-Specific Unit Tests
     dependsOn: []
     jobs:
-    - job: JS Utils Tests
+    - job: Test_JS_Utils
 
       strategy:
         matrix:

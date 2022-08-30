@@ -1,4 +1,4 @@
-﻿﻿/* Themes
+﻿﻿ /* Themes
 ------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .light-theme {
     --background-color: #fff;
@@ -23,7 +23,9 @@
     --icon-color-filter: invert(0.0);
     --keyword-color: blue;
     --class-color: #007e79;
+    --name-color: var(---text-color);
     --code-color: #d1377e;
+    --code-comment: green;
     --code-diagnostics-error-color: lightpink;
     --code-diagnostics-warn-color: lightyellow;
     --code-diagnostics-info-color: lightblue;
@@ -52,11 +54,45 @@
     --icon-color-filter: invert(0.5);
     --keyword-color: #ff7b72;
     --class-color: #d2a8ff;
+    --name-color: var(---text-color);
     --code-color: #db3984;
+    --code-comment: green;
     --code-diagnostics-error-color: darkmagenta;
     --code-diagnostics-warn-color: #846007;
     --code-diagnostics-info-color: darkblue;
 }
+
+.dark-solarized-theme {
+    --background-color: #2b2b2b;
+    --border-color: #30363d;
+    --text-color: white;
+    --bg-light: #3c3f41;
+    --bg-light-hover: #30363d;
+    --link-color: #bbbbbb;
+    --link-color-hover: #f4c56c;
+    --btn-outline-dark: #67a4f2;
+    --monochrome-8: rgba(255, 255, 255, 8%);
+    --monochrome-2: rgba(255, 255, 255, 0.2);
+    --monochrome-25: rgba(255, 255, 255, 0.25);
+    --monochrome-19: rgba(255, 255, 255, 0.19);
+    --monochrome-15: rgba(255, 255, 255, 0.15);
+    --monochrome-75: rgba(255, 255, 255, .075);
+    --monochrome-5: rgba(255, 255, 255, 0.5);
+    --monochrome-03: rgba(255, 255, 255, 0.03);
+    --monochrome-125: rgba(255, 255, 255, 0.125);
+    --focus-shadow: rgba(0, 123, 255, 0.642);
+    --muted-color: #717a83;
+    --icon-color-filter: invert(0.5);
+    --keyword-color: #d57c32;
+    --class-color: #ffc66d;
+    --name-color: #a9b7c6;
+    --code-color: #db3984;
+    --code-comment: #8a9898;
+    --code-diagnostics-error-color: #ff4c59;
+    --code-diagnostics-warn-color: #e3a710;
+    --code-diagnostics-info-color: #5197f0;
+}
+
 /* Mixins, Media, Include and Keyframes
 ------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 @mixin placeholder 
@@ -408,7 +444,7 @@ code {
 }
 
 .code-comment {
-    color: green;
+    color: var(--code-comment);
 }
 
 .enum {
@@ -419,8 +455,8 @@ code {
     color: var(--keyword-color);
 }
 
-.name {
-    color: var(--text-color);
+.name, a.name {
+    color: var(--name-color);
 }
 
 .specialName {

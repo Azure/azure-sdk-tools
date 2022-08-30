@@ -11,7 +11,7 @@ from azure.core import CaseInsensitiveEnumMeta
 from collections.abc import Sequence
 from enum import Enum, EnumMeta
 import functools
-from typing import Any, overload, TypedDict, Union, Optional, Generic, TypeVar
+from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, TypeAlias
 
 from ._mixin import MixinWithOverloads
 
@@ -267,3 +267,6 @@ class GenericStack(Generic[T]):
     def empty(self) -> bool:
         return not self.items
 
+AliasUnion = NewType('AliasUnion', Union[str, int, bool])
+
+AliasNewType = NewType('AliasNewType', Dict[str, str])

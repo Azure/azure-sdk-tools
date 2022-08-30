@@ -8,6 +8,8 @@
 
 # pylint: disable=wrong-import-position
 from ._models import (
+    AliasNewType,
+    AliasUnion,
     DocstringClass,
     FakeError,
     FakeObject,
@@ -34,6 +36,8 @@ from ._dataclasses import (
 )
 
 __all__ = (
+    "AliasNewType",
+    "AliasUnion",
     "DataClassSimple",
     "DataClassWithFields",
     "DataClassDynamic",

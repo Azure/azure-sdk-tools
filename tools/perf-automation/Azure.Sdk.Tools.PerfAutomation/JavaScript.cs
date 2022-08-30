@@ -96,7 +96,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            IDictionary<string, string> packageVersions, string testName, string arguments, string context)
+            IDictionary<string, string> packageVersions, string testName, string arguments, string context, bool profiling)
         {
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();

@@ -14,6 +14,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private string PerfCoreProjectFile => Path.Combine(WorkingDirectory, "common", "perf-test-core", "pom.xml");
 
+        private static int profileCount = 0;
+
         private static readonly Dictionary<string, string> _buildEnvironment = new Dictionary<string, string>()
         {
             // Prevents error "InvocationTargetException: Java heap space" in azure-storage-file-datalake when compiling azure-storage-perf
@@ -75,9 +77,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            IDictionary<string, string> packageVersions, string testName, string arguments, string context)
+            IDictionary<string, string> packageVersions, string testName, string arguments, string context, bool profiling)
         {
-            var processArguments = $"-XX:+CrashOnOutOfMemoryError -jar {context} -- {testName} {arguments}";
+            // '-XX:+UnlockCommercialFeatures' isn't required and fails when used in a version higher than Java 8, need to inspect the Java version to determine if it should be added.
+            var profilingConfig = !profiling ? "" : $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename=profile_java_{testName}_{profileCount++}.jfr,maxsize=1gb";
+            var processArguments = $"-XX:+CrashOnOutOfMemoryError {profilingConfig} -jar {context} -- {testName} {arguments}";
 
             var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false);
 

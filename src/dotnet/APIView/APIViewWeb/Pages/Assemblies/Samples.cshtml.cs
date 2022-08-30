@@ -196,7 +196,7 @@ namespace APIViewWeb.Pages.Assemblies
 
                 var line = new CodeLine(lineContent, Sample.SampleId + "-line-" + (i+1-skipped).ToString() , "");
                 comments.TryGetThreadForLine(Sample.SampleId + "-line-" + (i+1-skipped).ToString(), out var thread);
-                lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i+1-skipped);
+                lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i+1-skipped, new int[0]);
             }
 
             // Removes excess lines added that cause errors

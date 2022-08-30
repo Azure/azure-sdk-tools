@@ -22,6 +22,21 @@
     <!-- BootStrap Select -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css"/>
     <link id="theme-css" rel="stylesheet" href="~/site.css" asp-append-version="true" />
+    @{
+        var modelType = ViewData.ModelMetadata.ModelType.Name;
+        if (modelType == "ReviewPageModel")
+        {
+            @functions {
+                public string getLanguage()
+                {
+                    return ViewData.Model.Review.GetLanguageCssSafeName();
+                }
+            }
+            var lang = getLanguage();
+            var hrefNew = "~/" + lang + ".css";
+            <link rel="stylesheet" href=@hrefNew asp-append-version="true"/>
+        }
+    }
 </head>
 @{
     var userPreference = (ViewData["UserPreference"] as UserPreferenceModel) ?? new UserPreferenceModel();

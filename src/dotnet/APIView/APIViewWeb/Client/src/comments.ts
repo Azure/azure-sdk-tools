@@ -299,10 +299,10 @@
     }
 
     function ensureMessageIconInDOM() {
-        if (!MessageIconAddedToDom) {
-            $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `"><i class="far fa-comment-alt pt-1 pl-1"></i></span>`);
-            MessageIconAddedToDom = true;
-        }
+      if (!MessageIconAddedToDom) {
+        $(".comment-icon-cell").prepend(`<span class="icon icon-comments ` + INVISIBLE + `"><i class="far fa-comment-alt pt-1"></i></span>`);
+        MessageIconAddedToDom = true;
+      }
     }
 
     function toggleCommentIcon(id, show: boolean) {

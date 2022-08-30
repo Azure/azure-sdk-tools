@@ -85,6 +85,7 @@ stages:
         - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
           parameters:
             runProxy: true
+            rootFolder: $(CLONE_LOCATION)
 
         - pwsh: |
             git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
@@ -140,6 +141,7 @@ stages:
         - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
           parameters:
             runProxy: false
+            rootFolder: $(CLONE_LOCATION)
 
         - pwsh: |
             git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1

@@ -24,14 +24,22 @@
         hiddenSectionClass = isContent ? "d-none" : "";
     }
 
+    string documentationRow = String.Empty;
+    string codeLineDisplay = String.Empty;
+    if(Model.CodeLine.IsDocumentation)
+    {
+        documentationRow = "code-line-documentation";
+        codeLineDisplay = "hidden-row";
+    }
+
     var userPreference = ViewData["UserPreference"] as UserPreferenceModel;
 }
 
-<tr class="code-line @lineClass @foldableClass @hiddenSectionClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+<tr class="code-line @lineClass @foldableClass @hiddenSectionClass @codeLineDisplay @documentationRow" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
     <td class="line-details">
         <table>
             <tr>
-                @if(userPreference.HideLineNumbers == true)
+                @if(userPreference.HideLineNumbers == true || Model.CodeLine.IsDocumentation)
                 {
                     <td class="line-number @lineClass d-none"><span>@Model.LineNumber</span></td>
                 }
@@ -47,6 +55,14 @@
                     else
                     {
                        <a class="line-comment-button" style="visibility: hidden;">+</a> // Added for visual consistency
+                    }
+                </td>
+                <td class="line-details-button-cell">
+                    @if(Model.DocumentedByLines.Length > 0)
+                    {
+                        <span class="line-toggle-documentation-button icon-chevron-right" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
+                            &nbsp;
+                        </span>
                     }
                 </td>
                 <td class="line-details-button-cell @lineClass">

@@ -14,14 +14,14 @@ namespace ApiView
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
-        public CodeLine[] Render(CodeFile file, bool showDocumentation = false, bool enableSkipDiff = false)
+        public CodeLine[] Render(CodeFile file, bool enableSkipDiff = false)
         {
             var list = new List<CodeLine>();
-            Render(list, file.Tokens, showDocumentation, enableSkipDiff);
+            Render(list, file.Tokens, enableSkipDiff);
             return list.ToArray();
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff)
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool enableSkipDiff)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
@@ -37,9 +37,6 @@ namespace ApiView
             {
                 // Skip all tokens till range end
                 if (enableSkipDiff && isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
-                    continue;
-
-                if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
                     continue;
 
                 switch(token.Kind)
@@ -68,7 +65,7 @@ namespace ApiView
                             lineClass = lineClass.Trim();
                         }
 
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize));
+                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize, isDocumentationRange));
                         currentId = null;
                         stringBuilder.Clear();
                         break;

@@ -808,6 +808,14 @@ code {
     z-index: 1;
 }
 
+.icon-chevron-right {
+    background: url(/icons/chevron-right.svg) center center no-repeat;
+}
+
+.icon-chevron-up {
+    background: url(/icons/chevron-up.svg) center center no-repeat;
+}
+
 .icon-language {
     width: 34px;
     height: 34px;
@@ -864,7 +872,6 @@ code {
 .icon-swagger {
     background: url(/icons/swagger-original.svg) center center no-repeat;
 }
-
 /*---------------------------------------------------------------------*/
 
 .info-text {
@@ -909,6 +916,27 @@ code {
     white-space: normal;
     positon: sticky;
     left: 0px;
+}
+
+.line-toggle-documentation-button:hover {
+    transform: scale(1);
+}
+
+.line-toggle-documentation-button {
+    display: inline-block;
+    width: 21px;
+    height: 21px;
+    line-height: 21px;
+    color: #fff !important;
+    text-align: center;
+    text-indent: 0;
+    cursor: pointer;
+    background-color: #0366d6;
+    border-radius: 3px;
+    box-shadow: 0 1px 4px rgba(27, 31, 35, .15);
+    transition: transform .1s ease-in-out;
+    transform: scale(.8);
+    user-select: none;
 }
 
 .line-details-button-cell {

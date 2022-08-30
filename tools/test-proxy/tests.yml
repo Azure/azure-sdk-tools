@@ -82,14 +82,14 @@ stages:
             versionSpec: "16.x"
           displayName: "Use Node 16.x"
 
+        - pwsh: |
+            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+          displayName: Clone Repo
+
         - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
           parameters:
             runProxy: true
             rootFolder: $(CLONE_LOCATION)
-
-        - pwsh: |
-            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
-          displayName: Clone Repo
 
         - pwsh: |
             npm install -g @microsoft/rush@5.48.0
@@ -137,15 +137,15 @@ stages:
         - template: /eng/pipelines/templates/steps/use-python-version.yml
           parameters:
             versionSpec: '3.9'
+
+        - pwsh: |
+            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+          displayName: Clone Repo
         
         - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
           parameters:
             runProxy: false
             rootFolder: $(CLONE_LOCATION)
-
-        - pwsh: |
-            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
-          displayName: Clone Repo
 
         - pwsh: |
             pip install -r dev_requirements.txt

@@ -99,6 +99,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             [Option('t', "tests", HelpText = "Regex of tests to run")]
             public string Tests { get; set; }
+
+            [Option("profiling", HelpText = "Enables capture of profiling data")]
+            public bool Profiling { get; set; }
         }
 
         public static async Task Main(string[] args)
@@ -348,7 +351,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 try
                                 {
                                     Console.WriteLine($"RunAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
-                                        $"{test.TestNames[language]}, {allArguments}, {context})");
+                                        $"{test.TestNames[language]}, {allArguments}, {context}, {options.Profiling})");
                                     Console.WriteLine();
 
                                     iterationResult = await _languages[language].RunAsync(
@@ -358,7 +361,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         packageVersions,
                                         test.TestNames[language],
                                         allArguments,
-                                        context
+                                        context,
+                                        options.Profiling
                                     );
                                 }
                                 catch (Exception e)

@@ -18,7 +18,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             IDictionary<string, string> packageVersions,
             string testName,
             string arguments,
-            object context);
+            object context,
+            bool profiling);
 
         public abstract Task<(string output, string error, object context)> SetupAsync(
             string project,

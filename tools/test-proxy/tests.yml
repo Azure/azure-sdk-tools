@@ -150,10 +150,10 @@ stages:
             pip install .
           displayName: 'Install requirements and package'
           workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
-          env:
-            PROXY_URL: "http://localhost:5000"
 
         - pwsh: |
             pytest .
           displayName: 'Invoke Tests'
           workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
+          env:
+            PROXY_URL: "http://localhost:5000"

@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var result = await Util.RunAsync(
                 "mvn",
                 "clean install -T 2C -am" +
-                " -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true -Dcodesnippet.skip=true -Dorg.slf4j.simpleLogger.defaultLogLevel=warn" +
+                " -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true -Dcodesnippet.skip=true" +
                 " -Dspotbugs.skip=true -Dcheckstyle.skip=true -Drevapi.skip=true" +
                 $" --no-transfer-progress --pl {project}",
                 WorkingDirectory,
@@ -115,13 +115,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var profilingConfig = "";
             if (profiling)
             {
-                var baseProfileOutputPath = Path.Combine(WorkingDirectory, "java-profiling");
-                if (!Directory.Exists(baseProfileOutputPath))
-                {
-                    Directory.CreateDirectory(baseProfileOutputPath);
-                }
-                var profileOutputPath = Path.GetFullPath(Path.Combine(baseProfileOutputPath, $"{testName}_{profileCount++}.jfr"));
-                profilingConfig = $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath}.jfr,maxsize=1gb";               
+                var directoryInfo = Directory.CreateDirectory(Path.GetFullPath(Path.Combine(WorkingDirectory, "java-profiling")));
+                var profileOutputPath = Path.GetFullPath(Path.Combine(directoryInfo.FullName, $"{testName}_{profileCount++}.jfr"));
+                profilingConfig = $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";               
             }
             
             var processArguments = $"-XX:+CrashOnOutOfMemoryError {profilingConfig} -jar {context} -- {testName} {arguments}";

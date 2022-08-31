@@ -34,5 +34,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         [BindProperty]
         public string RevisionTitle { get; set; }
+        [BindProperty]
+        public string FileId { get; set; }
     }
 }

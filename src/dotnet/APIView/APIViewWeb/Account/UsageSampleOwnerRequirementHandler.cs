@@ -14,7 +14,7 @@ namespace APIViewWeb
             {
                 if (requirement is UsageSampleOwnerRequirement)
                 {
-                    if (((UsageSampleModel)context.Resource).Author == context.User.GetGitHubLogin())
+                    if (((UsageSampleRevisionModel)context.Resource).CreatedBy == context.User.GetGitHubLogin())
                     {
                         context.Succeed(requirement);
                     }

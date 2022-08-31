@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using System.Security.Claims;
+using System.Collections.Generic;
 
 namespace APIViewWeb
 {
@@ -8,20 +8,11 @@ namespace APIViewWeb
         [JsonProperty("id")]
         public string SampleId { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
-        public int RevisionNum { get; set; }
-        public string UsageSampleFileId { get; set; }
-        public string UsageSampleOriginalFileId { get; set; }
-        public string Author { get; set; }
-        public string RevisionTitle { get; set; }
+        public List<UsageSampleRevisionModel> Revisions { get; set; }
 
-        public UsageSampleModel(ClaimsPrincipal user, string reviewId, int revisionNum = 0)
+        public UsageSampleModel(string reviewId)
         {
-            if(user != null)
-            {
-                Author = user.GetGitHubLogin();
-            }
             ReviewId = reviewId;
-            RevisionNum = revisionNum;
         }
 
     }

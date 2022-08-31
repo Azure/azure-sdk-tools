@@ -39,9 +39,7 @@ namespace APIViewWeb
         public async Task<ReviewCommentsModel> GetUsageSampleCommentsAsync(string reviewId)
         {
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
-            var comments2 = comments.Where((e) => e.IsSampleComment);
-
-            return new ReviewCommentsModel(reviewId, comments2);
+            return new ReviewCommentsModel(reviewId, comments.Where((e) => e.IsUsageSampleComment));
         }
 
         public async Task AddCommentAsync(ClaimsPrincipal user, CommentModel comment)

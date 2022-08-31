@@ -1,21 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Markdig.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -23,19 +19,19 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private readonly UsageSampleManager _samplesManager;
         private readonly ReviewManager _reviewManager;
-        private const string ENDPOINT_SETTING = "Endpoint";
         private readonly CommentsManager _commentsManager;
         private readonly NotificationManager _notificationManager;
         public readonly UserPreferenceCache _preferenceCache;
+        private readonly IAuthorizationService _authorizationService;
 
         public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
-        public UsageSampleModel Sample { get; private set; }
-        public IEnumerable<UsageSampleModel> SampleRevisions { get; private set; }
+        public UsageSampleRevisionModel Sample { get; private set; }
+        public IEnumerable<UsageSampleRevisionModel> SampleRevisions { get; private set; }
+        public UsageSampleModel Samples { get; private set; }
         public CodeLineModel[] SampleContent { get; set; }
         public ReviewCommentsModel Comments { get; set; }
         public string SampleOriginal { get; set; }
-        public int latestRevision { get; set; }
 
         public UsageSamplePageModel(
             IConfiguration configuration,
@@ -43,14 +39,15 @@ namespace APIViewWeb.Pages.Assemblies
             ReviewManager reviewManager,
             CommentsManager commentsManager,
             NotificationManager notificationManager,
-            UserPreferenceCache preferenceCache)
+            UserPreferenceCache preferenceCache, 
+            IAuthorizationService authorizationService)
         {
             _samplesManager = samplesManager;
             _reviewManager = reviewManager;
-            Endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
             _preferenceCache = preferenceCache;
+            _authorizationService = authorizationService;
         }
 
         [FromForm]
@@ -60,60 +57,56 @@ namespace APIViewWeb.Pages.Assemblies
         {
             TempData["Page"] = "samples";
             Review = await _reviewManager.GetReviewAsync(User, id);
-            Comments = await _commentsManager.GetUsageSampleCommentsAsync(id);
-            latestRevision = -1;
+
+            await AssertAccess(User);
 
             // This try-catch is for the case that the deployment is set up incorrectly for usage samples
             try
             {
-                var SampleRevisionList = await _samplesManager.GetReviewUsageSampleAsync(id);
-                SampleRevisions = SampleRevisionList.OrderByDescending(e => e.RevisionNum);
-                if (SampleRevisions.Any())
+                var sampleFromServer = (await _samplesManager.GetReviewUsageSampleAsync(id)).FirstOrDefault();
+                Samples = sampleFromServer;
+                if (sampleFromServer != null)
                 {
-                    if (SampleRevisions.Count() > 1)
-                    {
-                        // get latest revision num (useful for ordering)
-                        latestRevision = SampleRevisions.First().RevisionNum;
+                    SampleRevisions = sampleFromServer.Revisions.OrderByDescending(e => e.RevisionNumber);
+                }
 
-                        // if a specific revision was selected, find it
-                        if (revisionId != null)
-                        {
-                            Sample = SampleRevisions.Where(e => e.SampleId == revisionId).First();
-                        }
-                        else
-                        {
-                            Sample = SampleRevisions.First();
-                        }
+                if (SampleRevisions != null && SampleRevisions.Any())
+                {
+                    if (revisionId != null)
+                    {
+                        Sample = SampleRevisions.Where(e => e.FileId == revisionId).First();
                     }
                     else
                     {
                         Sample = SampleRevisions.First();
-                        latestRevision = 0;
                     }
 
-                    SampleContent = ParseLines(Sample.UsageSampleFileId, Comments).Result;
-                    SampleOriginal = await _samplesManager.GetUsageSampleContentAsync(Sample.UsageSampleOriginalFileId);
+                    Comments = await _commentsManager.GetUsageSampleCommentsAsync(Samples.ReviewId);
+                    SampleContent = ParseLines(Sample.FileId, Comments).Result;
+                    SampleOriginal = await _samplesManager.GetUsageSampleContentAsync(Sample.OriginalFileId);
                     Upload.updateString = SampleOriginal;
                     if (SampleContent == null)
                     {
                         // Potentially bad blob setup, potentially erroneous file fetch
-                        Sample.SampleId = "File Content Missing";
+                        Sample.FileId = "File Content Missing";
                     }
                 }
                 else
                 {
                     // No samples.
-                    Sample = new UsageSampleModel(null, Review.ReviewId, -1);
+                    SampleRevisions = new List<UsageSampleRevisionModel>();
+                    Sample = new UsageSampleRevisionModel(null, -1);
                     SampleContent = Array.Empty<CodeLineModel>();
+                    Samples = new UsageSampleModel(Review.ReviewId);
                 }
             }
             catch (CosmosException)
             {
                 // Error gracefully
-                Sample = new UsageSampleModel(null, null);
-                Sample.SampleId = "Bad Deployment";
+                Sample = new UsageSampleRevisionModel(null, -1);
+                Sample.FileId = "Bad Deployment";
             }
-            
+
             return Page();
         }
 
@@ -123,6 +116,8 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 return RedirectToPage();
             }
+
+            await AssertAccess(User);
 
             var file = Upload.File;
             string sampleString = Upload.sampleString;
@@ -134,7 +129,7 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, openReadStream, newRevNum, revisionTitle);
+                    await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, openReadStream, newRevNum, revisionTitle, file.FileName);
                 }
             }
             else if (sampleString != null)
@@ -147,7 +142,7 @@ namespace APIViewWeb.Pages.Assemblies
             }
             else if (Upload.Deleting)
             {
-                await _samplesManager.DeleteUsageSampleAsync(User, reviewId, Upload.SampleId);
+                await _samplesManager.DeleteUsageSampleAsync(User, reviewId, Upload.FileId, Upload.SampleId);
             }
 
             
@@ -156,7 +151,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         private async Task<CodeLineModel[]> ParseLines(string fileId, ReviewCommentsModel comments)
         {
-            if(Sample.UsageSampleFileId == null)
+            if(Sample.FileId == null)
             {
                 return new CodeLineModel[0];
             }
@@ -194,13 +189,23 @@ namespace APIViewWeb.Pages.Assemblies
                 // Allows the indent to work correctly for spacing purposes
                 lineContent = "<div class=\"internal\">&nbsp;&nbsp;&nbsp;" + lineContent + "</div>";
 
-                var line = new CodeLine(lineContent, Sample.SampleId + "-line-" + (i+1-skipped).ToString() , "");
-                comments.TryGetThreadForLine(Sample.SampleId + "-line-" + (i+1-skipped).ToString(), out var thread);
+                var line = new CodeLine(lineContent, Sample.FileId + "-line-" + (i+1-skipped).ToString() , "");
+                comments.TryGetThreadForLine(Sample.FileId + "-line-" + (i+1-skipped).ToString(), out var thread);
                 lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i+1-skipped, new int[0]);
             }
 
             // Removes excess lines added that cause errors
             return Array.FindAll(lines, e => !(e.Diagnostics == null));
+        }
+
+        private async Task AssertAccess(ClaimsPrincipal user)
+        {
+            var auth = await _authorizationService.AuthorizeAsync(User, null, Startup.RequireOrganizationPolicy);
+            if (!auth.Succeeded)
+            {
+                throw new AuthorizationFailedException();
+            }
+
         }
     }
 }

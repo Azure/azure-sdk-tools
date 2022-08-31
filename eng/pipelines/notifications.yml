@@ -31,7 +31,7 @@ stages:
         # Go:
         #   PathPrefix: 'go'
         AzDev:
-          PathPrefix: 'azure-dev'
+          PathPrefix: 'azure-accelerators'
 
     pool:
       name: azsdk-pool-mms-ubuntu-2004-general

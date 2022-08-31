@@ -16,20 +16,20 @@ stages:
       # Running all entries simultaneously causes "Service Unavailable" errors
       maxParallel: 2
       matrix:
-        # NET:
-        #   PathPrefix: 'net'
-        # Python:
-        #   PathPrefix: 'python'
-        # JS:
-        #   PathPrefix: 'js'
-        # Java:
-        #   PathPrefix: 'java'
-        # C:
-        #   PathPrefix: 'c'
-        # CPP:
-        #   PathPrefix: 'cpp'
-        # Go:
-        #   PathPrefix: 'go'
+        NET:
+          PathPrefix: 'net'
+        Python:
+          PathPrefix: 'python'
+        JS:
+          PathPrefix: 'js'
+        Java:
+          PathPrefix: 'java'
+        C:
+          PathPrefix: 'c'
+        CPP:
+          PathPrefix: 'cpp'
+        Go:
+          PathPrefix: 'go'
         AzDev:
           PathPrefix: 'azure-accelerators'
 

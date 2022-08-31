@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             UpdatePackageVersions(PerfCoreProjectFile, packageVersions);
             UpdatePackageVersions(projectFile, packageVersions);
 
-            var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true --no-transfer-progress --pl {project}",
+            var result = await Util.RunAsync("mvn", $"clean package -T 2C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true -Dcodesnippet.skip=true -Dorg.slf4j.simpleLogger.defaultLogLevel=warn --no-transfer-progress --pl {project}",
                 WorkingDirectory, environmentVariables: _buildEnvironment);
 
             /*
@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             IDictionary<string, string> packageVersions, string testName, string arguments, string context, bool profiling)
         {
             // '-XX:+UnlockCommercialFeatures' isn't required and fails when used in a version higher than Java 8, need to inspect the Java version to determine if it should be added.
-            var profilingConfig = !profiling ? "" : $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename=profile_java_{testName}_{profileCount++}.jfr,maxsize=1gb";
+            var profilingConfig = !profiling ? "" : $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename=java-profiling/{testName}_{profileCount++}.jfr,maxsize=1gb";
             var processArguments = $"-XX:+CrashOnOutOfMemoryError {profilingConfig} -jar {context} -- {testName} {arguments}";
 
             var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false);

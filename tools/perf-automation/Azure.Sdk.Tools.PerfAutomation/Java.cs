@@ -83,7 +83,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var profilingConfig = "";
             if (profiling)
             {
-                profilingConfig = $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename={WorkingDirectory}/java-profiling/{testName}_{profileCount++}.jfr,maxsize=1gb";
+                var baseProfileOutputPath = Path.Combine(WorkingDirectory, "java-profiling");
+                if (!Directory.Exists(baseProfileOutputPath))
+                {
+                    Directory.CreateDirectory(baseProfileOutputPath);
+                }
+                var profileOutputPath = Path.GetFullPath(Path.Combine(baseProfileOutputPath, $"{testName}_{profileCount++}.jfr"));
+                profilingConfig = $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath}.jfr,maxsize=1gb";               
             }
             
             var processArguments = $"-XX:+CrashOnOutOfMemoryError {profilingConfig} -jar {context} -- {testName} {arguments}";

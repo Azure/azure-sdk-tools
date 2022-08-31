@@ -17,25 +17,33 @@
 <nav class="navbar-light shadow-sm bg-light sticky-top">
     <div class="container-fluid">
         <div class="row mx-5">
-            <div class="col-md-10 px-0 d-sm-flex flex-row justify-content-sm-start">
-                <div class="input-group py-2 mr-2" id="reviews-table-search-container">
+            <div class="col-md-10 py-2 px-0 d-sm-flex flex-row justify-content-sm-start">
+                <div class="input-group mr-2" id="reviews-table-search-container">
                     <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search.."/>
                     <div class="input-group-append">
                         <button class="btn btn-outline-secondary" id="reviews-search-button" aria-labelledby="reviews-table-search-box" type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
                     </div>
                 </div>
-                <select class="selectpicker show-tick show-menu-arrow py-2 mr-2" multiple data-selected-text-format="static" title="Language" data-style="btn-light border" data-width="120px" data-container="body" id="language-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Languages" />
-                </select>
-                <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="State" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="85px" data-container="body" id="state-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
-                </select>
-                <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="Status" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="90px" data-container="body" id="status-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
-                </select>
-                <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="Type" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="80px" data-container="body" id="type-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
-                </select>
+                <div class="mr-2">
+                    <select class="d-none" id="language-filter-bootstraps-select" multiple="multiple">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Languages" />
+                    </select>
+                </div>
+                <div class="mr-2">
+                        <select class="d-none" id="state-filter-bootstraps-select" multiple="multiple">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
+                    </select>
+                </div>
+                <div class="mr-2">
+                        <select class="d-none" id="status-filter-bootstraps-select" multiple="multiple">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
+                    </select>
+                </div>
+                <div class="mr-2">
+                        <select class="d-none" id="type-filter-bootstraps-select" multiple="multiple">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
+                    </select>
+                </div>
             </div>
             <div class="col-md-2 px-0 py-2 d-sm-flex flex-row justify-content-sm-end">
                 <button type="button" class="btn btn-outline-primary btn-sm" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset</button>

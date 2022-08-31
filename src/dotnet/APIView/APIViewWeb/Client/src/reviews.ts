@@ -91,21 +91,37 @@
       url: uri
     }).done(function(partialViewResult) {
       filter.html(partialViewResult);
-      (<any>filter).selectpicker('refresh');
+      (<any>filter).multiselect('rebuild');
     });
   }
 
-  // Fetch content of dropdown on page load
-  $(document).ready(function() {
+  $(window).ready(function () {
+    // Build multiSelect for filters
+    const multiSelectOptions = {
+      buttonText: () => "Language",
+      buttonTextAlignment: "left",
+      widthSynchronizationMode: "ifPopupIsSmaller",
+      buttonWidth: "120px",
+      onDropdownHidden: () => updateListedReviews(),
+      includeSelectAllOption: true,
+      selectAllText: "ALL"
+    };
+    (<any>languageFilter).multiselect(multiSelectOptions);
+
+    multiSelectOptions.buttonText = () => "State";
+    multiSelectOptions.buttonWidth = "85px";
+    (<any>stateFilter).multiselect(multiSelectOptions);
+
+    multiSelectOptions.buttonText = () => "Status";
+    multiSelectOptions.buttonWidth = "90px";
+    (<any>statusFilter).multiselect(multiSelectOptions);
+
+    multiSelectOptions.buttonText = () => "Type";
+    multiSelectOptions.buttonWidth = "80px";
+    (<any>typeFilter).multiselect(multiSelectOptions);
+
     updateFilterDropDown(languageFilter, "languages"); // Pulls languages data from DB
     addPaginationEventHandlers();
-  });
-
-  // Update list of reviews when any dropdown is changed
-  [languageFilter, stateFilter, statusFilter, typeFilter].forEach(function(value, index) {
-    value.on('hidden.bs.select', function() {
-      updateListedReviews();
-    });
   });
 
   // Update list of reviews based on search input
@@ -119,10 +135,10 @@
 
   // Reset list of reviews as well as filters
   resetButton.on('click', function(e) {
-    (<any>languageFilter).selectpicker('deselectAll');
-    (<any>stateFilter).selectpicker('deselectAll').selectpicker('val', 'Open');
-    (<any>statusFilter).selectpicker('deselectAll');
-    (<any>typeFilter).selectpicker('deselectAll');
+    (<any>languageFilter).multiselect('deselectAll', false);
+    (<any>stateFilter).multiselect('deselectAll', false).multiselect('select', 'Open');
+    (<any>statusFilter).multiselect('deselectAll');
+    (<any>typeFilter).multiselect('deselectAll');
     searchBox.val('');
     updateListedReviews();
   });

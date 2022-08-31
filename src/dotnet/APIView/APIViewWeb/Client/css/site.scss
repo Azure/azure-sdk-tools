@@ -29,6 +29,7 @@
     --code-diagnostics-error-color: lightpink;
     --code-diagnostics-warn-color: lightyellow;
     --code-diagnostics-info-color: lightblue;
+    --custom-select-icon-bg: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='black' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E");
 }
 
 .dark-theme {
@@ -60,6 +61,7 @@
     --code-diagnostics-error-color: darkmagenta;
     --code-diagnostics-warn-color: #846007;
     --code-diagnostics-info-color: darkblue;
+    --custom-select-icon-bg: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='white' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E");
 }
 
 .dark-solarized-theme {
@@ -91,6 +93,7 @@
     --code-diagnostics-error-color: #ff4c59;
     --code-diagnostics-warn-color: #e3a710;
     --code-diagnostics-info-color: #5197f0;
+    --custom-select-icon-bg: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='white' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E");
 }
 
 /* Mixins, Media, Include and Keyframes
@@ -288,6 +291,10 @@ input[type="search"]::-webkit-search-cancel-button {
     background-color: var(--bg-light);
 }
 
+.custom-select {
+    background-image: var(--custom-select-icon-bg);
+}
+
 .close {
     color: var(--text-color);
 }
@@ -343,6 +350,36 @@ input[type="search"]::-webkit-search-cancel-button {
 
 .modal-footer {
     border-top: 1px solid var(--border-color);
+}
+
+.multiselect {
+    color: var(--text-color);
+    background-color: var(--bg-light);
+    border-color: var(--border-color);
+}
+
+.multiselect:hover {
+    color: var(--text-color);
+    background-color: var(--bg-light-hover);
+}
+
+.multiselect-container .multiselect-option:hover,
+.multiselect-container .multiselect-group:hover,
+.multiselect-container .multiselect-all:hover,
+.multiselect-container .multiselect-option:focus,
+.multiselect-container .multiselect-group:focus,
+.multiselect-container .multiselect-all:focus {
+    background-color: var(--bg-light) !important;
+}
+
+.multiselect-container .multiselect-option.active:not(.multiselect-active-item-fallback),
+.multiselect-container .multiselect-group.active:not(.multiselect-active-item-fallback),
+.multiselect-container .multiselect-all.active:not(.multiselect-active-item-fallback),
+.multiselect-container .multiselect-option:not(.multiselect-active-item-fallback):active,
+.multiselect-container .multiselect-group:not(.multiselect-active-item-fallback):active,
+.multiselect-container .multiselect-all:not(.multiselect-active-item-fallback):active {
+    background-color: var(--bg-light);
+    color: var(--text-color);
 }
 
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
@@ -436,7 +473,6 @@ pre {
 
 .class {
     color: var(--class-color);
-    scroll-margin-top: calc(50px + 1.7em);
 }
 
 code {
@@ -595,7 +631,6 @@ code {
 
 .comment-thread-anchor {
     visibility: hidden;
-    scroll-margin-top: calc(50px + 1.7em);
 }
 
 .comment-thread-contents.new-thread-comment {

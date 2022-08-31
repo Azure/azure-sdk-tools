@@ -120,11 +120,13 @@ public class SwaggerApiViewOperation : ITokenSerializable
         ret.Add(TokenSerializer.NewLine());
 
         // ret.Add(TokenSerializer.FoldableContentStart());
+        context.IteratorPath.Add("Responses");
         foreach (var response in Responses)
         {
             ret.AddRange(response.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         }
         // ret.Add(TokenSerializer.FoldableContentEnd());
+        context.IteratorPath.Pop();
 
         ret.Add(TokenSerializer.NewLine());
 

@@ -315,7 +315,7 @@ namespace SwaggerApiParser
                 tableRows.AddRange(tableItem.TokenSerialize());
             }
 
-            tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(this.tableItems.Count, columns.Length, columns, tableRows.ToArray()));
+            tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(this.tableItems.Count, columns.Length, columns, tableRows.ToArray(), context.IteratorPath.CurrentNextPath("table")));
             tableRet.Add(TokenSerializer.NewLine());
             return tableRet.ToArray();
         }

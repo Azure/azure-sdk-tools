@@ -11,10 +11,12 @@ public class SwaggerApiViewGlobalParameters : SortedDictionary<string, SwaggerAp
         ret.Add(TokenSerializer.FoldableContentStart());
         foreach (var parameter in this)
         {
-            ret.Add(TokenSerializer.NavigableToken(parameter.Key, CodeFileTokenKind.MemberName, context.IteratorPath.CurrentNextPath(parameter.Key)));
+            context.IteratorPath.Add(parameter.Key);
+            ret.Add(TokenSerializer.NavigableToken(parameter.Key, CodeFileTokenKind.MemberName, context.IteratorPath.CurrentPath()));
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
             ret.AddRange(parameter.Value.TokenSerialize(context));
+            context.IteratorPath.Pop();
         }
 
         ret.Add(TokenSerializer.FoldableContentEnd());

@@ -28,7 +28,9 @@ public class SwaggerApiViewDefinitions : SortedDictionary<String, Definition>, I
         ret.Add(TokenSerializer.FoldableContentStart());
         foreach (var kv in this)
         {
-            ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Literal) {DefinitionId = context.IteratorPath.CurrentNextPath(kv.Key)});
+            context.IteratorPath.Add(kv.Key);
+            
+            ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Literal) {DefinitionId = context.IteratorPath.CurrentPath()});
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
             ret.AddRange(TokenSerializer.KeyValueTokens("Description", kv.Value.description));
@@ -51,11 +53,12 @@ public class SwaggerApiViewDefinitions : SortedDictionary<String, Definition>, I
                 tableRows.AddRange(tableItem.TokenSerializeWithOptions(serializedFields));
             }
 
-            tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(tableItems.Count, columns.Length, columns, tableRows.ToArray()));
+            tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(tableItems.Count, columns.Length, columns, tableRows.ToArray(), context.IteratorPath.CurrentNextPath("table")));
             tableRet.Add(TokenSerializer.NewLine());
 
 
             ret.AddRange(tableRet);
+            context.IteratorPath.Pop();
         }
 
         ret.Add(TokenSerializer.FoldableContentEnd());

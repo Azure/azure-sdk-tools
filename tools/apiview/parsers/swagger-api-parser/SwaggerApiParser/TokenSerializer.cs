@@ -189,11 +189,11 @@ namespace SwaggerApiParser
             return ret.ToArray();
         }
 
-        public static CodeFileToken[] TokenSerializeAsTableFormat(int rowCount, int columnCount, IEnumerable<String> columnNames, CodeFileToken[] rows)
+        public static CodeFileToken[] TokenSerializeAsTableFormat(int rowCount, int columnCount, IEnumerable<String> columnNames, CodeFileToken[] rows, string tableDefinitionId)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
 
-            ret.Add(TokenSerializer.TableBegin());
+            ret.Add(TokenSerializer.TableBegin(tableDefinitionId));
             ret.AddRange(TokenSerializer.TableSize(rowCount, columnCount));
             ret.AddRange(columnNames.Select(TokenSerializer.TableColumnName));
             ret.AddRange(rows);
@@ -269,9 +269,9 @@ namespace SwaggerApiParser
             return ret;
         }
 
-        public static CodeFileToken TableBegin()
+        public static CodeFileToken TableBegin(string definitionId)
         {
-            var ret = new CodeFileToken(null, CodeFileTokenKind.TableBegin);
+            var ret = new CodeFileToken(null, CodeFileTokenKind.TableBegin){DefinitionId = definitionId};
             return ret;
         }
 

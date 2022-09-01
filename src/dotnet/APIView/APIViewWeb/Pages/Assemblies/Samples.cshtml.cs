@@ -59,6 +59,13 @@ namespace APIViewWeb.Pages.Assemblies
             // This try-catch is for the case that the deployment is set up incorrectly for usage samples
             try
             {
+                // Tests the blob response with a dummy file id 
+                string blobTest = await _samplesManager.GetUsageSampleContentAsync("abdc");
+                if (blobTest == "Bad Blob")
+                {
+                    throw new CosmosException(null, System.Net.HttpStatusCode.NotFound, 0, null, 0.0); // Error does not matter, only type, to ensure clean error page.
+                }
+
                 var sampleFromServer = (await _samplesManager.GetReviewUsageSampleAsync(id)).FirstOrDefault();
                 Samples = sampleFromServer;
                 if (sampleFromServer != null)

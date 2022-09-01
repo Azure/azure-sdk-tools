@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 using System.Text;
+using Microsoft.VisualStudio.Services.FileContainer;
+using Octokit;
+using System;
 
 namespace APIViewWeb
 {
@@ -16,7 +19,7 @@ namespace APIViewWeb
         public BlobUsageSampleRepository(IConfiguration configuration)
         {
             var connectionString = configuration["Blob:ConnectionString"];
-            _container = new BlobContainerClient(connectionString, "usagesamples");
+            _container = new BlobContainerClient(connectionString, "usagesamples"); 
         }
 
         public async Task<Stream> GetUsageSampleAsync(string sampleFileId)
@@ -26,9 +29,17 @@ namespace APIViewWeb
                 var info = await GetBlobClient(sampleFileId).DownloadAsync();
                 return info.Value.Content;
             }
-            catch
+            catch (Exception e)
             {
-                return null;
+                // Error handling- Allows tidy pages to be displayed for a blob not existing
+                if(e.Message.StartsWith("The specified container does not exist."))
+                {
+                    return new MemoryStream(Encoding.UTF8.GetBytes("Bad Blob"));
+                }
+                else
+                {
+                    return null;
+                }
             }
         }
 

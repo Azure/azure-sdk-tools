@@ -47,7 +47,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             GitHandler = processHandler;
         }
 
-        #region push, reset, restore, and other asset repo implementations 
+        #region push, reset, restore, and other asset repo implementations
+        /// <summary>
+        /// Given a config, locate the cloned assets.
+        /// </summary>
+        /// <param name="pathToAssetsJson"></param>
+        /// <returns></returns>
+        public async Task<string> GetPath(string pathToAssetsJson)
+        {
+            var config = await ParseConfigurationFile(pathToAssetsJson);
+            return config.RepoRoot;
+        }
+
         /// <summary>
         /// Pushes a set of changed files to the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>

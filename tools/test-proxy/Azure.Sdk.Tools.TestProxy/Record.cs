@@ -28,9 +28,12 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Start()
         {
-            string file = await HttpRequestInteractions.GetBodyKey(Request, "x-recording-file", allowNulls: true);
+            var body = await HttpRequestInteractions.GetBody(Request);
 
-            _recordingHandler.StartRecording(file, Response);
+            string file = HttpRequestInteractions.GetBodyKey(body, "x-recording-file", allowNulls: true);
+            string assetsJson = HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true);
+
+            await _recordingHandler.StartRecordingAsync(file, Response, assetsJson);
         }
 
 

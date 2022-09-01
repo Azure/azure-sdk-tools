@@ -32,6 +32,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             AdditionalTransforms.Clear();
             AdditionalSanitizers.Clear();
             CustomMatcher = null;
+            Client = null;
         }
     }
 }

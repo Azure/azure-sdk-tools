@@ -11,6 +11,7 @@ import {
 } from '../common/errors'
 import { InjectableTypes } from '../lib/injectableTypes'
 import { LiveValidationError } from 'oav/dist/lib/models'
+import { Operation } from 'oav/dist/lib//swagger/swaggerTypes'
 import { OperationMatch, OperationSearcher } from 'oav/dist/lib/liveValidation/operationSearcher'
 import { ResponseGenerator } from './responser'
 import { SpecRetriever } from '../lib/specRetriever'
@@ -136,7 +137,7 @@ export class Coordinator {
             let lroCallback: string | null = null
             if (result.operationMatch.operation[AzureExtensions.XMsLongRunningOperation]) {
                 try {
-                    lroCallback = await this.findLROGet(req)
+                    lroCallback = await this.findLROGet(req, result.operationMatch.operation)
                 } catch (err) {
                     if (err instanceof LroCallbackNotFound) {
                         // degrade to non-lro if 1) no callback operation can be found and 2) there is 200 responses
@@ -254,7 +255,7 @@ export class Coordinator {
         return [undefined, undefined]
     }
 
-    async findLROGet(req: VirtualServerRequest): Promise<string> {
+    async findLROGet(req: VirtualServerRequest, operation: Operation): Promise<string> {
         const [uri, query] = `${req.url}&${LRO_CALLBACK}=true`.split('?')
         const uriPath = uri.split('/')
         const oriLen = uriPath.length
@@ -276,8 +277,15 @@ export class Coordinator {
                         'GET',
                         req.headers?.[AzureExtensions.XMsCorrelationRequestId] || ''
                     )
-                    this.liveValidator.operationSearcher.search(validationRequest)
-                    return testingUrl
+                    const result = this.liveValidator.operationSearcher.search(validationRequest)
+                    const finalState = HttpStatusCode.OK.toString()
+                    if (
+                        JSON.stringify(operation.responses?.[finalState]?.['schema']) ===
+                        JSON.stringify(
+                            result.operationMatch.operation?.responses?.[finalState]?.['schema']
+                        )
+                    )
+                        return testingUrl
                 } catch (error) {
                     if (
                         error instanceof LiveValidationError &&

@@ -3,21 +3,42 @@ using Microsoft.Extensions.Caching.Memory;
 using APIViewWeb.Models;
 using System;
 using System.Collections.Generic;
+using AutoMapper;
 
 namespace APIViewWeb.Repositories
 {
     public class UserPreferenceCache
     {
         private readonly IMemoryCache _cache;
+        private readonly IMapper _mapper;
 
-        public UserPreferenceCache(IMemoryCache cache)
+        public UserPreferenceCache(IMemoryCache cache, IMapper mapper)
         {
             _cache = cache;
+            _mapper = mapper;
         }
 
         public void UpdateUserPreference(UserPreferenceModel preference)
         {
-            _cache.Set(preference.UserName, preference);
+            UserPreferenceModel existingPreference = GetUserPreferences(preference.UserName);
+            if (existingPreference == null)
+            {
+                _cache.Set(preference.UserName, preference);
+            }
+            else
+            {
+                _mapper.Map<UserPreferenceModel, UserPreferenceModel>(preference, existingPreference);
+                _cache.Set(preference.UserName, existingPreference);
+            }
+        }
+
+        public UserPreferenceModel GetUserPreferences(string userName)
+        {
+            if (_cache.TryGetValue(userName, out UserPreferenceModel _preference))
+            {
+                return _preference;
+            }
+            return null;
         }
 
         public IEnumerable<string> GetLangauge(string userName)

@@ -5,6 +5,7 @@ import {
     CodeGeneration,
     CompletedEvent,
     generateTotalResult,
+    getTaskResults,
     InProgressEvent,
     logger,
     MongoConnectContext,
@@ -121,19 +122,6 @@ function getTrigger(config: ResultPublisherEventHubInput): Trigger {
     }
 
     return trigger;
-}
-
-function getTaskResults(taskResultsPath: string): TaskResult[] {
-    const taskResultsPathArray = JSON.parse(taskResultsPath);
-    const taskResults: TaskResult[] = [];
-    for (const taskResultPath of taskResultsPathArray) {
-        if (fs.existsSync(taskResultPath)) {
-            taskResults.push(requireJsonc(taskResultPath));
-        } else {
-            logger.warn(`${taskResultPath} isn't exist, skip.`);
-        }
-    }
-    return taskResults;
 }
 
 async function publishEventhub(pipelineStatus: SDKPipelineStatus) {

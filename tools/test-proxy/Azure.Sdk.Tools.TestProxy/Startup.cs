@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using System.Reflection;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Azure.Sdk.Tools.TestProxy.Console;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -37,8 +38,6 @@ namespace Azure.Sdk.Tools.TestProxy
         private static string resolveRepoLocation(string storageLocation = null)
         {
             var envValue = Environment.GetEnvironmentVariable("TEST_PROXY_FOLDER");
-
-            // TODO: absolute the paths first two paths if relative
             return storageLocation ?? envValue ?? Directory.GetCurrentDirectory();
         }
 
@@ -61,27 +60,27 @@ namespace Azure.Sdk.Tools.TestProxy
                 var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
                 var assemblyVersion = assembly.GetName().Version;
 
-                Console.WriteLine($"Built from ${assemblyVersion.Major}.${assemblyVersion.Minor}.${assemblyVersion.Build}-dev.{semanticVersion}");
+                System.Console.WriteLine($"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}-dev.{semanticVersion}");
 
                 Environment.Exit(0);
             }
 
             TargetLocation = resolveRepoLocation(storageLocation);
             Resolver = new StoreResolver();
-            DefaultStore = Resolver.ResolveStore(storagePlugin ?? "NullStore");
+            DefaultStore = Resolver.ResolveStore(storagePlugin ?? "GitStore");
 
             if (!String.IsNullOrWhiteSpace(command))
             {
                 switch (command.ToLowerInvariant())
                 {
                     case "save":
-                        DefaultStore.Push(assetsJsonPath, TargetLocation);
+                        DefaultStore.Push(assetsJsonPath);
                         break;
                     case "restore":
-                        DefaultStore.Restore(assetsJsonPath, TargetLocation);
+                        DefaultStore.Restore(assetsJsonPath);
                         break;
                     case "reset":
-                        DefaultStore.Reset(assetsJsonPath, TargetLocation);
+                        DefaultStore.Reset(assetsJsonPath);
                         break;
                     default:
                         throw new Exception($"One must provide a valid value for argument \"command\". \"{command}\" is not a valid option.");
@@ -125,12 +124,12 @@ namespace Azure.Sdk.Tools.TestProxy
             if (dump)
             {
                 var config = app.Services?.GetService<IConfiguration>();
-                Console.WriteLine("Dumping Resolved Configuration Values:");
+                System.Console.WriteLine("Dumping Resolved Configuration Values:");
                 if (config != null)
                 {
                     foreach (var c in config.AsEnumerable())
                     {
-                        Console.WriteLine(c.Key + " = " + c.Value);
+                        System.Console.WriteLine(c.Key + " = " + c.Value);
                     }
                 }
             }
@@ -240,21 +239,21 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     if (newLine)
                     {
-                        Console.WriteLine(obj);
+                        System.Console.WriteLine(obj);
                     }
                     else
                     {
-                        Console.Write(obj);
+                        System.Console.Write(obj);
                         needsExtraNewline = true;
                     }
                 }
 
                 if (needsExtraNewline)
                 {
-                    Console.WriteLine();
+                    System.Console.WriteLine();
                 }
 
-                Console.WriteLine();
+                System.Console.WriteLine();
             });
 
             thread.Start();

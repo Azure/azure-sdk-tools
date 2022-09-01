@@ -18,5 +18,6 @@ namespace APIViewWeb.Models
         public string ReviewId { get; set; }
         public string Author { get; set; }
         public string PackageName { get; set; }
+        public string Language { get; set; }
     }
 }

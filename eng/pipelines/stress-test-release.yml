@@ -8,7 +8,7 @@ parameters:
     default: prod
     values:
     - prod
-    - test
+    - pg
   - name: TestRepository
     displayName: Stress Test Repository
     type: string
@@ -21,6 +21,7 @@ parameters:
     - net
     - python
     - go
+    - cpp
   - name: DeployFromBranchOrCommit
     type: string
     default: main

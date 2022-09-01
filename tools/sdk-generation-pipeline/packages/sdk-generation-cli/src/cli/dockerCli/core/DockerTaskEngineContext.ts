@@ -5,7 +5,8 @@ import { writeFileSync } from 'fs';
 import * as path from 'path';
 import { Logger } from 'winston';
 
-import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from '../../../utils/git';
+import { extractAutorestConfigs } from '../../../utils/autorestConfigExtractorUtils';
+import { GitOperationWrapper } from '../../../utils/GitOperationWrapper';
 import { dockerTaskEngineInput } from '../schema/dockerTaskEngineInput';
 import { DockerContext } from './DockerContext';
 import { DockerRunningModel } from './DockerRunningModel';
@@ -43,11 +44,13 @@ export class DockerTaskEngineContext {
     taskResultJsonPath: string;
     changeOwner: boolean;
     mode: DockerRunningModel;
+    autorestConfig: string | undefined;
+    skipGeneration: boolean;
 
-    public initialize(dockerContext: DockerContext) {
+    public async initialize(dockerContext: DockerContext) {
         // before execute task engine, safe spec repos and sdk repos because they may be owned by others
-        safeDirectory(dockerContext.specRepo);
-        safeDirectory(dockerContext.sdkRepo);
+        await new GitOperationWrapper(dockerContext.specRepo).safeDirectory();
+        await new GitOperationWrapper(dockerContext.sdkRepo).safeDirectory();
         const dockerTaskEngineConfigProperties = dockerTaskEngineInput.getProperties();
         this.logger = dockerContext.logger;
         this.configFilePath = dockerTaskEngineConfigProperties.configFilePath;
@@ -62,10 +65,11 @@ export class DockerTaskEngineContext {
         this.readmeMdPath = dockerContext.readmeMdPath;
         this.specRepo = {
             repoPath: dockerContext.specRepo,
-            headSha: dockerTaskEngineConfigProperties.headSha ?? dockerContext.mode === DockerRunningModel.Pipeline?
-                getHeadSha(dockerContext.specRepo) : '{commit_id}',
-            headRef: dockerTaskEngineConfigProperties.headRef ?? getHeadRef(dockerContext.specRepo),
-            repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl
+            headSha: dockerTaskEngineConfigProperties.headSha ?? dockerContext.isPublicRepo?
+                await new GitOperationWrapper(dockerContext.specRepo).getHeadSha() : '',
+            headRef: dockerTaskEngineConfigProperties.headRef ?? await new GitOperationWrapper(dockerContext.specRepo).getHeadRef(),
+            repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl?? (await new GitOperationWrapper(dockerContext.specRepo).getRemote())??
+                `https://github.com/Azure/azure-rest-api-specs`
         };
         this.serviceType = dockerContext.readmeMdPath.includes('data-plane') && dockerTaskEngineConfigProperties.serviceType ? 'data-plane': 'resource-manager';
         this.tag = dockerContext.tag;
@@ -75,11 +79,16 @@ export class DockerTaskEngineContext {
         this.taskResultJsonPath = path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.taskResultJson);
         this.changeOwner = dockerTaskEngineConfigProperties.changeOwner;
         this.mode = dockerContext.mode;
+        this.autorestConfig = extractAutorestConfigs(dockerContext.autorestConfigFilePath, dockerContext.sdkRepo, dockerContext.logger);
+        this.skipGeneration = dockerContext.skipGeneration;
     }
 
     public async beforeRunTaskEngine() {
         if (!!this.resultOutputFolder && !fs.existsSync(this.resultOutputFolder)) {
             fs.mkdirSync(this.resultOutputFolder, { recursive: true });
+        }
+        if (!!this.sdkRepo && fs.existsSync(this.sdkRepo)) {
+            await new GitOperationWrapper(this.sdkRepo).disableFileMode();
         }
         this.logger.info(`Start to run task engine in ${path.basename(this.sdkRepo)}`);
     }
@@ -92,7 +101,7 @@ export class DockerTaskEngineContext {
             }
             if (!!this.sdkRepo && fs.existsSync(this.sdkRepo)) {
                 execSync(`chown -R ${userGroupId} ${this.sdkRepo}`, { encoding: 'utf8' });
-                disableFileMode(this.sdkRepo);
+                await new GitOperationWrapper(this.sdkRepo).disableFileMode();
             }
         }
         if (!!this.taskResults) {

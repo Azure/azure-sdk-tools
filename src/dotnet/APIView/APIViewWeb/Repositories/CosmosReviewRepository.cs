@@ -15,13 +15,12 @@ namespace APIViewWeb
     public class CosmosReviewRepository
     {
         private readonly Container _reviewsContainer;
-        private readonly PackageNameManager _packageNameManager;
+        private readonly CosmosClient _cosmosClient;
 
-        public CosmosReviewRepository(IConfiguration configuration, PackageNameManager packageNameManager)
+        public CosmosReviewRepository(IConfiguration configuration, CosmosClient cosmosClient = null)
         {
-            var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
-            _reviewsContainer = client.GetContainer("APIView", "Reviews");
-            _packageNameManager = packageNameManager;
+            _cosmosClient = cosmosClient ?? new CosmosClient(configuration["Cosmos:ConnectionString"]);
+            _reviewsContainer = _cosmosClient.GetContainer("APIView", "Reviews");
         }
 
         public async Task UpsertReviewAsync(ReviewModel reviewModel)
@@ -45,7 +44,7 @@ namespace APIViewWeb
             return reviews.FirstOrDefault();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, ReviewType? filterType = null)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, ReviewType? filterType = null, bool fetchAllPages = false)
         {
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE (IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed ");
 
@@ -68,7 +67,11 @@ namespace APIViewWeb
             }
 
             // Limit to top 50
-            queryStringBuilder.Append("OFFSET 0 LIMIT 50");
+            if (!fetchAllPages)
+            {
+                queryStringBuilder.Append("OFFSET 0 LIMIT 50");
+            }
+            
 
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
@@ -113,7 +116,7 @@ namespace APIViewWeb
             return reviews.OrderBy(r => r.Name).ThenByDescending(r => r.LastUpdated);
         }
 
-        public async Task<IEnumerable<string>> GetReviewFirstLevelProprtiesAsync(string propertyName)
+        public async Task<IEnumerable<string>> GetReviewFirstLevelPropertiesAsync(string propertyName)
         {
             var query = $"SELECT DISTINCT VALUE r.{propertyName} FROM Reviews r";
             var properties = new List<string>();
@@ -142,18 +145,65 @@ namespace APIViewWeb
             {
                 var searchAsQueryStr = ArrayToQueryString<string>(search);
                 var searchAsSingleString = '"' + String.Join(' ', search) + '"';
-                queryStringBuilder.Append($" AND (r.Author IN {searchAsQueryStr}");
-                queryStringBuilder.Append($" OR STRINGEQUALS(r.Revisions[0].Name, {searchAsSingleString}, true)");
-                queryStringBuilder.Append($" OR CONTAINS(r.Name, {searchAsSingleString}, true)");
-                queryStringBuilder.Append($" OR CONTAINS(r.ServiceName, {searchAsSingleString}, true)");
-                queryStringBuilder.Append($" OR CONTAINS(r.PackageDisplayName, {searchAsSingleString}, true)");
-                queryStringBuilder.Append($" OR (CONTAINS(r.Name, \"{search[0]}\", true)");
 
-                for (int i = 1; i < search.Count; i++)
+                var hasExactMatchQuery = search.Any(
+                    s => (
+                    s.StartsWith("package:") || 
+                    s.StartsWith("pr:") || 
+                    s.StartsWith("author:") || 
+                    s.StartsWith("service:") ||
+                    s.StartsWith("name:")
+                ));
+
+                if (hasExactMatchQuery)
                 {
-                    queryStringBuilder.Append($" AND CONTAINS(r.Revisions[0].Name, \"{search[i]}\", true)");
+                    foreach (var item in search)
+                    {
+                        if (item.StartsWith("package:"))
+                        {
+                            var query = '"' + $"{item.Replace("package:", "")}" + '"';
+                            queryStringBuilder.Append($" AND STRINGEQUALS(ARRAY_SLICE(r.Revisions, -1)[0].Files[0].PackageName, {query}, true)");
+                        }
+                        else if (item.StartsWith("author:"))
+                        {
+                            var query = '"' + $"{item.Replace("author:", "")}" + '"';
+                            queryStringBuilder.Append($" AND STRINGEQUALS(r.Author, {query}, true)");
+                        }
+                        else if (item.StartsWith("service:"))
+                        {
+                            var query = '"' + $"{item.Replace("service:", "")}" + '"';
+                            queryStringBuilder.Append($" AND STRINGEQUALS(r.ServiceName, {query}, true)");
+                        }
+                        else if (item.StartsWith("pr:"))
+                        {
+                            var query = '"' + $"{item.Replace("pr:", "")}" + '"';
+                            queryStringBuilder.Append($" AND ENDSWITH(ARRAY_SLICE(r.Revisions, -1)[0].Label, {query}, true)");
+                        }
+                        else if (item.StartsWith("name:"))
+                        {
+                            var query = '"' + $"{item.Replace("name:", "")}" + '"';
+                            queryStringBuilder.Append($" AND CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                        }
+                        else
+                        {
+                            var query = '"' + $"{item}" + '"';
+                            queryStringBuilder.Append($" AND CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                        }
+                    }
                 }
-                queryStringBuilder.Append($"))");
+                else
+                {
+                    queryStringBuilder.Append($" AND (r.Author IN {searchAsQueryStr}");
+                    foreach (var item in search) 
+                    {
+                        var query = '"' + $"{item}" + '"';
+                        queryStringBuilder.Append($" OR CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                        queryStringBuilder.Append($" OR CONTAINS(r.Name, {query}, true)");
+                        queryStringBuilder.Append($" OR CONTAINS(r.ServiceName, {query}, true)");
+                        queryStringBuilder.Append($" OR CONTAINS(r.PackageDisplayName, {query}, true)");
+                    }
+                    queryStringBuilder.Append($")");
+                }
             }
 
             if (languages != null && languages.Count > 0)

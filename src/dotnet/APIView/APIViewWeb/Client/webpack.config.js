@@ -1,6 +1,5 @@
 const path = require('path');
 
-const VueLoaderPlugin = require('vue-loader/lib/plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
@@ -12,17 +11,24 @@ module.exports = {
     navbar: './src/navbar.ts',
     review: './src/review.ts',
     reviews: './src/reviews.ts',
-    main: './src/main.ts',
-    api: './src/api.ts',
-    site: './css/site.scss'
+    site: './css/site.scss',
+
+    c: './css/c.scss',
+    cplusplus: './css/cplusplus.scss',
+    csharp: './css/csharp.scss',
+    go: './css/go.scss',
+    java: './css/java.scss',
+    javascript: './css/javascript.scss',
+    json: './css/json.scss',
+    kotlin: './css/kotlin.scss',
+    python: './css/python.scss',
+    swagger: './css/swagger.scss',
+    swift: './css/swift.scss',
+    xml: './css/xml.scss'
   },
   devtool: 'source-map',
   module: {
     rules: [
-      {
-        test: /\.vue$/,
-        loader: 'vue-loader'
-      },
       {
         test: /\.s[ac]ss$/i,
         use: [
@@ -51,9 +57,8 @@ module.exports = {
     ]
   },
   plugins: [
-    new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
-      filename: 'site.css'
+      filename: "[name].css"
     }),
   ],
   resolve: {

@@ -5,10 +5,10 @@ trigger: none
 parameters:
   - name: Environment
     type: string
-    default: test
+    default: pg
     values:
     - prod
-    - test
+    - pg
   - name: WhatIf
     type: boolean
     default: false

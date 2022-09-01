@@ -12,7 +12,7 @@ export class DockerTaskEngineInput {
     mockTestOutputJsonFile: string;
     headSha: string | undefined;
     headRef: string | undefined;
-    repoHttpsUrl: string;
+    repoHttpsUrl: string | undefined;
     serviceType: string;
     mockServerHost?: string;
     initTaskLog: string;
@@ -78,7 +78,7 @@ export const dockerTaskEngineInput = convict<DockerTaskEngineInput>({
         doc: 'headRef of spec repo'
     },
     repoHttpsUrl: {
-        default: 'https://github.com/Azure/azure-rest-api-specs',
+        default: undefined,
         env: 'REPO_HTTP_URL',
         format: String,
         doc: 'The http url of spec repo'

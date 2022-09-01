@@ -2240,21 +2240,16 @@
     }
   },
   "securityDefinitions": {
-    "azure_auth": {
-      "flow": "implicit",
-      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
-      "scopes": {
-        "user_impersonation": "impersonate your user account"
-      },
-      "type": "oauth2",
-      "description": "Azure Active Directory OAuth2 Flow"
+    "apim_key": {
+      "type": "apiKey",
+      "description": "A subscription key for a Language service resource.",
+      "name": "subscriptionKey",
+      "in": "header"
     }
   },
   "security": [
     {
-      "azure_auth": [
-        "user_impersonation"
-      ]
+      "apim_key": []
     }
   ]
 }

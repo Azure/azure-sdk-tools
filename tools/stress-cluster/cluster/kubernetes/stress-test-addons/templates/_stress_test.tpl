@@ -13,6 +13,8 @@ metadata:
   labels:
     release: {{ .Release.Name }}
     scenario: {{ .Stress.Scenario }}
+    resourceGroupName: {{ .Stress.ResourceGroupName }}
+    baseName: {{ .Stress.BaseName }}
 spec:
   backoffLimit: 0
   template:
@@ -64,6 +66,8 @@ metadata:
   labels:
     release: {{ .Release.Name }}
     scenario: {{ .Stress.Scenario }}
+    resourceGroupName: {{ .Stress.ResourceGroupName }}
+    baseName: {{ .Stress.BaseName }}
 spec:
   backoffLimit: 0
   template:

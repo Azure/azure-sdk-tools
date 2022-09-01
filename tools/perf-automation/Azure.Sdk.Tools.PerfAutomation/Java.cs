@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             await UpdatePackageVersions(packageVersions, WorkingDirectory);
 
-            var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true --no-transfer-progress --quiet --pl {project}",
+            var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true --no-transfer-progress --pl {project}",
                 WorkingDirectory, environmentVariables: _buildEnvironment);
 
             /*
@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
             IDictionary<string, string> packageVersions, string testName, string arguments, string context)
         {
-            var processArguments = $"-jar {context} -- {testName} {arguments}";
+            var processArguments = $"-XX:+CrashOnOutOfMemoryError -jar {context} -- {testName} {arguments}";
 
             var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false);
 

@@ -104,4 +104,55 @@ describe('mockForExample: ', () => {
             responseResourceId: example.responses['200'].body.id
         }).toMatchSnapshot()
     })
+
+    it('patchResourceIdAndType', async () => {
+        const jsonLoader = inversifyGetInstance(JsonLoader, {})
+        const swaggerMocker = new SwaggerMocker(jsonLoader, new MockerCache(), new PayloadCache())
+        let responses: any = {
+            200: {
+                body: {
+                    id: 'WrongId',
+                    type: 'WrongType'
+                }
+            }
+        }
+
+        // put with normal providers
+        swaggerMocker.patchResourceIdAndType(responses, {
+            method: 'put',
+            url:
+                'https://localhost:8443/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/policies/policyId'
+        })
+        expect(responses).toMatchSnapshot()
+
+        // list with nested providers
+        responses['200']['body'] = {
+            id: 'WrongId',
+            type: 'WrongType'
+        }
+        swaggerMocker.patchResourceIdAndType(responses, {
+            method: 'get',
+            url:
+                'https://localhost:8443/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/providers/Microsoft.MokeNested/foos/myfoo/bars/mybar'
+        })
+        expect(responses).toMatchSnapshot()
+
+        // list with nested providers
+        responses = {
+            200: {
+                body: [
+                    {
+                        id: 'WrongId',
+                        type: 'WrongType'
+                    }
+                ]
+            }
+        }
+        swaggerMocker.patchResourceIdAndType(responses, {
+            method: 'get',
+            url:
+                'https://localhost:8443/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/providers/Microsoft.MokeNested/foos/myfoo/bars'
+        })
+        expect(responses).toMatchSnapshot()
+    })
 })

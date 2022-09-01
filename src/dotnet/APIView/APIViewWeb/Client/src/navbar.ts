@@ -1,33 +1,22 @@
-﻿import Split from "split.js";
-
-addEventListener("load", () => {
-    $(".nav-list-toggle").click(function () {
-        $(this).parents(".nav-list-group").first().toggleClass("nav-list-collapsed");
-    });
-});
+import { updatePageSettings } from "./helpers";
 
 $(() => {
-    /* 992px matches bootstrap col-lg min-width */
-    ($('.namespace-view') as any).stickySidebar({ minWidth: 992 });
+    const themeSelector = $( '#theme-selector' );
 
-    /* Split left and right review panes using split.js */
-    const rl = $('#review-left');
-    const rr = $('#review-right');
-
-    if (rl.length && rr.length) {
-        Split(['#review-left', '#review-right'], {
-            direction: 'horizontal',
-            sizes: [17, 83],
-            elementStyle: (dimension, size, gutterSize) => {
-                return {
-                    'flex-basis': `calc(${size}% - ${gutterSize}px`
-                }
-            },
-            gutterStyle: (dimension, gutterSize) => {
-                return {
-                    'flex-basis': `${gutterSize}px`
-                }
-            }
+    // Add EventListener for Changing CSS Theme
+    themeSelector.on('change', function() {
+        updatePageSettings(function(){
+            var allThemes = themeSelector.children();
+            var newTheme = themeSelector.children(":selected").val() as string;
+            var themesToRemove = allThemes.filter(function(){
+                return ($(this).val() as string) != newTheme;
+            });
+            var body = $('body');
+    
+            themesToRemove.each(function(){
+                body.removeClass(($(this).val() as string));
+            })
+            body.addClass(newTheme);
         });
-    }
+    });
 });

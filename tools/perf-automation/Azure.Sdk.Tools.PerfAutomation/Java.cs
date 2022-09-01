@@ -45,15 +45,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private static async Task UpdatePackageVersions(IDictionary<string, string> packageVersions, string workingDirectory)
         {
             string versionsPath = Path.Combine(workingDirectory, "eng", "versioning");
-            string setVersionsScript = Path.Combine(versionsPath, "set_versions.py");
-            string updateVersionsScript = Path.Combine(versionsPath, "update_versions.py");
 
             bool sourceRun = packageVersions.Values.All(version => string.Equals(version, "source"));
             if (sourceRun)
             {
                 // All packages are set so source, treat this as if it were a From Source CI run.
                 // This call updates all dependency versions to source versions.
-                await ProcessUtil.RunAsync("python", $"{setVersionsScript} --build-type client --pst");
+                await ProcessUtil.RunAsync("python", $"set_versions.py --build-type client --pst", workingDirectory: versionsPath);
             } 
             else
             {
@@ -67,11 +65,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         continue;
                     }
 
-                    await ProcessUtil.RunAsync("python", $"{setVersionsScript} --bt client --group-id {groupIdAndArtifactIdSplit[0]} --artifact-id {groupIdAndArtifactIdSplit[1]} --new-version {packageKvp.Value}");
+                    await ProcessUtil.RunAsync("python", $"set_versions.py --bt client --group-id {groupIdAndArtifactIdSplit[0]} --artifact-id {groupIdAndArtifactIdSplit[1]} --new-version {packageKvp.Value}", workingDirectory: versionsPath);
                 }
             }
 
-            await ProcessUtil.RunAsync("python", $"{updateVersionsScript} --sr --bt client --ut library");
+            await ProcessUtil.RunAsync("python", $"update_versions.py --sr --bt client --ut library", workingDirectory: versionsPath);
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,

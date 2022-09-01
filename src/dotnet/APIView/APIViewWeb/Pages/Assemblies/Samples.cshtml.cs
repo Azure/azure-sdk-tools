@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Azure.Cosmos;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.VisualStudio.Services.FileContainer;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -61,7 +63,7 @@ namespace APIViewWeb.Pages.Assemblies
                 Samples = sampleFromServer;
                 if (sampleFromServer != null)
                 {
-                    SampleRevisions = sampleFromServer.Revisions.OrderByDescending(e => e.RevisionNumber);
+                    SampleRevisions = sampleFromServer.Revisions.OrderByDescending(e => e.RevisionNumber).Where(e => !e.RevisionIsDeleted);
                 }
 
                 if (SampleRevisions != null && SampleRevisions.Any())
@@ -88,10 +90,10 @@ namespace APIViewWeb.Pages.Assemblies
                 else
                 {
                     // No samples.
-                    SampleRevisions = new List<UsageSampleRevisionModel>();
+                    SampleRevisions = SampleRevisions ?? new List<UsageSampleRevisionModel>(); 
                     Sample = new UsageSampleRevisionModel(null, -1);
                     SampleContent = Array.Empty<CodeLineModel>();
-                    Samples = new UsageSampleModel(Review.ReviewId);
+                    Samples = Samples ?? new UsageSampleModel(Review.ReviewId);
                 }
             }
             catch (CosmosException)

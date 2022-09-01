@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -20,11 +19,9 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly UsageSampleManager _samplesManager;
         private readonly ReviewManager _reviewManager;
         private readonly CommentsManager _commentsManager;
-        private readonly NotificationManager _notificationManager;
         public readonly UserPreferenceCache _preferenceCache;
         private readonly IAuthorizationService _authorizationService;
 
-        public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
         public UsageSampleRevisionModel Sample { get; private set; }
         public IEnumerable<UsageSampleRevisionModel> SampleRevisions { get; private set; }
@@ -34,18 +31,15 @@ namespace APIViewWeb.Pages.Assemblies
         public string SampleOriginal { get; set; }
 
         public UsageSamplePageModel(
-            IConfiguration configuration,
             UsageSampleManager samplesManager,
             ReviewManager reviewManager,
             CommentsManager commentsManager,
-            NotificationManager notificationManager,
             UserPreferenceCache preferenceCache, 
             IAuthorizationService authorizationService)
         {
             _samplesManager = samplesManager;
             _reviewManager = reviewManager;
             _commentsManager = commentsManager;
-            _notificationManager = notificationManager;
             _preferenceCache = preferenceCache;
             _authorizationService = authorizationService;
         }

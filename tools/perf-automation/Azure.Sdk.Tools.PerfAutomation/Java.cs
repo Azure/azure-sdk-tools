@@ -44,14 +44,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private static async Task UpdatePackageVersions(IDictionary<string, string> packageVersions, string workingDirectory)
         {
-            string versionsPath = Path.Combine(workingDirectory, "eng", "versioning");
-
             bool sourceRun = packageVersions.Values.All(version => string.Equals(version, "source"));
             if (sourceRun)
             {
                 // All packages are set so source, treat this as if it were a From Source CI run.
                 // This call updates all dependency versions to source versions.
-                await ProcessUtil.RunAsync("python", $"set_versions.py --build-type client --pst", workingDirectory: versionsPath);
+                await ProcessUtil.RunAsync("python", $"./eng/versioning/set_versions.py --build-type client --pst", workingDirectory: workingDirectory);
             } 
             else
             {
@@ -65,11 +63,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         continue;
                     }
 
-                    await ProcessUtil.RunAsync("python", $"set_versions.py --bt client --group-id {groupIdAndArtifactIdSplit[0]} --artifact-id {groupIdAndArtifactIdSplit[1]} --new-version {packageKvp.Value}", workingDirectory: versionsPath);
+                    await ProcessUtil.RunAsync("python", $"./eng/versioning/set_versions.py --bt client --group-id {groupIdAndArtifactIdSplit[0]} --artifact-id {groupIdAndArtifactIdSplit[1]} --new-version {packageKvp.Value}", workingDirectory: workingDirectory);
                 }
             }
 
-            await ProcessUtil.RunAsync("python", $"update_versions.py --sr --bt client --ut library", workingDirectory: versionsPath);
+            await ProcessUtil.RunAsync("python", $"./eng/versioning/update_versions.py --sr --bt client --ut library", workingDirectory: workingDirectory);
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,

@@ -103,10 +103,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
-            // Dump "npm list 2>nul | findstr @azure" to stdout
-            // "npm list" may fail with exit code 1, but it succeeds enough to print the versions we care about
-            var npmListResult = await Util.RunAsync("npm", "list", projectDirectory, throwOnError: false);
-
             var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} --list-transitive-dependencies {arguments}",
                 projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);
 

@@ -1,9 +1,7 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
-using Microsoft.Crank.Agent;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -12,9 +10,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     public class Java : LanguageBase
     {
+        private IDictionary<string, string> SourceVersions;
+
         protected override Language Language => Language.Java;
 
         private string PerfCoreProjectFile => Path.Combine(WorkingDirectory, "common", "perf-test-core", "pom.xml");
+        private string VersionFile => Path.Combine(WorkingDirectory, "eng", "versioning", "version_client.txt");
 
         private static readonly Dictionary<string, string> _buildEnvironment = new Dictionary<string, string>()
         {
@@ -27,7 +28,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
-            await UpdatePackageVersions(packageVersions, WorkingDirectory);
+            SourceVersions ??= LoadSourceVersions();
+
+            UpdatePackageVersions(PerfCoreProjectFile, packageVersions, SourceVersions);
+            UpdatePackageVersions(projectFile, packageVersions, SourceVersions);
 
             var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true --no-transfer-progress --pl {project}",
                 WorkingDirectory, environmentVariables: _buildEnvironment);
@@ -42,15 +46,46 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (result.StandardOutput, result.StandardError, jar);
         }
 
-        private static async Task UpdatePackageVersions(IDictionary<string, string> packageVersions, string workingDirectory)
+        private static void UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions, IDictionary<string, string> sourceVersions)
         {
-            if (packageVersions.Values.All(version => string.Equals(version, "source")))
+            // Create backup.  Throw if exists, since this shouldn't happen
+            File.Copy(projectFile, projectFile + ".bak", overwrite: false);
+
+            var doc = new XmlDocument() { PreserveWhitespace = true };
+            doc.Load(projectFile);
+
+            var nsmgr = new XmlNamespaceManager(doc.NameTable);
+            nsmgr.AddNamespace("mvn", "http://maven.apache.org/POM/4.0.0");
+
+            foreach (var v in packageVersions)
             {
-                // All packages are set so source, treat this as if it were a From Source CI run.
-                // This call updates all dependency versions to source versions.
-                await ProcessUtil.RunAsync("python", $"./eng/versioning/set_versions.py --build-type client --pst", workingDirectory: workingDirectory);
-                await ProcessUtil.RunAsync("python", $"./eng/versioning/update_versions.py --sr --bt client --ut library", workingDirectory: workingDirectory);
+                var groupdIdAndArtifactId = v.Key;
+                var splitGroupdIdAndArtifactId = groupdIdAndArtifactId.Split(':');
+                var packageVersion = v.Value;
+
+                if (packageVersion == Program.PackageVersionSource)
+                {
+                    if (!sourceVersions.TryGetValue(groupdIdAndArtifactId, out packageVersion)) continue;
+                }
+
+                var dependencies = doc.SelectNodes("/mvn:project/mvn:dependencies/mvn:dependency");
+
+                for (var i = 0; i < dependencies.Count; i++)
+                {
+                    var dependency = dependencies[i];
+                    var groupId = dependency.SelectSingleNode("groupId").InnerText;
+                    var artifactId = dependency.SelectSingleNode("artifactId").InnerText;
+
+                    if (string.Equals(groupId, groupdIdAndArtifactId[0]) && string.Equals(artifactId, groupdIdAndArtifactId[1]))
+                    {
+                        dependency.SelectSingleNode("version").InnerText = packageVersion;
+                    }
+                }
             }
+
+            Console.WriteLine(doc.OuterXml);
+
+            doc.Save(projectFile);
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
@@ -86,6 +121,22 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
 
             return Task.CompletedTask;
+        }
+
+        private IDictionary<string, string> LoadSourceVersions()
+        {
+            var sourceVersions = new Dictionary<string, string>();
+            foreach (var line in File.ReadAllLines(VersionFile))
+            {
+                var trimmedLine = line.Trim();
+                if (string.IsNullOrEmpty(trimmedLine)) continue;
+                if (trimmedLine.StartsWith('#') || trimmedLine.StartsWith("beta_") || trimmedLine.StartsWith("unreleased_")) continue;
+
+                var splitVersionLine = trimmedLine.Split(';');
+                sourceVersions.Add(splitVersionLine[0], splitVersionLine[2]);
+            }
+
+            return sourceVersions;
         }
     }
 }

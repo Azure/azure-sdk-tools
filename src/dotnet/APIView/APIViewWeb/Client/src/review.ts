@@ -4,10 +4,11 @@ import { updatePageSettings } from "./helpers";
 $(() => {  
   const SEL_DOC_CLASS = ".documentation";
   const SHOW_DOC_CHECK_COMPONENT = "#show-documentation-component";
-  const SHOW_DOC_CHECKBOX = ".show-doc-checkbox";
+  const SHOW_DOC_CHECKBOX = "#show-doc-checkbox";
   const SHOW_DOC_HREF = ".show-document";
   const SHOW_DIFFONLY_CHECKBOX = ".show-diffonly-checkbox";
   const SHOW_DIFFONLY_HREF = ".show-diffonly";
+  const TOGGLE_DOCUMENTATION = ".line-toggle-documentation-button";
 
   hideCheckboxIfNoDocs();
 
@@ -62,7 +63,21 @@ $(() => {
   /* TOGGLE PAGE OPTIONS
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $(SHOW_DOC_CHECKBOX).on("click", e => {
-    $(SHOW_DOC_HREF)[0].click();
+    if((e.target as HTMLInputElement).checked) {
+      // show all documentation
+      $(".code-line-documentation").removeClass('hidden-row');
+      $(TOGGLE_DOCUMENTATION).removeClass("icon-chevron-right");
+      $(TOGGLE_DOCUMENTATION).addClass("icon-chevron-up");
+    } else {
+      // hide all documentation
+      $(".code-line-documentation").addClass("hidden-row");
+      $(TOGGLE_DOCUMENTATION).removeClass("icon-chevron-up");
+      $(TOGGLE_DOCUMENTATION).addClass("icon-chevron-right");
+    }
+  });
+
+  $(SHOW_DOC_HREF).on("click", e => {
+    $(SHOW_DOC_CHECKBOX)[0].click();
   });
 
   $(SHOW_DIFFONLY_CHECKBOX).on("click", e => {
@@ -95,6 +110,23 @@ $(() => {
         rightContainer.addClass("col-12");
       }
     });
+  });
+
+  /* TOGGLE DOCUMENTATION DROPDOWN
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  $(TOGGLE_DOCUMENTATION).on("click", function(e){
+    const documentedBy = $(this).data('documented-by');
+    const codeLines = $(".code-window > tbody > .code-line");
+    
+    for(var i = 0; i < documentedBy.length; i++) {
+      $(codeLines[documentedBy[i] - 1]).toggleClass("hidden-row");
+    }
+
+    $(this).toggleClass('icon-chevron-right');
+    $(this).toggleClass('icon-chevron-up');
+
+    // scroll button to center of screen, so that the line is visible after toggling folding
+    $(this).get(0).scrollIntoView({ block: "center"});
   });
 
   /* DROPDOWN FILTER FOR REVIEW, REVISIONS AND DIFF (UPDATES REVIEW PAGE ON CHANGE)

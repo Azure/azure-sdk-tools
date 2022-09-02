@@ -64,10 +64,6 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(SupportsGet = true)]
         public string DiffRevisionId { get; set; }
 
-        // Flag to decide whether to  include documentation
-        [BindProperty(Name = "doc", SupportsGet = true)]
-        public bool ShowDocumentation { get; set; }
-
         [BindProperty(Name = "diffOnly", SupportsGet = true)]
         public bool ShowDiffOnly { get; set; }
 
@@ -94,7 +90,7 @@ namespace APIViewWeb.Pages.Assemblies
             CodeFile = renderedCodeFile.CodeFile;
 
             var fileDiagnostics = CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
-            var fileHtmlLines = renderedCodeFile.Render(ShowDocumentation);
+            var fileHtmlLines = renderedCodeFile.Render();
 
             if (DiffRevisionId != null)
             {
@@ -102,9 +98,9 @@ namespace APIViewWeb.Pages.Assemblies
 
                 var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
 
-                var previousHtmlLines = previousRevisionFile.RenderReadOnly(ShowDocumentation);
-                var previousRevisionTextLines = previousRevisionFile.RenderText(ShowDocumentation);
-                var fileTextLines = renderedCodeFile.RenderText(ShowDocumentation);
+                var previousHtmlLines = previousRevisionFile.RenderReadOnly();
+                var previousRevisionTextLines = previousRevisionFile.RenderText();
+                var fileTextLines = renderedCodeFile.RenderText();
 
                 var diffLines = InlineDiff.Compute(
                     previousRevisionTextLines,
@@ -186,20 +182,45 @@ namespace APIViewWeb.Pages.Assemblies
                     diffLine.Kind != DiffLineKind.Removed ?
                         diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
                         Array.Empty<CodeDiagnostic>(),
-                    ++index
+                    ++index,
+                    new int[] { }
                 )).ToArray();
         }
 
         private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments)
         {
+            List<int> documentedByLines = new List<int>();
+            int lineNumberExcludingDocumentation = 0;
             return lines.Select(
-                (line, index) => new CodeLineModel(
-                    DiffLineKind.Unchanged,
-                    line,
-                    comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
-                    diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
-                    ++index
-                )).ToArray();
+                (line, index) =>
+                {
+                    if (line.IsDocumentation)
+                    {
+                        // documentedByLines must include the index of a line, assuming that documentation lines are counted
+                        documentedByLines.Add(++index);
+                        return new CodeLineModel(
+                            DiffLineKind.Unchanged,
+                            line,
+                            comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
+                            diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
+                            lineNumberExcludingDocumentation,
+                            new int[] {}
+                        );
+                    }
+                    else
+                    {
+                        CodeLineModel c = new CodeLineModel(
+                            DiffLineKind.Unchanged,
+                            line,
+                            comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
+                            diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
+                            ++lineNumberExcludingDocumentation,
+                            documentedByLines.ToArray()
+                        );
+                        documentedByLines.Clear();
+                        return c;
+                    }
+                }).ToArray();
         }
 
         private int ComputeActiveConversations(CodeLine[] lines, ReviewCommentsModel comments)
@@ -240,12 +261,11 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage(new { id = id });
         }
 
-        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null, string revisionId = null)
+        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, string revisionId = null)
         {
             var routingData = new Dictionary<string, string>();
             routingData["revisionId"] = revisionId;
             routingData["diffRevisionId"] = diffRevisionId;
-            routingData["doc"] = (showDocumentation ?? false).ToString();
             routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
             return routingData;
         }

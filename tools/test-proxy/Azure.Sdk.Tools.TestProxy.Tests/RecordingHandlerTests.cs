@@ -21,6 +21,7 @@ using Xunit;
 using Azure.Core;
 using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Store;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -961,15 +962,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Contains("The certificate is missing the public key", assertion.Message);
         }
         #endregion
-    }
-
-    public class IgnoreOnLinux : FactAttribute
-    {
-#if IS_LINUX
-    public IgnoreOnMonoFactAttribute() {
-        Skip = "Ignored on unix, the libssl library doesn't like the test cert.";
-    }
-#endif
     }
 
     public sealed class IgnoreOnLinuxFact : FactAttribute

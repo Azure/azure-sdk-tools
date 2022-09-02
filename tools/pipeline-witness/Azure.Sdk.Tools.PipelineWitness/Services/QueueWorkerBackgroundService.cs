@@ -3,8 +3,11 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
+
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Hosting;

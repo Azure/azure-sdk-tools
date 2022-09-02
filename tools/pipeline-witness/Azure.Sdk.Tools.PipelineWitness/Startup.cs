@@ -1,15 +1,21 @@
 ﻿using System;
+
+using Azure.Core;
 using Azure.Identity;
 using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
+using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
-using Azure.Security.KeyVault.Secrets;
+using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
+
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Common;
@@ -37,17 +43,22 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 builder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
                 builder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))
                     .ConfigureOptions(o => o.MessageEncoding = Storage.Queues.QueueMessageEncoding.Base64);
+
+                builder.AddClient((CosmosClientOptions options, IServiceProvider provider) =>
+                {
+                    var resolvedSettings = provider.GetRequiredService<IOptions<PipelineWitnessSettings>>().Value;
+                    return new CosmosClient(settings.CosmosAccountUri, resolvedSettings.CosmosAuthorizationKey, options);
+                });
             });
 
             builder.Services.AddSingleton<VssConnection>(provider =>
             {
-                var secretClient = provider.GetRequiredService<SecretClient>();
-                KeyVaultSecret secret = secretClient.GetSecret("azure-devops-personal-access-token");
-                var credential = new VssBasicCredential("nobody", secret.Value);
-                var connection = new VssConnection(new Uri("https://dev.azure.com/azure-sdk"), credential);
-                return connection;
+                var resolvedSettings = provider.GetRequiredService<IOptions<PipelineWitnessSettings>>().Value;
+                var credential = new VssBasicCredential("nobody", resolvedSettings.DevopsAccessToken);
+                return new VssConnection(new Uri("https://dev.azure.com/azure-sdk"), credential);
             });
 
+            builder.Services.AddSingleton<IAsyncLockProvider>(provider => new CosmosAsyncLockProvider(provider.GetRequiredService<CosmosClient>(), settings.CosmosDatabase, settings.CosmosAsyncLockContainer));
             builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<ProjectHttpClient>());
             builder.Services.AddSingleton<BuildHttpClient>(provider => provider.GetRequiredService<VssConnection>().GetClient<EnhancedBuildHttpClient>());
             builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<TestResultsHttpClient>());
@@ -76,8 +87,13 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, AzureArtifactsServiceUnavailableClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
-            builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
 
+            builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
+            builder.Services.AddSingleton<TokenCredential, DefaultAzureCredential>();
+            builder.Services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
+            builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureKeyVaultSettings<PipelineWitnessSettings>>();
+
+            builder.Services.AddHostedService<CosmosDatabaseInitializer>();
             builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
             builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
         }

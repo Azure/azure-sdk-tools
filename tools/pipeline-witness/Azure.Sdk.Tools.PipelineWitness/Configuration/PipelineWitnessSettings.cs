@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Azure.Sdk.Tools.PipelineWitness
+namespace Azure.Sdk.Tools.PipelineWitness.Configuration
 {
     public class PipelineWitnessSettings
     {
@@ -12,12 +12,17 @@ namespace Azure.Sdk.Tools.PipelineWitness
         public string KeyVaultUri { get; set; }
 
         /// <summary>
-        /// Gets or sets uri of the storage account use for queue processing
+        /// Gets or sets uri of the cosmos account to use
+        /// </summary>
+        public string CosmosAccountUri { get; set; }
+
+        /// <summary>
+        /// Gets or sets uri of the storage account to use for queue processing
         /// </summary>
         public string QueueStorageAccountUri { get; set; }
 
         /// <summary>
-        /// Gets or sets uri of the blob storage account use for blob export
+        /// Gets or sets uri of the blob storage account to use for blob export
         /// </summary>
         public string BlobStorageAccountUri { get; set; }
 
@@ -80,5 +85,25 @@ namespace Azure.Sdk.Tools.PipelineWitness
         /// Gets or sets the definition id of the pipeline owners extraction build 
         /// </summary>
         public int PipelineOwnersDefinitionId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the database to use 
+        /// </summary>
+        public string CosmosDatabase { get; set; }
+
+        /// <summary>
+        /// Gets or sets the container to use for async locks
+        /// </summary>
+        public string CosmosAsyncLockContainer { get; set; }
+
+        /// <summary>
+        /// Gets or sets the authorization key for the Cosmos account
+        /// </summary>
+        public string CosmosAuthorizationKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the access token to use for Azure DevOps clients
+        /// </summary>
+        public string DevopsAccessToken { get; set; }
     }
 }

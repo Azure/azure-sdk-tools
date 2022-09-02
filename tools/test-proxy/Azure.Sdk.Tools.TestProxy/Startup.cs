@@ -18,9 +18,11 @@ using System.Reflection;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Console;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
+    [ExcludeFromCodeCoverage]
     public sealed class Startup
     {
         internal static int RequestsRecorded;

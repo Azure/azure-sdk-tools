@@ -177,7 +177,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var session = new ModifiableRecordSession(new RecordSession())
             {
-                Path = !string.IsNullOrWhiteSpace(sessionId) ? GetRecordingPath(sessionId, assetsJson) : String.Empty,
+                Path = !string.IsNullOrWhiteSpace(sessionId) ? (await GetRecordingPath(sessionId, assetsJson)) : String.Empty,
                 Client = null
             };
 
@@ -390,8 +390,7 @@ namespace Azure.Sdk.Tools.TestProxy
             else
             {
                 await RestoreAssetsJson(assetsPath, true);
-
-                var path = GetRecordingPath(sessionId, assetsPath);
+                var path = await GetRecordingPath(sessionId, assetsPath);
 
                 if (!File.Exists(path))
                 {
@@ -907,7 +906,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public string GetRecordingPath(string file, string assetsPath = null)
+        public async Task<string> GetRecordingPath(string file, string assetsPath = null)
         {
             var normalizedFileName = file.Replace('\\', '/');
 
@@ -918,9 +917,20 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var path = file;
 
-            if (!Path.IsPathFullyQualified(file))
+            // if an assets.json iis provided, we have a bit of work to do here.
+            if (!string.IsNullOrWhiteSpace(assetsPath))
             {
-                path = Path.Join(ContextDirectory, file);
+                var contextDirectory = await Store.GetPath(assetsPath);
+
+                path = Path.Join(contextDirectory, file);
+            }
+            // otherwise, it's a basic restore like we're used to
+            else
+            {
+                if (!Path.IsPathFullyQualified(file))
+                {
+                    path = Path.Join(ContextDirectory, file);
+                }
             }
 
             return (path + (!path.EndsWith(".json") ? ".json" : String.Empty));

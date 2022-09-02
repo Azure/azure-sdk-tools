@@ -44,30 +44,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private static async Task UpdatePackageVersions(IDictionary<string, string> packageVersions, string workingDirectory)
         {
-            bool sourceRun = packageVersions.Values.All(version => string.Equals(version, "source"));
-            if (sourceRun)
+            if (packageVersions.Values.All(version => string.Equals(version, "source")))
             {
                 // All packages are set so source, treat this as if it were a From Source CI run.
                 // This call updates all dependency versions to source versions.
                 await ProcessUtil.RunAsync("python", $"./eng/versioning/set_versions.py --build-type client --pst", workingDirectory: workingDirectory);
-            } 
-            else
-            {
-                // Loop over each package version, which should use a key that is the artifact identifier (groupId:artifactId)
-                // and have a value of the artifact version.
-                foreach (var packageKvp in packageVersions)
-                {
-                    string[] groupIdAndArtifactIdSplit = packageKvp.Key.Split(':', 2);
-                    if (groupIdAndArtifactIdSplit.Length != 2 || !groupIdAndArtifactIdSplit[0].Equals("com.azure"))
-                    {
-                        continue;
-                    }
-
-                    await ProcessUtil.RunAsync("python", $"./eng/versioning/set_versions.py --bt client --group-id {groupIdAndArtifactIdSplit[0]} --artifact-id {groupIdAndArtifactIdSplit[1]} --new-version {packageKvp.Value}", workingDirectory: workingDirectory);
-                }
+                await ProcessUtil.RunAsync("python", $"./eng/versioning/update_versions.py --sr --bt client --ut library", workingDirectory: workingDirectory);
             }
-
-            await ProcessUtil.RunAsync("python", $"./eng/versioning/update_versions.py --sr --bt client --ut library", workingDirectory: workingDirectory);
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,

@@ -7,7 +7,7 @@
 @using APIViewWeb.Models
 @{
     ViewData["Title"] = "Reviews";
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin());
 }
 @section Scripts
 {

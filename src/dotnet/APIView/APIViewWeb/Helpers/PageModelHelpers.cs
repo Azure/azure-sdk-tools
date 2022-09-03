@@ -7,7 +7,7 @@ namespace APIViewWeb.Helpers
     {
         public static UserPreferenceModel GetUserPreference(UserPreferenceCache preferenceCache, string userName)
         {
-            return preferenceCache.GetUserPreferences(userName);
+            return preferenceCache.GetUserPreferences(userName).Result;
         }
     }
 }

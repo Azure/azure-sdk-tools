@@ -5,7 +5,7 @@
 @{
     Layout = "ReviewLayout";
     ViewData["Title"] = Model.Review.DisplayName;
-    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin());
     TempData["UserPreference"] = userPreference;
     ViewBag.HasSections = (Model.CodeFile.LeafSections?.Count > 0) ? true : false;
 }

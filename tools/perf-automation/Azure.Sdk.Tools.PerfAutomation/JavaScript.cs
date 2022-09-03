@@ -131,31 +131,66 @@ namespace Azure.Sdk.Tools.PerfAutomation
         // ├── @azure/test-utils-perf@1.0.0 -> /mnt/vss/_work/1/s/sdk/test-utils/perf            
         public static Dictionary<string, string> GetRuntimePackageVersions(string standardOutput)
         {
-            var runtimePackageVersions = new Dictionary<string, string>();
+            var runtimePackageVersions = new Dictionary<string, List<string>>();
 
-            var versionOutputStart = standardOutput.LastIndexOf("=== Versions ===", StringComparison.OrdinalIgnoreCase);
-            if (versionOutputStart == -1)
+            var versionOutputStart = standardOutput.IndexOf("=== Versions ===", StringComparison.OrdinalIgnoreCase);
+            var versionOutputEnd = standardOutput.IndexOf("=== Parsed options ===", StringComparison.OrdinalIgnoreCase);
+
+            if (versionOutputStart == -1 | versionOutputEnd == -1)
             {
-                return runtimePackageVersions;
+                return new Dictionary<string, string>();
             }
 
-            var versionOutput = standardOutput[versionOutputStart..];
-
-            var matches = Regex.Matches(versionOutput, @"(@azure.*?)@(.*)$", RegexOptions.Multiline);
-            foreach (Match match in matches)
+            var versionOutput = standardOutput.Substring(versionOutputStart, versionOutputEnd);
+            
+            foreach (var line in versionOutput.ToLines())
             {
-                var name = match.Groups[1].Value;
-                var version = match.Groups[2].Value.Trim();
-
-                if (version.Contains("node_modules", StringComparison.OrdinalIgnoreCase))
+                if (line.Contains("UNMET DEPENDENCY", StringComparison.OrdinalIgnoreCase))
                 {
-                    version = version.Substring(0, version.IndexOf(' '));
+                    continue;
                 }
 
-                runtimePackageVersions.Add(name, version);
+                var match = Regex.Match(line, @"(@azure.*?)@(.*)$");
+                if (match.Success)
+                {
+                    var name = match.Groups[1].Value;
+                    var version = match.Groups[2].Value.Trim();
+
+                    if (version.Contains("node_modules", StringComparison.OrdinalIgnoreCase))
+                    {
+                        version = version[..version.IndexOf(' ')];
+                    }
+
+                    version = version.Replace(" extraneous", string.Empty).Replace(" deduped", string.Empty);
+
+                    if (!runtimePackageVersions.ContainsKey(name))
+                    {
+                        runtimePackageVersions[name] = new List<string>();
+                    }
+                    runtimePackageVersions[name].Add(version);
+                }
             }
 
-            return runtimePackageVersions;
+            foreach (var name in runtimePackageVersions.Keys)
+            {
+                IEnumerable<string> versions = runtimePackageVersions[name];
+                
+                // Remove duplicates
+                versions = versions.Distinct();
+                
+                // Remove versions that are a substring of another version, to favor the more detailed version
+                // Example: "1.2.3", "1.2.3 -> /mnt/vss/_work/1/s/sdk/core/core-http"
+                versions = versions.Where(v1 => !versions.Any(v2 => v2.StartsWith(v1 + " "))).ToList();
+
+                // Sort alphabetically (ideally would sort by semver, but should be close enough)
+                versions = versions.OrderBy(v => v);
+
+                runtimePackageVersions[name] = versions.ToList();
+            }
+
+            return runtimePackageVersions
+                .Select(kvp => new KeyValuePair<string, string>(kvp.Key, string.Join(", ", kvp.Value)))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public override IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions)

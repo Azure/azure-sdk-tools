@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -121,10 +122,70 @@ namespace Azure.Sdk.Tools.PerfAutomation
             };
         }
 
+        // [08:13:01.622] [INFO] The following files have been resolved:
+        // [08:13:01.622] [INFO]    io.projectreactor:reactor-core:jar:3.4.22:compile
+        // [08:13:01.622] [INFO]    io.netty:netty-codec-http:jar:4.1.79.Final:compile
+        // [08:13:01.622] [INFO]    com.azure:azure-core-http-okhttp:jar:1.11.2:compile
+        // [08:13:01.623] [INFO]    io.netty:netty-tcnative-boringssl-static:jar:linux-x86_64:2.0.53.Final:compile
+        // ...
+        // [08:13:01.624] [INFO]    org.jetbrains:annotations:jar:13.0:compile
+        // [08:13:01.624] [INFO] 
+        // [08:13:01.624] [INFO] ------------------------------------------------------------------------
+        // [08:13:01.625] [INFO] BUILD SUCCESS
+        // [08:13:01.625] [INFO] ------------------------------------------------------------------------
         public static Dictionary<string, string> GetRuntimePackageVersions(string standardOutput)
         {
             var runtimePackageVersions = new Dictionary<string, string>();
+
+            var versionLines = standardOutput.ToLines()
+                .SkipWhile(s => !s.Contains("the following files have been resolved", StringComparison.OrdinalIgnoreCase))
+                .Skip(1)
+                .TakeWhile(s => !s.Trim().EndsWith("[INFO]", StringComparison.OrdinalIgnoreCase));
+
+            foreach (var line in versionLines)
+            {
+                var versionInfo = Regex.Replace(line, @"^.*\[INFO\]\s+", string.Empty);
+                var versionParts = versionInfo.Split(':');
+
+                string groupId = null;
+                string artifactId = null;
+                string version = null;
+
+                if (versionParts.Length == 5)
+                {
+                    // io.projectreactor:reactor-core:jar:3.4.22:compile
+                    groupId = versionParts[0];
+                    artifactId = versionParts[1];
+                    version = versionParts[3];
+                }
+                else if (versionParts.Length == 6)
+                {
+                    // io.netty:netty-tcnative-boringssl-static:jar:linux-x86_64:2.0.53.Final:compile
+                    groupId = versionParts[0];
+                    artifactId = versionParts[1];
+                    version = versionParts[4];
+                }
+                else
+                {
+                    // Skip non-matching lines
+                    continue;
+                }
+
+                if (groupId.StartsWith("com.azure", StringComparison.OrdinalIgnoreCase) ||
+                    groupId.StartsWith("io.projectreactor", StringComparison.OrdinalIgnoreCase))
+                {
+                    runtimePackageVersions[$"{groupId}:{artifactId}"] = version;
+                }
+            }
+
             return runtimePackageVersions;
+        }
+
+        public override IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions)
+        {
+            return runtimePackageVersions?
+                .Where(kvp => !kvp.Key.Equals("com.azure:perf-test-core", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public override Task CleanupAsync(string project)

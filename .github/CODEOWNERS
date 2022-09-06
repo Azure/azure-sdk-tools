@@ -21,7 +21,7 @@
 /tools/github-issues/            @praveenkuttappan @weshaggard
 /tools/js-sdk-release-tools/     @dw511214992 @qiaozha @MaryGao
 /tools/mock-service-host/        @changlong-liu @tadelesh
-/tools/perf-automation/          @mikeharder @g2vinay
+/tools/perf-automation/          @mikeharder @benbp
 /tools/pipeline-generator/       @weshaggard @benbp
 /tools/pipeline-witness/         @praveenkuttappan @weshaggard
 /tools/sdk-generation-pipeline/  @dw511214992 @chunyu3 @zzvswxy

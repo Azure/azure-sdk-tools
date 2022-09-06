@@ -27,7 +27,7 @@ Set-StrictMode -Version 3
 
 # Fetch all branches, e.g. main, live
 Write-Host "git fetch origin"
-git fetch origin
+git fetch origin | Write-Host
 
 # Working branch is base branch, e.g. main
 # Checking whether the base branch exists. Suppress the error message and use the exit code for error handling.
@@ -46,7 +46,7 @@ else {
 $changedFiles = Get-ChangedFiles -SourceCommittish $BaseBranch `
   -TargetCommittish "origin/$TargetBranch" `
   -DiffFilterType ''
-Write-Host "Here is the total number of the changed files: $($changedFiles.Count)"
+
 # Get all allowPath, allowPath is the regex of the path
 $allowedPath = Get-Content -path $AllowlistPath
 

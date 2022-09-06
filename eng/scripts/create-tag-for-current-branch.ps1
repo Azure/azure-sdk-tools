@@ -9,8 +9,8 @@ The github url for the working repo.
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-  [Parameter(mandatory=$false)]
-  [string] $ReleaseTag = "mainbackup-$(Get-Date -Format 'yyyy-MM-dd')",
+  [Parameter(mandatory=$true)]
+  [string] $ReleaseTag,
   [Parameter(mandatory=$true)]
   [string] $GithubUrl
 )

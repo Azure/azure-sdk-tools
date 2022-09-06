@@ -120,6 +120,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         throw GenerateInvokeException(e.Result);
                     }
                 }
+                // At this point the changes have been pushed and the assets.json needs to be updated with the new SHA
+                if (!GitHandler.TryRun($"rev-parse HEAD", config, out CommandResult newSHAResult))
+                {
+                    // if we have a nonzero exit code, only code 128 is acceptable.
+                    if (newSHAResult.ExitCode != 128)
+                    {
+                        throw GenerateInvokeException(result);
+                    }
+                }
+                else
+                {
+                    var newSHA = newSHAResult.StdOut.Trim();
+                    await UpdateAssetsJson(newSHA, config);
+                }
             }
         }
 
@@ -260,15 +274,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
-        public string GetCloneUrl(GitAssetsConfiguration config)
+        public static string GetCloneUrl(string assetsRepo)
         {
             var gitToken = Environment.GetEnvironmentVariable(EnvironmentVariableName);
 
             if (!string.IsNullOrWhiteSpace(gitToken)){
-                return $"https://{gitToken}@github.com/{config.AssetsRepo}";
+                return $"https://{gitToken}@github.com/{assetsRepo}";
             }
 
-            return $"https://github.com/{config.AssetsRepo}";
+            return $"https://github.com/{assetsRepo}";
         }
 
         /// <summary>
@@ -295,7 +309,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {GetCloneUrl(config)} .", config);
+                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {GetCloneUrl(config.AssetsRepo)} .", config);
                     GitHandler.Run($"sparse-checkout init", config);
                 }
                 catch(GitProcessException e)

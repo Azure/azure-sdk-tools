@@ -43,7 +43,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
             */
 
-            var buildMatch = Regex.Match(result.StandardOutput, @"Building jar: (.*with-dependencies\.jar)", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+            var buildMatch = Regex.Match(result.StandardOutput, @"Building jar: (.*with-dependencies\.jar)",
+                RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
             var jar = buildMatch.Groups[1].Value;
 
             return (result.StandardOutput, result.StandardError, jar);
@@ -62,17 +63,22 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             foreach (var v in packageVersions)
             {
-                var packageName = v.Key;
-                var packageVersion = v.Value;
+                var nameParts = v.Key.Split(':');
+                var groupId = nameParts[0];
+                var artifactId = nameParts[1];
 
-                if (packageVersion != Program.PackageVersionSource)
+                var version = v.Value;
+
+                if (version != Program.PackageVersionSource)
                 {
-                    var versionNode = doc.SelectSingleNode($"/mvn:project/mvn:dependencies/mvn:dependency[mvn:artifactId='{packageName}']/mvn:version", nsmgr);
+                    var versionNode = doc.SelectSingleNode(
+                        $"/mvn:project/mvn:dependencies/mvn:dependency[mvn:groupId='{groupId}' and mvn:artifactId='{artifactId}']/mvn:version",
+                        nsmgr);
 
                     // Skip missing dependencies
                     if (versionNode != null)
                     {
-                        versionNode.InnerText = packageVersion;
+                        versionNode.InnerText = version;
                     }
                 }
             }

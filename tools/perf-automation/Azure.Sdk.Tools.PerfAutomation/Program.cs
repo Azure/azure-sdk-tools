@@ -486,19 +486,37 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var versionTable = new List<IList<IList<string>>>();
 
                 var primaryPackage = group.First().PrimaryPackage;
-                var packageVersions = group.First().RequestedPackageVersions.Zip(group.First().RuntimePackageVersions);
+
+                var runtimePackageVersions = group.First().RuntimePackageVersions
+                    .Select(p => _languages[group.Key.Language].FilterRuntimePackageVersions(p));
+
+                var packageVersions = group.First().RequestedPackageVersions.Zip(runtimePackageVersions);
+
                 foreach (var (requested, runtime) in packageVersions)
                 {
+                    // requested is guaranteed to be non-null, runtime may be null
+
                     var versionRows = new List<IList<string>>();
 
-                    // Primary package should be listed first, with remaining sorted alphabetically
-                    foreach (var packageName in requested.Keys.OrderBy(n => (n == primaryPackage) ? $"_{n}" : n))
+                    // Primary package first, core second, remaining sorted alphabetically
+                    var packageNames = requested.Keys.Concat(runtime?.Keys ?? Enumerable.Empty<string>())
+                        .Distinct()
+                        .OrderBy(n => (n == primaryPackage) ? $"__{n}" :
+                            (n.Contains("core", StringComparison.OrdinalIgnoreCase) ? $"_{n}" : n));
+
+                    foreach (var packageName in packageNames)
                     {
-                        var versionRow = new List<string>();
-                        versionRow.Add(packageName);
-                        versionRow.Add(requested[packageName]);
-                        versionRow.Add(runtime?[packageName] ?? "unknown");
-                        versionRows.Add(versionRow);
+                        requested.TryGetValue(packageName, out var requestedPackageVersion);
+
+                        string runtimePackageVersion = null;
+                        runtime?.TryGetValue(packageName, out runtimePackageVersion);
+
+                        versionRows.Add(new List<string>
+                        {
+                            packageName,
+                            requestedPackageVersion ?? "none",
+                            runtimePackageVersion ?? "unknown"
+                        });
                     }
 
                     versionTable.Add(versionRows);

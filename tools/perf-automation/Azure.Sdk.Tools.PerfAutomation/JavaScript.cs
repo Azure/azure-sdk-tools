@@ -103,28 +103,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
-            // Dump "npm list 2>nul | findstr @azure" to stdout
-            // "npm list" may fail with exit code 1, but it succeeds enough to print the versions we care about
-            var npmListResult = await Util.RunAsync("npm", "list", projectDirectory, throwOnError: false);
-
-            foreach (var line in npmListResult.StandardOutput.ToLines().Where(l => l.Contains("@azure")))
-            {
-                outputBuilder.AppendLine(line);
-            }
-
-            var runtimePackageVersions = new Dictionary<string, string>(packageVersions.Count);
-            foreach (var package in packageVersions.Keys)
-            {
-                // Package: +-- @azure/storage-blob@12.4.1 -> js\common\temp\node_modules\.pnpm\@azure\storage-blob@12.4.1\node_modules\@azure\storage-blob
-                // Source:  +-- @azure/storage-blob@12.5.0-beta.2 -> \js\sdk\storage\storage-blob
-                var versionMatch = Regex.Match(npmListResult.StandardOutput, @$"{package}@(.*)$", RegexOptions.Multiline);
-                runtimePackageVersions[package] = versionMatch.Groups[1].Value.Trim();
-            }
-
-            // 1. cd project
-            // 2. npm run perf-test:node -- testName arguments
-
-            var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",
+            var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} --list-transitive-dependencies {arguments}",
                 projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);
 
             var match = Regex.Match(testResult.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
@@ -137,11 +116,89 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             return new IterationResult
             {
-                PackageVersions = runtimePackageVersions,
+                PackageVersions = GetRuntimePackageVersions(testResult.StandardOutput),
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = outputBuilder.ToString(),
                 StandardError = errorBuilder.ToString(),
             };
+        }
+
+        // === Versions ===
+        // @azure-tests/perf-storage-blob@1.0.0 /mnt/vss/_work/1/s/sdk/storage/perf-tests/storage-blob
+        // ├── @azure/core-http@2.2.6 -> /mnt/vss/_work/1/s/sdk/core/core-http
+        // ├── @azure/core-rest-pipeline@1.9.1 -> /mnt/vss/_work/1/s/sdk/core/core-rest-pipeline
+        // ├── @azure/storage-blob@12.11.0 -> /mnt/vss/_work/1/s/common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob
+        // ├── @azure/test-utils-perf@1.0.0 -> /mnt/vss/_work/1/s/sdk/test-utils/perf            
+        public static Dictionary<string, string> GetRuntimePackageVersions(string standardOutput)
+        {
+            var runtimePackageVersions = new Dictionary<string, List<string>>();
+
+            var versionOutputStart = standardOutput.IndexOf("=== Versions ===", StringComparison.OrdinalIgnoreCase);
+            var versionOutputEnd = standardOutput.IndexOf("=== Parsed options ===", StringComparison.OrdinalIgnoreCase);
+
+            if (versionOutputStart == -1 | versionOutputEnd == -1)
+            {
+                return new Dictionary<string, string>();
+            }
+
+            var versionOutput = standardOutput.Substring(versionOutputStart, versionOutputEnd);
+
+            foreach (var line in versionOutput.ToLines())
+            {
+                if (line.Contains("UNMET DEPENDENCY", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var match = Regex.Match(line, @"(@azure.*?)@(.*)$");
+                if (match.Success)
+                {
+                    var name = match.Groups[1].Value;
+                    var version = match.Groups[2].Value.Trim();
+
+                    if (version.Contains("node_modules", StringComparison.OrdinalIgnoreCase))
+                    {
+                        version = version[..version.IndexOf(' ')];
+                    }
+
+                    version = version.Replace(" extraneous", string.Empty).Replace(" deduped", string.Empty);
+
+                    if (!runtimePackageVersions.ContainsKey(name))
+                    {
+                        runtimePackageVersions[name] = new List<string>();
+                    }
+                    runtimePackageVersions[name].Add(version);
+                }
+            }
+
+            foreach (var name in runtimePackageVersions.Keys)
+            {
+                IEnumerable<string> versions = runtimePackageVersions[name];
+
+                // Remove duplicates
+                versions = versions.Distinct();
+
+                // Remove versions that are a substring of another version, to favor the more detailed version
+                // Example: "1.2.3", "1.2.3 -> /mnt/vss/_work/1/s/sdk/core/core-http"
+                versions = versions.Where(v1 => !versions.Any(v2 => v2.StartsWith(v1 + " "))).ToList();
+
+                // Sort alphabetically (ideally would sort by semver, but should be close enough)
+                versions = versions.OrderBy(v => v);
+
+                runtimePackageVersions[name] = versions.ToList();
+            }
+
+            return runtimePackageVersions
+                .Select(kvp => new KeyValuePair<string, string>(kvp.Key, string.Join(", ", kvp.Value)))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
+        public override IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions)
+        {
+            return runtimePackageVersions?
+                .Where(kvp => !kvp.Key.StartsWith("@azure-tests/", StringComparison.OrdinalIgnoreCase) &&
+                              !kvp.Key.EndsWith("perf", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public override Task CleanupAsync(string project)

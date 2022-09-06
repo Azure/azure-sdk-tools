@@ -68,18 +68,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     if (!sourceVersions.TryGetValue(groupdIdAndArtifactId, out packageVersion)) continue;
                 }
 
-                var dependencies = doc.SelectNodes("/mvn:project/mvn:dependencies/mvn:dependency");
+                var versionNode = doc.SelectSingleNode($"/mvn:project/mvn:dependencies/mvn:dependency[mvn:groupId='{splitGroupdIdAndArtifactId[0]}' and mvn:artifactId='{splitGroupdIdAndArtifactId[1]}']/mvn:version", nsmgr);
 
-                for (var i = 0; i < dependencies.Count; i++)
+                if (versionNode != null)
                 {
-                    var dependency = dependencies[i];
-                    var groupId = dependency.SelectSingleNode("groupId").InnerText;
-                    var artifactId = dependency.SelectSingleNode("artifactId").InnerText;
-
-                    if (string.Equals(groupId, groupdIdAndArtifactId[0]) && string.Equals(artifactId, groupdIdAndArtifactId[1]))
-                    {
-                        dependency.SelectSingleNode("version").InnerText = packageVersion;
-                    }
+                    versionNode.InnerText = packageVersion;
                 }
             }
 

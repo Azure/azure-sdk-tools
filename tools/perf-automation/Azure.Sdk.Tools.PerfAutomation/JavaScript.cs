@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
 
             var versionOutput = standardOutput.Substring(versionOutputStart, versionOutputEnd);
-            
+
             foreach (var line in versionOutput.ToLines())
             {
                 if (line.Contains("UNMET DEPENDENCY", StringComparison.OrdinalIgnoreCase))
@@ -174,10 +174,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             foreach (var name in runtimePackageVersions.Keys)
             {
                 IEnumerable<string> versions = runtimePackageVersions[name];
-                
+
                 // Remove duplicates
                 versions = versions.Distinct();
-                
+
                 // Remove versions that are a substring of another version, to favor the more detailed version
                 // Example: "1.2.3", "1.2.3 -> /mnt/vss/_work/1/s/sdk/core/core-http"
                 versions = versions.Where(v1 => !versions.Any(v2 => v2.StartsWith(v1 + " "))).ToList();

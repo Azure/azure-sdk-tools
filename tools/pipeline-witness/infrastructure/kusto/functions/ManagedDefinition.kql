@@ -1,0 +1,10 @@
+.create-or-alter function ManagedDefinition
+{
+    LatestDefinition
+    | where Variables contains "meta"
+    | extend metas = parse_json(Variables)
+    | extend Platform = metas["meta.platform"].value
+    | extend Service = metas["meta.component"].value
+    | extend BuildType = metas["meta.category"].value
+    | project-away metas
+}

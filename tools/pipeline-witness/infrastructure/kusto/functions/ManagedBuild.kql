@@ -1,0 +1,37 @@
+.create-or-alter function ManagedBuild(platformFilter:dynamic, serviceFilter:dynamic, buildTypeFilter:dynamic, triggerFilter:dynamic, resultFilter:dynamic, sourceBranchFilter:string, definitionNameFilter:string)
+{
+    ManagedDefinition
+    | extend BuildDefinitionId = BuildDefinitionId
+    | join kind=inner PipelineOwner on BuildDefinitionId
+    | extend BuildDefinitionId = tolong(BuildDefinitionId)
+    | join kind = inner Build on ProjectId, $left.BuildDefinitionId == $right.DefinitionId
+    | join kind = leftouter BuildFailure on ProjectId, BuildDefinitionId, $left.FinishTime == $right.BuildFinishTime
+    | project
+        ProjectId,
+        ProjectName,
+        BuildDefinitionName,
+        BuildDefinitionId,
+        BuildDefinitionRevision,
+        Platform,
+        Service = Feature,
+        BuildType = Category,
+        Trigger = Reason,
+        Result,
+        SourceBranch,
+        FinishTime,
+        ErrorClassification,
+        Owners
+    | summarize arg_max(FinishTime, *) by BuildDefinitionId, ProjectId
+    | where isnull(platformFilter) or Platform in (platformFilter)
+    | where isnull(serviceFilter) or Service in (serviceFilter)
+    | where isnull(buildTypeFilter) or BuildType in (buildTypeFilter)
+    | where isnull(triggerFilter) or Trigger in (triggerFilter)
+    | where isnull(resultFilter) or Result in (resultFilter)
+    | where BuildDefinitionName matches regex coalesce(definitionNameFilter, ".")
+    | where SourceBranch matches regex (sourceBranchFilter)
+    | extend Ranking = case(Result == 'failed', 1, Result == 'partiallySucceeded', 2, Result == 'canceled', 3, 4)
+    | order by Ranking asc
+    | project-away Ranking, BuildDefinitionRevision
+    | extend BuildDefinitionIdUrl = strcat("https://dev.azure.com/azure-sdk/", ProjectName, "/_build?definitionId=", tostring(BuildDefinitionId))
+    | mv-expand Platform to typeof(string), Service to typeof(string), BuildType to typeof(string)
+}

@@ -132,12 +132,18 @@ Services:
         'com.azure:azure-storage-blob-cryptography': 12.18.0
         'com.azure:azure-storage-file-share': 12.15.0
         'com.azure:azure-storage-file-datalake': 12.12.0
+        'com.azure:azure-core': 1.31.0
+        'com.azure:azure-core-http-netty': 1.12.4
+        'com.azure:azure-identity': 1.5.4
         'io.projectreactor:reactor-core': 3.4.21
       - 'com.azure:azure-storage-common': source
         'com.azure:azure-storage-blob': source
         'com.azure:azure-storage-blob-cryptography': source
         'com.azure:azure-storage-file-share': source
         'com.azure:azure-storage-file-datalake': source
+        'com.azure:azure-core': source
+        'com.azure:azure-core-http-netty': source
+        'com.azure:azure-identity': source
         'io.projectreactor:reactor-core': source
       AdditionalArguments: *java-additional-arguments
     JS:
@@ -370,13 +376,19 @@ Services:
       Project: sdk/keyvault/azure-security-keyvault-perf
       PrimaryPackage: 'com.azure:azure-security-keyvault-secrets'
       PackageVersions:
-      - 'com.azure:azure-security-keyvault-certificates': 4.2.3
-        'com.azure:azure-security-keyvault-keys': 4.3.3
-        'com.azure:azure-security-keyvault-secrets': 4.3.3
+      - 'com.azure:azure-security-keyvault-certificates': 4.3.5
+        'com.azure:azure-security-keyvault-keys': 4.4.6
+        'com.azure:azure-security-keyvault-secrets': 4.4.6
+        'com.azure:azure-core': 1.31.0
+        'com.azure:azure-core-http-netty': 1.12.4
+        'com.azure:azure-identity': 1.5.4
         'io.projectreactor:reactor-core': 3.4.9
       - 'com.azure:azure-security-keyvault-certificates': source
         'com.azure:azure-security-keyvault-keys': source
         'com.azure:azure-security-keyvault-secrets': source
+        'com.azure:azure-core': source
+        'com.azure:azure-core-http-netty': source
+        'com.azure:azure-identity': source
         'io.projectreactor:reactor-core': source
       AdditionalArguments: *java-additional-arguments
     JS:

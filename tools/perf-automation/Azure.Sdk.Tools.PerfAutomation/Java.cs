@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -28,8 +29,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             UpdatePackageVersions(PerfCoreProjectFile, packageVersions);
             UpdatePackageVersions(projectFile, packageVersions);
 
-            var result = await Util.RunAsync("mvn", $"clean install -T1C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true --no-transfer-progress --pl {project}",
-                WorkingDirectory, environmentVariables: _buildEnvironment);
+            var result = await Util.RunAsync(
+                "mvn",
+                "clean install -T1C -am" +
+                " -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true -Dcodesnippet.skip=true " +
+                " -Dspotbugs.skip=true -Dcheckstyle.skip=true -Drevapi.skip=true" +
+                $" --no-transfer-progress --pl {project}",
+                WorkingDirectory,
+                environmentVariables: _buildEnvironment
+            );
 
             /*
             [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
@@ -77,9 +85,17 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
             IDictionary<string, string> packageVersions, string testName, string arguments, string context)
         {
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            var dependencyListResult = await Util.RunAsync("mvn", $"dependency:list --pl {project}", WorkingDirectory,
+                outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            var runtimePackageVersions = GetRuntimePackageVersions(dependencyListResult.StandardOutput);
+
             var processArguments = $"-XX:+CrashOnOutOfMemoryError -jar {context} -- {testName} {arguments}";
 
-            var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false);
+            var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false,
+                outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             // Completed 157,630 operations in a weighted-average of 1.01s (156,225.73 ops/s, 0.000 s/op)
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
@@ -92,10 +108,17 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             return new IterationResult
             {
+                PackageVersions = runtimePackageVersions,
                 OperationsPerSecond = opsPerSecond,
-                StandardOutput = result.StandardOutput,
-                StandardError = result.StandardError
+                StandardOutput = outputBuilder.ToString(),
+                StandardError = errorBuilder.ToString()
             };
+        }
+
+        public static Dictionary<string, string> GetRuntimePackageVersions(string standardOutput)
+        {
+            var runtimePackageVersions = new Dictionary<string, string>();
+            return runtimePackageVersions;
         }
 
         public override Task CleanupAsync(string project)

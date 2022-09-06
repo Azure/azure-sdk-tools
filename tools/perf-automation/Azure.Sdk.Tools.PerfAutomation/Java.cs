@@ -88,7 +88,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
-            var dependencyListResult = await Util.RunAsync("mvn", $"dependency:list --pl {project}", WorkingDirectory,
+            var dependencyListResult = await Util.RunAsync("mvn", $"dependency:list --no-transfer-progress --pl {project}", WorkingDirectory,
                 outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             var runtimePackageVersions = GetRuntimePackageVersions(dependencyListResult.StandardOutput);
 

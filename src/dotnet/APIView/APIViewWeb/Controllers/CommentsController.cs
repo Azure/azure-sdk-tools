@@ -22,7 +22,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string resolutionLock = "off")
         {
             var comment = new CommentModel();
             comment.TimeStamp = DateTime.UtcNow;
@@ -30,6 +30,7 @@ namespace APIViewWeb.Controllers
             comment.RevisionId = revisionId;
             comment.ElementId = elementId;
             comment.Comment = commentText;
+            comment.ResolutionLocked = !resolutionLock.Equals("on");
 
             await _commentsManager.AddCommentAsync(User, comment);
             var review = await _reviewManager.GetReviewAsync(User, reviewId);

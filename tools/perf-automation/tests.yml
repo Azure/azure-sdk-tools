@@ -61,7 +61,7 @@ stages:
       WindowsVmImage: $(WindowsVmImage)
       Language: 'Net'
       LanguageRepoName: 'Azure/azure-sdk-for-net'
-      LanguageRepoCommitish: $(NetRepoCommitish)
+      LanguageRepoCommitish: ${{ parameters.NetRepoCommitish }}
       ToolsRepoCommitish: $(ToolsRepoCommitish)
       Variables:
       - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
@@ -86,7 +86,7 @@ stages:
       WindowsVmImage: $(WindowsVmImage)
       Language: 'Java'
       LanguageRepoName: 'Azure/azure-sdk-for-java'
-      LanguageRepoCommitish: $(JavaRepoCommitish)
+      LanguageRepoCommitish: ${{ parameters.JavaRepoCommitish }}
       ToolsRepoCommitish: $(ToolsRepoCommitish)
       Variables:
       - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-java
@@ -118,7 +118,7 @@ stages:
       WindowsVmImage: $(WindowsVmImage)
       Language: 'JS'
       LanguageRepoName: 'Azure/azure-sdk-for-js'
-      LanguageRepoCommitish: $(JSRepoCommitish)
+      LanguageRepoCommitish: ${{ parameters.JSRepoCommitish }}
       ToolsRepoCommitish: $(ToolsRepoCommitish)
       Variables:
       - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-js
@@ -143,7 +143,7 @@ stages:
       WindowsVmImage: $(WindowsVmImage)
       Language: 'Python'
       LanguageRepoName: 'Azure/azure-sdk-for-python'
-      LanguageRepoCommitish: $(PythonRepoCommitish)
+      LanguageRepoCommitish: ${{ parameters.PythonRepoCommitish }}
       ToolsRepoCommitish: $(ToolsRepoCommitish)
       Variables:
       - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-python

@@ -138,33 +138,46 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
                 else
                 {
-                    var targetPath = GetRecordingPath(recordingSession.Path);
-
                     // Create directories above file if they don't already exist
-                    var directory = Path.GetDirectoryName(targetPath);
+                    var directory = Path.GetDirectoryName(recordingSession.Path);
                     if (!String.IsNullOrEmpty(directory))
                     {
                         Directory.CreateDirectory(directory);
                     }
 
-                    using var stream = System.IO.File.Create(targetPath);
+                    using var stream = System.IO.File.Create(recordingSession.Path);
                     var options = new JsonWriterOptions { Indented = true };
                     var writer = new Utf8JsonWriter(stream, options);
                     recordingSession.Session.Serialize(writer);
                     writer.Flush();
                     stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
-
                 }
             }
         }
 
-        public void StartRecording(string sessionId, HttpResponse outgoingResponse)
+        /// <summary>
+        /// Entrypoint handling an an optional parameter assets.json. If present, a restore option either MUST run or MAY run depending on if we're running in playback or adding new recordings.
+        /// </summary>
+        /// <param name="assetsJson">The absolute path to the targeted assets.json.</param>
+        /// <param name="forceCheckout">If this is set to true, a restore MUST be run. Otherwise, we just need to ensure that the current assets SHA is selected.</param>
+        /// <returns></returns>
+        private async Task RestoreAssetsJson(string assetsJson = null, bool forceCheckout = false)
+        {
+            if (!string.IsNullOrWhiteSpace(assetsJson))
+            {
+                await this.Store.Restore(assetsJson);
+            }
+        }
+
+        public async Task StartRecordingAsync(string sessionId, HttpResponse outgoingResponse, string assetsJson = null)
         {
             var id = Guid.NewGuid().ToString();
 
+            await RestoreAssetsJson(assetsJson, false);
+
             var session = new ModifiableRecordSession(new RecordSession())
             {
-                Path = sessionId ?? String.Empty,
+                Path = !string.IsNullOrWhiteSpace(sessionId) ? (await GetRecordingPath(sessionId, assetsJson)) : String.Empty,
                 Client = null
             };
 
@@ -361,7 +374,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region playback functionality
-        public async Task StartPlaybackAsync(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted)
+        public async Task StartPlaybackAsync(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted, string assetsPath = null)
         {
             var id = Guid.NewGuid().ToString();
             ModifiableRecordSession session;
@@ -376,7 +389,8 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
-                var path = GetRecordingPath(sessionId);
+                await RestoreAssetsJson(assetsPath, true);
+                var path = await GetRecordingPath(sessionId, assetsPath);
 
                 if (!File.Exists(path))
                 {
@@ -892,7 +906,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public string GetRecordingPath(string file)
+        public async Task<string> GetRecordingPath(string file, string assetsPath = null)
         {
             var normalizedFileName = file.Replace('\\', '/');
 
@@ -903,9 +917,20 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var path = file;
 
-            if (!Path.IsPathFullyQualified(file))
+            // if an assets.json is provided, we have a bit of work to do here.
+            if (!string.IsNullOrWhiteSpace(assetsPath))
             {
-                path = Path.Join(ContextDirectory, file);
+                var contextDirectory = await Store.GetPath(assetsPath);
+
+                path = Path.Join(contextDirectory, file);
+            }
+            // otherwise, it's a basic restore like we're used to
+            else
+            {
+                if (!Path.IsPathFullyQualified(file))
+                {
+                    path = Path.Join(ContextDirectory, file);
+                }
             }
 
             return (path + (!path.EndsWith(".json") ? ".json" : String.Empty));

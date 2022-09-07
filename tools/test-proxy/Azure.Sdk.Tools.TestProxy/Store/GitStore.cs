@@ -47,7 +47,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             GitHandler = processHandler;
         }
 
-        #region push, reset, restore, and other asset repo implementations 
+        #region push, reset, restore, and other asset repo implementations
+        /// <summary>
+        /// Given a config, locate the cloned assets.
+        /// </summary>
+        /// <param name="pathToAssetsJson"></param>
+        /// <returns></returns>
+        public async Task<string> GetPath(string pathToAssetsJson)
+        {
+            var config = await ParseConfigurationFile(pathToAssetsJson);
+            return config.AssetsRepoLocation;
+        }
+
         /// <summary>
         /// Pushes a set of changed files to the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>
@@ -504,7 +515,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new DirectoryEvaluation()
             {
                 AssetsJsonPresent = File.Exists(assetsJsonLocation),
-                IsGitRoot = File.Exists(gitLocation),
+                IsGitRoot = File.Exists(gitLocation) || Directory.Exists(gitLocation),
                 IsRoot = new DirectoryInfo(directoryPath).Parent == null
             };
         }

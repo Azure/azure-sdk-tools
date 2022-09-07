@@ -39,11 +39,11 @@ Services:
     Java:
       Project: sdk/template/azure-template-perf
       PackageVersions:
-      - perf-test-core: source
+      - 'com.azure:perf-test-core': source
     JS:
       Project: sdk/test-utils/perfstress
       PackageVersions:
-      - "@azure/test-utils-perfstress": source
+      - '@azure/test-utils-perfstress': source
   Tests:
   - Test: no-op
     Arguments:
@@ -134,7 +134,6 @@ Services:
         'com.azure:azure-storage-file-datalake': 12.12.0
         'com.azure:azure-core': 1.31.0
         'com.azure:azure-core-http-netty': 1.12.4
-        'com.azure:azure-identity': 1.5.4
         'io.projectreactor:reactor-core': 3.4.21
       - 'com.azure:azure-storage-common': source
         'com.azure:azure-storage-blob': source
@@ -143,15 +142,14 @@ Services:
         'com.azure:azure-storage-file-datalake': source
         'com.azure:azure-core': source
         'com.azure:azure-core-http-netty': source
-        'com.azure:azure-identity': source
         'io.projectreactor:reactor-core': source
       AdditionalArguments: *java-additional-arguments
     JS:
       Project: sdk/storage/perf-tests/storage-blob
       PackageVersions:
       # TODO: Pin version of core to align with older version of storage.  Currently always uses source version of core.
-      - "@azure/storage-blob": 12.11.0
-      - "@azure/storage-blob": source
+      - '@azure/storage-blob': 12.11.0
+      - '@azure/storage-blob': source
     Python:
       Project: sdk/storage/azure-storage-blob
       PackageVersions:
@@ -254,7 +252,7 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-blob-track-1
       PackageVersions:
-      - "@azure/storage-blob": 10.5.0
+      - '@azure/storage-blob': 10.5.0
     Python:
       Project: sdk/storage/azure-storage-blob
       PackageVersions:
@@ -300,8 +298,8 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-file-share
       PackageVersions:
-      - "@azure/storage-file-share": 12.11.0
-      - "@azure/storage-file-share": source
+      - '@azure/storage-file-share': 12.11.0
+      - '@azure/storage-file-share': source
     Python:
       Project: sdk/storage/azure-storage-file-share
       PackageVersions:
@@ -340,8 +338,8 @@ Services:
     JS:
       Project: sdk/storage/perf-tests/storage-file-datalake
       PackageVersions:
-      - "@azure/storage-file-datalake": 12.10.0
-      - "@azure/storage-file-datalake": source
+      - '@azure/storage-file-datalake': 12.10.0
+      - '@azure/storage-file-datalake': source
     Python:
       Project: sdk/storage/azure-storage-file-datalake
       PackageVersions:
@@ -394,8 +392,8 @@ Services:
     JS:
       Project: sdk/keyvault/perf-tests/keyvault-secrets
       PackageVersions:
-      - "@azure/keyvault-secrets": 4.3.0
-      - "@azure/keyvault-secrets": source
+      - '@azure/keyvault-secrets': 4.3.0
+      - '@azure/keyvault-secrets': source
     Python:
       Project: sdk/keyvault/azure-keyvault-secrets
       PackageVersions:

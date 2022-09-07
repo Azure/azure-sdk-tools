@@ -1,0 +1,40 @@
+.create-or-alter function ManagedBuild2(platform:dynamic=dynamic(null), service:dynamic=dynamic(null), buildType:dynamic=dynamic(null), trigger:dynamic=dynamic(null), result:dynamic=dynamic(null), sourceBranch:string="", definitionName:string="")
+{
+    ManagedDefinition
+    | where isnull(platform) or Platform in (platform)
+    | where isnull(service) or Feature in (service)
+    | where isnull(buildType) or Category in (buildType)
+    | join kind = leftouter (
+        PipelineOwner
+        | summarize arg_min(Timestamp, *) by OrganizationName, BuildDefinitionId
+    ) on OrganizationName, BuildDefinitionId
+    | join kind = leftouter (
+        Build
+        | where isnull(trigger) or Reason in (trigger)
+        | where isnull(result) or Result in (result)
+        | where SourceBranch matches regex coalesce(sourceBranch, ".")
+        | where DefinitionName matches regex coalesce(definitionName, ".")
+        | summarize arg_max(FinishTime, *) by DefinitionId, ProjectId
+    ) on ProjectId, $left.BuildDefinitionId == $right.DefinitionId
+    | join kind = leftouter (
+        BuildFailure
+        | summarize arg_min(RecordFinishTime, *) by BuildDefinitionId, BuildId, ProjectId
+    ) on ProjectId, BuildDefinitionId, BuildId, $left.FinishTime == $right.BuildFinishTime
+    | project
+        ProjectId,
+        ProjectName,
+        BuildDefinitionName,
+        BuildDefinitionId,
+        Platform,
+        BuildType = Category,
+        Service = Feature,
+        Owners,
+        Trigger = Reason,
+        Result,
+        SourceBranch,
+        FinishTime,
+        ErrorClassification,
+        BuildDefinitionIdUrl = strcat("https://dev.azure.com/azure-sdk/", ProjectName, "/_build?definitionId=", tostring(BuildDefinitionId))
+    | order by case(Result == 'failed', 1, Result == 'partiallySucceeded', 2, Result == 'canceled', 3, 4) asc
+    | mv-expand Platform to typeof(string), Service to typeof(string), BuildType to typeof(string)
+}

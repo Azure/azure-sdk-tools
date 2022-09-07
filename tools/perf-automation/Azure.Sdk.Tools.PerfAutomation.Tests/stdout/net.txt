@@ -1,0 +1,108 @@
+﻿[11:50:52.377] [/mnt/vss/_work/1/s] dotnet /mnt/vss/_work/1/s/artifacts/perf/Azure.Storage.Blobs.Perf.dll DownloadBlob --size 10240 --parallel 64
+[11:50:52.527] === Options ===
+[11:50:52.544] {
+[11:50:52.544]   "MaximumTransferSize": null,
+[11:50:52.544]   "InitialTransferSize": null,
+[11:50:52.544]   "MaximumConcurrency": null,
+[11:50:52.544]   "EncryptionVersionString": null,
+[11:50:52.544]   "StorageTransferOptions": {
+[11:50:52.544]     "MaximumTransferLength": null,
+[11:50:52.544]     "MaximumTransferSize": null,
+[11:50:52.544]     "MaximumConcurrency": null,
+[11:50:52.544]     "InitialTransferLength": null,
+[11:50:52.544]     "InitialTransferSize": null
+[11:50:52.544]   },
+[11:50:52.544]   "Size": 10240,
+[11:50:52.544]   "Duration": 10,
+[11:50:52.544]   "Insecure": false,
+[11:50:52.544]   "Iterations": 1,
+[11:50:52.544]   "JobStatistics": false,
+[11:50:52.544]   "Latency": false,
+[11:50:52.544]   "MaxIOCompletionThreads": null,
+[11:50:52.544]   "MaxWorkerThreads": null,
+[11:50:52.545]   "MinIOCompletionThreads": null,
+[11:50:52.545]   "MinWorkerThreads": null,
+[11:50:52.545]   "NoCleanup": false,
+[11:50:52.545]   "Parallel": 64,
+[11:50:52.545]   "Rate": null,
+[11:50:52.545]   "StatusInterval": 1,
+[11:50:52.545]   "Sync": false,
+[11:50:52.545]   "TestProxies": [],
+[11:50:52.545]   "Warmup": 5
+[11:50:52.545] }
+[11:50:52.545] 
+[11:50:52.545] === Environment ===
+[11:50:52.545] GCSettings.IsServerGC: ***
+[11:50:52.545] Environment.ProcessorCount: 4
+[11:50:52.545] Environment.Is64BitProcess: ***
+[11:50:52.545] ThreadPool.MinWorkerThreads: 4
+[11:50:52.545] ThreadPool.MinCompletionPortThreads: 4
+[11:50:52.545] ThreadPool.MaxWorkerThreads: 32767
+[11:50:52.545] ThreadPool.MaxCompletionPortThreads: 1000
+[11:50:52.545] 
+[11:50:52.550] === Setup ===
+[11:50:52.834] .
+[11:50:52.835] 
+[11:50:52.835] === Post Setup ===
+[11:50:52.837] .
+[11:50:52.837] 
+[11:50:52.844] === Warmup ===
+[11:50:52.844]     Current             Total          Average       CPU    WorkingSet    PrivateMemory
+[11:50:53.857]       5,325             5,325         6,023.59    64.91%       197.18M          395.88M
+[11:50:54.866]       8,978            14,303         7,527.31    76.79%       224.93M          531.90M
+[11:50:55.875]       8,001            22,304         7,671.46    69.61%       228.06M          534.22M
+[11:50:56.882]       9,550            31,854         8,135.44    72.54%       232.44M          538.57M
+[11:50:57.879]       9,983            41,837         8,555.75    70.92%       229.47M          535.21M
+[11:50:57.879] 
+[11:50:57.879] === Results ===
+[11:50:57.879] Completed 41,837 operations in a weighted-average of 4.89s (8,555.75 ops/s, 0.000 s/op, 70.94% CPU)
+[11:50:57.879] 
+[11:50:57.879] === Test ===
+[11:50:57.879]     Current             Total          Average       CPU    WorkingSet    PrivateMemory
+[11:50:58.885]       9,451             9,451         9,867.85    71.07%       234.95M          540.49M
+[11:50:59.891]      10,253            19,704        10,015.10    68.96%       236.49M          542.16M
+[11:51:00.904]      11,696            31,400        10,532.66    75.47%       237.48M          543.52M
+[11:51:01.915]      13,391            44,791        11,222.81    84.61%       240.83M          546.81M
+[11:51:02.923]      13,261            58,052        11,610.62    84.58%       238.46M          544.46M
+[11:51:03.927]      13,664            71,716        11,946.81    88.15%       239.49M          545.59M
+[11:51:04.939]      13,564            85,280        12,156.53    85.96%       242.59M          548.44M
+[11:51:05.941]      13,662            98,942        12,339.26    88.29%       247.23M          552.89M
+[11:51:06.963]      13,762           112,704        12,467.44    86.88%       249.29M          555.14M
+[11:51:07.909]      12,423           125,127        12,557.81    87.93%       243.88M          746.11M
+[11:51:07.909] 
+[11:51:07.909] === Results ===
+[11:51:07.910] Completed 125,127 operations in a weighted-average of 9.96s (12,557.81 ops/s, 0.000 s/op, 82.17% CPU)
+[11:51:07.910] 
+[11:51:07.913] === Pre Cleanup ===
+[11:51:07.915] .
+[11:51:07.915] 
+[11:51:07.915] === Cleanup ===
+[11:51:07.926] .
+[11:51:07.926] 
+[11:51:07.928] === Versions ===
+[11:51:07.929] Runtime:         3.1.27
+[11:51:07.936] Azure.Core:
+[11:51:07.936]   Referenced:    1.25.0.0
+[11:51:07.936]   Loaded:        1.25.0.0
+[11:51:07.936]   Informational: 1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6
+[11:51:07.936]   JITOptimizer:  Enabled
+[11:51:07.936] Azure.Storage.Blobs:
+[11:51:07.936]   Referenced:    12.13.0.0
+[11:51:07.937]   Loaded:        12.13.0.0
+[11:51:07.937]   Informational: 12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae
+[11:51:07.937]   JITOptimizer:  Enabled
+[11:51:07.937] Azure.Storage.Blobs.Perf:
+[11:51:07.937]   Loaded:        1.0.0.0
+[11:51:07.937]   Informational: 1.0.0-alpha.20220719.3+5e7750d5d3d4754b657da8430ea805591522c43b
+[11:51:07.937]   JITOptimizer:  Enabled
+[11:51:07.937] Azure.Storage.Common:
+[11:51:07.937]   Referenced:    12.12.0.0
+[11:51:07.937]   Loaded:        12.12.0.0
+[11:51:07.937]   Informational: 12.12.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae
+[11:51:07.937]   JITOptimizer:  Enabled
+[11:51:07.937] Azure.Test.Perf:
+[11:51:07.937]   Referenced:    1.0.0.0
+[11:51:07.937]   Loaded:        1.0.0.0
+[11:51:07.937]   Informational: 1.0.0-alpha.20220719.3+5e7750d5d3d4754b657da8430ea805591522c43b
+[11:51:07.937]   JITOptimizer:  Enabled
+[11:51:07.937] 

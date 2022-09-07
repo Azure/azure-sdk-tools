@@ -1,0 +1,10 @@
+.create-or-alter function ManagedDefinitionFn()
+{ 
+    LatestDefinition()
+    | where Variables contains "meta"
+    | extend metas = parse_json(Variables)
+    | extend Platform = metas["meta.platform"].value
+    | extend Feature = metas["meta.component"].value
+    | extend Category = metas["meta.category"].value
+    | project-away metas
+}

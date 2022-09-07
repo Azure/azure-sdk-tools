@@ -1,5 +1,4 @@
-// Create table
-.create table BuildDefinition (
+.create-merge table BuildDefinition (
     OrganizationName: string,
     ProjectId: string,
     BuildDefinitionId: long,
@@ -60,8 +59,7 @@
     EtlIngestDate: datetime
 )
 
-// Create table json mapping
-.create table BuildDefinition ingestion json mapping 'BuildDefinition_mapping' ```[
+.alter table BuildDefinition ingestion json mapping 'BuildDefinition_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },

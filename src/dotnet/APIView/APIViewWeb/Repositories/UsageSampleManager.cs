@@ -101,6 +101,19 @@ namespace APIViewWeb.Repositories
 
             await AssertUsageSampleOwnerAsync(user, sampleModel);
 
+            sampleModels.Revisions.Remove(sampleModel);
+
+            int i = 0;
+            foreach (var revision in sampleModels.Revisions)
+            {
+                if (revision.RevisionIsDeleted)
+                {
+                    continue; 
+                }
+                i++;
+                revision.RevisionNumber = i;
+            }
+
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
             foreach (var comment in comments)
             {

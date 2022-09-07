@@ -66,11 +66,10 @@ namespace APIViewWeb.Pages.Assemblies
                     throw new CosmosException(null, System.Net.HttpStatusCode.NotFound, 0, null, 0.0); // Error does not matter, only type, to ensure clean error page.
                 }
 
-                var sampleFromServer = (await _samplesManager.GetReviewUsageSampleAsync(id)).FirstOrDefault();
-                Samples = sampleFromServer;
-                if (sampleFromServer != null)
+                Samples = (await _samplesManager.GetReviewUsageSampleAsync(id)).FirstOrDefault();
+                if (Samples != null)
                 {
-                    SampleRevisions = sampleFromServer.Revisions.OrderByDescending(e => e.RevisionNumber).Where(e => !e.RevisionIsDeleted);
+                    SampleRevisions = Samples.Revisions.OrderByDescending(e => e.RevisionNumber).Where(e => !e.RevisionIsDeleted);
                 }
 
                 if (SampleRevisions != null && SampleRevisions.Any())

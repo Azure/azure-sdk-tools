@@ -68,7 +68,7 @@ jobs:
             -AllowListPath "${{repo.AllowlistPath}}"
           workingDirectory: $(DocRepoLocation)
         displayName: Validate the changes within allowlist
-        condition: ne(variables['Skip.Validation'], 'true')
+        condition: and(succeeded(), ne(variables['Skip.Validation'], 'true'))
 
       - task: Powershell@2
         inputs:

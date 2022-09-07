@@ -917,7 +917,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var path = file;
 
-            // if an assets.json iis provided, we have a bit of work to do here.
+            // if an assets.json is provided, we have a bit of work to do here.
             if (!string.IsNullOrWhiteSpace(assetsPath))
             {
                 var contextDirectory = await Store.GetPath(assetsPath);

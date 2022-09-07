@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task<string> GetPath(string pathToAssetsJson)
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            return config.RepoRoot;
+            return config.AssetsRepoLocation;
         }
 
         /// <summary>
@@ -515,7 +515,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new DirectoryEvaluation()
             {
                 AssetsJsonPresent = File.Exists(assetsJsonLocation),
-                IsGitRoot = File.Exists(gitLocation),
+                IsGitRoot = File.Exists(gitLocation) || Directory.Exists(gitLocation),
                 IsRoot = new DirectoryInfo(directoryPath).Parent == null
             };
         }

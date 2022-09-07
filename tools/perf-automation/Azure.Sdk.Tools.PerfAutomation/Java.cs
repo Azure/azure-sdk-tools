@@ -12,9 +12,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     public class Java : LanguageBase
     {
+        private IDictionary<string, string> SourceVersions;
+
         protected override Language Language => Language.Java;
 
         private string PerfCoreProjectFile => Path.Combine(WorkingDirectory, "common", "perf-test-core", "pom.xml");
+        private string VersionFile => Path.Combine(WorkingDirectory, "eng", "versioning", "version_client.txt");
 
         private static readonly Dictionary<string, string> _buildEnvironment = new Dictionary<string, string>()
         {
@@ -27,8 +30,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
-            UpdatePackageVersions(PerfCoreProjectFile, packageVersions);
-            UpdatePackageVersions(projectFile, packageVersions);
+            SourceVersions ??= LoadSourceVersions();
+
+            UpdatePackageVersions(PerfCoreProjectFile, packageVersions, SourceVersions);
+            UpdatePackageVersions(projectFile, packageVersions, SourceVersions);
 
             var result = await Util.RunAsync(
                 "mvn",
@@ -51,7 +56,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (result.StandardOutput, result.StandardError, jar);
         }
 
-        private static void UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions)
+        private static void UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions, IDictionary<string, string> sourceVersions)
         {
             // Create backup.  Throw if exists, since this shouldn't happen
             File.Copy(projectFile, projectFile + ".bak", overwrite: false);
@@ -67,20 +72,23 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var nameParts = v.Key.Split(':');
                 var groupId = nameParts[0];
                 var artifactId = nameParts[1];
+                var packageVersion = v.Value;
 
-                var version = v.Value;
-
-                if (version != Program.PackageVersionSource)
+                if (packageVersion == Program.PackageVersionSource)
                 {
-                    var versionNode = doc.SelectSingleNode(
-                        $"/mvn:project/mvn:dependencies/mvn:dependency[mvn:groupId='{groupId}' and mvn:artifactId='{artifactId}']/mvn:version",
-                        nsmgr);
-
-                    // Skip missing dependencies
-                    if (versionNode != null)
+                    if (!sourceVersions.TryGetValue(v.Key, out packageVersion))
                     {
-                        versionNode.InnerText = version;
+                        continue;
                     }
+                }
+
+                var versionNode = doc.SelectSingleNode(
+                    $"/mvn:project/mvn:dependencies/mvn:dependency[mvn:groupId='{groupId}' and mvn:artifactId='{artifactId}']/mvn:version", 
+                    nsmgr);
+
+                if (versionNode != null)
+                {
+                    versionNode.InnerText = packageVersion;
                 }
             }
 
@@ -197,6 +205,27 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
 
             return Task.CompletedTask;
+        }
+
+        private IDictionary<string, string> LoadSourceVersions()
+        {
+            var sourceVersions = new Dictionary<string, string>();
+            foreach (var line in File.ReadAllLines(VersionFile))
+            {
+                var trimmedLine = line.Trim();
+                if (string.IsNullOrEmpty(trimmedLine) ||
+                    trimmedLine.StartsWith('#') ||
+                    trimmedLine.StartsWith("beta_", StringComparison.Ordinal) ||
+                    trimmedLine.StartsWith("unreleased_", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var splitVersionLine = trimmedLine.Split(';');
+                sourceVersions.Add(splitVersionLine[0], splitVersionLine[2]);
+            }
+
+            return sourceVersions;
         }
     }
 }

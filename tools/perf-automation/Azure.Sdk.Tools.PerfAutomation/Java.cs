@@ -210,8 +210,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
             foreach (var line in File.ReadAllLines(VersionFile))
             {
                 var trimmedLine = line.Trim();
-                if (string.IsNullOrEmpty(trimmedLine)) continue;
-                if (trimmedLine.StartsWith('#') || trimmedLine.StartsWith("beta_") || trimmedLine.StartsWith("unreleased_")) continue;
+                if (string.IsNullOrEmpty(trimmedLine) ||
+                    trimmedLine.StartsWith('#') ||
+                    trimmedLine.StartsWith("beta_", StringComparison.Ordinal) ||
+                    trimmedLine.StartsWith("unreleased_", StringComparison.Ordinal))
+                {
+                    continue;
+                }
 
                 var splitVersionLine = trimmedLine.Split(';');
                 sourceVersions.Add(splitVersionLine[0], splitVersionLine[2]);

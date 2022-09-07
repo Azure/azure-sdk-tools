@@ -76,7 +76,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion == Program.PackageVersionSource)
                 {
-                    if (!sourceVersions.TryGetValue(v.Key, out packageVersion)) continue;
+                    if (!sourceVersions.TryGetValue(v.Key, out packageVersion))
+                    {
+                        continue;
+                    }
                 }
 
                 var versionNode = doc.SelectSingleNode(

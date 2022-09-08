@@ -1,0 +1,5 @@
+.create-or-alter function LatestOwners()
+{ 
+    PipelineOwner
+    | summarize arg_max(Timestamp, *) by BuildDefinitionId
+}

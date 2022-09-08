@@ -59,6 +59,9 @@ parameters:
 - name: EnvVars
   type: object
   default: {}
+- name: Profile
+  type: boolean
+  default: false
 
 jobs:
 - job: ${{ parameters.JobName }}
@@ -161,6 +164,12 @@ jobs:
       targetPath: azure-sdk-tools/tools/perf-automation/Azure.Sdk.Tools.PerfAutomation/results
       artifactName: results-${{ parameters.Language }}-$(MatrixName)
     condition: always()
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: $(System.DefaultWorkingDirectory)
+      artifactName: ${{ parameters.Language }}-profile.zip
+    condition: ${{ parameters.Profile }}
 
   - template: /eng/common/TestResources/remove-test-resources.yml
     parameters:

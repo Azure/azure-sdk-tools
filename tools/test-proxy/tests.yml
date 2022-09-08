@@ -1,0 +1,162 @@
+trigger: none
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+stages:
+  - stage: IntegrationTests
+    displayName: "Asset Sync Integration Tests"
+    jobs:
+    - job: Integration_Test
+
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2019-general'
+            OS: 'Windows'
+          Linux:
+            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            OS: 'Linux'
+          Mac:
+            Pool: 'Azure Pipelines'
+            OS: 'Mac'
+
+      pool:
+        name: $(Pool)
+
+      steps:
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core sdk 6.x'
+          inputs:
+            version: '6.x'
+
+        - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) --filter "Category=Integration" --logger trx $(Build.SourcesDirectory)/tools/test-proxy/'
+          displayName: 'Test'
+          env:
+            DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+            DOTNET_CLI_TELEMETRY_OPTOUT: 1
+            DOTNET_MULTILEVEL_LOOKUP: 0
+            PROXY_GIT_TOKEN: $(azuresdk-github-pat)
+        
+        - task: PublishTestResults@2
+          condition: succeededOrFailed()
+          inputs:
+            testResultsFiles: '**/*.trx'
+            testRunTitle: '$(OS) AssetSync Tests against $(DotNetCoreVersion)'
+            testResultsFormat: 'VSTest'
+            mergeTestResults: true
+
+  - stage: RepoUnitTests
+    displayName: Repo-Specific Unit Tests
+    dependsOn: []
+    jobs:
+    - job: Test_JS_Utils
+
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2019-general'
+            OS: 'Windows'
+          Linux:
+            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            OS: 'Linux'
+          Mac:
+            Pool: 'Azure Pipelines'
+            OS: 'Mac'
+
+      pool:
+        name: $(Pool)
+
+      variables:
+        REPO: "Azure/azure-sdk-for-js"
+        CLONE_LOCATION: "$(Agent.BuildDirectory)/js_repo"
+
+      steps:
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core sdk 6.x'
+          inputs:
+            version: '6.x'
+
+        - task: NodeTool@0
+          inputs:
+            versionSpec: "16.x"
+          displayName: "Use Node 16.x"
+
+        - pwsh: |
+            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+          displayName: Clone Repo
+
+        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: true
+            rootFolder: $(CLONE_LOCATION)
+
+        - pwsh: |
+            npm install -g @microsoft/rush@5.48.0
+            rush update
+            rush build -t .
+          displayName: 'Install Rush, build and install proxy tests project'
+          workingDirectory: $(CLONE_LOCATION)/sdk/test-utils/recorder
+          env:
+            PROXY_MANUAL_START: "true"
+
+        - pwsh: |
+            rushx test:node
+          displayName: 'Invoke Tests'
+          workingDirectory: $(CLONE_LOCATION)/sdk/test-utils/recorder
+          env:
+            PROXY_MANUAL_START: "true"
+
+    - job: Test_Python_Tables
+
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2019-general'
+            OS: 'Windows'
+          Linux:
+            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            OS: 'Linux'
+          Mac:
+            Pool: 'Azure Pipelines'
+            OS: 'Mac'
+
+      pool:
+        name: $(Pool)
+
+      variables:
+        REPO: "Azure/azure-sdk-for-python"
+        CLONE_LOCATION: "$(Agent.BuildDirectory)/python_repo"
+
+      steps:
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core sdk 6.x'
+          inputs:
+            version: '6.x'
+
+        - template: /eng/pipelines/templates/steps/use-python-version.yml
+          parameters:
+            versionSpec: '3.9'
+
+        - pwsh: |
+            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+          displayName: Clone Repo
+        
+        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: true
+            rootFolder: $(CLONE_LOCATION)
+
+        - pwsh: |
+            pip install -r dev_requirements.txt
+            pip install .
+          displayName: 'Install requirements and package'
+          workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
+
+        - pwsh: |
+            pytest .
+          displayName: 'Invoke Tests'
+          workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
+          env:
+            PROXY_URL: "http://localhost:5000"
+            PROXY_MANUAL_START: true

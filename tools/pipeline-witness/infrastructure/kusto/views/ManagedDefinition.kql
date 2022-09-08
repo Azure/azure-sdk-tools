@@ -1,6 +1,5 @@
-.drop materialized-view ManagedDefinition
-
-.create materialized-view with (backfill=true,autoUpdateSchema=true) ManagedDefinition on table BuildDefinition {
+.create-or-alter materialized-view ManagedDefinition on table BuildDefinition
+{
 BuildDefinition
     | where Variables contains "meta"
     | extend metas = parse_json(Variables)

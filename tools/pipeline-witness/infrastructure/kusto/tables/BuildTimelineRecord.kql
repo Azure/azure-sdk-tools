@@ -1,5 +1,4 @@
-// Create table
-.create table BuildTimelineRecord (
+.create-merge table BuildTimelineRecord (
     OrganizationName: string,
     ProjectId: string,
     BuildId: long,
@@ -33,8 +32,7 @@
     EtlIngestDate: datetime
 )
 
-// Create table json mapping
-.create table BuildTimelineRecord ingestion json mapping 'BuildTimelineRecord_mapping' ```[
+.alter table BuildTimelineRecord ingestion json mapping 'BuildTimelineRecord_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "BuildId", "path": "$['buildId']" },

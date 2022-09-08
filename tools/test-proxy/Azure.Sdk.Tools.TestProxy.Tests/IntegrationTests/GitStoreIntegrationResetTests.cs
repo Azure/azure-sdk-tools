@@ -42,8 +42,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // 4. Expect: files updated should be at version 2
         // 5. Reset with Y
         // 6. Expect: each file should be at it's initial version, the version that was in the original SHA
-        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
-        //[Theory]
+        [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
@@ -52,6 +51,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoBranch"": ""main"",
               ""SHA"": ""fc54d000d0427c4a68bc8962d40f957f59e14577""
         }")]
+        [Trait("Category", "Integration")]
         public async Task Scenario1(string inputJson)
         {
             var folderStructure = new string[]
@@ -105,8 +105,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // 4. Expect: files updated should be at version 2
         // 5. Reset with N
         // 6. Expect: file versions should be what they were in step 4
-        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
-        //[Theory]
+        [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
@@ -115,6 +114,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoBranch"": ""main"",
               ""SHA"": ""fc54d000d0427c4a68bc8962d40f957f59e14577""
         }")]
+        [Trait("Category", "Integration")]
         public async Task Scenario2(string inputJson)
         {
             var folderStructure = new string[]
@@ -170,8 +170,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
         // 5. Reset with Y
         // 6. Expect: each file should be at it's initial version, the version that was in the original SHA
-        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
-        //[Theory]
+        [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
@@ -180,6 +179,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoBranch"": ""main"",
               ""SHA"": ""9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1""
         }")]
+        [Trait("Category", "Integration")]
         public async Task Scenario3(string inputJson)
         {
             var folderStructure = new string[]
@@ -244,8 +244,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
         // 5. Reset with N
         // 6. Expect: same files and same versions as step 4
-        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
-        //[Theory]
+        [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
@@ -254,6 +253,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoBranch"": ""main"",
               ""SHA"": ""9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1""
         }")]
+        [Trait("Category", "Integration")]
         public async Task Scenario4(string inputJson)
         {
             var folderStructure = new string[]
@@ -319,8 +319,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         // 6. Expect: same files and same versions as step 4
         // 7. Reset with Y
         // 8. Expect: same files and same versions as step 2
-        [Theory(Skip = "Skipping because the integration branch permissions need to be set for the test suite to run.")]
-        //[Theory]
+        [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
@@ -329,6 +328,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoBranch"": ""main"",
               ""SHA"": ""bb2223a3aa0472ff481f8e1850e7647dc39fbfdd""
         }")]
+        [Trait("Category", "Integration")]
         public async Task Scenario5(string inputJson)
         {
             var folderStructure = new string[]
@@ -389,7 +389,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
-
             }
             finally
             {

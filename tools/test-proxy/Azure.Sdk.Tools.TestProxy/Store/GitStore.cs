@@ -31,6 +31,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public GitProcessHandler GitHandler = new GitProcessHandler();
         public string DefaultBranch = "main";
         public string FileName = "assets.json";
+        public static readonly string EnvironmentVariableName = "PROXY_GIT_TOKEN";
 
         public GitStore() 
         {
@@ -248,6 +249,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
+        public string GetCloneUrl(GitAssetsConfiguration config)
+        {
+            var gitToken = Environment.GetEnvironmentVariable(EnvironmentVariableName);
+
+            if (!string.IsNullOrWhiteSpace(gitToken)){
+                return $"https://{gitToken}@github.com/{config.AssetsRepo}";
+            }
+
+            return $"https://github.com/{config.AssetsRepo}";
+        }
+
         /// <summary>
         /// Initializes an asset repo for a given configuration. This includes creating the target repo directory, cloning, and taking care of initial restore operations.
         /// </summary>
@@ -272,7 +284,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 https://github.com/{config.AssetsRepo} .", config);
+                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {GetCloneUrl(config)} .", config);
                     GitHandler.Run($"sparse-checkout init", config);
                 }
                 catch(GitProcessException e)
@@ -361,7 +373,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns>The default branch</returns>
         public async Task<string> GetDefaultBranch(GitAssetsConfiguration config)
         {
-            var token = Environment.GetEnvironmentVariable("GIT_TOKEN");
+            var token = Environment.GetEnvironmentVariable(EnvironmentVariableName);
 
             HttpRequestMessage msg = new HttpRequestMessage()
             {

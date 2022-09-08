@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -10,9 +12,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     public class Java : LanguageBase
     {
+        private IDictionary<string, string> SourceVersions;
+
         protected override Language Language => Language.Java;
 
         private string PerfCoreProjectFile => Path.Combine(WorkingDirectory, "common", "perf-test-core", "pom.xml");
+        private string VersionFile => Path.Combine(WorkingDirectory, "eng", "versioning", "version_client.txt");
 
         private static int profileCount = 0;
 
@@ -27,23 +32,33 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
-            UpdatePackageVersions(PerfCoreProjectFile, packageVersions);
-            UpdatePackageVersions(projectFile, packageVersions);
+            SourceVersions ??= LoadSourceVersions();
 
-            var result = await Util.RunAsync("mvn", $"clean package -T 1C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true -Dcodesnippet.skip=true --no-transfer-progress --pl {project}",
-                WorkingDirectory, environmentVariables: _buildEnvironment);
+            UpdatePackageVersions(PerfCoreProjectFile, packageVersions, SourceVersions);
+            UpdatePackageVersions(projectFile, packageVersions, SourceVersions);
+
+            var result = await Util.RunAsync(
+                "mvn",
+                "clean install -T1C -am" +
+                " -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true -Dcodesnippet.skip=true " +
+                " -Dspotbugs.skip=true -Dcheckstyle.skip=true -Drevapi.skip=true" +
+                $" --no-transfer-progress --pl {project}",
+                WorkingDirectory,
+                environmentVariables: _buildEnvironment
+            );
 
             /*
             [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
             */
 
-            var buildMatch = Regex.Match(result.StandardOutput, @"Building jar: (.*with-dependencies\.jar)", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+            var buildMatch = Regex.Match(result.StandardOutput, @"Building jar: (.*with-dependencies\.jar)",
+                RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
             var jar = buildMatch.Groups[1].Value;
 
             return (result.StandardOutput, result.StandardError, jar);
         }
 
-        private static void UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions)
+        private static void UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions, IDictionary<string, string> sourceVersions)
         {
             // Create backup.  Throw if exists, since this shouldn't happen
             File.Copy(projectFile, projectFile + ".bak", overwrite: false);
@@ -56,18 +71,26 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             foreach (var v in packageVersions)
             {
-                var packageName = v.Key;
+                var nameParts = v.Key.Split(':');
+                var groupId = nameParts[0];
+                var artifactId = nameParts[1];
                 var packageVersion = v.Value;
 
-                if (packageVersion != Program.PackageVersionSource)
+                if (packageVersion == Program.PackageVersionSource)
                 {
-                    var versionNode = doc.SelectSingleNode($"/mvn:project/mvn:dependencies/mvn:dependency[mvn:artifactId='{packageName}']/mvn:version", nsmgr);
-
-                    // Skip missing dependencies
-                    if (versionNode != null)
+                    if (!sourceVersions.TryGetValue(v.Key, out packageVersion))
                     {
-                        versionNode.InnerText = packageVersion;
+                        continue;
                     }
+                }
+
+                var versionNode = doc.SelectSingleNode(
+                    $"/mvn:project/mvn:dependencies/mvn:dependency[mvn:groupId='{groupId}' and mvn:artifactId='{artifactId}']/mvn:version", 
+                    nsmgr);
+
+                if (versionNode != null)
+                {
+                    versionNode.InnerText = packageVersion;
                 }
             }
 
@@ -77,20 +100,27 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            IDictionary<string, string> packageVersions, string testName, string arguments, string context, bool profiling)
+            IDictionary<string, string> packageVersions, string testName, string arguments, string context, bool profile)
         {
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            var dependencyListResult = await Util.RunAsync("mvn", $"dependency:list --no-transfer-progress --pl {project}", WorkingDirectory,
+                outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            var runtimePackageVersions = GetRuntimePackageVersions(dependencyListResult.StandardOutput);
+
             // '-XX:+UnlockCommercialFeatures' isn't required and fails when used in a version higher than Java 8, need to inspect the Java version to determine if it should be added.
             var profilingConfig = "";
-            if (profiling)
+            if (profile)
             {
-                var directoryInfo = Directory.CreateDirectory(Path.GetFullPath(Path.Combine(WorkingDirectory, "java-profiling")));
-                var profileOutputPath = Path.GetFullPath(Path.Combine(directoryInfo.FullName, $"{testName}_{profileCount++}.jfr"));
-                profilingConfig = $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";               
+                var profileOutputPath = Path.GetFullPath(Path.Combine(ProfileDirectory, $"{testName}_{profileCount++}.jfr"));
+                profilingConfig = $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";
             }
-            
+
             var processArguments = $"-XX:+CrashOnOutOfMemoryError {profilingConfig} -jar {context} -- {testName} {arguments}";
 
-            var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false);
+            var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false,
+                outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             // Completed 157,630 operations in a weighted-average of 1.01s (156,225.73 ops/s, 0.000 s/op)
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
@@ -103,10 +133,77 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             return new IterationResult
             {
+                PackageVersions = runtimePackageVersions,
                 OperationsPerSecond = opsPerSecond,
-                StandardOutput = result.StandardOutput,
-                StandardError = result.StandardError
+                StandardOutput = outputBuilder.ToString(),
+                StandardError = errorBuilder.ToString()
             };
+        }
+
+        // [08:13:01.622] [INFO] The following files have been resolved:
+        // [08:13:01.622] [INFO]    io.projectreactor:reactor-core:jar:3.4.22:compile
+        // [08:13:01.622] [INFO]    io.netty:netty-codec-http:jar:4.1.79.Final:compile
+        // [08:13:01.622] [INFO]    com.azure:azure-core-http-okhttp:jar:1.11.2:compile
+        // [08:13:01.623] [INFO]    io.netty:netty-tcnative-boringssl-static:jar:linux-x86_64:2.0.53.Final:compile
+        // ...
+        // [08:13:01.624] [INFO]    org.jetbrains:annotations:jar:13.0:compile
+        // [08:13:01.624] [INFO] 
+        // [08:13:01.624] [INFO] ------------------------------------------------------------------------
+        // [08:13:01.625] [INFO] BUILD SUCCESS
+        // [08:13:01.625] [INFO] ------------------------------------------------------------------------
+        public static Dictionary<string, string> GetRuntimePackageVersions(string standardOutput)
+        {
+            var runtimePackageVersions = new Dictionary<string, string>();
+
+            var versionLines = standardOutput.ToLines()
+                .SkipWhile(s => !s.Contains("the following files have been resolved", StringComparison.OrdinalIgnoreCase))
+                .Skip(1)
+                .TakeWhile(s => !s.Trim().EndsWith("[INFO]", StringComparison.OrdinalIgnoreCase));
+
+            foreach (var line in versionLines)
+            {
+                var versionInfo = Regex.Replace(line, @"^.*\[INFO\]\s+", string.Empty);
+                var versionParts = versionInfo.Split(':');
+
+                string groupId = null;
+                string artifactId = null;
+                string version = null;
+
+                if (versionParts.Length == 5)
+                {
+                    // io.projectreactor:reactor-core:jar:3.4.22:compile
+                    groupId = versionParts[0];
+                    artifactId = versionParts[1];
+                    version = versionParts[3];
+                }
+                else if (versionParts.Length == 6)
+                {
+                    // io.netty:netty-tcnative-boringssl-static:jar:linux-x86_64:2.0.53.Final:compile
+                    groupId = versionParts[0];
+                    artifactId = versionParts[1];
+                    version = versionParts[4];
+                }
+                else
+                {
+                    // Skip non-matching lines
+                    continue;
+                }
+
+                if (groupId.StartsWith("com.azure", StringComparison.OrdinalIgnoreCase) ||
+                    groupId.StartsWith("io.projectreactor", StringComparison.OrdinalIgnoreCase))
+                {
+                    runtimePackageVersions[$"{groupId}:{artifactId}"] = version;
+                }
+            }
+
+            return runtimePackageVersions;
+        }
+
+        public override IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions)
+        {
+            return runtimePackageVersions?
+                .Where(kvp => !kvp.Key.Equals("com.azure:perf-test-core", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public override Task CleanupAsync(string project)
@@ -118,6 +215,27 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
 
             return Task.CompletedTask;
+        }
+
+        private IDictionary<string, string> LoadSourceVersions()
+        {
+            var sourceVersions = new Dictionary<string, string>();
+            foreach (var line in File.ReadAllLines(VersionFile))
+            {
+                var trimmedLine = line.Trim();
+                if (string.IsNullOrEmpty(trimmedLine) ||
+                    trimmedLine.StartsWith('#') ||
+                    trimmedLine.StartsWith("beta_", StringComparison.Ordinal) ||
+                    trimmedLine.StartsWith("unreleased_", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var splitVersionLine = trimmedLine.Split(';');
+                sourceVersions.Add(splitVersionLine[0], splitVersionLine[2]);
+            }
+
+            return sourceVersions;
         }
     }
 }

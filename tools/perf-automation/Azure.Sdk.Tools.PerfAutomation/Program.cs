@@ -4,6 +4,7 @@ using CommandLine.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -100,8 +101,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('t', "tests", HelpText = "Regex of tests to run")]
             public string Tests { get; set; }
 
-            [Option("profiling", HelpText = "Enables capture of profiling data")]
-            public bool Profiling { get; set; }
+            [Option("profile", HelpText = "Enables capture of profiling data")]
+            public bool Profile { get; set; }
         }
 
         public static async Task Main(string[] args)
@@ -220,6 +221,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputMd = outputFiles[3];
 
             var results = new List<Result>();
+            var profileDirectories = new List<DirectoryInfo>();
 
             foreach (var service in selectedServices)
             {
@@ -227,6 +229,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 {
                     var language = l.Key;
                     var serviceLanugageInfo = l.Value;
+
+                    if (options.Profile)
+                    {
+                        // For each language create a directory name "{language name}-profile" that will be used to contain
+                        // all profiling data for a performance run by that language.
+                        // Later this directory will be zipped to create ZIP file that can be retained with the name "{language name}-profile.zip".
+                        string profileDirectory = Path.Combine(Program.Config.WorkingDirectories[language], language + "-profile");
+                        if (!Directory.Exists(profileDirectory))
+                        {
+                            profileDirectories.Add(Directory.CreateDirectory(profileDirectory));
+                        }
+                    }
 
                     var languageInfo = selectedlanguages[language];
 
@@ -239,6 +253,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 language, serviceLanugageInfo, languageVersion, packageVersions);
                         }
                     }
+                }
+            }
+
+            if (options.Profile) 
+            {
+                // For each language that ran create a ZIP file containing all profiling data collected.
+                // This can be retained for in-depth performance analysis.
+                foreach (var profileDirectory in profileDirectories)
+                {
+                    ZipFile.CreateFromDirectory(profileDirectory.FullName, Path.Combine(profileDirectory.Parent.FullName, profileDirectory.Name + ".zip"));
                 }
             }
         }
@@ -351,7 +375,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 try
                                 {
                                     Console.WriteLine($"RunAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
-                                        $"{test.TestNames[language]}, {allArguments}, {context}, {options.Profiling})");
+                                        $"{test.TestNames[language]}, {allArguments}, {context}, {options.Profile})");
                                     Console.WriteLine();
 
                                     iterationResult = await _languages[language].RunAsync(
@@ -361,7 +385,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         test.TestNames[language],
                                         allArguments,
                                         context,
-                                        options.Profiling
+                                        options.Profile
                                     );
                                 }
                                 catch (Exception e)
@@ -490,19 +514,38 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var versionTable = new List<IList<IList<string>>>();
 
                 var primaryPackage = group.First().PrimaryPackage;
-                var packageVersions = group.First().RequestedPackageVersions.Zip(group.First().RuntimePackageVersions);
+
+                var runtimePackageVersions = group.First().RuntimePackageVersions
+                    .Select(p => _languages[group.Key.Language].FilterRuntimePackageVersions(p));
+
+                var packageVersions = group.First().RequestedPackageVersions.Zip(runtimePackageVersions);
+
                 foreach (var (requested, runtime) in packageVersions)
                 {
+                    // requested is guaranteed to be non-null, runtime may be null
+
                     var versionRows = new List<IList<string>>();
 
-                    // Primary package should be listed first, with remaining sorted alphabetically
-                    foreach (var packageName in requested.Keys.OrderBy(n => (n == primaryPackage) ? $"_{n}" : n))
+                    // Primary package first, azure core second, remaining sorted alphabetically
+                    var packageNames = requested.Keys.Concat(runtime?.Keys ?? Enumerable.Empty<string>())
+                        .Distinct()
+                        .OrderBy(n => (n == primaryPackage) ? $"__{n}" :
+                            ((n.Contains("core", StringComparison.OrdinalIgnoreCase) &&
+                              n.Contains("azure", StringComparison.OrdinalIgnoreCase)) ? $"_{n}" : n));
+
+                    foreach (var packageName in packageNames)
                     {
-                        var versionRow = new List<string>();
-                        versionRow.Add(packageName);
-                        versionRow.Add(requested[packageName]);
-                        versionRow.Add(runtime?[packageName] ?? "unknown");
-                        versionRows.Add(versionRow);
+                        requested.TryGetValue(packageName, out var requestedPackageVersion);
+
+                        string runtimePackageVersion = null;
+                        runtime?.TryGetValue(packageName, out runtimePackageVersion);
+
+                        versionRows.Add(new List<string>
+                        {
+                            packageName,
+                            requestedPackageVersion ?? "none",
+                            runtimePackageVersion ?? "unknown"
+                        });
                     }
 
                     versionTable.Add(versionRows);

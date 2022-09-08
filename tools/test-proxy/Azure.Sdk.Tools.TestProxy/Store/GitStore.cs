@@ -67,73 +67,25 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task Push(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var pendingChanges = DetectPendingChanges(config);
-            var onLatestSHA = true;
+            var generatedTagName = config.AssetsRepoBranch + Guid.NewGuid().ToString();
 
             if (pendingChanges.Length > 0)
             {
-                if(!GitHandler.TryRun($"rev-parse origin/{config.AssetsRepoBranch}", config, out CommandResult result))
+                try
                 {
-                    // if we have a nonzero exit code, only code 128 is acceptable.
-                    if (result.ExitCode != 128)
-                    {
-                        throw GenerateInvokeException(result);
-                    }
+                    GitHandler.Run($"branch {config.AssetsRepoBranch}", config);
+                    GitHandler.Run($"checkout {config.AssetsRepoBranch}", config);
+                    GitHandler.Run($"add -A .", config);
+                    GitHandler.Run($"commit -m \"Automatic asset update from test-proxy.\"", config);
+                    GitHandler.Run($"tag {generatedTagName}", config);
+                    GitHandler.Run($"push origin {generatedTagName}", config);
                 }
-                else
+                catch(GitProcessException e)
                 {
-                    var retrievedSHA = result.StdOut.Trim();
-                    if (retrievedSHA != config.SHA)
-                    {
-                        onLatestSHA = false;
-                    }
+                    throw GenerateInvokeException(e.Result);
                 }
 
-                if (onLatestSHA)
-                {
-                    try
-                    {
-                        GitHandler.Run($"branch {config.AssetsRepoBranch}", config);
-                        GitHandler.Run($"checkout {config.AssetsRepoBranch}", config);
-                        GitHandler.Run($"add -A .", config);
-                        GitHandler.Run($"commit -m \"Automatic asset update from test-proxy.\"", config);
-                        GitHandler.Run($"push origin {config.AssetsRepoBranch}", config);
-                    }
-                    catch(GitProcessException e)
-                    {
-                        throw GenerateInvokeException(e.Result);
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        GitHandler.Run($"stash", config);
-                        GitHandler.Run($"fetch origin {config.AssetsRepoBranch}", config);
-                        GitHandler.Run($"checkout {config.AssetsRepoBranch}", config);
-                        GitHandler.Run($"stash pop", config);
-                        GitHandler.Run($"add -A .", config);
-                        GitHandler.Run($"commit -m \"Automatic asset update from test-proxy.\"", config);
-                        GitHandler.Run($"push origin {config.AssetsRepoBranch}", config);
-                    }
-                    catch (GitProcessException e)
-                    {
-                        throw GenerateInvokeException(e.Result);
-                    }
-                }
-                // At this point the changes have been pushed and the assets.json needs to be updated with the new SHA
-                if (!GitHandler.TryRun($"rev-parse HEAD", config, out CommandResult newSHAResult))
-                {
-                    // if we have a nonzero exit code, only code 128 is acceptable.
-                    if (newSHAResult.ExitCode != 128)
-                    {
-                        throw GenerateInvokeException(result);
-                    }
-                }
-                else
-                {
-                    var newSHA = newSHAResult.StdOut.Trim();
-                    await UpdateAssetsJson(newSHA, config);
-                }
+                await UpdateAssetsJson(generatedTagName, config);
             }
         }
 

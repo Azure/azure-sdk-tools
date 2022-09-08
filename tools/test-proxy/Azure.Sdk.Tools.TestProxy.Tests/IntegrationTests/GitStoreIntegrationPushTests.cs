@@ -198,15 +198,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         /// </summary>
         /// <param name="inputJson"></param>
         /// <returns></returns>
-        //[EnvironmentConditionalSkipTheory]
-        [Theory(Skip = "Skipping, scenario is currently broken the way push is done on conflict.")]
+        [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""scenario_conflict_push"",
-              ""SHA"": ""9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1""
+              ""AssetsRepoBranch"": ""python/tables"",
+              ""SHA"": ""python/tables/abc12345""
         }")]
         [Trait("Category", "Integration")]
         public async Task ScenarioConflictPush(string inputJson)
@@ -262,11 +261,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 await _defaultStore.Push(jsonFileLocation);
 
                 // Verify that after the push the directory still contains our updated files
-                Assert.Equal(5, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+                Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 3));
-                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
-                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file6.txt", 1));
 
                 // Ensure that the config was updated with the new SHA as part of the push

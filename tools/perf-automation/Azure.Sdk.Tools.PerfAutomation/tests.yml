@@ -306,6 +306,7 @@ Services:
       - '@azure/storage-file-share': source
     Python:
       Project: sdk/storage/azure-storage-file-share
+      PrimaryPackage: azure-storage-file-share
       PackageVersions:
       - azure-core: 1.25.0
         azure-storage-file-share: 12.9.0
@@ -348,6 +349,7 @@ Services:
       - '@azure/storage-file-datalake': source
     Python:
       Project: sdk/storage/azure-storage-file-datalake
+      PrimaryPackage: azure-storage-file-datalake
       PackageVersions:
       - azure-core: 1.25.0
         azure-storage-file-datalake: 12.8.0
@@ -404,6 +406,7 @@ Services:
       - '@azure/keyvault-secrets': source
     Python:
       Project: sdk/keyvault/azure-keyvault-secrets
+      PrimaryProject: azure-keyvault-secrets
       PackageVersions:
       - azure-core: 1.15.0
         azure-keyvault-secrets: 4.3.0

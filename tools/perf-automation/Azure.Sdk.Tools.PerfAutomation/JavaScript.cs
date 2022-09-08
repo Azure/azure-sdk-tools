@@ -145,7 +145,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             foreach (var line in versionOutput.ToLines())
             {
-                if (line.Contains("UNMET DEPENDENCY", StringComparison.OrdinalIgnoreCase))
+                // "Extraneous" packages are not listed on the parent package's dependencies list and should be skipped
+                if (line.Contains("UNMET DEPENDENCY", StringComparison.OrdinalIgnoreCase) ||
+                    line.Contains(" extraneous", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

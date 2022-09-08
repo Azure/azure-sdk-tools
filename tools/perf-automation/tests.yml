@@ -140,7 +140,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
-        Profile: ${{ parameter.Profile }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeJava }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -174,7 +174,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
-        Profile: ${{ parameter.Profile }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeJS }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -201,7 +201,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
-        Profile: ${{ parameter.Profile }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludePython }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -257,7 +257,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
-        Profile: ${{ parameter.Profile }}
+        Profile: ${{ parameters.Profile }}
 
 - stage: Print_Results
   displayName: Print Results

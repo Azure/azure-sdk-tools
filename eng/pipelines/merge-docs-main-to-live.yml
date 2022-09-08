@@ -56,7 +56,7 @@ jobs:
       - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         parameters:
           WorkingDirectory: $(DocRepoLocation)
-          DefaultBranchVariableName: ${{repo.RepoName}}
+          DefaultBranchVariableName: '${{repo.RepoName}}-DefaultBranch'
 
       - task: Powershell@2
         inputs:

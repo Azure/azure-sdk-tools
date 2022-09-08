@@ -51,6 +51,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            Assets updatedAssets = null;
             string originalAssetsRepoBranch = assets.TagPrefix;
             string originalSHA = assets.Tag;
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest:true);
@@ -92,17 +93,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
 
                 // Ensure that the config was updated with the new Tag as part of the push
-                Assets updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
+                updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
                 Assert.NotEqual(originalSHA, updatedAssets.Tag);
-                // Ensure that the latest commit Tag and the updated assets file Tag are equal
-                string latestSHA = TestHelpers.GetLatestCommitSHA(updatedAssets, localFilePath);
-                Assert.Equal(latestSHA, updatedAssets.Tag);
-
             }
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
-                TestHelpers.CleanupIntegrationTestBranch(assets);
+                TestHelpers.CleanupIntegrationTestBranch(updatedAssets);
             }
         }
 
@@ -133,6 +130,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            Assets updatedAssets = null;
             string originalAssetsRepoBranch = assets.TagPrefix;
             string originalSHA = assets.Tag;
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
@@ -174,17 +172,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file6.txt", 1));
 
                 // Ensure that the config was updated with the new Tag as part of the push
-                Assets updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
+                updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
                 Assert.NotEqual(originalSHA, updatedAssets.Tag);
-                // Ensure that the latest commit Tag and the updated assets file Tag are equal
-                string latestSHA = TestHelpers.GetLatestCommitSHA(updatedAssets, localFilePath);
-                Assert.Equal(latestSHA, updatedAssets.Tag);
-
             }
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
-                TestHelpers.CleanupIntegrationTestBranch(assets);
+                TestHelpers.CleanupIntegrationTestBranch(updatedAssets);
             }
         }
 
@@ -215,6 +209,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            Assets updatedAssets = null;
             string originalAssetsRepoBranch = assets.TagPrefix;
             string originalSHA = assets.Tag;
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
@@ -267,7 +262,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file6.txt", 1));
 
                 // Ensure that the config was updated with the new Tag as part of the push
-                Assets updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
+                updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
                 Assert.NotEqual(originalSHA, updatedAssets.Tag);
 
                 // Ensure that the targeted Tag is present on the repo
@@ -280,7 +275,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
-                TestHelpers.CleanupIntegrationTestBranch(assets);
+                TestHelpers.CleanupIntegrationTestBranch(updatedAssets);
             }
         }
     }

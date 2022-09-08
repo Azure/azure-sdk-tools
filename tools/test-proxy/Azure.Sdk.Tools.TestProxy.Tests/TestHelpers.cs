@@ -380,15 +380,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 GitProcessHandler GitHandler = new GitProcessHandler();
                 string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
                 GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
-
-                CommandResult commandResult = GitHandler.Run($"branch -a -l *{assets.TagPrefix}*", tmpPath);
-                if (!String.IsNullOrWhiteSpace(commandResult.StdOut))
-                {
-                    // git checkout $adjustedName
-                    // git push origin --delete $adjustedName
-                    GitHandler.Run($"checkout {assets.TagPrefix}", tmpPath);
-                    GitHandler.Run($"push origin --delete {assets.TagPrefix}", tmpPath);
-                }
+                GitHandler.Run($"push origin --delete {assets.Tag}", tmpPath);
             }
             finally
             {

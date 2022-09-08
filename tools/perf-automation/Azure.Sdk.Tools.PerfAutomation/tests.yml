@@ -154,10 +154,12 @@ Services:
       - '@azure/storage-blob': source
     Python:
       Project: sdk/storage/azure-storage-blob
+      PrimaryPackage: azure-storage-blob
       PackageVersions:
-      # TODO: Pin version of core to align with older version of storage
-      - azure-storage-blob: 12.13.1
-      - azure-storage-blob: source
+      - azure-core: 1.25.0
+        azure-storage-blob: 12.13.1
+      - azure-core: source
+        azure-storage-blob: source
     Cpp:
       Project: azure-storage-blobs-perf
       PackageVersions:

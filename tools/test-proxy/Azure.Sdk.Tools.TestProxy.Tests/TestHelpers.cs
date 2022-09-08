@@ -351,8 +351,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 // similar to the following:
                 // e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7	refs/heads/scenario_clean_push
                 GitHandler.Run($"checkout {assets.AssetsRepoBranch}", tmpPath);
-                GitHandler.Run("checkout *", tmpPath);
-                GitHandler.Run("clean -xdf", tmpPath);
 
                 // Create the adjustedAssetsRepoBranch from the original branch. The reason being is that pushing
                 // to a branch of a branch is automatic

@@ -74,6 +74,9 @@ parameters:
 - name: WindowsPool
   type: string
   default: 'azsdk-pool-mms-win-2019-general'
+- name: Profile
+  type: boolean
+  default: false
 
 resources:
   repositories:
@@ -137,6 +140,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameter.Profile }}
 
   - ${{ if parameters.IncludeJava }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -170,6 +174,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameter.Profile }}
 
   - ${{ if parameters.IncludeJS }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -196,6 +201,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameter.Profile }}
 
   - ${{ if parameters.IncludePython }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -251,6 +257,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameter.Profile }}
 
 - stage: Print_Results
   displayName: Print Results

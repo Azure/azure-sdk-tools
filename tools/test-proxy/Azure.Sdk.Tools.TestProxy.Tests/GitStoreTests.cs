@@ -566,27 +566,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-        [Theory(Skip = "Skipping because we don't have an integration test suite working yet.")]
-        [InlineData("scenario_clean_push", "scenario_clean_push")]
-        [InlineData("nonexistent_branch", "main")]
-        public async Task ResolveTargetBranchIntegration(string targetBranch, string result)
-        {
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, basicFolderStructure);
-            try
-            {
-                var config = await _defaultStore.ParseConfigurationFile(testFolder);
-                config.AssetsRepoBranch = targetBranch;
-
-                var defaultBranch = _defaultStore.ResolveCheckoutBranch(config);
-
-                Assert.Equal(result, targetBranch);
-            }
-            finally
-            {
-                DirectoryHelper.DeleteGitDirectory(testFolder);
-            }
-        }
-
         [Fact(Skip = "Skipping due to integration tests not figured out yet.")]
         public async Task GetDefaultBranchWorksWithValidRepo()
         {

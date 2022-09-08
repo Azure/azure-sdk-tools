@@ -380,26 +380,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Reaches out to the assets repo and confirms presence of auto branch.
-        /// </summary>
-        /// <param name="config"></param>
-        /// <returns></returns>
-        public string ResolveCheckoutBranch(GitAssetsConfiguration config)
-        {
-            GitHandler.TryRun($"rev-parse \"origin/{config.AssetsRepoBranch}\"", config, out var commandResult);
-
-            switch (commandResult.ExitCode)
-            {
-                case 0:   // there is indeed a branch that exists with that name
-                    return config.AssetsRepoBranch;
-                case 128: // not a git repo
-                    throw new HttpException(HttpStatusCode.BadRequest, commandResult.StdOut); ;
-            }
-
-            return DefaultBranch;
-        }
-
-        /// <summary>
         /// Used to ascend to the repo root of any given startup path. Unlike ResolveAssetsJson, which implements similar ascension logic, this function returns the repo root, NOT the assets.json.
         /// </summary>
         /// <param name="path"></param>

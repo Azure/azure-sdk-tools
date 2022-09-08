@@ -16,9 +16,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     /// <summary>
     /// Assets is the class representation of assets.json. When setting up for the push tests we're going to end up
-    /// creating a branch of the original AssetsRepoBranch so we can automatically push to it. This is done at setup
+    /// creating a branch of the original TagPrefix so we can automatically push to it. This is done at setup
     /// time and then the AssetsReproBranch will have to be changed to use this new branch. This class will be used
-    /// to deserialize from string representation of assets.json, set the AssetsRepoBranch to the generated testing
+    /// to deserialize from string representation of assets.json, set the TagPrefix to the generated testing
     /// branch and serialize back into a string. This is only used for testing purposes.
     /// </summary>
     public class Assets
@@ -153,7 +153,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 // Call InitIntegrationBranch
                 InitIntegrationBranch(assets, adjustedAssetsRepoBranch);
 
-                // set the AssetsRepoBranch to the adjusted test branch 
+                // set the TagPrefix to the adjusted test branch 
                 assets.AssetsRepoBranch = adjustedAssetsRepoBranch;
                 localAssetsJsonContent = JsonSerializer.Serialize(assets);
             }
@@ -330,7 +330,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             // What needs to get done here is as follows:
             // 1. Clone the original assets repo
-            // 2. <response> = git ls-remote --heads <gitCloneUrl> <assets.AssetsRepoBranch>
+            // 2. <response> = git ls-remote --heads <gitCloneUrl> <assets.TagPrefix>
             // if the <response> is empty then just return, if not then create a test branch
             try
             {
@@ -355,7 +355,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 // Create the adjustedAssetsRepoBranch from the original branch. The reason being is that pushing
                 // to a branch of a branch is automatic
                 GitHandler.Run($"checkout -b {adjustedAssetsRepoBranch}", tmpPath);
-                // Push the contents of the AssetsRepoBranch into the adjustedAssetsRepoBranch
+                // Push the contents of the TagPrefix into the adjustedAssetsRepoBranch
                 GitHandler.Run($"push origin {adjustedAssetsRepoBranch}", tmpPath);
             }
             finally
@@ -415,7 +415,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         /// <returns></returns>
         public static string GetLatestCommitSHA(Assets assets, string workingDirectory)
         {
-            // git rev-parse origin/$($config.AssetsRepoBranch) --quiet
+            // git rev-parse origin/$($config.TagPrefix) --quiet
             GitProcessHandler GitHandler = new GitProcessHandler();
             CommandResult result = GitHandler.Run($"rev-parse origin/{assets.AssetsRepoBranch} --quiet", workingDirectory);
             return result.StdOut.Trim();

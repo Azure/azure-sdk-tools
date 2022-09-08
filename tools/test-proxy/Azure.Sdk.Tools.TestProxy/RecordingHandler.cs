@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.TestProxy
         /// Entrypoint handling an an optional parameter assets.json. If present, a restore option either MUST run or MAY run depending on if we're running in playback or adding new recordings.
         /// </summary>
         /// <param name="assetsJson">The absolute path to the targeted assets.json.</param>
-        /// <param name="forceCheckout">If this is set to true, a restore MUST be run. Otherwise, we just need to ensure that the current assets SHA is selected.</param>
+        /// <param name="forceCheckout">If this is set to true, a restore MUST be run. Otherwise, we just need to ensure that the current assets Tag is selected.</param>
         /// <returns></returns>
         private async Task RestoreAssetsJson(string assetsJson = null, bool forceCheckout = false)
         {

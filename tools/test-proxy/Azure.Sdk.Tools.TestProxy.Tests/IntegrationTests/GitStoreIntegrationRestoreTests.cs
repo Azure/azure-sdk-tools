@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Store;
@@ -54,7 +55,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(inputJson, folderStructure);
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
             try
             {
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
@@ -107,7 +109,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(inputJson, folderStructure);
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
             try
             {
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
@@ -162,7 +165,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(inputJson, folderStructure);
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
 
             try
             {

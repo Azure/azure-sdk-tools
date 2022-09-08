@@ -22,7 +22,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     /// </summary>
     public class GitProcessHandler
     {
-        public virtual ProcessStartInfo CreateGitProcessInfo(GitAssetsConfiguration config)
+        /// <summary>
+        /// Create a ProcessStartInfo that's exclusively used for execution of git commands
+        /// </summary>
+        /// <param name="workingDirectory">The directory where the commands are to be executed. For normal processing
+        /// through GitStore, this will end up being GitAssetsConfiguration's AssetsRepoLocation.</param>
+        /// <returns></returns>
+        public virtual ProcessStartInfo CreateGitProcessInfo(string workingDirectory)
         {
             var startInfo = new ProcessStartInfo("git")
             {
@@ -30,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true,
-                WorkingDirectory = config.AssetsRepoLocation,
+                WorkingDirectory = workingDirectory,
             };
 
             startInfo.EnvironmentVariables["PATH"] = Environment.GetEnvironmentVariable("PATH");
@@ -75,13 +81,25 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <summary>
         /// Invokes a git command. If it fails in any way, throws GitProcessException. Otherwise returns the result of the git invocation.
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="arguments"></param>
+        /// <param name="arguments">git command line arguments</param>
+        /// <param name="config">GitAssetsConfiguration</param>
         /// <returns></returns>
         /// <exception cref="GitProcessException">Throws GitProcessException on returnCode != 0 OR if an unexpected exception is thrown during invocation.</exception>
         public virtual CommandResult Run(string arguments, GitAssetsConfiguration config)
         {
-            ProcessStartInfo processStartInfo = CreateGitProcessInfo(config);
+            return Run(arguments, config.AssetsRepoLocation);
+        }
+
+        /// <summary>
+        /// Invokes a git command. If it fails in any way, throws GitProcessException. Otherwise returns the result of the git invocation.
+        /// </summary>
+        /// <param name="arguments">git command line arguments</param>
+        /// <param name="workingDirectory">effectively the AssetsRepoLocation</param>
+        /// <returns></returns>
+        /// <exception cref="GitProcessException">Throws GitProcessException on returnCode != 0 OR if an unexpected exception is thrown during invocation.</exception>
+        public virtual CommandResult Run(string arguments, string workingDirectory)
+        {
+            ProcessStartInfo processStartInfo = CreateGitProcessInfo(workingDirectory);
             processStartInfo.Arguments = arguments;
 
             CommandResult result = new CommandResult()
@@ -137,7 +155,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public virtual bool TryRun(string arguments, GitAssetsConfiguration config, out CommandResult result)
         {
-            ProcessStartInfo processStartInfo = CreateGitProcessInfo(config);
+            ProcessStartInfo processStartInfo = CreateGitProcessInfo(config.AssetsRepoLocation);
             processStartInfo.Arguments = arguments;
 
             try

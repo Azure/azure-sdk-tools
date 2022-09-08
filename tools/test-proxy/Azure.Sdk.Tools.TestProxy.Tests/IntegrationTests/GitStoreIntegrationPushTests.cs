@@ -204,8 +204,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""scenario_conflict_push"",
-              ""SHA"": ""9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1""
+              ""AssetsRepoBranch"": ""python/tables"",
+              ""SHA"": ""python/tables/abc12345""
         }")]
         [Trait("Category", "Integration")]
         public async Task ScenarioConflictPush(string inputJson)

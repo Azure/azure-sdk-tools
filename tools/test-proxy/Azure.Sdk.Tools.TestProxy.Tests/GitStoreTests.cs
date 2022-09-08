@@ -50,8 +50,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             AssetsRepo = "Azure/azure-sdk-assets-integration",
             AssetsRepoPrefixPath = "python/recordings/",
             AssetsRepoId = "",
-            AssetsRepoBranch = "scenario_clean_push",
-            SHA = "e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7"
+            TagPrefix = "scenario_clean_push",
+            Tag = "e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7"
         };
 
         public static string DefaultAssetsJson =

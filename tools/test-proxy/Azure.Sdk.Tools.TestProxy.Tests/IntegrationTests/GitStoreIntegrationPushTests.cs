@@ -51,13 +51,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
-            string originalAssetsRepoBranch = assets.AssetsRepoBranch;
-            string originalSHA = assets.SHA;
+            string originalAssetsRepoBranch = assets.TagPrefix;
+            string originalSHA = assets.Tag;
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest:true);
             try
             {
                 // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalAssetsRepoBranch, assets.AssetsRepoBranch);
+                Assert.NotEqual(originalAssetsRepoBranch, assets.TagPrefix);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -93,10 +93,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the config was updated with the new Tag as part of the push
                 Assets updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
-                Assert.NotEqual(originalSHA, updatedAssets.SHA);
+                Assert.NotEqual(originalSHA, updatedAssets.Tag);
                 // Ensure that the latest commit Tag and the updated assets file Tag are equal
                 string latestSHA = TestHelpers.GetLatestCommitSHA(updatedAssets, localFilePath);
-                Assert.Equal(latestSHA, updatedAssets.SHA);
+                Assert.Equal(latestSHA, updatedAssets.Tag);
 
             }
             finally
@@ -133,13 +133,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
-            string originalAssetsRepoBranch = assets.AssetsRepoBranch;
-            string originalSHA = assets.SHA;
+            string originalAssetsRepoBranch = assets.TagPrefix;
+            string originalSHA = assets.Tag;
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
                 // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalAssetsRepoBranch, assets.AssetsRepoBranch);
+                Assert.NotEqual(originalAssetsRepoBranch, assets.TagPrefix);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -175,10 +175,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the config was updated with the new Tag as part of the push
                 Assets updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
-                Assert.NotEqual(originalSHA, updatedAssets.SHA);
+                Assert.NotEqual(originalSHA, updatedAssets.Tag);
                 // Ensure that the latest commit Tag and the updated assets file Tag are equal
                 string latestSHA = TestHelpers.GetLatestCommitSHA(updatedAssets, localFilePath);
-                Assert.Equal(latestSHA, updatedAssets.SHA);
+                Assert.Equal(latestSHA, updatedAssets.Tag);
 
             }
             finally
@@ -215,13 +215,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
-            string originalAssetsRepoBranch = assets.AssetsRepoBranch;
-            string originalSHA = assets.SHA;
+            string originalAssetsRepoBranch = assets.TagPrefix;
+            string originalSHA = assets.Tag;
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
                 // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalAssetsRepoBranch, assets.AssetsRepoBranch);
+                Assert.NotEqual(originalAssetsRepoBranch, assets.TagPrefix);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -268,7 +268,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the config was updated with the new Tag as part of the push
                 Assets updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
-                Assert.NotEqual(originalSHA, updatedAssets.SHA);
+                Assert.NotEqual(originalSHA, updatedAssets.Tag);
 
                 // Ensure that the targeted Tag is present on the repo
                 // this is failing when targeting a tag. the failure is

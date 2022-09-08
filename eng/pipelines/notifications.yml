@@ -30,6 +30,8 @@ stages:
           PathPrefix: 'cpp'
         Go:
           PathPrefix: 'go'
+        AzDev:
+          PathPrefix: 'azure-dev'
 
     pool:
       name: azsdk-pool-mms-ubuntu-2004-general

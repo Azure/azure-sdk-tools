@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -101,24 +102,68 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 opsPerSecond = double.Parse(match.Groups[1].Value);
             }
 
-            var runtimePackageVersions = new Dictionary<string, string>(packageVersions.Count);
-            foreach (var package in packageVersions.Keys)
-            {
-                // Azure.Storage.Blobs:
-                //   Referenced: 12.8.0.0
-                //   Loaded: 12.8.0.0
-                //   Informational: 12.8.0+430f2eba747d6de99a43f4f8bd63cd28e673f979
-                var versionMatch = Regex.Match(result.StandardOutput, @$"{package}:.*?Informational: (\S*)", RegexOptions.Singleline);
-                runtimePackageVersions[package] = versionMatch.Groups[1].Value;
-            }
-
             return new IterationResult
             {
-                PackageVersions = runtimePackageVersions,
+                PackageVersions = GetRuntimePackageVersions(result.StandardOutput),
                 OperationsPerSecond = opsPerSecond,
                 StandardError = result.StandardError,
                 StandardOutput = result.StandardOutput,
             };
+        }
+
+        // === Versions ===
+        // Runtime:         3.1.27
+        // Azure.Core:
+        //   Referenced:    1.25.0.0
+        //   Loaded:        1.25.0.0
+        //   Informational: 1.25.0+c8aaee521e662ddfb238d5ad1f2f9a79233f97f6
+        //   JITOptimizer:  Enabled
+        // Azure.Storage.Blobs:
+        //   Referenced:    12.13.0.0
+        //   Loaded:        12.13.0.0
+        //   Informational: 12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae
+        //   JITOptimizer:  Enabled
+        // Azure.Storage.Blobs.Perf:
+        //   Loaded:        1.0.0.0
+        //   Informational: 1.0.0-alpha.20220719.3+5e7750d5d3d4754b657da8430ea805591522c43b
+        //   JITOptimizer:  Enabled
+        // Azure.Storage.Common:
+        //   Referenced:    12.12.0.0
+        //   Loaded:        12.12.0.0
+        //   Informational: 12.12.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae
+        //   JITOptimizer:  Enabled
+        // Azure.Test.Perf:
+        //   Referenced:    1.0.0.0
+        //   Loaded:        1.0.0.0
+        //   Informational: 1.0.0-alpha.20220719.3+5e7750d5d3d4754b657da8430ea805591522c43b
+        //   JITOptimizer:  Enabled
+        public static Dictionary<string, string> GetRuntimePackageVersions(string standardOutput)
+        {
+            var runtimePackageVersions = new Dictionary<string, string>();
+
+            var versionOutputStart = standardOutput.LastIndexOf("=== Versions ===", StringComparison.OrdinalIgnoreCase);
+            if (versionOutputStart == -1)
+            {
+                return runtimePackageVersions;
+            }
+
+            var versionOutput = standardOutput[versionOutputStart..];
+
+            var matches = Regex.Matches(versionOutput, @"(Azure.*?):.*?Informational: (\S*)", RegexOptions.Singleline);
+            foreach (Match match in matches)
+            {
+                runtimePackageVersions.Add(match.Groups[1].Value, match.Groups[2].Value);
+            }
+
+            return runtimePackageVersions;
+        }
+
+        public override IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions)
+        {
+            // Ignore packages ending with ".Perf", to only show versions of shipping packages
+            return runtimePackageVersions?
+                .Where(kvp => !kvp.Key.EndsWith(".Perf", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public override Task CleanupAsync(string project)

@@ -191,11 +191,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestResetTargetsRecordingOnly()
+        public async Task TestResetTargetsRecordingOnly()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
+            await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
 
@@ -215,11 +215,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestResetTargetsSessionOnly()
+        public async Task TestResetTargetsSessionOnly()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
+            await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             testRecordingHandler.Sanitizers.Clear();
@@ -241,11 +241,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestResetExtensionsFailsWithActiveSessions()
+        public async Task TestResetExtensionsFailsWithActiveSessions()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
+            await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             var assertion = Assert.Throws<HttpException>(
@@ -318,7 +318,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestWriteAbsoluteRecording()
+        public async Task TestWriteAbsoluteRecording()
         {
             var tmpPath = Path.GetTempPath();
             var currentPath = Directory.GetCurrentDirectory();
@@ -326,7 +326,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var pathToRecording = Path.Combine(currentPath, "recordings/oauth_request_new.json");
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
             recordingHandler.StopRecording(sessionId);
 
@@ -341,7 +341,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestWriteRelativeRecording()
+        public async Task TestWriteRelativeRecording()
         {
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
@@ -349,7 +349,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingHandler = new RecordingHandler(currentPath);
             var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
             recordingHandler.StopRecording(sessionId);
 
@@ -378,7 +378,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             CreateRecordModeRequest(httpContext, "request-body");
@@ -418,7 +418,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             CreateRecordModeRequest(httpContext, "request-response");
@@ -466,7 +466,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 RedirectlessClient = mockClient
             };
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             CreateRecordModeRequest(httpContext, new StringValues(values));
@@ -521,7 +521,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestStopRecordingWithVariables()
+        public async Task TestStopRecordingWithVariables()
         {
             var tmpPath = Path.GetTempPath();
             var startHttpContext = new DefaultHttpContext();
@@ -533,7 +533,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             var endHttpContext = new DefaultHttpContext();
 
-            recordingHandler.StartRecording(pathToRecording, startHttpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, startHttpContext.Response);
             var sessionId = startHttpContext.Response.Headers["x-recording-id"].ToString();
 
             recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>(dict));
@@ -548,14 +548,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestStopRecordingWithoutVariables()
+        public async Task TestStopRecordingWithoutVariables()
         {
             var tmpPath = Path.GetTempPath();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/oauth_request_new.json";
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
             recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>());
 
@@ -565,14 +565,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestStopRecordingNullVariables()
+        public async Task TestStopRecordingNullVariables()
         {
             var tmpPath = Path.GetTempPath();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/oauth_request_new.json";
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
             recordingHandler.StopRecording(sessionId, variables: null);
 
@@ -663,12 +663,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Theory]
         [InlineData("awesomehost.com")]
         [InlineData("")]
-        public void TestRecordMaintainsUpstreamOverrideHostHeader(string upstreamHostHeaderValue)
+        public async Task TestRecordMaintainsUpstreamOverrideHostHeader(string upstreamHostHeaderValue)
         {
             var httpContext = new DefaultHttpContext();
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
-            testRecordingHandler.StartRecording("hello.json", httpContext.Response);
+            await testRecordingHandler.StartRecordingAsync("hello.json", httpContext.Response);
 
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
@@ -871,7 +871,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}, {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}")]
         [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}")]
         [InlineData("{{\"Transport\": {{\"Certificates\": []}}}}")]
-        public void TestSetRecordingOptionsValidTransportRecordingLevel(string body)
+        public async Task TestSetRecordingOptionsValidTransportRecordingLevel(string body)
         {
             var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
             var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
@@ -880,7 +880,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
 
             HttpContext context = new DefaultHttpContext();
-            testRecordingHandler.StartRecording("TestSetRecordingOptionsInValidTransportRecordingLevel.json", context.Response);
+            await testRecordingHandler.StartRecordingAsync("TestSetRecordingOptionsInValidTransportRecordingLevel.json", context.Response);
             var recordingId = context.Response.Headers["x-recording-id"].ToString();
 
             testRecordingHandler.SetRecordingOptions(inputBody, recordingId);
@@ -910,7 +910,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\", \"PemKey\": \"{1}\" }}]}}}}")]
         [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\" }}]}}}}")]
         [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemKey\": \"{1}\" }}]}}}}")]
-        public void TestSetRecordingOptionsInvalidTransportRecordingLevel(string body)
+        public async Task TestSetRecordingOptionsInvalidTransportRecordingLevel(string body)
         {
             var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
             var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
@@ -919,7 +919,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
 
             HttpContext context = new DefaultHttpContext();
-            testRecordingHandler.StartRecording("TestSetRecordingOptionsInValidTransportRecordingLevel.json", context.Response);
+            await testRecordingHandler.StartRecordingAsync("TestSetRecordingOptionsInValidTransportRecordingLevel.json", context.Response);
             var recordingId = context.Response.Headers["x-recording-id"].ToString();
 
             var assertion = Assert.Throws<HttpException>(

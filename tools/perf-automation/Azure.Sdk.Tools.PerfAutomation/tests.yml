@@ -307,8 +307,10 @@ Services:
     Python:
       Project: sdk/storage/azure-storage-file-share
       PackageVersions:
-      - azure-storage-file-share: 12.9.0
-      - azure-storage-file-share: source
+      - azure-core: 1.25.0
+        azure-storage-file-share: 12.9.0
+      - azure-core: source
+        azure-storage-file-share: source
 
   Tests:
   - Test: download
@@ -347,8 +349,10 @@ Services:
     Python:
       Project: sdk/storage/azure-storage-file-datalake
       PackageVersions:
-      - azure-storage-file-datalake: 12.8.0
-      - azure-storage-file-datalake: source
+      - azure-core: 1.25.0
+        azure-storage-file-datalake: 12.8.0
+      - azure-core: source
+        azure-storage-file-datalake: source
 
   Tests:
   - Test: download
@@ -401,8 +405,10 @@ Services:
     Python:
       Project: sdk/keyvault/azure-keyvault-secrets
       PackageVersions:
-      - azure-keyvault-secrets: 4.3.0
-      - azure-keyvault-secrets: source
+      - azure-core: 1.15.0
+        azure-keyvault-secrets: 4.3.0
+      - azure-core: source
+        azure-keyvault-secrets: source
   Tests:
   - Test: get-secret
     Arguments:

@@ -400,17 +400,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         /// <summary>
-        /// Given an 
+        /// Given a test assets config, check to see if the tag exists on the assets repo.
         /// </summary>
         /// <param name="assets"></param>
         /// <param name="workingDirectory"></param>
         /// <returns></returns>
-        public static string GetLatestCommitSHA(Assets assets, string workingDirectory)
+        public static bool CheckExistenceOfTag(Assets assets, string workingDirectory)
         {
-            // git rev-parse origin/$($config.TagPrefix) --quiet
             GitProcessHandler GitHandler = new GitProcessHandler();
-            CommandResult result = GitHandler.Run($"rev-parse origin/{assets.TagPrefix} --quiet", workingDirectory);
-            return result.StdOut.Trim();
+            var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+            CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
+            return result.StdOut.Trim().Length > 0;
         }
     }
 }

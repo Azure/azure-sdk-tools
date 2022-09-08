@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""scenario_new_push"",
-              ""Tag"": ""fc54d000d0427c4a68bc8962d40f957f59e14577""
+              ""Tag"": ""python/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task ScenarioNewPush(string inputJson)
@@ -95,6 +95,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Ensure that the config was updated with the new Tag as part of the push
                 updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
                 Assert.NotEqual(originalSHA, updatedAssets.Tag);
+
+                // Ensure that the targeted tag is present on the repo
+                TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
             }
             finally
             {
@@ -120,7 +123,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""scenario_clean_push"",
-              ""Tag"": ""bb2223a3aa0472ff481f8e1850e7647dc39fbfdd""
+              ""Tag"": ""python/tables_bb2223""
         }")]
         [Trait("Category", "Integration")]
         public async Task ScenarioCleanPush(string inputJson)
@@ -174,6 +177,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Ensure that the config was updated with the new Tag as part of the push
                 updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
                 Assert.NotEqual(originalSHA, updatedAssets.Tag);
+
+                // Ensure that the targeted tag is present on the repo
+                TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
             }
             finally
             {
@@ -199,7 +205,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""python/tables"",
-              ""Tag"": ""python/tables/abc12345""
+              ""Tag"": ""python/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task ScenarioConflictPush(string inputJson)
@@ -265,12 +271,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
                 Assert.NotEqual(originalSHA, updatedAssets.Tag);
 
-                // Ensure that the targeted Tag is present on the repo
-                // this is failing when targeting a tag. the failure is
-                // fatal: ambiguous argument 'origin/test_d15a3644-7513-41c3-920e-4a8c40caeaa9_python/tables': unknown revision or path not in the working tree.
-                // Use '--' to separate paths from revisions, like this: 'git <command> [<revision>...] -- [<file>...]
-                //string latestSHA = TestHelpers.GetLatestCommitSHA(updatedAssets, localFilePath);
-                //Assert.Equal(latestSHA, updatedAssets.Tag);
+                // Ensure that the targeted tag is present on the repo
+                TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
             }
             finally
             {

@@ -83,7 +83,7 @@ jobs:
       - pwsh: |
           Write-Host "##vso[task.setvariable variable=HasChanges]$true"
         workingDirectory: $(DocRepoLocation)
-        displayName: Set var HasChanges to true to push committed changes
+        displayName: Set Var 'HasChanges' to push committed changes
 
       - template: /eng/common/pipelines/templates/steps/git-push-changes.yml
         parameters: 

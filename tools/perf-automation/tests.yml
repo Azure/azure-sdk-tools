@@ -79,7 +79,7 @@ stages:
       Arguments: $(Arguments)
       # Iterations parameter has type 'number' so must use this variable syntax
       Iterations: ${{ variables.Iterations }}
-      Profile: ${{ parameter.Profile }}
+      Profile: ${{ parameters.Profile }}
 
   - template: /eng/common/pipelines/templates/jobs/perf.yml
     parameters:
@@ -112,7 +112,7 @@ stages:
       Arguments: $(Arguments)
       # Iterations parameter has type 'number' so must use this variable syntax
       Iterations: ${{ variables.Iterations }}
-      Profile: ${{ parameter.Profile }}
+      Profile: ${{ parameters.Profile }}
 
   - template: /eng/common/pipelines/templates/jobs/perf.yml
     parameters:
@@ -138,7 +138,7 @@ stages:
       Arguments: $(Arguments)
       # Iterations parameter has type 'number' so must use this variable syntax
       Iterations: ${{ variables.Iterations }}
-      Profile: ${{ parameter.Profile }}
+      Profile: ${{ parameters.Profile }}
 
   - template: /eng/common/pipelines/templates/jobs/perf.yml
     parameters:
@@ -167,7 +167,7 @@ stages:
       Arguments: $(Arguments)
       # Iterations parameter has type 'number' so must use this variable syntax
       Iterations: ${{ variables.Iterations }}
-      Profile: ${{ parameter.Profile }}
+      Profile: ${{ parameters.Profile }}
 
 - stage: Print_Results
   displayName: Print Results

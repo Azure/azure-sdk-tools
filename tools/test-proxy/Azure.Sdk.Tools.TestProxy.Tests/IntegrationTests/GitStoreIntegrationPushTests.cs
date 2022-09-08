@@ -198,8 +198,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         /// </summary>
         /// <param name="inputJson"></param>
         /// <returns></returns>
-        //[EnvironmentConditionalSkipTheory]
-        [Theory(Skip = "Skipping, scenario is currently broken the way push is done on conflict.")]
+        [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",

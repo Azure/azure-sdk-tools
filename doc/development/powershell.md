@@ -18,7 +18,7 @@ _(i.e. too long, didn't read)_
 
 **DO**
 
-- Try to write scripts that can be run locally
+- Write scripts that can be run locally
 - Write unit tests for your scripts. See [Unit Testing](#unit-testing).
 - Handle exit codes from external programs
 - Use `Set-StrictMode -Version 4` where possible
@@ -36,8 +36,10 @@ When structuring a powershell cmdlet or collection of scripts, it is important t
 
 - When writing a powershell cmdlet file, keep the file as small as possible, or organize your code into functions. Scripts tend to grow in size and complexity over time with incremental edits from many authors, and it is much easier to understand, test and refactor code when it is written in a modular way from the start.
 - Isolate calls to dependencies inside their own cmdlet files or within functions. This makes it easier to abstract these calls for testing.
+- Add `[CmdletBinding()]` to the top of scripts to support [powershell common parameters](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_commonparameters?view=powershell-7.2).
 - Avoid global state where possible. Powershell has very liberal scoping rules, and it is easy to take dependencies on variables that are defined outside a code block, which can lead to hard to debug issues. Where possible, only treat script parameters and variables defined at the top of the file as read-only global variables.
-- Try not to rely on exporting your code as a powershell module. Favor [dot sourcing](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_scripts?view=powershell-7.2#script-scope-and-dot-sourcing) when possible. There are lots of downsides to working with module imports in local development settings that make them not worth it. This guideline some limitations, e.g. if you want to test class instance assertions via Pester, you cannot export the class types without using module imports.
+- Try not to rely on exporting your code as a powershell module. Favor [dot sourcing](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_scripts?view=powershell-7.2#script-scope-and-dot-sourcing) when possible. Module imports are more finicky in the dev loop and and cause more trouble than they are worth.
+- Import our common powershell modules for handling operations like logging, github/devops APIs, etc. See [common.ps1](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/common.ps1) for more information. This file is mirrored to every SDK repository.
 
 ## Functionality
 
@@ -45,7 +47,7 @@ There are many quirks to how powershell works that make trade offs between being
 
 - Reserve powershell pipelines (`|` operator) for simple assignment operations only (e.g. light transformations of a data structure)
   - If side effects are needed, favor `foreach` loops.
-  - If the value being returned is any sort of collection (e.g. list), either favor a `foreach` loop or explicitly declare a variable type like `[array]$arr = some-func | ? { $_ -contains "foo" }` . Due to how pipelines work, when the result value is singular, the inner value with the collection item type will be returned instead of a collection with length 1. _This goes the same for powershell functions._
+  - If the value being returned is any sort of collection (e.g. list), either favor a `foreach` loop, define the type of the variable like `[array]$arr`, or wrap it with array syntax `@()` like `$arr = @(some-func | ? { $_ -contains "foo" })` . Due to how pipelines work, when the result value is singular, the inner value with the collection item type will be returned instead of a collection with length 1. _This goes the same for powershell functions._
 - Handle exit codes from calls to external binaries (e.g. `git`).
   - Powershell by default will only stop execution on thrown exceptions. Calls to external binaries do not throw powershell native exceptions, so failures will not be caught unless explicitly handled.
     - Check the `$LASTEXITCODE` variable for values greater than 0.
@@ -54,6 +56,7 @@ There are many quirks to how powershell works that make trade offs between being
   - `$ErrorActionPreference` should be set to `Stop` at the top of any cmdlet files unless there is a specific reason to do something else.
   - `Set-StrictMode -Version 4` should be set at the top of any cmdlet files unless there is a specific reason to do something else.
 - Support the common `-WhatIf` parameter. See [SupportsShouldProcess docs](https://docs.microsoft.com/en-us/powershell/scripting/learn/deep-dives/everything-about-shouldprocess?view=powershell-7.2#supportsshouldprocess).
+  - Use `[CmdletBinding()]` at the top of the script to enable.
   - Scripts should be able to be run locally, and they should also support a dry run mode via `-WhatIf` so a user can see what actions might be performed that could be destructive.
   - Most common powershell module functions will support `-WhatIf` natively, but engsys code that does any write operations should also gate this functionality behind this parameter by checking [ShouldProcess](https://docs.microsoft.com/en-us/powershell/scripting/learn/deep-dives/everything-about-shouldprocess?view=powershell-7.2#pscmdletshouldprocess).
 - Log write actions with enough context that someone reading the log statement in a pipeline would be able to know what happened.
@@ -63,6 +66,7 @@ There are many quirks to how powershell works that make trade offs between being
 
 Powershell is a very flexible language. In engsys we try to use a smaller subset of what's possible to keep programs consistent and their behavior predictable.
 
+- Do NOT call functions like `myFunc(1, 2, 3)`. Powershell functions must be invoked like `myFunc 1 2 3`. The former syntax will end up calling `myFunc` with the single array-type argument value `@(1,2,3)`.
 - Declare types for function parameters (e.g. `function foo([string]$bar) {}`.
 - Add formatted documentation for entrypoints like top-level scripts or publicly exposed functions.
   ```
@@ -79,18 +83,13 @@ Powershell is a very flexible language. In engsys we try to use a smaller subset
   function foobar([string]$baz)
   ```
 - Avoid complex pipeline statements.
-- Put curly braces `{` for opening function blocks on a new line.
-    ```
-    function foo()
-    {
-    }
-    ```
 - Use explicit `return` statements for returning function/script block values.
 - Favor simple variable substitution in strings (see [variable substitution docs](https://docs.microsoft.com/en-us/powershell/scripting/learn/deep-dives/everything-about-string-substitutions?view=powershell-7.2)).
   - For simple variables in a string, use syntax like `"my name is $username"`. Do not use `"my name is $($username)"`.
   - For properties, use syntax like `"my name is $($user.name)"`.
-  - Only use curly braces when the delineation is unclear, e.g. `"Updating all ${itemType}s"`
+  - Only use curly braces when the delineation is ambiguous (`"Updating all ${itemType}s"`) or you are using a named scope (`"my name is ${env:USERNAME}"`).
 - Use full CmdLet names for better scripts.
+  - Favor `$foobar.Where(...)` over `$foobar | Where-Object {...}` where possible to sidestep powershell pipeline gotchas like single value returns.
   - Favor `$foobar | Where-Object {} | ForEach-Object {}` over `$foobar | ? {} | % {}`.
   - Read https://devblogs.microsoft.com/scripting/best-practice-for-using-aliases-in-powershell-scripts/ for some general reasons to avoid using aliases in scripts but even sense then we now have more reasons because of the cross-platform differences that pwsh brings. The more we depend on powershell scripts we need to be aware of ways to make them work on all our OS's. Of course we are using pwsh which runs on all OS's but default alias on the different OS's may change. [Two examples we hit](https://github.com/Azure/azure-sdk-tools/commit/0301c21a37de6e429f80cdb78a5f0adf41fafd12) while trying to run scripts on linux and windows:
     - `mkdir` - On Windows this is an alias on top of New-Item and will happily create any missing directories in the directory hierarchy, while on linux this is the shell command and will need to be passed `-p` in order to create the missing directories. In order to make this work consistently use the cmdlet on all OS's call `New-Item -ItemType Directory` instead. 

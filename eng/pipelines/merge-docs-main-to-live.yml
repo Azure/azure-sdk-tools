@@ -35,7 +35,7 @@ jobs:
       # Checkout docs repo
       - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
         parameters:
-          SkipDefaultCheckout: true
+          SkipCheckoutNone: true
           Repositories:
           - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
             WorkingDirectory: $(DocRepoLocation)
@@ -79,6 +79,11 @@ jobs:
             -BaseBranch "$(${{repo.RepoName}})" 
           workingDirectory: $(DocRepoLocation)
         displayName: Sync base branch to target
+
+      - pwsh: |
+          Write-Host "##vso[task.setvariable variable=HasChanges]$true"
+        workingDirectory: $(DocRepoLocation)
+        displayName: Set var HasChanges to true to push committed changes
 
       - template: /eng/common/pipelines/templates/steps/git-push-changes.yml
         parameters: 

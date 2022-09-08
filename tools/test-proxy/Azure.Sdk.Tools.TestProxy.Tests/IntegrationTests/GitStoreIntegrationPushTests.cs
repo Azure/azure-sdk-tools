@@ -261,11 +261,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 await _defaultStore.Push(jsonFileLocation);
 
                 // Verify that after the push the directory still contains our updated files
-                Assert.Equal(5, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+                Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 3));
-                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
-                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file6.txt", 1));
 
                 // Ensure that the config was updated with the new SHA as part of the push

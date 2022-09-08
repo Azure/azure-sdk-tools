@@ -406,7 +406,7 @@ Services:
       - '@azure/keyvault-secrets': source
     Python:
       Project: sdk/keyvault/azure-keyvault-secrets
-      PrimaryProject: azure-keyvault-secrets
+      PrimaryPackage: azure-keyvault-secrets
       PackageVersions:
       - azure-core: 1.15.0
         azure-keyvault-secrets: 4.3.0

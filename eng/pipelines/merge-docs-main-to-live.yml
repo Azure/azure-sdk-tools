@@ -64,7 +64,7 @@ jobs:
           filePath: eng/scripts/validate-changes-on-allowed-path.ps1
           arguments: 
             -TargetBranch ${{ parameters.TargetBranch }} `
-            -BaseBranch '$(${{repo.RepoName}})' `
+            -BaseBranch '$(${{repo.RepoName}}-DefaultBranch)' `
             -AllowListPath "${{repo.AllowlistPath}}"
           workingDirectory: $(DocRepoLocation)
         displayName: Validate the changes within allowlist
@@ -76,7 +76,7 @@ jobs:
           filePath: eng/scripts/sync-base-branch-to-target.ps1
           arguments: 
             -TargetBranch ${{ parameters.TargetBranch }} `
-            -BaseBranch "$(${{repo.RepoName}})" 
+            -BaseBranch "$(${{repo.RepoName}}-DefaultBranch)" 
           workingDirectory: $(DocRepoLocation)
         displayName: Sync base branch to target
 

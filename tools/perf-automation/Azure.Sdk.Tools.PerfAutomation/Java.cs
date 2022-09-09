@@ -115,6 +115,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 var profileOutputPath = Path.GetFullPath(Path.Combine(ProfileDirectory, $"{testName}_{profileCount++}.jfr"));
                 profilingConfig = $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";
+
+                var jfrConfigurationFile = Path.Combine(WorkingDirectory, "eng", "PerfAutomation.jfc");
+                if (File.Exists(jfrConfigurationFile))
+                {
+                    profilingConfig += $",settings={jfrConfigurationFile}";
+                }
             }
 
             var processArguments = $"-XX:+CrashOnOutOfMemoryError {profilingConfig} -jar {context} -- {testName} {arguments}";

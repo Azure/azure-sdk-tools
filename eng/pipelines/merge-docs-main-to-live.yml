@@ -94,4 +94,5 @@ jobs:
           SkipCheckingForChanges: true
           WorkingDirectory: $(DocRepoLocation)
           WhatIfPreference: ${{ parameters.WhatIfPreference }}
+          CommitMsg: "Merge main to live $(Get-Date -Format 'yyyy-MM-dd')"
           PushArgs: -f

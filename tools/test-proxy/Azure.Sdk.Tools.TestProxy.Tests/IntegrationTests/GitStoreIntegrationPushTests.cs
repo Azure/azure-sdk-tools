@@ -40,8 +40,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""TagPrefix"": ""scenario_new_push"",
-              ""Tag"": ""python/tables_fc54d0""
+              ""TagPrefix"": ""language/tables"",
+              ""Tag"": ""language/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task ScenarioNewPush(string inputJson)
@@ -122,8 +122,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""TagPrefix"": ""scenario_clean_push"",
-              ""Tag"": ""python/tables_bb2223""
+              ""TagPrefix"": ""language/tables"",
+              ""Tag"": ""language/tables_bb2223""
         }")]
         [Trait("Category", "Integration")]
         public async Task ScenarioCleanPush(string inputJson)
@@ -204,8 +204,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""TagPrefix"": ""python/tables"",
-              ""Tag"": ""python/tables_9e81fb""
+              ""TagPrefix"": ""language/tables"",
+              ""Tag"": ""language/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task ScenarioConflictPush(string inputJson)

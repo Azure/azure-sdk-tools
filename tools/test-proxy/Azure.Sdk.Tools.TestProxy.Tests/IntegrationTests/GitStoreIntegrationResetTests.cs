@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 1 - Changes to existing files only are detected and overridden with Reset response Y
-        // 1. Restore from Tag python/tables_fc54d0
+        // 1. Restore from Tag language/tables_fc54d0
         // 2. Expect: 3 files with versions they were checked in with
         // 3. Update one or more files, incrementing their version
         // 4. Expect: files updated should be at version 2
@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""python/tables_fc54d0""
+              ""Tag"": ""language/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario1(string inputJson)
@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 2 - Changes to existing files only are detected and retained with Reset response N
-        // 1. Restore from Tag python/tables_fc54d0
+        // 1. Restore from Tag language/tables_fc54d0
         // 2. Expect: 3 files with versions they were checked in with
         // 3. Update one or more files, incrementing their version
         // 4. Expect: files updated should be at version 2
@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""python/tables_fc54d0""
+              ""Tag"": ""language/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario2(string inputJson)
@@ -166,7 +166,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 3 - Restore from Tag, add and remove files, Reset response Y
-        // 1. Restore from Tag python/tables_9e81fb
+        // 1. Restore from Tag language/tables_9e81fb
         // 2. Expect: 4 files with versions they were checked in with
         // 3. Update add/remove files
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
@@ -179,7 +179,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""python/tables_9e81fb""
+              ""Tag"": ""language/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario3(string inputJson)
@@ -241,7 +241,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 4 - Restore from Tag, add and remove files, Reset response N
-        // 1. Restore from Tag python/tables_9e81fb
+        // 1. Restore from Tag language/tables_9e81fb
         // 2. Expect: 4 files with versions they were checked in with
         // 3. Update add/remove files
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
@@ -254,7 +254,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""python/tables_9e81fb""
+              ""Tag"": ""language/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario4(string inputJson)
@@ -315,7 +315,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 5 - Restore from Tag, add and remove files, Reset response N, then Reset response Y
-        // 1. Restore from Tag python/tables_9e81fb
+        // 1. Restore from Tag language/tables_9e81fb
         // 2. Expect: 3 files with versions they were checked in with
         // 3. Update add/remove files
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
@@ -330,7 +330,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""python/tables_bb2223""
+              ""Tag"": ""language/tables_bb2223""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario5(string inputJson)

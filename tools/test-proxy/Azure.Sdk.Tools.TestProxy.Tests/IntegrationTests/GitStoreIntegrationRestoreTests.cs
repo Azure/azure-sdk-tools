@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         private GitStore _defaultStore = new GitStore();
 
         // Scenario1
-        // Tag python/tables_fc54d0
+        // Tag language/tables_fc54d0
         // This was the initial push of the test files:
         // Added file1.txt
         // Added file2.txt
@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""python/tables_fc54d0""
+              ""Tag"": ""language/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario1(string inputJson)
@@ -82,7 +82,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
 
         // Scenario2
-        // Tag python/tables_9e81fb
+        // Tag language/tables_9e81fb
         // This was the second push of the test files.
         // Unchanged file1.txt
         // Updated file2.txt
@@ -99,7 +99,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""python/tables_9e81fb""
+              ""Tag"": ""language/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario2(string inputJson)
@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario3
-        // Tag python/tables_bb2223
+        // Tag language/tables_bb2223
         // This was the third push of the test files.
         // Deleted   file1.txt
         // Unchanged file2.txt
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""python/tables_bb2223""
+              ""Tag"": ""language/tables_bb2223""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario3(string inputJson)

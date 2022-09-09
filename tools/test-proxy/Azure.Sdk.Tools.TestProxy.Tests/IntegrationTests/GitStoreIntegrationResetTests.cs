@@ -18,9 +18,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
     // Setup:
     // The files live under https://github.com/Azure/azure-sdk-assets-integration/tree/main/pull/scenarios.
     // Each file contains nothing but a single version digit, which is used for verification purposes.
-    // Most of the scenarios involve restoring from a SHA, updating, adding, and/or deleting files locally
-    // and then performing a Reset and verifying that the only the files in the original SHA are there and
-    // they've been restored to what they were in the original SHA.
+    // Most of the scenarios involve restoring from a Tag, updating, adding, and/or deleting files locally
+    // and then performing a Reset and verifying that the only the files in the original Tag are there and
+    // they've been restored to what they were in the original Tag.
     public class GitStoreIntegrationResetTests
     {
         private GitStore _defaultStore;
@@ -37,20 +37,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 1 - Changes to existing files only are detected and overridden with Reset response Y
-        // 1. Restore from SHA fc54d000d0427c4a68bc8962d40f957f59e14577
+        // 1. Restore from Tag language/tables_fc54d0
         // 2. Expect: 3 files with versions they were checked in with
         // 3. Update one or more files, incrementing their version
         // 4. Expect: files updated should be at version 2
         // 5. Reset with Y
-        // 6. Expect: each file should be at it's initial version, the version that was in the original SHA
+        // 6. Expect: each file should be at it's initial version, the version that was in the original Tag
         [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""main"",
-              ""SHA"": ""fc54d000d0427c4a68bc8962d40f957f59e14577""
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario1(string inputJson)
@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 2 - Changes to existing files only are detected and retained with Reset response N
-        // 1. Restore from SHA fc54d000d0427c4a68bc8962d40f957f59e14577
+        // 1. Restore from Tag language/tables_fc54d0
         // 2. Expect: 3 files with versions they were checked in with
         // 3. Update one or more files, incrementing their version
         // 4. Expect: files updated should be at version 2
@@ -112,8 +112,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""main"",
-              ""SHA"": ""fc54d000d0427c4a68bc8962d40f957f59e14577""
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario2(string inputJson)
@@ -165,21 +165,21 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             }
         }
 
-        // Scenario 3 - Restore from SHA, add and remove files, Reset response Y
-        // 1. Restore from SHA 9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1
+        // Scenario 3 - Restore from Tag, add and remove files, Reset response Y
+        // 1. Restore from Tag language/tables_9e81fb
         // 2. Expect: 4 files with versions they were checked in with
         // 3. Update add/remove files
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
         // 5. Reset with Y
-        // 6. Expect: each file should be at it's initial version, the version that was in the original SHA
+        // 6. Expect: each file should be at it's initial version, the version that was in the original Tag
         [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""main"",
-              ""SHA"": ""9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1""
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario3(string inputJson)
@@ -203,7 +203,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
                 string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
 
-                // Verify files from SHA
+                // Verify files from Tag
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
@@ -226,7 +226,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 _consoleWrapperTester.SetReadLineResponse("Y");
                 await _defaultStore.Reset(jsonFileLocation);
 
-                // Verify the only files there are ones from the SHA
+                // Verify the only files there are ones from the Tag
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
@@ -240,8 +240,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             }
         }
 
-        // Scenario 4 - Restore from SHA, add and remove files, Reset response N
-        // 1. Restore from SHA 9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1
+        // Scenario 4 - Restore from Tag, add and remove files, Reset response N
+        // 1. Restore from Tag language/tables_9e81fb
         // 2. Expect: 4 files with versions they were checked in with
         // 3. Update add/remove files
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
@@ -253,8 +253,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""main"",
-              ""SHA"": ""9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1""
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario4(string inputJson)
@@ -278,7 +278,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
                 string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
 
-                // Verify files from SHA
+                // Verify files from Tag
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
@@ -301,7 +301,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 _consoleWrapperTester.SetReadLineResponse("N");
                 await _defaultStore.Reset(jsonFileLocation);
 
-                // Verify the only files were not restored from the SHA
+                // Verify the only files were not restored from the Tag
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
@@ -314,8 +314,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             }
         }
 
-        // Scenario 5 - Restore from SHA, add and remove files, Reset response N, then Reset response Y
-        // 1. Restore from SHA 9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1
+        // Scenario 5 - Restore from Tag, add and remove files, Reset response N, then Reset response Y
+        // 1. Restore from Tag language/tables_9e81fb
         // 2. Expect: 3 files with versions they were checked in with
         // 3. Update add/remove files
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
@@ -329,8 +329,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""main"",
-              ""SHA"": ""bb2223a3aa0472ff481f8e1850e7647dc39fbfdd""
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_bb2223""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario5(string inputJson)
@@ -354,7 +354,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
                 string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
 
-                // Verify files from SHA
+                // Verify files from Tag
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
@@ -378,7 +378,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 _consoleWrapperTester.SetReadLineResponse("N");
                 await _defaultStore.Reset(jsonFileLocation);
 
-                // Verify the files were not restored from the SHA
+                // Verify the files were not restored from the Tag
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
@@ -389,7 +389,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 _consoleWrapperTester.SetReadLineResponse("Y");
                 await _defaultStore.Reset(jsonFileLocation);
 
-                // Verify files are from the SHA
+                // Verify files are from the Tag
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));

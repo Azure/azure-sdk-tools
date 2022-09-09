@@ -23,9 +23,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public string AssetsRepo { get; set; }
 
         /// <summary>
-        /// The targeted SHA within the AssetsRepo.
+        /// The targeted Tag within the AssetsRepo.
         /// </summary>
-        public string SHA { get; set;  }
+        public string Tag { get; set;  }
 
         /// <summary>
         /// Within the assets repo, is there a prefix that should be inserted prior to writing out files?
@@ -33,9 +33,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public string AssetsRepoPrefixPath { get; set; }
 
         /// <summary>
-        /// The auto-commit branch.
+        /// Tags are generated and pushed with each changeset. This prefix will inform the name of the tag to be recognizable as soemthing other than a guid.
         /// </summary>
-        public string AssetsRepoBranch { get; set; }
+        public string TagPrefix { get; set; }
 
         /// <summary>
         /// The location of the assets repo for this config.

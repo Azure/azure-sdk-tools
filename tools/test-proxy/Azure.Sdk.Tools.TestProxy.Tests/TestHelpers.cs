@@ -16,9 +16,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     /// <summary>
     /// Assets is the class representation of assets.json. When setting up for the push tests we're going to end up
-    /// creating a branch of the original AssetsRepoBranch so we can automatically push to it. This is done at setup
+    /// creating a branch of the original TagPrefix so we can automatically push to it. This is done at setup
     /// time and then the AssetsReproBranch will have to be changed to use this new branch. This class will be used
-    /// to deserialize from string representation of assets.json, set the AssetsRepoBranch to the generated testing
+    /// to deserialize from string representation of assets.json, set the TagPrefix to the generated testing
     /// branch and serialize back into a string. This is only used for testing purposes.
     /// </summary>
     public class Assets
@@ -26,8 +26,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public string AssetsRepo { get; set; }
         public string AssetsRepoPrefixPath { get; set; }
         public string AssetsRepoId { get; set; }
-        public string AssetsRepoBranch { get; set; }
-        public string SHA { get; set; }
+        public string TagPrefix { get; set; }
+        public string Tag { get; set; }
     }
 
     public static class TestHelpers
@@ -149,12 +149,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             // 1. The AssetsReproBranch
             if (isPushTest)
             {
-                string adjustedAssetsRepoBranch = string.Format("test_{0}_{1}", testGuid, assets.AssetsRepoBranch);
+                string adjustedAssetsRepoBranch = string.Format("test_{0}_{1}", testGuid, assets.TagPrefix);
                 // Call InitIntegrationBranch
                 InitIntegrationBranch(assets, adjustedAssetsRepoBranch);
 
-                // set the AssetsRepoBranch to the adjusted test branch 
-                assets.AssetsRepoBranch = adjustedAssetsRepoBranch;
+                // set the TagPrefix to the adjusted test branch 
+                assets.TagPrefix = adjustedAssetsRepoBranch;
                 localAssetsJsonContent = JsonSerializer.Serialize(assets);
             }
 
@@ -330,7 +330,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             // What needs to get done here is as follows:
             // 1. Clone the original assets repo
-            // 2. <response> = git ls-remote --heads <gitCloneUrl> <assets.AssetsRepoBranch>
+            // 2. <response> = git ls-remote --heads <gitCloneUrl> <assets.TagPrefix>
             // if the <response> is empty then just return, if not then create a test branch
             try
             {
@@ -340,7 +340,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 // Clone the original assets repo
                 GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
                 // Check to see if there's already a branch
-                CommandResult commandResult = GitHandler.Run($"ls-remote --heads {gitCloneUrl} {assets.AssetsRepoBranch}", tmpPath);
+                CommandResult commandResult = GitHandler.Run($"ls-remote --heads {gitCloneUrl} {assets.TagPrefix}", tmpPath);
                 // If the commandResult response is empty, there's nothing to do and we can return
                 if (String.IsNullOrWhiteSpace(commandResult.StdOut))
                 {
@@ -350,12 +350,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 // If the commandResult response is not empty, the command result will have something
                 // similar to the following:
                 // e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7	refs/heads/scenario_clean_push
-                GitHandler.Run($"checkout {assets.AssetsRepoBranch}", tmpPath);
+                GitHandler.Run($"checkout {assets.TagPrefix}", tmpPath);
 
                 // Create the adjustedAssetsRepoBranch from the original branch. The reason being is that pushing
                 // to a branch of a branch is automatic
                 GitHandler.Run($"checkout -b {adjustedAssetsRepoBranch}", tmpPath);
-                // Push the contents of the AssetsRepoBranch into the adjustedAssetsRepoBranch
+                // Push the contents of the TagPrefix into the adjustedAssetsRepoBranch
                 GitHandler.Run($"push origin {adjustedAssetsRepoBranch}", tmpPath);
             }
             finally
@@ -380,15 +380,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 GitProcessHandler GitHandler = new GitProcessHandler();
                 string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
                 GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
-
-                CommandResult commandResult = GitHandler.Run($"branch -a -l *{assets.AssetsRepoBranch}*", tmpPath);
-                if (!String.IsNullOrWhiteSpace(commandResult.StdOut))
-                {
-                    // git checkout $adjustedName
-                    // git push origin --delete $adjustedName
-                    GitHandler.Run($"checkout {assets.AssetsRepoBranch}", tmpPath);
-                    GitHandler.Run($"push origin --delete {assets.AssetsRepoBranch}", tmpPath);
-                }
+                GitHandler.Run($"push origin --delete {assets.Tag}", tmpPath);
             }
             finally
             {
@@ -408,17 +400,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         /// <summary>
-        /// Given an 
+        /// Given a test assets config, check to see if the tag exists on the assets repo.
         /// </summary>
         /// <param name="assets"></param>
         /// <param name="workingDirectory"></param>
         /// <returns></returns>
-        public static string GetLatestCommitSHA(Assets assets, string workingDirectory)
+        public static bool CheckExistenceOfTag(Assets assets, string workingDirectory)
         {
-            // git rev-parse origin/$($config.AssetsRepoBranch) --quiet
             GitProcessHandler GitHandler = new GitProcessHandler();
-            CommandResult result = GitHandler.Run($"rev-parse origin/{assets.AssetsRepoBranch} --quiet", workingDirectory);
-            return result.StdOut.Trim();
+            var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+            CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
+            return result.StdOut.Trim().Length > 0;
         }
     }
 }

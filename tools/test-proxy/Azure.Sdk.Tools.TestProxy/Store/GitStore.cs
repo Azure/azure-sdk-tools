@@ -67,73 +67,25 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task Push(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var pendingChanges = DetectPendingChanges(config);
-            var onLatestSHA = true;
+            var generatedTagName = config.TagPrefix + Guid.NewGuid().ToString();
 
             if (pendingChanges.Length > 0)
             {
-                if(!GitHandler.TryRun($"rev-parse origin/{config.AssetsRepoBranch}", config, out CommandResult result))
+                try
                 {
-                    // if we have a nonzero exit code, only code 128 is acceptable.
-                    if (result.ExitCode != 128)
-                    {
-                        throw GenerateInvokeException(result);
-                    }
+                    GitHandler.Run($"branch {config.TagPrefix}", config);
+                    GitHandler.Run($"checkout {config.TagPrefix}", config);
+                    GitHandler.Run($"add -A .", config);
+                    GitHandler.Run($"commit -m \"Automatic asset update from test-proxy.\"", config);
+                    GitHandler.Run($"tag {generatedTagName}", config);
+                    GitHandler.Run($"push origin {generatedTagName}", config);
                 }
-                else
+                catch(GitProcessException e)
                 {
-                    var retrievedSHA = result.StdOut.Trim();
-                    if (retrievedSHA != config.SHA)
-                    {
-                        onLatestSHA = false;
-                    }
+                    throw GenerateInvokeException(e.Result);
                 }
 
-                if (onLatestSHA)
-                {
-                    try
-                    {
-                        GitHandler.Run($"branch {config.AssetsRepoBranch}", config);
-                        GitHandler.Run($"checkout {config.AssetsRepoBranch}", config);
-                        GitHandler.Run($"add -A .", config);
-                        GitHandler.Run($"commit -m \"Automatic asset update from test-proxy.\"", config);
-                        GitHandler.Run($"push origin {config.AssetsRepoBranch}", config);
-                    }
-                    catch(GitProcessException e)
-                    {
-                        throw GenerateInvokeException(e.Result);
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        GitHandler.Run($"stash", config);
-                        GitHandler.Run($"fetch origin {config.AssetsRepoBranch}", config);
-                        GitHandler.Run($"checkout {config.AssetsRepoBranch}", config);
-                        GitHandler.Run($"stash pop", config);
-                        GitHandler.Run($"add -A .", config);
-                        GitHandler.Run($"commit -m \"Automatic asset update from test-proxy.\"", config);
-                        GitHandler.Run($"push origin {config.AssetsRepoBranch}", config);
-                    }
-                    catch (GitProcessException e)
-                    {
-                        throw GenerateInvokeException(e.Result);
-                    }
-                }
-                // At this point the changes have been pushed and the assets.json needs to be updated with the new SHA
-                if (!GitHandler.TryRun($"rev-parse HEAD", config, out CommandResult newSHAResult))
-                {
-                    // if we have a nonzero exit code, only code 128 is acceptable.
-                    if (newSHAResult.ExitCode != 128)
-                    {
-                        throw GenerateInvokeException(result);
-                    }
-                }
-                else
-                {
-                    var newSHA = newSHAResult.StdOut.Trim();
-                    await UpdateAssetsJson(newSHA, config);
-                }
+                await UpdateAssetsJson(generatedTagName, config);
             }
         }
 
@@ -209,7 +161,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     throw GenerateInvokeException(e.Result);
                 }
 
-                if (!string.IsNullOrWhiteSpace(config.SHA))
+                if (!string.IsNullOrWhiteSpace(config.Tag))
                 {
                     CheckoutRepoAtConfig(config);
                 }
@@ -252,7 +204,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Given a configuration, set the sparse-checkout directory for the config, then attempt checkout of the targeted SHA.
+        /// Given a configuration, set the sparse-checkout directory for the config, then attempt checkout of the targeted Tag.
         /// </summary>
         /// <param name="config"></param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
@@ -265,8 +217,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 // See https://github.blog/2022-06-27-highlights-from-git-2-37/#tidbits
                 GitHandler.Run($"sparse-checkout set --no-cone {checkoutPaths}", config);
                 // The -c advice.detachedHead=false removes the verbose detatched head state
-                // warning that happens when syncing sparse-checkout to a particular SHA
-                GitHandler.Run($"-c advice.detachedHead=false checkout {config.SHA}", config);
+                // warning that happens when syncing sparse-checkout to a particular Tag
+                GitHandler.Run($"-c advice.detachedHead=false checkout {config.Tag}", config);
             }
             catch(GitProcessException e)
             {
@@ -428,26 +380,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Reaches out to the assets repo and confirms presence of auto branch.
-        /// </summary>
-        /// <param name="config"></param>
-        /// <returns></returns>
-        public string ResolveCheckoutBranch(GitAssetsConfiguration config)
-        {
-            GitHandler.TryRun($"rev-parse \"origin/{config.AssetsRepoBranch}\"", config, out var commandResult);
-
-            switch (commandResult.ExitCode)
-            {
-                case 0:   // there is indeed a branch that exists with that name
-                    return config.AssetsRepoBranch;
-                case 128: // not a git repo
-                    throw new HttpException(HttpStatusCode.BadRequest, commandResult.StdOut); ;
-            }
-
-            return DefaultBranch;
-        }
-
-        /// <summary>
         /// Used to ascend to the repo root of any given startup path. Unlike ResolveAssetsJson, which implements similar ascension logic, this function returns the repo root, NOT the assets.json.
         /// </summary>
         /// <param name="path"></param>
@@ -535,22 +467,22 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Do we have a new update for the assets.json? Right now, only the recording SHA is automatically updatable by the test-proxy.
+        /// Do we have a new update for the assets.json? Right now, only the recording Tag is automatically updatable by the test-proxy.
         /// </summary>
         /// <param name="newSha"></param>
         /// <param name="config"></param>
         public async Task UpdateAssetsJson(string newSha, GitAssetsConfiguration config)
         {
             // only do work if the SHAs aren't equivalent
-            if (config.SHA != newSha)
+            if (config.Tag != newSha)
             {
-                config.SHA = newSha;
+                config.Tag = newSha;
 
                 // we deliberately do an extremely stripped down version parse and update here. We do this primarily to maintain
                 // any comments left in the assets.json though maintaining attribute ordering is also nice. To do this, we read all the file content, then
-                // simply replace the existing SHA value with the new one, then write the content back to the json file.
+                // simply replace the existing Tag value with the new one, then write the content back to the json file.
 
-                var currentSHA = (await ParseConfigurationFile(config.AssetsJsonLocation)).SHA;
+                var currentSHA = (await ParseConfigurationFile(config.AssetsJsonLocation)).Tag;
                 var content = await File.ReadAllTextAsync(config.AssetsJsonLocation);
                 content = content.Replace(currentSHA, newSha);
 

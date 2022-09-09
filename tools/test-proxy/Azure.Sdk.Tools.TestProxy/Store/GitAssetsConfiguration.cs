@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -66,9 +68,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var assetsStore = ResolveAssetsStoreLocation();
 
-            var hash = Convert.ToHexString(SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(AssetsJsonRelativeLocation)));
+            // Combine the AssetsRepo and AssetsJsonRelativeLocation and grab the hash of that.
+            // AssetsRepo will be something like Azure/azure-sdk-assets-integration and
+            // AssetsJsonRelativeLocation will be something like sdk/<service>/assets.json
+            string assetsRepoPlusJsonRelPathLoc = AssetsRepo + AssetsJsonRelativeLocation;
 
-            var location = Path.Join(assetsStore, AssetsRepo.Replace("/", "-"), hash);
+            string shortHashString = ShortHashGenerator.GenerateShortHash(assetsRepoPlusJsonRelPathLoc);
+
+            var location = Path.Join(assetsStore, shortHashString);
             if (!Directory.Exists(location))
             {
                 Directory.CreateDirectory(location);

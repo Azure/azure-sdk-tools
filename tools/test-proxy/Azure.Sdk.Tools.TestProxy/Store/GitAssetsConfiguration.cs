@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -71,13 +72,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             // AssetsRepo will be something like Azure/azure-sdk-assets-integration and
             // AssetsJsonRelativeLocation will be something like sdk/<service>/assets.json
             string assetsRepoPlusJsonRelPathLoc = AssetsRepo + AssetsJsonRelativeLocation;
-            var hash = SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(assetsRepoPlusJsonRelPathLoc));
-            // Converting the hash to Hex will produce 40 character which is quite a bit longer than we actually want to add to
-            // the path. Converting the hash to Base64 produces 28 characters, which is still too long, and also has the potential
-            // to have non-alphanumeric characters which wouldn't be okay in a directory name. Take the Base64 string, grab only
-            // letters and digits and then, only grab the first 10 characters. This should be reasonably unique for the scenarios
-            // in which we're using it.
-            string shortHashString = string.Concat(Convert.ToBase64String(hash).ToCharArray().Where(char.IsLetterOrDigit).Take(10));
+
+            string shortHashString = ShortHashGenerator.GenerateShortHash(assetsRepoPlusJsonRelPathLoc);
 
             var location = Path.Join(assetsStore, shortHashString);
             if (!Directory.Exists(location))

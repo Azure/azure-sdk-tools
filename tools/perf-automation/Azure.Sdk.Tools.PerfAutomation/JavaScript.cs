@@ -133,21 +133,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             var runtimePackageVersions = new Dictionary<string, List<string>>();
 
-            var versionOutputStart = standardOutput.IndexOf("=== Versions ===", StringComparison.OrdinalIgnoreCase);
-            var versionOutputEnd = standardOutput.IndexOf("=== Parsed options ===", StringComparison.OrdinalIgnoreCase);
-
-            if (versionOutputStart == -1 | versionOutputEnd == -1)
-            {
-                return new Dictionary<string, string>();
-            }
-
-            var versionOutput = standardOutput.Substring(versionOutputStart, versionOutputEnd);
-
-            foreach (var line in versionOutput.ToLines())
+            foreach (var line in standardOutput.ToLines())
             {
                 // "Extraneous" packages are not listed on the parent package's dependencies list and should be skipped
-                if (line.Contains("UNMET DEPENDENCY", StringComparison.OrdinalIgnoreCase) ||
-                    line.Contains(" extraneous", StringComparison.OrdinalIgnoreCase))
+                if (line.Contains("UNMET DEPENDENCY", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -163,7 +152,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         version = version[..version.IndexOf(' ')];
                     }
 
-                    version = version.Replace(" extraneous", string.Empty).Replace(" deduped", string.Empty);
+                    version = version.Replace(" deduped", string.Empty);
 
                     if (!runtimePackageVersions.ContainsKey(name))
                     {

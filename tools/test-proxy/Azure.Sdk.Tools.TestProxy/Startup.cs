@@ -67,6 +67,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 Environment.Exit(0);
             }
 
+            // This throws and will exit
+            new GitProcessHandler().VerifyGitMinVersion();
+
             TargetLocation = resolveRepoLocation(storageLocation);
             Resolver = new StoreResolver();
             DefaultStore = Resolver.ResolveStore(storagePlugin ?? "GitStore");

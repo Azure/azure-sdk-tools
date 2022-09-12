@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.IO;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
@@ -23,6 +24,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     public class GitProcessHandler
     {
         /// <summary>
+        /// Internal class to hold the minimum supported version of git. If that
+        /// version changes we only need to change it here.
+        /// </summary>
+        class GitMinVersion
+        {
+            // The minimum version of git supported is 2.37.0 due to cone/non-cone options for sparse-checkout
+            public static int Major = 2;
+            public static int Minor = 37;
+            public static int Patch = 0;
+            public static string minVersionString = $"{Major}.{Minor}.{Patch}";
+        }
+
+        /// <summary>
         /// Create a ProcessStartInfo that's exclusively used for execution of git commands
         /// </summary>
         /// <param name="workingDirectory">The directory where the commands are to be executed. For normal processing
@@ -41,21 +55,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             startInfo.EnvironmentVariables["PATH"] = Environment.GetEnvironmentVariable("PATH");
 
-            // TODO
-            // 1. Check the git version >= 2.27.0 https://github.com/Azure/azure-sdk-tools/issues/3955
-            // 2. If on Windows, check whether or not longpath is set
-            // The windows compat pack contains the registry classes for .net core
-            // Note: This may be done in a different way, the links below are for a potential solution
-            // that has not been fully investigated yet.
-            // https://docs.microsoft.com/en-us/dotnet/core/porting/windows-compat-pack
-            // How to add them is here
-            // https://www.nuget.org/packages/Microsoft.Windows.Compatibility#versions-body-tab
-            /*
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                // TODO
-            }
-            */
             return startInfo;
         }
 
@@ -197,6 +196,65 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Verify that the version of git running on the machine is greater equal the git minimum version. 
+        /// This is more for the people running the CLI/TestProxy locally than for lab machines which seem
+        /// to be running on the latest, released versions. The reason is that any git version less than 
+        /// 2.37.0 won't have the cone/no-cone options used by sparse-checkout.
+        /// </summary>
+        /// <exception cref="GitProcessException">Thrown by the internal call to Run.</exception>
+        /// <exception cref="GitVersionException">Thrown if the version doesn't meet the min or if we can't determine it.</exception>
+        public void VerifyGitMinVersion(string testVersion=null)
+        {
+            string localGitVersion = testVersion;
+            if (String.IsNullOrEmpty(testVersion))
+            {
+                // We need to run git --version to get the current version. The directory in which
+                // the process executes is irrelevant.
+                CommandResult result = Run("--version", Directory.GetCurrentDirectory());
+                localGitVersion = result.StdOut.Trim();
+            }
+            // Sample git versions from the various platforms:
+            // Windows: git version 2.37.2.windows.2
+            // Mac: git version 2.32.1 (Apple Git-133)
+            // Linux: git version 2.25.1
+            // Regex to scrape major, minor and patch versions from the git version string
+            Regex rx = new Regex(@"git version (?<Major>\d*)\.(?<Minor>\d*)(\.(?<Patch>\d*)?)?", RegexOptions.Compiled);
+            Match match = rx.Match(localGitVersion);
+
+            if (match.Success)
+            {
+                string gitVersionExceptionMessage = $"{localGitVersion} is less than the minimum supported Git version {GitMinVersion.minVersionString}";
+                // match.Groups["Major"].Value, match.Groups["Minor"].Value, match.Groups["Patch"].Value
+                int major = int.Parse(match.Groups["Major"].Value);
+                int minor = int.Parse(match.Groups["Minor"].Value);
+                int patch = int.Parse(match.Groups["Patch"].Value);
+                if (major < GitMinVersion.Major)
+                {
+                    throw new GitVersionException(gitVersionExceptionMessage);
+                }
+                else if (major == GitMinVersion.Major)
+                {
+                    if (minor < GitMinVersion.Minor)
+                    {
+                        throw new GitVersionException(gitVersionExceptionMessage);
+                    }
+                    else if (minor == GitMinVersion.Minor)
+                    {
+                        if (patch < GitMinVersion.Patch)
+                        {
+                            throw new GitVersionException(gitVersionExceptionMessage);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // In theory we shouldn't get here. If git isn't installed or on the path, the Run command should throw.
+                throw new GitVersionException($"Unable to determine the local git version from the returned version string '{localGitVersion}'. Please ensure that git is installed on the machine and has been added to the PATH.");
+            }    
         }
     }
 }

@@ -277,6 +277,14 @@ function FindOrCreateDeleteAfterTag {
   }
 }
 
+function HasDoNotDeleteTag([object]$ResourceGroup) {
+  $doNotDelete = GetTag $ResourceGroup "DoNotDelete"
+  if ($doNotDelete -ne $null) {
+    Write-Host " Skipping resource group '$($ResourceGroup.ResourceGroupName)' because it has a 'DoNotDelete' tag"
+  }
+  return $doNotDelete -ne $null
+}
+
 function HasDeleteLock() {
   return $false
 }
@@ -309,10 +317,7 @@ function DeleteOrUpdateResourceGroups() {
     if (!$DeleteNonCompliantGroups) {
       continue
     }
-    # TODO: Follow non-compliant group deletion for ALL managed subscriptions
-    # Currently this is disabled in order to roll out features of the script slowly.
-    # See https://gitub.com/Azure/azure-sdk-tools/issues/2714
-    if ($SubscriptionId -ne "2cd617ea-1866-46b1-90e3-fffb087ebf9b") {  # Azure SDK Test Resources
+    if (HasDoNotDeleteTag $rg) {
       continue
     }
     if (HasValidAliasInName $rg) {

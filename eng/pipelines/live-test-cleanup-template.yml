@@ -33,7 +33,8 @@ steps:
         -OpensourceApiApplicationTenant $(opensource-aad-tenant-id) `
         -GithubAliasCachePath ${{ parameters.GithubAliasCachePath }} `
         @subscriptionConfiguration `
-        -Verbose ${{ parameters.AdditionalParameters }} `
+        -Verbose `
+        ${{ parameters.AdditionalParameters }} `
         -WhatIf:$${{ parameters.DryRun }}
     displayName: ${{ parameters.DisplayName }}
     continueOnError: true

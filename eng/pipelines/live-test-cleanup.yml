@@ -11,8 +11,7 @@ parameters:
       - DisplayName: AzureCloud - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources)
-        # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
-        # AdditionalParameters: "-DeleteNonCompliantGroups"
+        AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: AzureCloud-Preview - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources-preview)

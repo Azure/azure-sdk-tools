@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
@@ -35,6 +37,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             public static int Patch = 0;
             public static string minVersionString = $"{Major}.{Minor}.{Patch}";
         }
+
+        private ConcurrentDictionary<string, TaskQueue> AssetTasks = new ConcurrentDictionary<string, TaskQueue>();
 
         /// <summary>
         /// Create a ProcessStartInfo that's exclusively used for execution of git commands
@@ -106,43 +110,52 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 Arguments = arguments
             };
 
-            try
+            if (!AssetTasks.TryGetValue(workingDirectory, out var value))
             {
-                DebugLogger.LogInformation($"git {arguments}");
-                var process = Process.Start(processStartInfo);
-                string stdOut = process.StandardOutput.ReadToEnd();
-                string stdErr = process.StandardError.ReadToEnd();
-                process.WaitForExit();
+                value = new TaskQueue();
+                // only add a new task queue if it doesn't exist
+                // if it does exist, just use the old one so that pending tasks will still be able to complete
+                AssetTasks.AddOrUpdate(workingDirectory, value, (key, oldValue) => oldValue);
+            }
 
-                int returnCode = process.ExitCode;
-
-                DebugLogger.LogDebug($"StdOut: {stdOut}");
-                DebugLogger.LogDebug($"StdErr: {stdErr}");
-                DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
-
-
-                result.ExitCode = process.ExitCode;
-                result.StdErr = stdErr;
-                result.StdOut = stdOut;
-
-
-                if (result.ExitCode == 0){
-                    return result;
-                }
-                else
+            value.Enqueue(() =>
+            {
+                try
                 {
+                    DebugLogger.LogInformation($"git {arguments}");
+                    var process = Process.Start(processStartInfo);
+                    string stdOut = process.StandardOutput.ReadToEnd();
+                    string stdErr = process.StandardError.ReadToEnd();
+                    process.WaitForExit();
+
+                    int returnCode = process.ExitCode;
+
+                    DebugLogger.LogDebug($"StdOut: {stdOut}");
+                    DebugLogger.LogDebug($"StdErr: {stdErr}");
+                    DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+
+                    result.ExitCode = process.ExitCode;
+                    result.StdErr = stdErr;
+                    result.StdOut = stdOut;
+
+                    if (result.ExitCode != 0)
+                    {
+                        throw new GitProcessException(result);
+                    }
+                }
+                catch (Exception e)
+                {
+                    DebugLogger.LogDebug(e.Message);
+
+                    result.ExitCode = -1;
+                    result.CommandException = e;
+
                     throw new GitProcessException(result);
                 }
-            }
-            catch (Exception e)
-            {
-                DebugLogger.LogDebug(e.Message);
+            });
 
-                result.ExitCode = -1;
-                result.CommandException = e;
-
-                throw new GitProcessException(result);
-            }
+            return result;
         }
 
         /// <summary>
@@ -156,39 +169,53 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(config.AssetsRepoLocation);
             processStartInfo.Arguments = arguments;
+            var commandResult = new CommandResult();
 
-            try
+            if (!AssetTasks.TryGetValue(config.AssetsRepoLocation, out var queue))
             {
-                DebugLogger.LogInformation($"git {arguments}");
-                var process = Process.Start(processStartInfo);
-                string stdOut = process.StandardOutput.ReadToEnd();
-                string stdErr = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-
-                int returnCode = process.ExitCode;
-
-                DebugLogger.LogDebug($"StdOut: {stdOut}");
-                DebugLogger.LogDebug($"StdErr: {stdErr}");
-                DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
-
-                result = new CommandResult()
-                {
-                    ExitCode = process.ExitCode,
-                    StdErr = stdErr,
-                    StdOut = stdOut,
-                    Arguments = arguments
-                };
+                queue = new TaskQueue();
+                // only add a new task queue if it doesn't exist
+                // if it does exist, just use the old one so that pending tasks will still be able to complete
+                AssetTasks.AddOrUpdate(config.AssetsRepoLocation, queue, (key, oldValue) => oldValue);
             }
-            catch (Exception e)
+
+            queue.Enqueue(() =>
             {
-                DebugLogger.LogDebug(e.Message);
-
-                result = new CommandResult()
+                try
                 {
-                    ExitCode = -1,
-                    CommandException = e
-                };
-            }
+                    DebugLogger.LogInformation($"git {arguments}");
+                    var process = Process.Start(processStartInfo);
+                    string stdOut = process.StandardOutput.ReadToEnd();
+                    string stdErr = process.StandardError.ReadToEnd();
+                    process.WaitForExit();
+
+                    int returnCode = process.ExitCode;
+
+                    DebugLogger.LogDebug($"StdOut: {stdOut}");
+                    DebugLogger.LogDebug($"StdErr: {stdErr}");
+                    DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+                    commandResult = new CommandResult()
+                    {
+                        ExitCode = process.ExitCode,
+                        StdErr = stdErr,
+                        StdOut = stdOut,
+                        Arguments = arguments
+                    };
+                }
+                catch (Exception e)
+                {
+                    DebugLogger.LogDebug(e.Message);
+
+                    commandResult = new CommandResult()
+                    {
+                        ExitCode = -1,
+                        CommandException = e
+                    };
+                }
+            });
+
+            result = commandResult;
 
             if (result.ExitCode != 0)
             {

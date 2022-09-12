@@ -212,11 +212,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="config"></param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
         {
-            if (Assets.TryGetValue(config.AssetsJsonRelativeLocation, out var value)){
-                if (value == config.Tag)
-                {
-                    return;
-                }
+            if (Assets.TryGetValue(config.AssetsJsonRelativeLocation, out var value) && value == config.Tag)
+            {
+                return;
             }
 
             var checkoutPaths = ResolveCheckoutPaths(config);

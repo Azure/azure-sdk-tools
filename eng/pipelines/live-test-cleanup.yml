@@ -2,6 +2,9 @@ pr: none
 trigger: none
 
 parameters:
+  - name: DryRun
+    type: boolean
+    default: false
   - name: Subscriptions
     type: object
     default:
@@ -83,6 +86,7 @@ stages:
     - ${{ each subscription in parameters.Subscriptions }}:
       - template: ./live-test-cleanup-template.yml
         parameters:
+          DryRun: ${{ parameters.DryRun }}
           DisplayName: ${{ subscription.DisplayName }}
           SubscriptionConfigurations: ${{ subscription.SubscriptionConfigurations }}
           GithubAliasCachePath: $(CachePath)/github-alias-mappings.txt

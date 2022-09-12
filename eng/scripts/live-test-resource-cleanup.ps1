@@ -271,7 +271,7 @@ function FindOrCreateDeleteAfterTag {
   if (!$deleteAfter -or !($deleteAfter -as [datetime])) {
     $deleteAfter = [datetime]::UtcNow.AddHours($DeleteAfterHours)
     if ($Force -or $PSCmdlet.ShouldProcess("$($ResourceGroup.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Adding DeleteAfter Tag to Group")) {
-      Write-Host "Adding DeleteAfer tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
+      Write-Host "Adding DeleteAfter tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
       $ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter }
     }
   }
@@ -306,10 +306,13 @@ function DeleteOrUpdateResourceGroups() {
       }
       continue
     }
-    # TODO: Remove $true and follow non-compliant group deletion
+    if (!$DeleteNonCompliantGroups) {
+      continue
+    }
+    # TODO: Follow non-compliant group deletion for ALL managed subscriptions
     # Currently this is disabled in order to roll out features of the script slowly.
-    # See https://gitub.com/Azure/azure-sdk-tools/issues/2714h
-    if ($true -or !$DeleteNonCompliantGroups) {
+    # See https://gitub.com/Azure/azure-sdk-tools/issues/2714
+    if ($SubscriptionId -ne "2cd617ea-1866-46b1-90e3-fffb087ebf9b") {  # Azure SDK Test Resources
       continue
     }
     if (HasValidAliasInName $rg) {

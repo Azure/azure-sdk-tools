@@ -74,7 +74,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 System.Console.WriteLine(details);
             }
-            
         }
 
 
@@ -92,7 +91,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 Debug.WriteLine(details);
             }
-            
         }
 
         /// <summary>

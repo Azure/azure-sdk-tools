@@ -67,9 +67,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 Environment.Exit(0);
             }
 
-            GitProcessHandler gph = new GitProcessHandler();
             // This throws and will exit
-            gph.VerifyGitMinVersion();
+            new GitProcessHandler().VerifyGitMinVersion();
 
             TargetLocation = resolveRepoLocation(storageLocation);
             Resolver = new StoreResolver();

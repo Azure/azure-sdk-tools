@@ -38,6 +38,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             public static string minVersionString = $"{Major}.{Minor}.{Patch}";
         }
 
+        /// <summary>
+        /// This dictionary is used to ensure that each git directory will only ever have a SINGLE git command running it at a time.
+        /// </summary>
         private ConcurrentDictionary<string, TaskQueue> AssetTasks = new ConcurrentDictionary<string, TaskQueue>();
 
         /// <summary>
@@ -110,15 +113,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 Arguments = arguments
             };
 
-            if (!AssetTasks.TryGetValue(workingDirectory, out var value))
+            if (!AssetTasks.TryGetValue(workingDirectory, out var queue))
             {
-                value = new TaskQueue();
                 // only add a new task queue if it doesn't exist
                 // if it does exist, just use the old one so that pending tasks will still be able to complete
-                AssetTasks.AddOrUpdate(workingDirectory, value, (key, oldValue) => oldValue);
+                queue = AssetTasks.GetOrAdd(workingDirectory, new TaskQueue());
             }
 
-            value.Enqueue(() =>
+            queue.Enqueue(() =>
             {
                 try
                 {
@@ -173,10 +175,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (!AssetTasks.TryGetValue(config.AssetsRepoLocation, out var queue))
             {
-                queue = new TaskQueue();
-                // only add a new task queue if it doesn't exist
-                // if it does exist, just use the old one so that pending tasks will still be able to complete
-                AssetTasks.AddOrUpdate(config.AssetsRepoLocation, queue, (key, oldValue) => oldValue);
+                queue = AssetTasks.GetOrAdd(config.AssetsRepoLocation, new TaskQueue());
             }
 
             queue.Enqueue(() =>

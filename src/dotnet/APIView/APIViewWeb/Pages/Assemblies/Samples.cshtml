@@ -52,7 +52,6 @@ else
                                         <select class="selectpicker show-tick show-menu-arrow shadow-sm" data-style="btn-light btn-sm border" data-selected-text-format="value" data-live-search="true" data-size="10" data-width="100%" data-container="body" id="revisions-bootstraps-select" data-tick-icon="fa-solid fa-check">
                                             @foreach (var revision in Model.SampleRevisions)
                                             {
-                                                if (revision.RevisionIsDeleted) continue;
                                                 var urlValue = @Url.ActionLink("Samples", "Assemblies", new
                                                 {
                                                     id = @Model.Review.ReviewId,

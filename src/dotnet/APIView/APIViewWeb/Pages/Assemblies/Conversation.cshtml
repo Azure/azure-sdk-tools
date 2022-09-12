@@ -50,11 +50,6 @@
                         <div class="border rounded">
                             @foreach (var revision in Model.UsageSampleThreads.Reverse())
                             {
-                                @if (revision.Key.RevisionIsDeleted) 
-                                {
-                                    skipped++;
-                                    continue;
-                                }
                                 var divId = $"rev-{revision.Key.RevisionNumber}";
                                 var displayName = $"Usage sample - rev {@revision.Key.RevisionNumber}";
 
@@ -74,19 +69,15 @@
                                         @foreach (var thread in revision.Value.OrderBy(e => int.Parse(e.LineId.Split("-").Last())))
                                         {
                                             var elementId = thread.LineId;
-                                            <tr class="code-line">
-                                                <td class="code p-2" style="word-break: break-all;">
-                                                    <a class="comment-url" asp-page="Samples"
-                                       asp-route-id=@Model.Review.ReviewId
-                                       asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
-                                       asp-fragment=@Uri.EscapeUriString(elementId)>
-                                                        @Html.Raw(
-                                                            Model.SampleLines.ElementAt(revision.Key.RevisionNumber-skipped)
-                                                                .ElementAt(int.Parse(thread.Comments.First().ElementId.Split("-").Last())-1)
-                                                            )
-                                                    </a>
-                                                </td>
-                                            </tr>
+                                            <tr class="code-line"><td class="code p-2" style="word-break: break-all;"><a class="comment-url" asp-page="Samples"
+                                                asp-route-id=@Model.Review.ReviewId
+                                                asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
+                                                asp-fragment=@Uri.EscapeUriString(elementId)>
+                                                @Html.Raw(
+                                                    Model.SampleLines.ElementAt(revision.Key.RevisionNumber-skipped)
+                                                        .ElementAt(int.Parse(thread.Comments.First().ElementId.Split("-").Last())-1))
+                                                </a>
+                                            </td></tr>
                                             <partial name="_CommentThreadPartial" model="@thread" />
                                         }
                                     </table>

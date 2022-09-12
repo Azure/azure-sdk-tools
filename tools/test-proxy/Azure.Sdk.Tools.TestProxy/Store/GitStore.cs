@@ -229,7 +229,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 GitHandler.Run($"-c advice.detachedHead=false checkout {config.Tag}", config);
 
                 // the first argument, the key, is the path to the assets json relative location
-                // the second argument, the value, is the value we want to set the json realtive location to
+                // the second argument, the value, is the value we want to set the json elative location to
                 // the third argument is a function argument that resolves what to do in the "update" case. If the key already exists
                 // update the tag to what we just checked out.
                 Assets.AddOrUpdate(config.AssetsJsonRelativeLocation, config.Tag, (key, oldValue) => config.Tag);

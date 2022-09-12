@@ -205,7 +205,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// 2.37.0 won't have the cone/no-cone options used by sparse-checkout.
         /// </summary>
         /// <exception cref="GitProcessException">Thrown by the internal call to Run.</exception>
-        /// <exception cref="Exception">.</exception>
+        /// <exception cref="GitVersionException">Thrown if the version doesn't meet the min or if we can't determine it.</exception>
         public void VerifyGitMinVersion(string testVersion=null)
         {
             string localGitVersion = testVersion;

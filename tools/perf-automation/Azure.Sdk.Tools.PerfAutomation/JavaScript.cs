@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
             IDictionary<string, string> packageVersions, string testName, string arguments, object context)
         {
-            (var deployDirectory, var runtimePackageVersions) = (ValueTuple<string, IDictionary<string, string>>) context;
+            (var deployDirectory, var runtimePackageVersions) = (ValueTuple<string, Dictionary<string, string>>) context;
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();

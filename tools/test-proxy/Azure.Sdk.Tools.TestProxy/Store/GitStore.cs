@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                _consoleWrapper.WriteLine("There are pending git chances, are you sure you want to reset? [Y|N]");
+                _consoleWrapper.WriteLine("There are pending git changes, are you sure you want to reset? [Y|N]");
                 while (true)
                 {
                     string response = _consoleWrapper.ReadLine();

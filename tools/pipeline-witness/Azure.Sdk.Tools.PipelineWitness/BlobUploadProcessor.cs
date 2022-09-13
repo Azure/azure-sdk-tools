@@ -823,8 +823,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         {
             try
             {
-                long changeTime = ((DateTimeOffset)testRun.LastUpdatedDate).ToUnixTimeSeconds();
-                var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}-{changeTime}.jsonl";
+                var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl";
                 var blobClient = this.testRunsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -113,12 +114,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 Arguments = arguments
             };
 
-            if (!AssetTasks.TryGetValue(workingDirectory, out var queue))
-            {
-                // only add a new task queue if it doesn't exist
-                // if it does exist, just use the old one so that pending tasks will still be able to complete
-                queue = AssetTasks.GetOrAdd(workingDirectory, new TaskQueue());
-            }
+            var queue = AssetTasks.GetOrAdd(workingDirectory, new TaskQueue());
 
             queue.Enqueue(() =>
             {
@@ -173,10 +169,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             processStartInfo.Arguments = arguments;
             var commandResult = new CommandResult();
 
-            if (!AssetTasks.TryGetValue(config.AssetsRepoLocation, out var queue))
-            {
-                queue = AssetTasks.GetOrAdd(config.AssetsRepoLocation, new TaskQueue());
-            }
+            var queue = AssetTasks.GetOrAdd(config.AssetsRepoLocation, new TaskQueue());
 
             queue.Enqueue(() =>
             {

@@ -77,6 +77,7 @@
                                         var cmt = comment.Comment.Split("\r\n");
                                         string codeBlockString = "";
                                         bool codeBlock = false;
+                                        bool newLineAdded = true;
                                         foreach (var line in cmt){
                                             @* Preserves code block formatting *@
                                             if (line.Contains("```")) {
@@ -84,9 +85,13 @@
                                                 codeBlockString += line + "\n";
                                                 if (!codeBlock)
                                                 {
-                                                    <br />
+                                                    if (!newLineAdded) 
+                                                    {
+                                                        <br />
+                                                    }
                                                     @Html.FormatAsMarkdown(codeBlockString)
                                                     codeBlockString = "";
+                                                    newLineAdded = true;
                                                 }
                                             }
                                             else if (codeBlock)
@@ -94,13 +99,15 @@
                                                 codeBlockString += line + "\n";
                                             }
                                             @* Adds new lines where needed, otherwise breaks up parsing to be line by line *@
-                                            else if (line.Equals(""))
+                                            else if (line.Equals("") && !newLineAdded)
                                             {
                                                 <br />
+                                                newLineAdded = true;
                                             } 
-                                            else
+                                            else if (!line.Equals(""))
                                             {
                                                 @Html.FormatAsMarkdown(line)
+                                                newLineAdded = false;
                                             }
                                         }
                                     }

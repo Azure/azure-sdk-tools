@@ -1081,6 +1081,10 @@ mark {
     color: #6A737D;
 }
 
+.review-comment pre {
+    background-color: var(--bg-light-hover);
+}
+
 .review-thread-reply {
     background-color: var(--bg-light);
     border-radius: 0 0 3px 3px;

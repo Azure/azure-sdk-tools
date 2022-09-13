@@ -85,8 +85,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     GitHandler.Run($"branch {config.TagPrefix}", config);
                     GitHandler.Run($"checkout {config.TagPrefix}", config);
                     GitHandler.Run($"add -A .", config);
-                    // git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" commit -m
-                    //GitHandler.Run($"commit -m \"Automatic asset update from test-proxy.\"", config);
                     GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit -m \"Automatic asset update from test-proxy.\"", config);
                     GitHandler.Run($"tag {generatedTagName}", config);
                     GitHandler.Run($"push origin {generatedTagName}", config);

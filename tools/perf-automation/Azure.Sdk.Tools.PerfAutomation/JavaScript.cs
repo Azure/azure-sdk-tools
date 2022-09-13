@@ -22,9 +22,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
-            var commonVersionsFile = Path.Combine(WorkingDirectory, "common", "config", "rush", "common-versions.json");
-            var commonVersionsJson = JObject.Parse(File.ReadAllText(commonVersionsFile));
-
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var projectFile = Path.Combine(projectDirectory, "package.json");
             var projectJson = JObject.Parse(File.ReadAllText(projectFile));
@@ -57,23 +54,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             projectJson[dependencyType][packageName] = packageVersion;
                         }
                     }
-
-                    if (track2)
-                    {
-                        if (commonVersionsJson["allowedAlternativeVersions"]?[packageName] != null)
-                        {
-                            ((JArray)commonVersionsJson["allowedAlternativeVersions"][packageName]).Add(packageVersion);
-                        }
-                        else
-                        {
-                            commonVersionsJson["allowedAlternativeVersions"][packageName] = new JArray(packageVersion);
-                        }
-                    }
                 }
             }
-
-            File.Copy(commonVersionsFile, commonVersionsFile + ".bak", overwrite: true);
-            File.WriteAllText(commonVersionsFile, commonVersionsJson.ToString() + Environment.NewLine);
 
             File.Copy(projectFile, projectFile + ".bak", overwrite: true);
             File.WriteAllText(projectFile, projectJson.ToString() + Environment.NewLine);
@@ -91,7 +73,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 await Util.RunAsync("node", $"{_rush} build --to {projectName}", WorkingDirectory,
                     outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             }
-
+            
             return (outputBuilder.ToString(), errorBuilder.ToString(), null);
         }
 

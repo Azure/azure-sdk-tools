@@ -11,6 +11,7 @@ using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Console;
+using System.Collections.Concurrent;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -32,6 +33,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public string DefaultBranch = "main";
         public string FileName = "assets.json";
         public static readonly string EnvironmentVariableName = "PROXY_GIT_TOKEN";
+
+        public ConcurrentDictionary<string, string> Assets = new ConcurrentDictionary<string, string>();
 
         public GitStore() 
         {
@@ -96,7 +99,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task Restore(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            var initialized = config.IsAssetsRepoInitialized();
+            var initialized = IsAssetsRepoInitialized(config);
 
             if (!initialized)
             {
@@ -115,7 +118,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task Reset(string pathToAssetsJson) 
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
-            var initialized = config.IsAssetsRepoInitialized();
+            var initialized = IsAssetsRepoInitialized(config);
             var allowReset = false;
 
             if (!initialized)
@@ -209,6 +212,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="config"></param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
         {
+            if (Assets.TryGetValue(config.AssetsJsonRelativeLocation, out var value) && value == config.Tag)
+            {
+                return;
+            }
+
             var checkoutPaths = ResolveCheckoutPaths(config);
 
             try
@@ -219,6 +227,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 // The -c advice.detachedHead=false removes the verbose detatched head state
                 // warning that happens when syncing sparse-checkout to a particular Tag
                 GitHandler.Run($"-c advice.detachedHead=false checkout {config.Tag}", config);
+
+                // the first argument, the key, is the path to the assets json relative location
+                // the second argument, the value, is the value we want to set the json elative location to
+                // the third argument is a function argument that resolves what to do in the "update" case. If the key already exists
+                // update the tag to what we just checked out.
+                Assets.AddOrUpdate(config.AssetsJsonRelativeLocation, config.Tag, (key, oldValue) => config.Tag);
             }
             catch(GitProcessException e)
             {
@@ -237,6 +251,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return $"https://github.com/{assetsRepo}";
         }
 
+        public bool IsAssetsRepoInitialized(GitAssetsConfiguration config)
+        {
+            if (Assets.ContainsKey(config.AssetsJsonRelativeLocation))
+            {
+                return true;
+            }
+
+            return config.IsAssetsRepoInitialized();
+        }
+
         /// <summary>
         /// Initializes an asset repo for a given configuration. This includes creating the target repo directory, cloning, and taking care of initial restore operations.
         /// </summary>
@@ -246,7 +270,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public bool InitializeAssetsRepo(GitAssetsConfiguration config, bool forceInit = false)
         {
             var assetRepo = config.AssetsRepoLocation;
-            var initialized = config.IsAssetsRepoInitialized();
+            var initialized = IsAssetsRepoInitialized(config);
             var workCompleted = false;
 
             if (forceInit)

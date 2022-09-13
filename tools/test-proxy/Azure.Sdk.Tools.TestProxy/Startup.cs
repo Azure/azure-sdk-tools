@@ -68,7 +68,8 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             // This throws and will exit
-            new GitProcessHandler().VerifyGitMinVersion();
+            // JRS - Temporarily disable this check because of https://github.com/Azure/azure-sdk-tools/issues/4116
+            // new GitProcessHandler().VerifyGitMinVersion();
 
             TargetLocation = resolveRepoLocation(storageLocation);
             Resolver = new StoreResolver();

@@ -59,13 +59,6 @@ namespace APIViewWeb.Pages.Assemblies
             // This try-catch is for the case that the deployment is set up incorrectly for usage samples
             try
             {
-                // Tests the blob response with a dummy file id 
-                string blobTest = await _samplesManager.GetUsageSampleContentAsync("abdc");
-                if (blobTest == "Bad Blob")
-                {
-                    throw new CosmosException(null, System.Net.HttpStatusCode.NotFound, 0, null, 0.0); // Error does not matter, only type, to ensure clean error page.
-                }
-
                 Samples = (await _samplesManager.GetReviewUsageSampleAsync(id)).FirstOrDefault();
                 if (Samples != null)
                 {
@@ -95,6 +88,13 @@ namespace APIViewWeb.Pages.Assemblies
                 }
                 else
                 {
+                    // Tests the blob response with a dummy file id 
+                    string blobTest = await _samplesManager.GetUsageSampleContentAsync("abdc");
+                    if (blobTest == "Bad Blob")
+                    {
+                        throw new CosmosException(null, System.Net.HttpStatusCode.NotFound, 0, null, 0.0); // Error does not matter, only type, to ensure clean error page.
+                    }
+
                     // No samples.
                     SampleRevisions = SampleRevisions ?? new List<UsageSampleRevisionModel>(); 
                     Sample = new UsageSampleRevisionModel(null, -1);
@@ -159,7 +159,7 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             string rawContent = (await _samplesManager.GetUsageSampleContentAsync(fileId));
-            if (rawContent == null)
+            if (rawContent == null || rawContent.Equals("Bad Blob"))
             {
                 return null; // should only occur if there is a blob error or the file is removed by other means
             }

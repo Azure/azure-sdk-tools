@@ -137,20 +137,13 @@ namespace APIViewWeb.Pages.Assemblies
 
             foreach (var revision in Sample.Revisions.ToArray().Reverse())
             {
-                if (revision.RevisionIsDeleted)
+                string rawContent = await _samplesManager.GetUsageSampleContentAsync(revision.FileId);
+                if (rawContent == null)
                 {
-                    lines.Add(new List<string>());
-                    if (revision.RevisionNumber == 1)
-                    {
-                        break;
-                    }
                     continue;
                 }
-
-                string rawContent = await _samplesManager.GetUsageSampleContentAsync(revision.FileId);
-                var sampleLines = new List<string>();
-
                 rawContent = rawContent.Trim();
+                var sampleLines = new List<string>();
                 string[] content = rawContent.Split("\n");
 
                 for (int i = 0; i < content.Length; i++)
@@ -171,11 +164,6 @@ namespace APIViewWeb.Pages.Assemblies
                 }
 
                 lines.Add(sampleLines);
-
-                if (revision.RevisionNumber == 1)
-                {
-                    break;
-                }
             }
 
             lines.Reverse();

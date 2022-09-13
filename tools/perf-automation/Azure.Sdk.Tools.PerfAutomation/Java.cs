@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             { "MAVEN_OPTS", "-Xmx1024m" },
         };
 
-        public override async Task<(string output, string error, string context)> SetupAsync(
+        public override async Task<(string output, string error, object context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
 
                 var versionNode = doc.SelectSingleNode(
-                    $"/mvn:project/mvn:dependencies/mvn:dependency[mvn:groupId='{groupId}' and mvn:artifactId='{artifactId}']/mvn:version", 
+                    $"/mvn:project/mvn:dependencies/mvn:dependency[mvn:groupId='{groupId}' and mvn:artifactId='{artifactId}']/mvn:version",
                     nsmgr);
 
                 if (versionNode != null)
@@ -98,8 +98,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            IDictionary<string, string> packageVersions, string testName, string arguments, string context)
+            IDictionary<string, string> packageVersions, string testName, string arguments, object context)
         {
+            var jarFile = (string)context;
+
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
@@ -107,7 +109,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             var runtimePackageVersions = GetRuntimePackageVersions(dependencyListResult.StandardOutput);
 
-            var processArguments = $"-XX:+CrashOnOutOfMemoryError -jar {context} -- {testName} {arguments}";
+            var processArguments = $"-XX:+CrashOnOutOfMemoryError -jar {jarFile} -- {testName} {arguments}";
 
             var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false,
                 outputBuilder: outputBuilder, errorBuilder: errorBuilder);

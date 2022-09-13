@@ -73,7 +73,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 await Util.RunAsync("node", $"{_rush} build --to {projectName}", WorkingDirectory,
                     outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             }
-            
+
+            // Target folder must be empty before deploy
+            // rmdir /s /q common/deploy
+
+            // rush init-deploy -p {projectName}
+
+            // rush deploy -p {projectName}
+
             return (outputBuilder.ToString(), errorBuilder.ToString(), null);
         }
 

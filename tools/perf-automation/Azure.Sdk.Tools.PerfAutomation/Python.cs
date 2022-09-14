@@ -146,6 +146,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return runtimePackageVersions?
                 .Where(kvp => !kvp.Key.Equals("azure-devtools", StringComparison.OrdinalIgnoreCase) &&
                               !kvp.Key.Equals("azure-sdk-tools", StringComparison.OrdinalIgnoreCase) &&
+                              !kvp.Key.Equals("azure-common", StringComparison.OrdinalIgnoreCase) &&
+                              !kvp.Key.Equals("azure-storage-common", StringComparison.OrdinalIgnoreCase) &&
                               !kvp.Key.StartsWith("azure-mgmt", StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }

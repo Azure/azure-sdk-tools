@@ -154,10 +154,12 @@ Services:
       - '@azure/storage-blob': source
     Python:
       Project: sdk/storage/azure-storage-blob
+      PrimaryPackage: azure-storage-blob
       PackageVersions:
-      # TODO: Pin version of core to align with older version of storage
-      - azure-storage-blob: 12.13.1
-      - azure-storage-blob: source
+      - azure-core: 1.25.0
+        azure-storage-blob: 12.13.1
+      - azure-core: source
+        azure-storage-blob: source
     Cpp:
       Project: azure-storage-blobs-perf
       PackageVersions:
@@ -304,9 +306,12 @@ Services:
       - '@azure/storage-file-share': source
     Python:
       Project: sdk/storage/azure-storage-file-share
+      PrimaryPackage: azure-storage-file-share
       PackageVersions:
-      - azure-storage-file-share: 12.9.0
-      - azure-storage-file-share: source
+      - azure-core: 1.25.0
+        azure-storage-file-share: 12.9.0
+      - azure-core: source
+        azure-storage-file-share: source
 
   Tests:
   - Test: download
@@ -344,9 +349,12 @@ Services:
       - '@azure/storage-file-datalake': source
     Python:
       Project: sdk/storage/azure-storage-file-datalake
+      PrimaryPackage: azure-storage-file-datalake
       PackageVersions:
-      - azure-storage-file-datalake: 12.8.0
-      - azure-storage-file-datalake: source
+      - azure-core: 1.25.0
+        azure-storage-file-datalake: 12.8.0
+      - azure-core: source
+        azure-storage-file-datalake: source
 
   Tests:
   - Test: download
@@ -398,9 +406,12 @@ Services:
       - '@azure/keyvault-secrets': source
     Python:
       Project: sdk/keyvault/azure-keyvault-secrets
+      PrimaryPackage: azure-keyvault-secrets
       PackageVersions:
-      - azure-keyvault-secrets: 4.3.0
-      - azure-keyvault-secrets: source
+      - azure-core: 1.15.0
+        azure-keyvault-secrets: 4.3.0
+      - azure-core: source
+        azure-keyvault-secrets: source
   Tests:
   - Test: get-secret
     Arguments:

@@ -252,7 +252,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 string setupOutput = null;
                 string setupError = null;
-                string context = null;
+                object context = null;
                 string setupException = null;
 
                 try

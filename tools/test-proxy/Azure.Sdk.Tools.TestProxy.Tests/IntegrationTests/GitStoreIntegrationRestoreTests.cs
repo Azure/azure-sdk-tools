@@ -6,7 +6,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Castle.Components.DictionaryAdapter;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -184,6 +186,69 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+
+        // Scenario4
+        // NONEXISTENT or INVALID tag
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": """"
+        }", "")]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""INVALID_TAG""
+        }", "error: pathspec 'INVALID_TAG' did not match any file(s) known to git")]
+        [Trait("Category", "Integration")]
+        public async Task Scenario4(string inputJson, string gitProcessException)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+
+            try
+            {
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+
+                if (!string.IsNullOrEmpty(gitProcessException))
+                {
+                    var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
+                    {
+                        await _defaultStore.Restore(jsonFileLocation);
+                    });
+                    Assert.Contains(gitProcessException, assertion.Message);
+                }
+                else
+                {
+                    await _defaultStore.Restore(jsonFileLocation);
+
+                    // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
+                    // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
+                    // will be a forward one as expected by git but on Windows this won't result in a usable path.
+                    string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+
+                    Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+                }
             }
             finally
             {

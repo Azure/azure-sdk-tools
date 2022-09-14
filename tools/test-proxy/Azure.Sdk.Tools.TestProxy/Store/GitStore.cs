@@ -32,7 +32,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public GitProcessHandler GitHandler = new GitProcessHandler();
         public string DefaultBranch = "main";
         public string FileName = "assets.json";
-        public static readonly string EnvironmentVariableName = "PROXY_GIT_TOKEN";
+        public static readonly string GIT_TOKEN_ENV_VAR = "GIT_TOKEN";
+        // Note: These are slightly different from the GIT_COMMITTER_NAME and GIT_COMMITTER_EMAIL
+        // variables that GIT recognizes, this is on purpose.
+        public static readonly string GIT_COMMIT_OWNER_ENV_VAR = "GIT_COMMIT_OWNER";
+        public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
 
         public ConcurrentDictionary<string, string> Assets = new ConcurrentDictionary<string, string>();
 
@@ -76,10 +80,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
+                    string gitUserName = GetGitOwnerName(config);
+                    string gitUserEmail = GetGitOwnerEmail(config);
                     GitHandler.Run($"branch {config.TagPrefix}", config);
                     GitHandler.Run($"checkout {config.TagPrefix}", config);
                     GitHandler.Run($"add -A .", config);
-                    GitHandler.Run($"commit -m \"Automatic asset update from test-proxy.\"", config);
+                    GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit -m \"Automatic asset update from test-proxy.\"", config);
                     GitHandler.Run($"tag {generatedTagName}", config);
                     GitHandler.Run($"push origin {generatedTagName}", config);
                 }
@@ -130,7 +136,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                _consoleWrapper.WriteLine("There are pending git chances, are you sure you want to reset? [Y|N]");
+                _consoleWrapper.WriteLine("There are pending git changes, are you sure you want to reset? [Y|N]");
                 while (true)
                 {
                     string response = _consoleWrapper.ReadLine();
@@ -240,9 +246,43 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
+        public string GetGitOwnerName(GitAssetsConfiguration config)
+        {
+            var ownerName = Environment.GetEnvironmentVariable(GIT_COMMIT_OWNER_ENV_VAR);
+            // If the owner wasn't set as part of the environment, check to see if there's
+            // a user.name set, if not 
+            if (string.IsNullOrWhiteSpace(ownerName))
+            {
+                ownerName = GitHandler.Run("config --get user.name", config).StdOut;
+                if (string.IsNullOrWhiteSpace(ownerName))
+                {
+                    // At this point we need to prompt the user
+                    ownerName = "";
+                }
+            }
+            return ownerName.Trim();
+        }
+
+        public string GetGitOwnerEmail(GitAssetsConfiguration config)
+        {
+            var ownerEmail = Environment.GetEnvironmentVariable(GIT_COMMIT_EMAIL_ENV_VAR);
+            // If the owner wasn't set as part of the environment, check to see if there's
+            // a user.name set, if not 
+            if (string.IsNullOrWhiteSpace(ownerEmail))
+            {
+                ownerEmail = GitHandler.Run("config --get user.email", config).StdOut;
+                if (string.IsNullOrWhiteSpace(ownerEmail))
+                {
+                    // At this point we need to prompt the user
+                    ownerEmail = "";
+                }
+            }
+            return ownerEmail.Trim();
+        }
+
         public static string GetCloneUrl(string assetsRepo)
         {
-            var gitToken = Environment.GetEnvironmentVariable(EnvironmentVariableName);
+            var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
 
             if (!string.IsNullOrWhiteSpace(gitToken)){
                 return $"https://{gitToken}@github.com/{assetsRepo}";
@@ -374,7 +414,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns>The default branch</returns>
         public async Task<string> GetDefaultBranch(GitAssetsConfiguration config)
         {
-            var token = Environment.GetEnvironmentVariable(EnvironmentVariableName);
+            var token = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
 
             HttpRequestMessage msg = new HttpRequestMessage()
             {

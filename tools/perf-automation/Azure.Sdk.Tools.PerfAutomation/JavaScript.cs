@@ -38,8 +38,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // 2. rush update
             // 3. Extract project name from package.json in project folder
             // 4. rush build -t projectName
-            // 5. rush deploy-init -p projectName
-            // 6. rush deploy -p projectName
+            // 5. Get runtime package versions
+            //    A. rush deploy-init -p projectName
+            //    B. rush deploy -p projectName
+            //    C. npm ls --all
 
             foreach (var v in packageVersions)
             {
@@ -97,19 +99,21 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var runtimePackageVersions = GetRuntimePackageVersions(npmListResult.StandardOutput);
 
-            return (outputBuilder.ToString(), errorBuilder.ToString(), (deployDirectory, runtimePackageVersions));
+            return (outputBuilder.ToString(), errorBuilder.ToString(), runtimePackageVersions);
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
             IDictionary<string, string> packageVersions, string testName, string arguments, object context)
         {
-            (var deployDirectory, var runtimePackageVersions) = (ValueTuple<string, Dictionary<string, string>>) context;
+            var runtimePackageVersions = (Dictionary<string, string>) context;
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
-            
+
+            var projectDirectory = Path.Combine(WorkingDirectory, project);
+
             var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",
-                deployDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);
+                projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);
 
             var match = Regex.Match(testResult.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
 

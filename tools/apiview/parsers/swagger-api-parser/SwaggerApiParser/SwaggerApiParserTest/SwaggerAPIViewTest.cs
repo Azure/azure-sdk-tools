@@ -92,10 +92,10 @@ public class SwaggerApiViewTest
     public async Task TestDeviceUpdate()
     {
         const string petStoreFilePath = "./fixtures/deviceupdate.json";
-        var petStoreSwaggerSpec = await SwaggerDeserializer.Deserialize(petStoreFilePath);
+        var deviceUpdateSwagger = await SwaggerDeserializer.Deserialize(petStoreFilePath);
 
         SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.DeviceUpdate", "Microsoft.DeviceUpdate");
-        root.AddSwaggerSpec(petStoreSwaggerSpec, Path.GetFullPath(petStoreFilePath), "Microsoft.DeviceUpdate");
+        root.AddSwaggerSpec(deviceUpdateSwagger, Path.GetFullPath(petStoreFilePath), "Microsoft.DeviceUpdate");
 
         var codeFile = root.GenerateCodeFile();
         var outputFilePath = Path.GetFullPath("./deviceupdate_codefile.json");
@@ -104,6 +104,37 @@ public class SwaggerApiViewTest
         await codeFile.SerializeAsync(writer);
     }
 
+    [Fact]
+    public async Task TestMultivariate()
+    {
+        const string multiVariateSwaggerFile = "./fixtures/multivariate.json";
+        var multiVariateSwagger = await SwaggerDeserializer.Deserialize(multiVariateSwaggerFile);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.CognitiveService", "Microsoft.CognitiveService");
+        root.AddSwaggerSpec(multiVariateSwagger, Path.GetFullPath(multiVariateSwaggerFile), "Microsoft.CognitiveService");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./multivariate_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
+
+    [Fact]
+    public async Task TestCommunicate()
+    {
+        const string multiVariateSwaggerFile = "./fixtures/communicate.json";
+        var multiVariateSwagger = await SwaggerDeserializer.Deserialize(multiVariateSwaggerFile);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Communicate", "Microsoft.Communicate");
+        root.AddSwaggerSpec(multiVariateSwagger, Path.GetFullPath(multiVariateSwaggerFile), "Microsoft.Communicate");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./communicate_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
 
     [Fact]
     public async Task TestSignalRCrossFileReferenceCommonTypes()

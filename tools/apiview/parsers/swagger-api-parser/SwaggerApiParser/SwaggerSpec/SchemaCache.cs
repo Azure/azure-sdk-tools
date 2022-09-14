@@ -74,6 +74,7 @@ public class SchemaCache
         this.Cache.TryGetValue(referenceSwaggerFilePath, out var swaggerSchema);
         if (swaggerSchema == null)
         {
+            return null;
             throw new Exception($"Swagger schema not found. swagger file path: {currentSwaggerFilePath}");
         }
 
@@ -120,6 +121,10 @@ public class SchemaCache
             this.ResolvedCache.TryAdd(root.Ref + currentSwaggerFilePath, schema);
             refChain.RemoveLast();
 
+            if (ret == null)
+            {
+                return null;
+            }
             ret.originalRef = root.Ref;
             return ret;
         }

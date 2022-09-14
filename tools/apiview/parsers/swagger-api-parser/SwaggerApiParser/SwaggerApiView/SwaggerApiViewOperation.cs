@@ -63,13 +63,15 @@ public class SwaggerApiViewOperation : ITokenSerializable
         ret.Add(TokenSerializer.Colon());
         ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
         ret.Add(TokenSerializer.NewLine());
-       
-        ret.Add(TokenSerializer.NavigableToken("tags", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("tags")));
-        ret.Add(TokenSerializer.Colon());
-        ret.Add(new CodeFileToken(string.Join(",", tags), CodeFileTokenKind.Literal));
-        ret.Add(TokenSerializer.NewLine());
 
-
+        if (tags != null)
+        {
+            ret.Add(TokenSerializer.NavigableToken("tags", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("tags")));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(new CodeFileToken(string.Join(",", tags), CodeFileTokenKind.Literal));
+            ret.Add(TokenSerializer.NewLine());
+        }
+    
         if (this.xMsLongRunningOperation)
         {
             // ret.Add(TokenSerializer.Intent(context.intent));

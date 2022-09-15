@@ -148,6 +148,7 @@ Services:
       AdditionalArguments: *java-additional-arguments
     JS:
       Project: sdk/storage/perf-tests/storage-blob
+      PrimaryPackage: '@azure/storage-blob'
       PackageVersions:
       - '@azure/storage-blob': 12.11.0
         '@azure/core-auth': 1.3.2

@@ -50,6 +50,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion != Program.PackageVersionSource)
                 {
+                    // TODO: Stop checking devDependencies, since we only care about runtime deps
+                    // TODO: If dep does not already exist, add it instead of skipping
                     foreach (var dependencyType in new string[] { "dependencies", "devDependencies" })
                     {
                         if (projectJson[dependencyType]?[packageName] != null)

@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Xunit;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -44,6 +45,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             AssetsJson
         };
 
+        public static Assets DefaultAssets = new Assets
+        {
+            AssetsRepo = "Azure/azure-sdk-assets-integration",
+            AssetsRepoPrefixPath = "python/recordings/",
+            AssetsRepoId = "",
+            TagPrefix = "scenario_clean_push",
+            Tag = "e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7"
+        };
+
         public static string DefaultAssetsJson =
 @"
 {
@@ -51,8 +61,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     ""AssetsRepo"":""Azure/azure-sdk-assets-integration"",
     ""AssetsRepoPrefixPath"":""python/recordings/"",
     ""AssetsRepoId"":"""",
-    ""AssetsRepoBranch"":""scenario_clean_push"",
-    ""SHA"":""e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7""
+    ""TagPrefix"":""scenario_clean_push"",
+    ""Tag"":""e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7""
 }
 ";
         #endregion
@@ -67,7 +77,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Path.Join("folder2", "file1.json")
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(String.Empty, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(null, folderStructure, malformedJson:String.Empty);
             try
             {
                 var evaluation = _defaultStore.EvaluateDirectory(testFolder);
@@ -92,7 +102,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Path.Join("folder2", "file1.json")
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, folderStructure);
 
             try
             {
@@ -117,7 +127,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Path.Join("folder2", "file1.json")
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, folderStructure);
             try
             {
                 var evaluationDirectory = Path.Join(testFolder, "folder1");
@@ -136,7 +146,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void ResolveAssetsJsonFindsAssetsInTargetFolder()
         {
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, basicFolderStructure);
             try
             {
                 var path = _defaultStore.ResolveAssetsJson(testFolder);
@@ -156,7 +166,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Path.Join("folder1", AssetsJson)
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, folderStructure);
             try
             {
                 var evaluationDirectory = Path.Join(testFolder, "folder1");
@@ -181,7 +191,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "folder1",
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, folderStructure);
             try
             {
                 var evaluationDirectory = Path.Join(testFolder, "folder1");
@@ -200,7 +210,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void ResolveAssetsJsonThrowsOnUnableToLocate()
         {
-            var testFolder = TestHelpers.DescribeTestFolder(String.Empty, new string[] { });
+            var testFolder = TestHelpers.DescribeTestFolder(null, new string[] { }, malformedJson:String.Empty);
             try
             {
                 var assertion = Assert.Throws<HttpException>(() =>
@@ -225,7 +235,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "folder1",
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(String.Empty, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(null, folderStructure, malformedJson:String.Empty);
             try
             {
                 var evaluationDirectory = Path.Join(testFolder, "folder1");
@@ -249,13 +259,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""python/recordings/"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""auto/test"",
-              ""SHA"": ""786b4f3d380d9c36c91f5f146ce4a7661ffee3b9""
+              ""TagPrefix"": ""auto/test"",
+              ""Tag"": ""786b4f3d380d9c36c91f5f146ce4a7661ffee3b9""
         }")]
         // Valid to just pass the assets repo. We can infer everything else.
         [InlineData(
         @"{
-              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration""
         }")]
         public async Task ParseConfigurationEvaluatesValidConfigs(string inputJson)
         {
@@ -264,7 +274,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 AssetsJson
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(inputJson, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(null, folderStructure, malformedJson:inputJson);
             try
             {
                 var jsonFileLocation = Path.Join(testFolder, AssetsJson);
@@ -280,17 +290,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Theory]
         [InlineData(
         @"{
-              ""AssetsRepo"": """",
+              ""AssetsRepo"": """"
         }")]
         [InlineData(
         @"{
-              ""AssetsRepo"": ""   "",
+              ""AssetsRepo"": ""   ""
         }")]
         [InlineData(
         @"{
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""auto/test"",
-              ""SHA"": ""786b4f3d380d9c36c91f5f146ce4a7661ffee3b9""
+              ""TagPrefix"": ""auto/test"",
+              ""Tag"": ""786b4f3d380d9c36c91f5f146ce4a7661ffee3b9""
         }")]
         public async Task ParseConfigurationThrowsOnMissingRequiredProperty(string inputJson)
         {
@@ -299,7 +309,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 AssetsJson
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(inputJson, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(null, folderStructure, malformedJson:inputJson);
             try
             {
                 var jsonFileLocation = Path.Join(testFolder, AssetsJson);
@@ -326,7 +336,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 targetRelPath
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, folderStructure);
             try
             {
                 var jsonFileLocation = Path.Join(testFolder, folderPath);
@@ -351,7 +361,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Path.Join(targetRelPath, AssetsJson)
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, folderStructure);
             try
             {
                 var jsonFileLocation = Path.Join(testFolder, targetRelPath, AssetsJson);
@@ -372,7 +382,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{}")]
         public async Task ParseConfigurationThrowsOnEmptyJson(string errorJson)
         {
-            var testFolder = TestHelpers.DescribeTestFolder(errorJson, basicFolderStructure, ignoreEmptyAssetsJson: true);
+            var testFolder = TestHelpers.DescribeTestFolder(null, basicFolderStructure, ignoreEmptyAssetsJson: true, malformedJson:errorJson);
             try
             {
                 var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
@@ -391,7 +401,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public async Task ParseConfigurationThrowsOnNonExistentJson()
         {
-            var testFolder = TestHelpers.DescribeTestFolder(string.Empty, basicFolderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(null, basicFolderStructure, malformedJson:String.Empty);
             try
             {
                 var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
@@ -410,7 +420,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public async Task GetDefaultBranchFailsWithInvalidRepo()
         {
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, basicFolderStructure);
 
             try
             {
@@ -432,15 +442,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public async Task UpdateRecordingJsonUpdatesProperly()
         {
             var fakeSha = "FakeReplacementSha";
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, basicFolderStructure);
             try
             {
                 var configuration = await _defaultStore.ParseConfigurationFile(testFolder);
                 await _defaultStore.UpdateAssetsJson(fakeSha, configuration);
 
-                Assert.Equal(fakeSha, configuration.SHA);
+                Assert.Equal(fakeSha, configuration.Tag);
                 var newConfiguration = await _defaultStore.ParseConfigurationFile(testFolder);
-                Assert.Equal(fakeSha, newConfiguration.SHA);
+                Assert.Equal(fakeSha, newConfiguration.Tag);
             }
             finally
             {
@@ -460,7 +470,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 assetsJsonPath
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, expectedPaths);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, expectedPaths);
             try
             {
                 string configLocation;
@@ -493,19 +503,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public async Task UpdateRecordingJsonNoOpsProperly()
         {
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, basicFolderStructure);
             try
             {
                 var pathToAssets = Path.Combine(testFolder, "assets.json");
                 var creationTime = File.GetLastWriteTime(pathToAssets);
 
                 var configuration = await _defaultStore.ParseConfigurationFile(testFolder);
-                await _defaultStore.UpdateAssetsJson(configuration.SHA, configuration);
+                await _defaultStore.UpdateAssetsJson(configuration.Tag, configuration);
                 var postUpdateLastWrite = File.GetLastWriteTime(pathToAssets);
 
                 Assert.Equal(creationTime, postUpdateLastWrite);
                 var newConfiguration = await _defaultStore.ParseConfigurationFile(testFolder);
-                Assert.Equal(configuration.SHA, newConfiguration.SHA);
+                Assert.Equal(configuration.Tag, newConfiguration.Tag);
             }
             finally
             {
@@ -516,19 +526,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public async Task UpdateRecordingJsonOnlyUpdatesTargetSHA()
         {
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, basicFolderStructure);
             try
             {
                 var fakeSha = "FakeReplacementSha";
                 var pathToAssets = Path.Combine(testFolder, "assets.json");
                 var contentBeforeUpdate = File.ReadAllText(pathToAssets);
                 var configuration = await _defaultStore.ParseConfigurationFile(pathToAssets);
-                var originalSHA = configuration.SHA;
+                var originalSHA = configuration.Tag;
 
                 await _defaultStore.UpdateAssetsJson(fakeSha, configuration);
 
                 var newConfiguration = await _defaultStore.ParseConfigurationFile(pathToAssets);
-                Assert.NotEqual(originalSHA, newConfiguration.SHA);
+                Assert.NotEqual(originalSHA, newConfiguration.Tag);
                 var contentAfterUpdate = File.ReadAllText(pathToAssets);
 
                 Assert.NotEqual(contentBeforeUpdate, contentAfterUpdate);
@@ -543,7 +553,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact(Skip ="Skipping because we don't have an integration test suite working yet.")]
         public async Task GitCallHonorsLocalCredential()
         {
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, basicFolderStructure);
             try
             {
                 var config = await _defaultStore.ParseConfigurationFile(testFolder);
@@ -556,31 +566,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-        [Theory(Skip = "Skipping because we don't have an integration test suite working yet.")]
-        [InlineData("scenario_clean_push", "scenario_clean_push")]
-        [InlineData("nonexistent_branch", "main")]
-        public async Task ResolveTargetBranchIntegration(string targetBranch, string result)
-        {
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
-            try
-            {
-                var config = await _defaultStore.ParseConfigurationFile(testFolder);
-                config.AssetsRepoBranch = targetBranch;
-
-                var defaultBranch = _defaultStore.ResolveCheckoutBranch(config);
-
-                Assert.Equal(result, targetBranch);
-            }
-            finally
-            {
-                DirectoryHelper.DeleteGitDirectory(testFolder);
-            }
-        }
-
         [Fact(Skip = "Skipping due to integration tests not figured out yet.")]
         public async Task GetDefaultBranchWorksWithValidRepo()
         {
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssetsJson, basicFolderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, basicFolderStructure);
             try
             {
                 _defaultStore.DefaultBranch = "not-main";

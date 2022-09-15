@@ -1,0 +1,74 @@
+﻿[08:12:59.354] [INFO] Scanning for projects...
+[08:13:01.056] [INFO] 
+[08:13:01.057] [INFO] --------------------< com.azure:azure-storage-perf >--------------------
+[08:13:01.057] [INFO] Building azure-storage-perf 1.0.0-beta.1
+[08:13:01.058] [INFO] --------------------------------[ jar ]---------------------------------
+[08:13:01.220] [INFO] 
+[08:13:01.221] [INFO] --- maven-dependency-plugin:2.8:list (default-cli) @ azure-storage-perf ---
+[08:13:01.622] [INFO] 
+[08:13:01.622] [INFO] The following files have been resolved:
+[08:13:01.622] [INFO]    io.projectreactor:reactor-core:jar:3.4.22:compile
+[08:13:01.622] [INFO]    io.netty:netty-codec-http:jar:4.1.79.Final:compile
+[08:13:01.622] [INFO]    com.azure:azure-core-http-okhttp:jar:1.11.2:compile
+[08:13:01.623] [INFO]    io.netty:netty-handler:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-buffer:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    org.jetbrains.kotlin:kotlin-stdlib:jar:1.6.20:compile
+[08:13:01.623] [INFO]    io.netty:netty-resolver-dns-classes-macos:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    org.slf4j:slf4j-api:jar:1.7.36:compile
+[08:13:01.623] [INFO]    io.netty:netty-common:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    com.azure:azure-storage-blob-cryptography:jar:12.19.0-beta.2:compile
+[08:13:01.623] [INFO]    org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:1.5.31:compile
+[08:13:01.623] [INFO]    io.netty:netty-transport-classes-epoll:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    com.azure:azure-core:jar:1.32.0:compile
+[08:13:01.623] [INFO]    io.netty:netty-tcnative-boringssl-static:jar:linux-x86_64:2.0.53.Final:compile
+[08:13:01.623] [INFO]    io.projectreactor.netty:reactor-netty-core:jar:1.0.22:compile
+[08:13:01.623] [INFO]    io.netty:netty-codec:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-tcnative-boringssl-static:jar:windows-x86_64:2.0.53.Final:compile
+[08:13:01.623] [INFO]    io.projectreactor.netty:reactor-netty-http:jar:1.0.22:compile
+[08:13:01.623] [INFO]    org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.5.31:compile
+[08:13:01.623] [INFO]    com.azure:azure-core-http-netty:jar:1.12.5:compile
+[08:13:01.623] [INFO]    io.netty:netty-codec-dns:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-transport-classes-kqueue:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-tcnative-boringssl-static:jar:linux-aarch_64:2.0.53.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.1.79.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-handler-proxy:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    com.fasterxml.jackson.core:jackson-core:jar:2.13.3:compile
+[08:13:01.623] [INFO]    io.netty:netty-resolver:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-tcnative-boringssl-static:jar:osx-aarch_64:2.0.53.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-tcnative-classes:jar:2.0.53.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-transport:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-codec-socks:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-transport-native-unix-common:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.13.3:compile
+[08:13:01.623] [INFO]    com.fasterxml.woodstox:woodstox-core:jar:6.2.7:compile
+[08:13:01.623] [INFO]    com.squareup.okio:okio-jvm:jar:3.0.0:compile
+[08:13:01.623] [INFO]    io.netty:netty-resolver-dns:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.1.79.Final:compile
+[08:13:01.623] [INFO]    com.azure:azure-storage-internal-avro:jar:12.5.0-beta.2:compile
+[08:13:01.623] [INFO]    org.codehaus.woodstox:stax2-api:jar:4.2.1:compile
+[08:13:01.623] [INFO]    com.fasterxml.jackson.core:jackson-databind:jar:2.13.3:compile
+[08:13:01.623] [INFO]    com.azure:azure-storage-blob:jar:12.20.0-beta.2:compile
+[08:13:01.623] [INFO]    com.azure:azure-security-keyvault-keys:jar:4.4.6:compile
+[08:13:01.623] [INFO]    io.netty:netty-codec-http2:jar:4.1.79.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-tcnative-boringssl-static:jar:2.0.53.Final:compile
+[08:13:01.623] [INFO]    io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.79.Final:compile
+[08:13:01.624] [INFO]    org.jacoco:org.jacoco.agent:jar:runtime:0.8.8:test
+[08:13:01.624] [INFO]    com.azure:perf-test-core:jar:1.0.0-beta.1:compile
+[08:13:01.624] [INFO]    com.azure:azure-storage-file-share:jar:12.16.0-beta.2:compile
+[08:13:01.624] [INFO]    com.beust:jcommander:jar:1.78:compile
+[08:13:01.624] [INFO]    com.fasterxml.jackson.core:jackson-annotations:jar:2.13.3:compile
+[08:13:01.624] [INFO]    org.jetbrains.kotlin:kotlin-stdlib-common:jar:1.5.31:compile
+[08:13:01.624] [INFO]    io.netty:netty-tcnative-boringssl-static:jar:osx-x86_64:2.0.53.Final:compile
+[08:13:01.624] [INFO]    com.fasterxml.jackson.dataformat:jackson-dataformat-xml:jar:2.13.3:compile
+[08:13:01.624] [INFO]    org.reactivestreams:reactive-streams:jar:1.0.4:compile
+[08:13:01.624] [INFO]    com.squareup.okhttp3:okhttp:jar:4.10.0:compile
+[08:13:01.624] [INFO]    com.azure:azure-storage-common:jar:12.19.0-beta.2:compile
+[08:13:01.624] [INFO]    com.azure:azure-storage-file-datalake:jar:12.13.0-beta.2:compile
+[08:13:01.624] [INFO]    org.jetbrains:annotations:jar:13.0:compile
+[08:13:01.624] [INFO] 
+[08:13:01.624] [INFO] ------------------------------------------------------------------------
+[08:13:01.625] [INFO] BUILD SUCCESS
+[08:13:01.625] [INFO] ------------------------------------------------------------------------
+[08:13:01.626] [INFO] Total time:  2.292 s
+[08:13:01.626] [INFO] Finished at: 2022-09-06T20:13:01Z
+[08:13:01.626] [INFO] ------------------------------------------------------------------------

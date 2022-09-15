@@ -18,9 +18,11 @@ using System.Reflection;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Console;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
+    [ExcludeFromCodeCoverage]
     public sealed class Startup
     {
         internal static int RequestsRecorded;
@@ -64,6 +66,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 Environment.Exit(0);
             }
+
+            // This throws and will exit
+            // JRS - Temporarily disable this check because of https://github.com/Azure/azure-sdk-tools/issues/4116
+            // new GitProcessHandler().VerifyGitMinVersion();
 
             TargetLocation = resolveRepoLocation(storageLocation);
             Resolver = new StoreResolver();

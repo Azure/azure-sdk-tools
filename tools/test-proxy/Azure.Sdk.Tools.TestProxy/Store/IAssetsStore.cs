@@ -23,5 +23,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         public abstract Task Reset(string pathToAssetsJson);
+
+        /// <summary>
+        /// Given a configuration, return the path on disk to the root of the cloned repo.
+        /// </summary>
+        /// <param name="pathToAssetsJson"></param>
+        /// <returns></returns>
+        public abstract Task<string> GetPath(string pathToAssetsJson);
     }
 }

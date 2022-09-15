@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Store;
@@ -16,7 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
     // Setup:
     // The files live under https://github.com/Azure/azure-sdk-assets-integration/tree/main/pull/scenarios.
     // Each file contains nothing but a single version digit, which is used for verification purposes.
-    // There are restore test scenarios and each uses a different SHA. The scenarios are detailed down
+    // There are restore test scenarios and each uses a different Tag. The scenarios are detailed down
     // below with their test functions.
     public class GitStoreIntegrationRestoreTests
     {
@@ -31,7 +32,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         private GitStore _defaultStore = new GitStore();
 
         // Scenario1
-        // SHA fc54d000d0427c4a68bc8962d40f957f59e14577
+        // Tag language/tables_fc54d0
         // This was the initial push of the test files:
         // Added file1.txt
         // Added file2.txt
@@ -43,8 +44,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""main"",
-              ""SHA"": ""fc54d000d0427c4a68bc8962d40f957f59e14577""
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario1(string inputJson)
@@ -54,7 +55,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(inputJson, folderStructure);
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
             try
             {
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
@@ -80,7 +82,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
 
         // Scenario2
-        // SHA 9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1
+        // Tag language/tables_9e81fb
         // This was the second push of the test files.
         // Unchanged file1.txt
         // Updated file2.txt
@@ -96,8 +98,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""main"",
-              ""SHA"": ""9e81fbb7d08c2df4cbdbfaffe79cde5d72f560d1""
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario2(string inputJson)
@@ -107,7 +109,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(inputJson, folderStructure);
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
             try
             {
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
@@ -133,7 +136,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario3
-        // SHA bb2223a3aa0472ff481f8e1850e7647dc39fbfdd
+        // Tag language/tables_bb2223
         // This was the third push of the test files.
         // Deleted   file1.txt
         // Unchanged file2.txt
@@ -151,8 +154,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
-              ""AssetsRepoBranch"": ""main"",
-              ""SHA"": ""bb2223a3aa0472ff481f8e1850e7647dc39fbfdd""
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_bb2223""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario3(string inputJson)
@@ -162,7 +165,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
 
-            var testFolder = TestHelpers.DescribeTestFolder(inputJson, folderStructure);
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
 
             try
             {

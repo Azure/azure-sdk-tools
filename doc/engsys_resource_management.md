@@ -85,10 +85,11 @@ The automation will delete all resource groups in managed subscriptions multiple
       # azure cli, set manually
       az group update -g <group name> --tags DeleteAfter=$(date -u +"%Y-%m-%dT%H:%M:%SZ" -d "$(date) + 3 day")
       ```
+- The resource group contains a tag with the name `DoNotDelete` and any value (even empty).
+    - Even if this tag is set, the `Owners` tag should still be set for tracking.
+    - This should only be used for resources that must never be deleted, in case all owners leave the company.
 
-Resource groups which do not satisfy at least one of the above criteria will have a `DeleteAfter` tag added for a
-24 hour duration to mark them for deletion and give any test pipelines that are actively using the resources time to
-complete.
+Resource groups which do not satisfy at least one of the above criteria will have a `DeleteAfter` tag added for a 24 hour duration to mark them for deletion and give any test pipelines that are actively using the resources time to complete.
 
 **NOTE:** For long-lived resources, please also add a resource group tag named `Purpose` describing the purpose of the group.
 

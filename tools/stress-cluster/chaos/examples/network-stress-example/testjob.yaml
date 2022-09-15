@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: goqumoqu
+  namespace: gearama1
+spec:
+  template:
+    spec:
+      containers:
+      - name: goqumoqu
+        image: stresstesttbiruti6oi24k.azurecr.io/gearama/stress:1
+        imagePullPolicy: Always
+        command: ["bash", "poll.sh"]
+      restartPolicy: Never
+  backoffLimit: 1

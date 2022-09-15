@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var errorBuilder = new StringBuilder();
 
             // Windows and Linux require different arguments to build Release config
-            var additionalGenerateArguments = Util.IsWindows ? String.Empty : "-DCMAKE_BUILD_TYPE=Release";
+            var additionalGenerateArguments = Util.IsWindows ? "-DDISABLE_AZURE_CORE_OPENTELEMETRY=ON" : "-DCMAKE_BUILD_TYPE=Release";
             var additionalBuildArguments = Util.IsWindows ? "--config MinSizeRel" : String.Empty;
 
             await Util.RunAsync(

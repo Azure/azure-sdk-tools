@@ -181,7 +181,7 @@ stages:
       displayName: Download Results
 
     - pwsh: |
-        get-childitem . -recurse -filter results.txt | sort fullname | foreach-object {
+        get-childitem . -recurse -filter results.txt | sort-object fullname | foreach-object {
           write-host $_
           get-content $_
           write-host

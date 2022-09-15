@@ -178,12 +178,37 @@ stages:
 
     - download: current
       patterns: '**/results.txt'
+      displayName: Download Results
 
     - pwsh: |
-        get-childitem . -recurse -filter results.txt | foreach-object {
+        get-childitem . -recurse -filter results.txt | sort-object fullname | foreach-object {
           write-host $_
           get-content $_
           write-host
         }
       workingDirectory: $(Pipeline.Workspace)
-      displayName: Print Results
+      displayName: All
+
+    - pwsh: |
+        write-host results-Net-Linux/results.txt
+        get-content results-Net-Linux/results.txt
+      workingDirectory: $(Pipeline.Workspace)
+      displayName: Net
+
+    - pwsh: |
+        write-host results-Java-Linux/results.txt
+        get-content results-Java-Linux/results.txt
+      workingDirectory: $(Pipeline.Workspace)
+      displayName: Java
+
+    - pwsh: |
+        write-host results-JS-Linux/results.txt
+        get-content results-JS-Linux/results.txt
+      workingDirectory: $(Pipeline.Workspace)
+      displayName: JS
+
+    - pwsh: |
+        write-host results-Python-Linux/results.txt
+        get-content results-Python-Linux/results.txt
+      workingDirectory: $(Pipeline.Workspace)
+      displayName: Python

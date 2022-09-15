@@ -10,3 +10,9 @@ AzSecPackAutoConfigRG
 
 static-test-resources
 LiveTestSecrets
+
+# Temporarily excluding this resource group until we can figure out its origin.
+# The group has restricted permissions meaning we cannot tag it with either DoNotDelete or DeleteAfter
+# and the cleanup script fails out.
+
+managed-rg-ycllcPurviewAccount

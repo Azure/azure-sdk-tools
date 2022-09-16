@@ -53,10 +53,20 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion != Program.PackageVersionSource)
                 {
-                    // TODO: Could change algo to "update deps, else update dev deps, else add to deps",
-                    //       but I think all our projects will only need deps added/updated.
-                    projectJson["dependencies"][packageName] = packageVersion;
-                    testUtilsProjectJson["dependencies"][packageName] = packageVersion;
+                    // TODO: Update common/config/rush/common-versions.json
+
+                    foreach (var packageJson in new JObject[] { projectJson, testUtilsProjectJson })
+                    {
+                        // Update devDependencies if exists, else upsert dependencies
+                        if (packageJson["devDependencies"]?[packageName] != null)
+                        {
+                            packageJson["devDependencies"][packageName] = packageVersion;
+                        }
+                        else
+                        {
+                            packageJson["dependencies"][packageName] = packageVersion;
+                        }
+                    }
                 }
             }
 

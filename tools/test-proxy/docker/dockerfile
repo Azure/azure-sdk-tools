@@ -28,7 +28,7 @@ COPY --from=build /usr/share/dotnet/sdk/6.0.102/DotnetTools/dotnet-dev-certs/6.0
 COPY docker_build/$CERT_IMPORT_SH docker_build/dotnet-devcert.pfx docker_build/dotnet-devcert.crt $CERT_FOLDER/
 
 RUN \
-    && apk add --no-cache bash nss-tools git \
+    apk add --no-cache bash nss-tools git \
     # Fix line endings
     && sed -i -e 's/\r$//' $CERT_FOLDER/$CERT_IMPORT_SH \
     # Use copied dotnet-dev-certs tool

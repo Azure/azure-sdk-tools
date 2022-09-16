@@ -1,13 +1,25 @@
 parameters:
+- name: TestNet
+  type: boolean
+  default: true
 - name: NetRepoCommitish
   type: string
   default: 'main'
+- name: TestJava
+  type: boolean
+  default: true
 - name: JavaRepoCommitish
   type: string
   default: 'main'
+- name: TestJS
+  type: boolean
+  default: true
 - name: JSRepoCommitish
   type: string
   default: 'main'
+- name: TestPython
+  type: boolean
+  default: true
 - name: PythonRepoCommitish
   type: string
   default: 'main'
@@ -52,7 +64,7 @@ stages:
 - stage: Test
   displayName: Test
   jobs:
-  - ${{ if ne(parameters.NetRepoCommitish, 'skip') }}:
+  - ${{ if parameters.TestNet }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Net'
@@ -78,7 +90,7 @@ stages:
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
 
-  - ${{ if ne(parameters.JavaRepoCommitish, 'skip') }}:
+  - ${{ if parameters.TestJava }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Java'
@@ -111,7 +123,7 @@ stages:
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
 
-  - ${{ if ne(parameters.JSRepoCommitish, 'skip') }}:
+  - ${{ if parameters.TestJS }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_JS'
@@ -137,7 +149,7 @@ stages:
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
 
-  - ${{ if ne(parameters.PythonRepoCommitish, 'skip') }}:
+  - ${{ if parameters.TestPython }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Python'
@@ -193,28 +205,28 @@ stages:
       workingDirectory: $(Pipeline.Workspace)
       displayName: All
 
-    - ${{ if ne(parameters.NetRepoCommitish, 'skip') }}:
+    - ${{ if parameters.TestNet }}:
       - pwsh: |
           write-host results-Net-Linux/results.txt
           get-content results-Net-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Net
 
-    - ${{ if ne(parameters.JavaRepoCommitish, 'skip') }}:
+    - ${{ if parameters.TestJava }}:
       - pwsh: |
           write-host results-Java-Linux/results.txt
           get-content results-Java-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Java
 
-    - ${{ if ne(parameters.JSRepoCommitish, 'skip') }}:
+    - ${{ if parameters.TestJS }}:
       - pwsh: |
           write-host results-JS-Linux/results.txt
           get-content results-JS-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: JS
 
-    - ${{ if ne(parameters.PythonRepoCommitish, 'skip') }}:
+    - ${{ if parameters.TestPython }}:
       - pwsh: |
           write-host results-Python-Linux/results.txt
           get-content results-Python-Linux/results.txt

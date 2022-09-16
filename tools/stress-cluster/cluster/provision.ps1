@@ -85,10 +85,14 @@ function DeployStaticResources([hashtable]$params)
 {
     Write-Host "Deploying static resources"
 
+    $formattedTags = $params.tags.GetEnumerator() | ForEach-Object { "$($_.Name)=$($_.Value)" }
+    $formattedTags = $formattedTags -join ' '
+
     RunOrExitOnFailure az group create `
         -n $params.staticTestSecretsKeyvaultGroup `
         -l $params.clusterLocation `
-        --subscription $params.subscriptionId
+        --subscription $params.subscriptionId `
+        --tags $formattedTags
     $kv = Run az keyvault show `
         -n $params.staticTestSecretsKeyvaultName `
         -g $params.staticTestSecretsKeyvaultGroup `

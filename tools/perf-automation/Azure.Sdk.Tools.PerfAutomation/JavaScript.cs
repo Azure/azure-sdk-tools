@@ -22,6 +22,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
+            var commonVersionsFile = Path.Combine(WorkingDirectory, "common", "config", "rush", "common-versions.json");
+            var commonVersionsJson = JObject.Parse(File.ReadAllText(commonVersionsFile));
+
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var projectFile = Path.Combine(projectDirectory, "package.json");
             var projectJson = JObject.Parse(File.ReadAllText(projectFile));
@@ -53,7 +56,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion != Program.PackageVersionSource)
                 {
-                    // TODO: Update common/config/rush/common-versions.json
+                    commonVersionsJson["preferredVersions"][packageName] = packageVersion;
 
                     foreach (var packageJson in new JObject[] { projectJson, testUtilsProjectJson })
                     {
@@ -69,6 +72,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     }
                 }
             }
+
+            File.Copy(commonVersionsFile, commonVersionsFile + ".bak", overwrite: true);
+            File.WriteAllText(commonVersionsFile, commonVersionsJson.ToString() + Environment.NewLine);
 
             File.Copy(projectFile, projectFile + ".bak", overwrite: true);
             File.WriteAllText(projectFile, projectJson.ToString() + Environment.NewLine);
@@ -220,11 +226,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Delete(Path.Combine(WorkingDirectory, "common", "config", "rush", "deploy.json"));
             Util.DeleteIfExists(Path.Combine(WorkingDirectory, "common", "deploy"));
 
+            var commonVersionsFile = Path.Combine(WorkingDirectory, "common", "config", "rush", "common-versions.json");
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var projectFile = Path.Combine(projectDirectory, "package.json");
             var testUtilsProjectFile = Path.Combine(WorkingDirectory, "sdk", "test-utils", "perf", "package.json");
 
             // Restore backups
+            File.Move(commonVersionsFile + ".bak", commonVersionsFile, overwrite: true);
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
             File.Move(testUtilsProjectFile + ".bak", testUtilsProjectFile, overwrite: true);
 

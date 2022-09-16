@@ -82,7 +82,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Copy(testUtilsProjectFile, testUtilsProjectFile + ".bak", overwrite: true);
             File.WriteAllText(testUtilsProjectFile, testUtilsProjectJson.ToString() + Environment.NewLine);
 
-            await Util.RunAsync("node", $"{_rush} update", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            await Util.RunAsync("node", $"{_rush} update --full", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             if (track1)
             {

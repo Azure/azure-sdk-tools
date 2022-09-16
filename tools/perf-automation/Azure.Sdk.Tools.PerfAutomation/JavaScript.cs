@@ -26,6 +26,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var projectFile = Path.Combine(projectDirectory, "package.json");
             var projectJson = JObject.Parse(File.ReadAllText(projectFile));
 
+            var testUtilsProjectFile = Path.Combine(WorkingDirectory, "sdk", "test-utils", "perf", "package.json");
+            var testUtilsProjectJson = JObject.Parse(File.ReadAllText(testUtilsProjectFile));
+
             var track1 = projectDirectory.EndsWith("track-1", StringComparison.OrdinalIgnoreCase);
 
             // Track 1
@@ -50,20 +53,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion != Program.PackageVersionSource)
                 {
-                    // TODO: Stop checking devDependencies, since we only care about runtime deps
-                    // TODO: If dep does not already exist, add it instead of skipping
-                    foreach (var dependencyType in new string[] { "dependencies", "devDependencies" })
-                    {
-                        if (projectJson[dependencyType]?[packageName] != null)
-                        {
-                            projectJson[dependencyType][packageName] = packageVersion;
-                        }
-                    }
+                    // TODO: Could change algo to "update deps, else update dev deps, else add to deps",
+                    //       but I think all our projects will only need deps added/updated.
+                    projectJson["dependencies"][packageName] = packageVersion;
+                    testUtilsProjectJson["dependencies"][packageName] = packageVersion;
                 }
             }
 
             File.Copy(projectFile, projectFile + ".bak", overwrite: true);
             File.WriteAllText(projectFile, projectJson.ToString() + Environment.NewLine);
+
+            File.Copy(testUtilsProjectFile, testUtilsProjectFile + ".bak", overwrite: true);
+            File.WriteAllText(testUtilsProjectFile, testUtilsProjectJson.ToString() + Environment.NewLine);
 
             await Util.RunAsync("node", $"{_rush} update", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
@@ -211,9 +212,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var projectFile = Path.Combine(projectDirectory, "package.json");
+            var testUtilsProjectFile = Path.Combine(WorkingDirectory, "sdk", "test-utils", "perf", "package.json");
 
             // Restore backups
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
+            File.Move(testUtilsProjectFile + ".bak", testUtilsProjectFile, overwrite: true);
 
             return Task.CompletedTask;
         }

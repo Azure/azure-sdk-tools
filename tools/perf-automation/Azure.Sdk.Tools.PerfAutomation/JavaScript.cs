@@ -58,14 +58,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 {
                     commonVersionsJson["preferredVersions"][packageName] = packageVersion;
 
-                    foreach (var packageJson in new JObject[] { projectJson/*, testUtilsProjectJson*/ })
+                    foreach (var packageJson in new JObject[] { projectJson, testUtilsProjectJson })
                     {
                         // Update devDependencies if exists, else upsert dependencies
                         if (packageJson["devDependencies"]?[packageName] != null)
                         {
                             packageJson["devDependencies"][packageName] = packageVersion;
                         }
-                        else // if (packageJson["dependencies"]?[packageName] != null)
+                        else if (packageJson["dependencies"]?[packageName] != null)
                         {
                             // TODO: Consider only updating deps if they exist, rather than inserting
                             // Some packages may need inserting, but some may only need updating.

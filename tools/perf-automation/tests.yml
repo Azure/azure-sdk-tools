@@ -27,6 +27,9 @@ parameters:
 - name: PythonRepoCommitish
   type: string
   default: 'main'
+- name: PackageVersions
+  type: string
+  default: '12|source'
 
 resources:
   repositories:
@@ -59,7 +62,6 @@ variables:
   WindowsVmImage: 'MMS2019'
   ToolsRepoCommitish: $(Build.SourceVersion)
   Services: '^storage-blob$'
-  PackageVersions: '12|source'
   Tests: '^(download)$'
   Arguments: '(10240)'
   Iterations: '1'
@@ -88,7 +90,7 @@ stages:
             EnableNuGetCache: false
         ServiceDirectory: 'storage/Azure.Storage.Blobs'
         Services: $(Services)
-        PackageVersions: $(PackageVersions)
+        PackageVersions: ${{ parameters.PackageVersions }}
         Tests: $(Tests)
         Arguments: $(Arguments)
         # Iterations parameter has type 'number' so must use this variable syntax
@@ -121,7 +123,7 @@ stages:
           displayName: Print Java Versions
         ServiceDirectory: 'storage/azure-storage-blob'
         Services: $(Services)
-        PackageVersions: $(PackageVersions)
+        PackageVersions: ${{ parameters.PackageVersions }}
         Tests: $(Tests)
         Arguments: $(Arguments)
         # Iterations parameter has type 'number' so must use this variable syntax
@@ -147,7 +149,7 @@ stages:
             NodeVersion: 14.x
         ServiceDirectory: 'storage/storage-blob'
         Services: $(Services)
-        PackageVersions: $(PackageVersions)
+        PackageVersions: ${{ parameters.PackageVersions }}
         Tests: $(Tests)
         Arguments: $(Arguments)
         # Iterations parameter has type 'number' so must use this variable syntax
@@ -176,7 +178,7 @@ stages:
             versionSpec: $(PythonVersion)
         ServiceDirectory: 'storage/azure-storage-blob'
         Services: $(Services)
-        PackageVersions: $(PackageVersions)
+        PackageVersions: ${{ parameters.PackageVersions }}
         Tests: $(Tests)
         Arguments: $(Arguments)
         # Iterations parameter has type 'number' so must use this variable syntax

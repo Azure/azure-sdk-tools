@@ -9,13 +9,13 @@ using Xunit;
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     /// <summary>
-    /// Used to skip integration tests in our CI builds. If a test decorated with EnvironmentConditionalSkipTheory attribute is collected, it will only run
+    /// Used to skip integration tests in our CI builds. If a test decorated with EnvironmentConditionalSkipFact attribute is collected, it will only run
     /// on a CI machine if the environment variable PROXY_GIT_TOKEN is valid. On a normal dev machine, the variable TF_BUILD is unset, so the test should still
     /// run as part of the test suite.
     /// </summary>
-    public sealed class EnvironmentConditionalSkipTheory : TheoryAttribute
+    public sealed class EnvironmentConditionalSkipFact : TheoryAttribute
     {
-        public EnvironmentConditionalSkipTheory()
+        public EnvironmentConditionalSkipFact()
         {
             var token = Environment.GetEnvironmentVariable(GitStore.GIT_TOKEN_ENV_VAR);
             var inCI = Environment.GetEnvironmentVariable("TF_BUILD");

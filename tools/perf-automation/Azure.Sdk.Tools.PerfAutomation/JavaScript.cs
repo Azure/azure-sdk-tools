@@ -65,7 +65,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         {
                             packageJson["devDependencies"][packageName] = packageVersion;
                         }
-                        else
+                        else if (packageJson["dependencies"]?[packageName] != null)
                         {
                             // TODO: Consider only updating deps if they exist, rather than inserting
                             // Some packages may need inserting, but some may only need updating.

@@ -513,6 +513,12 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region SetRecordingOptions and store functionality
+        public async Task Restore(string pathToAssetsJson)
+        {
+            var resultingPath = await Store.Restore(pathToAssetsJson);
+            ContextDirectory = resultingPath;
+        }
+
         public void SetRecordingOptions(IDictionary<string, object> options = null, string sessionId = null)
         {
             if (options != null)

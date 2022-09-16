@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -184,6 +184,43 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_bb2223""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task RestoreUpdatesContext(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = System.Text.Json.JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+            var pathToAssets = Path.Join(testFolder, "assets.json");
+            var currentDirectory = Environment.CurrentDirectory;
+            var recordingHandler = new RecordingHandler(currentDirectory, _defaultStore);
+            
+            try
+            {
+                await recordingHandler.Restore(pathToAssets);
+
+                var result = (await _defaultStore.ParseConfigurationFile(pathToAssets)).AssetsRepoLocation;
+
+                Assert.Equal(result, recordingHandler.ContextDirectory);
             }
             finally
             {

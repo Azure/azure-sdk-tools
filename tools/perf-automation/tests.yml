@@ -1,26 +1,26 @@
 parameters:
-- name: TestNet
+- name: IncludeNet
   displayName: Include .NET?
   type: boolean
   default: true
 - name: NetRepoCommitish
   type: string
   default: 'main'
-- name: TestJava
+- name: IncludeJava
   displayName: Include Java?
   type: boolean
   default: true
 - name: JavaRepoCommitish
   type: string
   default: 'main'
-- name: TestJS
+- name: IncludeJS
   displayName: Include JS?
   type: boolean
   default: true
 - name: JSRepoCommitish
   type: string
   default: 'main'
-- name: TestPython
+- name: IncludePython
   displayName: Include Python?
   type: boolean
   default: true
@@ -68,7 +68,7 @@ stages:
 - stage: Test
   displayName: Test
   jobs:
-  - ${{ if parameters.TestNet }}:
+  - ${{ if parameters.IncludeNet }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Net'
@@ -94,7 +94,7 @@ stages:
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
 
-  - ${{ if parameters.TestJava }}:
+  - ${{ if parameters.IncludeJava }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Java'
@@ -127,7 +127,7 @@ stages:
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
 
-  - ${{ if parameters.TestJS }}:
+  - ${{ if parameters.IncludeJS }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_JS'
@@ -153,7 +153,7 @@ stages:
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
 
-  - ${{ if parameters.TestPython }}:
+  - ${{ if parameters.IncludePython }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Python'
@@ -209,28 +209,28 @@ stages:
       workingDirectory: $(Pipeline.Workspace)
       displayName: All
 
-    - ${{ if parameters.TestNet }}:
+    - ${{ if parameters.IncludeNet }}:
       - pwsh: |
           write-host results-Net-Linux/results.txt
           get-content results-Net-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Net
 
-    - ${{ if parameters.TestJava }}:
+    - ${{ if parameters.IncludeJava }}:
       - pwsh: |
           write-host results-Java-Linux/results.txt
           get-content results-Java-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Java
 
-    - ${{ if parameters.TestJS }}:
+    - ${{ if parameters.IncludeJS }}:
       - pwsh: |
           write-host results-JS-Linux/results.txt
           get-content results-JS-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: JS
 
-    - ${{ if parameters.TestPython }}:
+    - ${{ if parameters.IncludePython }}:
       - pwsh: |
           write-host results-Python-Linux/results.txt
           get-content results-Python-Linux/results.txt

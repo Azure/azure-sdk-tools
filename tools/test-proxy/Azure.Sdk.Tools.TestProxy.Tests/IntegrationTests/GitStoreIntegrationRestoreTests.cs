@@ -204,17 +204,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
               ""Tag"": """"
-        }", "")]
-        [InlineData(
-        @"{
-              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
-              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
-              ""AssetsRepoId"": """",
-              ""TagPrefix"": ""main"",
-              ""Tag"": ""INVALID_TAG""
-        }", "error: pathspec 'INVALID_TAG' did not match any file(s) known to git")]
+        }")]
         [Trait("Category", "Integration")]
-        public async Task Scenario4(string inputJson, string gitProcessException)
+        public async Task NonexistentTagFallsBack(string inputJson)
         {
             var folderStructure = new string[]
             {
@@ -230,25 +222,52 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
 
-                if (!string.IsNullOrEmpty(gitProcessException))
-                {
-                    var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
-                    {
-                        await _defaultStore.Restore(jsonFileLocation);
-                    });
-                    Assert.Contains(gitProcessException, assertion.Message);
-                }
-                else
+                await _defaultStore.Restore(jsonFileLocation);
+
+                // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
+                // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
+                // will be a forward one as expected by git but on Windows this won't result in a usable path.
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+
+                Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""INVALID_TAG""
+        }", "error: pathspec 'INVALID_TAG' did not match any file(s) known to git")]
+        [Trait("Category", "Integration")]
+        public async Task InvalidTagThrows(string inputJson, string httpException)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+
+            try
+            {
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+
+                var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
                 {
                     await _defaultStore.Restore(jsonFileLocation);
-
-                    // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
-                    // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
-                    // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                    string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
-
-                    Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
-                }
+                });
+                Assert.Contains(httpException, assertion.Message);
             }
             finally
             {

@@ -52,7 +52,7 @@ stages:
 - stage: Test
   displayName: Test
   jobs:
-  - ${{ if ne(parameters.NetRepoCommitish, '') }}:
+  - ${{ if ne(parameters.NetRepoCommitish, 'skip') }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Net'
@@ -78,7 +78,7 @@ stages:
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
 
-  - ${{ if ne(parameters.JavaRepoCommitish, '') }}:
+  - ${{ if ne(parameters.JavaRepoCommitish, 'skip') }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Java'
@@ -111,7 +111,7 @@ stages:
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
 
-  - ${{ if ne(parameters.JSRepoCommitish, '') }}:
+  - ${{ if ne(parameters.JSRepoCommitish, 'skip') }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_JS'
@@ -137,7 +137,7 @@ stages:
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
 
-  - ${{ if ne(parameters.PythonRepoCommitish, '') }}:
+  - ${{ if ne(parameters.PythonRepoCommitish, 'skip') }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Python'
@@ -193,28 +193,28 @@ stages:
       workingDirectory: $(Pipeline.Workspace)
       displayName: All
 
-    - ${{ if ne(parameters.NetRepoCommitish, '') }}:
+    - ${{ if ne(parameters.NetRepoCommitish, 'skip') }}:
       - pwsh: |
           write-host results-Net-Linux/results.txt
           get-content results-Net-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Net
 
-    - ${{ if ne(parameters.JavaRepoCommitish, '') }}:
+    - ${{ if ne(parameters.JavaRepoCommitish, 'skip') }}:
       - pwsh: |
           write-host results-Java-Linux/results.txt
           get-content results-Java-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Java
 
-    - ${{ if ne(parameters.JSRepoCommitish, '') }}:
+    - ${{ if ne(parameters.JSRepoCommitish, 'skip') }}:
       - pwsh: |
           write-host results-JS-Linux/results.txt
           get-content results-JS-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: JS
 
-    - ${{ if ne(parameters.PythonRepoCommitish, '') }}:
+    - ${{ if ne(parameters.PythonRepoCommitish, 'skip') }}:
       - pwsh: |
           write-host results-Python-Linux/results.txt
           get-content results-Python-Linux/results.txt

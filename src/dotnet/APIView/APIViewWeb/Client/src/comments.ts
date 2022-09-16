@@ -108,7 +108,7 @@
         }
         let commentElement = getCommentElement(getCommentId(e.target)!);
         let comment = commentElement.find(".js-comment-raw").html();
-        let codeLine = commentElement.closest(".comment-row").prev(".code-line").find(".code");
+        let codeLine = commentElement.closest(".comment-row-unresolved").prev(".code-line").find(".code");
         let apiViewUrl = "";
 
         // if creating issue from the convos tab, the link to the code element is in the DOM already.
@@ -187,7 +187,7 @@
     }
 
     function toggleComments(id: string) {
-        $(getCommentsRow(id)).find(".comment-holder").toggle();
+        $(getResolvedCommentsRow(id)).find(".comment-holder").toggle();
     }
 
     function editComment(commentId: string) {
@@ -202,7 +202,19 @@
     }
 
     function getCommentsRow(id: string) {
-        return $(`.comment-row[data-line-id='${id}']`);
+        const l = $(`.comment-row-unresolved[data-line-id='${id}']`);
+        if (l.length > 0)
+        {
+          return l;
+        }
+        else
+        {
+          return getResolvedCommentsRow(id);
+        }
+    }
+
+    function getResolvedCommentsRow(id: string) {
+      return $(`.comment-row-resolved[data-line-id='${id}']`);
     }
 
     function getCodeRow(id: string) {
@@ -226,7 +238,7 @@
         if (commentsRow.length === 0) {
             commentForm = createCommentForm();
             commentsRow =
-                $(`<tr class="comment-row" data-line-id="${id}">`)
+                $(`<tr class="comment-row-unresolved" data-line-id="${id}">`)
                     .append($("<td colspan=\"3\">")
                         .append(commentForm));
 
@@ -309,7 +321,7 @@
     }
 
     function addCommentThreadNavigation(){
-        var commentRows = $('.comment-row');
+        var commentRows = $('.comment-row-unresolved');
         commentRows.each(function (index) {
             var commentThreadAnchorId = "comment-thread-" + index;
             $(this).find('.comment-thread-anchor').first().prop('id', commentThreadAnchorId);

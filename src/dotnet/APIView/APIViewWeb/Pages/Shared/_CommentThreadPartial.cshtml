@@ -7,7 +7,22 @@
 
 @if (Model != null && Model.Comments.Any())
 {
-    <tr class="comment-row" data-line-id="@Model.LineId">
+@functions {
+
+        private string getCommentType()
+        {
+            if (Model.IsResolved)
+            {
+                return "comment-row-resolved";
+            }
+            else
+            {
+                return "comment-row-unresolved";
+            }
+        }
+    }
+    var type = getCommentType();
+    <tr class=@type data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="3">
             <a class="comment-thread-anchor"></a>
             @if (Model.IsResolved)

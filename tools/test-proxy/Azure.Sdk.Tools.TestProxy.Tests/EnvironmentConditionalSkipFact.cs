@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     /// on a CI machine if the environment variable PROXY_GIT_TOKEN is valid. On a normal dev machine, the variable TF_BUILD is unset, so the test should still
     /// run as part of the test suite.
     /// </summary>
-    public sealed class EnvironmentConditionalSkipFact : TheoryAttribute
+    public sealed class EnvironmentConditionalSkipFact : FactAttribute
     {
         public EnvironmentConditionalSkipFact()
         {

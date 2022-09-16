@@ -68,6 +68,9 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
           logAnalyticsWorkspaceResourceID: workspaceId
         }
       }
+      azurepolicy: {
+        enabled: true
+      }
     }
     kubernetesVersion: kubernetesVersion
     enableRBAC: true

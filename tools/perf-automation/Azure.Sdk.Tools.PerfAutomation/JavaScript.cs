@@ -22,9 +22,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
+            var commonVersionsFile = Path.Combine(WorkingDirectory, "common", "config", "rush", "common-versions.json");
+            var commonVersionsJson = JObject.Parse(File.ReadAllText(commonVersionsFile));
+
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var projectFile = Path.Combine(projectDirectory, "package.json");
             var projectJson = JObject.Parse(File.ReadAllText(projectFile));
+
+            var testUtilsProjectFile = Path.Combine(WorkingDirectory, "sdk", "test-utils", "perf", "package.json");
+            var testUtilsProjectJson = JObject.Parse(File.ReadAllText(testUtilsProjectFile));
 
             var track1 = projectDirectory.EndsWith("track-1", StringComparison.OrdinalIgnoreCase);
 
@@ -50,20 +56,32 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion != Program.PackageVersionSource)
                 {
-                    foreach (var dependencyType in new string[] { "dependencies", "devDependencies" })
+                    commonVersionsJson["preferredVersions"][packageName] = packageVersion;
+
+                    foreach (var packageJson in new JObject[] { projectJson, testUtilsProjectJson })
                     {
-                        if (projectJson[dependencyType]?[packageName] != null)
+                        foreach (var dependencyType in new string[] { "dependencies", "devDependencies" })
                         {
-                            projectJson[dependencyType][packageName] = packageVersion;
+                            // Only update existing dependencies.  Not necessary to add dependencies not already present.
+                            if (packageJson[dependencyType]?[packageName] != null)
+                            {
+                                packageJson[dependencyType][packageName] = packageVersion;
+                            }
                         }
                     }
                 }
             }
 
+            File.Copy(commonVersionsFile, commonVersionsFile + ".bak", overwrite: true);
+            File.WriteAllText(commonVersionsFile, commonVersionsJson.ToString() + Environment.NewLine);
+
             File.Copy(projectFile, projectFile + ".bak", overwrite: true);
             File.WriteAllText(projectFile, projectJson.ToString() + Environment.NewLine);
 
-            await Util.RunAsync("node", $"{_rush} update", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            File.Copy(testUtilsProjectFile, testUtilsProjectFile + ".bak", overwrite: true);
+            File.WriteAllText(testUtilsProjectFile, testUtilsProjectJson.ToString() + Environment.NewLine);
+
+            await Util.RunAsync("node", $"{_rush} update --full", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             if (track1)
             {
@@ -207,11 +225,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Delete(Path.Combine(WorkingDirectory, "common", "config", "rush", "deploy.json"));
             Util.DeleteIfExists(Path.Combine(WorkingDirectory, "common", "deploy"));
 
+            var commonVersionsFile = Path.Combine(WorkingDirectory, "common", "config", "rush", "common-versions.json");
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var projectFile = Path.Combine(projectDirectory, "package.json");
+            var testUtilsProjectFile = Path.Combine(WorkingDirectory, "sdk", "test-utils", "perf", "package.json");
 
             // Restore backups
+            File.Move(commonVersionsFile + ".bak", commonVersionsFile, overwrite: true);
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
+            File.Move(testUtilsProjectFile + ".bak", testUtilsProjectFile, overwrite: true);
 
             return Task.CompletedTask;
         }

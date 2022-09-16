@@ -6,8 +6,6 @@ COPY windows-git-install.ps1 /tempcode/
 
 RUN pwsh /tempcode/windows-git-install.ps1
 
-RUN pwsh -c "gci -R /git"
-
 # publish the package
 RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f net6.0
 

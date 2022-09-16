@@ -67,6 +67,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         }
                         else
                         {
+                            // TODO: Consider only updating deps if they exist, rather than inserting
+                            // Some packages may need inserting, but some may only need updating.
                             packageJson["dependencies"][packageName] = packageVersion;
                         }
                     }

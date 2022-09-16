@@ -1,23 +1,27 @@
 parameters:
 - name: TestNet
+  displayName: Test .NET?
   type: boolean
   default: true
 - name: NetRepoCommitish
   type: string
   default: 'main'
 - name: TestJava
+  displayName: Test Java?
   type: boolean
   default: true
 - name: JavaRepoCommitish
   type: string
   default: 'main'
 - name: TestJS
+  displayName: Test JS?
   type: boolean
   default: true
 - name: JSRepoCommitish
   type: string
   default: 'main'
 - name: TestPython
+  displayName: Test Python?
   type: boolean
   default: true
 - name: PythonRepoCommitish

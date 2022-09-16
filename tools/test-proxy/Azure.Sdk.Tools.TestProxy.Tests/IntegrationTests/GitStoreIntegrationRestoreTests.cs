@@ -193,9 +193,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             }
         }
 
-
-        // Scenario4
-        // NONEXISTENT or INVALID tag
         [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{

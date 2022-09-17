@@ -42,7 +42,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // Install dev reqs
             await Util.RunAsync(pip, "install -r dev_requirements.txt", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
-            // TODO: Support multiple packages if possible.  Maybe by force installing?
             foreach (var v in packageVersions)
             {
                 var packageName = v.Key;
@@ -50,7 +49,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion == Program.PackageVersionSource)
                 {
-                    await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                    if (packageName == primaryPackage)
+                    {
+                        await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                    }
+                    // TODO: Consider installing source versions of non-primary packages.  Would require finding package in source tree.
+                    //       So far, this seems unnecessary, since dev-requirements.txt usually includes core.
                 }
                 else
                 {

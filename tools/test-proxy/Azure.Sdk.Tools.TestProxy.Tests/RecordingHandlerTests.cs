@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -632,7 +633,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var upstreamRequestContext = GenerateHttpRequestContext(incomingHeaders);
 
-            var output = recordingHandler.CreateUpstreamRequest(upstreamRequestContext.Request, new byte[] { });
+            var output = recordingHandler.CreateUpstreamRequest(upstreamRequestContext.Request);
 
             // iterate across the set we know about and confirm that GenerateUpstreamRequest worked properly!
             var setOfHeaders = GenerateHeaderValuesTuples(incomingHeaders);
@@ -684,7 +685,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             httpContext.Request.Method = "GET";
 
-            var upstreamRequest = testRecordingHandler.CreateUpstreamRequest(httpContext.Request, new byte[] { });
+            var upstreamRequest = testRecordingHandler.CreateUpstreamRequest(httpContext.Request);
 
             if (!String.IsNullOrWhiteSpace(upstreamHostHeaderValue))
             {
@@ -693,6 +694,52 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             else
             {
                 Assert.Null(upstreamRequest.Headers.Host);
+            }
+        }
+
+        [Fact]
+        public async Task TestRecordWithGZippedContent()
+        {
+            var httpContext = new DefaultHttpContext();
+            var bodyBytes = Encoding.UTF8.GetBytes("{\"hello\":\"world\"}");
+            var mockClient = new HttpClient(new MockHttpHandler(bodyBytes, "application/json", "gzip"));
+            var path = Directory.GetCurrentDirectory();
+            var recordingHandler = new RecordingHandler(path)
+            {
+                RedirectableClient = mockClient,
+                RedirectlessClient = mockClient
+            };
+
+            var relativePath = "recordings/gzip";
+            var fullPathToRecording = Path.Combine(path, relativePath) + ".json";
+
+            await recordingHandler.StartRecordingAsync(relativePath, httpContext.Response);
+
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            httpContext.Request.ContentType = "application/json";
+            httpContext.Request.Headers["Content-Encoding"] = "gzip";
+            httpContext.Request.ContentLength = 0;
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Request.Headers["x-recording-upstream-base-uri"] = "http://example.org";
+            httpContext.Request.Method = "GET";
+            httpContext.Request.Body = new MemoryStream(GZipUtilities.CompressBody(bodyBytes, httpContext.Request.Headers));
+
+            await recordingHandler.HandleRecordRequestAsync(recordingId, httpContext.Request, httpContext.Response);
+            recordingHandler.StopRecording(recordingId);
+
+            try
+            {
+                using var fileStream = File.Open(fullPathToRecording, FileMode.Open);
+                using var doc = JsonDocument.Parse(fileStream);
+                var record = RecordSession.Deserialize(doc.RootElement);
+                var entry = record.Entries.First();
+                Assert.Equal("{\"hello\":\"world\"}", Encoding.UTF8.GetString(entry.Request.Body));
+                Assert.Equal("{\"hello\":\"world\"}", Encoding.UTF8.GetString(entry.Response.Body));
+            }
+            finally
+            {
+                File.Delete(fullPathToRecording);
             }
         }
 
@@ -979,17 +1026,38 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     internal class MockHttpHandler : HttpMessageHandler
     {
         public const string DefaultResponse = "default response";
+        private readonly byte[] _responseContent;
+        private readonly string _contentType;
+        private readonly string _contentEncoding;
 
-        public MockHttpHandler()
+        public MockHttpHandler(byte[] responseContent = default, string contentType = default, string contentEncoding = default)
         {
+            _responseContent = responseContent ?? Encoding.UTF8.GetBytes(DefaultResponse);
+            _contentType = contentType ?? "application/json";
+            _contentEncoding = contentEncoding;
         }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            var response = new HttpResponseMessage(HttpStatusCode.OK);
 
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            // we need to set the content before the content headers as otherwise they will be cleared out after setting content.
+            if (_contentEncoding == "gzip")
             {
-                Content = new StringContent(DefaultResponse)
-            });
+                response.Content = new ByteArrayContent(GZipUtilities.CompressBodyCore(_responseContent));
+            }
+            else
+            {
+                response.Content = new ByteArrayContent(_responseContent);
+            }
+
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue(_contentType);
+            if (_contentEncoding != null)
+            {
+                response.Content.Headers.ContentEncoding.Add(_contentEncoding);
+            }
+
+            return Task.FromResult(response);
         }
     }
 }

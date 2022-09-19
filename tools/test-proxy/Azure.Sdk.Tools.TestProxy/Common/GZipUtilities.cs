@@ -37,16 +37,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static byte[] CompressBodyCore(byte[] body)
         {
-            using (var uncompressedStream = new MemoryStream(body))
-            using (var resultStream = new MemoryStream())
+            using var uncompressedStream = new MemoryStream(body);
+            using var resultStream = new MemoryStream();
+            using (var compressedStream = new GZipStream(resultStream, CompressionMode.Compress))
             {
-                using (var compressedStream = new GZipStream(resultStream, CompressionMode.Compress))
-                {
-                    uncompressedStream.CopyTo(compressedStream);
-                }
-
-                return resultStream.ToArray();
+                uncompressedStream.CopyTo(compressedStream);
+                compressedStream.Flush();
             }
+            return resultStream.ToArray();
         }
 
         public static byte[] DecompressBody(MemoryStream incomingBody, HttpContentHeaders headers)

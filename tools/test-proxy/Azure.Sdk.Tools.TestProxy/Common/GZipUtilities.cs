@@ -42,7 +42,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             using (var compressedStream = new GZipStream(resultStream, CompressionMode.Compress))
             {
                 uncompressedStream.CopyTo(compressedStream);
-                compressedStream.Flush();
             }
             return resultStream.ToArray();
         }

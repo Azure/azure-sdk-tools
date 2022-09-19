@@ -10,6 +10,7 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Options;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -28,18 +29,22 @@ namespace APIViewWeb.Pages.Assemblies
 
         public readonly UserPreferenceCache _preferenceCache;
 
+        public readonly OrganizationOptions _options;
+
         public ReviewPageModel(
             ReviewManager manager,
             BlobCodeFileRepository codeFileRepository,
             CommentsManager commentsManager,
             NotificationManager notificationManager,
-            UserPreferenceCache preferenceCache)
+            UserPreferenceCache preferenceCache,
+            IOptions<OrganizationOptions> options)
         {
             _manager = manager;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
             _preferenceCache = preferenceCache;
+            _options = options.Value;
 
         }
 
@@ -53,6 +58,7 @@ namespace APIViewWeb.Pages.Assemblies
         public CodeLineModel[] Lines { get; set; }
         public InlineDiffLine<CodeLine>[] DiffLines { get; set; }
         public ReviewCommentsModel Comments { get; set; }
+        public HashSet<GithubUser> TaggableUsers { get; set; }
 
         /// <summary>
         /// The number of active conversations for this iteration
@@ -83,6 +89,8 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }
+
+            TaggableUsers = _commentsManager.TaggableUsers;
 
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
             Revision = revisionId != null ?

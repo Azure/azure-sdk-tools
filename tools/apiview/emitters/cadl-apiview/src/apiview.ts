@@ -28,7 +28,6 @@ import {
   UnionExpressionNode,
 } from "@cadl-lang/compiler";
 import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
-import { getFullyQualifiedNamespace } from "./emitter.js";
 import { ApiViewNavigation } from "./navigation.js";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
@@ -51,6 +50,18 @@ export const enum ApiViewTokenKind {
   DeprecatedRangeEnd = 14,
   SkipDiffRangeStart = 15,
   SkipDiffRangeEnd = 16,
+  // New Token Types
+  FoldableSectionHeading = 17,
+  FoldableSectionContentStart = 18,
+  FoldableSectionContentEnd = 19,
+  TableBegin = 20,
+  TableEnd = 21,
+  TableRowCount = 22,
+  TableColumnCount = 23,
+  TableColumnName = 24,
+  TableCellBegin = 25,
+  TableCellEnd = 26,
+  LeafSectionPlaceholder = 27
 }
 
 export interface ApiViewToken {
@@ -266,7 +277,7 @@ export class ApiViewDocument {
     // collect namespaces in program
     navigateProgram(program, {
       namespace(obj) {
-        const name = getFullyQualifiedNamespace(obj);
+        const name = program.checker.getNamespaceString(obj);
         allNamespaces.set(name, obj);
       },
     });

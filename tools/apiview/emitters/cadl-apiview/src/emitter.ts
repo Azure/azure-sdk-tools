@@ -42,16 +42,6 @@ export function resolveOptions(
   };
 }
 
-// TODO: Move this to Cadl compiler?
-export function getFullyQualifiedNamespace(ns: Namespace, suffix?: string): string {
-  suffix = suffix ?? ns.name;
-  if (ns.namespace != undefined && ns.namespace.name != "") {
-    return getFullyQualifiedNamespace(ns.namespace, `${ns.namespace.name}.${suffix}`);
-  } else {
-    return suffix;
-  }
-}
-
 function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterOptions) {
   return { emitApiView };
 
@@ -73,15 +63,14 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         program = projectProgram(program, record.projections);
       }
 
-      await emitApiViewFromVersion(serviceNs, record.version);
+      await emitApiViewFromVersion(serviceNs, program.checker.getNamespaceString(serviceNs), record.version);
     }
   }
 
-  async function emitApiViewFromVersion(serviceNamespace: Namespace, version?: string) {
-    const rootNamespaceName = getFullyQualifiedNamespace(serviceNamespace);
+  async function emitApiViewFromVersion(serviceNamespace: Namespace, namespaceString: string, version?: string) {
     const serviceTitle = getServiceTitle(program);
     const serviceVersion = version ?? getServiceVersion(program);
-    const apiview = new ApiViewDocument(serviceTitle, rootNamespaceName, serviceVersion);
+    const apiview = new ApiViewDocument(serviceTitle, namespaceString, serviceVersion);
     apiview.emit(program);
     apiview.resolveMissingTypeReferences();
 

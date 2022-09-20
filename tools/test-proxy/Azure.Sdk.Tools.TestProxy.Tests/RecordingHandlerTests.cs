@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
-        public JsonSerializerOptions SerializerOptions = new JsonSerializerOptions
+        public static JsonSerializerOptions SerializerOptions = new JsonSerializerOptions
         {
             ReadCommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true,
@@ -713,7 +713,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void TestSetRecordingOptionsHandlesValidRedirectSetting(string body, bool expectedSetting)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var httpContext = new DefaultHttpContext();
             Dictionary<string, object> inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
 
             testRecordingHandler.SetRecordingOptions(inputBody);
@@ -729,7 +728,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void TestSetRecordingOptionsThrowsOnInvalidRedirectSetting(string body, string errorText)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var httpContext = new DefaultHttpContext();
 
             Dictionary<string, object> inputBody = null;
             if (!string.IsNullOrWhiteSpace(body))

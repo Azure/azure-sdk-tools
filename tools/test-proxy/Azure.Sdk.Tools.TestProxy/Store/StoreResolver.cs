@@ -76,12 +76,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public static string ParseAssetsJsonBody(IDictionary<string, object> options)
         {
-            if (!options.ContainsKey("AssetsJsonLocation"))
+            if (!options.ContainsKey("x-recording-assets-file"))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "Users provide the key AssetsJsonLocation within the JSON body sent to this endpoint.");
             }
 
-            var value = options["AssetsJsonLocation"].ToString();
+            var value = options["x-recording-assets-file"].ToString();
 
             if (string.IsNullOrWhiteSpace(value))
             {

@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
 
-            await _recordingHandler.Store.Restore(pathToAssets);
+            await _recordingHandler.Restore(pathToAssets);
         }
 
         public async Task HandleRequest()

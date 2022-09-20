@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     {
         public Task Push(string pathToAssetsJson) { return null; }
 
-        public Task Restore(string pathToAssetsJson) { return null; }
+        public Task<string> Restore(string pathToAssetsJson) { return null; }
 
         public Task Reset(string assetsJspathToAssetsJsononPath) { return null; }
 

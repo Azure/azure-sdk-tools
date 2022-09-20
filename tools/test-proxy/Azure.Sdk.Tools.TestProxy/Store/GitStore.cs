@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
-        public async Task Restore(string pathToAssetsJson) {
+        public async Task<string> Restore(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = IsAssetsRepoInitialized(config);
 
@@ -113,6 +113,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             CheckoutRepoAtConfig(config);
+
+            return config.AssetsRepoLocation;
         }
 
         /// <summary>

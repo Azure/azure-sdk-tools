@@ -5,8 +5,10 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Http;
+using Castle.Components.DictionaryAdapter;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -184,6 +186,174 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        // Scenario4
+        // Sometime in the past, our assets repo was restored to language/tables_bb2223
+        // Our local copy of the assets repo has set of tags A, B, and C.
+        //
+        // However, after we update our language repo, our assets.json is also updated to a new tag. If we attempt  a restore
+        // operation, we need to have a way to ensure that the asset-sync repo doesn't just return "yes I'm initialized" and
+        // actually updates itself from origin prior to checking out the targeted tag.
+        //
+        // Order of operations
+        //   - restore language/tables_bb2223 on a fresh gitstore
+        //   - push a new test tag under test/<blah>
+        //   - restore the new test tag on a fresh gitstore.
+        //
+        // Using a fresh gitstore for each restore will simulate different CLI calls, as whether or not an assets repo is
+        // initialized is aggressively cached within each given gitstore.
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_bb2223""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task Scenario4(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+            var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+            var tempTag = string.Format("test_{0}", Guid.NewGuid().ToString());
+            await _defaultStore.Restore(jsonFileLocation);
+            GitStore additionalStore = new GitStore();
+
+            try
+            {
+                TestHelpers.InitIntegrationTag(assets, tempTag);
+                assets.Tag = tempTag;
+                TestHelpers.WriteTestFile(JsonSerializer.Serialize(assets), jsonFileLocation);
+                // this is the first time this Gitstore has seen this assets.json. This allows
+                // us to simulate a re-entrant command on an already initialized repo.
+                await additionalStore.Restore(jsonFileLocation);
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
+            }
+        }
+
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": """"
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task NonexistentTagFallsBack(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+
+            try
+            {
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+
+                await _defaultStore.Restore(jsonFileLocation);
+
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+
+                Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""INVALID_TAG""
+        }", "error: pathspec 'INVALID_TAG' did not match any file(s) known to git")]
+        [Trait("Category", "Integration")]
+        public async Task InvalidTagThrows(string inputJson, string httpException)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+
+            try
+            {
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+
+                var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
+                {
+                    await _defaultStore.Restore(jsonFileLocation);
+                });
+                Assert.Contains(httpException, assertion.Message);
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_bb2223""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task RestoreUpdatesContext(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = System.Text.Json.JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+            var pathToAssets = Path.Join(testFolder, "assets.json");
+            var currentDirectory = Environment.CurrentDirectory;
+            var recordingHandler = new RecordingHandler(currentDirectory, _defaultStore);
+
+            try
+            {
+                await recordingHandler.Restore(pathToAssets);
+
+                var result = (await _defaultStore.ParseConfigurationFile(pathToAssets)).AssetsRepoLocation;
+
+                Assert.Equal(result, recordingHandler.ContextDirectory);
             }
             finally
             {

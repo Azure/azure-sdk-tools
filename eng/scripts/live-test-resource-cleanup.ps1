@@ -254,9 +254,11 @@ function HasExpiredDeleteAfterTag([string]$DeleteAfter) {
 }
 
 function HasException([object]$ResourceGroup) {
-  if ($Exceptions.Count -and $Exceptions.Contains($ResourceGroup.ResourceGroupName)) {
-    Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it is in the allow list '$AllowListPath'"
-    return $true
+  foreach ($ex in $Exceptions) {
+    if ($ResourceGroup.ResourceGroupName -like $ex) {
+      Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it matches pattern '$ex' in the allow list '$AllowListPath'"
+      return $true
+    }
   }
   return $false
 }

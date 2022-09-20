@@ -1,9 +1,9 @@
 package com.azure.tools.apiview.processor;
 
-import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.Analyser;
+import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.KotlinASTAnalyser;
-import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
+//import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.azure.tools.apiview.processor.model.DiagnosticKind;
@@ -12,6 +12,7 @@ import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import net.lingala.zip4j.ZipFile;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,7 +48,7 @@ public class Main {
 //            System.exit(-1);
 //        }
 
-        final String jarFiles = "test-1.0.0.0-sources.jar";
+        final String jarFiles = "final-1.0.2-sources.jar";
         final String[] jarFilesArray = jarFiles.split(",");
 
         final File outputDir = new File("test-result");
@@ -121,9 +122,6 @@ public class Main {
 
         if (inputFile.getName().endsWith("-sources.jar")) {
             processJavaSourcesJar(inputFile, apiListing);
-        } else if (inputFile.getName().endsWith(".xml")) {
-            // We are *probably* looking at a Maven BOM / POM file, let's analyse it!
-            processXmlFile(inputFile, apiListing);
         } else {
             apiListing.getTokens().add(new Token(LINE_ID_MARKER, "Error!", "error"));
             apiListing.addDiagnostic(new Diagnostic(
@@ -155,71 +153,49 @@ public class Main {
         apiListing.setReviewName(reviewName);
         apiListing.setPackageName(packageName);
         apiListing.setPackageVersion(reviewProperties.getMavenPom().getVersion());
-        apiListing.setLanguage("Java");
+        apiListing.setLanguage("Kotlin");
         apiListing.setMavenPom(reviewProperties.getMavenPom());
 
-        final Analyser analyser = new KotlinASTAnalyser();
+//        final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
+//
+////         Read all files within the jar file so that we can create a list of files to analyse
+//        final List<Path> allFiles = new ArrayList<>();
+//        try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
+//            fs.getRootDirectories().forEach(root -> {
+//                try (Stream<Path> paths = Files.walk(root)) {
+//                    paths.forEach(allFiles::add);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    System.exit(-1);
+//                }
+//            });
+//
+//            // Do the analysis while the filesystem is still represented in memory
+//            analyser.analyse(allFiles);
+//        }
 
-        // Read all files within the jar file so that we can create a list of files to analyse
-        final List<Path> allFiles = new ArrayList<>();
-        try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
-            fs.getRootDirectories().forEach(root -> {
-                try (Stream<Path> paths = Files.walk(root)) {
-                    paths.forEach(allFiles::add);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    System.exit(-1);
-                }
-            });
+        String destination = "temp/" + inputFile.getName();
+        cleanDestinationDirectory(new File(destination));
 
-            // Do the analysis while the filesystem is still represented in memory
-            analyser.analyse(allFiles);
-        }
+        ZipFile zipFile = new ZipFile(inputFile);
+        zipFile.extractAll(destination);
+
+        File file = new File(destination);
+        final Analyser analyser = new KotlinASTAnalyser(apiListing);
+        analyser.analyse(file.getAbsolutePath());
     }
 
-    private static void processXmlFile(File inputFile, APIListing apiListing) {
-        final ReviewProperties reviewProperties = new ReviewProperties();
-
-        try (FileInputStream fis = new FileInputStream(inputFile)) {
-            String reviewName;
-            String packageName;
-            String packageVersion;
-            String reviewLanguage;
-
-            try {
-                reviewProperties.setMavenPom(new Pom(fis));
-
-                final String groupId = reviewProperties.getMavenPom().getGroupId();
-                packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
-                packageVersion = reviewProperties.getMavenPom().getVersion();
-                reviewName = reviewProperties.getMavenPom().getArtifactId() + " (version " + packageVersion + ")";
-                reviewLanguage = "Java";
-
-                apiListing.setMavenPom(reviewProperties.getMavenPom());
-            } catch (IOException e) {
-                // this is likely to not be a maven pom file
-                reviewName = inputFile.getName();
-                packageName = reviewName;
-                packageVersion = "1.0.0";
-                reviewLanguage = "Xml";
-            }
-
-            System.out.println("  Using '" + reviewName + "' for the review name");
-            System.out.println("  Using '" + packageName + "' for the package name");
-            System.out.println("  Using '" + packageVersion + "' for the package version");
-
-            apiListing.setReviewName(reviewName);
-            apiListing.setPackageName(packageName);
-            apiListing.setPackageVersion(packageVersion);
-            apiListing.setLanguage(reviewLanguage);
-
-            final Analyser analyser = new XMLASTAnalyser(apiListing);
-            analyser.analyse(inputFile.toPath());
-        } catch (IOException e) {
-            e.printStackTrace();
+    private static void cleanDestinationDirectory(File file){
+        if (file == null) {
+            return;
         }
 
-
+        if (file.isDirectory()) {
+            for (File f : file.listFiles()) {
+                cleanDestinationDirectory(f);
+            }
+        }
+        file.delete();
     }
 
     private static class ReviewProperties {

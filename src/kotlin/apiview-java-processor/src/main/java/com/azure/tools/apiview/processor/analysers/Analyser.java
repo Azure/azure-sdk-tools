@@ -1,6 +1,7 @@
 package com.azure.tools.apiview.processor.analysers;
 
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -26,5 +27,8 @@ public interface Analyser {
 
     default void analyse(Path file) {
         analyse(Arrays.asList(file));
+    }
+
+    default void analyse(String absolutePath) {
     }
 }

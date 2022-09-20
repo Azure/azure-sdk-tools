@@ -149,7 +149,7 @@ public class JavaASTAnalyser implements Analyser {
             return false;
         } else {
             // Only include Java files.
-            return fileName.endsWith(".java") || fileName.endsWith(".kt") || fileName.endsWith("pom.xml");
+            return fileName.endsWith(".java")  || fileName.endsWith("pom.xml");
         }
     }
 
@@ -469,7 +469,7 @@ public class JavaASTAnalyser implements Analyser {
                     // we have an empty interface declaration, it is probably a marker interface and we will leave a
                     // comment to that effect
                     indent();
-                    addComment("// This interface is does not declare any API.");
+                    addComment("// This interface does not declare any API.");
                     unindent();
                 }
             }

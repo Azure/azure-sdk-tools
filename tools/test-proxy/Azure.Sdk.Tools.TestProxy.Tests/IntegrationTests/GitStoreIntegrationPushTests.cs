@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
-                TestHelpers.CleanupIntegrationTestBranch(updatedAssets);
+                TestHelpers.CleanupIntegrationTestTag(updatedAssets);
             }
         }
 
@@ -184,7 +184,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
-                TestHelpers.CleanupIntegrationTestBranch(updatedAssets);
+                TestHelpers.CleanupIntegrationTestTag(updatedAssets);
             }
         }
 
@@ -277,7 +277,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
-                TestHelpers.CleanupIntegrationTestBranch(updatedAssets);
+                TestHelpers.CleanupIntegrationTestTag(updatedAssets);
             }
         }
     }

@@ -193,6 +193,61 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             }
         }
 
+        // Scenario4
+        // Sometime in the past, our assets repo was restored to language/tables_bb2223
+        // Our local copy of the assets repo has set of tags A, B, and C.
+        //
+        // However, after we update our language repo, our assets.json is also updated to a new tag. If we attempt  a restore
+        // operation, we need to have a way to ensure that the asset-sync repo doesn't just return "yes I'm initialized" and
+        // actually updates itself from origin prior to checking out the targeted tag.
+        //
+        // Order of operations
+        //   - restore language/tables_bb2223 on a fresh gitstore
+        //   - push a new test tag under test/<blah>
+        //   - restore the new test tag on a fresh gitstore.
+        //
+        // Using a fresh gitstore for each restore will simulate different CLI calls, as whether or not an assets repo is
+        // initialized is aggressively cached within each given gitstore.
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""language/tables_bb2223""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task Scenario4(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+            var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+            var tempTag = string.Format("test_{0}", Guid.NewGuid().ToString());
+            await _defaultStore.Restore(jsonFileLocation);
+            GitStore additionalStore = new GitStore();
+
+            try
+            {
+                TestHelpers.InitIntegrationTag(assets, tempTag);
+                assets.Tag = tempTag;
+                TestHelpers.WriteTestFile(JsonSerializer.Serialize(assets), jsonFileLocation);
+                // this is the first time this Gitstore has seen this assets.json. This allows
+                // us to simulate a re-entrant command on an already initialized repo.
+                await additionalStore.Restore(jsonFileLocation);
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
+            }
+        }
+
         [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{

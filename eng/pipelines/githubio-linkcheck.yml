@@ -2,7 +2,7 @@ trigger: none
 pr: none
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2004-general
+  name: azsdk-pool-mms-ubuntu-2004-perf
   vmImage: MMSUbuntu20.04
 
 variables:

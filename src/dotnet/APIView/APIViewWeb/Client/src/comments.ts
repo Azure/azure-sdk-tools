@@ -11,6 +11,9 @@
     let CurrentUserSuggestionElements: HTMLElement[] = [];
     let CurrentUserSuggestionIndex = -1;
 
+    // simple github username match
+    const githubLoginTagMatch = /(\s|^)@([a-zA-Z\d-]+)/g;
+
     $(document).on("click", ".commentable", e => {
         showCommentBox(e.target.id);
         e.preventDefault();
@@ -64,6 +67,7 @@
             serializedForm.push({ name: "elementId", value: lineId });
             serializedForm.push({ name: "reviewId", value: getReviewId(e.target) });
             serializedForm.push({ name: "revisionId", value: getRevisionId(e.target) });
+            serializedForm.push({ name: "taggedUsers", value: getTaggedUsers(e.target) });
 
             $.ajax({
                 type: "POST",
@@ -150,9 +154,6 @@
             return;
         }
 
-        // simple github username match
-        const taggedUserMatch = /(\s|^)@([a-zA-Z\d-]+)/g
-
         // current value of form not including key currently pressed
         let currentVal: string = e.target.value;
         // system keys should allow the list to be updated, but should not be added as a key
@@ -178,6 +179,8 @@
         
         // list of suggested users container
         const suggestionBox = $(e.target).parent().find(".tag-user-suggestion");
+        
+        // mirror box helps calculate x and y to place suggestion box at
         const mirrorBox = $(e.target).parent().find(".new-thread-comment-text-mirror");
 
         if(!suggestionBox.hasClass("d-none")) {
@@ -231,11 +234,14 @@
             mirrorBox.get(0).innerText = upToCurrent.split('\n')[upToCurrent.split('\n').length - 1];
 
             const left = (<number>mirrorBox.innerWidth()) % ((<HTMLTextAreaElement>e.target).clientWidth - 24);
-            while ((matchArray = taggedUserMatch.exec(currentVal)) !== null) {
+
+            // reset regex last checked index
+            githubLoginTagMatch.lastIndex = 0;
+            while ((matchArray = githubLoginTagMatch.exec(currentVal)) !== null) {
                 // matchArray[0] = whole matched item
                 // matchArray[1] = empty or whitespace (matched to start of string or single whitespace before tag)
                 // matchArray[2] = tag excluding @ symbol
-                const end = taggedUserMatch.lastIndex; // last index = end of string
+                const end = githubLoginTagMatch.lastIndex; // last index = end of string
                 const stringLength = matchArray[2].length + 1; // add length of @ char
                 const start = end - stringLength;
                 
@@ -334,6 +340,18 @@
 
     function getRevisionId(element: HTMLElement) {
         return getParentData(element, "data-revision-id");
+    }
+
+    function getTaggedUsers(element: HTMLFormElement): string[] {
+        githubLoginTagMatch.lastIndex = 0;
+        let matchArray;
+        const taggedUsers: string[] = [];
+
+        const currentValue = new FormData(element).get("commentText") as string;
+        while((matchArray = githubLoginTagMatch.exec(currentValue)) !== null) {
+            taggedUsers.push(matchArray[2]);
+        }
+        return taggedUsers;
     }
 
     function getElementId(element: HTMLElement) {

@@ -6,6 +6,7 @@ This transition document is written for the intended audience of Azure SDK devs 
 
 - [x] The transition script is written in **powershell core**
 - [x] A working installation of either `.NET>5.0` OR `docker`
+- [x] Git version `>2.25.1`
 
 ## Nomenclature
 

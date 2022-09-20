@@ -34,13 +34,23 @@ export class ApiViewNavigation {
         NamespaceStack.push(objNode.name);
         this.Text = objNode.name;
         this.Tags = { TypeKind: ApiViewNavigationKind.Module };
-        this.ChildItems = [];
+        const operationItems = new Array<ApiViewNavigation>();
         for (const node of objNode.operations.values()) {
-          this.ChildItems.push(new ApiViewNavigation(node));
+          operationItems.push(new ApiViewNavigation(node));
         }
+        const resourceItems = new Array<ApiViewNavigation>();
+        for (const node of objNode.resources.values()) {
+          resourceItems.push(new ApiViewNavigation(node));
+        }
+        const modelItems = new Array<ApiViewNavigation>();
         for (const node of objNode.models.values()) {
-          this.ChildItems.push(new ApiViewNavigation(node));
+          modelItems.push(new ApiViewNavigation(node));
         }
+        this.ChildItems = [
+          { Text: "Operations", ChildItems: operationItems, Tags: { TypeKind: ApiViewNavigationKind.Method }, NavigationId: "" },
+          { Text: "Resources", ChildItems: resourceItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" },
+          { Text: "Models", ChildItems: modelItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" },
+        ];
         break;
       case SyntaxKind.ModelStatement:
         obj = objNode as ModelStatementNode;

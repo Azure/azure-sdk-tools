@@ -24,6 +24,14 @@ export class NamespaceModel {
   name: string;
   node: NamespaceStatementNode;
   operations = new Map<string, OperationStatementNode | InterfaceStatementNode>();
+  resources = new Map<
+    string,
+    | ModelStatementNode
+    | ModelExpressionNode
+    | IntersectionExpressionNode
+    | ProjectionModelExpressionNode
+    | EnumStatementNode
+  >();
   models = new Map<
     string,
     | ModelStatementNode
@@ -45,10 +53,21 @@ export class NamespaceModel {
       this.operations.set(intName, int.node);
     }
 
-    // Gather models
+    // Gather models and resources
     for (const [modelName, model] of ns.models) {
       if (model.node != undefined) {
-        this.models.set(modelName, model.node);
+        let isResource = false;
+        for (const dec of model.decorators) {
+          if (dec.decorator.name == "$resource") {
+            isResource = true;
+            break;
+          }
+        }
+        if (isResource) {
+          this.resources.set(modelName, model.node);
+        } else {
+          this.models.set(modelName, model.node);
+        }
       } else {
         throw new Error("Unexpectedly found undefined model node.");
       }
@@ -59,6 +78,7 @@ export class NamespaceModel {
 
     // sort operations and models
     this.operations = new Map([...this.operations].sort());
+    this.resources = new Map([...this.resources].sort());
     this.models = new Map([...this.models].sort());
   }
 }

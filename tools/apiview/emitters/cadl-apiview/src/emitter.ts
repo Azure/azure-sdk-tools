@@ -63,11 +63,11 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         program = projectProgram(program, record.projections);
       }
 
-      await emitApiViewFromVersion(serviceNs, program.checker.getNamespaceString(serviceNs), record.version);
+      await emitApiViewFromVersion(program.checker.getNamespaceString(serviceNs), record.version);
     }
   }
 
-  async function emitApiViewFromVersion(serviceNamespace: Namespace, namespaceString: string, version?: string) {
+  async function emitApiViewFromVersion(namespaceString: string, version?: string) {
     const serviceTitle = getServiceTitle(program);
     const serviceVersion = version ?? getServiceVersion(program);
     const apiview = new ApiViewDocument(serviceTitle, namespaceString, serviceVersion);

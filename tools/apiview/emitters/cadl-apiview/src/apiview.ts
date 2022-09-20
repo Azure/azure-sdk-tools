@@ -614,6 +614,9 @@ export class ApiViewDocument {
     for (const node of model.operations.values()) {
       this.tokenize(node);
     }
+    for (const node of model.resources.values()) {
+      this.tokenize(node);
+    }
     for (const node of model.models.values()) {
       this.tokenize(node);
     }

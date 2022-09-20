@@ -68,6 +68,10 @@ Services:
       AdditionalArguments: &java-additional-arguments
         warmup: 15
         duration: 15
+    Cpp:
+      Project: azure-perf-test
+      PackageVersions:
+      - azure-core-cpp: source
   Tests:
   - Test: jsonsend
     Arguments: &core-document-sizes
@@ -115,7 +119,12 @@ Services:
     - --size 10485760 --parallel 32 --backend-type blobs --http-client okhttp
     TestNames:
       Java: binarydatareceive
-
+  - Test: extendedOptions
+    Arguments:
+    - -e 1
+    TestNames:
+      Cpp: extendedOptions
+       
 - Service: storage-blob
   Languages:
     Net:

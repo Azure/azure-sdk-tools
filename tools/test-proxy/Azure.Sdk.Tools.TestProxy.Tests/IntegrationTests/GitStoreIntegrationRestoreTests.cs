@@ -6,7 +6,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Castle.Components.DictionaryAdapter;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -184,6 +186,82 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": """"
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task NonexistentTagFallsBack(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+
+            try
+            {
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+
+                await _defaultStore.Restore(jsonFileLocation);
+
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+
+                Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
+              ""Tag"": ""INVALID_TAG""
+        }", "error: pathspec 'INVALID_TAG' did not match any file(s) known to git")]
+        [Trait("Category", "Integration")]
+        public async Task InvalidTagThrows(string inputJson, string httpException)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+
+            try
+            {
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+
+                var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
+                {
+                    await _defaultStore.Restore(jsonFileLocation);
+                });
+                Assert.Contains(httpException, assertion.Message);
             }
             finally
             {

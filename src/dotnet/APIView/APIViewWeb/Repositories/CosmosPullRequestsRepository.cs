@@ -13,11 +13,13 @@ namespace APIViewWeb
     public class CosmosPullRequestsRepository
     {
         private readonly Container _pullRequestsContainer;
+        private CosmosReviewRepository _reviewsRepository;
 
-        public CosmosPullRequestsRepository(IConfiguration configuration)
+        public CosmosPullRequestsRepository(IConfiguration configuration, CosmosReviewRepository reviewsRepository)
         {
             var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
             _pullRequestsContainer = client.GetContainer("APIView", "PullRequests");
+            _reviewsRepository = reviewsRepository;
         }
 
         public async Task<PullRequestModel> GetPullRequestAsync(int pullRequestNumber, string repoName, string packageName, string language = null)
@@ -52,7 +54,22 @@ namespace APIViewWeb
                 var result = await itemQueryIterator.ReadNextAsync();
                 allRequests.AddRange(result.Resource);
             }
-            return allRequests;
+
+            // Cosmos doesn't allow cross join of two containers so we need to filter closed API reviews
+            var filtered = new List<PullRequestModel>();
+            foreach(var pr in allRequests)
+            {
+                if(!await IsApiReviewClosed(pr.ReviewId))
+                    filtered.Add(pr);
+            }
+
+            return filtered;
+        }
+
+        private async Task<bool> IsApiReviewClosed(string reviewId)
+        {
+            var review = await _reviewsRepository.GetReviewAsync(reviewId);
+            return review?.IsClosed ?? true;
         }
 
         public async Task<List<PullRequestModel>> GetPullRequestsAsync(int pullRequestNumber, string repoName)

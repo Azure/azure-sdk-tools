@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Castle.Components.DictionaryAdapter;
 using Microsoft.Extensions.Logging;
 using Xunit;
 

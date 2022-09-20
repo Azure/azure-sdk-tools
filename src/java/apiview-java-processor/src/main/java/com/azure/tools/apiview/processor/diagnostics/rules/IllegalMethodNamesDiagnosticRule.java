@@ -43,8 +43,8 @@ public class IllegalMethodNamesDiagnosticRule implements DiagnosticRule {
     }
 
     public static class Rule {
-        private Pattern classNamePattern;
-        private Pattern methodNamePattern;
+        private final Pattern classNamePattern;
+        private final Pattern methodNamePattern;
 
         public Rule(String methodNamePattern) {
             this(null, methodNamePattern);

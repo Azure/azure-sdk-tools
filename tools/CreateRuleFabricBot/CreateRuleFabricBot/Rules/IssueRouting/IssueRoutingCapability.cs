@@ -1,11 +1,9 @@
-﻿using CreateRuleFabricBot.CommandLine;
-using CreateRuleFabricBot.Markdown;
+﻿using Azure.Sdk.Tools.CodeOwnersParser;
 using Newtonsoft.Json.Linq;
 using OutputColorizer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
 
 namespace CreateRuleFabricBot.Rules.IssueRouting
 {

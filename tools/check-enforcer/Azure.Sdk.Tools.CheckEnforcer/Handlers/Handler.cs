@@ -125,7 +125,7 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
             }
 
             var otherRuns = from run in runs
-                            where run.Name != this.GlobalConfigurationProvider.GetApplicationName()
+                            where run.Name != this.GlobalConfigurationProvider.GetApplicationName() && run.Conclusion != new StringEnum<CheckConclusion>(CheckConclusion.Neutral)
                             select run;
 
             var totalOtherRuns = otherRuns.Count();
@@ -135,7 +135,6 @@ namespace Azure.Sdk.Tools.CheckEnforcer.Handlers
                                         select run;
 
             var totalOutstandingOtherRuns = outstandingOtherRuns.Count();
-
             if (totalOtherRuns >= configuration.MinimumCheckRuns && totalOutstandingOtherRuns == 0 && checkEnforcerRuns.Any(checkEnforcerRun => checkEnforcerRun.Conclusion != new StringEnum<CheckConclusion>(CheckConclusion.Success)))
             {
                 foreach (var checkEnforcerRun in checkEnforcerRuns)

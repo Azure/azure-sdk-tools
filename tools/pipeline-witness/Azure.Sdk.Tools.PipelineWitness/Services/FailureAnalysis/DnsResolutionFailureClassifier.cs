@@ -11,14 +11,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
     public class DnsResolutionFailureClassifier : IFailureClassifier
     {
-        public DnsResolutionFailureClassifier(VssConnection vssConnection)
+        public DnsResolutionFailureClassifier(BuildLogProvider buildLogProvider)
         {
-            this.vssConnection = vssConnection;
-            buildClient = vssConnection.GetClient<BuildHttpClient>();
+            this.buildLogProvider = buildLogProvider;
         }
 
-        private VssConnection vssConnection;
-        private BuildHttpClient buildClient;
+        private readonly BuildLogProvider buildLogProvider;
 
         private bool IsDnsResolutionFailure(string line)
         {
@@ -39,11 +37,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 
             foreach (var failedTask in failedTasks)
             {
-                var lines = await buildClient.GetBuildLogLinesAsync(
-                    context.Build.Project.Id,
-                    context.Build.Id,
-                    failedTask.Log.Id
-                    );
+                var lines = await buildLogProvider.GetLogLinesAsync(context.Build, failedTask.Log.Id);
 
                 if (lines.Any(line => IsDnsResolutionFailure(line)))
                 {

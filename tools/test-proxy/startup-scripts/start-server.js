@@ -55,8 +55,8 @@ function dockerInteract(mode, root){
         // else we need to create it
         else {
             console.log("Attempting creation of Docker host " + CONTAINER_NAME);
-            console.log('docker container create -v ' + resolvedPath + ':/etc/testproxy -p 5001:5001 -p 5000:5000 --name ' + CONTAINER_NAME + ' ' + IMAGE_SOURCE);
-            execSync('docker container create -v ' + resolvedPath + ':/etc/testproxy -p 5001:5001 -p 5000:5000 --name ' + CONTAINER_NAME + ' ' + IMAGE_SOURCE, (error, stdout, stderr) => {
+            console.log('docker container create -v ' + resolvedPath + ':/srv/testproxy/ -p 5001:5001 -p 5000:5000 --name ' + CONTAINER_NAME + ' ' + IMAGE_SOURCE);
+            execSync('docker container create -v ' + resolvedPath + ':/srv/testproxy/ -p 5001:5001 -p 5000:5000 --name ' + CONTAINER_NAME + ' ' + IMAGE_SOURCE, (error, stdout, stderr) => {
                 if (error) {
                     console.error('Creation of the test-proxy failed with docker error.');
                     console.error(error)

@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`mockForExample:  mock resourceType 1`] = `
+Object {
+  "responseResourceId": "/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/policies/policyId",
+  "responseResourceType": "Microsoft.ApiManagement/service/policies",
+}
+`;
+
+exports[`mockForExample:  patchResourceIdAndType 1`] = `
+Object {
+  "200": Object {
+    "body": Object {
+      "id": "/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/policies/policyId",
+      "type": "Microsoft.ApiManagement/service/policies",
+    },
+  },
+}
+`;
+
+exports[`mockForExample:  patchResourceIdAndType 2`] = `
+Object {
+  "200": Object {
+    "body": Object {
+      "id": "/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/providers/Microsoft.MokeNested/foos/myfoo/bars/mybar",
+      "type": "Microsoft.MokeNested/foos/bars",
+    },
+  },
+}
+`;
+
+exports[`mockForExample:  patchResourceIdAndType 3`] = `
+Object {
+  "200": Object {
+    "body": Array [
+      Object {
+        "id": "/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/providers/Microsoft.MokeNested/foos/myfoo/bars/resourceName",
+        "type": "Microsoft.MokeNested/foos/bars",
+      },
+    ],
+  },
+}
+`;

@@ -1,0 +1,100 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`generateResponse() degrade to non-lro if can't find callback url 1`] = `
+VirtualServerResponse {
+  "body": Object {
+    "etag": "AAAAAAAXX6Y=",
+    "id": "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/apimService1",
+    "location": "East Asia",
+    "name": "restore",
+    "properties": Object {
+      "createdAtUtc": "2015-09-22T01:50:34.7921566Z",
+      "gatewayUrl": "https://apimService1.azure-api.net",
+      "hostnameConfigurations": Array [],
+      "managementApiUrl": "https://apimService1.management.azure-api.net",
+      "portalUrl": "https://apimService1.portal.azure-api.net",
+      "provisioningState": "Succeeded",
+      "publicIPAddresses": Array [
+        "207.46.155.24",
+      ],
+      "publisherEmail": "admin@live.com",
+      "publisherName": "Contoso",
+      "scmUrl": "https://apimService1.scm.azure-api.net",
+      "targetProvisioningState": "",
+      "virtualNetworkType": "None",
+    },
+    "sku": Object {
+      "capacity": 1,
+      "name": "Premium",
+    },
+    "tags": Object {
+      "UID": "52ed5986-717b-45b4-b17c-3df8db372cff",
+    },
+    "type": "Microsoft.ApiManagement/service",
+  },
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;
+
+exports[`generateResponse() end up with example response 1`] = `
+VirtualServerResponse {
+  "body": Object {
+    "id": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/apimService1/apis/a1/releases/testrev",
+    "name": "testrev",
+    "properties": Object {
+      "apiId": "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/apimService1/apis/a1",
+      "createdDateTime": "2018-02-08T20:52:00.65Z",
+      "notes": "yahooagain",
+      "updatedDateTime": "2018-02-08T20:52:00.65Z",
+    },
+    "type": "Microsoft.ApiManagement/service/apis/releases",
+  },
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;
+
+exports[`generateResponse() special rule of GET locations 1`] = `
+VirtualServerResponse {
+  "body": Object {
+    "id": "/subscriptions/randomSub/resourceGroups/randomRG",
+    "location": "eastus",
+    "managedBy": null,
+    "name": "randomRG",
+    "properties": Object {
+      "provisioningState": "Succeeded",
+    },
+    "tags": Object {},
+    "type": "Microsoft.Resources/resourceGroups",
+  },
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;
+
+exports[`generateResponse() special rule of GET resourceGroup 1`] = `
+VirtualServerResponse {
+  "body": Object {
+    "id": "/subscriptions/randomSub/resourceGroups/randomRG",
+    "location": "eastus",
+    "managedBy": null,
+    "name": "randomRG",
+    "properties": Object {
+      "provisioningState": "Succeeded",
+    },
+    "tags": Object {},
+    "type": "Microsoft.Resources/resourceGroups",
+  },
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;
+
+exports[`generateResponse() validate DELETE input 1`] = `
+VirtualServerResponse {
+  "body": undefined,
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;

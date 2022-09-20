@@ -1,0 +1,61 @@
+scope: ResourceGroup
+variables:
+  resourceName: signalrswaggertest4
+  fakeStepVar: signalrswaggertest4
+prepareSteps:
+  - step: Delete-proximity-placement-group
+    exampleFile: ../examples/DeleteAProximityPlacementGroup.json
+scenarios:
+  - description: Microsoft.SignalRService/Basic_CRUD
+    variables:
+      fakeScenarioVar: signalrswaggertest5
+    steps:
+      - step: Generate_Unique_Name
+        armTemplate: ./peArmTemplate/Generate_Unique_name_template.json
+      - step: Create-or-Update-a-proximity-placement-group
+        exampleFile: ../examples/CreateOrUpdateAProximityPlacementGroup.json
+        outputVariables: 
+          fakeScenarioVar:
+            fromResponse: /id
+      - step: Delete-proximity_placement_group
+        exampleFile: ../examples/DeleteAProximityPlacementGroup.json
+      - step: Create_a_vm_with_Host_Encryption_using_encryptionAtHost_property
+        exampleFile: ../examples/CreateAVmWithEncryptionAtHost.json
+        variables:
+          fakeStepVar: signalrswaggertest6
+  - description: Microsoft.SignalRService/DeleteOnly
+    steps:
+      - step: Delete_proximity_placement_group
+        exampleFile: ../examples/DeleteAProximityPlacementGroup.json
+      - step: createVM
+        operationId: VirtualMachines_CreateOrUpdate
+        parameters:
+          parameters:
+            location: $(location)
+            properties:
+              hardwareProfile:
+                vmSize: Standard_A2_v2
+              networkProfile:
+                networkInterfaces:
+                  - id: $(vmNicId)
+              storageProfile:
+                osDisk:
+                  createOption: fromImage
+                  caching: ReadWrite
+                imageReference:
+                  publisher: MicrosoftWindowsServer
+                  offer: WindowsServer
+                  sku: 2019-Datacenter
+                  version: latest
+              osProfile:
+                computerName: $(vmName)
+                adminUsername: azureuser
+                adminPassword: $(adminPassword)
+              additionalCapabilities: {}
+        outputVariables:
+          vmId:
+            type: string
+            fromResponse: /id
+      - step: getVM
+        operationId: VirtualMachines_Get
+          

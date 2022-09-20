@@ -6,10 +6,12 @@ import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.azure.tools.apiview.processor.model.DiagnosticKind;
+import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +34,10 @@ import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_GETTERS;
 import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_IS_GETTERS;
 
 public class Main {
+    private static final ObjectWriter WRITER = new ObjectMapper()
+        .disable(AUTO_DETECT_CREATORS, AUTO_DETECT_FIELDS, AUTO_DETECT_GETTERS, AUTO_DETECT_IS_GETTERS)
+        .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        .writerWithDefaultPrettyPrinter();
 
     // expected argument order:
     // [inputFiles] <outputDirectory>
@@ -100,7 +106,7 @@ public class Main {
         // if we can't get the maven details out of the Jar file, we will just use the filename itself...
         if (reviewProperties.getMavenPom() == null) {
             // we failed to read it from the maven pom file, we will just take the file name without any extension
-            reviewProperties.setMavenPom(new Pom("", artifactId, packageVersion));
+            reviewProperties.setMavenPom(new Pom("", artifactId, packageVersion, false));
         }
 
         return reviewProperties;
@@ -129,11 +135,7 @@ public class Main {
         }
 
         // Write out to the filesystem
-        new ObjectMapper()
-            .disable(AUTO_DETECT_CREATORS, AUTO_DETECT_FIELDS, AUTO_DETECT_GETTERS, AUTO_DETECT_IS_GETTERS)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .writerWithDefaultPrettyPrinter()
-            .writeValue(outputFile, apiListing);
+        WRITER.writeValue(outputFile, apiListing);
     }
 
     private static void processJavaSourcesJar(File inputFile, APIListing apiListing) throws IOException {
@@ -155,6 +157,15 @@ public class Main {
         apiListing.setPackageVersion(reviewProperties.getMavenPom().getVersion());
         apiListing.setLanguage("Java");
         apiListing.setMavenPom(reviewProperties.getMavenPom());
+
+        if(groupId.contains("spring")) {
+            apiListing.setLanguageVariant(LanguageVariant.SPRING);
+        } else if(groupId.contains("android")) {
+            apiListing.setLanguageVariant(LanguageVariant.ANDROID);
+        } else {
+            apiListing.setLanguageVariant(LanguageVariant.DEFAULT);
+        }
+        System.out.println("  Using '" + apiListing.getLanguageVariant() + "' for the language variant");
 
         final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
 

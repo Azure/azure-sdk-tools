@@ -22,7 +22,7 @@ Label,Attestation,,e99695
 Label,Authentication,,e99695
 Label,Authorization,,e99695
 Label,Automation,,e99695
-Label,Azure Arc enabled servers,,e99695
+Label,Azure Arc Enabled Servers,,e99695
 Label,Azure Stack,,e99695
 Label,Azure.Core,,e99695
 Label,Azure.Identity,,e99695
@@ -57,6 +57,15 @@ Label,Cognitive - Vision,,e99695
 Label,Cognitive Services,,e99695
 Label,Commerce,,e99695
 Label,Communication,,e99695
+Label,Communication - Calling Server,,e99695
+Label,Communication - Chat,,e99695
+Label,Communication - Common,,e99695
+Label,Communication - Identity,,e99695
+Label,Communication - Network Traversal,,e99695
+Label,Communication - Phone Numbers,,e99695
+Label,Communication - Short Codes,,e99695
+Label,Communication - SMS,,e99695
+Label,Communication - Resource Manager,,e99695
 Label,Community Contribution,Community members are working on the issue,1aa874
 Label,Compute,,e99695
 Label,Compute - Extensions,,e99695
@@ -67,15 +76,24 @@ Label,Compute - VM,,e99695
 Label,Compute - VMSS,,e99695
 Label,Confidential Ledger,,e99695
 Label,Connected Kubernetes,,e99695
-Label,Consumption,,e99695
+Label,Consumption - Budget,"All issues in consumption for Budgets API, Alert API and other Notification scenarios.",e99695
+Label,Consumption - Query,"All issues in consumption associated with tags, dimensions and forecasts.",e99695
+Label,Consumption - Billing,"All issues in consumption where billing/price-related data is shown.",e99695
+Label,Consumption - UsageDetailsAndExport,"All issues in consumption for usage details API and exports API.",e99695
+Label,Consumption - RIandShowBack,"All issues in consumption associated with Reservation and ShowBack.",e99695
 Label,Container Instances,,e99695
 Label,Container Registry,,e99695
 Label,Container Service,,e99695
 Label,Cosmos,,e99695
-Label,Cost Management,,e99695
+Label,Cost Management - Budget,"All issues in cost management for Budgets API, Alert API and other Notification scenarios.",e99695
+Label,Cost Management - Query,"All issues in cost management associated with tags, dimensions and forecasts.",e99695
+Label,Cost Management - Billing,"All issues in cost management where billing/price-related data is shown.",e99695
+Label,Cost Management - UsageDetailsAndExport,"All issues in cost management for usage details API and exports API.",e99695
+Label,Cost Management - RIandShowBack,"All issues in cost management associated with Reservation and ShowBack.",e99695
 Label,Custom Providers,,e99695
 Label,Customer Insights,,e99695
 Label,CycleCloud,,e99695
+Label,CXP Attention,The Azure CXP Support Team is responsible for this issue.,10066b
 Label,Data Bricks,,e99695
 Label,Data Catalog,,e99695
 Label,Data Factory,,e99695
@@ -89,6 +107,7 @@ Label,Data Share,,e99695
 Label,DataBox,,e99695
 Label,DataBox Edge,,e99695
 Label,Dev Spaces,,e99695
+Label,Device Update,,e99695
 Label,DevOps,,e99695
 Label,Devtestlab,,e99695
 Label,Digital Twins,,e99695
@@ -113,6 +132,7 @@ Label,IoT/CLI,,e99695
 Label,KeyVault,,e99695
 Label,Kubernetes Configuration,,e99695
 Label,Kusto,,e99695
+Label,LLC,,e99695
 Label,LOUIS,,e99695
 Label,Lab Services,,e99695
 Label,Logic App,,e99695
@@ -122,6 +142,7 @@ Label,Machine Learning Compute,,e99695
 Label,Machine Learning Experimentation,,e99695
 Label,Managed Identity,,e99695
 Label,ManagedServices,,e99695
+Label,Maps,,e99695
 Label,MariaDB,,e99695
 Label,Marketplace Ordering,,e99695
 Label,Media Services,,e99695

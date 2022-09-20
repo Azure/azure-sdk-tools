@@ -4,7 +4,8 @@ trigger: none
 pr: none
 
 pool:
-  vmImage: windows-2019
+  name: azsdk-pool-mms-ubuntu-2004-general
+  vmImage: MMSUbuntu20.04
 
 jobs:
   - job: TagToolsRepo
@@ -38,3 +39,5 @@ jobs:
           azure-sdk-for-js:
           azure-sdk-for-net:
           azure-sdk-for-python:
+          autorest.csharp:
+            branch: feature/v3

@@ -1,0 +1,12 @@
+.create-or-alter materialized-view ManagedDefinition on table BuildDefinition
+{
+BuildDefinition
+    | where Variables contains "meta"
+    | extend metas = parse_json(Variables)
+    | extend Platform = metas["meta.platform"].value
+    | extend Feature = metas["meta.component"].value
+    | extend Category = metas["meta.category"].value
+    | project-away metas
+    // keep only the row with the largest rev # per definition/project
+    | summarize arg_max(BuildDefinitionRevision, *) by BuildDefinitionId, ProjectId
+}

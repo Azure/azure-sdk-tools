@@ -8,25 +8,33 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}"
+  name: "{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
   labels:
     release: {{ .Release.Name }}
-    scenario: {{ .Scenario }}
+    scenario: {{ .Stress.Scenario }}
+    resourceGroupName: {{ .Stress.ResourceGroupName }}
+    baseName: {{ .Stress.BaseName }}
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
         release: {{ .Release.Name }}
-        scenario: {{ .Scenario }}
+        scenario: {{ .Stress.Scenario }}
     spec:
+      # In cases where a stress test has higher resource requirements or needs a dedicated node,
+      # a new nodepool can be provisioned and labeled to allow custom scheduling.
+      nodeSelector:
+        sku: 'default'
       restartPolicy: Never
       volumes:
         # Volume template for mounting secrets
         {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
         # Volume template for mounting ARM templates
         {{- include "stress-test-addons.deploy-volumes" . | nindent 8 }}
+        # Volume template for mounting azure file share for debugging
+        {{- include "stress-test-addons.debug-file-volumes" . | nindent 8 }}
       initContainers:
         # Init container template for injecting secrets
         # (e.g. app insights instrumentation key, azure client credentials)
@@ -42,10 +50,9 @@ spec:
 {{- include "stress-test-addons.deploy-configmap" $global }}
 {{- range (default (list "stress") $global.Values.scenarios) }}
 ---
-{{- /* Copy scenario name into top level key of global context */}}
-{{ $instance := deepCopy $global | merge (dict "Scenario" . ) -}}
-{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $instance $podDefinition)) -}}
-{{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $instance) -}}
+{{ $jobCtx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list $global . )) }}
+{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $jobCtx $podDefinition)) -}}
+{{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
 {{- end -}}
@@ -54,23 +61,28 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}"
+  name: "{{ .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
   labels:
     release: {{ .Release.Name }}
-    scenario: {{ .Scenario }}
+    scenario: {{ .Stress.Scenario }}
+    resourceGroupName: {{ .Stress.ResourceGroupName }}
+    baseName: {{ .Stress.BaseName }}
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
         release: {{ .Release.Name }}
-        scenario: {{ .Scenario }}
+        scenario: {{ .Stress.Scenario }}
     spec:
+      nodeSelector:
+        sku: 'default'
       restartPolicy: Never
       volumes:
         # Volume template for mounting secrets
         {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
+        {{- include "stress-test-addons.debug-file-volumes" . | nindent 8 }}
       initContainers:
         # Init container template for injecting secrets
         # (e.g. app insights instrumentation key, azure client credentials)
@@ -84,9 +96,9 @@ spec:
 {{- range (default (list "stress") $global.Values.scenarios) }}
 ---
 {{- /* Copy scenario name into top level key of global context */}}
-{{ $instance := deepCopy $global | merge (dict "Scenario" . ) -}}
-{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $instance $podDefinition)) -}}
-{{- $tpl := fromYaml (include "stress-test-addons.env-job-template.tpl" $instance) -}}
+{{ $jobCtx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list $global . )) }}
+{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $jobCtx $podDefinition)) -}}
+{{- $tpl := fromYaml (include "stress-test-addons.env-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
 {{- end -}}

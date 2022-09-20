@@ -87,6 +87,33 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0002ProducedForMethodsWhereRequestContextIsNotLast()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task {|AZC0002:GetAsync|}(RequestContext context = default, string text = default)
+        {
+            return null;
+        }
+
+        public virtual void {|AZC0002:Get|}(RequestContext context = default, string text = default)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
         public async Task AZC0002DoesntFireIfThereIsAnOverloadWithCancellationToken()
         {
             const string code = @"
@@ -121,6 +148,41 @@ namespace RandomNamespace
                 .RunAsync();
         }
 
+        [Fact]
+        public async Task AZC0002DoesntFireIfThereIsAnOverloadWithRequestContext()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task GetAsync(string s)
+        {
+            return null;
+        }
+
+        public virtual void Get(string s)
+        {
+        }
+
+        public virtual Task GetAsync(string s, RequestContext context = default)
+        {
+            return null;
+        }
+
+        public virtual void Get(string s, RequestContext context = default)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
 
         [Fact]
         public async Task AZC0002ProducedWhenCancellationTokenOverloadsDontMatch()
@@ -174,6 +236,33 @@ namespace RandomNamespace
         }
 
         public virtual void Get(CancellationToken cancellationToken = default)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0002NotProducedForMethodsWithRequestContext()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task GetAsync(RequestContext context = default)
+        {
+            return null;
+        }
+
+        public virtual void Get(RequestContext context = default)
         {
         }
     }

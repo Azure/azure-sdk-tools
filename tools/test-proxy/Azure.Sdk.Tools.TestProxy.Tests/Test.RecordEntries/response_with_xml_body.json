@@ -30,7 +30,6 @@
         ],
         "Transfer-Encoding": "chunked",
         "X-Content-Type-Options": "nosniff",
-        "x-ms-client-request-id": "b24f75a9-b830-11eb-b949-10e7c6392c5a",
         "x-ms-request-id": "d2271628-c002-0072-5e3d-4ce19f000000",
         "x-ms-version": "2019-02-02"
       },
@@ -63,7 +62,6 @@
           "Microsoft-HTTPAPI/2.0"
         ],
         "Transfer-Encoding": "chunked",
-        "x-ms-client-request-id": "b25bf92a-b830-11eb-947a-10e7c6392c5a",
         "x-ms-request-id": "d2271635-c002-0072-6a3d-4ce19f000000",
         "x-ms-version": "2019-02-02"
       },

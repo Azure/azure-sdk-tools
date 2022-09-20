@@ -41,7 +41,7 @@ def docker_interact(mode, root):
         # else we need to create it
         else:
             print("Attempting creation of Docker host {}".format(CONTAINER_NAME))
-            subprocess.check_call(["docker", "container", "create", "-v", "{}:/etc/testproxy".format(resolved_root), "-p", "5001:5001", "-p", "5000:5000", "--name", CONTAINER_NAME, IMAGE_SOURCE ])
+            subprocess.check_call(["docker", "container", "create", "-v", "{}:/srv/testproxy/".format(resolved_root), "-p", "5001:5001", "-p", "5000:5000", "--name", CONTAINER_NAME, IMAGE_SOURCE ])
 
         print("Attempting start of Docker host {}".format(CONTAINER_NAME))
         subprocess.check_call(["docker", "container", "start", CONTAINER_NAME])

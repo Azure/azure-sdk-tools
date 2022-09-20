@@ -93,7 +93,7 @@ inspired by an earlier performance testing prototype.
 We also discussed that if the recording/playback solution isn't fast enough to
 handle performance testing directly, we could possibly solve that by having a
 fast caching layer that sits between it and the client for performance tests. We
-don't think this would be necessary if we take approporiate care in the test
+don't think this would be necessary if we take appropriate care in the test
 server implementation.
 
 

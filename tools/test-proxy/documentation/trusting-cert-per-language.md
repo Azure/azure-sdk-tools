@@ -10,7 +10,8 @@ Within this folder are components of a **dev certificate** that has no usage out
 
 ```powershell
 # ensure root access
-> $rootCert = $(Import-PfxCertificate -FilePath eng/common/testproxy/dotnet-devcert.pfx -CertStoreLocation 'Cert:\LocalMachine\Root')
+> $pfxpass = ConvertTo-SecureString -String 'password' -AsPlainText -Force
+> $rootCert = $(Import-PfxCertificate -FilePath eng/common/testproxy/dotnet-devcert.pfx -CertStoreLocation 'Cert:\LocalMachine\Root' -Password $pfxpass)
 ```
 
 or via `dotnet`
@@ -20,9 +21,29 @@ dotnet dev-certs https --clean --import eng/common/testproxy/dotnet-devcert.pfx 
 dotnet dev-certs https --trust
 ```
 
-On a ubuntu-flavored distro of linux, feel free to re-use the import mechanism in the local file `eng/common/testproxy/import-dev-cert.sh`. Prior to using locally, ensure $CERT_FOLDER environment variable is set to the local directory containing the script. Otherwise it won't be able to access necessary files!
+On a ubuntu-flavored distro of linux, feel free to re-use the import mechanism in the local file `eng/common/testproxy/apply-dev-cert.sh`. Prior to using locally, ensure $CERT_FOLDER environment variable is set to the local directory containing the script. Otherwise it won't be able to access necessary files!
+
+On a Mac(OS X), it may not work properly due to permission problems. You can see the message after execution as follows.
+
+```bash
+ $ dotnet dev-certs https --clean --import eng/common/testproxy/dotnet-devcert.pfx --password="password"
+Cleaning HTTPS development certificates from the machine. This operation might require elevated privileges. If that is the case, a prompt for credentials will be displayed.
+HTTPS development certificates successfully removed from the machine.
+The provided certificate file 'eng/common/testproxy/dotnet-devcert.pfx' is not a valid PFX file or the password is incorrect.
+```
+
+In this case, you can manually set it in 'Keychain Access' to work around the problem.
+1. Click the `dotnet-devcert.pfx` file in 'Finder' to register the keychain directly. Enter the password as “password”
+2. You can check the newly created `localhost` name in the keychain access “system” item
+3. Double-click `localhost` and change Trust to "Always Trust"
+4. Run `$ dotnet dev-certs https --trust` in the terminal, and you can see that the `localhost` checked above has changed from ![x](_images/keychain-cert-not.png) to ![+](_images/keychain-cert-ok.png)
+
+![keychain-localhost](_images/keychain-localhost.png)
+![keychain-always-trust](_images/keychain-trust.png)
 
 Also note that taken to trust this cert will _also apply to installing the dotnet tool directly_. The test-proxy tool will consume the certificate just the same as the docker container does.
+
+On a Mac(OS X), If port 5000 is the problem, you need to check the 'AirPlay' sharing feature in settings or kill port process. [see here](https://github.com/Azure/azure-sdk-tools/pull/3739#issuecomment-1207217025)
 
 ## Go
 
@@ -32,16 +53,39 @@ Also note that taken to trust this cert will _also apply to installing the dotne
 
 As always, [stack overflow comes through](https://stackoverflow.com/a/39358282). Unlike `go`, there is nothing specific that needs to happen in the test code itself.
 
-As a pre-req, ensure that the certificate file present [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/docker/dev_certificate/dotnet-devcert.crt) is downloaded and renamed to the `pem` file format. Normally a `.crt` file would be binary encoded in DER format, but the ASP.NET dev certs are not encoded that way when they are created, so we don't need to worry about re-encoding anything!
+After doing any setup described in the [general section](#generally), run the
+[trust_proxy_cert.py](https://github.com/Azure/azure-sdk-for-python/blob/main/scripts/devops_tasks/trust_proxy_cert.py) script:
+```cmd
+~/azure-sdk-for-python> python scripts\devops_tasks\trust_proxy_cert.py
+```
 
-To trust this certificate...
+This will copy the [test proxy certificate](https://github.com/Azure/azure-sdk-for-python/blob/main/eng/common/testproxy/dotnet-devcert.crt) and place the copy
+under `azure-sdk-for-python/.certificate` as a `pem` file.
 
-1. Ensure that `SSL_CERTS_DIR` points to the directory containing your newly downloaded PEM file.
-2. The `requests` library does NOT honor the `SSL_CERTS_DIR` environment variable. They have no intention of doing so. Instead, you'll need to...
-   1. Find your `certifi` certificate bundle using `requests.certs.where()`. Once located, **combine it** with the newly downloaded pemfile mentioned above.
-   2. [Here is scripted example of combining](https://github.com/Azure/azure-sdk-for-python/commit/3f4ef4d64382edd74a830bfb71622c6fd8edb5c1)
-   3. Set `REQUESTS_CA_BUNDLE` to the location of the newly combined pemfile.
-3. Ensure SSL verification is enabled still, notice that your requests to the test proxy still succeed!
+The only remaining step is to set two environment variables to point to this certificate. The script will output the environment variables and values that you'll
+need to set once it finishes running. For example where `YOUR DIRECTORY` specifies where you've cloned the repo:
+```cmd
+Set the following certificate paths:
+        SSL_CERT_DIR=C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate
+        REQUESTS_CA_BUNDLE=C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate\dotnet-devcert.pem
+```
+
+Persistently set these environment variables. In a Windows Powershell command prompt as an administrator, use the `SETX` command (not the `SET` command) to set these variables.
+Using the example above, you would run:
+```cmd
+SETX SSL_CERT_DIR "C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate"
+SETX REQUESTS_CA_BUNDLE "C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate\dotnet-devcert.pem"
+```
+
+_Disclaimer:_ __A new terminal__ should be started up to make these variables available. 
+To check if these variables are indeed in the environment,
+```powershell
+[Environment]::GetEnvironmentVariable('SSL_CERT_DIR')
+[Environment]::GetEnvironmentVariable('REQUESTS_CA_BUNDLE')
+```
+should output your SSL certificate directory and file location path in this new terminal.
+
+In this and subsequent terminals, with the variables in place, running tests with the test proxy should now work with HTTPS requests.
 
 ## Java
 

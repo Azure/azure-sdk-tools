@@ -18,13 +18,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     {
         private readonly HttpPipelineTransport _innerTransport;
 
-        private readonly Func<RecordEntry, EntryRecordModel> _filter;
+        private readonly Func<RecordEntry, EntryRecordMode> _filter;
 
         private readonly Random _random;
 
         private readonly RecordSession _session;
 
-        public RecordTransport(RecordSession session, HttpPipelineTransport innerTransport, Func<RecordEntry, EntryRecordModel> filter, Random random)
+        public RecordTransport(RecordSession session, HttpPipelineTransport innerTransport, Func<RecordEntry, EntryRecordMode> filter, Random random)
         {
             _innerTransport = innerTransport;
             _filter = filter;
@@ -50,10 +50,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             switch (_filter(recordEntry))
             {
-                case EntryRecordModel.Record:
+                case EntryRecordMode.Record:
                     _session.Record(recordEntry);
                     break;
-                case EntryRecordModel.RecordWithoutRequestBody:
+                case EntryRecordMode.RecordWithoutRequestBody:
                     recordEntry.Request.Body = null;
                     _session.Record(recordEntry);
                     break;

@@ -24,6 +24,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             {
                 ActionType = MetaDataType.Sanitizer,
                 Name = x.GetType().Name,
+                ConstructorDetails = GetInstanceDetails(x),
                 Description = GetClassDocComment(x.GetType(), docXML)
             }));
 
@@ -31,6 +32,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             {
                 ActionType = MetaDataType.Transform,
                 Name = x.GetType().Name,
+                ConstructorDetails = GetInstanceDetails(x),
                 Description = GetClassDocComment(x.GetType(), docXML)
             }));
 
@@ -38,6 +40,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             {
                 ActionType = MetaDataType.Matcher,
                 Name = handler.Matcher.GetType().Name,
+                ConstructorDetails = GetInstanceDetails(handler.Matcher),
                 Description = GetClassDocComment(handler.Matcher.GetType(), docXML)
             });
 

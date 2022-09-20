@@ -11,19 +11,22 @@ namespace APIViewWeb
         private static string _autoReviewOwner = "azure-sdk";
         public Task HandleAsync(AuthorizationHandlerContext context)
         {
-            var loggedInUser = context.User.GetGitHubLogin();
-            foreach (var requirement in context.Requirements)
+            if (context.User != null)
             {
-                if (requirement is AutoReviewModifierRequirement)
+                var loggedInUser = context.User.GetGitHubLogin();
+                foreach (var requirement in context.Requirements)
                 {
-                    var review = ((ReviewModel)context.Resource);
-                    // If review is auto created by bot then ensure logged in user is bot and review owner is bot
-                    if (!review.IsAutomatic || (loggedInUser == _autoReviewOwner && review.Author == _autoReviewOwner))
+                    if (requirement is AutoReviewModifierRequirement)
                     {
-                        context.Succeed(requirement);
+                        var review = ((ReviewModel)context.Resource);
+                        // If review is auto created by bot then ensure logged in user is bot and review owner is bot
+                        if (!review.IsAutomatic || (loggedInUser == _autoReviewOwner && review.Author == _autoReviewOwner))
+                        {
+                            context.Succeed(requirement);
+                        }
                     }
                 }
-            }
+            }            
             return Task.CompletedTask;
         }
     }

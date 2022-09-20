@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
-using APIViewWeb.Respositories;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
@@ -16,6 +16,7 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly ReviewManager _reviewManager;
         private const string ENDPOINT_SETTING = "Endpoint";
         private readonly BlobCodeFileRepository _codeFileRepository;
+        public readonly UserPreferenceCache _preferenceCache;
 
         public string Endpoint { get; }
         public ReviewModel Review { get; private set; }
@@ -26,12 +27,14 @@ namespace APIViewWeb.Pages.Assemblies
             IConfiguration configuration,
             BlobCodeFileRepository codeFileRepository,
             CommentsManager commentsManager,
-            ReviewManager reviewManager)
+            ReviewManager reviewManager,
+            UserPreferenceCache preferenceCache)
         {
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
             Endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
+            _preferenceCache = preferenceCache;
         }
 
         public async Task<IActionResult> OnGetAsync(string id)

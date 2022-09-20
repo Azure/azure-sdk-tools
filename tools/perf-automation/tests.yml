@@ -1,0 +1,240 @@
+parameters:
+- name: IncludeNet
+  displayName: Include .NET?
+  type: boolean
+  default: true
+- name: NetRepoCommitish
+  type: string
+  default: 'main'
+- name: IncludeJava
+  displayName: Include Java?
+  type: boolean
+  default: true
+- name: JavaRepoCommitish
+  type: string
+  default: 'main'
+- name: IncludeJS
+  displayName: Include JS?
+  type: boolean
+  default: true
+- name: JSRepoCommitish
+  type: string
+  default: 'main'
+- name: IncludePython
+  displayName: Include Python?
+  type: boolean
+  default: true
+- name: PythonRepoCommitish
+  type: string
+  default: 'main'
+- name: PackageVersions
+  type: string
+  default: '12|source'
+
+resources:
+  repositories:
+  - repository: azure-sdk-for-net
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-net
+    ref: main
+  - repository: azure-sdk-for-java
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-java
+    ref: main
+  - repository: azure-sdk-for-js
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-js
+    ref: main
+  - repository: azure-sdk-for-python
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-python
+    ref: main
+
+variables:
+  # Use general pools instead of perf pools for faster startup due to more warm agents
+  LinuxPool: 'azsdk-pool-mms-ubuntu-2004-general'
+  LinuxVmImage: 'MMSUbuntu20.04'
+  WindowsPool: 'azsdk-pool-mms-win-2019-general'
+  WindowsVmImage: 'MMS2019'
+  ToolsRepoCommitish: $(Build.SourceVersion)
+  Services: '^storage-blob$'
+  Tests: '^(download)$'
+  Arguments: '(10240)'
+  Iterations: '1'
+
+stages:
+- stage: Test
+  displayName: Test
+  jobs:
+  - ${{ if parameters.IncludeNet }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_Net'
+        LinuxPool: $(LinuxPool)
+        LinuxVmImage: $(LinuxVmImage)
+        WindowsPool: $(WindowsPool)
+        WindowsVmImage: $(WindowsVmImage)
+        Language: 'Net'
+        LanguageRepoName: 'Azure/azure-sdk-for-net'
+        LanguageRepoCommitish: ${{ parameters.NetRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        Variables:
+        - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
+        InstallLanguageSteps:
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
+          parameters:
+            EnableNuGetCache: false
+        ServiceDirectory: 'storage/Azure.Storage.Blobs'
+        Services: $(Services)
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: $(Tests)
+        Arguments: $(Arguments)
+        # Iterations parameter has type 'number' so must use this variable syntax
+        Iterations: ${{ variables.Iterations }}
+
+  - ${{ if parameters.IncludeJava }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_Java'
+        LinuxPool: $(LinuxPool)
+        LinuxVmImage: $(LinuxVmImage)
+        WindowsPool: $(WindowsPool)
+        WindowsVmImage: $(WindowsVmImage)
+        Language: 'Java'
+        LanguageRepoName: 'Azure/azure-sdk-for-java'
+        LanguageRepoCommitish: ${{ parameters.JavaRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        Variables:
+        - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-java
+        InstallLanguageSteps:
+        - task: JavaToolInstaller@0
+          inputs:
+            versionSpec: '8'
+            jdkArchitectureOption: 'x64'
+            jdkSourceOption: 'PreInstalled'
+          displayName: Install Java 8
+        - script: |
+            java -version
+            mvn --version
+          displayName: Print Java Versions
+        ServiceDirectory: 'storage/azure-storage-blob'
+        Services: $(Services)
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: $(Tests)
+        Arguments: $(Arguments)
+        # Iterations parameter has type 'number' so must use this variable syntax
+        Iterations: ${{ variables.Iterations }}
+
+  - ${{ if parameters.IncludeJS }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_JS'
+        LinuxPool: $(LinuxPool)
+        LinuxVmImage: $(LinuxVmImage)
+        WindowsPool: $(WindowsPool)
+        WindowsVmImage: $(WindowsVmImage)
+        Language: 'JS'
+        LanguageRepoName: 'Azure/azure-sdk-for-js'
+        LanguageRepoCommitish: ${{ parameters.JSRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        Variables:
+        - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-js
+        InstallLanguageSteps:
+        - template: /eng/pipelines/templates/steps/use-node-version.yml@azure-sdk-for-js
+          parameters:
+            NodeVersion: 14.x
+        ServiceDirectory: 'storage/storage-blob'
+        Services: $(Services)
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: $(Tests)
+        Arguments: $(Arguments)
+        # Iterations parameter has type 'number' so must use this variable syntax
+        Iterations: ${{ variables.Iterations }}
+
+  - ${{ if parameters.IncludePython }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_Python'
+        LinuxPool: $(LinuxPool)
+        LinuxVmImage: $(LinuxVmImage)
+        WindowsPool: $(WindowsPool)
+        WindowsVmImage: $(WindowsVmImage)
+        Language: 'Python'
+        LanguageRepoName: 'Azure/azure-sdk-for-python'
+        LanguageRepoCommitish: ${{ parameters.PythonRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        Variables:
+        - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-python
+        - name: PythonVersion
+          value: '3.7'
+        InstallLanguageSteps:
+        - task: UsePythonVersion@0
+          displayName: "Use Python $(PythonVersion)"
+          inputs:
+            versionSpec: $(PythonVersion)
+        ServiceDirectory: 'storage/azure-storage-blob'
+        Services: $(Services)
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: $(Tests)
+        Arguments: $(Arguments)
+        # Iterations parameter has type 'number' so must use this variable syntax
+        Iterations: ${{ variables.Iterations }}
+
+- stage: Print_Results
+  displayName: Print Results
+  pool:
+    name: 'azsdk-pool-mms-ubuntu-2004-general'
+    vmImage: 'MMSUbuntu20.04'
+  condition: succeededOrFailed()
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  jobs:
+  - job: Print_Results
+    displayName: Print Results
+    steps:
+    - checkout: none
+
+    - download: current
+      patterns: '**/results.txt'
+      displayName: Download Results
+
+    - pwsh: |
+        get-childitem . -recurse -filter results.txt | sort-object fullname | foreach-object {
+          write-host $_
+          get-content $_
+          write-host
+        }
+      workingDirectory: $(Pipeline.Workspace)
+      displayName: All
+
+    - ${{ if parameters.IncludeNet }}:
+      - pwsh: |
+          write-host results-Net-Linux/results.txt
+          get-content results-Net-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: Net
+
+    - ${{ if parameters.IncludeJava }}:
+      - pwsh: |
+          write-host results-Java-Linux/results.txt
+          get-content results-Java-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: Java
+
+    - ${{ if parameters.IncludeJS }}:
+      - pwsh: |
+          write-host results-JS-Linux/results.txt
+          get-content results-JS-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: JS
+
+    - ${{ if parameters.IncludePython }}:
+      - pwsh: |
+          write-host results-Python-Linux/results.txt
+          get-content results-Python-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: Python

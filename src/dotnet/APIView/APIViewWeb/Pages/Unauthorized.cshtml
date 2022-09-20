@@ -6,25 +6,27 @@
     var names = string.Join(" or ", Model.Options.RequiredOrganization);
 }
 
-<p>Your GitHub account is not publicly affiliated with @names organizations.</p>
-<p>
-    In order to use the site, please sign into another account - or,
-    ensure <b>public</b> membership in one of the following organizations:
-    <ul>
-        @foreach (var organization in Model.Options.RequiredOrganization)
-        {
-            <li>
-                <a href="https://github.com/orgs/@organization/people?utf8=✓&query=@(User.GetGitHubLogin())#org-members-table">@organization</a>
-            </li>
-        }
-    </ul>
-</p>
-<p>
-    If you are a member but can't access the site,
-    find yourself under the "People" tab of the organization page and set your visibility to public.
-</p>
+<div class="container">
+    <p>Your GitHub account is not publicly affiliated with @names organizations.</p>
+    <p>
+        In order to use the site, please sign into another account - or,
+        ensure <b>public</b> membership in one of the following organizations:
+        <ul>
+            @foreach (var organization in Model.Options.RequiredOrganization)
+            {
+                <li>
+                    <a href="https://github.com/orgs/@organization/people?utf8=✓&query=@(User.GetGitHubLogin())#org-members-table">@organization</a>
+                </li>
+            }
+        </ul>
+    </p>
+    <p>
+        If you are a member but can't access the site,
+        find yourself under the "People" tab of the organization page and set your visibility to public.
+    </p>
 
-<a class="login-button btn btn-outline-dark" asp-action="Login" asp-controller="Account" asp-route-returnUrl="@Model.ReturnUrl">
-    <img height="30" width="30" src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" />
-    Refresh GitHub login
-</a>
+    <a class="login-button btn btn-outline-dark" asp-action="Login" asp-controller="Account" asp-route-returnUrl="@Model.ReturnUrl">
+        <img height="30" width="30" src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" />
+        Refresh GitHub login
+    </a>
+</div>

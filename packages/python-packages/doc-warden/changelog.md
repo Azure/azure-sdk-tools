@@ -1,4 +1,6 @@
 # Release History
+## 0.7.2
+- Add and `--repo-root` argument. This allows scoping of the run to any directory in the repo as long as all entries in the config file are relative to this directory.
 
 ## 0.7.1
 - Fixed an issue where `doc-warden` was handling the code fence blocks improperly. This issue caused verson `0.7.0` to throw errors when it SHOULDN'T have been.

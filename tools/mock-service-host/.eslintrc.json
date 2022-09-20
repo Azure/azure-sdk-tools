@@ -1,0 +1,50 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "prettier/@typescript-eslint",
+        "plugin:prettier/recommended",
+        "plugin:import/errors",
+        "plugin:import/warnings",
+        "plugin:import/typescript"
+    ],
+    "ignorePatterns": ["cache/*"],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 12,
+        "sourceType": "module"
+    },
+    "plugins": ["@typescript-eslint", "sort-imports-es6-autofix"],
+    "rules": {
+        "prefer-template": 0,
+        "linebreak-style": 0,
+        "indent": 0,
+        "no-console": "off",
+        "import/extensions": [
+            "error",
+            "ignorePackages",
+            {
+                "js": "never",
+                "jsx": "never",
+                "ts": "never",
+                "tsx": "never",
+                "json": "never"
+            }
+        ],
+        "sort-imports-es6-autofix/sort-imports-es6": [
+            2,
+            {
+                "ignoreCase": false,
+                "ignoreMemberSort": false,
+                "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+            }
+        ],
+        "@typescript-eslint/no-explicit-any": 0,
+        "@typescript-eslint/explicit-module-boundary-types": 0,
+        "eqeqeq": "error"
+    }
+}

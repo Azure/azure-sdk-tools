@@ -648,6 +648,9 @@ function Start-CodeGeneration {
     try {
         Install-AutoRest $AutoRestVersion
         Write-InfoLog "Commencing code generation"  
+
+        # Hard code to avoid x-ms-identifiers issue
+        $AutoRestVersion = "2.0.4421"
         
         if(-not [string]::IsNullOrWhiteSpace($SdkRootDirectory)) {
             Invoke-AutoRestCodeGenerationCommand -ConfigFile $configFile -SdkRootDirectory $SdkRootDirectory -AutoRestVersion $AutoRestVersion -Namespace $Namespace -ConfigFileTag $ConfigFileTag -SdkGenerationType $SdkGenerationType -AutoRestCodeGenerationFlags $AutoRestCodeGenerationFlags

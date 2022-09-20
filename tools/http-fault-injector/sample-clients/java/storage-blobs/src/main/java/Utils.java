@@ -59,12 +59,16 @@ public final class Utils {
             URI faultInjectorUri = new URI(scheme, requestUri.getUserInfo(), host,
                 port, requestUri.getPath(), requestUri.getQuery(), requestUri.getFragment());
 
-            String xUpstreamBaseUri = (requestUri.getPort() < 0)
-                ? requestUri.getScheme() + "://" + requestUri.getHost()
-                : requestUri.getScheme() + "://" + requestUri.getHost() + ":" + requestUri.getPort();
+            // Ensure X-Upstream-Base-Uri header is only set once, since the same HttpMessage will be reused on retries
+            if (request.getHeaders().get(HTTP_FAULT_INJECTOR_UPSTREAM_BASE_URI_HEADER) == null) {
+                String xUpstreamBaseUri = (requestUri.getPort() < 0)
+                    ? requestUri.getScheme() + "://" + requestUri.getHost()
+                    : requestUri.getScheme() + "://" + requestUri.getHost() + ":" + requestUri.getPort();
 
-            return request.setHeader(HTTP_FAULT_INJECTOR_UPSTREAM_BASE_URI_HEADER, xUpstreamBaseUri)
-                .setUrl(faultInjectorUri.toURL());
+                request.setHeader(HTTP_FAULT_INJECTOR_UPSTREAM_BASE_URI_HEADER, xUpstreamBaseUri);
+            }
+
+            return request.setUrl(faultInjectorUri.toURL());
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
         }

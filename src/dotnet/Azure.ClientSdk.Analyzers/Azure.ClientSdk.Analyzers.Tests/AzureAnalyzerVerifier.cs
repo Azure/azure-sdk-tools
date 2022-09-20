@@ -17,7 +17,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
     {
         private static readonly ReferenceAssemblies DefaultReferenceAssemblies =
             ReferenceAssemblies.Default.AddPackages(ImmutableArray.Create(
-                new PackageIdentity("Azure.Core", "1.0.0"),
+                new PackageIdentity("Azure.Core", "1.21.0"),
                 new PackageIdentity("Microsoft.Bcl.AsyncInterfaces", "1.1.0"),
                 new PackageIdentity("System.Text.Json", "4.6.0"),
                 new PackageIdentity("Newtonsoft.Json", "12.0.3"),

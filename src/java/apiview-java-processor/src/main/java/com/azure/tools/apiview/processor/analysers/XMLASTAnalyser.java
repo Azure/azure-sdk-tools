@@ -47,6 +47,8 @@ public class XMLASTAnalyser implements Analyser {
         apiListing.addChildItem(new ChildItem(filename, filename, TypeKind.ASSEMBLY));
 
         final XMLInputFactory factory = XMLInputFactory.newInstance();
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+
         XMLStreamReader reader = null;
         try {
             reader = factory.createXMLStreamReader(new FileInputStream(file.toFile()));

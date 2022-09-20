@@ -1,24 +1,17 @@
-﻿using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.WebApi;
-using System;
-using System.Collections.Generic;
+﻿using Microsoft.TeamFoundation.Build.WebApi;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
     public class AzureArtifactsServiceUnavailableClassifier : IFailureClassifier
     {
-        public AzureArtifactsServiceUnavailableClassifier(VssConnection vssConnection)
+        public AzureArtifactsServiceUnavailableClassifier(BuildLogProvider buildLogProvider)
         {
-            this.vssConnection = vssConnection;
-            buildClient = vssConnection.GetClient<BuildHttpClient>();
+            this.buildLogProvider = buildLogProvider;
         }
 
-        private VssConnection vssConnection;
-        private BuildHttpClient buildClient;
+        private readonly BuildLogProvider buildLogProvider;
 
         public async Task ClassifyAsync(FailureAnalyzerContext context)
         {
@@ -32,11 +25,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 
             foreach (var failedTask in failedTasks)
             {
-                var lines = await buildClient.GetBuildLogLinesAsync(
-                    context.Build.Project.Id,
-                    context.Build.Id,
-                    failedTask.Log.Id
-                    );
+                var lines = await this.buildLogProvider.GetLogLinesAsync(context.Build, failedTask.Log.Id);
 
                 if (lines.Any(line => line.Contains("Transfer failed for https://pkgs.dev.azure.com") && line.Contains("503 Service Unavailable")))
                 {

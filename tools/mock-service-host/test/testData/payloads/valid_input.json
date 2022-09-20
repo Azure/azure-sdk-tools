@@ -1,0 +1,48 @@
+{
+  "liveRequest": {
+    "headers": {
+      "strict-Transport-Security": "max-age=31536000; includeSubDomains",
+      "x-ms-request-id": "8e3485b6-c8a7-45c2-a9f5-59b826e42880",
+      "x-ms-correlation-request-id": "8e3485b6-c8a7-45c2-a9f5-59b826e42880",
+      "date": "Tue, 11 Sep 2018 18:45:41 GMT",
+      "eTag": "\"AAAAAAAAjAIAAAAAAACL/A==\"",
+      "server": "Microsoft-HTTPAPI/2.0",
+      "Content-Type": "application/json"
+    },
+    "method": "GET",
+    "url": "/subscriptions/randomSub/resourceGroups/randomRG/providers/Microsoft.ApiManagement/service/randomService/users/randomUsers?api-version=2018-01-01",
+    "query": { "api-version": "2018-01-01" }
+  },
+  "liveResponse": {
+    "statusCode": "200",
+    "headers": {
+      "x-ms-request-id": "8e3485b6-c8a7-45c2-a9f5-59b826e42880",
+      "x-ms-correlation-request-id": "8e3485b6-c8a7-45c2-a9f5-59b826e42880",
+      "date": "Tue, 11 Sep 2018 18:45:41 GMT",
+      "eTag": "\"AAAAAAAAjAIAAAAAAACL/A==\"",
+      "server": "Microsoft-HTTPAPI/2.0",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "type": "Microsoft.ApiManagement/service/users",
+      "name": "5b92dc1a4de8a7229083f7bf",
+      "properties": {
+        "firstName": "aaaaa",
+        "lastName": "aaaaa",
+        "email": "aaaaaaaaaaaaaaaaaaaaa",
+        "state": "active",
+        "registrationDate": "2018-09-07T20:14:18.357Z",
+        "note": "aaa",
+        "identities": [{ "provider": "aaaaa", "id": "aaaaaaaaaaaaaaaaaaaaa" }],
+        "groups": [{
+          "builtIn": true,
+          "description": "aaa",
+          "displayName": "aaa",
+          "externalId": "aaa",
+          "type": "custom"
+        }]
+      }
+    }
+  }
+}

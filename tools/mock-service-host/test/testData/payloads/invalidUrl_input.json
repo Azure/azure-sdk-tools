@@ -1,0 +1,20 @@
+{
+  "liveRequest": {
+    "headers": {},
+    "method": "GET",
+    "url": "/subscriptions/randomSub/resourcegroups/randomRG/providers/Microsoft.ApiManagement/service1/randomService?api-version=2018-01-01",
+    "query": {
+      "api-version": "2018-01-01"
+    }
+  },
+  "liveResponse": {
+    "statusCode": "404",
+    "headers": {},
+    "body": {
+      "error": {
+        "code": "404",
+        "message": "{\"code\":\"OPERATION_NOT_FOUND_IN_CACHE\",\"message\":\"Could not find best match operation for verb \\\"get\\\" for api-version \\\"2018-01-01\\\" and provider \\\"microsoft.apimanagement\\\" in the cache.\"}"
+      }
+    }
+  }
+}

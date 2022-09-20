@@ -37,7 +37,7 @@ namespace APIViewWeb
         public bool RunAnalysis
         {
 #pragma warning disable 618
-            get => _runAnalysis || Revisions.SelectMany(r=>r.Files).Any(f => f.RunAnalysis);
+            get => _runAnalysis || Revisions.SelectMany(r => r.Files).Any(f => f.RunAnalysis);
 #pragma warning restore 618
             set => _runAnalysis = value;
         }
@@ -59,6 +59,20 @@ namespace APIViewWeb
         public string GetUserEmail(ClaimsPrincipal user) =>
             NotificationManager.GetUserEmail(user);
 
+        // gets CSS safe language name - such that css classes based on language name would not need any escaped characters
+        public string GetLanguageCssSafeName()
+        {
+            switch (Language.ToLower())
+            {
+                case "c#":
+                    return "csharp";
+                case "c++":
+                    return "cplusplus";
+                default:
+                    return Language.ToLower();
+            }
+        }
+
         [JsonIgnore]
         public string DisplayName
         {
@@ -73,13 +87,40 @@ namespace APIViewWeb
             }
         }
 
-        [JsonIgnore]
         public DateTime LastUpdated => Revisions.LastOrDefault()?.CreationDate ?? CreationDate;
 
         [JsonIgnore]
         public string Language => Revisions.LastOrDefault()?.Files.LastOrDefault()?.Language;
 
+        [JsonIgnore]
+        public string LanguageVariant => Revisions.LastOrDefault()?.Files.LastOrDefault()?.LanguageVariant;
+
+        [JsonIgnore]
+        public string PackageName {
+            get
+            {
+                var packageName = Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName;
+                if (String.IsNullOrWhiteSpace(packageName))
+                {
+                    return "Other";
+                }
+                else 
+                {
+                    return packageName;
+                }
+            }
+        }
+
         // Master version of review for each package will be auto created
         public bool IsAutomatic { get; set; }
+
+        public ReviewType FilterType { get; set; }
+
+        [JsonIgnore]
+        public bool IsApproved => Revisions.LastOrDefault()?.Approvers?.Any() ?? false;
+
+        public string ServiceName { get; set; }
+
+        public string PackageDisplayName { get; set; }
     }
 }

@@ -1,22 +1,66 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public static class StringSanitizer
     {
         /// <summary>
+        /// Quick and easy abstraction for checking regex validity. Passing null explicitly will result in a True return.
+        /// </summary>
+        /// <param name="regex">A regular expression.</param>
+        public static void ConfirmValidRegex(string regex)
+        {
+            try
+            {
+                new Regex(regex);
+            }
+            catch (Exception e)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Expression of value {regex} does not successfully compile. Failure Details: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Quick and easy abstraction for checking regex validity. Passing null explicitly will result in a True return.
+        /// </summary>
+        /// <param name="regex">A regular expression.</param>
+        public static Regex GetRegex(string regex)
+        {
+            try
+            {
+                return new Regex(regex);
+            }
+            catch (Exception e)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Expression of value {regex} does not successfully compile. Failure Details: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// General purpose string replacement. Simple abstraction of string.Replace().
+        /// </summary>
+        /// <param name="inputValue">The name of the header we're operating against.</param>
+        /// <param name="targetValue">The substitution or whole new header value, depending on "regex" setting.</param>
+        /// <param name="replacementValue">The substitution or new header value, depending on the "targetValue" setting.</param>
+        /// <returns>An updated value of the input string, with replacement operations completed if necessary.</returns>
+        public static string ReplaceValue(string inputValue, string targetValue, string replacementValue)
+        {
+            return inputValue.Replace(targetValue, replacementValue);
+        }
+
+        /// <summary>
         /// General purpose string replacement/subsitution given a set of inputs. Used in many regex substitution sanitizers.
         /// </summary>
         /// <param name="inputValue">The name of the header we're operating against.</param>
-        /// <param name="replacementValue">The substitution or whole new header value, depending on "regex" setting.</param>
+        /// <param name="replacementValue">The substitution or whole input value, depending on "regex" setting.</param>
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupName is set, a subsitution operation.</param>
         /// <param name="groupName">The capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation. 
         /// Note that with this implementation, you can refer to a numbered group if you didn't name it, EG: '0'.</param>
+        /// <returns>An updated value of the input string, with replacement operations completed if necessary.</returns>
         public static string SanitizeValue(string inputValue, string replacementValue, string regex = null, string groupName = null)
         {
             if (regex == null)
@@ -24,7 +68,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return replacementValue;
             }
 
-            var rx = new Regex(regex);
+            Regex rx = new Regex(regex);
+
             var replacement = String.Empty;
 
             if (groupName != null)

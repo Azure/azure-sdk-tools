@@ -1,0 +1,41 @@
+{
+  "endpoints": {
+    "activeDirectory": "https://localhost:443",
+    "activeDirectoryDataLakeResourceId": null,
+    "activeDirectoryGraphResourceId": "https://graph.cloudapi.de/",
+    "activeDirectoryResourceId": "https://localhost:443/",
+    "appInsightsResourceId": null,
+    "appInsightsTelemetryChannelResourceId": null,
+    "attestationResourceId": null,
+    "batchResourceId": "https://batch.cloudapi.de/",
+    "gallery": "https://gallery.cloudapi.de/",
+    "logAnalyticsResourceId": null,
+    "management": "https://localhost:443/",
+    "mediaResourceId": "https://rest.media.cloudapi.de",
+    "microsoftGraphResourceId": "https://graph.microsoft.de",
+    "ossrdbmsResourceId": "https://ossrdbms-aad.database.cloudapi.de",
+    "portal": "https://portal.microsoftazure.de",
+    "resourceManager": "https://localhost",
+    "sqlManagement": "https://management.core.cloudapi.de:8443/",
+    "synapseAnalyticsResourceId": null,
+    "vmImageAliasDoc": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/arm-compute/quickstart-templates/aliases.json"
+  },
+  "isActive": false,
+  "name": "AzureGermanCloud",
+  "profile": "latest",
+  "suffixes": {
+    "acrLoginServerEndpoint": null,
+    "attestationEndpoint": null,
+    "azureDatalakeAnalyticsCatalogAndJobEndpoint": null,
+    "azureDatalakeStoreFileSystemEndpoint": null,
+    "keyvaultDns": ".vault.microsoftazure.de",
+    "mariadbServerEndpoint": ".mariadb.database.cloudapi.de",
+    "mhsmDns": ".managedhsm.microsoftazure.de",
+    "mysqlServerEndpoint": ".mysql.database.cloudapi.de",
+    "postgresqlServerEndpoint": ".postgres.database.cloudapi.de",
+    "sqlServerHostname": ".database.cloudapi.de",
+    "storageEndpoint": "core.cloudapi.de",
+    "storageSyncEndpoint": null,
+    "synapseAnalyticsEndpoint": null
+  }
+}

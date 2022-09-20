@@ -29,8 +29,8 @@ public class UpperCaseNamingDiagnosticRule implements DiagnosticRule {
         getClassName(cu).ifPresent(name -> check(name, makeId(cu), listing));
 
         // check all public / protected methods
-        getPublicOrProtectedMethods(cu)
-                .forEach(methodDeclaration -> check(methodDeclaration.getNameAsString(), makeId(methodDeclaration), listing));
+        getPublicOrProtectedMethods(cu).forEach(methodDeclaration ->
+            check(methodDeclaration.getNameAsString(), makeId(methodDeclaration), listing));
     }
 
     private void check(String name, String id, APIListing listing) {

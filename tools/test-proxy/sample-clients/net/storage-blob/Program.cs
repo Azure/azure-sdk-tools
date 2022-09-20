@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
         private const string _blobName = "sample";
 
         private static readonly Uri _proxy = new Uri("https://localhost:5001");
-        private static readonly string _recordingFile = Path.Combine("recordings", "test-proxy", "net-storage-blob-sample.json");
+        private static readonly string _recordingFile = "recordings/net-storage-blob-sample.json";
 
         private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler()
         {
@@ -84,7 +84,9 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
             Console.WriteLine("StartPlayback");
 
             var message = new HttpRequestMessage(HttpMethod.Post, _proxy + "playback/start");
-            message.Headers.Add("x-recording-file", _recordingFile);
+            var json = "{\"x-recording-file\":\"" + _recordingFile + "\"}";
+            var content = new System.Net.Http.StringContent(json, Encoding.UTF8, "application/json");
+            message.Content = content;
 
             var response = await _httpClient.SendAsync(message);
             var recordingId = response.Headers.GetValues("x-recording-id").Single();
@@ -110,7 +112,9 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
             Console.WriteLine("StartRecording");
 
             var message = new HttpRequestMessage(HttpMethod.Post, _proxy + "record/start");
-            message.Headers.Add("x-recording-file", _recordingFile);
+            var json = "{\"x-recording-file\":\"" + _recordingFile + "\"}";
+            var content = new System.Net.Http.StringContent(json, Encoding.UTF8, "application/json");
+            message.Content = content;
 
             var response = await _httpClient.SendAsync(message);
             var recordingId = response.Headers.GetValues("x-recording-id").Single();
@@ -199,6 +203,7 @@ namespace Azure.Sdk.Tools.TestProxy.StorageBlobSample
                 message.Request.Headers.Add("x-recording-upstream-base-uri", baseUri.ToString());
 
                 message.Request.Uri.Host = _host;
+                message.Request.Uri.Scheme = _proxy.Scheme;
                 if (_port.HasValue)
                 {
                     message.Request.Uri.Port = _port.Value;

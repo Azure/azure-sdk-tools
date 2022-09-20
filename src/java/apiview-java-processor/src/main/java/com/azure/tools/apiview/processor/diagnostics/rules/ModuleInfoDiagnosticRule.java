@@ -22,8 +22,7 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
  * name of the module matches the base package name.
  */
 public class ModuleInfoDiagnosticRule implements DiagnosticRule {
-    private String moduleName;
-    private Set<String> packages = new HashSet<>();
+    private final Set<String> packages = new HashSet<>();
 
     @Override
     public void scanIndividual(CompilationUnit cu, APIListing listing) {
@@ -62,7 +61,7 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
             return;
         }
 
-        moduleName = moduleInfoToken.get().getValue();
+        String moduleName = moduleInfoToken.get().getValue();
         if (moduleName != null) {
             // special casing azure-core as the base package doesn't have any classes and hence not included in the
             // list of packages

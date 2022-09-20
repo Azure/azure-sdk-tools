@@ -1,0 +1,377 @@
+{
+    // This file produces the following page https://i.imgur.com/ikfRmLM.png
+    // As an artifact of current deserialization code all propererties are currently required even if they have a default value, this can requirement can be relaxed
+    // Token kinds:
+    //     Text = 0,
+    //     Newline = 1,
+    //     Whitespace = 2,
+    //     Punctuation = 3,
+    //     Keyword = 4,
+    //     LineIdMarker = 5, // use this if there are no visible tokens with ID on the line but you still want to be able to leave a comment for it
+    //     TypeName = 6,
+    //     MemberName = 7,
+    //     StringLiteral = 8,
+    //     Literal = 9,
+    //     Comment = 10,
+    //     DocumentRangeStart = 11,
+    //     DocumentRangeEnd = 12,
+    //     DeprecatedRangeStart = 13,
+    //     DeprecatedRangeEnd = 14,
+    //     SkipDiffRangeStart = 15,
+    //     SkipDiffRangeEnd = 16,
+    //     InheritanceInfoStart = 17,
+    //     InheritanceInfoEnd = 18
+
+    "Name": "ClassLibrary1", // Would be displayed in review list
+    "Language": "Json",
+    "ServiceName": "Service1",
+    "PackageDisplayName": "Package Display Name1",
+    "Tokens": [
+        {
+            "DefinitionId": null, // Allows token to be navigated to, should be unique, used as ID for comment thread
+            "NavigateToId": null, // If set clicking on the token would navigate to other token with this ID
+            "Value": "namespace", // Textual value
+            "Kind": 4 // One of token kinds from above
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": "ClassLibrary1",
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 5
+        },
+        {
+            "DefinitionId": "ClassLibrary1",
+            "NavigateToId": null,
+            "Value": "ClassLibrary1",
+            "Kind": 0
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "{",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 1
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "    ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": "ClassLibrary1.Class1",
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 5
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "public",
+            "Kind": 4
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "class",
+            "Kind": 4
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": "ClassLibrary1.Class1",
+            "NavigateToId": null,
+            "Value": "Class1",
+            "Kind": 6,
+            "CrossLanguageDefId": "Namespace1.Class1"
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "ClassLibrary1.Class1",
+            "Kind": 17
+        },               
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "{",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 1
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 18
+        }, 
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "        ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": "ClassLibrary1.Class1.Class1(System.String, System.Int32)",
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 5
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "public",
+            "Kind": 4
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": "ClassLibrary1.Class1.Class1(System.String, System.Int32)",
+            "NavigateToId": null,
+            "Value": "Class1",
+            "Kind": 6,
+            "CrossLanguageDefId": "Namespace1.Class1.Class1"
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "(",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "string",
+            "Kind": 4
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "parameter",
+            "Kind": 0
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "=",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "\u0022value\u0022",
+            "Kind": 8
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ",",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "int",
+            "Kind": 4
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "other",
+            "Kind": 0
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "=",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "-1",
+            "Kind": 0
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": ")",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": " ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "{",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "}",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 1
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "    ",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "}",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 1
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "",
+            "Kind": 2
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": "}",
+            "Kind": 3
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 1
+        },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 19
+        }
+    ],
+    "Navigation": [
+        {
+            "Text": "ClassLibrary1.dll",
+            "NavigationId": null,
+            "ChildItems": [
+                {
+                    "Text": "ClassLibrary1",
+                    "NavigationId": "ClassLibrary1",
+                    "ChildItems": [
+                        {
+                            "Text": "Class1",
+                            "NavigationId": "ClassLibrary1.Class1",
+                            "ChildItems": [],
+                            "Tags": {
+                                "TypeKind": "class" // used to figure out the icon, availible list class, interface, struct, enum, delegate, unknown, assembly
+                            }
+                        }
+                    ],
+                    "Tags": {}
+                }
+            ],
+            "Tags": {
+                "TypeKind": "assembly"
+            }
+        }
+    ]
+}

@@ -15,7 +15,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
             const string code = @"
 namespace RandomNamespace
 {
-    public class SomeClientOptions { }
+    public class SomeClientOptions : Azure.Core.ClientOptions { }
 
     public class SomeClient
     {
@@ -32,7 +32,7 @@ namespace RandomNamespace
             const string code = @"
 namespace RandomNamespace
 {
-    public class SomeClientOptions { }
+    public class SomeClientOptions : Azure.Core.ClientOptions { }
 
     public class SomeClient
     {
@@ -49,7 +49,7 @@ namespace RandomNamespace
             const string code = @"
 namespace RandomNamespace
 {
-    public class SomeClientOptions { }
+    public class SomeClientOptions : Azure.Core.ClientOptions { }
 
     public class SomeClient
     {
@@ -66,12 +66,29 @@ namespace RandomNamespace
             const string code = @"
 namespace RandomNamespace
 {
-    public class SharedClientOptions { }
+    public class SharedClientOptions : Azure.Core.ClientOptions { }
 
     public class SomeClient
     {
         protected SomeClient() {}
         public SomeClient(string connectionString, SharedClientOptions options = null) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0006NotProducedForClientsOptions()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClientsOptions : Azure.Core.ClientOptions { } // Type has 'ClientsOptions' suffix instead of 'ClientOptions'
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public SomeClient(string connectionString, SomeClientsOptions options = null) {}
     }
 }";
             await Verifier.VerifyAnalyzerAsync(code);

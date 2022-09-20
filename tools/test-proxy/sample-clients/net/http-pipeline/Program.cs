@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,7 +14,7 @@ namespace Azure.Sdk.Tools.TestProxy.HttpPipelineSample
     {
         private static readonly Uri _url = new Uri("https://www.example.org");
         private static readonly Uri _proxy = new Uri("https://localhost:5001");
-        private static readonly string _recordingFile = Path.Combine("test-proxy", "net-http-pipeline-sample.json");
+        private static readonly string _recordingFile = "recordings/net-http-pipeline-sample.json";
 
         private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler()
         {
@@ -68,7 +69,9 @@ namespace Azure.Sdk.Tools.TestProxy.HttpPipelineSample
             Console.WriteLine("StartPlayback");
 
             var message = new HttpRequestMessage(HttpMethod.Post, _proxy + "playback/start");
-            message.Headers.Add("x-recording-file", _recordingFile);
+            var json = "{\"x-recording-file\":\"" + _recordingFile + "\"}";
+            var content = new System.Net.Http.StringContent(json, Encoding.UTF8, "application/json");
+            message.Content = content;
 
             var response = await _httpClient.SendAsync(message);
             var recordingId = response.Headers.GetValues("x-recording-id").Single();
@@ -94,7 +97,9 @@ namespace Azure.Sdk.Tools.TestProxy.HttpPipelineSample
             Console.WriteLine("StartRecording");
 
             var message = new HttpRequestMessage(HttpMethod.Post, _proxy + "record/start");
-            message.Headers.Add("x-recording-file", _recordingFile);
+            var json = "{\"x-recording-file\":\"" + _recordingFile + "\"}";
+            var content = new System.Net.Http.StringContent(json, Encoding.UTF8, "application/json");
+            message.Content = content;
 
             var response = await _httpClient.SendAsync(message);
             var recordingId = response.Headers.GetValues("x-recording-id").Single();

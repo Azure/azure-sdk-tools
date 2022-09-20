@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
-using APIViewWeb.Respositories;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -11,11 +11,13 @@ namespace APIViewWeb.Pages.Assemblies
     public class RevisionsPageModel : PageModel
     {
         private readonly ReviewManager _manager;
+        public readonly UserPreferenceCache _preferenceCache;
 
         public RevisionsPageModel(
-            ReviewManager manager)
+            ReviewManager manager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
+            _preferenceCache = preferenceCache;
         }
 
         public ReviewModel Review { get; set; }

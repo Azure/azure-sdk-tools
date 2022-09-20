@@ -89,7 +89,6 @@ public class IllegalPackageAPIExportsDiagnosticRule implements DiagnosticRule {
                     ERROR,
                     methodId,
                     "Public API should never expose classes from the " + illegalPackage + " package."));
-                continue;
             }
         }
     }

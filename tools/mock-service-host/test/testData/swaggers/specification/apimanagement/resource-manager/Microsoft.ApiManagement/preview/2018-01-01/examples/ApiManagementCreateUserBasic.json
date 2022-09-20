@@ -1,0 +1,80 @@
+{
+  "parameters": {
+    "test": 2,
+    "api-version": "2018-01-01",
+    "resourceGroupName": "randomRG",
+    "serviceName": "randomService",
+    "uid": "randomUsers",
+    "parameters": {
+      "properties": {
+        "firstName": "foo",
+        "lastName": "bar",
+        "email": "foobar@outlook.com",
+        "confirmation": "signup"
+      }
+    },
+    "subscriptionId": "randomSub"
+  },
+  "responses": {
+    "200": {
+      "body": {
+        "id": "/subscriptions/randomSub/resourceGroups/randomRG/providers/Microsoft.ApiManagement/service/randomService/users/randomUsers",
+        "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "type": "aaaaa",
+        "properties": {
+          "state": "active",
+          "note": "aaaaaaaaaaaaaaaaaaa",
+          "identities": [
+            {
+              "provider": "aaaaaaaaaaa",
+              "id": "/subscriptions/a9cbceed-cd54-47f1-b7a2-bad149218603/resourceGroups/mockRg/providers/Microsoft.Resources/mockResource/mockName"
+            }
+          ],
+          "firstName": "a",
+          "lastName": "aaaa",
+          "email": "aaaaaaaaaaaaaa",
+          "registrationDate": "2021-07-20T07:22:45.742Z",
+          "groups": [
+            {
+              "displayName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "description": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "builtIn": true,
+              "type": "custom",
+              "externalId": "aaaaaaaaaa"
+            }
+          ]
+        }
+      }
+    },
+    "201": {
+      "body": {
+        "id": "/subscriptions/randomSub/resourceGroups/randomRG/providers/Microsoft.ApiManagement/service/randomService/users/randomUsers",
+        "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "type": "aaaaa",
+        "properties": {
+          "state": "active",
+          "note": "aaaaaaaaaaaaaaaaaaa",
+          "identities": [
+            {
+              "provider": "aaaaaaaaaaa",
+              "id": "/subscriptions/a9cbceed-cd54-47f1-b7a2-bad149218603/resourceGroups/mockRg/providers/Microsoft.Resources/mockResource/mockName"
+            }
+          ],
+          "firstName": "a",
+          "lastName": "aaaa",
+          "email": "aaaaaaaaaaaaaa",
+          "registrationDate": "2021-07-20T07:22:45.742Z",
+          "groups": [
+            {
+              "displayName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "description": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "builtIn": true,
+              "type": "custom",
+              "externalId": "aaaaaaaaaa"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

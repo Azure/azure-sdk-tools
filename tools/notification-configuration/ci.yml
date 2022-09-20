@@ -9,6 +9,8 @@ trigger:
   paths:
     include:
       - tools/notification-configuration
+      - tools/code-owners-parser/CodeOwnersParser
+      - tools/identity-resolution/identity-resolution
 
 pr:
   branches:
@@ -20,8 +22,11 @@ pr:
   paths:
     include:
       - tools/notification-configuration
+      - tools/code-owners-parser/CodeOwnersParser
+      - tools/identity-resolution/identity-resolution
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/notification-configuration
+    DotNetCoreVersion: 5.0.301

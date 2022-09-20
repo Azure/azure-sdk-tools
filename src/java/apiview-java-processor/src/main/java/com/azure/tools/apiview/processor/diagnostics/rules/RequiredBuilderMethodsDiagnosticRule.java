@@ -18,9 +18,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
-
-import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getClasses;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPublicOrProtectedMethods;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
+import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
 /**
  * Not all builders require all methods, but we should warn regardless so it can be considered.
@@ -59,15 +60,15 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
                 // This is unless the builderProtocol is null, in which case the set of rules we have
                 // will all be applied.
                 final String protocolName = typeDeclaration.getAnnotationByName(BUILDER_ANNOTATION).get()
-                      .getChildNodes()
-                      .stream()
-                      .filter(n -> n instanceof MemberValuePair)
-                      .map(n -> (MemberValuePair) n)
-                      .filter(p -> "protocol".equals(p.getNameAsString()))
-                      .map(MemberValuePair::getValue)
-                      .map(Node::toString)
-                      .findFirst()
-                      .orElse("http");  // TODO for now we assume that no specified protocol in the builder means we will be http
+                    .getChildNodes()
+                    .stream()
+                    .filter(n -> n instanceof MemberValuePair)
+                    .map(n -> (MemberValuePair) n)
+                    .filter(p -> "protocol".equals(p.getNameAsString()))
+                    .map(MemberValuePair::getValue)
+                    .map(Node::toString)
+                    .findFirst()
+                    .orElse("http");  // TODO for now we assume that no specified protocol in the builder means we will be http
 
                 if (builderProtocol != null) {
                     if (!builderProtocol.equals(protocolName) || protocolName.isEmpty()) {
@@ -85,10 +86,10 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
 
                 if (!missingMethods.isEmpty()) {
                     listing.addDiagnostic(new Diagnostic(
-                            WARNING,
-                            makeId(typeDeclaration),
-                            "This builder is missing common APIs. These are not required, but please consider if the following methods should exist: " + missingMethods,
-                            "https://azure.github.io/azure-sdk/java_design.html#java-service-client-builder-consistency"));
+                        WARNING,
+                        makeId(typeDeclaration),
+                        "This builder is missing common APIs. These are not required, but please consider if the following methods should exist: " + missingMethods,
+                        "https://azure.github.io/azure-sdk/java_introduction.html#java-service-client-builder-consistency"));
                 }
             }
         });
@@ -113,15 +114,15 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
                 ParameterAllowedTypes expectedType = expectedTypes[i];
                 Type actualType = methodDeclaration.getParameter(i).getType();
 
-                String actualTypeName = ((ClassOrInterfaceType)actualType).getNameAsString();
+                String actualTypeName = ((ClassOrInterfaceType) actualType).getNameAsString();
 
                 if (!expectedType.supports(actualTypeName)) {
                     return Optional.of(
-                            new Diagnostic(
-                                WARNING,
-                                makeId(methodDeclaration),
-                                "Incorrect type being supplied to this builder method. Expected " + expectedType +
-                                        ", but was " + actualTypeName + "."));
+                        new Diagnostic(
+                            WARNING,
+                            makeId(methodDeclaration),
+                            "Incorrect type being supplied to this builder method. Expected " + expectedType +
+                                ", but was " + actualTypeName + "."));
                 }
             }
 

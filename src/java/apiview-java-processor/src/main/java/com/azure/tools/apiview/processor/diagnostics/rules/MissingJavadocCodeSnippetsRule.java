@@ -4,7 +4,8 @@ import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.comments.JavadocComment;
+
+import java.util.regex.Pattern;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getClasses;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPublicOrProtectedMethods;
@@ -18,6 +19,9 @@ import static com.azure.tools.apiview.processor.model.DiagnosticKind.INFO;
 public class MissingJavadocCodeSnippetsRule implements DiagnosticRule {
     public static final String CODE_SNIPPET_TAG = "{@codesnippet";
 
+    private static final Pattern NEW_CODESNIPPET_TAG = Pattern
+        .compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9.#\\-_]+)\\s*-->");
+
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         getClasses(cu).forEach(typeDeclaration -> {
@@ -26,10 +30,8 @@ public class MissingJavadocCodeSnippetsRule implements DiagnosticRule {
             // Check for codesnippets in class level javadoc for clients and client builders
             if (typeDeclaration.getJavadocComment().isPresent()
                     && (className.endsWith("Client") || className.endsWith("Builder"))) {
-                JavadocComment javadocComment = typeDeclaration.getJavadocComment().get();
-                String javadoc = javadocComment.getContent();
 
-                if (!javadoc.contains(CODE_SNIPPET_TAG)) {
+                if (!javadocContainsCodeSnippetTag(typeDeclaration.getJavadocComment().get().getContent())) {
                     listing.addDiagnostic((new Diagnostic(
                             INFO,
                             makeId(cu),
@@ -49,11 +51,8 @@ public class MissingJavadocCodeSnippetsRule implements DiagnosticRule {
                 boolean serviceMethodHasCodesnippets = getPublicOrProtectedMethods(cu)
                         .filter(methodDeclaration -> methodDeclaration.isAnnotationPresent("ServiceMethod"))
                         .filter(methodDeclaration -> methodDeclaration.getJavadocComment().isPresent())
-                        .anyMatch(methodDeclaration -> methodDeclaration
-                                .getJavadocComment()
-                                .get()
-                                .getContent()
-                                .contains(CODE_SNIPPET_TAG));
+                        .map(methodDeclaration -> methodDeclaration.getJavadocComment().get().getContent())
+                        .anyMatch(MissingJavadocCodeSnippetsRule::javadocContainsCodeSnippetTag);
 
                 if (!serviceMethodHasCodesnippets) {
                     listing.addDiagnostic((new Diagnostic(
@@ -65,5 +64,13 @@ public class MissingJavadocCodeSnippetsRule implements DiagnosticRule {
                 }
             }
         });
+    }
+
+    private static boolean javadocContainsCodeSnippetTag(String javadoc) {
+        if (javadoc == null) {
+            return false;
+        }
+
+        return javadoc.contains(CODE_SNIPPET_TAG) || NEW_CODESNIPPET_TAG.matcher(javadoc).find();
     }
 }

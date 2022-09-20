@@ -8,6 +8,7 @@
             NavigateToId = null;
             Kind = kind;
             DefinitionId = null;
+            CrossLanguageDefId = null;
         }
 
         public string DefinitionId { get; set; }
@@ -17,6 +18,8 @@
         public string Value { get; set; }
 
         public CodeFileTokenKind Kind { get; set; }
+
+        public string CrossLanguageDefId { get; set; }
 
         public override string ToString()
         {

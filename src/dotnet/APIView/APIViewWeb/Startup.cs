@@ -16,12 +16,12 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using APIViewWeb.Respositories;
+using APIViewWeb.Repositories;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using APIViewWeb.Repositories;
 using System.Threading.Tasks;
 using APIViewWeb.HostedServices;
+using APIViewWeb.Filters;
 
 namespace APIViewWeb
 {
@@ -49,12 +49,13 @@ namespace APIViewWeb
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddApplicationInsightsTelemetry();
+            services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
 
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
                 options.CheckConsentNeeded = context => true;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
+                options.MinimumSameSitePolicy = SameSiteMode.Lax;
             });
 
             services.Configure<OrganizationOptions>(options => Configuration
@@ -75,10 +76,15 @@ namespace APIViewWeb
             services.AddSingleton<BlobOriginalsRepository>();
             services.AddSingleton<CosmosReviewRepository>();
             services.AddSingleton<CosmosCommentsRepository>();
+            services.AddSingleton<CosmosPullRequestsRepository>();
+            services.AddSingleton<DevopsArtifactRepository>();
 
             services.AddSingleton<ReviewManager>();
             services.AddSingleton<CommentsManager>();
             services.AddSingleton<NotificationManager>();
+            services.AddSingleton<PullRequestManager>();
+            services.AddSingleton<PackageNameManager>();
+            services.AddSingleton<UserPreferenceCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();
@@ -89,6 +95,7 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, CppLanguageService>();
             services.AddSingleton<LanguageService, GoLanguageService>();
             services.AddSingleton<LanguageService, ProtocolLanguageService>();
+            services.AddSingleton<LanguageService, SwaggerLanguageService>();
             services.AddSingleton<LanguageService, SwiftLanguageService>();
             services.AddSingleton<LanguageService, XmlLanguageService>();
 
@@ -184,7 +191,10 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, PullRequestPermissionRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
+            services.AddHostedService<PullRequestBackgroundHostedService>();
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)

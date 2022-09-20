@@ -1,15 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -36,7 +32,6 @@ namespace Azure.Sdk.Tools.TestProxy
             };
         }
 
-
         [HttpGet]
         public async Task<ContentResult> Active()
         {
@@ -61,8 +56,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
             using (var writer = new StringWriter())
             {
-                
-
                 IViewEngine viewEngine = controller.HttpContext.RequestServices.GetService(typeof(ICompositeViewEngine)) as ICompositeViewEngine;
                 
                 ViewEngineResult viewResult = viewEngine.FindView(controller.ControllerContext, viewName, !partial);

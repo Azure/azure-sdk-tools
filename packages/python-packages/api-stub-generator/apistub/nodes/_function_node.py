@@ -1,43 +1,20 @@
 import logging
 import inspect
+from collections import OrderedDict
 import astroid
-import operator
 import re
-from inspect import Parameter
-from ._docstring_parser import DocstringParser, TypeHintParser
+
+from ._annotation_parser import FunctionAnnotationParser
+from ._astroid_parser import AstroidFunctionParser
+from ._docstring_parser import DocstringParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
 
 
-KW_ARG_NAME = "**kwargs"
-VALIDATION_REQUIRED_DUNDER = ["__init__",]
-KWARG_NOT_REQUIRED_METHODS = ["close",]
-TYPEHINT_NOT_REQUIRED_METHODS = ["close", "__init__"]
-REGEX_ITEM_PAGED = "~[\w.]*\.([\w]*)\s?[\[\(][^\n]*[\]\)]"
-PAGED_TYPES = ["ItemPaged", "AsyncItemPaged",]
-# Methods that are implementation of known interface should be excluded from lint check
-# for e.g. get, update, keys
-LINT_EXCLUSION_METHODS = [
-    "get",
-    "has_key",
-    "items",
-    "keys",
-    "update",
-    "values",
-    "close",    
-]
 # Find types like ~azure.core.paging.ItemPaged and group returns ItemPaged.
 # Regex is used to find shorten such instances in complex type
 # for e,g, ~azure.core.ItemPaged.ItemPaged[~azure.communication.chat.ChatThreadInfo] to ItemPaged[ChatThreadInfo]
-REGEX_FIND_LONG_TYPE = "((?:~?)[\w.]+\.+([\w]+))"
-
-
-def is_kwarg_mandatory(func_name):
-    return not func_name.startswith("_") and func_name not in KWARG_NOT_REQUIRED_METHODS
-
-
-def is_typehint_mandatory(func_name):
-    return not func_name.startswith("_") and func_name not in TYPEHINT_NOT_REQUIRED_METHODS
+REGEX_FIND_LONG_TYPE = r"((?:~?)[\\w.]+\.+([\\w]+))"
 
 
 class FunctionNode(NodeEntityBase):
@@ -46,13 +23,25 @@ class FunctionNode(NodeEntityBase):
     :param str: namespace
     :param NodeEntityBase: parent_node
     :param function: obj
+    :param astroid.FunctionDef: node
     :param bool: is_module_level
     """
 
-    def __init__(self, namespace, parent_node, obj, is_module_level=False):
+    def __init__(self, namespace, parent_node, *, obj=None, node: astroid.FunctionDef=None, is_module_level=False):
         super().__init__(namespace, parent_node, obj)
+        if not obj and node:
+            self.name = node.name
+            self.display_name = node.name
         self.annotations = []
-        self.args = []
+
+        # Track **kwargs and *args separately, the way astroid does
+        self.special_kwarg = None
+        self.special_vararg = None
+
+        self.args = OrderedDict()
+        self.kwargs = OrderedDict()
+        self.posargs = OrderedDict()
+
         self.return_type = None
         self.namespace_id = self.generate_id()
         # Set name space level ID as full name
@@ -63,111 +52,63 @@ class FunctionNode(NodeEntityBase):
         # Some of the methods wont be listed in API review
         # For e.g. ABC methods if class implements all ABC methods
         self.hidden = False
+        try:
+            self.node = node or astroid.extract_node(inspect.getsource(obj))
+        except OSError:
+            self.node = None
         self._inspect()
+        self.kwargs = OrderedDict(sorted(self.kwargs.items()))
+        self.namespace_id = self._regenerate_function_id()
 
+    def _regenerate_function_id(self):
+        """
+        Regenerate the namespace_id for functions to account for overloads, which
+        have the same name.
+        """
+        lines = [f"{self.full_name}("]
+        for arg in self.args.values():
+            lines.append(f"{arg.argname}:{arg.argtype},")
+        for arg in self.kwargs.values():
+            lines.append(f"{arg.argname}:{arg.argtype},")
+        lines.append(f")->{self.return_type}")
+        namespace_id = "".join(lines)
+        return namespace_id
 
     def _inspect(self):
         logging.debug("Processing function {0}".format(self.name))
-        code = inspect.getsource(self.obj).strip()
-        # We cannot do "startswith" check here due to annotations or decorators present for functions
-        self.is_async = "async def" in code
+
+        self.is_async = isinstance(self.node, astroid.AsyncFunctionDef)
         self.def_key = "async def" if self.is_async else "def"
+
         # Update namespace ID to reflect async status. Otherwise ID will conflict between sync and async methods
         if self.is_async:
             self.namespace_id += ":async"
-
-        # Find decorators and any annotations
-        try:
-            node = astroid.extract_node(inspect.getsource(self.obj))
-            if node.decorators:
-                self.annotations = [
-                    "@{}".format(x.name)
-                    for x in node.decorators.nodes
-                    if hasattr(x, "name")
-                ]
-        except:
-            # todo Update exception details in error
-            error_message = "Error in parsing decorators for function {}".format(
-                self.name
-            )
-            self.add_error(error_message)
-            logging.error(error_message)
+        
+        # Turn any decorators into annotation
+        if self.node and self.node.decorators:
+            self.annotations = [f"@{x.as_string(preserve_quotes=True)}" for x in self.node.decorators.nodes]
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
 
-
     def _parse_function(self):
-        """
-        Find positional and keyword arguements, type and default value and return type of method
-        Parsing logic will follow below order to identify these information
-        1. Identify args, types, default and ret type using inspect
-        2. Parse type annotations if inspect doesn't have complete info
-        3. Parse docstring to find keyword arguements
-        4. Parse type hints
-        """
+        """ Find positional and keyword arguments, type and default value and return type of method."""
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
-            self.args.append(ArgType("cls"))
+            self.args["cls"] = ArgType(name="cls", argtype=None, default=inspect.Parameter.empty, keyword=None)
 
-        # Find signature to find positional args and return type
-        sig = inspect.signature(self.obj)
-        params = sig.parameters
-        # Add all keyword only args here temporarily until docstring is parsed
-        # This is to handle the scenario is keyword arg typehint (py3 style is present in signature itself)
-        self.kw_args = []
-        for argname in params:
-            arg = ArgType(argname, get_qualified_name(params[argname].annotation, self.namespace), "", self)
-            # set default value if available
-            if params[argname].default != Parameter.empty:
-                arg.default = str(params[argname].default)
-            # Store handle to kwarg object to replace it later
-            if params[argname].kind == Parameter.VAR_KEYWORD:
-                arg.argname = KW_ARG_NAME
-
-            if params[argname].kind == Parameter.KEYWORD_ONLY:
-                self.kw_args.append(arg)
-            else:
-                self.args.append(arg)
-
-        if sig.return_annotation:
-            self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
-
-        # parse docstring
+        if self.node:
+            parser = AstroidFunctionParser(self.node, self.namespace, self)
+        else:
+            parser = FunctionAnnotationParser(self.obj, self.namespace, self)
+        if parser:
+            self.args = parser.args
+            self.posargs = parser.posargs
+            self.kwargs = parser.kwargs
+            self.return_type = get_qualified_name(parser.return_type, self.namespace)
+            self.special_kwarg = parser.special_kwarg
+            self.special_vararg = parser.special_vararg
         self._parse_docstring()
-        # parse type hints
-        self._parse_typehint()
-        self._copy_kw_args()
-
-        if not self.return_type and is_typehint_mandatory(self.name):
-            self.add_error("Return type is missing in both typehint and docstring")
-        # Validate return type
-        self._validate_pageable_api()
-
-
-    def _copy_kw_args(self):
-        # Copy kw only args from signature and docstring
-        kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
-        # add keyword args
-        if self.kw_args:
-            # Add separator to differentiate pos_arg and keyword args
-            self.args.append(ArgType("*"))
-            self.kw_args.sort(key=operator.attrgetter("argname"))
-            # Add parsed keyword args to function signature after updating current function node as parent in arg
-            for arg in self.kw_args:
-                arg.set_function_node(self)
-                self.args.append(arg)
-
-            # remove arg with name "**kwarg and add at the end"
-            if kwargs:
-                kw_arg = kwargs[0]
-                self.args.remove(kw_arg)
-                self.args.append(kw_arg)
-
-        # API must have **kwargs for non async methods. Flag it as an error if it is missing for public API
-        if not kwargs and is_kwarg_mandatory(self.name):
-            self.errors.append("Keyword arg (**kwargs) is missing in method {}".format(self.name))
-
 
     def _parse_docstring(self):
         # Parse docstring to get list of keyword args, type and default value for both positional and
@@ -186,7 +127,7 @@ class FunctionNode(NodeEntityBase):
         if docstring:
             #  Parse doc string to find missing types, kwargs and return type
             parsed_docstring = DocstringParser(docstring)
-            parsed_docstring.parse()
+
             # Set return type if not already set
             if not self.return_type and parsed_docstring.ret_type:
                 logging.debug(
@@ -194,17 +135,58 @@ class FunctionNode(NodeEntityBase):
                 )
                 self.return_type = parsed_docstring.ret_type
 
-            # Update arg type from docstring if available and if argtype is missing from signatrue parsing
-            arg_type_dict = dict(
-                [(x.argname, x.argtype) for x in parsed_docstring.pos_args]
-            )
-            for pos_arg in self.args:
-                pos_arg.argtype = arg_type_dict.get(
-                    pos_arg.argname, pos_arg.argtype
-                )
+            # if something is missing from the signature parsing, update it from the
+            # docstring, if available
+            for argname, signature_arg in {**self.args, **self.posargs}.items():
+                signature_arg.argtype = signature_arg.argtype if signature_arg.argtype is not None else parsed_docstring.type_for(argname)
+                signature_arg.default = signature_arg.default if signature_arg.default is not None else  parsed_docstring.default_for(argname)
 
-            self.kw_args.extend(parsed_docstring.kw_args)            
+            # if something is missing from the signature parsing, update it from the
+            # docstring, if available
+            remaining_docstring_kwargs = set(parsed_docstring.kwargs.keys())
+            for argname, kw_arg in self.kwargs.items():
+                docstring_match = parsed_docstring.kwargs.get(argname, None)
+                if not docstring_match:
+                    continue
+                remaining_docstring_kwargs.remove(argname)
+                if not kw_arg.is_required:
+                    kw_arg.argtype = kw_arg.argtype if kw_arg.argtype is not None else parsed_docstring.type_for(argname)
+                    kw_arg.default = kw_arg.default if kw_arg.default is not None else parsed_docstring.default_for(argname)
+            
+            # ensure any kwargs described only in the docstrings are added
+            for argname in remaining_docstring_kwargs:
+                self.kwargs[argname] = parsed_docstring.kwargs[argname]
 
+            # retrieve the special *args type from docstrings
+            if self.special_kwarg and not self.special_kwarg.argtype:
+                match = parsed_docstring.pos_args.get(self.special_kwarg.argname, None)
+                if match:
+                    self.special_kwarg.argtype = match.argtype
+
+            # retrieve the special **kwargs type from docstrings
+            if self.special_vararg and not self.special_vararg.argtype:
+                match = parsed_docstring.pos_args.get(self.special_vararg.argname, None)
+                if match:
+                    self.special_vararg.argtype = match.argtype
+
+    def _newline_if_needed(self, apiview, use_multi_line):
+        if use_multi_line:
+            apiview.add_newline()
+            apiview.add_whitespace()
+
+    def _argument_count(self) -> int:
+        count = len(self.posargs) + len(self.args) + len(self.kwargs)
+        if self.posargs:
+            # account for /
+            count += 1
+        if self.kwargs:
+            # account for *
+            count += 1
+        if self.special_kwarg:
+            count += 1
+        if self.special_vararg:
+            count += 1
+        return count
 
     def _generate_short_type(self, long_type):
         short_type = long_type
@@ -213,78 +195,75 @@ class FunctionNode(NodeEntityBase):
             short_type = short_type.replace(g[0], g[1])
         return short_type
 
-    def _parse_typehint(self):
+    def _generate_args_for_collection(self, items, apiview, use_multi_line):
+        for item in items.values():
+            self._newline_if_needed(apiview, use_multi_line)
+            item.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line)
+            apiview.add_punctuation(",", False, True)
 
-        # Skip parsing typehint if typehint is not expected for e.g dunder or async methods
-        # and if return type is already found
-        if self.return_type and not is_typehint_mandatory(self.name) or self.is_async:
-            return
-
-        # Parse type hint to get return type and types for positional args
-        typehint_parser = TypeHintParser(self.obj)
-        # Find return type from type hint if return type is not already set
-        type_hint_ret_type = typehint_parser.find_return_type()
-        # Type hint must be present for all APIs. Flag it as an error if typehint is missing
-        if  not type_hint_ret_type:
-            if (is_typehint_mandatory(self.name)):
-                self.add_error("Typehint is missing for method {}".format(self.name))
-            return
-
-        if not self.return_type:
-            self.return_type = type_hint_ret_type
-        else:
-            # Verify return type is same in docstring and typehint if typehint is available
-            short_return_type = self._generate_short_type(self.return_type)
-            long_ret_type = self.return_type
-            if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
-                logging.info("Long type: {0}, Short type: {1}, Type hint return type: {2}".format(long_ret_type, short_return_type, type_hint_ret_type))
-                error_message = "Return type in type hint is not matching return type in docstring"
-                self.add_error(error_message)
-
-
-    def _generate_signature_token(self, apiview):
+    def _generate_signature_token(self, apiview, use_multi_line):
         apiview.add_punctuation("(")
-        args_count = len(self.args)
-        use_multi_line = args_count > 2
-        # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
+
         if use_multi_line:
+            # render errors directly below definition line
+            for err in self.pylint_errors:
+                err.generate_tokens(apiview, self.namespace_id)
             apiview.begin_group()
             apiview.begin_group()
 
-        # Generate token for each arg
-        for index in range(args_count):
-            # Add new line if args are listed in new line
-            if use_multi_line:
-                apiview.add_new_line()
-                apiview.add_whitespace()
+        self._generate_args_for_collection(self.posargs, apiview, use_multi_line)
+        # add postional-only marker if any posargs
+        if self.posargs:
+            self._newline_if_needed(apiview, use_multi_line)
+            apiview.add_text("/")
+            apiview.add_punctuation(",", False, True)
 
-            self.args[index].generate_tokens(
-                apiview, self.namespace_id, use_multi_line
-            )
-            # Add punctuation between types except for last one
-            if index < args_count - 1:
-                apiview.add_punctuation(",", False, True)
+        self._generate_args_for_collection(self.args, apiview, use_multi_line)
+        if self.special_vararg:
+            self._newline_if_needed(apiview, use_multi_line)
+            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=True, prefix="*")
+            apiview.add_punctuation(",", False, True)
+
+        # add keyword argument marker        
+        if self.kwargs:
+            self._newline_if_needed(apiview, use_multi_line)
+            apiview.add_text("*")
+            apiview.add_punctuation(",", False, True)
+
+        self._generate_args_for_collection(self.kwargs, apiview, use_multi_line)
+        if self.special_kwarg:
+            self._newline_if_needed(apiview, use_multi_line)
+            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=True, prefix="**")
+            apiview.add_punctuation(",", False, True)
+
+        # pop the final ", " tokens
+        if self._argument_count():
+            apiview.tokens.pop()
+            apiview.tokens.pop()
 
         if use_multi_line:
-            apiview.add_new_line()
+            apiview.add_newline()
             apiview.end_group()
             apiview.add_whitespace()
             apiview.add_punctuation(")")
             apiview.end_group()
         else:
             apiview.add_punctuation(")")
-
 
     def generate_tokens(self, apiview):
         """Generates token for function signature
         :param ApiView: apiview
         """
-        logging.info("Processing method {0} in class {1}".format(self.name, self.parent_node.namespace_id))
+        # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
+        use_multi_line = self._argument_count() > 2
+
+        parent_id = self.parent_node.namespace_id if self.parent_node else "???"
+        logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
         for annot in self.annotations:
             apiview.add_whitespace()
             apiview.add_keyword(annot)
-            apiview.add_new_line()
+            apiview.add_newline()
 
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
@@ -294,51 +273,20 @@ class FunctionNode(NodeEntityBase):
         apiview.add_keyword("def", False, True)
         # Show fully qualified name for module level function and short name for instance functions
         apiview.add_text(
-            self.namespace_id, self.full_name if self.is_module_level else self.name
+            self.full_name if self.is_module_level else self.name,
+            definition_id=self.namespace_id,
+            add_cross_language_id=True
         )
         # Add parameters
-        self._generate_signature_token(apiview)
+        self._generate_signature_token(apiview, use_multi_line)
         if self.return_type:
             apiview.add_punctuation("->", True, True)
             # Add line marker id if signature is displayed in multi lines
-            if len(self.args) > 2:
-                line_id = "{}.returntype".format(self.namespace_id)
+            if use_multi_line:
+                line_id = f"{self.namespace_id}.returntype"
                 apiview.add_line_marker(line_id)
             apiview.add_type(self.return_type)
-
-        if self.errors:
-            for e in self.errors:
-                apiview.add_diagnostic(e, self.namespace_id)
-
-
-    def add_error(self, error_msg):
-        # Ignore errors for lint check excluded methods
-        if self.name in LINT_EXCLUSION_METHODS:
-            return
-
-        # Hide all diagnostics for now for dunder methods
-        # These are well known protocol implementation
-        if not self.name.startswith("_") or self.name in VALIDATION_REQUIRED_DUNDER:
-            self.errors.append(error_msg)
-
-
-    def _validate_pageable_api(self):
-        # If api name starts with "list" and if annotated with "@distributed_trace"
-        # then this method should return ItemPaged or AsyncItemPaged
-        if self.return_type and self.name.startswith("list") and  "@distributed_trace" in self.annotations:
-            tokens = re.search(REGEX_ITEM_PAGED, self.return_type)
-            if tokens:
-                ret_short_type = tokens.groups()[-1]
-                if ret_short_type in PAGED_TYPES:
-                    logging.debug("list API returns valid paged return type")
-                    return
-            error_msg = "list API {0} should return ItemPaged or AsyncItemPaged instead of {1} and page type must be included in docstring rtype".format(self.name, self.return_type)
-            logging.error(error_msg)
-            self.add_error(error_msg)                
-        
-
-    def print_errors(self):
-        if self.errors:
-            print("  method: {}".format(self.name))
-            for e in self.errors:
-                print("      {}".format(e))
+        apiview.add_newline()
+        if not use_multi_line:
+            for err in self.pylint_errors:
+                err.generate_tokens(apiview, self.namespace_id)            

@@ -34,7 +34,12 @@
 
     $(document).on("click", "#show-comments-checkbox", e => {
         ensureMessageIconInDOM();
-        toggleAllCommentsAndDiagnosticsVisibility(e.target.checked);
+        toggleAllCommentsVisibility(e.target.checked);
+    });
+
+    $(document).on("click", "#show-system-comments-checkbox", e => {
+        ensureMessageIconInDOM();
+        toggleAllDiagnosticsVisibility(e.target.checked);
     });
 
     $(document).on("click", SEL_COMMENT_ICON, e => {
@@ -61,6 +66,7 @@
                 data: $.param(serializedForm)
             }).done(partialViewResult => {
                 updateCommentThread(commentRow, partialViewResult);
+                addCommentThreadNavigation();
             });
         }
         e.preventDefault();
@@ -138,12 +144,13 @@
         }
     });
 
-    addEventListener("hashchange", e => {
+    $(window).on("hashchange", e => {
         highlightCurrentRow();
     });
 
-    addEventListener("load", e => {
-        highlightCurrentRow();
+    $(document).ready(function() {
+      highlightCurrentRow();
+      addCommentThreadNavigation();
     });
 
     function highlightCurrentRow() {
@@ -180,7 +187,8 @@
     }
 
     function toggleComments(id: string) {
-        $(getCommentsRow(id)).find(".comment-holder").toggle();
+      $(getCommentsRow(id)).find(".comment-holder").toggle();
+      addCommentThreadNavigation();
     }
 
     function editComment(commentId: string) {
@@ -220,7 +228,7 @@
             commentForm = createCommentForm();
             commentsRow =
                 $(`<tr class="comment-row" data-line-id="${id}">`)
-                    .append($("<td colspan=\"2\">")
+                    .append($("<td colspan=\"3\">")
                         .append(commentForm));
 
             commentsRow.insertAfter(getDiagnosticsRow(id).get(0) || getCodeRow(id).get(0));
@@ -265,11 +273,20 @@
         return false;
     }
 
-    function toggleAllCommentsAndDiagnosticsVisibility(showComments: boolean) {
-        $(SEL_COMMENT_CELL + ", " + SEL_CODE_DIAG).each(function () {
+    function toggleAllCommentsVisibility(showComments: boolean) {
+        $(SEL_COMMENT_CELL).each(function () {
             var id = getElementId(this);
             if (id) {
                 getCommentsRow(id).toggle(showComments);
+                toggleCommentIcon(id, !showComments);
+            }
+        });
+    }
+
+    function toggleAllDiagnosticsVisibility(showComments: boolean) {
+        $(SEL_CODE_DIAG).each(function () {
+            var id = getElementId(this);
+            if (id) {
                 getDiagnosticsRow(id).toggle(showComments);
                 toggleCommentIcon(id, !showComments);
             }
@@ -282,13 +299,60 @@
     }
 
     function ensureMessageIconInDOM() {
-        if (!MessageIconAddedToDom) {
-            $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `">💬</span>`);
-            MessageIconAddedToDom = true;
-        }
+      if (!MessageIconAddedToDom) {
+        $(".comment-icon-cell").prepend(`<span class="icon icon-comments ` + INVISIBLE + `"><i class="far fa-comment-alt pt-1"></i></span>`);
+        MessageIconAddedToDom = true;
+      }
     }
 
     function toggleCommentIcon(id, show: boolean) {
         getCodeRow(id).find(SEL_COMMENT_ICON).toggleClass(INVISIBLE, !show);
+    }
+
+    function addCommentThreadNavigation(){
+      var commentRows = $('.comment-row');
+      var displayedCommentRows: JQuery<HTMLElement>[] = [];
+
+      commentRows.each(function (index) {
+        $(this).find('.comment-thread-anchor').removeAttr("id");
+        $(this).find('.comment-navigation-buttons').empty();
+
+        if ($(this).hasClass("d-none")) {
+          return;
+        }
+
+        let commentHolder = $(this).find(".comment-holder").first();
+        console.log(`commentHolder: ${commentHolder}`);
+        console.log(`commentHolder Has Comments Resolved: ${commentHolder.hasClass("comments-resolved")}`);
+        console.log(`commentHolder Display: ${commentHolder.css("display")}`);
+        if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
+          return;
+        }
+        displayedCommentRows.push($(this));
+      });
+
+      if (displayedCommentRows.length > 1) {
+        displayedCommentRows.forEach(function (value, index) {
+          var commentThreadAnchorId = "comment-thread-" + index;
+          $(value).find('.comment-thread-anchor').first().prop('id', commentThreadAnchorId);
+
+          var commentNavigationButtons = $(value).find('.comment-navigation-buttons').last();
+          commentNavigationButtons.empty();
+
+          var nextCommentThreadAnchor = "comment-thread-" + (index + 1);
+          var previousCommentThreadAnchor = "comment-thread-" + (index - 1);
+
+          if (index == 0) {
+            commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+          }
+          else if (index == displayedCommentRows.length - 1) {
+            commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+          }
+          else {
+            commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+            commentNavigationButtons.append(`<a class="btn btn-outline-dark ml-1" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+          }
+        });
+      }
     }
 });

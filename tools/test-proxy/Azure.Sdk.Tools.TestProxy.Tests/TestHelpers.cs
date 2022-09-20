@@ -149,12 +149,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             // 1. The AssetsReproBranch
             if (isPushTest)
             {
-                string adjustedAssetsRepoBranch = string.Format("test_{0}_{1}", testGuid, assets.TagPrefix);
+                string adjustedAssetsRepoTag = string.Format("test_{0}_{1}", testGuid, assets.TagPrefix);
                 // Call InitIntegrationTag
-                InitIntegrationTag(assets, adjustedAssetsRepoBranch);
+                InitIntegrationTag(assets, adjustedAssetsRepoTag);
 
                 // set the TagPrefix to the adjusted test branch 
-                assets.TagPrefix = adjustedAssetsRepoBranch;
+                assets.TagPrefix = adjustedAssetsRepoTag;
                 localAssetsJsonContent = JsonSerializer.Serialize(assets);
             }
 

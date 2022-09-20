@@ -801,9 +801,7 @@ code {
 .icon-comments {
     cursor: pointer;
     position: absolute;
-    width: 16px;
-    height: 16px;
-    z-index: 1;
+    right: 30px;
 }
 
 .icon-chevron-right {
@@ -906,14 +904,6 @@ code {
     transition: transform .1s ease-in-out;
     transform: scale(.8);
     user-select: none;
-}
-
-.line-comment-button-cell {
-    user-select: none;
-    max-width: 0px;
-    white-space: normal;
-    positon: sticky;
-    left: 0px;
 }
 
 .line-toggle-documentation-button:hover {

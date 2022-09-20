@@ -144,13 +144,13 @@
         }
     });
 
-    addEventListener("hashchange", e => {
+    $(window).on("hashchange", e => {
         highlightCurrentRow();
     });
 
-    addEventListener("load", e => {
-        highlightCurrentRow();
-        addCommentThreadNavigation();
+    $(document).ready(function() {
+      highlightCurrentRow();
+      addCommentThreadNavigation();
     });
 
     function highlightCurrentRow() {
@@ -187,7 +187,8 @@
     }
 
     function toggleComments(id: string) {
-        $(getCommentsRow(id)).find(".comment-holder").toggle();
+      $(getCommentsRow(id)).find(".comment-holder").toggle();
+      addCommentThreadNavigation();
     }
 
     function editComment(commentId: string) {
@@ -298,10 +299,10 @@
     }
 
     function ensureMessageIconInDOM() {
-        if (!MessageIconAddedToDom) {
-            $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `"><i class="far fa-comment-alt pt-1 pl-1"></i></span>`);
-            MessageIconAddedToDom = true;
-        }
+      if (!MessageIconAddedToDom) {
+        $(".comment-icon-cell").prepend(`<span class="icon icon-comments ` + INVISIBLE + `"><i class="far fa-comment-alt pt-1"></i></span>`);
+        MessageIconAddedToDom = true;
+      }
     }
 
     function toggleCommentIcon(id, show: boolean) {
@@ -309,30 +310,49 @@
     }
 
     function addCommentThreadNavigation(){
-        var commentRows = $('.comment-row');
-        commentRows.each(function (index) {
-            var commentThreadAnchorId = "comment-thread-" + index;
-            $(this).find('.comment-thread-anchor').first().prop('id', commentThreadAnchorId);
+      var commentRows = $('.comment-row');
+      var displayedCommentRows: JQuery<HTMLElement>[] = [];
 
-            var commentNavigationButtons = $(this).find('.comment-navigation-buttons').last();
-            commentNavigationButtons.empty();
+      commentRows.each(function (index) {
+        $(this).find('.comment-thread-anchor').removeAttr("id");
+        $(this).find('.comment-navigation-buttons').empty();
 
-            var nextCommentThreadAnchor = "comment-thread-" + (index + 1);
-            var previousCommentThreadAnchor = "comment-thread-" + (index - 1);
+        if ($(this).hasClass("d-none")) {
+          return;
+        }
 
-            if (commentRows.length != 1)
-            {
-                if (index == 0) {
-                  commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
-                }
-                else if (index == commentRows.length - 1) {
-                  commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
-                }
-                else {
-                  commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
-                  commentNavigationButtons.append(`<a class="btn btn-outline-dark ml-1" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
-                }
-            }
+        let commentHolder = $(this).find(".comment-holder").first();
+        console.log(`commentHolder: ${commentHolder}`);
+        console.log(`commentHolder Has Comments Resolved: ${commentHolder.hasClass("comments-resolved")}`);
+        console.log(`commentHolder Display: ${commentHolder.css("display")}`);
+        if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
+          return;
+        }
+        displayedCommentRows.push($(this));
+      });
+
+      if (displayedCommentRows.length > 1) {
+        displayedCommentRows.forEach(function (value, index) {
+          var commentThreadAnchorId = "comment-thread-" + index;
+          $(value).find('.comment-thread-anchor').first().prop('id', commentThreadAnchorId);
+
+          var commentNavigationButtons = $(value).find('.comment-navigation-buttons').last();
+          commentNavigationButtons.empty();
+
+          var nextCommentThreadAnchor = "comment-thread-" + (index + 1);
+          var previousCommentThreadAnchor = "comment-thread-" + (index - 1);
+
+          if (index == 0) {
+            commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+          }
+          else if (index == displayedCommentRows.length - 1) {
+            commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+          }
+          else {
+            commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+            commentNavigationButtons.append(`<a class="btn btn-outline-dark ml-1" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+          }
         });
+      }
     }
 });

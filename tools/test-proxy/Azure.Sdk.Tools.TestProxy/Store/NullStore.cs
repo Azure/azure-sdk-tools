@@ -2,24 +2,27 @@ using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Console;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
     public class NullStore : IAssetsStore
     {
-        public Task Push(string assetsJsonPath) { return null; }
+        public Task Push(string pathToAssetsJson) { return null; }
 
-        public Task Restore(string assetsJsonPath) { return null; }
+        public Task<string> Restore(string pathToAssetsJson) { return null; }
 
-        public Task Reset(string assetsJsonPath) { return null; }
+        public Task Reset(string assetsJspathToAssetsJsononPath) { return null; }
 
-        public AssetsConfiguration ParseConfigurationFile(string assetsJsonPath)
+        public AssetsConfiguration ParseConfigurationFile(string pathToAssetsJson)
         {
-            if (!File.Exists(assetsJsonPath)) {
-                throw new HttpException(HttpStatusCode.BadRequest, $"The provided assets json path of \"{assetsJsonPath}\" does not exist.");
+            if (!File.Exists(pathToAssetsJson)) {
+                throw new HttpException(HttpStatusCode.BadRequest, $"The provided assets json path of \"{pathToAssetsJson}\" does not exist.");
             }
 
             return new AssetsConfiguration();
         }
+
+        public Task<string> GetPath(string pathToAssetsJson) { return null; }
     }
 }

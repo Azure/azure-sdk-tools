@@ -71,7 +71,50 @@
                                         </div>
                                     </span>
                                     <textarea class="js-comment-raw d-none">@comment.Comment</textarea>
-                                    @Html.FormatAsMarkdown(@comment.Comment)
+                                    
+                                    @if (comment.Comment.Contains("\r\n")) 
+                                    {
+                                        var cmt = comment.Comment.Split("\r\n");
+                                        string codeBlockString = "";
+                                        bool codeBlock = false;
+                                        bool newLineAdded = true;
+                                        foreach (var line in cmt){
+                                            @* Preserves code block formatting *@
+                                            if (line.Contains("```")) {
+                                                codeBlock = !codeBlock;
+                                                codeBlockString += line + "\n";
+                                                if (!codeBlock)
+                                                {
+                                                    if (!newLineAdded) 
+                                                    {
+                                                        <br />
+                                                    }
+                                                    @Html.FormatAsMarkdown(codeBlockString)
+                                                    codeBlockString = "";
+                                                    newLineAdded = true;
+                                                }
+                                            }
+                                            else if (codeBlock)
+                                            {
+                                                codeBlockString += line + "\n";
+                                            }
+                                            @* Adds new lines where needed, otherwise breaks up parsing to be line by line *@
+                                            else if (line.Equals("") && !newLineAdded)
+                                            {
+                                                <br />
+                                                newLineAdded = true;
+                                            } 
+                                            else if (!line.Equals(""))
+                                            {
+                                                @Html.FormatAsMarkdown(line)
+                                                newLineAdded = false;
+                                            }
+                                        }
+                                    }
+                                    else 
+                                    {
+                                        @Html.FormatAsMarkdown(comment.Comment)
+                                    }
                                 </div>
                             </div>
                         </div>

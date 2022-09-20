@@ -5,8 +5,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
 # Table of Contents
 
   * [Installation](#installation)
-  * [Access](#access)
-  * [Quick Testing with no Dependencies](#quick-testing-with-no-dependencies)
+  * [Deploying a Stress Test](#deploying-a-stress-test)
   * [Creating a Stress Test](#creating-a-stress-test)
      * [Layout](#layout)
      * [Stress Test Metadata](#stress-test-metadata)
@@ -20,7 +19,6 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Chaos Manifest](#chaos-manifest)
      * [Scenarios and values.yaml](#scenarios-and-valuesyaml)
      * [Node Size Requirements](#node-size-requirements)
-  * [Deploying a Stress Test](#deploying-a-stress-test)
   * [Configuring faults](#configuring-faults)
      * [Faults via Dashboard](#faults-via-dashboard)
      * [Faults via Config](#faults-via-config)
@@ -44,115 +42,79 @@ You will need the following tools to create and run tests:
 1. [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)
 1. [Powershell Core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) (if using Linux)
 
-## Access
+## Deploying a Stress Test
 
-To access the cluster, run the following. These commands are unnecessary for stress test deployment but can be useful
-for verifying permissions and directly interacting with containers via the kubernetes command line tool `kubectl`. For
-running the build and deployment script, see [Deploying a Stress Test](#deploying-a-stress-test).
+The stress test deployment is best run via the [stress test deploy
+script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
+This script handles: cluster and container registry access, building the stress test helm package, installing helm
+package dependencies, and building and pushing docker images. The script must be run via powershell or powershell core.
 
-```bash
-# Authenticate to Azure
-az login
+If using bash or another linux terminal, a [powershell core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) shell can be invoked via `pwsh`.
 
-# Download the kubeconfig for the cluster (creates a 'context' named 'stress-pg')
-az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-pg -n stress-pg
-```
-
-You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:
+The first invocation of the script must be run with the `-Login` flag to set up cluster and container registry access.
 
 ```
-kubectl get namespaces
+cd <stress test search directory>
+
+<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
+    -Login `
+    -PushImages
 ```
 
-## Quick Testing with no Dependencies
-
-This section details how to deploy a simple job, without any dependencies on the cluster (e.g. azure credentials, app insights keys) or stress test scripts. It is used to illustrate how kubernetes and the tools work only. Stress test development should be done using the [deploy script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
-
-To get started, you will need to create a container image containing your long-running test, and a manifest to execute that image as a [kubernetes job](https://kubernetes.io/docs/concepts/workloads/controllers/job/).
-
-The Dockerfile for your image should contain your test code/artifacts. See [docs on how to create a Dockerfile](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)
-
-To create any resources in the cluster, you will need to create a namespace for them to live in:
-
-```bash
-# For simplicity of tracking use your user alias as the name of your namespace.
-kubectl create namespace <your alias>
-```
-
-You will then need to build and push your container image to an Azure Container Registry the cluster has access to.
-
-Get the default container registry for the stress testing Kubernetes cluster:
-
-```bash
-az acr list -g rg-stress-cluster-pg --subscription "Azure SDK Developer Playground" --query "[0].loginServer"
-# Outputs: <registry server host name, ex: 'myregistry.azurecr.io'>
-```
-
-Login to the azure container registry. The below command will add a token to the registy to the local docker config. This must be refreshed daily.
+To re-deploy more quickly, the script can be run without `-Login` and/or without `-PushImages` (if no code changes were
+made).
 
 ```
-az acr login -n <registry name>
+<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
 ```
 
-Build and push development image to stress test cluster registry
-
-```bash
-docker build . -t "<registry server host name from above>/<your alias>/<test job image name>:<version>"
-docker push "<registry server host name from above>/<your username>/<test job image name>:<version>"
-```
-
-To define a job that utilizes your test, create a file called testjob.yaml, including the below contents (with fields replaced):
+To run multiple instances of the same test in parallel, add a different namespace override 
+for each test deployment. If not specified, it will default to the shell username when run locally.
 
 ```
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: <your job name>
-  namespace: <your namespace name>
-spec:
-  template:
-    spec:
-      containers:
-      - name: <container name, pick anything>
-        image: <container image name>
-        imagePullPolicy: Always
-        command: ["test entrypoint command/binary"]
-        args: [<args string array for your test command>]
-      restartPolicy: Never
-  backoffLimit: 1
+<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
+    -Namespace my-test-instance-2 `
 ```
 
-To submit your test job, run:
+You can check the progress/status of your installation via:
 
 ```
-# Submit/re-submit the test
-kubectl replace --force -f testjob.yaml
+helm list -n <stress test namespace>
 ```
 
-To view the status of your test:
+To debug the kubernetes manifests installed by the stress test, run the following from the stress test directory:
 
 ```
-kubectl get jobs -n <your namespace name>
+helm template <stress test name> .
 ```
 
-If there are any errors (whether due to configuration or commands):
+To stop and remove the test:
 
 ```
-kubectl describe pods -n <your namespace name> -l job-name=<your job name>
+helm uninstall <stress test name> -n <stress test namespace>
 ```
 
-To view the logs from your test:
+To check the status of the stress test containers:
 
 ```
-# Append -f to tail the logs
-kubectl logs -n <your namespace name> -l job-name=<your job name>
+# List stress test pods
+kubectl get pods -n <stress test namespace> -l release=<stress test name>
+
+# Get logs from the init-azure-deployer init container, if deploying resources. Omit `-c init-azure-deployer` to get main container
+logs.
+kubectl logs -n <stress test namespace> <stress test pod name> -c init-azure-deployer
+
+# If empty, there may have been startup failures
+kubectl describe pod -n <stress test namespace> <stress test pod name>
 ```
 
-To delete your test:
+If deploying resources, once the `init-azure-deployer` init container is completed and the stress test pod is in a `Running` state,
+you can quick check the local logs:
 
 ```
-kubectl delete -f testjob.yaml
+kubectl logs -n <stress test namespace> <stress test pod name>
 ```
+
 
 ## Creating a Stress Test
 
@@ -498,79 +460,6 @@ az aks nodepool add \
     --max-count 3 \
     --node-vm-size <azure vm sku> \
     --labels "sku=<nodepool sku label>"
-```
-
-## Deploying a Stress Test
-
-The stress test deployment is best run via the [stress test deploy
-script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
-This script handles: cluster and container registry access, building the stress test helm package, installing helm
-package dependencies, and building and pushing docker images. The script must be run via powershell or powershell core.
-
-If using bash or another linux terminal, a [powershell core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) shell can be invoked via `pwsh`.
-
-The first invocation of the script must be run with the `-Login` flag to set up cluster and container registry access.
-
-```
-cd <stress test search directory>
-
-<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
-    -Login `
-    -PushImages
-```
-
-To re-deploy more quickly, the script can be run without `-Login` and/or without `-PushImages` (if no code changes were
-made).
-
-```
-<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
-```
-
-To run multiple instances of the same test in parallel, add a different namespace override 
-for each test deployment. If not specified, it will default to the shell username when run locally.
-
-```
-<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
-    -Namespace my-test-instance-2 `
-```
-
-You can check the progress/status of your installation via:
-
-```
-helm list -n <stress test namespace>
-```
-
-To debug the kubernetes manifests installed by the stress test, run the following from the stress test directory:
-
-```
-helm template <stress test name> .
-```
-
-To stop and remove the test:
-
-```
-helm uninstall <stress test name> -n <stress test namespace>
-```
-
-To check the status of the stress test job resources:
-
-```
-# List stress test pods
-kubectl get pods -n <stress test namespace> -l release=<stress test name>
-
-# Get logs from the init-azure-deployer init container, if deploying resources. Omit `-c init-azure-deployer` to get main container
-logs.
-kubectl logs -n <stress test namespace> <stress test pod name> -c init-azure-deployer
-
-# If empty, there may have been startup failures
-kubectl describe pod -n <stress test namespace> <stress test pod name>
-```
-
-If deploying resources, once the `init-azure-deployer` init container is completed and the stress test pod is in a `Running` state,
-you can quick check the local logs:
-
-```
-kubectl logs -n <stress test namespace> <stress test pod name>
 ```
 
 ## Configuring faults

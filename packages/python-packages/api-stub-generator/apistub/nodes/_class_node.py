@@ -148,8 +148,11 @@ class ClassNode(NodeEntityBase):
     def _parse_overloads(self) -> List[FunctionNode]:
         overload_nodes = []
         functions = self._parse_functions_from_class(self.obj)
-        for base_class in inspect.getmro(self.obj)[1:-1]:
-            functions += self._parse_functions_from_class(base_class)
+        try:
+            for base_class in inspect.getmro(self.obj)[1:-1]:
+                functions += self._parse_functions_from_class(base_class)
+        except AttributeError:
+            pass
         for func in functions:
             if not func.decorators:
                 continue
@@ -169,7 +172,7 @@ class ClassNode(NodeEntityBase):
         # get base classes
         self.base_class_names = self._get_base_classes()
         # Check if Enum is in Base class hierarchy
-        self.is_enum = Enum in self.obj.__mro__
+        self.is_enum = Enum in getattr(self.obj, "__mro__", [])
         # Find any ivar from docstring
         self._parse_ivars()
 
@@ -276,8 +279,14 @@ class ClassNode(NodeEntityBase):
     def _get_base_classes(self):
         # Find base classes
         base_classes = []
-        bases = getattr(self.obj, "__orig_bases__", None) or getattr(self.obj, "__bases__", None) or []
-        for cl in [c for c in bases if c is not object]:
+        bases = getattr(self.obj, "__orig_bases__", [])
+        if not bases:
+            bases = getattr(self.obj, "__bases__", [])
+        if not bases:
+            supertype = getattr(self.obj, "__supertype__", None)
+            if supertype:
+                bases = [supertype]
+        for cl in [c for c in bases or [] if c is not object]:
             base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes
 

@@ -11,6 +11,7 @@ export type GenerateAndBuildInput = {
     relatedReadmeMdFile: string;
     serviceType: string;
     autorestConfig: string;
+    skipGeneration: boolean;
 };
 
 export const getGenerateAndBuildInput = getTypeTransformer<GenerateAndBuildInput>(

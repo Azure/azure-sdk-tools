@@ -1,0 +1,14 @@
+.create-or-alter function DashboardQuery(platformFilter:dynamic, serviceFilter:dynamic, buildTypeFilter:dynamic, triggerFilter:dynamic, resultFilter:dynamic, sourceBranchFilter:string, definitionNameFilter:string, ownerFilter:string)
+{ 
+    ManagedDefinitionBuild(sourceBranchFilter)
+    | where isnull(platformFilter) or Platform in (platformFilter)
+    | where isnull(serviceFilter) or Service in (serviceFilter)
+    | where isnull(buildTypeFilter) or BuildType in (buildTypeFilter)
+    | where isnull(triggerFilter) or Trigger in (triggerFilter)
+    | where isnull(resultFilter) or Result in (resultFilter)
+    | where BuildDefinitionName matches regex coalesce(definitionNameFilter, ".")
+    | where Owners contains (ownerFilter)
+    | join kind = leftouter BuildFailure on ProjectId, BuildDefinitionId, $left.FinishTime == $right.BuildFinishTime
+    | project BuildDefinitionId, FinishTime, BuildDefinitionName, ErrorClassification, Platform, Service, Result, BuildType, Trigger, SourceBranch, Owners, ProjectName, ProjectId
+    | extend BuildDefinitionIdUrl = strcat("https://dev.azure.com/azure-sdk/", ProjectName, "/_build?definitionId=", tostring(BuildDefinitionId))
+}

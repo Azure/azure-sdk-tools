@@ -7,11 +7,33 @@ using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
+using Azure.Sdk.Tools.TestProxy.Store;
+using System.Diagnostics;
+using Moq;
+using Microsoft.Build.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
+    /// <summary>
+    /// Assets is the class representation of assets.json. When setting up for the push tests we're going to end up
+    /// creating a branch of the original TagPrefix so we can automatically push to it. This is done at setup
+    /// time and then the AssetsReproBranch will have to be changed to use this new branch. This class will be used
+    /// to deserialize from string representation of assets.json, set the TagPrefix to the generated testing
+    /// branch and serialize back into a string. This is only used for testing purposes.
+    /// </summary>
+    public class Assets
+    {
+        public string AssetsRepo { get; set; }
+        public string AssetsRepoPrefixPath { get; set; }
+        public string AssetsRepoId { get; set; }
+        public string TagPrefix { get; set; }
+        public string Tag { get; set; }
+    }
+
     public static class TestHelpers
     {
+        public static readonly string DisableBranchCleanupEnvVar = "DISABLE_INTEGRATION_BRANCH_CLEANUP";
+
         public static string GetValueFromCertificateFile(string certName)
         {
             var path = Path.Join(Directory.GetCurrentDirectory(), "Test.Certificates", certName);
@@ -66,7 +88,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static HttpRequest CreateRequestFromEntry(RecordEntry entry)
         {
             var context = new DefaultHttpContext();
-            if(entry.Request.Body != null)
+            if (entry.Request.Body != null)
             {
                 context.Request.Body = new BinaryData(entry.Request.Body).ToStream();
             }
@@ -108,13 +130,35 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         /// If one of the paths ends with assets.json, that path will receive the assetsJsonContent string, instead of defaulting to the root of the temp folder.</param>
         /// <param name="ignoreEmptyAssetsJson">Normally passing string.Empty to assetsJsonContent argument will result in no assets.json being written. 
         /// Passing true to this argument will ensure that the file is still created without content.</param>
+        /// <param name="isPushTest">Whether or not the scenario being run is a push test</param>
         /// <returns>The absolute path to the created folder.</returns>
-        public static string DescribeTestFolder(string assetsJsonContent, string[] sampleFiles, bool ignoreEmptyAssetsJson = false)
+        public static string DescribeTestFolder(Assets assets, string[] sampleFiles, string malformedJson = null, bool ignoreEmptyAssetsJson = false, bool isPushTest = false)
         {
-            // get a test folder root
-            var tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
-            var testFolder = Directory.CreateDirectory(tmpPath);
+            string localAssetsJsonContent = JsonSerializer.Serialize(assets);
+            if (null != malformedJson)
+            {
+                localAssetsJsonContent = malformedJson;
+            }
+            // the guid will be used to create a unique test folder root and, if this is a push test,
+            // it'll be used as part of the generated branch name
+            string testGuid = Guid.NewGuid().ToString();
+            // generate a test folder root
+            var tmpPath = Path.Join(Path.GetTempPath(), testGuid);
 
+            // Push tests need some special setup for automation
+            // 1. The AssetsReproBranch
+            if (isPushTest)
+            {
+                string adjustedAssetsRepoTag = string.Format("test_{0}_{1}", testGuid, assets.TagPrefix);
+                // Call InitIntegrationTag
+                InitIntegrationTag(assets, adjustedAssetsRepoTag);
+
+                // set the TagPrefix to the adjusted test branch 
+                assets.TagPrefix = adjustedAssetsRepoTag;
+                localAssetsJsonContent = JsonSerializer.Serialize(assets);
+            }
+
+            var testFolder = Directory.CreateDirectory(tmpPath);
             var assetsJsonPath = Path.Join(tmpPath, "assets.json");
 
             foreach (var sampleFile in sampleFiles)
@@ -156,12 +200,217 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             WriteTestFile(String.Empty, Path.Combine(tmpPath, ".git"));
 
             // write assets json if we were passed content
-            if (!String.IsNullOrWhiteSpace(assetsJsonContent) || ignoreEmptyAssetsJson)
+            if (!String.IsNullOrWhiteSpace(localAssetsJsonContent) || ignoreEmptyAssetsJson)
             {
-                WriteTestFile(assetsJsonContent, assetsJsonPath);
+                WriteTestFile(localAssetsJsonContent, assetsJsonPath);
             }
 
             return testFolder.ToString();
+        }
+
+
+        /// <summary>
+        /// Remove the test folder created in the call to DescribeTestFolder
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        public static void RemoveTestFolder(string testFolder)
+        {
+            // We can't Directory.Delete(path, true) to recursiverly delete the directory
+            // because the git files under .git\objects\pack have attributes on them that
+            // cause an UnauthorizedAccessException when trying to delete them. Fortunately,
+            // setting the attributes to normal allows them to be deleted.
+            File.SetAttributes(testFolder, FileAttributes.Normal);
+
+            string[] files = Directory.GetFiles(testFolder);
+            string[] dirs = Directory.GetDirectories(testFolder);
+
+            foreach (string file in files)
+            {
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+            }
+
+            foreach (string dir in dirs)
+            {
+                RemoveTestFolder(dir);
+            }
+
+            Directory.Delete(testFolder, false);
+        }
+
+        /// <summary>
+        /// Verify the version, inside the file, for a given file inside of a test folder.
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        /// <param name="fileName">The fileName whose version needs verification</param>
+        /// <param name="expectedVersion">The expected version in the file</param>
+        public static bool VerifyFileVersion(string testFolder, string fileName, int expectedVersion)
+        {
+            string fullFileName = Path.Combine(testFolder, fileName);
+            string stringVersion = "";
+            int intVersion = -1;
+
+            if (!File.Exists(fullFileName))
+            {
+                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                throw new ArgumentException(errorString);
+            }
+
+            using (StreamReader reader = new StreamReader(fullFileName))
+            {
+                stringVersion = reader.ReadLine() ?? "";
+            }
+
+            if (Int32.TryParse(stringVersion, out intVersion))
+            {
+                if (expectedVersion == intVersion)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Verify the version, inside the file, for a given file inside of a test folder.
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        /// <param name="fileName">The file whose version needs to be incremented</param>
+        public static void IncrementFileVersion(string testFolder, string fileName)
+        {
+            string fullFileName = Path.Combine(testFolder, fileName);
+            string stringVersion = "";
+            int intVersion = -1;
+
+            if (!File.Exists(fullFileName))
+            {
+                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                throw new ArgumentException(errorString);
+            }
+
+            using (StreamReader reader = new StreamReader(fullFileName))
+            {
+                stringVersion = reader.ReadLine() ?? "";
+            }
+
+            if (Int32.TryParse(stringVersion, out intVersion))
+            {
+                File.WriteAllText(fullFileName, (++intVersion).ToString());
+            }
+        }
+
+        /// <summary>
+        /// Create a new file with an initial version of 1
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        /// <param name="fileName">The file to be created</param>
+        public static void CreateFileWithInitialVersion(string testFolder, string fileName)
+        {
+            string fullFileName = Path.Combine(testFolder, fileName);
+
+            if (File.Exists(fullFileName))
+            {
+                string errorString = String.Format("FileName {0} already exists", fullFileName);
+                throw new ArgumentException(errorString);
+            }
+
+            File.WriteAllText(fullFileName, "1");
+        }
+
+        /// <summary>
+        /// This function is only used by the Push scenarios. It'll clone the assets repository
+        /// </summary>
+        /// <param name="assets"></param>
+        /// <param name="adjustedAssetsRepoBranch"></param>
+        public static void InitIntegrationTag(Assets assets, string adjustedAssetsRepoBranch)
+        {
+            // generate a test folder root
+            string tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+            // What needs to get done here is as follows:
+            // 1. Clone the original assets repo
+            // 2. <response> = git ls-remote --heads <gitCloneUrl> <assets.TagPrefix>
+            // if the <response> is empty then just return, if not then create a test branch
+            try
+            {
+                Directory.CreateDirectory(tmpPath);
+                GitProcessHandler GitHandler = new GitProcessHandler();
+                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+                // Clone the original assets repo
+                GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
+                // Check to see if there's already a branch
+                CommandResult commandResult = GitHandler.Run($"ls-remote --heads {gitCloneUrl} {assets.TagPrefix}", tmpPath);
+                // If the commandResult response is empty, there's nothing to do and we can return
+                if (String.IsNullOrWhiteSpace(commandResult.StdOut))
+                {
+                    return;
+                }
+
+                // If the commandResult response is not empty, the command result will have something
+                // similar to the following:
+                // e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7	refs/heads/scenario_clean_push
+                GitHandler.Run($"checkout {assets.TagPrefix}", tmpPath);
+
+                // Create the adjustedAssetsRepoBranch from the original branch. The reason being is that pushing
+                // to a branch of a branch is automatic
+                GitHandler.Run($"tag {adjustedAssetsRepoBranch}", tmpPath);
+                // Push the contents of the TagPrefix into the adjustedAssetsRepoBranch
+                GitHandler.Run($"push origin {adjustedAssetsRepoBranch}", tmpPath);
+            }
+            finally
+            {
+                // After creating the test branch, there's nothing that needs to remain around.
+                RemoveTestFolder(tmpPath);
+            }
+        }
+
+        public static void CleanupIntegrationTestTag(Assets assets)
+        {
+            var skipBranchCleanup = Environment.GetEnvironmentVariable(DisableBranchCleanupEnvVar);
+            if (!String.IsNullOrWhiteSpace(skipBranchCleanup))
+            {
+                return;
+            }
+            // generate a test folder root
+            string tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
+            try
+            {
+                Directory.CreateDirectory(tmpPath);
+                GitProcessHandler GitHandler = new GitProcessHandler();
+                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+                GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
+                GitHandler.Run($"push origin --delete {assets.Tag}", tmpPath);
+            }
+            finally
+            {
+                RemoveTestFolder(tmpPath);
+            }
+
+        }
+
+        /// <summary>
+        /// Create an Assets from a assets.json file on disk
+        /// </summary>
+        /// <param name="jsonFileLocation">locaion of the assets.json on disk</param>
+        /// <returns></returns>
+        public static Assets LoadAssetsFromFile(string jsonFileLocation)
+        {
+            return JsonSerializer.Deserialize<Assets>(File.ReadAllText(jsonFileLocation));
+        }
+
+        /// <summary>
+        /// Given a test assets config, check to see if the tag exists on the assets repo.
+        /// </summary>
+        /// <param name="assets"></param>
+        /// <param name="workingDirectory"></param>
+        /// <returns></returns>
+        public static bool CheckExistenceOfTag(Assets assets, string workingDirectory)
+        {
+            GitProcessHandler GitHandler = new GitProcessHandler();
+            var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+            CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
+            return result.StdOut.Trim().Length > 0;
         }
     }
 }

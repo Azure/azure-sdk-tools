@@ -259,13 +259,13 @@ namespace SwaggerApiParser
 
         public static CodeFileToken FoldableParentToken(String value)
         {
-            var ret = new CodeFileToken(value, CodeFileTokenKind.FoldableParentToken);
+            var ret = new CodeFileToken(value, CodeFileTokenKind.FoldableSectionHeading);
             return ret;
         }
 
         public static CodeFileToken FoldableContentStart()
         {
-            var ret = new CodeFileToken(null, CodeFileTokenKind.FoldableContentStart);
+            var ret = new CodeFileToken(null, CodeFileTokenKind.FoldableSectionContentStart);
             return ret;
         }
 
@@ -298,7 +298,7 @@ namespace SwaggerApiParser
 
         public static CodeFileToken FoldableContentEnd()
         {
-            var ret = new CodeFileToken(null, CodeFileTokenKind.FoldableContentEnd);
+            var ret = new CodeFileToken(null, CodeFileTokenKind.FoldableSectionContentEnd);
             return ret;
         }
     }
@@ -380,7 +380,7 @@ namespace SwaggerApiParser
                     this.Writer.AnnotateDefinition(id);
                     if (isCollapsible)
                     {
-                        this.Writer.Write(CodeFileTokenKind.FoldableParentToken, id);
+                        this.Writer.Write(CodeFileTokenKind.FoldableSectionHeading, id);
                     }
 
                     // Visit the value
@@ -388,7 +388,7 @@ namespace SwaggerApiParser
                     {
                         this.Writer.Write(CodeFileTokenKind.Punctuation, "\": ");
                         this.Writer.WriteLine();
-                        this.Writer.Write(CodeFileTokenKind.FoldableContentStart, null);
+                        this.Writer.Write(CodeFileTokenKind.FoldableSectionHeading, null);
                         Visit(property.Value);
                         if (property.Name != values.Last().Name)
                         {
@@ -396,7 +396,7 @@ namespace SwaggerApiParser
                             if (multiLine) { this.Writer.WriteLine(); }
                         }
 
-                        this.Writer.Write(CodeFileTokenKind.FoldableContentEnd, null);
+                        this.Writer.Write(CodeFileTokenKind.FoldableSectionHeading, null);
                     }
                     else
                     {

@@ -31,7 +31,7 @@ public class XMsParameterizedHost : ITokenSerializable
 
         if (parameters != null && parameters.Count>0)
         {
-            ret.Add(new CodeFileToken("Parameters", CodeFileTokenKind.FoldableParentToken));
+            ret.Add(new CodeFileToken("Parameters", CodeFileTokenKind.FoldableSectionHeading));
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
             ret.Add(TokenSerializer.FoldableContentStart());

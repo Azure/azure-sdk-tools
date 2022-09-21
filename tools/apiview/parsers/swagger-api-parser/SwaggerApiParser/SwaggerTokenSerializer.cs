@@ -649,7 +649,7 @@ namespace SwaggerApiParser
                         _writer.AnnotateDefinition(id);
                         if (isCollapsible)
                         {
-                            _writer.Write(CodeFileTokenKind.FoldableParentToken, id);
+                            _writer.Write(CodeFileTokenKind.FoldableSectionHeading, id);
                         }
 
                         // Optionally add a navigation tree node
@@ -671,14 +671,14 @@ namespace SwaggerApiParser
                         {
                             _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
                             this._writer.WriteLine();
-                            this._writer.Write(CodeFileTokenKind.FoldableContentStart, null);
+                            this._writer.Write(CodeFileTokenKind.FoldableSectionContentStart, null);
                             Visit(property.Value, next, navigationIdPrefix);
                             if (property.Name != values.Last().Name)
                             {
                                 _writer.Write(CodeFileTokenKind.Punctuation, ", ");
                                 if (multiLine) { _writer.WriteLine();}
                             }
-                            this._writer.Write(CodeFileTokenKind.FoldableContentEnd, null);
+                            this._writer.Write(CodeFileTokenKind.FoldableSectionContentEnd, null);
                         }
                         else
                         {

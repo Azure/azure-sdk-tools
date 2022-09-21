@@ -31,7 +31,7 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
         List<CodeFileToken> ret = new List<CodeFileToken>();
 
         ret.AddRange(TokenSerializer.KeyValueTokens("swagger", swagger, true, context.IteratorPath.CurrentNextPath("swagger")));
-        ret.Add(new CodeFileToken("info", CodeFileTokenKind.FoldableParentToken));
+        ret.Add(new CodeFileToken("info", CodeFileTokenKind.FoldableSectionHeading));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
         ret.AddRange(info.TokenSerialize(context));
@@ -70,13 +70,13 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
 
         if (securityDefinitions != null)
         {
-            ret.Add(new CodeFileToken("securityDefinitions", CodeFileTokenKind.FoldableParentToken));
+            ret.Add(new CodeFileToken("securityDefinitions", CodeFileTokenKind.FoldableSectionHeading));
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
             ret.Add(TokenSerializer.FoldableContentStart());
             foreach (var kv in securityDefinitions)
             {
-                ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.FoldableParentToken));
+                ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.FoldableSectionHeading));
                 ret.Add(TokenSerializer.Colon());
                 ret.Add(TokenSerializer.NewLine());
                 ret.AddRange(TokenSerializer.TokenSerializeAsJson(kv.Value, true));
@@ -86,7 +86,7 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
 
         if (xMsParameterizedHost!=null)
         {
-            ret.Add(new CodeFileToken("x-ms-parameterized-host", CodeFileTokenKind.FoldableParentToken));
+            ret.Add(new CodeFileToken("x-ms-parameterized-host", CodeFileTokenKind.FoldableSectionHeading));
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
             ret.Add(TokenSerializer.FoldableContentStart());

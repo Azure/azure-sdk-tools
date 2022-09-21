@@ -27,7 +27,7 @@ public class Info : ITokenSerializable
 
         if (externalDocs != null)
         {
-            ret.Add(new CodeFileToken("externalDocs", CodeFileTokenKind.FoldableParentToken));
+            ret.Add(new CodeFileToken("externalDocs", CodeFileTokenKind.FoldableSectionHeading));
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
             ret.Add(TokenSerializer.FoldableContentStart());

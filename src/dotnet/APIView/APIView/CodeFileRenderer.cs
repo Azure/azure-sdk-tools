@@ -24,8 +24,6 @@ namespace ApiView
         private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool enableSkipDiff)
         {
             var stringBuilder = new StringBuilder();
-            // this will be used to track nested foldable panels if present
-            var foldableParentStack = new Stack<string>();
             string currentId = null;
             bool isDocumentationRange = false;
             bool isDeprecatedToken = false;

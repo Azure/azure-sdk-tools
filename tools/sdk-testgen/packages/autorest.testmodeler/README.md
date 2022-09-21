@@ -12,11 +12,7 @@ autorest --version=3.7.3 --use=<test model extension> --output-folder=<RP packag
 
 ## Contribution
 
-The testmodeler use both rush and npm to manage the project. So if there is changes on package.json, remember to execute `npm ci` for testmodeler to keep autorest.testmodeler/npm-shrinkwrap.json updated.
-~~~
-> cd packages/autorest.testmodeler
-> npm ci
-~~~
+The testmodeler use rush to manage the project. Refer to https://www.npmjs.com/package/@microsoft/rush for more information.
 
 ## Configurations
 

@@ -1,8 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using ApiView;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using ApiView;
+using APIView.Model;
 
 namespace APIViewWeb.Models
 {
@@ -18,12 +22,14 @@ namespace APIViewWeb.Models
         }
 
         public CodeFile CodeFile { get; }
+        public RenderResult RenderResult { get; private set; }
 
         public CodeLine[] Render()
         {
             if (_rendered == null)
             {
-                _rendered = CodeFileHtmlRenderer.Normal.Render(CodeFile);
+                RenderResult = CodeFileHtmlRenderer.Normal.Render(CodeFile);
+                _rendered = RenderResult.CodeLines;
             }
 
             return _rendered;
@@ -33,7 +39,8 @@ namespace APIViewWeb.Models
         {
             if (_renderedReadOnly == null)
             {
-                _renderedReadOnly = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
+                RenderResult = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
+                _renderedReadOnly = RenderResult.CodeLines;
             }
 
             return _renderedReadOnly;
@@ -43,15 +50,86 @@ namespace APIViewWeb.Models
         {
             if (skipDiff)
             {
-                return CodeFileRenderer.Instance.Render(CodeFile, enableSkipDiff: skipDiff);
+                RenderResult = CodeFileRenderer.Instance.Render(CodeFile, enableSkipDiff: skipDiff);
+                return RenderResult.CodeLines;
             }
 
             if (_renderedText == null)
             {
-                _renderedText = CodeFileRenderer.Instance.Render(CodeFile);
+                RenderResult = CodeFileRenderer.Instance.Render(CodeFile);
+                _renderedText = RenderResult.CodeLines;
             }
 
             return _renderedText;
+        }
+
+        public CodeLine[] GetCodeLineSection(int sectionId)
+        {
+            var result = new List<CodeLine>();
+            if (RenderResult.Sections.Count > sectionId)
+            {
+                var section = RenderResult.Sections[sectionId];
+
+                using (IEnumerator<TreeNode<CodeLine>> enumerator = section.GetEnumerator())
+                {
+                    enumerator.MoveNext();
+                    while (enumerator.MoveNext())
+                    {
+                        var node = enumerator.Current;
+                        var lineClass = new List<string>();
+                        var indent = node.Level;
+
+                        // Add classes for managing tree hierachy
+                        if (node.Children.Count > 0)
+                            lineClass.Add($"lvl_{node.Level}_parent_{node.PositionAmongSiblings}");
+
+                        if (!node.IsRoot)
+                            lineClass.Add($"lvl_{node.Level}_child_{node.PositionAmongSiblings}");
+
+                        if (node.Level > 1)
+                            lineClass.Add("d-none");
+
+                        var lineClasses = String.Join(' ', lineClass);
+
+                        if (!String.IsNullOrWhiteSpace(node.Data.LineClass))
+                            lineClasses = node.Data.LineClass.Trim() + $" {lineClasses}";
+
+                        if (node.IsLeaf)
+                        {
+                            int leafSectionId;
+                            bool parseWorked = Int32.TryParse(node.Data.DisplayString, out leafSectionId);
+
+                            if (parseWorked && CodeFile.LeafSections.Count > leafSectionId)
+                            {
+                                var leafSection = CodeFile.LeafSections[leafSectionId];
+                                var renderedLeafSection = CodeFileHtmlRenderer.Normal.Render(leafSection);
+                                var placeHolderLineNumber = node.Data.LineNumber;
+                                int index = 0;
+                                foreach (var codeLine in renderedLeafSection)
+                                {
+                                    index++;
+                                    lineClasses = Regex.Replace(lineClasses, @"_child_[0-9]+", $"_child_{index}");
+                                    if (!String.IsNullOrWhiteSpace(codeLine.LineClass))
+                                    {
+                                        lineClasses = codeLine.LineClass.Trim() + $" {lineClasses}";
+                                    }
+                                    result.Add(new CodeLine(codeLine, lineClass: lineClasses, lineNumber: placeHolderLineNumber, indent: indent));
+                                    placeHolderLineNumber++;
+                                }
+                            }
+                            else
+                            {
+                                result.Add(new CodeLine(node.Data, lineClass: lineClasses, indent: indent));
+                            }
+                        }
+                        else
+                        {
+                            result.Add(new CodeLine(node.Data, lineClass: lineClasses, indent: indent));
+                        }
+                    }
+                }
+            }
+            return result.ToArray();
         }
     }
 }

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swagger-api-parser", "swagger-api-parser.csproj", "{0444F9A1-1230-49B0-B280-D2B887F14EFD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwaggerApiParser", "SwaggerApiParser.csproj", "{0444F9A1-1230-49B0-B280-D2B887F14EFD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewWeb", "..\..\..\..\..\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj", "{04A2E9C9-C5D4-4D5C-92CE-66B4BCFCD79A}"
 EndProject
@@ -18,9 +18,9 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{0444F9A1-1230-49B0-B280-D2B887F14EFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0444F9A1-1230-49B0-B280-D2B887F14EFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0444F9A1-1230-49B0-B280-D2B887F14EFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0444F9A1-1230-49B0-B280-D2B887F14EFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0444F9A1-1230-49B0-B280-D2B887F14EFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{04A2E9C9-C5D4-4D5C-92CE-66B4BCFCD79A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{04A2E9C9-C5D4-4D5C-92CE-66B4BCFCD79A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{04A2E9C9-C5D4-4D5C-92CE-66B4BCFCD79A}.Release|Any CPU.ActiveCfg = Release|Any CPU

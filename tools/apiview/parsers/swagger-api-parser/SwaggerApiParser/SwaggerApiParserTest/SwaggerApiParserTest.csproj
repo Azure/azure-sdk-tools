@@ -23,7 +23,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\swagger-api-parser.csproj" />
+      <ProjectReference Include="..\SwaggerApiParser.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="fixtures/**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>

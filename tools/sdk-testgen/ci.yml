@@ -80,6 +80,17 @@ stages:
           - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/common/temp/artifacts/packages
             artifact: packages
             displayName: Publish packages(.tgz) as pipeline artifacts
+      - job: Testmodeler
+        displayName: "TestModeler"
+        steps:
+          - script: |
+              npm install
+            displayName: "npm install"
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/autorest.testmodeler
+          - script: |
+              npm run test
+            displayName: "npm run test"
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/autorest.testmodeler
 
   - ${{if eq(variables['Build.Reason'], 'Manual')}}:
     - stage: release

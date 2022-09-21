@@ -1037,8 +1037,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             _contentEncoding = contentEncoding;
         }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            // should not throw as stream should not be disposed
+            var content = await request.Content.ReadAsStringAsync();
+            Assert.NotEmpty(content);
             var response = new HttpResponseMessage(HttpStatusCode.OK);
 
             // we need to set the content before the content headers as otherwise they will be cleared out after setting content.
@@ -1057,7 +1060,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 response.Content.Headers.ContentEncoding.Add(_contentEncoding);
             }
 
-            return Task.FromResult(response);
+            return response;
         }
     }
 }

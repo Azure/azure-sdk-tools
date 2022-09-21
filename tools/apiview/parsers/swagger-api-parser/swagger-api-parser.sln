@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewWeb", "..\..\..\..\s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIView", "..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj", "{33DFC38B-8A02-48C4-8BCB-334B0D0F5BEE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwaggerApiParserTest", "SwaggerApiParser\SwaggerApiParserTest\SwaggerApiParserTest.csproj", "{26CFF247-A6EE-41D8-9405-254A05B6150A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwaggerApiParserTest", "SwaggerApiParserTest\SwaggerApiParserTest.csproj", "{26CFF247-A6EE-41D8-9405-254A05B6150A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

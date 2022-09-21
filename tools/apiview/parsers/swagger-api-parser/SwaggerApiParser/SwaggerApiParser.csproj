@@ -13,6 +13,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="SwaggerApiParserTest\**" />
+    <EmbeddedResource Remove="SwaggerApiParserTest\**" />
+    <None Remove="SwaggerApiParserTest\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj" />
   </ItemGroup>
 
@@ -22,15 +28,10 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta2.21617.1" />
-    <PackageReference Include="xunit" Version="2.4.1" />
   </ItemGroup>
 
   <ItemGroup>
     <None Remove=".gitignore" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="SwaggerApiParserTest\fixtures\common-types\resource-management" />
   </ItemGroup>
 
 </Project>

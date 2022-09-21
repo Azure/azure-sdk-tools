@@ -33,7 +33,7 @@ namespace APIViewWeb.Controllers
             foreach(string user in taggedUsers)
             {
                 comment.TaggedUsers.Add(user);
-                // notify?
+                // TODO: notify users they have been tagged
             }
 
             await _commentsManager.AddCommentAsync(User, comment);

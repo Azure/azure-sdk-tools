@@ -48,21 +48,24 @@ namespace APIViewWeb
         public async void LoadTaggableUsers()
         {
             HttpClient c = new HttpClient();
-            ProductInfoHeaderValue p = new ProductInfoHeaderValue("Test", "1.0");
+
+            // UserAgent is required
+            ProductInfoHeaderValue userAgent = new ProductInfoHeaderValue("APIView", Startup.VersionHash);
 
             foreach (string requiredOrg in _Options.RequiredOrganization)
             {
-                HttpRequestMessage r = new HttpRequestMessage(HttpMethod.Get, string.Format("https://api.github.com/orgs/{0}/public_members?page={1}&per_page=100", requiredOrg, 1));
-                r.Headers.UserAgent.Add(p);
+                HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, string.Format("https://api.github.com/orgs/{0}/public_members?page={1}&per_page=100", requiredOrg, 1));
+                req.Headers.UserAgent.Add(userAgent);
 
-                HttpResponseMessage h = await c.SendAsync(r);
-                string body = await h.Content.ReadAsStringAsync();
+                HttpResponseMessage res = await c.SendAsync(req);
+                string body = await res.Content.ReadAsStringAsync();
                 GithubUser[] users = JsonConvert.DeserializeObject<GithubUser[]>(body);
                 foreach (GithubUser user in users)
                 {
                     TaggableUsers.Add(user);
                 }
             }
+            // Order users alphabetically
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
 
@@ -97,7 +100,7 @@ namespace APIViewWeb
             {
                 if(!comment.TaggedUsers.Contains(taggedUser))
                 {
-                    // notify
+                    // TODO: notify users they have been tagged
                 }
                 newTaggedUsers.Add(taggedUser);
             }

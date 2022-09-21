@@ -10,7 +10,6 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Options;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -36,15 +35,13 @@ namespace APIViewWeb.Pages.Assemblies
             BlobCodeFileRepository codeFileRepository,
             CommentsManager commentsManager,
             NotificationManager notificationManager,
-            UserPreferenceCache preferenceCache,
-            IOptions<OrganizationOptions> options)
+            UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
             _preferenceCache = preferenceCache;
-            _options = options.Value;
 
         }
 

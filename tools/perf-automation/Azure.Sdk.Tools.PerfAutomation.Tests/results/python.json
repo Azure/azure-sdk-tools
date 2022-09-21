@@ -1,0 +1,920 @@
+[
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-29T05:26:50.218959+00:00",
+    "End": "2022-07-29T05:27:43.586705+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 398.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 399.3,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 405.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 398.8,
+    "OperationsPerSecondMean": 401.1666666666667,
+    "OperationsPerSecondMedian": 399.3,
+    "OperationsPerSecondMax": 405.4
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-29T05:27:43.5868033+00:00",
+    "End": "2022-07-29T05:28:35.4107803+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 45.51,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 45.88,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 45.38,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 45.38,
+    "OperationsPerSecondMean": 45.59,
+    "OperationsPerSecondMedian": 45.51,
+    "OperationsPerSecondMax": 45.88
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-29T05:28:35.4107907+00:00",
+    "End": "2022-07-29T05:29:31.677821+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 10485760 --parallel 32 --sync",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 16.67,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 16.49,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 16.03,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 16.03,
+    "OperationsPerSecondMean": 16.396666666666665,
+    "OperationsPerSecondMedian": 16.49,
+    "OperationsPerSecondMax": 16.67
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-29T05:29:31.6778408+00:00",
+    "End": "2022-07-29T05:36:59.8168689+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 0.1234,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 0.1271,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 0.1262,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.1234,
+    "OperationsPerSecondMean": 0.1255666666666667,
+    "OperationsPerSecondMedian": 0.1262,
+    "OperationsPerSecondMax": 0.1271
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-29T05:36:59.8168777+00:00",
+    "End": "2022-07-29T05:44:49.4575594+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 0.3966,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 0.4177,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 0.4143,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.3966,
+    "OperationsPerSecondMean": 0.40953333333333336,
+    "OperationsPerSecondMedian": 0.4143,
+    "OperationsPerSecondMax": 0.4177
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-29T05:44:49.4576526+00:00",
+    "End": "2022-07-29T05:45:41.6878258+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "ListBlobsTest",
+    "Arguments": "--count 5 --parallel 64",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 259.2,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 260.2,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 260.6,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 259.2,
+    "OperationsPerSecondMean": 260,
+    "OperationsPerSecondMedian": 260.2,
+    "OperationsPerSecondMax": 260.6
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-29T05:45:41.6878369+00:00",
+    "End": "2022-07-29T05:46:59.5544866+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "ListBlobsTest",
+    "Arguments": "--count 500 --parallel 32",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 8.733,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 8.735,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 8.745,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 8.733,
+    "OperationsPerSecondMean": 8.737666666666668,
+    "OperationsPerSecondMedian": 8.735,
+    "OperationsPerSecondMax": 8.745
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-29T05:46:59.554495+00:00",
+    "End": "2022-07-29T05:48:15.3340158+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "ListBlobsTest",
+    "Arguments": "--count 500 --parallel 32 --sync",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 7.33,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 7.557,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 7.44,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 7.33,
+    "OperationsPerSecondMean": 7.442333333333334,
+    "OperationsPerSecondMedian": 7.44,
+    "OperationsPerSecondMax": 7.557
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-29T05:48:15.3340262+00:00",
+    "End": "2022-07-29T06:42:22.3023217+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "ListBlobsTest",
+    "Arguments": "--count 50000 --parallel 32 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 0.0738,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 0.07285,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "azure-storage-blob==12.13.0"
+        },
+        "OperationsPerSecond": 0.07235,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.07235,
+    "OperationsPerSecondMean": 0.073,
+    "OperationsPerSecondMedian": 0.07285,
+    "OperationsPerSecondMax": 0.0738
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-29T06:42:37.2820143+00:00",
+    "End": "2022-07-29T06:43:27.5083823+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 399.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 400.6,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 402.3,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 399.4,
+    "OperationsPerSecondMean": 400.76666666666665,
+    "OperationsPerSecondMedian": 400.6,
+    "OperationsPerSecondMax": 402.3
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-29T06:43:27.5083912+00:00",
+    "End": "2022-07-29T06:44:19.475843+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 45.83,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 43.85,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 44.32,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 43.85,
+    "OperationsPerSecondMean": 44.666666666666664,
+    "OperationsPerSecondMedian": 44.32,
+    "OperationsPerSecondMax": 45.83
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-29T06:44:19.4758524+00:00",
+    "End": "2022-07-29T06:45:15.6461572+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 10485760 --parallel 32 --sync",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 15.59,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 16.61,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 16.21,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 15.59,
+    "OperationsPerSecondMean": 16.136666666666667,
+    "OperationsPerSecondMedian": 16.21,
+    "OperationsPerSecondMax": 16.61
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-29T06:45:15.6461684+00:00",
+    "End": "2022-07-29T06:52:42.499546+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 0.1264,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 0.1263,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 0.1248,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.1248,
+    "OperationsPerSecondMean": 0.12583333333333335,
+    "OperationsPerSecondMedian": 0.1263,
+    "OperationsPerSecondMax": 0.1264
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-29T06:52:42.4995541+00:00",
+    "End": "2022-07-29T06:59:53.0677152+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "DownloadTest",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 0.3913,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 0.3874,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 0.3866,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.3866,
+    "OperationsPerSecondMean": 0.38843333333333335,
+    "OperationsPerSecondMedian": 0.3874,
+    "OperationsPerSecondMax": 0.3913
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-29T06:59:53.0677425+00:00",
+    "End": "2022-07-29T07:00:43.6067879+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "ListBlobsTest",
+    "Arguments": "--count 5 --parallel 64",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 256.7,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 259.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 257.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 256.7,
+    "OperationsPerSecondMean": 258,
+    "OperationsPerSecondMedian": 257.5,
+    "OperationsPerSecondMax": 259.8
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-29T07:00:43.6069495+00:00",
+    "End": "2022-07-29T07:02:01.82108+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "ListBlobsTest",
+    "Arguments": "--count 500 --parallel 32",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 8.698,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 8.723,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 8.747,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 8.698,
+    "OperationsPerSecondMean": 8.722666666666667,
+    "OperationsPerSecondMedian": 8.723,
+    "OperationsPerSecondMax": 8.747
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-29T07:02:01.8210894+00:00",
+    "End": "2022-07-29T07:03:17.0943083+00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "ListBlobsTest",
+    "Arguments": "--count 500 --parallel 32 --sync",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 7.356,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 7.287,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 7.434,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 7.287,
+    "OperationsPerSecondMean": 7.359000000000001,
+    "OperationsPerSecondMedian": 7.356,
+    "OperationsPerSecondMax": 7.434
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-29T07:03:17.0943168+00:00",
+    "End": "0001-01-01T00:00:00",
+    "Language": "python",
+    "LanguageVersion": "3.7.12",
+    "Project": "sdk/storage/azure-storage-blob",
+    "LanguageTestName": "ListBlobsTest",
+    "Arguments": "--count 50000 --parallel 32 --warmup 60 --duration 60",
+    "PrimaryPackage": "azure-storage-blob",
+    "PackageVersions": {
+      "azure-storage-blob": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 0.07055,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 0.06952,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "azure-storage-blob": "-e git+https://github.com/Azure/azure-sdk-for-python@4429048d442d463d732d54b965bd3db119e3fa44#egg=azure_storage_blob&subdirectory=sdk/storage/azure-storage-blob"
+        },
+        "OperationsPerSecond": 0.06965,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.06952,
+    "OperationsPerSecondMean": 0.06990666666666667,
+    "OperationsPerSecondMedian": 0.06965,
+    "OperationsPerSecondMax": 0.07055
+  }
+]

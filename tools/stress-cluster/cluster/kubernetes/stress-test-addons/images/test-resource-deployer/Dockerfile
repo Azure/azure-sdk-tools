@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/powershell
 
-RUN pwsh -c Install-Module Az -Force;
+RUN pwsh -c '$ErrorActionPreference = "Stop"; Install-Module Az -Force';
 
 # For local testing, run prepare.ps1 before building the docker image
 COPY ./docker_build/common /common

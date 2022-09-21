@@ -14,7 +14,7 @@ from ._metadata_map import MetadataMap
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "Language"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{0}), Python version: {1}".format(VERSION, platform.python_version())
-TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\\d._]+)")
+TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\d._]+)")
 TYPE_OR_SEPARATOR = " or "
 
 
@@ -33,7 +33,7 @@ class ApiView:
         path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
         while os.path.split(path)[1]:
             dirname = os.path.split(path)[1]
-            if dirname == "api-stub-generator":
+            if dirname == "apistub":
                 return path
             else:
                 path = os.path.split(path)[0]
@@ -42,7 +42,7 @@ class ApiView:
     def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None):
         self.name = pkg_name
         self.version = 0
-        self.version_string = ""
+        self.version_string = VERSION
         self.language = "Python"
         self.tokens = []
         self.navigation = []
@@ -54,6 +54,7 @@ class ApiView:
         self.metadata_map = metadata_map or MetadataMap("")
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)
+        self.add_line_marker("GLOBAL")
         if source_url:
             self.set_blank_lines(1)
             self.add_literal(f"# Source URL: {source_url}")
@@ -181,6 +182,7 @@ class ApiView:
     def _add_type_token(self, type_name, line_id):
         # parse to get individual type name
         logging.debug("Generating tokens for type {}".format(type_name))
+
         types = re.search(TYPE_NAME_REGEX, type_name)
         if types:
             # Generate token for the prefix before internal type

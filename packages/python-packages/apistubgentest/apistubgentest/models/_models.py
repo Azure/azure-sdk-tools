@@ -6,13 +6,14 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
+import abc
 from azure.core import CaseInsensitiveEnumMeta
 from collections.abc import Sequence
-from dataclasses import dataclass
 from enum import Enum, EnumMeta
 import functools
-from six import with_metaclass
-from typing import Any, overload, TypedDict, Union, Optional
+from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, TypeAlias
+
+from ._mixin import MixinWithOverloads
 
 
 def my_decorator(fn):
@@ -110,18 +111,6 @@ FakeTypedDict = TypedDict(
 )
 
 
-@dataclass
-class FakeInventoryItemDataClass:
-    """Class for testing @dataclass
-    """
-    name: str
-    unit_price: float
-    quantity_on_hand: int = 0
-
-    def total_cost(self, **kwargs) -> float:
-        return self.unit_price * self.quantity_on_hand
-
-
 class PublicPrivateClass:
 
     public_var: str = "SOMEVAL"
@@ -172,6 +161,10 @@ class SomePoorlyNamedObject:
         self.name = name
 
 
+class SomeAwesomelyNamedObject(SomePoorlyNamedObject):
+    pass
+
+
 class SomethingWithOverloads:
 
     @overload
@@ -197,6 +190,10 @@ class SomethingWithOverloads:
 
     def something(self, id: int | str, *args, **kwargs) -> str:
         return str(id)
+
+
+class SomethingWithInheritedOverloads(MixinWithOverloads):
+    pass
 
 
 class SomethingWithDecorators:
@@ -237,3 +234,39 @@ class SomethingWithProperties:
         :rtype: Optional[str]
         """
         pass
+
+# pylint:disable=docstring-missing-rtype
+class _SomeAbstractBase(abc.ABC):
+    """ Some abstract base class. """
+
+    @property
+    @abc.abstractmethod
+    def say_hello(self) -> str:
+        """ A method to say hello. """
+        ...
+
+class SomeImplementationClass(_SomeAbstractBase):
+
+    def say_hello(self) -> str:
+        return "Hello!"
+
+
+T = TypeVar('T')
+
+class GenericStack(Generic[T]):
+    def __init__(self) -> None:
+        # Create an empty list with items of type T
+        self.items: list[T] = []
+
+    def push(self, item: T) -> None:
+        self.items.append(item)
+
+    def pop(self) -> T:
+        return self.items.pop()
+
+    def empty(self) -> bool:
+        return not self.items
+
+AliasUnion = NewType('AliasUnion', Union[str, int, bool])
+
+AliasNewType = NewType('AliasNewType', Dict[str, str])

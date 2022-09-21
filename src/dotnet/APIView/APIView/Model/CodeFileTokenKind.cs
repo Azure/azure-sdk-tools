@@ -21,15 +21,8 @@ namespace APIView
         DeprecatedRangeEnd = 14,
         SkipDiffRangeStart = 15,
         SkipDiffRangeEnd = 16,
-        FoldableParentToken = 17,
-        FoldableContentStart = 18,
-        FoldableContentEnd = 19,
-        TableBegin = 20,
-        TableEnd = 21,
-        TableRowCount = 22,
-        TableColumnCount = 23,
-        TableColumnName = 24,
-        TableCellBegin = 25,
-        TableCellEnd = 26,
+        FoldableSectionHeading = 17,
+        FoldableSectionContentStart = 18,
+        FoldableSectionContentEnd = 19
     }
 }

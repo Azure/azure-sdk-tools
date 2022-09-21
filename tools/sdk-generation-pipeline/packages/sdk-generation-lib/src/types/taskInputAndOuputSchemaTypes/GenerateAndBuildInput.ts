@@ -10,6 +10,8 @@ export type GenerateAndBuildInput = {
     repoHttpsUrl: string;
     relatedReadmeMdFile: string;
     serviceType: string;
+    autorestConfig: string;
+    skipGeneration: boolean;
 };
 
 export const getGenerateAndBuildInput = getTypeTransformer<GenerateAndBuildInput>(

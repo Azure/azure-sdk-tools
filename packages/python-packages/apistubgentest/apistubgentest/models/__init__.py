@@ -8,35 +8,55 @@
 
 # pylint: disable=wrong-import-position
 from ._models import (
+    AliasNewType,
+    AliasUnion,
     DocstringClass,
     FakeError,
-    FakeInventoryItemDataClass,
     FakeObject,
     FakeTypedDict,
+    GenericStack,
     PetEnumPy3Metaclass,
     PetEnumPy3MetaclassAlt,
     PublicCaseInsensitiveEnumMeta,
-    PublicPrivateClass, RequiredKwargObject,
-    SomePoorlyNamedObject as SomeAwesomelyNamedObject,
+    PublicPrivateClass,
+    RequiredKwargObject,
+    SomeAwesomelyNamedObject,
+    SomeImplementationClass,
     SomethingWithDecorators,
+    SomethingWithInheritedOverloads,
     SomethingWithOverloads,
     SomethingWithProperties
 )
-
+from ._dataclasses import (
+    DataClassSimple,
+    DataClassWithFields,
+    DataClassDynamic,
+    DataClassWithKeywordOnly,
+    DataClassWithPostInit
+)
 
 __all__ = (
+    "AliasNewType",
+    "AliasUnion",
+    "DataClassSimple",
+    "DataClassWithFields",
+    "DataClassDynamic",
+    "DataClassWithKeywordOnly",
+    "DataClassWithPostInit",
     "DocstringClass",
     "FakeError",
-    "FakeInventoryItemDataClass",
     "FakeObject",
     "FakeTypedDict",
+    "GenericStack",
     "PetEnumPy3Metaclass",
     "PetEnumPy3MetaclassAlt",
     "PublicCaseInsensitiveEnumMeta",
     "PublicPrivateClass",
     "RequiredKwargObject",
     "SomeAwesomelyNamedObject",
+    "SomeImplementationClass",
     "SomethingWithDecorators",
+    "SomethingWithInheritedOverloads",
     "SomethingWithOverloads",
     "SomethingWithProperties"
 )

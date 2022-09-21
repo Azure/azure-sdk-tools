@@ -1,14 +1,10 @@
-using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.Matchers;
-using Azure.Sdk.Tools.TestProxy.Sanitizers;
-using Azure.Sdk.Tools.TestProxy.Transforms;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -28,7 +24,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -65,7 +61,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackContext = new DefaultHttpContext();
             playbackContext.Request.Headers["x-recording-id"] = inMemId;
 
-            var playbackController = new Playback(testRecordingHandler)
+            var playbackController = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -88,7 +84,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackContext = new DefaultHttpContext();
             var recordingId = Guid.NewGuid().ToString();
             playbackContext.Request.Headers["x-recording-id"] = recordingId;
-            var playbackController = new Playback(testRecordingHandler)
+            var playbackController = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -111,7 +107,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackContext = new DefaultHttpContext();
             var recordingId = Guid.NewGuid().ToString();
             playbackContext.Request.Headers["x-recording-id"] = recordingId;
-            var playbackController = new Playback(testRecordingHandler)
+            var playbackController = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -135,7 +131,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -172,7 +168,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var playbackContext = new DefaultHttpContext();
             playbackContext.Request.Headers["x-recording-id"] = inMemId;
-            var playbackController = new Playback(testRecordingHandler)
+            var playbackController = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -196,7 +192,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {

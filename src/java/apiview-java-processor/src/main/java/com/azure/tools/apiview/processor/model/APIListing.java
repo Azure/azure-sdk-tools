@@ -23,6 +23,9 @@ public class APIListing {
     @JsonProperty("Language")
     private String language;
 
+    @JsonProperty("LanguageVariant")
+    private LanguageVariant languageVariant;
+
     @JsonProperty("PackageName")
     private String packageName;
 
@@ -32,7 +35,7 @@ public class APIListing {
     // This string is taken from here:
     // https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs#L50
     @JsonProperty("VersionString")
-    private final String versionString = "20";
+    private final String versionString = "21";
 
     @JsonProperty("Tokens")
     private List<Token> tokens;
@@ -89,6 +92,14 @@ public class APIListing {
 
     public void setLanguage(final String language) {
         this.language = language;
+    }
+
+    public LanguageVariant getLanguageVariant() {
+        return languageVariant;
+    }
+
+    public void setLanguageVariant(final LanguageVariant variant) {
+        this.languageVariant = variant;
     }
 
     public String getPackageName() {

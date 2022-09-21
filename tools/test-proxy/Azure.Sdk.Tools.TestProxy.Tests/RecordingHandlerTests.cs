@@ -19,11 +19,15 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Primitives;
 using Xunit;
 using Azure.Core;
+using System.Runtime.InteropServices;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Store;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordingHandlerTests
     {
+        #region helpers and private test fields
         private HttpContext GenerateHttpRequestContext(string[] headerValueStrings)
         {
             HttpContext context = new DefaultHttpContext();
@@ -55,6 +59,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         private NullLoggerFactory _nullLogger = new NullLoggerFactory();
+
+        public static JsonSerializerOptions SerializerOptions = new JsonSerializerOptions
+        {
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+        };
 
         [Flags]
         enum CheckSkips
@@ -91,6 +101,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[2]);
             }
         }
+        #endregion
 
         [Fact]
         public void TestGetHeader()
@@ -180,11 +191,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestResetTargetsRecordingOnly()
+        public async Task TestResetTargetsRecordingOnly()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
+            await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
 
@@ -198,17 +209,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Single(testRecordingHandler.Sanitizers);
             Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers[0]);
             _checkDefaultExtensions(testRecordingHandler, CheckSkips.IncludeMatcher | CheckSkips.IncludeTransforms);
-            Assert.Empty(session.ModifiableSession.AdditionalSanitizers);
-            Assert.Empty(session.ModifiableSession.AdditionalTransforms);
-            Assert.Null(session.ModifiableSession.CustomMatcher);
+            Assert.Empty(session.AdditionalSanitizers);
+            Assert.Empty(session.AdditionalTransforms);
+            Assert.Null(session.CustomMatcher);
         }
 
         [Fact]
-        public void TestResetTargetsSessionOnly()
+        public async Task TestResetTargetsSessionOnly()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
+            await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             testRecordingHandler.Sanitizers.Clear();
@@ -219,7 +230,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = testRecordingHandler.RecordingSessions.First().Value;
 
             // check that the individual session had reset sanitizers
-            Assert.Empty(session.ModifiableSession.AdditionalSanitizers);
+            Assert.Empty(session.AdditionalSanitizers);
 
             // stop the recording to clear out the session cache
             testRecordingHandler.StopRecording(recordingId);
@@ -230,11 +241,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestResetExtensionsFailsWithActiveSessions()
+        public async Task TestResetExtensionsFailsWithActiveSessions()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
+            await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             var assertion = Assert.Throws<HttpException>(
@@ -307,7 +318,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestWriteAbsoluteRecording()
+        public async Task TestWriteAbsoluteRecording()
         {
             var tmpPath = Path.GetTempPath();
             var currentPath = Directory.GetCurrentDirectory();
@@ -315,7 +326,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var pathToRecording = Path.Combine(currentPath, "recordings/oauth_request_new.json");
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
             recordingHandler.StopRecording(sessionId);
 
@@ -330,7 +341,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestWriteRelativeRecording()
+        public async Task TestWriteRelativeRecording()
         {
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
@@ -338,7 +349,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingHandler = new RecordingHandler(currentPath);
             var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
             recordingHandler.StopRecording(sessionId);
 
@@ -359,16 +370,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/skip_body";
-            var recordingHandler = new RecordingHandler(currentPath);
+            var mockClient = new HttpClient(new MockHttpHandler());
+            var recordingHandler = new RecordingHandler(currentPath)
+            {
+                RedirectableClient = mockClient,
+                RedirectlessClient = mockClient
+            };
             var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             CreateRecordModeRequest(httpContext, "request-body");
 
-            var mockClient = new HttpClient(new MockHttpHandler());
-            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient);
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response);
             recordingHandler.StopRecording(sessionId);
 
             try
@@ -392,23 +407,30 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/skip_entry";
-            var recordingHandler = new RecordingHandler(currentPath);
+
+            var mockClient = new HttpClient(new MockHttpHandler());
+            var recordingHandler = new RecordingHandler(currentPath)
+            {
+                RedirectableClient = mockClient,
+                RedirectlessClient = mockClient
+            };
+
+
             var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             CreateRecordModeRequest(httpContext, "request-response");
 
-            var mockClient = new HttpClient(new MockHttpHandler());
-            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient);
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response);
 
             httpContext = new DefaultHttpContext();
             // send a second request that SHOULD be recorded
             CreateRecordModeRequest(httpContext);
             httpContext.Request.Headers.Remove("x-recording-skip");
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"value\" }");
-            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient);
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response);
 
             recordingHandler.StopRecording(sessionId);
 
@@ -437,16 +459,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/invalid_record_mode";
-            var recordingHandler = new RecordingHandler(currentPath);
+            var mockClient = new HttpClient(new MockHttpHandler());
+            var recordingHandler = new RecordingHandler(currentPath)
+            {
+                RedirectableClient = mockClient,
+                RedirectlessClient = mockClient
+            };
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             CreateRecordModeRequest(httpContext, new StringValues(values));
 
-            var mockClient = new HttpClient(new MockHttpHandler());
             HttpException resultingException = await Assert.ThrowsAsync<HttpException>(
-                async () => await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient)
+                async () => await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response)
             );
             Assert.Equal(HttpStatusCode.BadRequest, resultingException.StatusCode);
         }
@@ -495,7 +521,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestStopRecordingWithVariables()
+        public async Task TestStopRecordingWithVariables()
         {
             var tmpPath = Path.GetTempPath();
             var startHttpContext = new DefaultHttpContext();
@@ -507,7 +533,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             var endHttpContext = new DefaultHttpContext();
 
-            recordingHandler.StartRecording(pathToRecording, startHttpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, startHttpContext.Response);
             var sessionId = startHttpContext.Response.Headers["x-recording-id"].ToString();
 
             recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>(dict));
@@ -522,14 +548,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestStopRecordingWithoutVariables()
+        public async Task TestStopRecordingWithoutVariables()
         {
             var tmpPath = Path.GetTempPath();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/oauth_request_new.json";
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
             recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>());
 
@@ -539,14 +565,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestStopRecordingNullVariables()
+        public async Task TestStopRecordingNullVariables()
         {
             var tmpPath = Path.GetTempPath();
             var httpContext = new DefaultHttpContext();
             var pathToRecording = "recordings/oauth_request_new.json";
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
             recordingHandler.StopRecording(sessionId, variables: null);
 
@@ -633,63 +659,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-        [Theory]
-        [InlineData("{ \"HandleRedirects\": \"true\"}", true)]
-        [InlineData("{ \"HandleRedirects\": \"false\"}", false)]
-        [InlineData("{ \"HandleRedirects\": \"1\"}", true)]
-        [InlineData("{ \"HandleRedirects\": \"0\"}", false)]
-        [InlineData("{ \"HandleRedirects\": \"True\"}", true)]
-        [InlineData("{ \"HandleRedirects\": \"False\"}", false)]
-        [InlineData("{ \"HandleRedirects\": \"TRUE\"}", true)]
-        [InlineData("{ \"HandleRedirects\": \"FALSE\"}", false)]
-        [InlineData("{ \"HandleRedirects\": true }", true)]
-        [InlineData("{ \"HandleRedirects\": false }", false)]
-        [InlineData("{ \"HandleRedirects\": 1 }", true)]
-        [InlineData("{ \"HandleRedirects\": 0 }", false)]
-        public void TestSetRecordingOptionsHandlesValidInputs(string body, bool expectedSetting)
-        {
-            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var httpContext = new DefaultHttpContext();
-            Dictionary<string, object> inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
-
-            testRecordingHandler.SetRecordingOptions(inputBody);
-
-            Assert.Equal(expectedSetting, testRecordingHandler.HandleRedirects);
-        }
-
-        [Theory]
-        [InlineData("{ \"HandleRedirects\": \"anotherkey\"}", "The value of key \"HandleRedirects\" MUST be castable to a valid boolean value.")]
-        [InlineData("{ \"HandleRedirects\": \"true2\"}", "The value of key \"HandleRedirects\" MUST be castable to a valid boolean value.")]
-        [InlineData("{}", "At least one key is expected in the body being passed to SetRecordingOptions.")]
-        [InlineData(null, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.")]
-        public void TestSetRecordingOptionsThrowsOnInvalidInputs(string body, string errorText)
-        {
-            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var httpContext = new DefaultHttpContext();
-
-            Dictionary<string, object> inputBody = null;
-            if (!string.IsNullOrWhiteSpace(body))
-            {
-                inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
-            }
-
-            var assertion = Assert.Throws<HttpException>(
-               () => testRecordingHandler.SetRecordingOptions(inputBody)
-            );
-
-            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
-            Assert.Contains(errorText, assertion.Message);
-        }
 
         [Theory]
         [InlineData("awesomehost.com")]
         [InlineData("")]
-        public void TestRecordMaintainsUpstreamOverrideHostHeader(string upstreamHostHeaderValue)
+        public async Task TestRecordMaintainsUpstreamOverrideHostHeader(string upstreamHostHeaderValue)
         {
             var httpContext = new DefaultHttpContext();
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
-            testRecordingHandler.StartRecording("hello.json", httpContext.Response);
+            await testRecordingHandler.StartRecordingAsync("hello.json", httpContext.Response);
 
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
@@ -716,7 +695,284 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Assert.Null(upstreamRequest.Headers.Host);
             }
         }
+
+        #region SetRecordingOptions
+        [Theory]
+        [InlineData("{ \"HandleRedirects\": \"true\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"false\"}", false)]
+        [InlineData("{ \"HandleRedirects\": \"1\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"0\"}", false)]
+        [InlineData("{ \"HandleRedirects\": \"True\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"False\"}", false)]
+        [InlineData("{ \"HandleRedirects\": \"TRUE\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"FALSE\"}", false)]
+        [InlineData("{ \"HandleRedirects\": true }", true)]
+        [InlineData("{ \"HandleRedirects\": false }", false)]
+        [InlineData("{ \"HandleRedirects\": 1 }", true)]
+        [InlineData("{ \"HandleRedirects\": 0 }", false)]
+        public void TestSetRecordingOptionsHandlesValidRedirectSetting(string body, bool expectedSetting)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            Dictionary<string, object> inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+
+            testRecordingHandler.SetRecordingOptions(inputBody);
+
+            Assert.Equal(expectedSetting, testRecordingHandler.HandleRedirects);
+        }
+
+        [Theory]
+        [InlineData("{ \"HandleRedirects\": \"anotherkey\"}", "The value of key \"HandleRedirects\" MUST be castable to a valid boolean value.")]
+        [InlineData("{ \"HandleRedirects\": \"true2\"}", "The value of key \"HandleRedirects\" MUST be castable to a valid boolean value.")]
+        [InlineData("{}", "At least one key is expected in the body being passed to SetRecordingOptions.")]
+        [InlineData(null, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.")]
+        public void TestSetRecordingOptionsThrowsOnInvalidRedirectSetting(string body, string errorText)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+
+            Dictionary<string, object> inputBody = null;
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+            }
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+
+            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+            Assert.Contains(errorText, assertion.Message);
+        }
+
+        [Theory]
+        [InlineData("hellothere", "generalkenobi")]
+        [InlineData("", "")]
+        public void TestSetRecordingOptionsHandlesValidContextDirectory(params string[] relativePaths)
+        {
+            var relativePath = Path.Combine(relativePaths);
+            var testDirectory = Path.GetTempPath();
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(testDirectory);
+            testDirectory = Path.Combine(testDirectory, relativePath);
+            var body = $"{{ \"ContextDirectory\": \"{testDirectory.Replace("\\", "/")}\"}}";
+
+            var httpContext = new DefaultHttpContext();
+            Dictionary<string, object> inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+
+            testRecordingHandler.SetRecordingOptions(inputBody);
+
+            Assert.Equal(new Uri(testDirectory), new Uri(testRecordingHandler.ContextDirectory));
+        }
+
+        [Theory]
+        [InlineData("{ \"ContextDirectory\": \":/repo/\0\"}", "Unable set proxy context to target directory")]
+        public void TestSetRecordingOptionsThrowsOnInvalidContextDirectory(string body, string errorText)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            Dictionary<string, object> inputBody = null;
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+            }
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+
+            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+            Assert.StartsWith(errorText, assertion.Message);
+        }
+
+
+        [Theory]
+        [InlineData("{ \"AssetsStore\": \"NullStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.GitStore\"}")]
+        [InlineData("{ \"AssetsStore\": \"Azure.Sdk.Tools.TestProxy.Store.NullStore\"}")]
+        public void TestSetRecordingOptionsHandlesValidStoreTypes(string body)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.Store = null;
+            Dictionary<string, object> inputBody = null;
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+            }
+
+            testRecordingHandler.SetRecordingOptions(inputBody);
+
+            Assert.NotNull(testRecordingHandler.Store);
+        }
+
+        [Theory]
+        [InlineData("{ \"AssetsStore\": \"NonExistent\"}", "Unable to load the specified IAssetStore class NonExistent.")]
+        [InlineData("{ \"AssetsStore\": \"\"}", "Users must provide a valid value when providing the key \"AssetsStore\"")]
+        [InlineData("{ \"AssetsStore\": \"GitAssetsConfiguration\"}", "Unable to create an instance of type GitAssetsConfiguration")]
+        public void TestSetRecordingOptionsThrowsOnInvalidStoreTypes(string body, string errorText)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            Dictionary<string, object> inputBody = null;
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+            }
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+
+            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+            Assert.StartsWith(errorText, assertion.Message);
+        }
+
+        [Fact]
+        public void TestSetRecordingOptionsValidTlsCert()
+        {
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
+            var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\"}}}}", certValue);
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
+
+            testRecordingHandler.SetRecordingOptions(inputBody, null);
+        }
+
+        [Fact]
+        public void TestSetRecordingOptionsMultipleCertOptions()
+        {
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\", \"Certificates\": [ {{ \"PemValue\": \"{1}\", \"PemKey\": \"{2}\" }}]}}}}", certValue, pemValue, pemKey);
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
+
+            testRecordingHandler.SetRecordingOptions(inputBody, null);
+        }
+
+        [Theory]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}, {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": []}}}}")]
+        public void TestSetRecordingOptionsValidTransportSessionLevel(string body)
+        {
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var inputObj = string.Format(body, pemValue, pemKey);
+            var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.SetRecordingOptions(inputBody, null);
+        }
+
+        [Theory]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}, {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": []}}}}")]
+        public async Task TestSetRecordingOptionsValidTransportRecordingLevel(string body)
+        {
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputObj = string.Format(body, pemValue, pemKey);
+            var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
+
+            HttpContext context = new DefaultHttpContext();
+            await testRecordingHandler.StartRecordingAsync("TestSetRecordingOptionsInValidTransportRecordingLevel.json", context.Response);
+            var recordingId = context.Response.Headers["x-recording-id"].ToString();
+
+            testRecordingHandler.SetRecordingOptions(inputBody, recordingId);
+        }
+
+        [Theory]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"badkey\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemKey\": \"{1}\" }}]}}}}")]
+        public void TestSetRecordingOptionsInValidTransportSessionLevel(string body)
+        {
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputObj = string.Format(body, pemValue, pemKey);
+            var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+            Assert.Contains("Unable to instantiate a new X509 certificate from the provided value and key.", assertion.Message);
+        }
+
+        [Theory]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"badkey\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\", \"PemKey\": \"{1}\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemValue\": \"badvalue\" }}]}}}}")]
+        [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemKey\": \"{1}\" }}]}}}}")]
+        public async Task TestSetRecordingOptionsInvalidTransportRecordingLevel(string body)
+        {
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
+            var inputObj = string.Format(body, pemValue, pemKey);
+            var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
+
+            HttpContext context = new DefaultHttpContext();
+            await testRecordingHandler.StartRecordingAsync("TestSetRecordingOptionsInValidTransportRecordingLevel.json", context.Response);
+            var recordingId = context.Response.Headers["x-recording-id"].ToString();
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody, recordingId)
+            );
+            Assert.Contains("Unable to instantiate a new X509 certificate from the provided value and key.", assertion.Message);
+        }
+
+
+        [Fact]
+        public void TestSetRecordingOptionsTransportWithTLSCert()
+        {
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\", \"TLSValidationCertHost\":\"azure.blobs.windows.net\", \"Certificates\": [ {{ \"PemValue\": \"{1}\", \"PemKey\": \"{2}\" }}]}}}}", certValue, pemValue, pemKey);
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
+
+            testRecordingHandler.SetRecordingOptions(inputBody);
+        }
+
+        [Fact]
+        public void TestSetRecordingOptionsInValidTransportWithTLSCert()
+        {
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"hello-there\", \"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}", pemValue, pemKey);
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+
+            Assert.StartsWith("Unable to instantiate a valid cert from the value provided in Transport settings key", assertion.Message);
+            Assert.Contains("The certificate is missing the public key", assertion.Message);
+        }
+        #endregion
     }
+
+    public sealed class IgnoreOnLinuxFact : FactAttribute
+    {
+        public IgnoreOnLinuxFact()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Skip = "Ignore on Linux.";
+            }
+        }
+    }
+
 
     internal class MockHttpHandler : HttpMessageHandler
     {

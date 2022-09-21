@@ -4,7 +4,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20211215.1
+      ref: refs/tags/azure-sdk-build-tools_20220920.1
 
 parameters:
   - name: BuildToolsRepoPath
@@ -25,24 +25,15 @@ parameters:
   - name: DevOpsFeedID
     type: string
     default: ''
-  - name: PartnerDropsSubscription
-    type: string
-    default: 'azuresdkpartnerdrops-kv Secrets'
-  - name: PartnerDropsStorageName
-    type: string
-    default: 'azuresdkpartnerdrops'
-  - name: PartnerDropsContainerName
-    type: string
-    default: 'drops-signed'
-  - name: PartnerDropsBlobDestPrefix
-    type: string
-    default: '$(Build.DefinitionName)\$(Build.BuildId)-$(System.JobAttempt)'
   - name: ShouldSign
     type: boolean
     default: true
   - name: ShouldPublish
     type: boolean
     default: true
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
 
 jobs:
   - job: AzurePartnerDropsToNuget
@@ -106,13 +97,7 @@ jobs:
               nuGetFeedType: external
               publishFeedCredentials: Nuget.org
 
-      - task: AzureFileCopy@2
-        displayName: 'Copy Signed Files to Blob'
-        inputs:
-          SourcePath: '${{ parameters.ArtifactsPath }}'
-          azureSubscription: '${{ parameters.PartnerDropsSubscription }}'
-          Destination: AzureBlob
-          storage: '${{ parameters.PartnerDropsStorageName }}'
-          ContainerName: '${{ parameters.PartnerDropsContainerName }}'
-          BlobPrefix: '${{ parameters.PartnerDropsBlobDestPrefix }}'
-        condition: and(succeeded(), ne(variables['SkipCopySignedFilestoBlob'], 'true'))
+      - publish: '${{ parameters.ArtifactsPath }}'
+        displayName: Upload Packages to Artifacts
+        artifact: packages
+        condition: succeeded()

@@ -16,9 +16,6 @@ SDK Automation is launched in azure pipeline. It runs tasks in the following ste
 
 4. Launch __mockTestTask__ to run mock test with [mockTestInput.json](#mocktestinput). The script should produce [mockTestOutput.json](#mocktestoutput). Then the [mockTestOutput.json](#mocktestoutput) will be parsed and the test result will be stored in database.
 
-5. Launch __liveTestTask__ to run mock test with [liveTestInput.json](#livetestinput). The script should produce [liveTestOutput.json](#livetestoutput). Then the [liveTestOutput.json](#livetestoutput) will be parsed and the test result will be stored in database.
-
-
 ## Definitions
 
 ### CodegenToSdkConfig
@@ -75,7 +72,8 @@ Input file for generate and build script.
   "headRef": "refs/pull/1234/merge",
   "repoHttpsUrl": "https://github.com/Azure/azure-rest-api-specs.git",
   "relatedReadmeMdFile": "compute/resource-manager/readme.md"
-  "serviceType": "resource-manager"
+  "serviceType": "resource-manager",
+  "skipGeneration": "false"
 }
 ```
 

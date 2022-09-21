@@ -1,0 +1,31 @@
+.create-merge table BuildFailure (
+    OrganizationName: string,
+    ProjectId: string,
+    ProjectName: string,
+    BuildDefinitionId: long,
+    BuildDefinitionName: string,
+    BuildId: long,
+    BuildFinishTime: datetime,
+    BuildTimelineId: string,
+    ChangeId: int,
+    RecordId: string,
+    RecordFinishTime: datetime,
+    ErrorClassification: string,
+    EtlIngestDate: datetime
+)
+
+.alter table BuildFailure ingestion json mapping 'BuildFailure_mapping' ```[
+    { "column": "OrganizationName", "path": "$['organizationName']" },
+    { "column": "ProjectId", "path": "$['projectId']" },
+    { "column": "ProjectName", "path": "$['projectName']" },
+    { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },
+    { "column": "BuildDefinitionName", "path": "$['buildDefinitionName']" },
+    { "column": "BuildId", "path": "$['buildId']" },
+    { "column": "BuildFinishTime", "path": "$['buildFinishTime']" },
+    { "column": "BuildTimelineId", "path": "$['buildTimelineId']" },
+    { "column": "ChangeId", "path": "$['changeId']" },
+    { "column": "RecordId", "path": "$['recordId']" },
+    { "column": "RecordFinishTime", "path": "$['recordFinishTime']" },
+    { "column": "ErrorClassification", "path": "$['errorClassification']" },
+    { "column": "EtlIngestDate", "path": "$['etlIngestDate']" }
+]```

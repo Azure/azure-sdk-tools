@@ -15,9 +15,14 @@ using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Azure.Sdk.Tools.TestProxy.Store;
+using Azure.Sdk.Tools.TestProxy.Console;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
+    [ExcludeFromCodeCoverage]
     public sealed class Startup
     {
         internal static int RequestsRecorded;
@@ -29,12 +34,12 @@ namespace Azure.Sdk.Tools.TestProxy
         public Startup(IConfiguration configuration) { }
 
         public static string TargetLocation;
+        public static StoreResolver Resolver;
+        public static IAssetsStore DefaultStore;
 
         private static string resolveRepoLocation(string storageLocation = null)
         {
             var envValue = Environment.GetEnvironmentVariable("TEST_PROXY_FOLDER");
-
-            // TODO: absolute the paths first two paths if relative
             return storageLocation ?? envValue ?? Directory.GetCurrentDirectory();
         }
 
@@ -43,10 +48,13 @@ namespace Azure.Sdk.Tools.TestProxy
         /// </summary>
         /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
         /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
+        /// <param name="storagePlugin">Does the user have a preference as to a default storage plugin? Defaults to "No plugin" currently.</param>
+        /// <param name="command">A specific test-proxy action to be carried out. Supported options: ["Save", "Restore", "Reset"]</param>
+        /// <param name="assetsJsonPath">Only required if a "command" value is present. This should be a path to a valid assets.json within a language repository.</param>
         /// <param name="dump">Flag. Pass to dump configuration values before starting the application.</param>
         /// <param name="version">Flag. Pass to get the version of the tool.</param>
         /// <param name="args">Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider.</param>
-        public static void Main(bool insecure = false, string storageLocation = null, bool dump = false, bool version = false, string[] args = null)
+        public static void Main(bool insecure = false, string storageLocation = null, string storagePlugin = null, string command = null, string assetsJsonPath = null, bool dump = false, bool version = false, string[] args = null)
         {
             if (version)
             {
@@ -54,18 +62,41 @@ namespace Azure.Sdk.Tools.TestProxy
                 var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
                 var assemblyVersion = assembly.GetName().Version;
 
-                Console.WriteLine($"Built from ${assemblyVersion.Major}.${assemblyVersion.Minor}.${assemblyVersion.Build}-dev.{semanticVersion}");
+                System.Console.WriteLine($"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}-dev.{semanticVersion}");
 
                 Environment.Exit(0);
             }
 
-            _insecure = insecure;
+            // This throws and will exit
+            // JRS - Temporarily disable this check because of https://github.com/Azure/azure-sdk-tools/issues/4116
+            // new GitProcessHandler().VerifyGitMinVersion();
 
+            TargetLocation = resolveRepoLocation(storageLocation);
+            Resolver = new StoreResolver();
+            DefaultStore = Resolver.ResolveStore(storagePlugin ?? "GitStore");
+
+            if (!String.IsNullOrWhiteSpace(command))
+            {
+                switch (command.ToLowerInvariant())
+                {
+                    case "save":
+                        DefaultStore.Push(assetsJsonPath);
+                        break;
+                    case "restore":
+                        DefaultStore.Restore(assetsJsonPath);
+                        break;
+                    case "reset":
+                        DefaultStore.Reset(assetsJsonPath);
+                        break;
+                    default:
+                        throw new Exception($"One must provide a valid value for argument \"command\". \"{command}\" is not a valid option.");
+                }
+            }
+
+            _insecure = insecure;
             Regex.CacheSize = 0;
 
             var statusThreadCts = new CancellationTokenSource();
-
-            TargetLocation = resolveRepoLocation(storageLocation);
 
             var statusThread = PrintStatus(
                 () => $"[{DateTime.UtcNow.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
@@ -88,6 +119,10 @@ namespace Azure.Sdk.Tools.TestProxy
                         loggingBuilder.AddDebug();
                         loggingBuilder.AddEventSourceLogger();
                     })
+                    .ConfigureKestrel(options =>
+                    {
+                        options.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1);
+                    })
                 );
 
             var app = host.Build();
@@ -95,12 +130,12 @@ namespace Azure.Sdk.Tools.TestProxy
             if (dump)
             {
                 var config = app.Services?.GetService<IConfiguration>();
-                Console.WriteLine("Dumping Resolved Configuration Values:");
+                System.Console.WriteLine("Dumping Resolved Configuration Values:");
                 if (config != null)
                 {
                     foreach (var c in config.AsEnumerable())
                     {
-                        Console.WriteLine(c.Key + " = " + c.Value);
+                        System.Console.WriteLine(c.Key + " = " + c.Value);
                     }
                 }
             }
@@ -131,7 +166,14 @@ namespace Azure.Sdk.Tools.TestProxy
             });
             services.AddControllersWithViews();
             services.AddRazorPages();
-            services.AddSingleton<RecordingHandler>(new RecordingHandler(TargetLocation));
+
+            var singletonRecordingHandler = new RecordingHandler(
+                TargetLocation,
+                store: DefaultStore,
+                storeResolver: Resolver
+            );
+
+            services.AddSingleton<RecordingHandler>(singletonRecordingHandler);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
@@ -203,21 +245,21 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     if (newLine)
                     {
-                        Console.WriteLine(obj);
+                        System.Console.WriteLine(obj);
                     }
                     else
                     {
-                        Console.Write(obj);
+                        System.Console.Write(obj);
                         needsExtraNewline = true;
                     }
                 }
 
                 if (needsExtraNewline)
                 {
-                    Console.WriteLine();
+                    System.Console.WriteLine();
                 }
 
-                Console.WriteLine();
+                System.Console.WriteLine();
             });
 
             thread.Start();

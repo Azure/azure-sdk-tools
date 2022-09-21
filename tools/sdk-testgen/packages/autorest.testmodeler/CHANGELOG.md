@@ -1,6 +1,32 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Sun, 24 Apr 2022 09:41:30 GMT and should not be manually modified.
+This log was last generated on Mon, 22 Aug 2022 03:25:13 GMT and should not be manually modified.
+
+## 2.3.2
+Mon, 22 Aug 2022 03:25:13 GMT
+
+### Patches
+
+- add option --explicit-types to allow customize tagged types in exported code model.
+- fix bugs in loading remote api scenario
+- fix bug in outputVariableModel generation when there is no response in scenario step
+
+## 2.3.1
+Fri, 05 Aug 2022 09:25:55 GMT
+
+### Patches
+
+- Consolidate operation groups for examples with m4.
+
+## 2.3.0
+Thu, 21 Jul 2022 06:46:35 GMT
+
+### Minor changes
+
+- Use modelerfour@4.23.7 and add securityParameters in ExampleModel for ApiKey securityDefinitions.
+- use apiscenario 1.2 via oav@3.0.3
+- add --testmodeler.api-scenario-loader-option to make api scenario loader configurable
+- Add --testmodeler.export-explicit-type to support explicit types in exported codemodel.
 
 ## 2.2.5
 Sun, 24 Apr 2022 09:41:30 GMT

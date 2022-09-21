@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
@@ -16,6 +17,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             Session = session;
         }
 
+        public string Path { get; set; }
+
+        public HttpClient Client { get; set; }
+
         public List<ResponseTransform> AdditionalTransforms { get; } = new List<ResponseTransform>();
 
         public List<RecordedTestSanitizer> AdditionalSanitizers { get; }= new List<RecordedTestSanitizer>();
@@ -27,6 +32,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             AdditionalTransforms.Clear();
             AdditionalSanitizers.Clear();
             CustomMatcher = null;
+            Client = null;
         }
     }
 }

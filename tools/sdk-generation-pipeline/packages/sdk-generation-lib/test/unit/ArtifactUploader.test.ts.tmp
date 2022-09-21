@@ -1,0 +1,8 @@
+import { ArtifactBlobUploader } from '../../src/lib/ArtifactUploader';
+
+// beforeAll();
+test('test constructor', async () => {
+    expect(new ArtifactBlobUploader(undefined)).toThrowError();
+});
+
+// afterAll();

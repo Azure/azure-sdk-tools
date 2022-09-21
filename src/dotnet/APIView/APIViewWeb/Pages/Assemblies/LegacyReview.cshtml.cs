@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -12,10 +13,12 @@ namespace APIViewWeb.Pages.Assemblies
     public class LegacyReview: PageModel
     {
         private CommentsManager _commentsManager;
+        public readonly UserPreferenceCache _preferenceCache;
 
-        public LegacyReview(CommentsManager commentsManager)
+        public LegacyReview(CommentsManager commentsManager, UserPreferenceCache preferenceCache)
         {
             _commentsManager = commentsManager;
+            _preferenceCache = preferenceCache;
         }
 
         public string Id { get; set; }

@@ -2,8 +2,11 @@
 // Licensed under the MIT License.
 
 using APIView;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ApiView
 {
@@ -11,14 +14,14 @@ namespace ApiView
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
-        public CodeLine[] Render(CodeFile file, bool showDocumentation = false, bool enableSkipDiff = false)
+        public CodeLine[] Render(CodeFile file, bool enableSkipDiff = false)
         {
             var list = new List<CodeLine>();
-            Render(list, file.Tokens, showDocumentation, enableSkipDiff);
+            Render(list, file.Tokens, enableSkipDiff);
             return list.ToArray();
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff)
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool enableSkipDiff)
         {
             var stringBuilder = new StringBuilder();
             // this will be used to track nested foldable panels if present
@@ -27,9 +30,10 @@ namespace ApiView
             bool isDocumentationRange = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
-            // IF isfoldableRange is set then child nodes will be named as content of parent node
-            bool isFoldableRange = false;
-            string nodeName = null;
+            Stack<NodeInProcess> nodesInProcess = new Stack<NodeInProcess>();
+            string lastHeadingEncountered = null;
+            HashSet<string> lineIds = new HashSet<string>(); // Used to ensure there are no duplicate IDs
+            int indentSize = 0;
 
             foreach (var token in node)
             {
@@ -37,20 +41,33 @@ namespace ApiView
                 if (enableSkipDiff && isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
                     continue;
 
-                if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
-                    continue;
-
                 switch(token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        // Set parent and content class if current line is infoldable panel
                         string lineClass = "";
-                        if (nodeName != null)
+                        if (nodesInProcess.Count > 0)
                         {
-                            lineClass = nodeName + (isFoldableRange ?"-content" : "-parent");
+                            var nodesInProcessAsArray = nodesInProcess.ToArray();
+                            for (int i = 0; i < nodesInProcessAsArray.Length; i++)
+                            {
+                                var classPrefix = SanitizeLineClass(nodesInProcessAsArray[i].classPrefix);
+                                if (i == 0 && nodesInProcessAsArray[i].classSuffix.Equals("heading"))
+                                {
+                                    lineClass += (classPrefix + "-heading ");
+                                }
+                                else if (i > 0 && nodesInProcessAsArray[i].classSuffix.Equals("heading"))
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    lineClass += (classPrefix + "-content ");
+                                }
+                            }
+                            lineClass = lineClass.Trim();
                         }
 
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass));
+                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize, isDocumentationRange));
                         currentId = null;
                         stringBuilder.Clear();
                         break;
@@ -81,33 +98,25 @@ namespace ApiView
                         isSkipDiffRange = false;
                         break;
 
-                    case CodeFileTokenKind.FoldableParentToken:
-                        // In case of nested foldable panel, push current parent name to stack
-                        if (nodeName != null)
-                        {
-                            foldableParentStack.Push(nodeName);
-                        }
-                        nodeName = token.Value;
+                    case CodeFileTokenKind.FoldableSectionHeading:
+                        nodesInProcess.Push(new NodeInProcess(token.Value, "heading"));
+                        lastHeadingEncountered = token.Value;
+                        RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;
 
-                    case CodeFileTokenKind.FoldableContentStart:
-                        isFoldableRange = true;
+                    case CodeFileTokenKind.FoldableSectionContentStart:
+                        nodesInProcess.Push(new NodeInProcess(lastHeadingEncountered, "content"));
+                        indentSize++;
                         break;
 
-                    case CodeFileTokenKind.FoldableContentEnd:
-                        // Foldable content panel is completed.
-                        // Pop previous parent or reset foldable range if no longer a foldable panel.
-                        if (foldableParentStack.Count > 0)
+                    case CodeFileTokenKind.FoldableSectionContentEnd:
+                        nodesInProcess.Pop();
+                        if (nodesInProcess.Peek().classSuffix.Equals("heading"))
                         {
-                            nodeName = foldableParentStack.Pop();
+                            nodesInProcess.Pop();
                         }
-                        else
-                        {
-                            isFoldableRange = false;
-                            nodeName = null;
-                        }
+                        indentSize--;
                         break;
-
                     default:
                         if (token.DefinitionId != null)
                         {
@@ -117,6 +126,59 @@ namespace ApiView
                         break;
                 }                
             }
+        }
+
+        private string SanitizeLineClass(string lineClass)
+        {
+            if (!String.IsNullOrEmpty(lineClass))
+            {
+                var result = lineClass.ToLower();
+                result = Regex.Replace(result, "[^a-z_0-9-]", "");
+                result = Regex.Replace(result, "^[0-9]+", "");
+                result = Regex.Replace(result, "//s+", "");
+                return result;
+            }
+            return lineClass;
+        }
+
+        private string SanitizeLineId(string lineId, HashSet<string> lineIds)
+        {
+            int resultAsInt;
+            if (Int32.TryParse(lineId, out resultAsInt))
+            {
+                return resultAsInt.ToString();
+            }
+
+            // Ensure the id is valid html id
+            if (!String.IsNullOrWhiteSpace(lineId))
+            {
+                var result = lineId.ToLower();
+                result = Regex.Replace(result, "[^a-z_0-9-:.]", "");
+                result = Regex.Replace(result, "^[0-9]+", "");
+                result = Regex.Replace(result, "//s+", "");
+
+                // Remove duplicates by appending or incrementing a number as suffix of string
+                if (lineIds.Contains(result))
+                {
+                    do
+                    {
+                        var suffixCount = Regex.Match(result, "[0-9]+$").Value;
+                        if (!String.IsNullOrWhiteSpace(suffixCount))
+                        {
+                            int suffixCountAsInt = Int32.Parse(suffixCount);
+                            result = Regex.Replace(result, $"{suffixCount}$", $"{++suffixCountAsInt}");
+                        }
+                        else
+                        {
+                            result += $"_1";
+                        }
+                    }
+                    while (lineIds.Contains(result));
+                }
+                lineIds.Add(result);
+                return result;
+            }
+            return lineId;
         }
 
         protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken)
@@ -131,5 +193,17 @@ namespace ApiView
         // These methods should not render anything for text renderer so keeping it empty
         protected virtual void StartDocumentationRange(StringBuilder stringBuilder) { }
         protected virtual void CloseDocumentationRange(StringBuilder stringBuilder) { }
+    }
+
+    public struct NodeInProcess
+    {
+        public NodeInProcess(string prefix, string suffix)
+        {
+            classPrefix = prefix;
+            classSuffix = suffix;
+        }
+
+        public string classPrefix { get; }
+        public string classSuffix { get; }
     }
 }

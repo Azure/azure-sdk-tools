@@ -79,6 +79,25 @@ $OwnerAliasCache = @{}
 $IsProvisionerApp = $PSCmdlet.ParameterSetName -eq "Provisioner"
 $Exceptions = [System.Collections.Generic.HashSet[String]]@()
 
+function Retry([scriptblock] $Action, [int] $Attempts = 5) {
+    $attempt = 0
+    $sleep = 5
+
+    while ($attempt -lt $Attempts) {
+        try {
+            $attempt++
+            return $Action.Invoke()
+        } catch {
+            if ($attempt -lt $Attempts) {
+                Write-Warning "Attempt $attempt failed: $_. Trying again in $sleep seconds..."
+                Start-Sleep -Seconds $sleep
+            } else {
+                Write-Error -ErrorRecord $_
+            }
+        }
+    }
+}
+
 function LoadAllowList() {
   if (!(Test-Path $AllowListPath)) {
     return
@@ -235,9 +254,11 @@ function HasExpiredDeleteAfterTag([string]$DeleteAfter) {
 }
 
 function HasException([object]$ResourceGroup) {
-  if ($Exceptions.Count -and $Exceptions.Contains($ResourceGroup.ResourceGroupName)) {
-    Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it is in the allow list '$AllowListPath'"
-    return $true
+  foreach ($ex in $Exceptions) {
+    if ($ResourceGroup.ResourceGroupName -like $ex) {
+      Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it matches pattern '$ex' in the allow list '$AllowListPath'"
+      return $true
+    }
   }
   return $false
 }
@@ -252,10 +273,18 @@ function FindOrCreateDeleteAfterTag {
   if (!$deleteAfter -or !($deleteAfter -as [datetime])) {
     $deleteAfter = [datetime]::UtcNow.AddHours($DeleteAfterHours)
     if ($Force -or $PSCmdlet.ShouldProcess("$($ResourceGroup.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Adding DeleteAfter Tag to Group")) {
-      Write-Host "Adding DeleteAfer tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
+      Write-Host "Adding DeleteAfter tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
       $ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter }
     }
   }
+}
+
+function HasDoNotDeleteTag([object]$ResourceGroup) {
+  $doNotDelete = GetTag $ResourceGroup "DoNotDelete"
+  if ($doNotDelete -ne $null) {
+    Write-Host " Skipping resource group '$($ResourceGroup.ResourceGroupName)' because it has a 'DoNotDelete' tag"
+  }
+  return $doNotDelete -ne $null
 }
 
 function HasDeleteLock() {
@@ -271,7 +300,7 @@ function DeleteOrUpdateResourceGroups() {
   }
 
   Write-Verbose "Fetching groups"
-  $allGroups = @(Get-AzResourceGroup)
+  [Array]$allGroups = Retry { Get-AzResourceGroup }
   $toDelete = @()
   $toUpdate = @()
   Write-Host "Total Resource Groups: $($allGroups.Count)"
@@ -287,10 +316,10 @@ function DeleteOrUpdateResourceGroups() {
       }
       continue
     }
-    # TODO: Remove $true and follow non-compliant group deletion
-    # Currently this is disabled in order to roll out features of the script slowly.
-    # See https://gitub.com/Azure/azure-sdk-tools/issues/2714h
-    if ($true -or !$DeleteNonCompliantGroups) {
+    if (!$DeleteNonCompliantGroups) {
+      continue
+    }
+    if (HasDoNotDeleteTag $rg) {
       continue
     }
     if (HasValidAliasInName $rg) {
@@ -346,7 +375,9 @@ function Login() {
     Write-Verbose "Logging in with provisioner"
     $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
     $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)
-    Connect-AzAccount -Force -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal -Environment $Environment -WhatIf:$false
+    Retry {
+        Connect-AzAccount -Force -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal -Environment $Environment -WhatIf:$false
+    }
     Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false -WhatIf:$false
   } elseif ($Login) {
     Write-Verbose "Logging in with interactive user"

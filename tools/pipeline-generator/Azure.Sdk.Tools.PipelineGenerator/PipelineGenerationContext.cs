@@ -22,7 +22,6 @@ namespace PipelineGenerator
         private string project;
         private string patvar;
         private string endpoint;
-        private string repository;
         private string agentPool;
         private int[] variableGroups;
         private string devOpsPath;
@@ -49,7 +48,7 @@ namespace PipelineGenerator
             this.project = project;
             this.patvar = patvar;
             this.endpoint = endpoint;
-            this.repository = repository;
+            this.Repository = repository;
             this.Branch = branch;
             this.agentPool = agentPool;
             this.variableGroups = ParseIntArray(variableGroups);
@@ -61,6 +60,7 @@ namespace PipelineGenerator
             this.OverwriteTriggers = overwriteTriggers;
         }
 
+        public string Repository { get; }
         public string Branch { get; }
         public string Prefix { get; }
         public bool WhatIf { get; }
@@ -148,7 +148,7 @@ namespace PipelineGenerator
 
         private Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ServiceEndpoint cachedServiceEndpoint;
 
-        private async Task<Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ServiceEndpoint> GetServiceEndpointAsync(CancellationToken cancellationToken)
+        public async Task<Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ServiceEndpoint> GetServiceEndpointAsync(CancellationToken cancellationToken)
         {
             if (cachedServiceEndpoint == null)
             {
@@ -184,36 +184,6 @@ namespace PipelineGenerator
             }
 
             return cachedBuildClient;
-        }
-
-        private SourceRepository cachedSourceRepository;
-
-        public async Task<SourceRepository> GetSourceRepositoryAsync(CancellationToken cancellationToken)
-        {
-            if (cachedSourceRepository == null)
-            {
-                var buildClient = await GetBuildHttpClientAsync(cancellationToken);
-                var projectReference = await GetProjectReferenceAsync(cancellationToken);
-                var serviceEndpoint = await GetServiceEndpointAsync(cancellationToken);
-
-                this.logger.LogDebug("Getting repositories from buildClient with github service endpoint {ServiceEndpointId} and repository name {RepositoryName}", serviceEndpoint.Id, repository);
-
-                var sourceRepositories = await buildClient.ListRepositoriesAsync(
-                    projectReference.Id,
-                    "github",
-                    serviceEndpointId: serviceEndpoint.Id,
-                    repository: repository,
-                    cancellationToken: cancellationToken
-                );
-
-                this.logger.LogDebug("buildClient returned {Count} repositories", sourceRepositories.Repositories.Count);
-
-                cachedSourceRepository = sourceRepositories.Repositories.Single();
-
-                this.logger.LogDebug("Cached repository {Name} with id {Id}", cachedSourceRepository.Name, cachedSourceRepository.Id);
-            }
-
-            return cachedSourceRepository;
         }
 
         private TaskAgentHttpClient cachedTaskAgentClient;

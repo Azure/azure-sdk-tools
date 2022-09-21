@@ -21,6 +21,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 using APIViewWeb.HostedServices;
+using APIViewWeb.Filters;
 
 namespace APIViewWeb
 {
@@ -48,6 +49,7 @@ namespace APIViewWeb
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddApplicationInsightsTelemetry();
+            services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -192,6 +194,7 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, PullRequestPermissionRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)

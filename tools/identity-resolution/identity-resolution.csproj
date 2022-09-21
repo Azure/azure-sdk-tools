@@ -8,7 +8,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.2.0" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.170.0" />
-    <PackageReference Include="Microsoft.TeamFoundationServer.ExtendedClient" Version="16.170.0" />
     <PackageReference Include="Microsoft.VisualStudio.Services.Notifications.WebApi" Version="16.170.0" />
     <PackageReference Include="YamlDotNet" Version="6.1.1" />
     <PackageReference Include="Azure.Identity" Version="1.5.0" />

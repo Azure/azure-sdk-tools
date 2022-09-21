@@ -907,24 +907,12 @@ code {
     user-select: none;
 }
 
-.line-toggle-documentation-button:hover {
-    transform: scale(1);
-}
-
 .line-toggle-documentation-button {
     display: inline-block;
-    width: 21px;
-    height: 21px;
-    line-height: 21px;
-    color: #fff !important;
+    width: 100%;
+    height: 100%;
     text-align: center;
-    text-indent: 0;
     cursor: pointer;
-    background-color: #0366d6;
-    border-radius: 3px;
-    box-shadow: 0 1px 4px rgba(27, 31, 35, .15);
-    transition: transform .1s ease-in-out;
-    transform: scale(.8);
     user-select: none;
 }
 
@@ -957,7 +945,7 @@ code {
     vertical-align: middle;
 }
 
-.line-details td i{
+.row-fold-caret i {
     position: relative;
     left: 6px;
 }

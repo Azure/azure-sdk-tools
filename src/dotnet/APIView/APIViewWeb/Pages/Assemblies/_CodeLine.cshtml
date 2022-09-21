@@ -73,8 +73,8 @@
             <tr>
                 @if(userPreference.HideLineNumbers == true || Model.CodeLine.IsDocumentation)
                 {
-                    var lineNumberClass = RemoveMultipleSpaces($"line-number d-none {lineClass}");
-                    <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
+                    var lineNumberClass = RemoveMultipleSpaces($"line-number {lineClass}");
+                    <td class="@lineNumberClass" style="visibility: hidden;"><span>@Model.LineNumber</span></td>
                 }
                 else
                 {
@@ -94,8 +94,16 @@
                 <td class="@lineDetailsClass">
                     @if(Model.DocumentedByLines?.Length  > 0)
                     {
-                        <span class="line-toggle-documentation-button icon-chevron-right" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
-                            &nbsp;
+                        <span class="line-toggle-documentation-button" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
+                            <i class="fa-regular fa-square-plus"></i>
+                        </span>
+                    }
+                    @if (Model.CodeLine.IsDocumentation)
+                    {
+                        <span>
+                            <svg height='23' width='23'>
+                                <line x1='60%' y1='0' x2='60%' y2='100%' style='stroke:rgb(0,139,139);stroke-width:1.2' />
+                            </svg>
                         </span>
                     }
                 </td>

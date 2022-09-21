@@ -297,13 +297,13 @@ $(() => {
     if((e.target as HTMLInputElement).checked) {
       // show all documentation
       $(".code-line-documentation").removeClass('hidden-row');
-      $(TOGGLE_DOCUMENTATION).removeClass("icon-chevron-right");
-      $(TOGGLE_DOCUMENTATION).addClass("icon-chevron-up");
+      $(TOGGLE_DOCUMENTATION).children('i').removeClass("fa-square-plus");
+      $(TOGGLE_DOCUMENTATION).children('i').addClass("fa-square-minus");
     } else {
       // hide all documentation
       $(".code-line-documentation").addClass("hidden-row");
-      $(TOGGLE_DOCUMENTATION).removeClass("icon-chevron-up");
-      $(TOGGLE_DOCUMENTATION).addClass("icon-chevron-right");
+      $(TOGGLE_DOCUMENTATION).children('i').removeClass("fa-square-minus");
+      $(TOGGLE_DOCUMENTATION).children('i').addClass("fa-square-plus");
     }
   });
 
@@ -353,8 +353,8 @@ $(() => {
       $(codeLines[documentedBy[i] - 1]).toggleClass("hidden-row");
     }
 
-    $(this).toggleClass('icon-chevron-right');
-    $(this).toggleClass('icon-chevron-up');
+    $(this).children('i').toggleClass('fa-square-minus');
+    $(this).children('i').toggleClass('fa-square-plus');
 
     // scroll button to center of screen, so that the line is visible after toggling folding
     $(this).get(0).scrollIntoView({ block: "center"});

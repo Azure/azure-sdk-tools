@@ -633,7 +633,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var upstreamRequestContext = GenerateHttpRequestContext(incomingHeaders);
 
-            var output = recordingHandler.CreateUpstreamRequest(upstreamRequestContext.Request);
+            var output = recordingHandler.CreateUpstreamRequest(upstreamRequestContext.Request, new byte[] { });
 
             // iterate across the set we know about and confirm that GenerateUpstreamRequest worked properly!
             var setOfHeaders = GenerateHeaderValuesTuples(incomingHeaders);
@@ -685,7 +685,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             httpContext.Request.Method = "GET";
 
-            var upstreamRequest = testRecordingHandler.CreateUpstreamRequest(httpContext.Request);
+            var upstreamRequest = testRecordingHandler.CreateUpstreamRequest(httpContext.Request, new byte[] { });
 
             if (!String.IsNullOrWhiteSpace(upstreamHostHeaderValue))
             {

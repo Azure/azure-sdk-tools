@@ -200,7 +200,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
-            var upstreamRequest = CreateUpstreamRequest(incomingRequest);
+            var upstreamRequest = CreateUpstreamRequest(incomingRequest, GZipUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
 
             HttpResponseMessage upstreamResponse = null;
 
@@ -290,12 +290,12 @@ namespace Azure.Sdk.Tools.TestProxy
             return mode;
         }
 
-        public HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest)
+        public HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
         {
             var upstreamRequest = new HttpRequestMessage();
             upstreamRequest.RequestUri = GetRequestUri(incomingRequest);
             upstreamRequest.Method = new HttpMethod(incomingRequest.Method);
-            upstreamRequest.Content = new StreamContent(incomingRequest.Body);
+            upstreamRequest.Content = new ReadOnlyMemoryContent(incomingBody);
 
             foreach (var header in incomingRequest.Headers)
             {

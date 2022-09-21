@@ -11,7 +11,7 @@ import {
   resolvePath,
 } from "@cadl-lang/compiler";
 import { buildVersionProjections } from "@cadl-lang/versioning";
-import { ApiViewDocument } from "./apiview.js";
+import { ApiView } from "./apiview.js";
 import { ApiViewEmitterOptions } from "./lib.js";
 
 const defaultOptions = {
@@ -70,11 +70,11 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
   async function emitApiViewFromVersion(namespaceString: string, version?: string) {
     const serviceTitle = getServiceTitle(program);
     const serviceVersion = version ?? getServiceVersion(program);
-    const apiview = new ApiViewDocument(serviceTitle, namespaceString, serviceVersion);
+    const apiview = new ApiView(serviceTitle, namespaceString, serviceVersion);
     apiview.emit(program);
     apiview.resolveMissingTypeReferences();
 
-    const tokenJson = JSON.stringify(apiview) + "\n";
+    const tokenJson = JSON.stringify(apiview.asApiViewDocument()) + "\n";
     await emitFile(program, {
       path: options["output-file"],
       content: tokenJson,

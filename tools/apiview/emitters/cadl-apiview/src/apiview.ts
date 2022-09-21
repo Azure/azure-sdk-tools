@@ -28,7 +28,7 @@ import {
   UnionExpressionNode,
 } from "@cadl-lang/compiler";
 import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
-import { ApiViewNavigation } from "./navigation.js";
+import { ApiViewNavigation, ApiViewNavigationTag } from "./navigation.js";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
 
@@ -49,19 +49,7 @@ export const enum ApiViewTokenKind {
   DeprecatedRangeStart = 13,
   DeprecatedRangeEnd = 14,
   SkipDiffRangeStart = 15,
-  SkipDiffRangeEnd = 16,
-  // New Token Types
-  FoldableSectionHeading = 17,
-  FoldableSectionContentStart = 18,
-  FoldableSectionContentEnd = 19,
-  TableBegin = 20,
-  TableEnd = 21,
-  TableRowCount = 22,
-  TableColumnCount = 23,
-  TableColumnName = 24,
-  TableCellBegin = 25,
-  TableCellEnd = 26,
-  LeafSectionPlaceholder = 27
+  SkipDiffRangeEnd = 16
 }
 
 export interface ApiViewToken {
@@ -72,30 +60,37 @@ export interface ApiViewToken {
   CrossLanguageDefinitionId?: string;
 }
 
-let indentString: string = "";
-const indentSize: number = 2;
-
-export class ApiViewDocument {
+interface ApiViewDocument {
   Name: string;
   PackageName: string;
-  Tokens: ApiViewToken[] = [];
-
-  Navigation: ApiViewNavigation[] = [];
-  Diagnostics: ApiViewDiagnostic[] = [];
-
+  Tokens: ApiViewToken[];
+  Navigation: ApiViewNavigation[];
+  Diagnostics: ApiViewDiagnostic[];
   VersionString: string;
-  Language: string = "Cadl";
+  Language: string;
+}
+
+export class ApiView {
+  name: string;
+  packageName: string;
+  tokens: ApiViewToken[] = [];
+  navigationItems: ApiViewNavigation[] = [];
+  diagnostics: ApiViewDiagnostic[] = [];
+  versionString: string;
+
+  indentString: string = "";
+  indentSize: number = 2;
 
   constructor(name: string, packageName: string, versionString: string) {
-    this.Name = name;
-    this.PackageName = packageName;
-    this.VersionString = versionString;
+    this.name = name;
+    this.packageName = packageName;
+    this.versionString = versionString;
 
     this.emitHeader();
   }
 
   token(kind: ApiViewTokenKind, value?: string, lineId?: string, navigateToId?: string) {
-    this.Tokens.push({
+    this.tokens.push({
       Kind: kind,
       Value: value,
       DefinitionId: lineId,
@@ -107,27 +102,27 @@ export class ApiViewDocument {
     this.punctuation("{", true, false);
     this.newline();
     this.pop();
-    indentString = " ".repeat(indentString.length + indentSize);
-    this.Tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: indentString });
+    this.indentString = " ".repeat(this.indentString.length + this.indentSize);
+    this.tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: this.indentString });
   }
 
   endGroup(count: number = 3) {
     this.pop(count);
-    indentString = " ".repeat(indentString.length - indentSize);
-    this.Tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: indentString });
+    this.indentString = " ".repeat(this.indentString.length - this.indentSize);
+    this.tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: this.indentString });
     this.punctuation("}");
   }
 
   whitespace(count: number = 1) {
-    this.Tokens.push({
+    this.tokens.push({
       Kind: ApiViewTokenKind.Whitespace,
       Value: " ".repeat(count),
     });
   }
 
   space() {
-    if (this.Tokens[-1]?.Kind != ApiViewTokenKind.Whitespace) {
-      this.Tokens.push({
+    if (this.tokens[-1]?.Kind != ApiViewTokenKind.Whitespace) {
+      this.tokens.push({
         Kind: ApiViewTokenKind.Whitespace,
         Value: " ",
       });
@@ -135,17 +130,17 @@ export class ApiViewDocument {
   }
 
   newline() {
-    this.Tokens.push({
+    this.tokens.push({
       Kind: ApiViewTokenKind.Newline,
     });
-    this.Tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: indentString });
+    this.tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: this.indentString });
   }
 
   blankLines(count: number) {
     // count the number of trailing newlines (ignoring indent whitespace)
     let newlineCount: number = 0;
-    for (let i = this.Tokens.length; i > 0; i--) {
-      const token = this.Tokens[i - 1];
+    for (let i = this.tokens.length; i > 0; i--) {
+      const token = this.tokens[i - 1];
       if (token.Kind == ApiViewTokenKind.Newline) {
         newlineCount++;
       } else if (token.Kind == ApiViewTokenKind.Whitespace) {
@@ -164,7 +159,7 @@ export class ApiViewDocument {
       // if there are too many newlines, remove some
       let toRemove = newlineCount - (count + 1);
       while (toRemove) {
-        const popped = this.Tokens.pop();
+        const popped = this.tokens.pop();
         if (popped?.Kind == ApiViewTokenKind.Newline) {
           toRemove--;
         }
@@ -176,7 +171,7 @@ export class ApiViewDocument {
     if (prefixSpace) {
       this.space();
     }
-    this.Tokens.push({
+    this.tokens.push({
       Kind: ApiViewTokenKind.Punctuation,
       Value: value,
     });
@@ -186,7 +181,7 @@ export class ApiViewDocument {
   }
 
   lineMarker() {
-    this.Tokens.push({
+    this.tokens.push({
       Kind: ApiViewTokenKind.LineIdMarker,
       DefinitionId: NamespaceStack.value(),
     });
@@ -198,14 +193,14 @@ export class ApiViewDocument {
       Value: text,
     };
     // TODO: Cross-language definition ID
-    this.Tokens.push(token);
+    this.tokens.push(token);
   }
 
   keyword(keyword: string, prefixSpace: boolean = false, postfixSpace: boolean = false) {
     if (prefixSpace) {
       this.space();
     }
-    this.Tokens.push({
+    this.tokens.push({
       Kind: ApiViewTokenKind.Keyword,
       Value: keyword,
     });
@@ -221,7 +216,7 @@ export class ApiViewDocument {
       }
       typeDeclarations.add(typeId);
     }
-    this.Tokens.push({
+    this.tokens.push({
       Kind: ApiViewTokenKind.TypeName,
       DefinitionId: typeId,
       Value: typeName,
@@ -229,7 +224,7 @@ export class ApiViewDocument {
   }
 
   typeReference(typeName: string, targetId?: string) {
-    this.Tokens.push({
+    this.tokens.push({
       Kind: ApiViewTokenKind.TypeName,
       Value: typeName,
       NavigateToId: targetId ?? "__MISSING__",
@@ -237,37 +232,37 @@ export class ApiViewDocument {
   }
 
   member(name: string) {
-    this.Tokens.push({
+    this.tokens.push({
       Kind: ApiViewTokenKind.MemberName,
       Value: name,
     });
   }
 
   stringLiteral(value: string) {
-    this.Tokens.push({
+    this.tokens.push({
       Kind: ApiViewTokenKind.StringLiteral,
       Value: `\u0022${value}\u0022`,
     });
   }
 
   literal(value: string) {
-    this.Tokens.push({
+    this.tokens.push({
       Kind: ApiViewTokenKind.StringLiteral,
       Value: value,
     });
   }
 
   diagnostic(message: string, targetId: string, level: ApiViewDiagnosticLevel) {
-    this.Diagnostics.push(new ApiViewDiagnostic(message, targetId, level));
+    this.diagnostics.push(new ApiViewDiagnostic(message, targetId, level));
   }
 
   navigation(item: ApiViewNavigation) {
-    this.Navigation.push(item);
+    this.navigationItems.push(item);
   }
 
   pop(count: number = 1) {
     for (let x = 0; x < count; x++) {
-      this.Tokens.pop();
+      this.tokens.pop();
     }
   }
 
@@ -285,7 +280,7 @@ export class ApiViewDocument {
 
     // Skip namespaces which are outside the root namespace.
     for (const [name, ns] of allNamespaces.entries()) {
-      if (!name.startsWith(this.PackageName)) {
+      if (!name.startsWith(this.packageName)) {
         continue;
       }
       const nsModel = new NamespaceModel(name, ns);
@@ -710,11 +705,23 @@ export class ApiViewDocument {
   }
 
   resolveMissingTypeReferences() {
-    for (const token of this.Tokens) {
+    for (const token of this.tokens) {
       if (token.Kind == ApiViewTokenKind.TypeName && token.NavigateToId == "__MISSING__") {
         token.NavigateToId = definitionIdFor(token.Value!);
       }
     }
+  }
+
+  asApiViewDocument(): ApiViewDocument {
+    return {
+      Name: this.name,
+      PackageName: this.packageName,
+      Tokens: this.tokens,
+      Navigation: this.navigationItems,
+      Diagnostics: this.diagnostics,
+      VersionString: this.versionString,
+      Language: "Cadl"
+    };
   }
 }
 

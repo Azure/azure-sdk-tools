@@ -15,17 +15,14 @@ export async function createApiViewTestRunner({
   withVersioning,
 }: { withVersioning?: boolean } = {}) {
   const host = await createApiViewTestHost();
-  // const importAndUsings = `
-  //   import "@cadl-lang/rest";
-  //   ${withVersioning ? `import "@cadl-lang/versioning"` : ""};
-  //   using Cadl.Rest;
-  //   using Cadl.Http;
-  //   ${withVersioning ? "using Cadl.Versioning;" : ""}
-  // `;
-  // return createTestWrapper(host, (code: string) => `${importAndUsings} ${code}`, {
-  //   emitters: { "@azure-tools/cadl-apiview": {} },
-  // });
-  return createTestWrapper(host, (code: string) => `${code}`, {
+  const importAndUsings = `
+    import "@cadl-lang/rest";
+    ${withVersioning ? `import "@cadl-lang/versioning"` : ""};
+    using Cadl.Rest;
+    using Cadl.Http;
+    ${withVersioning ? "using Cadl.Versioning;" : ""}
+  `;
+  return createTestWrapper(host, (code: string) => `${importAndUsings} ${code}`, {
     emitters: { "@azure-tools/cadl-apiview": {} },
   });
 }

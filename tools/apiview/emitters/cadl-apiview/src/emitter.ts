@@ -5,12 +5,9 @@ import {
   getServiceNamespace,
   getServiceTitle,
   getServiceVersion,
-  Namespace,
   Program,
-  projectProgram,
   resolvePath,
 } from "@cadl-lang/compiler";
-import { buildVersionProjections } from "@cadl-lang/versioning";
 import { ApiView } from "./apiview.js";
 import { ApiViewEmitterOptions } from "./lib.js";
 
@@ -50,21 +47,8 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
     if (!serviceNs) {
       return;
     }
-    const versions = buildVersionProjections(program, serviceNs);
-    for (const record of versions) {
-      if (record.version) {
-        record.projections.push({
-          projectionName: "atVersion",
-          arguments: [record.version],
-        });
-      }
-
-      if (record.projections.length > 0) {
-        program = projectProgram(program, record.projections);
-      }
-
-      await emitApiViewFromVersion(program.checker.getNamespaceString(serviceNs), record.version);
-    }
+    const versionString = "TODO";
+    await emitApiViewFromVersion(program.checker.getNamespaceString(serviceNs), versionString);
   }
 
   async function emitApiViewFromVersion(namespaceString: string, version?: string) {

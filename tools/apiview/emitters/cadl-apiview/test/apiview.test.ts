@@ -1,12 +1,13 @@
 import { resolvePath } from "@cadl-lang/compiler";
 import { expectDiagnosticEmpty } from "@cadl-lang/compiler/testing";
+import "@cadl-lang/versioning";
 import { strictEqual } from "assert";
 import { ApiViewEmitterOptions } from "../src/lib.js";
 import { createApiViewTestRunner } from "./test-host.js";
 
 describe("apiview: tests", () => {
   async function rawApiViewFor(code: string, options: ApiViewEmitterOptions): Promise<string> {
-    const runner = await createApiViewTestRunner();
+    const runner = await createApiViewTestRunner({withVersioning: true});
 
     const outPath = resolvePath("/apiview.json");
 
@@ -14,17 +15,22 @@ describe("apiview: tests", () => {
       noEmit: false,
       emitters: { "@azure-tools/cadl-apiview": { ...options, "output-file": outPath } },
     });
-
     expectDiagnosticEmpty(diagnostics);
 
     return runner.fs.get(outPath)!;
   }
 
   it("describes enums", async () => {
-    const output = await rawApiViewFor(
-      `
+    const output = await rawApiViewFor(`
+    @versioned(Versions)
     @Cadl.serviceTitle("Enum Test")
     namespace Azure.Test {
+
+      enum Versions {
+        version1: "version1",
+        version2: "version2"
+      }
+
       enum SomeEnum {
         Plain,
         "Literal",

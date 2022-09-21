@@ -5,7 +5,7 @@
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>swaggerAPIParser</ToolCommandName>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>swagger_api_parser</RootNamespace>
     <LangVersion>10</LangVersion>
     <VersionPrefix>1.0.0</VersionPrefix>

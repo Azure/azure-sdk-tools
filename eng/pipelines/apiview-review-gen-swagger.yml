@@ -1,0 +1,50 @@
+pr: none
+
+trigger: none
+
+pool:
+  name: azsdk-pool-mms-ubuntu-2004-general
+  vmImage: MMSUbuntu20.04
+
+parameters:
+  - name: Reviews
+    type: string
+    default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","FileID":"<fileid>","FileName":"<fileName>"}]'
+  - name: APIViewURL
+    type: string
+    default: 'https://apiview.dev' 
+  - name: StorageContainerUrl
+    type: string
+    default: ''
+
+variables:
+  SwaggerParserInstallPath: $(Pipeline.Workspace)/SwaggerApiParser
+
+jobs:
+- job: CreateSwaggerReviewCodeFile
+  displayName: 'Create Swagger API review token file'
+
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+  steps:
+  - script: >
+      mkdir SwaggerApiParser
+    workingDirectory: $(Pipeline.Workspace)
+    displayName: Setup working directory for Swagger Parser.
+
+  - script: >
+      dotnet tool install
+      Azure.Sdk.Tools.SwaggerParser
+      --version 1.0.0-dev.20220921.1
+      --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
+      --tool-path $(SwaggerParserInstallPath)
+    workingDirectory: $(Pipeline.Workspace)/SwaggerParser
+    displayName: 'Install Swagger APIView Parser'
+
+  - template: /eng/pipelines/templates/steps/apiview-review-gen.yml
+    parameters:
+      Reviews: ${{ parameters.Reviews }}
+      APIViewURL: ${{ parameters.APIViewURL }}
+      StorageContainerUrl: ${{ parameters.StorageContainerUrl }}
+      ApiviewGenScript: './Create-Apiview-Token-Swagger.ps1'

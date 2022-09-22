@@ -49,11 +49,9 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             var actual = (new Python()).FilterRuntimePackageVersions(allPackages);
 
             var expected = new Dictionary<string, string>() {
-                { "azure-common", "1.1.28" },
                 { "azure-core", "1.25.0" },
                 { "azure-identity", "1.10.0" },
                 { "azure-storage-blob", "12.14.0b1 -> /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob" },
-                { "azure-storage-common", "1.4.0" },
             };
 
             CollectionAssert.AreEquivalent(expected, actual);

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Text;
 using System.IO;
 using System;
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.Extensions;
 
@@ -21,6 +22,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     ///  A) Not the most fun to debug issues with
     ///  B) Just slower than re-using the same instance
     ///  C) There is no real reason (other than to get access to DI-ed parameters) to switch the existing method.
+    ///  
+    /// In the case of running CLI commands, the DebugLogger will not be initialized as Startup's Configure has not
+    /// and will not be executed. In this case, the non-async functions, LogInformation and LogDebug, will use
+    /// Console.WriteLine and Debug.Writeline if the logger is null. The async functions are only called when running
+    /// in a server.
     /// </summary>
     public static class DebugLogger
     {
@@ -60,7 +66,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="details">The content which should be logged.</param>
         public static void LogInformation(string details)
         {
-            logger.LogInformation(details);
+            if (null != logger)
+            {
+                logger.LogInformation(details);
+            }
+            else
+            {
+                System.Console.WriteLine(details);
+            }
         }
 
 
@@ -70,7 +83,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="details">The content which should be logged.</param>
         public static void LogDebug(string details)
         {
-            logger.LogDebug(details);
+            if (null != logger)
+            {
+                logger.LogDebug(details);
+            }
+            else
+            {
+                Debug.WriteLine(details);
+            }
         }
 
         /// <summary>

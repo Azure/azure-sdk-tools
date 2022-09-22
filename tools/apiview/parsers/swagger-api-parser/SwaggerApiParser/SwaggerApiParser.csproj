@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageVersion>1.0.0-dev.0.2</PackageVersion>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>swaggerAPIParser</ToolCommandName>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>swagger_api_parser</RootNamespace>
+    <LangVersion>Latest</LangVersion>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <AssemblyName>Azure.Sdk.Tools.SwaggerApiParser</AssemblyName>
+    <SignAssembly>True</SignAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>$(NoWarn);NU5105;NU5119</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>$(NoWarn);NU5105;NU5119</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+      <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj" />    
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Remove="SwaggerApiParserTest\**" />
+    <EmbeddedResource Remove="SwaggerApiParserTest\**" />
+    <None Remove="SwaggerApiParserTest\**" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="NuGet.CommandLine" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta2.21617.1" />
+  </ItemGroup>
+
+</Project>

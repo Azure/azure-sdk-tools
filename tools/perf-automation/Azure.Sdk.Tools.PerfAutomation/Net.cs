@@ -15,8 +15,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
         // Azure.Core.TestFramework.TestEnvironment requires publishing under the "artifacts" folder to find the repository root.
         private string PublishDirectory => Path.Join(WorkingDirectory, "artifacts", "perf");
 
-        public override async Task<(string output, string error, string context)> SetupAsync(
-            string project, string languageVersion, IDictionary<string, string> packageVersions)
+        public override async Task<(string output, string error, object context)> SetupAsync(
+            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
         {
             var projectFile = Path.Combine(WorkingDirectory, project);
 
@@ -84,7 +84,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            IDictionary<string, string> packageVersions, string testName, string arguments, string context)
+            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context)
         {
             var dllName = Path.GetFileNameWithoutExtension(project) + ".dll";
             var dllPath = Path.Combine(PublishDirectory, dllName);

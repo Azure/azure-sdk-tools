@@ -23,8 +23,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         protected override Language Language => Language.Cpp;
 
-        public override async Task<(string output, string error, string context)> SetupAsync(
-            string project, string languageVersion, IDictionary<string, string> packageVersions)
+        public override async Task<(string output, string error, object context)> SetupAsync(
+            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
         {
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
 
@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var errorBuilder = new StringBuilder();
 
             // Windows and Linux require different arguments to build Release config
-            var additionalGenerateArguments = Util.IsWindows ? String.Empty : "-DCMAKE_BUILD_TYPE=Release";
+            var additionalGenerateArguments = Util.IsWindows ? "-DDISABLE_AZURE_CORE_OPENTELEMETRY=ON" : "-DCMAKE_BUILD_TYPE=Release";
             var additionalBuildArguments = Util.IsWindows ? "--config MinSizeRel" : String.Empty;
 
             await Util.RunAsync(
@@ -54,9 +54,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            IDictionary<string, string> packageVersions, string testName, string arguments, string context)
+            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context)
         {
-            var perfExe = context;
+            var perfExe = (string)context;
 
             var result = await Util.RunAsync(perfExe, $"{testName} {arguments}", WorkingDirectory);
 

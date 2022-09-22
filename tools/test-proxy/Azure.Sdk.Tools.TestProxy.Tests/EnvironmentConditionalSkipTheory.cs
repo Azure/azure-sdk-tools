@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     {
         public EnvironmentConditionalSkipTheory()
         {
-            var token = Environment.GetEnvironmentVariable(GitStore.EnvironmentVariableName);
+            var token = Environment.GetEnvironmentVariable(GitStore.GIT_TOKEN_ENV_VAR);
             var inCI = Environment.GetEnvironmentVariable("TF_BUILD");
 
             // If we are in CI, we MUST have environment variable for PROXY_GIT_TOKEN populated.

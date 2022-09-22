@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -19,6 +20,7 @@ namespace Azure.Sdk.Tools.TestProxy.Vendored
     /// The <c>PemEncoding</c> class takes advantage of other implementation changes in net5.0 and,
     /// based on conversations with the .NET team, runtime changes.
     /// </remarks>
+    [ExcludeFromCodeCoverage]
     internal static partial class PemReader
     {
         // The following implementation was based on PemEncoding and reviewed by @bartonjs on the .NET / cryptography team.

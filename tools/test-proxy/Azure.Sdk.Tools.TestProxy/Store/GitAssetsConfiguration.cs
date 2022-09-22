@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -21,9 +23,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public string AssetsRepo { get; set; }
 
         /// <summary>
-        /// The targeted SHA within the AssetsRepo.
+        /// The targeted Tag within the AssetsRepo.
         /// </summary>
-        public string SHA { get; set;  }
+        public string Tag { get; set;  }
 
         /// <summary>
         /// Within the assets repo, is there a prefix that should be inserted prior to writing out files?
@@ -31,9 +33,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public string AssetsRepoPrefixPath { get; set; }
 
         /// <summary>
-        /// The auto-commit branch.
+        /// Tags are generated and pushed with each changeset. This prefix will inform the name of the tag to be recognizable as soemthing other than a guid.
         /// </summary>
-        public string AssetsRepoBranch { get; set; }
+        public string TagPrefix { get; set; }
 
         /// <summary>
         /// The location of the assets repo for this config.
@@ -66,9 +68,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var assetsStore = ResolveAssetsStoreLocation();
 
-            var hash = Convert.ToHexString(SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(AssetsJsonRelativeLocation)));
+            // Combine the AssetsRepo and AssetsJsonRelativeLocation and grab the hash of that.
+            // AssetsRepo will be something like Azure/azure-sdk-assets-integration and
+            // AssetsJsonRelativeLocation will be something like sdk/<service>/assets.json
+            string assetsRepoPlusJsonRelPathLoc = AssetsRepo + AssetsJsonRelativeLocation;
 
-            var location = Path.Join(assetsStore, AssetsRepo.Replace("/", "-"), hash);
+            string shortHashString = ShortHashGenerator.GenerateShortHash(assetsRepoPlusJsonRelPathLoc);
+
+            var location = Path.Join(assetsStore, shortHashString);
             if (!Directory.Exists(location))
             {
                 Directory.CreateDirectory(location);

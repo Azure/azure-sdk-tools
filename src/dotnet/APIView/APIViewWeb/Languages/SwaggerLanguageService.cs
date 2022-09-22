@@ -14,7 +14,7 @@ namespace APIViewWeb
 
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
-            return await CodeFile.DeserializeAsync(stream);
+            return await CodeFile.DeserializeAsync(stream, true);
         }
     }
 }

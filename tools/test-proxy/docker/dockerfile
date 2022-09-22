@@ -21,7 +21,6 @@ ENV \
     Logging__LogLevel__Default=Information \
     Logging__LogLevel__Microsoft=Information
 
-
 # dotnet-dev-certs tool is not included in aspnet image, so manually copy from sdk image
 COPY --from=build /usr/share/dotnet/sdk/6.0.102/DotnetTools/dotnet-dev-certs/6.0.2-servicing.22064.12/tools/net6.0/any/ /dotnet-dev-certs
 
@@ -29,8 +28,7 @@ COPY --from=build /usr/share/dotnet/sdk/6.0.102/DotnetTools/dotnet-dev-certs/6.0
 COPY docker_build/$CERT_IMPORT_SH docker_build/dotnet-devcert.pfx docker_build/dotnet-devcert.crt $CERT_FOLDER/
 
 RUN \
-    # Install bash and certutil
-    apk add --no-cache bash nss-tools \
+    apk add --no-cache bash nss-tools git \
     # Fix line endings
     && sed -i -e 's/\r$//' $CERT_FOLDER/$CERT_IMPORT_SH \
     # Use copied dotnet-dev-certs tool

@@ -93,12 +93,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (string.IsNullOrEmpty(additionalEntryModeHeader))
             {
-                var fullPath = testRecordingHandler.GetRecordingPath(targetFile);
+                var fullPath = await testRecordingHandler.GetRecordingPath(targetFile);
                 Assert.True(File.Exists(fullPath));
             }
             else
             {
-                var fullPath = testRecordingHandler.GetRecordingPath(targetFile);
+                var fullPath = await testRecordingHandler.GetRecordingPath(targetFile);
                 Assert.False(File.Exists(fullPath));
             }
         }

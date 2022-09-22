@@ -34,16 +34,16 @@ namespace SwaggerApiParser
                     return;
                 }
 
-                await HandleGenerateCodeFile(enumerable, outputFile, package);
+                await HandleGenerateCodeFileFromSwaggerFiles(enumerable, outputFile, package);
             }, swaggers, output, packageName);
 
             return Task.FromResult(cmd.Invoke(args));
         }
 
-        static async Task HandleGenerateCodeFile(IEnumerable<string> swaggers, string output, string packageName)
+        static async Task HandleGenerateCodeFileFromSwaggerFiles(IEnumerable<string> swaggers, string output, string packageName)
         {
             var swaggerFilePaths = swaggers as string[] ?? swaggers.ToArray();
-            var swaggerCodeFileRender = new SwaggerCodeFileMerger();
+            SwaggerApiViewRoot root = new SwaggerApiViewRoot(packageName, packageName);
             foreach (var swaggerFilePath in swaggerFilePaths)
             {
                 if (!File.Exists(swaggerFilePath))
@@ -52,15 +52,14 @@ namespace SwaggerApiParser
                 }
 
                 var input = Path.GetFullPath(swaggerFilePath);
-                var swaggerFileName = Path.GetFileName(input);
-                Console.WriteLine("Input swagger file: {0}", input);
-                await using FileStream fileReadStream = File.OpenRead(input);
-                var ls = new SwaggerTokenSerializer();
-                var cf = await ls.GetCodeFileInternalAsync(swaggerFileName, fileReadStream, false);
-                swaggerCodeFileRender.AppendResult(swaggerFileName, cf);
+                var swaggerSpec = await SwaggerDeserializer.Deserialize(input);
+                root.AddSwaggerSpec(swaggerSpec, Path.GetFullPath(input), packageName);
             }
 
-            await swaggerCodeFileRender.GenerateCodeFile(output, packageName);
+            var codeFile = root.GenerateCodeFile();
+            var outputFilePath = Path.GetFullPath(output);
+            await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+            await codeFile.SerializeAsync(writer);
         }
     }
 }

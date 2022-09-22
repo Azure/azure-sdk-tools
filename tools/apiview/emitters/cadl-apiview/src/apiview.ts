@@ -26,9 +26,12 @@ import {
   TupleExpressionNode,
   TypeReferenceNode,
   UnionExpressionNode,
+  UnionStatementNode,
+  UnionVariant,
+  UnionVariantNode,
 } from "@cadl-lang/compiler";
 import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
-import { ApiViewNavigation, ApiViewNavigationTag } from "./navigation.js";
+import { ApiViewNavigation } from "./navigation.js";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
 
@@ -465,9 +468,11 @@ export class ApiView {
         this.pop(3);
         break;
       case SyntaxKind.UnionStatement:
-        throw new Error(`Case "UnionStatement" not implemented`);
+        this.tokenizeUnionStatement(node as UnionStatementNode);
+        break;
       case SyntaxKind.UnionVariant:
-        throw new Error(`Case "UnionVariant" not implemented`);
+        this.tokenizeUnionVariant(node as UnionVariantNode);
+        break;
       case SyntaxKind.UnknownKeyword:
         this.keyword("any", true, true);
         break;
@@ -499,7 +504,7 @@ export class ApiView {
     if (node.properties.length) {
       this.beginGroup();
       for (const prop of node.properties) {
-        const propName = generateId(prop)!.split(".").splice(-1)[0];
+        const propName = this.getNameForNode(prop);
         NamespaceStack.push(propName);
         this.tokenize(prop);
         this.punctuation(";", false, false);
@@ -539,7 +544,7 @@ export class ApiView {
     this.lineMarker();
     this.beginGroup();
     for (const member of node.members) {
-      const memberName = generateId(member)!.split(".").splice(-1)[0];
+      const memberName = this.getNameForNode(member);
       NamespaceStack.push(memberName);
       this.tokenize(member);
       this.punctuation(",");
@@ -550,6 +555,37 @@ export class ApiView {
     this.endGroup(1);
     NamespaceStack.pop();
     this.blankLines(1);
+  }
+
+  private tokenizeUnionStatement(node: UnionStatementNode) {
+    this.tokenizeDecorators(node.decorators, false);
+    this.keyword("union", false, true);
+    NamespaceStack.push(node.id.sv);
+    this.tokenizeIdentifer(node.id, "declaration");
+    this.lineMarker();
+    this.beginGroup();
+    for (const variant of node.options) {
+      const variantName = this.getNameForNode(node);
+      NamespaceStack.push(variantName);
+      this.tokenize(variant);
+      this.lineMarker();
+      NamespaceStack.pop();
+      this.punctuation(",");
+      this.blankLines(0);
+    }
+    this.endGroup(4);
+    this.pop(2);
+    this.newline();
+    this.punctuation("}");
+    NamespaceStack.pop();
+    this.blankLines(1);
+  }
+
+  private tokenizeUnionVariant(node: UnionVariantNode) {
+    this.tokenizeDecorators(node.decorators, false);
+    this.tokenizeIdentifer(node.id, "member");
+    this.punctuation(":", false, true);
+    this.tokenize(node.value);
   }
 
   private tokenizeModelProperty(node: ModelPropertyNode, inline: boolean) {
@@ -565,29 +601,46 @@ export class ApiView {
   private tokenizeModelExpression(
     node: ModelExpressionNode,
     brackets: boolean,
-    inlineDecorators: boolean
+    inline: boolean
   ) {
     if (node.properties.length) {
+      // FIXME: Fix indentation
+      if (!inline) {
+        this.newline();
+      }
       if (brackets) {
-        this.punctuation("{", true, true);
+        this.punctuation("{", inline, inline);
+      }
+      if (!inline) {
+        this.newline();
       }
       for (const prop of node.properties) {
         switch (prop.kind) {
           case SyntaxKind.ModelProperty:
-            this.tokenizeModelProperty(prop, inlineDecorators);
+            this.tokenizeModelProperty(prop, inline);
             break;
           case SyntaxKind.ModelSpreadProperty:
             this.tokenize(prop);
             break;
         }
-        this.punctuation(",", false, true);
+        this.punctuation(",", false, inline);
+        if (!inline) {
+          this.newline();
+        }
       }
       this.pop(2);
+      if (!inline) {
+        this.newline();
+      }
       if (brackets) {
-        this.punctuation("}", true, true);
+        this.punctuation("}", inline, inline);
+      }
+      if (!inline) {
+        this.newline();
       }
     }
   }
+
   private tokenizeOperationStatement(node: OperationStatementNode) {
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("op", false, true);
@@ -702,6 +755,15 @@ export class ApiView {
   private buildNavigation(ns: NamespaceModel) {
     NamespaceStack.reset();
     this.navigation(new ApiViewNavigation(ns));
+  }
+
+  private getNameForNode(node: BaseNode | NamespaceModel): string {
+    const id = generateId(node);
+    if (id != undefined) {
+      return id.split(".").splice(-1)[0];
+    } else {
+      throw new Error("Unable to get name for node.");
+    }
   }
 
   resolveMissingTypeReferences() {

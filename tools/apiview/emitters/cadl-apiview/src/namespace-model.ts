@@ -17,6 +17,8 @@ import {
   EnumSpreadMemberNode,
   DecoratorExpressionNode,
   MemberExpressionNode,
+  UnionStatementNode,
+  UnionExpressionNode,
 } from "@cadl-lang/compiler";
 
 export class NamespaceModel {
@@ -31,6 +33,8 @@ export class NamespaceModel {
     | IntersectionExpressionNode
     | ProjectionModelExpressionNode
     | EnumStatementNode
+    | UnionStatementNode
+    | UnionExpressionNode
   >();
   models = new Map<
     string,
@@ -39,6 +43,8 @@ export class NamespaceModel {
     | IntersectionExpressionNode
     | ProjectionModelExpressionNode
     | EnumStatementNode
+    | UnionStatementNode
+    | UnionExpressionNode
   >();
 
   constructor(name: string, ns: Namespace) {
@@ -74,6 +80,9 @@ export class NamespaceModel {
     }
     for (const [enumName, en] of ns.enums) {
       this.models.set(enumName, en.node);
+    }
+    for (const [unionName, un] of ns.unions) {
+      this.models.set(unionName, un.node);
     }
 
     // sort operations and models
@@ -163,6 +172,11 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       break;
     case SyntaxKind.OperationStatement:
       node = obj as OperationStatementNode;
+      name = node.id.sv;
+      parentId = generateId(node.parent);
+      break;
+    case SyntaxKind.UnionStatement:
+      node = obj as UnionStatementNode;
       name = node.id.sv;
       parentId = generateId(node.parent);
       break;

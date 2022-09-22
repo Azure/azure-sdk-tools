@@ -7,6 +7,8 @@ import {
   OperationStatementNode,
   ProjectionModelExpressionNode,
   SyntaxKind,
+  UnionExpressionNode,
+  UnionStatementNode,
 } from "@cadl-lang/compiler";
 import { NamespaceStack } from "./apiview.js";
 import { NamespaceModel } from "./namespace-model.js";
@@ -27,6 +29,8 @@ export class ApiViewNavigation {
       | ModelExpressionNode
       | IntersectionExpressionNode
       | ProjectionModelExpressionNode
+      | UnionStatementNode
+      | UnionExpressionNode
   ) {
     let obj;
     switch (objNode.kind) {
@@ -58,7 +62,6 @@ export class ApiViewNavigation {
         this.Text = obj.id.sv;
         this.Tags = { TypeKind: ApiViewNavigationKind.Class };
         this.ChildItems = [];
-        // TODO: Include properties?
         break;
       case SyntaxKind.EnumStatement:
         obj = objNode as EnumStatementNode;
@@ -66,7 +69,6 @@ export class ApiViewNavigation {
         this.Text = obj.id.sv;
         this.Tags = { TypeKind: ApiViewNavigationKind.Enum };
         this.ChildItems = [];
-        // TODO: Include members?
         break;
       case SyntaxKind.OperationStatement:
         obj = objNode as OperationStatementNode;
@@ -84,6 +86,13 @@ export class ApiViewNavigation {
         for (const child of obj.operations) {
           this.ChildItems.push(new ApiViewNavigation(child));
         }
+        break;
+      case SyntaxKind.UnionStatement:
+        obj = objNode as UnionStatementNode;
+        NamespaceStack.push(obj.id.sv);
+        this.Text = obj.id.sv;
+        this.Tags = { TypeKind: ApiViewNavigationKind.Enum };
+        this.ChildItems = [];
         break;
       case SyntaxKind.ModelExpression:
         throw new Error(`Navigation unsupported for "ModelExpression".`);

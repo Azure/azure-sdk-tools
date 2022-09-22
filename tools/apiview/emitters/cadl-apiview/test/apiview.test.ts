@@ -42,34 +42,51 @@ describe("apiview: tests", () => {
     return slice.map((line) => line.trimStart()).join("");
   }
 
+  function indentCounts(lines: string[], start: number, end: number): number[] {
+    const counts = Array<number>();
+    const slice = lines.slice(start, end + 1);
+    for (const line of slice) {
+      let count = 0;
+      for (const char of [...line]) {
+        if (char == " ") {
+          count += 1;
+        } else {
+          break;
+        }
+      }
+      counts.push(count);
+    }
+    return counts;
+  }
+
   it("describes enums", async () => {
     const input = `
-@Cadl.serviceTitle("Enum Test")
-namespace Azure.Test {
+    @Cadl.serviceTitle("Enum Test")
+    namespace Azure.Test {
 
-  enum SomeEnum {
-    Plain,
-    "Literal",
-  }
+      enum SomeEnum {
+        Plain,
+        "Literal",
+      }
 
-  enum SomeStringEnum {
-    A: "A",
-    B: "B",
-  }
+      enum SomeStringEnum {
+        A: "A",
+        B: "B",
+      }
 
-  namespace BuildingBlocks {
-    model Block is string;
+      namespace BuildingBlocks {
+        model Block is string;
 
-    model Thing {
-      someInt: SomeIntEnum;
-    }
-  }
+        model Thing {
+          someInt: SomeIntEnum;
+        }
+      }
 
-  enum SomeIntEnum {
-    A: 1,
-    B: 2,
-  }
-}`;
+      enum SomeIntEnum {
+        A: 1,
+        B: 2,
+      }
+    }`;
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
     strictEqual(stringifyLines(lines, 4, 7), `enum SomeEnum {Plain,"Literal",}`);
@@ -79,6 +96,7 @@ namespace Azure.Test {
 
   it("describes union", async () =>{
     const input = `
+    @Cadl.serviceTitle("Union Test")
     namespace Azure.Test {
       union MyUnion {
         cat: Cat,
@@ -86,14 +104,45 @@ namespace Azure.Test {
         snake: Snake
       }
 
-      model Cat is string;
+      model Cat {
+        name: string
+      };
 
-      model Dog is string;
+      model Dog {
+        name: string
+      };
 
-      model Snake is string;
+      model Snake {
+        name: string,
+        length: int16
+      };
     }`;
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
-    strictEqual(stringifyLines(lines, 2, 6), `union MyUnion {cat: Cat,dog: Dog,snake: Snake}`);
+    strictEqual(stringifyLines(lines, 12, 16), `union MyUnion {cat: Cat,dog: Dog,snake: Snake}`);
+  });
+
+  it("describes operations", async () =>{
+    const input = `
+    @Cadl.serviceTitle("Operation Test")
+    namespace Azure.Test {
+      op ResourceRead<TResource, TParams>(resource: TResource, params: TParams): TResource;
+
+      op GetFoo is ResourceRead<
+        {
+          name: string;
+        },
+        {
+          parameters: {
+            @doc("The collection id.")
+            fooId: string;
+          };
+        }
+      >;
+    }`;
+    const apiview = await apiViewFor(input, {});
+    const lines = apiViewText(apiview);
+    strictEqual(indentCounts(lines, 4, 6), [0, 2, 4]);
+    strictEqual(indentCounts(lines, 7, 10), [0, 2, 4, 4]);
   });
 });

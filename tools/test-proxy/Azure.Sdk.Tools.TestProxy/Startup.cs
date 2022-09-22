@@ -91,12 +91,15 @@ namespace Azure.Sdk.Tools.TestProxy
                     StartServer(startOptions);
                     break;
                 case PushOptions pushOptions:
-                    await DefaultStore.Push(pushOptions.AssetsJsonPath);
+                    var assetsJson = RecordingHandler.GetAssetsJsonLocation(pushOptions.AssetsJsonPath, TargetLocation);
+                    await DefaultStore.Push(assetsJson);
                     break;
                 case ResetOptions resetOptions:
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(resetOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Reset(resetOptions.AssetsJsonPath);
                     break;
                 case RestoreOptions restoreOptions:
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(restoreOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Restore(restoreOptions.AssetsJsonPath);
                     break;
                 default:

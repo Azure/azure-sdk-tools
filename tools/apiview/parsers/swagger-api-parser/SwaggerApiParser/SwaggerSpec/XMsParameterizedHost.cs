@@ -19,7 +19,7 @@ public class XMsParameterizedHost : ITokenSerializable
             ret.AddRange(TokenSerializer.KeyValueTokens("hostTemplate", hostTemplate, true, context.IteratorPath.CurrentNextPath("hostTemplate")));
         }
 
-        if (useSchemePrefix != null)
+        if (useSchemePrefix)
         {
             ret.AddRange(TokenSerializer.KeyValueTokens("useSchemePrefix", useSchemePrefix.ToString(), true,context.IteratorPath.CurrentNextPath("useSchemePrefix")));
         }

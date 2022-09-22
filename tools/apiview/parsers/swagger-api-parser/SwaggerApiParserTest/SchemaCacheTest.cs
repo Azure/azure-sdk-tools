@@ -27,11 +27,11 @@ public class SchemaCacheTest
             cache.AddSchema(runCommandsFilePath, schema.Key, schema.Value);
         }
 
-        var resolvedSchema = cache.GetResolvedSchema(swaggerSpec.definitions.First().Value,  runCommandsFilePath);
-        this.output.WriteLine(resolvedSchema.ToString());
+        //var resolvedSchema = cache.GetResolvedSchema(swaggerSpec.definitions.First().Value,  runCommandsFilePath);
+       // this.output.WriteLine(resolvedSchema.ToString());
 
-        swaggerSpec.definitions.TryGetValue("VirtualMachineRunCommandProperties", out var runCommandProperties);
-        var resolvedRunCommandProperties = cache.GetResolvedSchema(runCommandProperties,  runCommandsFilePath);
-        this.output.WriteLine(resolvedRunCommandProperties.ToString());
+        //swaggerSpec.definitions.TryGetValue("VirtualMachineRunCommandProperties", out var runCommandProperties);
+        //var resolvedRunCommandProperties = cache.GetResolvedSchema(runCommandProperties,  runCommandsFilePath);
+        //this.output.WriteLine(resolvedRunCommandProperties.ToString());
     }
 }

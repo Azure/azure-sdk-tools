@@ -8,32 +8,33 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
-using APIViewWeb;
 
 namespace SwaggerApiParser
 {
-    public class SwaggerTokenSerializer : LanguageService
+    public class SwaggerTokenSerializer
     {
         internal const string LanguageServiceName = "Swagger";
-        public override string Name => LanguageServiceName;
+        public string Name => LanguageServiceName;
 
         // This is an unfortunate hack because JsonLanguageService is already
         // squatting on `.json`.  We'll have to fix this before we ask anyone
         // to use ApiView for swagger files.
-        public override string Extension => ".swagger";
+        public string Extension => ".swagger";
 
 
         // I don't really know what this is doing, but the other language
         // services do the same.  It'd probably be worth making this the default
         // implementation if everyone needs to copy it as-is.
-        public override bool CanUpdate(string versionString) => false;
+        public bool CanUpdate(string versionString) => false;
 
         public async Task<CodeFile> GetCodeFileInternalAsync(string originalName, Stream stream, bool runAnalysis) =>
             SwaggerVisitor.GenerateCodeListing(originalName, await JsonDocument.ParseAsync(stream));
-        
-        
+
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task<CodeFile> GetCodeFileFromJsonDocumentAsync(string originalName, JsonDocument jsonDoc, bool runAnalysis) =>
             SwaggerVisitor.GenerateCodeListing(originalName, jsonDoc);
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
 
         /// <summary>
@@ -44,7 +45,7 @@ namespace SwaggerApiParser
         /// <param name="stream">Stream full of JSON.</param>
         /// <param name="runAnalysis">This is unused.</param>
         /// <returns>An ApiView listing.</returns>
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis) =>
+        public async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis) =>
             await CodeFile.DeserializeAsync(stream);
 
         /// <summary>

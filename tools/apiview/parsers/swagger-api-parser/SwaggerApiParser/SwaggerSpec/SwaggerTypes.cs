@@ -113,7 +113,7 @@ namespace SwaggerApiParser
         public String GetOriginRef()
         {
             return "";
-            return this.originalRef ?? this.Ref;
+            //return this.originalRef ?? this.Ref;
         }
 
 

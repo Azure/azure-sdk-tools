@@ -21,12 +21,20 @@ namespace SwaggerApiParser
                 description: "The package name for the generated code file.",
                 getDefaultValue: () => "swagger");
 
-            var cmd = new RootCommand {swaggers, output, packageName};
+            var swaggerLinks = new Option<IEnumerable<string>>(name: "--swaggerLinks",
+                description: "The input swagger links. Can be a single URL or multiple URLs separated by space.", getDefaultValue:
+                () => new List<string>()) {AllowMultipleArgumentsPerToken = true};
+
+            var cmd = new RootCommand {swaggers, output, packageName, swaggerLinks};
+
+            // Console.WriteLine($"{string.Join(",", swaggerLinks)}");
 
             cmd.Description = "Parse swagger file into codefile.";
 
-            cmd.SetHandler(async (IEnumerable<string> swaggerFiles, string outputFile, string package) =>
+            cmd.SetHandler(async (IEnumerable<string> swaggerFiles, string outputFile, string package, IEnumerable<string> links) =>
             {
+                var swaggerLinksArray = links.ToList();
+
                 var enumerable = swaggerFiles as string[] ?? swaggerFiles.ToArray();
                 if (!enumerable.Any())
                 {
@@ -34,26 +42,31 @@ namespace SwaggerApiParser
                     return;
                 }
 
-                await HandleGenerateCodeFile(enumerable, outputFile, package);
-            }, swaggers, output, packageName);
+                await HandleGenerateCodeFile(enumerable, outputFile, package, swaggerLinksArray);
+            }, swaggers, output, packageName, swaggerLinks);
 
             return Task.FromResult(cmd.Invoke(args));
         }
 
-        static async Task HandleGenerateCodeFile(IEnumerable<string> swaggers, string output, string packageName)
+        static async Task HandleGenerateCodeFile(IEnumerable<string> swaggers, string output, string packageName, List<string> swaggerLinks)
         {
             var swaggerFilePaths = swaggers as string[] ?? swaggers.ToArray();
             SwaggerApiViewRoot root = new SwaggerApiViewRoot(packageName, packageName);
+            var idx = 0;
             foreach (var swaggerFilePath in swaggerFilePaths)
             {
                 if (!File.Exists(swaggerFilePath))
                 {
                     throw new FileNotFoundException(swaggerFilePath);
                 }
+
+                var swaggerLink = idx < swaggerLinks.Count ? swaggerLinks[idx] : "";
+                idx++;
+
                 var input = Path.GetFullPath(swaggerFilePath);
                 Console.WriteLine("Generating codefile for swagger file: {0}", Path.GetFileName(input));
                 var swaggerSpec = await SwaggerDeserializer.Deserialize(input);
-                root.AddSwaggerSpec(swaggerSpec, Path.GetFullPath(input), packageName);
+                root.AddSwaggerSpec(swaggerSpec, Path.GetFullPath(input), packageName, swaggerLink);
             }
 
             var codeFile = root.GenerateCodeFile();

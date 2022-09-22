@@ -8,6 +8,8 @@ namespace SwaggerApiParser;
 public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
 {
     public string swagger { set; get; }
+    
+    public string swaggerLink { set; get; }
     public Info info { set; get; }
 
     public string host { get; set; }
@@ -29,6 +31,11 @@ public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
+
+        if (swaggerLink != "")
+        {
+            ret.AddRange(TokenSerializer.KeyValueTokens("swaggerLink", swaggerLink, true, context.IteratorPath.CurrentNextPath("swaggerLink")));
+        }
 
         ret.AddRange(TokenSerializer.KeyValueTokens("swagger", swagger, true, context.IteratorPath.CurrentNextPath("swagger")));
         ret.Add(new CodeFileToken("info", CodeFileTokenKind.FoldableSectionHeading));

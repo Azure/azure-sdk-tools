@@ -61,6 +61,7 @@ public class SwaggerApiViewRoot : ITokenSerializable
             var specToken = kv.Value.TokenSerialize(specContext);
 
             ret.AddRange(specToken);
+            ret.Add(TokenSerializer.NewLine());
         }
 
         return ret.ToArray();

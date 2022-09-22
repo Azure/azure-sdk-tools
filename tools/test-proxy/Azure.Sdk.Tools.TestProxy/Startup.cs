@@ -157,7 +157,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             statusThreadCts.Cancel();
             statusThread.Join();
-         }
+        }
 
         public void ConfigureServices(IServiceCollection services)
         {

@@ -97,8 +97,6 @@ namespace SwaggerApiParser
     {
         private const String IntentText = "  ";
 
-        private static int intentNumber = 0;
-
         public static CodeFileToken[] TokenSerializeAsJson(JsonElement jsonElement, bool isFoldable = false)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();

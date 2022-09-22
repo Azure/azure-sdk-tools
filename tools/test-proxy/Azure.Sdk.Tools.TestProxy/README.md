@@ -120,7 +120,7 @@ To ensure that your local copy is up to date, run:
 
 ## Command line arguments
 
-This is the help information for test-proxy. It uses the pre-release package [`System.CommandLine.DragonFruit`](https://github.com/dotnet/command-line-api) to parse arguments.
+This is the help information for test-proxy. It uses the nuget package [`CommandLineParser`](https://www.nuget.org/packages/CommandLineParser) to parse arguments.
 
 ```text
 Azure.Sdk.Tools.TestProxy

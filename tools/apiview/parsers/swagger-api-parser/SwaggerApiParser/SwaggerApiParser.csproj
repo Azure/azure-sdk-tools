@@ -13,6 +13,14 @@
     <SignAssembly>False</SignAssembly>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>$(NoWarn);NU5105;NU5119</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>$(NoWarn);NU5105;NU5119</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="SwaggerApiParserTest\**" />
     <EmbeddedResource Remove="SwaggerApiParserTest\**" />

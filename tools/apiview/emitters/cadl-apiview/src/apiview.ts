@@ -60,7 +60,7 @@ export interface ApiViewToken {
   CrossLanguageDefinitionId?: string;
 }
 
-interface ApiViewDocument {
+export interface ApiViewDocument {
   Name: string;
   PackageName: string;
   Tokens: ApiViewToken[];
@@ -681,7 +681,7 @@ export class ApiView {
         if (style != "member") {
           throw new Error(`StringLiteral type can only be a member name. Unexpectedly "${style}"`);
         }
-        this.member(node.value);
+        this.stringLiteral(node.value);
         break;
       case SyntaxKind.Identifier:
         switch (style) {

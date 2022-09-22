@@ -47,7 +47,6 @@ words:
   - safeint
   - strs
   - TSES
-  - Uhoh
   - unassignable
   - Uncapitalize
   - uninstantiated
@@ -63,5 +62,6 @@ ignorePaths:
   - "**/node_modules/**"
   - "**/dist/**"
   - "**/dist-dev/**"
+  - "**/cadl-output/**"
 enableFiletypes:
   - cadl

@@ -6,7 +6,7 @@
     <OutputType>Exe</OutputType>
     <StartupObject />
     <LangVersion>Latest</LangVersion>
-    <SignAssembly>False</SignAssembly>
+    <SignAssembly>True</SignAssembly>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

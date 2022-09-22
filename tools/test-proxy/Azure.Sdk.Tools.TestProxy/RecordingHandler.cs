@@ -228,7 +228,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode != EntryRecordMode.DontRecord)
             {
-                session.Session.Entries.Add(entry);
+                lock (session.Session.Entries)
+                {
+                    session.Session.Entries.Add(entry);
+                }
 
                 Interlocked.Increment(ref Startup.RequestsRecorded);
             }

@@ -96,11 +96,11 @@ namespace Azure.Sdk.Tools.TestProxy
                     break;
                 case ResetOptions resetOptions:
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(resetOptions.AssetsJsonPath, TargetLocation);
-                    await DefaultStore.Reset(resetOptions.AssetsJsonPath);
+                    await DefaultStore.Reset(assetsJson);
                     break;
                 case RestoreOptions restoreOptions:
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(restoreOptions.AssetsJsonPath, TargetLocation);
-                    await DefaultStore.Restore(restoreOptions.AssetsJsonPath);
+                    await DefaultStore.Restore(assetsJson);
                     break;
                 default:
                     throw new ArgumentException("Invalid verb. The only supported verbs are start, push, reset and restore.");

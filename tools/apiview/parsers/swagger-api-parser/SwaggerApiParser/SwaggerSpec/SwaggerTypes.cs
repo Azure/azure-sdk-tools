@@ -58,14 +58,13 @@ namespace SwaggerApiParser
 
         // public Boolean additionalProperties { get; set; }
         public bool readOnly { get; set; }
-        
+
         public bool writeOnly { get; set; }
-        
+
         public string discriminator { get; set; }
-        
-        [JsonPropertyName("x-ms-nullable")]
-        public bool xMsNullable { get; set; }
-        
+
+        [JsonPropertyName("x-ms-nullable")] public bool xMsNullable { get; set; }
+
         public Dictionary<string, BaseSchema> properties { get; set; }
         public Dictionary<string, BaseSchema> allOfProperities { get; set; }
 
@@ -73,6 +72,8 @@ namespace SwaggerApiParser
         public string xMsDiscriminatorValue { get; set; }
 
         public List<string> required { get; set; }
+
+        [JsonPropertyName("enum")] public List<string> Enum { get; set; }
 
         public bool IsPropertyRequired(string propertyName)
         {
@@ -105,6 +106,11 @@ namespace SwaggerApiParser
             if (this.xMsNullable)
             {
                 keywords.Add("x-ms-nullable");
+            }
+
+            if (this.Enum != null && this.Enum.Count > 0)
+            {
+                keywords.Add($"enum: {string.Join(",", this.Enum)}");
             }
 
             return keywords;
@@ -187,6 +193,7 @@ namespace SwaggerApiParser
                     TokenSerializeArray(context, ret, schema, ref flattenedTableItems, serializeRef);
                 }
             }
+
             return ret.ToArray();
         }
 
@@ -275,7 +282,7 @@ namespace SwaggerApiParser
         {
             ret.Add(new CodeFileToken("array", CodeFileTokenKind.Keyword));
 
-            if (arraySchema.items.type != null)
+            if (arraySchema.items.type != null && arraySchema.items.type != "object")
             {
                 ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
                 ret.Add(new CodeFileToken(arraySchema.items.type, CodeFileTokenKind.TypeName));

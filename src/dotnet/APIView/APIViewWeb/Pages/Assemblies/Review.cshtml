@@ -50,13 +50,18 @@
                 @{
                     var popOverContent = $"<b>{Model.ActiveConversations}</b> active revision threads.<br><b>{Model.TotalActiveConversations}</b> total active threads.<br>"
                     + $"<b>Current Revision:</b> <em>{@Model.Revision.DisplayName}</em>";
-                                        @if (Model.DiffRevisionId != null)
+                    @if (Model.DiffRevisionId != null)
                     {
                         popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
                     }
-                                        <button type="button" class="btn btn-info btn-sm shadow-sm" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
-                                            <i class="far fa-comment-alt mr-2"></i><span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
-                                        </button>
+                    <div class="btn-group btn-group-sm shadow-sm" aria-label="Page Information">
+                        <button type="button" class="btn btn-info" id="jump-to-first-comment">
+                            <i class="far fa-comment-alt"></i>
+                        </button>
+                        <button type="button" class="btn btn-info" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
+                            <span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
+                        </button>
+                    </div>
                 }
             </div>
             <div class="my-1">

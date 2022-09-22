@@ -71,7 +71,7 @@
     <td class="line-details">
         <table>
             <tr>
-                @if(userPreference.HideLineNumbers == true || Model.CodeLine.IsDocumentation)
+                @if(userPreference.HideLineNumbers == true)
                 {
                     var lineNumberClass = RemoveMultipleSpaces($"line-number d-none {lineClass}");
                     <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
@@ -79,7 +79,14 @@
                 else
                 {
                     var lineNumberClass = RemoveMultipleSpaces($"line-number {lineClass}");
-                    <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
+                    if (Model.CodeLine.IsDocumentation)
+                    {
+                        <td class="@lineNumberClass invisible"><span></span></td>
+                    }
+                    else
+                    {
+                        <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
+                    }
                 }
                 <td class="@lineDetailsClass comment-icon-cell">
                     @if (!isRemoved && Model.CodeLine.ElementId != null)
@@ -88,14 +95,25 @@
                     }
                     else
                     {
-                       <a class="line-comment-button" style="visibility: hidden;">+</a> // Added for visual consistency
+                        <a class="line-comment-button invisible">+</a>// Added for visual consistency
                     }
                 </td>
                 <td class="@lineDetailsClass">
                     @if(Model.DocumentedByLines?.Length  > 0)
                     {
-                        <span class="line-toggle-documentation-button icon-chevron-right" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
-                            &nbsp;
+                        <span class="line-toggle-documentation-button" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
+                            <svg height='23' width='23' class="invisible">
+                                <line x1='52%' y1='0' x2='52%' y2='30%' style='stroke:rgb(255,140,0);stroke-width:1.2' />
+                            </svg>
+                            <i class="fa-regular fa-square-plus"></i>
+                        </span>
+                    }
+                    @if (Model.CodeLine.IsDocumentation)
+                    {
+                        <span>
+                            <svg height='23' width='23'>
+                                <line x1='52%' y1='0' x2='52%' y2='100%' style='stroke:rgb(255,140,0);stroke-width:1.2' />
+                            </svg>
                         </span>
                     }
                 </td>

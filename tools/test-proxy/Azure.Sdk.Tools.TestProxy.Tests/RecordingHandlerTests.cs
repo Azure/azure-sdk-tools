@@ -743,6 +743,42 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
+        [Fact]
+        public async Task RecordingHandlerIsThreadSafe()
+        {
+            var bodyBytes = Encoding.UTF8.GetBytes("{\"hello\":\"world\"}");
+            var mockClient = new HttpClient(new MockHttpHandler(bodyBytes));
+            var path = Directory.GetCurrentDirectory();
+            var recordingHandler = new RecordingHandler(path)
+            {
+                RedirectableClient = mockClient,
+                RedirectlessClient = mockClient
+            };
+
+            var httpContext = new DefaultHttpContext();
+            await recordingHandler.StartRecordingAsync("threadSafe", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            var requests = new List<Task>();
+            var requestCount = 100;
+
+            for (int i = 0; i < requestCount; i++)
+            {
+                httpContext = new DefaultHttpContext();
+                httpContext.Request.ContentType = "application/json";
+                httpContext.Request.ContentLength = 0;
+                httpContext.Request.Headers["x-recording-id"] = recordingId;
+                httpContext.Request.Headers["x-recording-upstream-base-uri"] = "http://example.org";
+                httpContext.Request.Method = "GET";
+                httpContext.Request.Body = new MemoryStream(bodyBytes);
+                requests.Add(recordingHandler.HandleRecordRequestAsync(recordingId, httpContext.Request, httpContext.Response));
+            }
+
+            await Task.WhenAll(requests);
+            var session = recordingHandler.RecordingSessions.First().Value;
+            Assert.Equal(requestCount, session.Session.Entries.Count);
+        }
+
         #region SetRecordingOptions
         [Theory]
         [InlineData("{ \"HandleRedirects\": \"true\"}", true)]
@@ -1041,6 +1077,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var content = await request.Content.ReadAsStringAsync();
             Assert.NotEmpty(content);
             var response = new HttpResponseMessage(HttpStatusCode.OK);
+
+            // simulate some IO
+            await Task.Delay(100, cancellationToken);
 
             // we need to set the content before the content headers as otherwise they will be cleared out after setting content.
             if (_contentEncoding == "gzip")

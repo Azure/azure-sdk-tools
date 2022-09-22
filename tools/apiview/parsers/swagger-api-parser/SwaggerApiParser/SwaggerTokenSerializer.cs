@@ -30,10 +30,12 @@ namespace SwaggerApiParser
 
         public async Task<CodeFile> GetCodeFileInternalAsync(string originalName, Stream stream, bool runAnalysis) =>
             SwaggerVisitor.GenerateCodeListing(originalName, await JsonDocument.ParseAsync(stream));
-        
-        
+
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task<CodeFile> GetCodeFileFromJsonDocumentAsync(string originalName, JsonDocument jsonDoc, bool runAnalysis) =>
             SwaggerVisitor.GenerateCodeListing(originalName, jsonDoc);
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
 
         /// <summary>

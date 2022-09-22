@@ -27,7 +27,7 @@ public class Parameter : ITokenSerializable
 
     [JsonPropertyName("$ref")] public string Ref { get; set; }
 
-    [JsonPropertyName("in")] public string? In { get; set; }
+    [JsonPropertyName("in")] public string In { get; set; }
 
     public bool IsRefObject()
     {

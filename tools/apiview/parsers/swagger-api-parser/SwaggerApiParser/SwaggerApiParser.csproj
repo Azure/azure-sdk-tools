@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <PackageVersion>1.0.0-dev.0.1</PackageVersion>
@@ -10,6 +10,8 @@
     <LangVersion>Latest</LangVersion>
     <VersionPrefix>1.0.0</VersionPrefix>
     <AssemblyName>Azure.Sdk.Tools.SwaggerApiParser</AssemblyName>
+    <DelaySign>True</DelaySign>
+    <SignAssembly>False</SignAssembly>
   </PropertyGroup>
 
   <ItemGroup>

@@ -50,8 +50,8 @@ namespace SwaggerApiParser
                 {
                     throw new FileNotFoundException(swaggerFilePath);
                 }
-
                 var input = Path.GetFullPath(swaggerFilePath);
+                Console.WriteLine("Generating codefile for swagger file: {0}", Path.GetFileName(input));
                 var swaggerSpec = await SwaggerDeserializer.Deserialize(input);
                 root.AddSwaggerSpec(swaggerSpec, Path.GetFullPath(input), packageName);
             }
@@ -59,6 +59,7 @@ namespace SwaggerApiParser
             var codeFile = root.GenerateCodeFile();
             var outputFilePath = Path.GetFullPath(output);
             await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+            Console.WriteLine($"Generate codefile {output} successfully.");
             await codeFile.SerializeAsync(writer);
         }
     }

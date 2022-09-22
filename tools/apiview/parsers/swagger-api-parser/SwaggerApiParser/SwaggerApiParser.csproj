@@ -22,14 +22,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+      <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj" />    
+  </ItemGroup>
+  
+  <ItemGroup>
     <Compile Remove="SwaggerApiParserTest\**" />
     <EmbeddedResource Remove="SwaggerApiParserTest\**" />
     <None Remove="SwaggerApiParserTest\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="NuGet.CommandLine" Version="6.0.2">

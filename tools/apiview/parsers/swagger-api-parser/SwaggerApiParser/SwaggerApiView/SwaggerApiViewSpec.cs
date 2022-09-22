@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using ApiView;
 using APIView;
-using Octokit;
 
 namespace SwaggerApiParser;
 

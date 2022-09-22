@@ -13,6 +13,7 @@
     <JavaScriptProcessor>..\..\..\..\tools\apiview\parsers\js-api-parser\</JavaScriptProcessor>
     <TypeScriptToolsVersion>latest</TypeScriptToolsVersion>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+    <SignAssembly>False</SignAssembly>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

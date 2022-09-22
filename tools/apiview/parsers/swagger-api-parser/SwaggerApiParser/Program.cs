@@ -34,13 +34,13 @@ namespace SwaggerApiParser
                     return;
                 }
 
-                await HandleGenerateCodeFileFromSwaggerFiles(enumerable, outputFile, package);
+                await HandleGenerateCodeFile(enumerable, outputFile, package);
             }, swaggers, output, packageName);
 
             return Task.FromResult(cmd.Invoke(args));
         }
 
-        static async Task HandleGenerateCodeFileFromSwaggerFiles(IEnumerable<string> swaggers, string output, string packageName)
+        static async Task HandleGenerateCodeFile(IEnumerable<string> swaggers, string output, string packageName)
         {
             var swaggerFilePaths = swaggers as string[] ?? swaggers.ToArray();
             SwaggerApiViewRoot root = new SwaggerApiViewRoot(packageName, packageName);

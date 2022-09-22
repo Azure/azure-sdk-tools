@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.TestProxy.CommandParserOptions
     /// </summary>
     class CLICommandOptions : DefaultOptions
     {
-        [Option('a', "assetsJsonPath", Required = true, HelpText = "Required for Push/Reset/Restore. This should be a path to a valid assets.json within a language repository.")]
+        [Option('a', "assets-json-path", Required = true, HelpText = "Required for Push/Reset/Restore. This should be a path to a valid assets.json within a language repository.")]
         public string AssetsJsonPath { get; set; }
     }
 }

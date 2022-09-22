@@ -7,10 +7,10 @@ namespace Azure.Sdk.Tools.TestProxy.CommandParserOptions
     /// </summary>
     class DefaultOptions
     {
-        [Option('l', "storageLocation", Default = null, HelpText = "The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.")]
+        [Option('l', "storage-location", Default = null, HelpText = "The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.")]
         public string StorageLocation { get; set; }
 
-        [Option('p', "storagePlugin", Default = "GitStore", HelpText = "The plugin for the selected storage, default is Git storage is GitStore. (Currently the only option)")]
+        [Option('p', "storage-plugin", Default = "GitStore", HelpText = "The plugin for the selected storage, default is Git storage is GitStore. (Currently the only option)")]
         public string StoragePlugin { get; set; }
 
         [Option('v', "version", Default = false, HelpText = "Flag. Output the TestProxy version.")]

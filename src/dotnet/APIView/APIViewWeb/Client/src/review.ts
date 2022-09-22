@@ -299,11 +299,15 @@ $(() => {
       $(".code-line-documentation").removeClass('hidden-row');
       $(TOGGLE_DOCUMENTATION).children('i').removeClass("fa-square-plus");
       $(TOGGLE_DOCUMENTATION).children('i').addClass("fa-square-minus");
+      $(TOGGLE_DOCUMENTATION).children('i').css("color", "darkorange");
+      $(TOGGLE_DOCUMENTATION).children('svg').removeClass("invisible");
     } else {
       // hide all documentation
       $(".code-line-documentation").addClass("hidden-row");
       $(TOGGLE_DOCUMENTATION).children('i').removeClass("fa-square-minus");
       $(TOGGLE_DOCUMENTATION).children('i').addClass("fa-square-plus");
+      $(TOGGLE_DOCUMENTATION).children('i').css("color", "darkcyan");
+      $(TOGGLE_DOCUMENTATION).children('svg').addClass("invisible");
     }
   });
 
@@ -355,6 +359,14 @@ $(() => {
 
     $(this).children('i').toggleClass('fa-square-minus');
     $(this).children('i').toggleClass('fa-square-plus');
+    if ($(this).children('i').hasClass('fa-square-plus')) {
+      $(this).children('i').css("color", "darkcyan");
+      $(this).children('svg').addClass("invisible");
+    }
+    else {
+      $(this).children('i').css("color", "darkorange");
+      $(this).children('svg').removeClass("invisible");
+    }
 
     // scroll button to center of screen, so that the line is visible after toggling folding
     $(this).get(0).scrollIntoView({ block: "center"});

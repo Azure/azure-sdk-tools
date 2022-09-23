@@ -14,7 +14,7 @@
     <maven.compiler.testTarget>1.8</maven.compiler.testTarget>
     <maven.compiler.testSource>1.8</maven.compiler.testSource>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <kotlin.version>1.7.10</kotlin.version>
+    <kotlin.version>1.7.10</kotlin.version>
   </properties>
 
   <dependencies>
@@ -54,46 +54,54 @@
       <version>4.0.0</version> <!-- {x-version-update;org.mockito:mockito-core;external_dependency} -->
       <scope>test</scope>
     </dependency>
-      <dependency>
-          <groupId>commons-lang</groupId>
-          <artifactId>commons-lang</artifactId>
-          <version>2.6</version>
-      </dependency>
-
-      <dependency>
-          <groupId>org.jetbrains.dokka</groupId>
-          <artifactId>dokka-core</artifactId>
-          <version>1.6.10</version>
-      </dependency>
-      <dependency>
-          <groupId>org.jetbrains.dokka</groupId>
-          <artifactId>dokka-base</artifactId>
-          <version>1.6.10</version>
-      </dependency>
-
-      <dependency>
-          <groupId>net.lingala.zip4j</groupId>
-          <artifactId>zip4j</artifactId>
-          <version>2.10.0</version>
-      </dependency>
-      <dependency>
-          <groupId>org.jetbrains.kotlin</groupId>
-          <artifactId>kotlin-stdlib-jdk8</artifactId>
-          <version>1.6.10</version>
-      </dependency>
-      <dependency>
-          <groupId>org.jetbrains.kotlin</groupId>
-          <artifactId>kotlin-test</artifactId>
-          <version>1.6.10</version>
-          <scope>test</scope>
-      </dependency>
+    <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>2.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.dokka</groupId>
+      <artifactId>dokka-core</artifactId>
+      <version>1.6.10</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.dokka</groupId>
+      <artifactId>dokka-base</artifactId>
+      <version>1.6.10</version>
+    </dependency>
+    <dependency>
+      <groupId>net.lingala.zip4j</groupId>
+      <artifactId>zip4j</artifactId>
+      <version>2.10.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib-jdk8</artifactId>
+      <version>1.6.10</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-test</artifactId>
+      <version>1.6.10</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
       <!-- Set a compiler level -->
-
-        <!-- Maven Assembly Plugin -->
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.1</version>
+          <configuration>
+              <source>1.8</source>
+              <target>1.8</target>
+              <testSource>1.8</testSource>
+              <testTarget>1.8</testTarget>
+          </configuration>
+      </plugin>
+      <!-- Maven Assembly Plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>

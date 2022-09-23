@@ -53,7 +53,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
             val filteredModules = singleModuleGeneration.transformDocumentationModelBeforeMerge(modulesFromPlatforms)
             val documentationModel = singleModuleGeneration.mergeDocumentationModels(filteredModules)
 
-            return documentationModel!!.packages
+            return documentationModel!!.packages.filter { !it.packageName.contains("implementation") }
         }
     }
 

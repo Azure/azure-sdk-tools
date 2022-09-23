@@ -29,16 +29,14 @@ public class ReadmeParserTest
         var inputFile = ReadmeParser.GetSwaggerFilesFromReadme(readmeFilePath, "default");
         var enumerable = inputFile as string[] ?? inputFile.ToArray();
         Assert.Equal("Microsoft.AppConfiguration/stable/2022-05-01/appconfiguration.json", enumerable.ToArray()[0]);
-        Assert.Equal(1, enumerable.ToList().Count);
+        Assert.Single(enumerable.ToList());
 
 
         inputFile = ReadmeParser.GetSwaggerFilesFromReadme(readmeFilePath, "package-2020-06-01");
         enumerable = inputFile as string[] ?? inputFile.ToArray();
         Assert.Equal("Microsoft.AppConfiguration/stable/2020-06-01/appconfiguration.json", enumerable.ToArray()[0]);
-        Assert.Equal(1, enumerable.ToList().Count);
-        
+        Assert.Single(enumerable.ToList());
     }
-    
 
     [Fact]
     public void TestGetTagFromYamlArguments()
@@ -57,6 +55,21 @@ public class ReadmeParserTest
         result = ReadmeParser.GetTagFromYamlArguments(input);
         this.output.WriteLine(result);
         Assert.Equal("package-2019-01", result);
+        
+    }
 
+    [Fact]
+    public void TestGetTagFromYamlArgumentsInvalidCase()
+    {
+        var input = "$(tag) ==package-2019-01";
+        var result = ReadmeParser.GetTagFromYamlArguments(input);
+        this.output.WriteLine(result);
+        Assert.Equal("", result);
+        
+        input = "$tag =package-2019-01";
+        result = ReadmeParser.GetTagFromYamlArguments(input);
+        this.output.WriteLine(result);
+        Assert.Equal("", result);
+        
     }
 }

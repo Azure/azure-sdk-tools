@@ -41,7 +41,7 @@ public class ReadmeParser
     {
         string pattern = @"\$\(tag\)=='(.*)'";
         var matchResult = Regex.Match(arguments.Replace(" ", ""), pattern);
-        return matchResult.Success ? matchResult.Groups[1].Value : arguments;
+        return matchResult.Success ? matchResult.Groups[1].Value : "";
     }
 
     public static IEnumerable<string> GetSwaggerFilesFromReadme(string readme, string tag)

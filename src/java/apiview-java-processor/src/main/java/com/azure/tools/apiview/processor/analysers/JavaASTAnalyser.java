@@ -103,7 +103,7 @@ public class JavaASTAnalyser implements Analyser {
     public static final String MODULE_INFO_KEY = "module-info";
 
     private static final boolean SHOW_JAVADOC = true;
-    private static final Set<String> BLOCKED_ANNOTATIONS =
+    public static final Set<String> BLOCKED_ANNOTATIONS =
         new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
 
     private static final Pattern SPLIT_NEWLINE = Pattern.compile(MiscUtils.LINEBREAK);

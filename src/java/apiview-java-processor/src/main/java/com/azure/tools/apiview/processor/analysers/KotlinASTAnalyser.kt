@@ -124,42 +124,13 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
 
         // get Constructors and methods
         if (documentable is DClass) {
-            documentable.constructors
-                .also {
-                    if (it.isEmpty()) {
-                        indent()
-                        addComment("// This class does not have any public constructors, and is not able to be instantiated using 'new'.")
-                        unindent()
-                    }
-                }
-                .sortedWith(compareBy { it.parameters.size })
-                .forEach { constructor ->
-                    if (documentable.constructors.size == 1 && constructor.parameters.isEmpty())
-                        return@forEach
-                    tokeniseConstructorsOrMethods(constructor)
-                }
+            tokeniseConstructors(documentable.constructors)
+            tokeniseCompanion(documentable.companion)
+        }
 
-            documentable.companion?.let{
-                addToken(makeWhitespace())
-                addToken(makeWhitespace())
-
-                addToken(Token(TokenKind.KEYWORD, "companion"), TokenModifier.SPACE)
-                addToken(Token(TokenKind.KEYWORD, "object"), TokenModifier.SPACE)
-
-                addToken(Token(TokenKind.PUNCTUATION, "{"), TokenModifier.NEWLINE)
-
-                indent()
-
-                // get fields
-                tokeniseProperties(it)
-                tokeniseFunctions(it)
-
-                unindent()
-                addToken(makeWhitespace())
-                addToken(makeWhitespace())
-                addToken(Token(TokenKind.PUNCTUATION, "}"), TokenModifier.NEWLINE)
-
-            }
+        if (documentable is DAnnotation) {
+            tokeniseConstructors(documentable.constructors)
+            tokeniseCompanion(documentable.companion)
         }
 
         tokeniseFunctions(documentable)
@@ -200,6 +171,47 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
         addToken(makeWhitespace())
         addToken(Token(TokenKind.PUNCTUATION, "}"), TokenModifier.NEWLINE)
     }
+
+    private fun tokeniseConstructors(constructors: List<DFunction>) {
+        constructors.also {
+            if (it.isEmpty()) {
+                indent()
+                addComment("// This class does not have any public constructors, and is not able to be instantiated using 'new'.")
+                unindent()
+            }
+        }
+            .sortedWith(compareBy { it.parameters.size })
+            .forEach { constructor ->
+                if (constructors.size == 1 && constructor.parameters.isEmpty())
+                    return@forEach
+                tokeniseConstructorsOrMethods(constructor)
+            }
+    }
+
+    private fun tokeniseCompanion(companion: DObject?) {
+        companion?.let{
+            addToken(makeWhitespace())
+            addToken(makeWhitespace())
+
+            addToken(Token(TokenKind.KEYWORD, "companion"), TokenModifier.SPACE)
+            addToken(Token(TokenKind.KEYWORD, "object"), TokenModifier.SPACE)
+
+            addToken(Token(TokenKind.PUNCTUATION, "{"), TokenModifier.NEWLINE)
+
+            indent()
+
+            // get fields
+            tokeniseProperties(it)
+            tokeniseFunctions(it)
+
+            unindent()
+            addToken(makeWhitespace())
+            addToken(makeWhitespace())
+            addToken(Token(TokenKind.PUNCTUATION, "}"), TokenModifier.NEWLINE)
+
+        }
+    }
+
 
     private fun tokeniseFunctions(documentable: Documentable) {
         val functions = when (documentable) {
@@ -243,8 +255,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
             addToken(Token(TokenKind.WHITESPACE, " "))
         }
 
-        val annotations = getAnnotations(function)
-        val isDeprecated =  annotations?.any { list -> list.any { item -> item.dri.classNames == "Deprecated" } } == true
+        val isDeprecated = isDeprecated(function)
         if (isDeprecated) {
             addToken(Token(TokenKind.DEPRECATED_RANGE_START))
         }
@@ -335,6 +346,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
             is DClass -> documentable.properties
             is DInterface -> documentable.properties
             is DObject -> documentable.properties
+            is DAnnotation -> documentable.properties
             else -> return
         }
 
@@ -360,6 +372,11 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
 
         addToken(Token(TokenKind.KEYWORD, if (property.setter == null) "val" else "var"), TokenModifier.SPACE)
 
+        val isDeprecated = isDeprecated(property)
+        if (isDeprecated) {
+            addToken(Token(TokenKind.DEPRECATED_RANGE_START))
+        }
+
         // extension and name
         if (property.receiver != null) {
             val it = property.receiver!!
@@ -376,6 +393,10 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
         else {
             val definitionId: String = ASTUtils.makeId(property.dri.packageName + "." + property.dri.classNames + "." + property.name)
             addToken(Token(TokenKind.MEMBER_NAME, property.name, definitionId))
+        }
+
+        if (isDeprecated) {
+            addToken(Token(TokenKind.DEPRECATED_RANGE_END))
         }
 
         addToken(Token(TokenKind.KEYWORD, ":"), TokenModifier.SPACE)
@@ -443,16 +464,6 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
         }
     }
 
-    private fun getAnnotations(documentable: Documentable): Collection<List<Annotations.Annotation>>? {
-        return when (documentable) {
-            is DClass -> documentable.extra[Annotations]?.directAnnotations?.values
-            is DInterface -> documentable.extra[Annotations]?.directAnnotations?.values
-            is DEnum -> documentable.extra[Annotations]?.directAnnotations?.values
-            is DFunction -> documentable.extra[Annotations]?.directAnnotations?.values
-            else -> null
-        }
-    }
-
     private fun getTypeDeclaration(documentable: Documentable) {
         val typeKind: TypeKind = when (documentable) {
             is DClass -> TypeKind.CLASS
@@ -461,11 +472,12 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
             is DObject -> TypeKind.OBJECT
             is DFunction -> TypeKind.FUNCTION
             is DProperty -> TypeKind.PROPERTY
+            is DAnnotation -> TypeKind.ANNOTATION
             else -> return
         }
 
         // public class or interface or enum
-//            getAnnotations(typeDeclaration, true, true)
+        addAnnotations(documentable, showAnnotationProperties = true, addNewline = true)
 
         // Get modifiers
         addToken(makeWhitespace())
@@ -484,8 +496,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
 
         addToken(Token(TokenKind.KEYWORD, typeKind.getName()), TokenModifier.SPACE)
 
-        val annotations = getAnnotations(documentable)
-        val isDeprecated =  annotations?.any { list -> list.any { item -> item.dri.classNames == "Deprecated" } } == true
+        val isDeprecated =  isDeprecated(documentable)
         if (isDeprecated) {
             addToken(Token(TokenKind.DEPRECATED_RANGE_START))
         }
@@ -683,7 +694,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
                         addToken(Token(TokenKind.COMMENT, " * "))
                         addNewLine()
                         addToken(makeWhitespace())
-                        addToken(Token(TokenKind.COMMENT, " * @param " + tagWrapper.name + " "))
+                        addToken(Token(TokenKind.COMMENT, " * @param ${tagWrapper.name} "))
                         tagWrapper.children.forEach { docTag ->
                             build(docTag)
                         }
@@ -694,7 +705,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
                         addToken(Token(TokenKind.COMMENT, " * "))
                         addNewLine()
                         addToken(makeWhitespace())
-                        addToken(Token(TokenKind.COMMENT, " * @sample " + tagWrapper.name + " "))
+                        addToken(Token(TokenKind.COMMENT, " * @sample ${tagWrapper.name} "))
                         tagWrapper.children.forEach { docTag ->
                             build(docTag)
                         }
@@ -736,6 +747,127 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
                 tag.children.forEach {
                     build(it)
                 }
+            }
+        }
+    }
+
+    private fun getAnnotations(documentable: Documentable): Collection<Annotations.Annotation>? {
+        val directAnnotations = when (documentable) {
+            is DClass -> documentable.extra[Annotations]?.directAnnotations
+            is DInterface -> documentable.extra[Annotations]?.directAnnotations
+            is DEnum -> documentable.extra[Annotations]?.directAnnotations
+            is DObject -> documentable.extra[Annotations]?.directAnnotations
+            is DFunction -> documentable.extra[Annotations]?.directAnnotations
+            is DProperty -> documentable.extra[Annotations]?.directAnnotations
+            else -> null
+        }
+
+        return directAnnotations?.values?.flatten()
+    }
+
+    private fun isDeprecated(documentable: Documentable): Boolean {
+        val annotations = getAnnotations(documentable)
+        return annotations?.any { item -> item.dri.classNames == "Deprecated" } ?: false
+    }
+
+    private fun addAnnotations(documentable: Documentable, showAnnotationProperties: Boolean, addNewline: Boolean) {
+        val annotations = getAnnotations(documentable)
+
+        if (annotations == null || !annotations.any())
+            return
+
+        if (addNewline) {
+            addToken(makeWhitespace())
+        }
+
+        annotations
+            .filter {
+                val id = it.dri.classNames
+                !JavaASTAnalyser.BLOCKED_ANNOTATIONS.contains(id) && id?.startsWith("Json") == false
+            }
+            .sortedBy { it.dri.classNames }
+            .forEach {
+                val token = Token(TokenKind.TYPE_NAME, "@" + it.dri.classNames)
+                token.navigateToId = apiListing.knownTypes[it.dri.classNames]
+                addToken(token)
+
+                if (showAnnotationProperties) {
+                    addToken(Token(TokenKind.PUNCTUATION, "("))
+
+                    it.params.onEachIndexed { index, entry ->
+                        addToken(Token(TokenKind.TEXT, entry.key))
+                        addToken(Token(TokenKind.PUNCTUATION, " = "))
+                        processAnnotationValueExpression(entry.value)
+
+                        if (index < it.params.size - 1) {
+                            addToken(Token(TokenKind.PUNCTUATION, ", "))
+                        }
+                    }
+
+                    addToken(Token(TokenKind.PUNCTUATION, ")"))
+                }
+
+                if (addNewline) {
+                    addNewLine()
+                } else {
+                    addToken(Token(TokenKind.WHITESPACE, " "))
+                }
+            }
+    }
+
+    private fun processAnnotationValueExpression(value: AnnotationParameterValue) {
+        when (value) {
+            is AnnotationValue -> {
+                val token = Token(TokenKind.TYPE_NAME, value.annotation.dri.classNames)
+                token.navigateToId = apiListing.knownTypes[value.annotation.dri.classNames]
+                addToken(token)
+
+                addToken(Token(TokenKind.PUNCTUATION, "("))
+                value.annotation.params.onEachIndexed { index, entry ->
+
+                    addToken(Token(TokenKind.TEXT, entry.key))
+                    addToken(Token(TokenKind.PUNCTUATION, " = "))
+                    processAnnotationValueExpression(entry.value)
+
+                    if (index < value.annotation.params.size - 1) {
+                        addToken(Token(TokenKind.PUNCTUATION, ", "))
+                    }
+
+                }
+                addToken(Token(TokenKind.PUNCTUATION, ")"))
+
+            }
+            is ArrayValue -> {
+                addToken(Token(TokenKind.PUNCTUATION, "["))
+                value.value.onEachIndexed { index, annotationParameterValue ->
+                    processAnnotationValueExpression(annotationParameterValue)
+                    if (index < value.value.size - 1) {
+                        addToken(Token(TokenKind.PUNCTUATION, ", "))
+                    }
+                }
+                addToken(Token(TokenKind.PUNCTUATION, "]"))
+            }
+            is EnumValue -> {
+                val token = Token(TokenKind.TYPE_NAME, value.enumName)
+                value.enumDri.classNames?.let{
+                    token.navigateToId = apiListing.knownTypes[it.split(".")[0]]
+                }
+                addToken(token)
+            }
+            is org.jetbrains.dokka.model.ClassValue -> {
+                val token = Token(TokenKind.TYPE_NAME, value.className)
+                token.navigateToId = apiListing.knownTypes[value.className]
+                addToken(token)
+            }
+
+            is StringValue -> {
+                addToken(Token(TokenKind.TEXT, "\"${value.value}\""))
+            }
+            is LiteralValue -> {
+                addToken(Token(TokenKind.TEXT, value.text()))
+            }
+            else -> {
+                addToken(Token(TokenKind.TEXT, value.toString()))
             }
         }
     }

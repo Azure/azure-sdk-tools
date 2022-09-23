@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -216,6 +217,36 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             response = new DefaultHttpContext().Response;
             await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
             Assert.False(response.Headers.ContainsKey("Retry-After"));
+        }
+
+        [Fact]
+        public async Task TestPlaybackWithGZippedContentPlayback()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var body = "{\"x-recording-file\":\"Test.RecordEntries/request_response_with_gzipped_content.json\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+            Assert.NotNull(recordingId);
+            Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(recordingId));
+            var entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[0];
+            HttpRequest request = TestHelpers.CreateRequestFromEntry(entry);
+
+            // compress the body to simulate what the request coming from the library will look like
+            request.Body = new MemoryStream(GZipUtilities.CompressBody(BinaryData.FromStream(request.Body).ToArray(), request.Headers));
+            HttpResponse response = new DefaultHttpContext().Response;
+            await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
         }
     }
 }

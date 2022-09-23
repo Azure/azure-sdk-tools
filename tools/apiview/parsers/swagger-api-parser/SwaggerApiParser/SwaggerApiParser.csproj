@@ -1,19 +1,36 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <PackageVersion>1.0.0-dev.0.1</PackageVersion>
+    <PackageVersion>1.0.0-dev.0.2</PackageVersion>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>swaggerAPIParser</ToolCommandName>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>swagger_api_parser</RootNamespace>
-    <PackageOutputPath>./nupkg</PackageOutputPath>
-    <LangVersion>10</LangVersion>
+    <LangVersion>Latest</LangVersion>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <AssemblyName>Azure.Sdk.Tools.SwaggerApiParser</AssemblyName>
+    <SignAssembly>True</SignAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>$(NoWarn);NU5105;NU5119</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>$(NoWarn);NU5105;NU5119</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj" />
+      <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj" />    
   </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Remove="SwaggerApiParserTest\**" />
+    <EmbeddedResource Remove="SwaggerApiParserTest\**" />
+    <None Remove="SwaggerApiParserTest\**" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="NuGet.CommandLine" Version="6.0.2">
@@ -21,15 +38,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta2.21617.1" />
-    <PackageReference Include="xunit" Version="2.4.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove=".gitignore" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="SwaggerApiParserTest\fixtures\common-types\resource-management" />
   </ItemGroup>
 
 </Project>

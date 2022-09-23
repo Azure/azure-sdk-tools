@@ -190,6 +190,12 @@
     highlightCurrentRow(inlineRow);
   });
 
+  $("#jump-to-first-comment").on("click", function () {
+    var commentRows = $('.comment-row');
+    var displayedCommentRows = getDisplayedCommentRows(commentRows, false, true);
+    $(displayedCommentRows[0])[0].scrollIntoView();
+  });
+
   function highlightCurrentRow(rowElement: JQuery<HTMLElement> = $()) {
     if (location.hash.length < 1) return;
     var row = (rowElement.length > 0) ? rowElement : getCodeRow(location.hash.substring(1));
@@ -411,7 +417,7 @@
 
   function ensureMessageIconInDOM() {
     if (!MessageIconAddedToDom) {
-      $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `"><i class="far fa-comment-alt pt-1 pl-1"></i></span>`);
+      $(".comment-icon-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `"><i class="far fa-comment-alt pt-1 pl-1"></i></span>`);
       MessageIconAddedToDom = true;
     }
   }
@@ -420,9 +426,33 @@
     getCodeRow(id).find(SEL_COMMENT_ICON).toggleClass(INVISIBLE, !show);
   }
 
+  function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearCommentAnchors = false, returnFirst = false) {
+    var displayedCommentRows: JQuery<HTMLElement>[] = [];
+    commentRows.each(function (index) {
+      if (clearCommentAnchors) {
+        $(this).find('.comment-thread-anchor').removeAttr("id");
+        $(this).find('.comment-navigation-buttons').empty();
+      }
+
+      if ($(this).hasClass("d-none")) {
+        return;
+      }
+
+      let commentHolder = $(this).find(".comment-holder").first();
+      if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
+        return;
+      }
+      displayedCommentRows.push($(this));
+      if (returnFirst) {
+        return false;
+      }
+    });
+    return displayedCommentRows
+  }
+
   function addCommentThreadNavigation(){
     var commentRows = $('.comment-row');
-    var displayedCommentRows: JQuery<HTMLElement>[] = [];
+    var displayedCommentRows = getDisplayedCommentRows(commentRows, true, false);
 
     commentRows.each(function (index) {
       $(this).find('.comment-thread-anchor').removeAttr("id");

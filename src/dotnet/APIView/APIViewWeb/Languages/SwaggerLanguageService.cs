@@ -18,8 +18,10 @@ namespace APIViewWeb
 
         public override string ProcessName => throw new NotImplementedException();
 
-        public new bool IsReviewGenByPipeline = true;
-
+        public SwaggerLanguageService()
+        {
+            IsReviewGenByPipeline = true;
+        }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
             return await CodeFile.DeserializeAsync(stream, true);

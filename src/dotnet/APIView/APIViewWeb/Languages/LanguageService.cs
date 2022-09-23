@@ -15,7 +15,7 @@ namespace APIViewWeb
         public virtual bool IsSupportedFile(string name) => name.EndsWith(Extension, StringComparison.OrdinalIgnoreCase);
         public abstract bool CanUpdate(string versionString);
         public abstract Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis);
-        public virtual bool IsReviewGenByPipeline { get; } = false;
+        public virtual bool IsReviewGenByPipeline { get; set; } = false;
 
         public readonly CodeFileToken ReviewNotReadyCodeFile = new CodeFileToken("API review is being generated for this revision and it will be available in few minutes. Please refresh this page after few minutes to see generated API review.", CodeFileTokenKind.Literal);
         public virtual CodeFile GetReviewGenPendingCodeFile(string fileName) => new CodeFile()

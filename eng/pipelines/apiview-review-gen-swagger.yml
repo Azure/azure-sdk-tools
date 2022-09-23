@@ -39,7 +39,7 @@ jobs:
       --version 1.0.0-dev.20220921.1
       --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
       --tool-path $(SwaggerParserInstallPath)
-    workingDirectory: $(Pipeline.Workspace)/SwaggerParser
+    workingDirectory: $(SwaggerParserInstallPath)
     displayName: 'Install Swagger APIView Parser'
 
   - template: /eng/pipelines/templates/steps/apiview-review-gen.yml

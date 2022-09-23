@@ -2,6 +2,7 @@ package com.azure.tools.apiview.processor;
 
 import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.Analyser;
+import com.azure.tools.apiview.processor.analysers.KotlinASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
@@ -12,6 +13,7 @@ import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import net.lingala.zip4j.ZipFile;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -98,6 +100,10 @@ public class Main {
                 if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(artifactId + "/pom.xml")) {
                     reviewProperties.setMavenPom(new Pom(jarFile.getInputStream(entry)));
                 }
+
+                if (fullPath.endsWith(".kt")) {
+                    reviewProperties.hasKotlinFiles(true);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -155,7 +161,7 @@ public class Main {
         apiListing.setReviewName(reviewName);
         apiListing.setPackageName(packageName);
         apiListing.setPackageVersion(reviewProperties.getMavenPom().getVersion());
-        apiListing.setLanguage("Java");
+
         apiListing.setMavenPom(reviewProperties.getMavenPom());
 
         if(groupId.contains("spring")) {
@@ -167,23 +173,63 @@ public class Main {
         }
         System.out.println("  Using '" + apiListing.getLanguageVariant() + "' for the language variant");
 
-        final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
+        if (reviewProperties.getHasKotlinFiles()) {
+            apiListing.setLanguage("Kotlin");
+            String destination = "temp/" + inputFile.getName();
 
-        // Read all files within the jar file so that we can create a list of files to analyse
-        final List<Path> allFiles = new ArrayList<>();
-        try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
-            fs.getRootDirectories().forEach(root -> {
-                try (Stream<Path> paths = Files.walk(root)) {
-                    paths.forEach(allFiles::add);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    System.exit(-1);
-                }
-            });
+            deleteDirectory(new File(destination));
 
-            // Do the analysis while the filesystem is still represented in memory
-            analyser.analyse(allFiles);
+            ZipFile zipFile = new ZipFile(inputFile);
+            zipFile.extractAll(destination);
+
+            File file = new File(destination);
+            final KotlinASTAnalyser analyser = new KotlinASTAnalyser(apiListing);
+            analyser.analyse(file.getAbsolutePath());
         }
+        else {
+            apiListing.setLanguage("Java");
+            final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
+
+            // Read all files within the jar file so that we can create a list of files to analyse
+            final List<Path> allFiles = new ArrayList<>();
+            try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
+                fs.getRootDirectories().forEach(root -> {
+                    try (Stream<Path> paths = Files.walk(root)) {
+                        paths.forEach(allFiles::add);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        System.exit(-1);
+                    }
+                });
+
+                // Do the analysis while the filesystem is still represented in memory
+                analyser.analyse(allFiles);
+            }
+        }
+    }
+
+    private static boolean containsKotlinFiles(File file) {
+        if (file.isDirectory()) {
+            for (File f : file.listFiles()) {
+                if (containsKotlinFiles(f))
+                    return true;
+            }
+            return false;
+        }
+        return file.getName().endsWith(".kt");
+    }
+
+    private static void deleteDirectory(File file){
+        if (file == null) {
+            return;
+        }
+
+        if (file.isDirectory()) {
+            for (File f : file.listFiles()) {
+                deleteDirectory(f);
+            }
+        }
+        file.delete();
     }
 
     private static void processXmlFile(File inputFile, APIListing apiListing) {
@@ -233,6 +279,7 @@ public class Main {
 
     private static class ReviewProperties {
         private Pom mavenPom;
+        private Boolean hasKotlinFiles;
 
         public void setMavenPom(Pom pom) {
             this.mavenPom = pom;
@@ -240,6 +287,15 @@ public class Main {
 
         public Pom getMavenPom() {
             return mavenPom;
+        }
+
+        public void hasKotlinFiles(Boolean hasKotlinFiles){
+            this.hasKotlinFiles = hasKotlinFiles;
+        }
+
+
+        public Boolean getHasKotlinFiles() {
+            return hasKotlinFiles;
         }
     }
 }

@@ -6,6 +6,9 @@ public enum TypeKind {
     ASSEMBLY("assembly"),     // i.e. a Jar File
     NAMESPACE("namespace"),   // i.e. a Java package
     CLASS("class"),
+    OBJECT("object"),
+    FUNCTION("fun"),
+    PROPERTY("property"),
     INTERFACE("interface"),
     ENUM("enum"),
     ANNOTATION("annotation"),

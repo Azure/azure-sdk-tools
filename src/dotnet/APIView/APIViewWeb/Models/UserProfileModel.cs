@@ -1,11 +1,18 @@
 using System.Collections.Generic;
 using System.Security.Claims;
+using Newtonsoft.Json;
 
 namespace APIViewWeb.Models
 {
-    public class UserModel
+    public class UserProfileModel
     {
-        public UserModel(ClaimsPrincipal User, string email, HashSet<string> languages)
+        // Default case
+        public UserProfileModel() 
+        {
+            Languages = new HashSet<string>();
+        }
+
+        public UserProfileModel(ClaimsPrincipal User, string email, HashSet<string> languages)
         {
             UserName = User.GetGitHubLogin();
             Email = email;
@@ -20,6 +27,7 @@ namespace APIViewWeb.Models
             
         }
 
+        [JsonProperty("id")]
         public string UserName { get; set; }
         public string Email { get; set; }
 

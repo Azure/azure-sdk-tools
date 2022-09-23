@@ -235,10 +235,10 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
 
         // print the JavaDoc above each method / constructor
         visitJavaDoc(function.documentation)
+        // annotations
+        addAnnotations(function, showAnnotationProperties = true, addNewline = true)
 
         addToken(makeWhitespace())
-        // annotations
-//        getAnnotations(callableDeclaration, false, false)
 
         // modifiers
         getModifiers(function)
@@ -304,6 +304,9 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
         function.parameters
             .forEachIndexed { index, parameter ->
 
+                // annotations
+                addAnnotations(parameter, showAnnotationProperties = false, addNewline = false)
+
                 addToken(Token(TokenKind.TEXT, parameter.name))
                 addToken(Token(TokenKind.PUNCTUATION, ":"), TokenModifier.SPACE)
                 getType(parameter.type)
@@ -364,9 +367,11 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
 
         visitJavaDoc(property.documentation)
 
+        // annotations
+        addAnnotations(property, showAnnotationProperties = true, addNewline = true)
+
         addToken(makeWhitespace())
 
-        // Add annotation for field declaration
         if (property.modifier.values.any { it.name == "open" })
             addToken(Token(TokenKind.KEYWORD, "open"), TokenModifier.SPACE)
 
@@ -759,6 +764,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
             is DObject -> documentable.extra[Annotations]?.directAnnotations
             is DFunction -> documentable.extra[Annotations]?.directAnnotations
             is DProperty -> documentable.extra[Annotations]?.directAnnotations
+            is DParameter -> documentable.extra[Annotations]?.directAnnotations
             else -> null
         }
 

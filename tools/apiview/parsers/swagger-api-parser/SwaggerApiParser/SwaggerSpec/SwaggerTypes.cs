@@ -216,6 +216,10 @@ namespace SwaggerApiParser
                 // ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Literal));
                 ret.Add(TokenSerializer.Colon());
+                if (kv.Value == null)
+                {
+                    continue;
+                }
 
                 // Normal case: If properties is has values. Serialize each key value pair in properties.
                 if ((kv.Value.properties != null && kv.Value.properties?.Count != 0))
@@ -224,7 +228,7 @@ namespace SwaggerApiParser
                     SchemaTableItem item = new SchemaTableItem {Field = kv.Key, Description = kv.Value.description, Keywords = String.Join(",", keywords), TypeFormat = kv.Value.GetTypeFormat()};
                     flattenedTableItems.Add(item);
                     ret.Add(TokenSerializer.NewLine());
-                    if (serializeRef) 
+                    if (serializeRef)
                     {
                         ret.AddRange(schema.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), kv.Value, ref flattenedTableItems, serializeRef));
                     }

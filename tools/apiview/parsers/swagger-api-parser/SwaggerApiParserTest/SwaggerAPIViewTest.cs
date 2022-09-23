@@ -104,6 +104,22 @@ public class SwaggerApiViewTest
         await codeFile.SerializeAsync(writer);
     }
     
+    [Fact]
+    public async Task TestAppConfiguration()
+    {
+        const string appConfigurationFile = "./fixtures/appconfiguration/Microsoft.AppConfiguration/stable/2022-05-01/appconfiguration.json";
+        var appConfigurationSwagger = await SwaggerDeserializer.Deserialize(appConfigurationFile);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.AppConfiguration", "Microsoft.AppConfiguration");
+        root.AddSwaggerSpec(appConfigurationSwagger, Path.GetFullPath(appConfigurationFile), "Microsoft.AppConfiguration");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./appConfiguration_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
+    
     
     [Fact]
     public async Task TestDeviceUpdateSmall()

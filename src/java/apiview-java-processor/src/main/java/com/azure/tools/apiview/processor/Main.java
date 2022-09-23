@@ -100,10 +100,6 @@ public class Main {
                 if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(artifactId + "/pom.xml")) {
                     reviewProperties.setMavenPom(new Pom(jarFile.getInputStream(entry)));
                 }
-
-                if (fullPath.endsWith(".kt")) {
-                    reviewProperties.hasKotlinFiles(true);
-                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -173,18 +169,18 @@ public class Main {
         }
         System.out.println("  Using '" + apiListing.getLanguageVariant() + "' for the language variant");
 
-        if (reviewProperties.getHasKotlinFiles()) {
+
+        String unzippedTemp = "temp/" + inputFile.getName();
+        deleteDirectory(new File(unzippedTemp));
+
+        ZipFile zipFile = new ZipFile(inputFile);
+        zipFile.extractAll(unzippedTemp);
+        File unzippedFile = new File(unzippedTemp);
+
+        if (KotlinASTAnalyser.hasPublicApiInKotlin(unzippedFile.getAbsolutePath())) {
             apiListing.setLanguage("Kotlin");
-            String destination = "temp/" + inputFile.getName();
-
-            deleteDirectory(new File(destination));
-
-            ZipFile zipFile = new ZipFile(inputFile);
-            zipFile.extractAll(destination);
-
-            File file = new File(destination);
-            final KotlinASTAnalyser analyser = new KotlinASTAnalyser(apiListing);
-            analyser.analyse(file.getAbsolutePath());
+            final KotlinASTAnalyser kotlinAnalyser = new KotlinASTAnalyser(apiListing);
+            kotlinAnalyser.analyse(unzippedFile.getAbsolutePath());
         }
         else {
             apiListing.setLanguage("Java");
@@ -206,17 +202,7 @@ public class Main {
                 analyser.analyse(allFiles);
             }
         }
-    }
-
-    private static boolean containsKotlinFiles(File file) {
-        if (file.isDirectory()) {
-            for (File f : file.listFiles()) {
-                if (containsKotlinFiles(f))
-                    return true;
-            }
-            return false;
-        }
-        return file.getName().endsWith(".kt");
+        deleteDirectory(unzippedFile);
     }
 
     private static void deleteDirectory(File file){
@@ -279,7 +265,6 @@ public class Main {
 
     private static class ReviewProperties {
         private Pom mavenPom;
-        private Boolean hasKotlinFiles;
 
         public void setMavenPom(Pom pom) {
             this.mavenPom = pom;
@@ -287,15 +272,6 @@ public class Main {
 
         public Pom getMavenPom() {
             return mavenPom;
-        }
-
-        public void hasKotlinFiles(Boolean hasKotlinFiles){
-            this.hasKotlinFiles = hasKotlinFiles;
-        }
-
-
-        public Boolean getHasKotlinFiles() {
-            return hasKotlinFiles;
         }
     }
 }

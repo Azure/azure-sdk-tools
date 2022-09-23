@@ -19,37 +19,51 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
     private var indent: Int = 0
     private val knownTypes = mutableMapOf<String, Documentable>()
 
+    companion object {
+        @JvmStatic
+        fun hasPublicApiInKotlin(absolutePath: String) : Boolean {
+            val packages = getPackages(absolutePath)
+
+            return packages
+                .flatMap { it.children }
+                .filter { it is WithSources }
+                .map { it as WithSources }
+                .flatMap { it.sources.values }
+                .any { it.path.endsWith(".kt") }
+        }
+
+        private fun getPackages(absolutePath: String): List<DPackage> {
+            val files = setOf(File(absolutePath))
+
+            val sourceSet = DokkaSourceSetImpl(
+                sourceSetID = DokkaSourceSetID("DEFAULT", "DEFAULT"),
+                sourceRoots = files,
+            )
+
+            val configuration = DokkaConfigurationImpl(
+                sourceSets = listOf(sourceSet),
+            )
+
+            val logger = DokkaConsoleLogger(LoggingLevel.DEBUG)
+
+            val dokkaGenerator = DokkaGenerator(configuration, logger)
+            val context = dokkaGenerator.initializePlugins(configuration, logger)
+            val singleModuleGeneration = context.single(CoreExtensions.generation) as SingleModuleGeneration
+            val modulesFromPlatforms = singleModuleGeneration.createDocumentationModels()
+            val filteredModules = singleModuleGeneration.transformDocumentationModelBeforeMerge(modulesFromPlatforms)
+            val documentationModel = singleModuleGeneration.mergeDocumentationModels(filteredModules)
+
+            return documentationModel!!.packages
+        }
+    }
+
     fun analyse(absolutePath: String) {
-
-        val files = setOf(File(absolutePath))
-
-
-        val sourceSet = DokkaSourceSetImpl(
-            sourceSetID = DokkaSourceSetID("DEFAULT", "DEFAULT"),
-            sourceRoots = files,
-        )
-
-        val configuration = DokkaConfigurationImpl(
-            sourceSets = listOf(sourceSet),
-        )
-
-        val logger = DokkaConsoleLogger(LoggingLevel.DEBUG)
-
-        val dokkaGenerator = DokkaGenerator(configuration, logger)
-        val context = dokkaGenerator.initializePlugins(configuration, logger)
-        val singleModuleGeneration = context.single(CoreExtensions.generation) as SingleModuleGeneration
-        val modulesFromPlatforms = singleModuleGeneration.createDocumentationModels()
-        val filteredModules = singleModuleGeneration.transformDocumentationModelBeforeMerge(modulesFromPlatforms)
-        val documentationModel = singleModuleGeneration.mergeDocumentationModels(filteredModules) ?: return
-
-        val packages = documentationModel.packages
-
+        val packages = getPackages(absolutePath)
         scanForTypes(packages)
 
         packages.sortedBy { it.packageName }.forEach {
             processPackage(it)
         }
-
     }
 
     private fun scanForTypes(packages: List<DPackage>) {
@@ -66,9 +80,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
     }
 
     private fun processPackage(dPackage: DPackage) {
-
         visitJavaDoc(dPackage.documentation)
-
 
         val packageName = dPackage.packageName
 
@@ -87,7 +99,6 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
         indent()
 
         dPackage.children.stream()
-            .filter { it is DClass || it is DInterface || it is DEnum || it is DObject || it is DProperty || it is DFunction}
             .sorted(Comparator.comparing { s: Documentable -> s.name!! } )
             .forEach { documentable: Documentable ->
 
@@ -104,8 +115,6 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
     }
 
     private fun processClassOrInterfaceOrEnum(documentable: Documentable) {
-
-
         visitJavaDoc(documentable.documentation)
 
         getTypeDeclaration(documentable)
@@ -624,25 +633,19 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
                 val type = (it as Invariance<TypeParameter>).inner
                 getTypeDFS(type.dri, listOf())
             }
-            catch (ex: Exception){
-            }
+            catch (ex: Exception){ }
 
             try {
                 val type = (it as Invariance<GenericTypeConstructor>).inner
                 getTypeDFS(type.dri, type.projections)
             }
-            catch (ex: Exception){
-            }
-
+            catch (ex: Exception){ }
 
             addToken(Token(TokenKind.PUNCTUATION, ">"))
         }
-
-
     }
 
     private fun visitJavaDoc(set: SourceSetDependent<DocumentationNode>) {
-
         val tags = set.values
             .flatMap {
                 it.children
@@ -696,9 +699,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
                             build(docTag)
                         }
                     }
-                    else -> {
-
-                    }
+                    else -> { }
                 }
             }
 
@@ -710,8 +711,6 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
     }
 
     private fun build(tag: DocTag) {
-
-
         when (tag) {
             is Text -> {
                 addToken(Token(TokenKind.COMMENT, tag.body))

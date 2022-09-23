@@ -7,7 +7,7 @@ public enum TypeKind {
     NAMESPACE("namespace"),   // i.e. a Java package
     CLASS("class"),
     OBJECT("object"),
-    FUNCTION("fun"),
+    FUNCTION("function"),
     PROPERTY("property"),
     INTERFACE("interface"),
     ENUM("enum"),

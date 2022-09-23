@@ -31,7 +31,8 @@ ENV ProgramFiles="C:\Program Files" \
     ASPNETCORE_Kestrel__Certificates__Default__Password="password"  \
     # this override allows the tool server to listen to traffic over the docker bridge.
     # default URL of localhost:5000 or localhost:50001 are not usable from outside the container
-    ASPNETCORE_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
+    ASPNETCORE_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001" \
+    TEST_PROXY_FOLDER="/srv/testproxy/"
 
 USER ContainerAdministrator
 
@@ -55,4 +56,4 @@ COPY --from=build_env /proxyserver .
 EXPOSE 5001
 EXPOSE 5000
 
-ENTRYPOINT ["host-patcher.cmd", "&",  "dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/srv/testproxy/", "--dump"]
+ENTRYPOINT ["host-patcher.cmd", "&",  "dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--dump"]

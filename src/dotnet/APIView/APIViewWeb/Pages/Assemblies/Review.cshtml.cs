@@ -298,6 +298,7 @@ namespace APIViewWeb.Pages.Assemblies
                 }
 
                 // if we have comments for this line and the thread has not been resolved.
+                // Add "&& !thread.Comments.First().IsUsageSampleComment()" to exclude sample comments from being counted (This also prevents the popup before approval)
                 if (comments.TryGetThreadForLine(line.ElementId, out CommentThreadModel thread) && !thread.IsResolved)
                 {
                     activeThreads++;

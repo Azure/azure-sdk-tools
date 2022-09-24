@@ -77,9 +77,40 @@
                         }
                         else
                         {
-                            <button type="submit" class="btn btn-sm shadow-sm btn-success ml-2">
-                                <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve
-                            </button>
+                            @if (Model.ActiveConversations > 0)
+                            {
+                                <button type="button" class="btn btn-sm shadow-sm btn-success ml-2" data-toggle="modal" data-target="#approveModel">
+                                    <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve
+                                </button>
+
+                                <div class="modal fade" id="approveModel" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Approve Review</h5>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p> There are still active conversations. <br /> Would you like to review these first? </p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-sm border shadow-sm btn-outline-dark" data-dismiss="modal">Cancel</button>
+                                                <a asp-page="Conversation" asp-route-id="@Model.Review.ReviewId">
+                                                    <div class="btn btn-sm border shadow-sm btn-outline-dark">Check Conversations</div>
+                                                </a>
+                                                <button type="submit" class="btn btn-sm shadow-sm btn-success ml-2">
+                                                    <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve Anyway
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-sm shadow-sm btn-success ml-2">
+                                    <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve
+                                </button>
+                            }
                         }
                     }
                     else

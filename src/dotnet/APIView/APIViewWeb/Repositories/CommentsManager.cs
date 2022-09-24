@@ -104,6 +104,8 @@ namespace APIViewWeb
                 }
                 newTaggedUsers.Add(taggedUser);
             }
+            comment.TaggedUsers = newTaggedUsers;
+
             await _commentsRepository.UpsertCommentAsync(comment);
             await _notificationManager.NotifySubscribersOnComment(user, comment);
             return comment;

@@ -9,23 +9,11 @@ using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
-    public class ResolverRequirementHandler : IAuthorizationHandler
+    public class ResolverRequirementHandler : ApproverRequirementHandler, IAuthorizationHandler
     {
-        private HashSet<string> approvers = new HashSet<string>();
+        public ResolverRequirementHandler(IConfiguration configuration) : base(configuration) {}
 
-        public ResolverRequirementHandler(IConfiguration configuration)
-        {
-            var approverConfig = configuration["approvers"];
-            if (!string.IsNullOrEmpty(approverConfig))
-            {
-                foreach (var id in approverConfig.Split(","))
-                {
-                    approvers.Add(id);
-                }
-            }
-        }
-
-        public Task HandleAsync(AuthorizationHandlerContext context)
+        public new Task HandleAsync(AuthorizationHandlerContext context)
         {
             foreach (var requirement in context.Requirements)
             {

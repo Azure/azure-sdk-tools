@@ -23,9 +23,9 @@ public class TokenSerializerTest
         SerializeContext context = new SerializeContext();
         var ret = TokenSerializer.TokenSerialize(text, context);
         
-        Assert.Equal(CodeFileTokenKind.Whitespace, ret[0].Kind);
-        Assert.Equal(CodeFileTokenKind.Literal, ret[1].Kind);
-        Assert.Equal("hello", ret[1].Value);
+        Assert.Equal(CodeFileTokenKind.Literal, ret[0].Kind);
+        Assert.Equal(CodeFileTokenKind.Newline, ret[1].Kind);
+        Assert.Equal("hello", ret[0].Value);
         return Task.CompletedTask;
     } 
 
@@ -38,11 +38,11 @@ public class TokenSerializerTest
         var ret = TokenSerializer.TokenSerialize(general, context);
 
         // Assert first line format. 
-        Assert.Equal(CodeFileTokenKind.Whitespace, ret[0].Kind);
-        Assert.Equal(CodeFileTokenKind.Literal, ret[1].Kind);
-        Assert.Equal("swagger", ret[1].Value);
-        Assert.Equal(":", ret[2].Value);
-        Assert.Equal("2.0", ret[3].Value);
+        Assert.Equal(CodeFileTokenKind.Literal, ret[0].Kind);
+        Assert.Equal(CodeFileTokenKind.Punctuation, ret[1].Kind);
+        Assert.Equal("swagger", ret[0].Value);
+        Assert.Equal(": ", ret[1].Value);
+        Assert.Equal("2.0", ret[2].Value);
 
         return Task.CompletedTask;
     }

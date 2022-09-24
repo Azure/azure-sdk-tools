@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using CommandLine;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -19,6 +20,12 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Console;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
+using System.Linq;
+using Azure.Sdk.Tools.TestProxy.CommandParserOptions;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -46,54 +53,60 @@ namespace Azure.Sdk.Tools.TestProxy
         /// <summary>
         /// test-proxy
         /// </summary>
-        /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
-        /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
-        /// <param name="storagePlugin">Does the user have a preference as to a default storage plugin? Defaults to "No plugin" currently.</param>
-        /// <param name="command">A specific test-proxy action to be carried out. Supported options: ["Save", "Restore", "Reset"]</param>
-        /// <param name="assetsJsonPath">Only required if a "command" value is present. This should be a path to a valid assets.json within a language repository.</param>
-        /// <param name="dump">Flag. Pass to dump configuration values before starting the application.</param>
-        /// <param name="version">Flag. Pass to get the version of the tool.</param>
-        /// <param name="args">Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider.</param>
-        public static void Main(bool insecure = false, string storageLocation = null, string storagePlugin = null, string command = null, string assetsJsonPath = null, bool dump = false, bool version = false, string[] args = null)
+        /// <param name="args">CommandLineParser arguments. In server mode use double dash '--' and everything after that becomes additional arguments to Host.CreateDefaultBuilder. Ex. -- arg1 value1 arg2 value2 </param>
+        public static async Task Main(string[] args = null)
         {
-            if (version)
+            // JRS - Temporarily disable this check because of https://github.com/Azure/azure-sdk-tools/issues/4116
+            // This throws and will exit
+            // new GitProcessHandler().VerifyGitMinVersion();
+            var parser = new Parser(settings =>
+            {
+                settings.AutoVersion = false;
+                settings.CaseSensitive = false;
+                settings.HelpWriter = System.Console.Out;
+                settings.EnableDashDash = true;
+            });
+            
+            await parser.ParseArguments<StartOptions, PushOptions, ResetOptions, RestoreOptions>(args).WithParsedAsync(Run);
+        }
+
+        private static async Task Run(object commandObj)
+        {
+            DefaultOptions defaultOptions = (DefaultOptions)commandObj;
+            if (defaultOptions.VersionFlag)
             {
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
                 var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
                 var assemblyVersion = assembly.GetName().Version;
-
                 System.Console.WriteLine($"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}-dev.{semanticVersion}");
-
-                Environment.Exit(0);
             }
 
-            // This throws and will exit
-            // JRS - Temporarily disable this check because of https://github.com/Azure/azure-sdk-tools/issues/4116
-            // new GitProcessHandler().VerifyGitMinVersion();
-
-            TargetLocation = resolveRepoLocation(storageLocation);
+            TargetLocation = resolveRepoLocation(defaultOptions.StorageLocation);
             Resolver = new StoreResolver();
-            DefaultStore = Resolver.ResolveStore(storagePlugin ?? "GitStore");
+            DefaultStore = Resolver.ResolveStore(defaultOptions.StoragePlugin ?? "GitStore");
 
-            if (!String.IsNullOrWhiteSpace(command))
+            switch (commandObj)
             {
-                switch (command.ToLowerInvariant())
-                {
-                    case "save":
-                        DefaultStore.Push(assetsJsonPath);
-                        break;
-                    case "restore":
-                        DefaultStore.Restore(assetsJsonPath);
-                        break;
-                    case "reset":
-                        DefaultStore.Reset(assetsJsonPath);
-                        break;
-                    default:
-                        throw new Exception($"One must provide a valid value for argument \"command\". \"{command}\" is not a valid option.");
-                }
+                case StartOptions startOptions:
+                    StartServer(startOptions);
+                    break;
+                case PushOptions pushOptions:
+                    await DefaultStore.Push(pushOptions.AssetsJsonPath);
+                    break;
+                case ResetOptions resetOptions:
+                    await DefaultStore.Reset(resetOptions.AssetsJsonPath);
+                    break;
+                case RestoreOptions restoreOptions:
+                    await DefaultStore.Restore(restoreOptions.AssetsJsonPath);
+                    break;
+                default:
+                    throw new ArgumentException("Invalid verb. The only supported verbs are start, push, reset and restore.");
             }
+        }
 
-            _insecure = insecure;
+        private static void StartServer(StartOptions startOptions)
+        {
+            _insecure = startOptions.Insecure;
             Regex.CacheSize = 0;
 
             var statusThreadCts = new CancellationTokenSource();
@@ -102,7 +115,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 () => $"[{DateTime.UtcNow.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
                 newLine: true, statusThreadCts.Token);
 
-            var host = Host.CreateDefaultBuilder(args);
+            var host = Host.CreateDefaultBuilder(startOptions.AdditionalArgs.ToArray());
 
             host.ConfigureWebHostDefaults(
                 builder =>
@@ -112,22 +125,22 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         loggingBuilder.ClearProviders();
                         loggingBuilder.AddConfiguration(hostBuilder.Configuration.GetSection("Logging"));
-                        loggingBuilder.AddSimpleConsole(options =>
+                        loggingBuilder.AddSimpleConsole(formatterOptions =>
                         {
-                            options.TimestampFormat = "[HH:mm:ss] ";
+                            formatterOptions.TimestampFormat = "[HH:mm:ss] ";
                         });
                         loggingBuilder.AddDebug();
                         loggingBuilder.AddEventSourceLogger();
                     })
-                    .ConfigureKestrel(options =>
+                    .ConfigureKestrel(kestrelServerOptions =>
                     {
-                        options.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1);
+                        kestrelServerOptions.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1);
                     })
                 );
 
             var app = host.Build();
 
-            if (dump)
+            if (startOptions.Dump)
             {
                 var config = app.Services?.GetService<IConfiguration>();
                 System.Console.WriteLine("Dumping Resolved Configuration Values:");

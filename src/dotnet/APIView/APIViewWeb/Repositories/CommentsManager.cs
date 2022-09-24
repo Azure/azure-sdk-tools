@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Options;
-using System.Linq;
 
 namespace APIViewWeb
 {

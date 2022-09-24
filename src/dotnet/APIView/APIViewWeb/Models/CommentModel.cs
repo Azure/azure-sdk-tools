@@ -11,6 +11,8 @@ namespace APIViewWeb.Models
         public string ReviewId { get; set; }
         public string RevisionId { get; set; }
         public string ElementId { get; set; }
+        public string SectionClass { get; set; }
+        public string GroupNo { get; set; }
         public string Comment { get; set; }
         public DateTime TimeStamp { get; set; }
         public string Username { get; set; }

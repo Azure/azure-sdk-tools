@@ -679,16 +679,25 @@ code {
     line-height: 20px;
 }
 
-.code-line:hover .line-comment-button {
+.code-line:hover .line-details-button-cell .line-comment-button {
     opacity: 1;
 }
 
-.code-line.active {
+.code-line .table .line-comment-button {
+    position: absolute;
+    left: -21px;
+}
+
+.code-line .table tr:hover .line-comment-button {
+    opacity: 1;
+}
+
+.code-line.active, .code-line tr.active {
     animation: glow normal 1.5s ease-in-out;
 }
 
 .code {
-    padding-right: 10px;
+    padding: 0px;
     position: relative;
     vertical-align: top;
 }
@@ -699,10 +708,17 @@ code {
     white-space: pre;
 }
 
-.code-inner-indent {
-    margin-left: 25px;
-    border-left: 1px dashed #dee2e6;
-    padding-bottom: 0.45rem;
+.code-inner > svg {
+    float: left;
+}
+
+.code-inner > table {
+    display: inline-block;
+    position: relative;
+}
+
+.code-inner td, .code-inner th {
+    border: 1px solid #dee2e6;
 }
 
 .code-added {

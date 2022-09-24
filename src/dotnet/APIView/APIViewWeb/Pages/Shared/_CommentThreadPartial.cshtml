@@ -7,7 +7,7 @@
 
 @if (Model != null && Model.Comments.Any())
 {
-    <tr class="comment-row" data-line-id="@Model.LineId">
+    <tr class="comment-row @Model.LineClass" data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="3">
             <a class="comment-thread-anchor"></a>
             @if (Model.IsResolved)
@@ -16,118 +16,42 @@
             }
             <div class="border comment-holder rounded-1 @(Model.IsResolved ? "comments-resolved" : "")">
                 <div class="comment-thread-contents">
-                    @foreach (var comment in Model.Comments)
+                    @{
+                        var groupedComments = Model.Comments.Where(x => !String.IsNullOrEmpty(x.GroupNo));
+                        var unGroupedComments = Model.Comments.Where(x => String.IsNullOrEmpty(x.GroupNo));
+                    }
+                    @if (unGroupedComments.Any())
                     {
-                        <div id="@comment.CommentId" class="review-comment" data-comment-id="@comment.CommentId">
-                            <div class="media">
-                                <a username="@comment.Username" title="Github Profile of Commenter">
-                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" aria-label="User Avatar of Commenter"/>
-                                </a>
-                                <div class="media-body comment-contents">
-                                    <span>
-                                        <a username="@comment.Username" class="font-weight-bolder text-dark mt-0">@comment.Username</a>
-                                        <a date="@comment.TimeStamp.ToLocalTime()" href="#@comment.CommentId" class="small"></a>
-                                    </span>
-                                    <span class="float-right mr-1">
-                                        <form class="float-left mr-1" data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
-                                            <input type="hidden" name="commentId" value="@comment.CommentId" />
-                                            <button type="submit" class="btn btn-light btn-xs btn-upvote" title="@string.Join(", ", comment.Upvotes)" active-if="@comment.Upvotes.Contains(User.GetGitHubLogin())">
-                                                @{
-                                                    <span active-if="@comment.Upvotes.Any()">👍</span>
-                                                    if (comment.Upvotes.Any())
-                                                    {
-                                                        <small class="mr-1">@comment.Upvotes.Count</small>
-                                                    }
-                                                }
-                                            </button>
-                                        </form>
-
-                                        <div class="dropup float-right">
-                                            <a class="btn btn-xs btn-light p-1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Dropdown Menu Button">
-                                                <i class="fa-solid fa-ellipsis"></i>
-                                            </a>
-
-                                            <div class="dropdown-menu dropdown-menu-right">
-                                                @if (comment.Username == User.GetGitHubLogin())
-                                                {
-                                                    <form data-post-update="comments" asp-controller="Comments" asp-action="Delete" method="post" asp-route-reviewId="@Model.ReviewId">
-                                                        <input type="hidden" name="commentId" value="@comment.CommentId" />
-                                                        <button id="@comment.CommentId" type="submit" class="text-danger dropdown-item">Delete</button>
-                                                    </form>
-                                                    <a href="#" class="dropdown-item js-edit-comment">Edit</a>
-                                                    <li><hr class="dropdown-divider"></li>
-                                                }
-                                                <li><h4 class="dropdown-header">Create GitHub Issue</h4></li>
-                                                <div class="px-4">
-                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-net" data-repo-language="c#">.Net</a>
-                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-java" data-repo-language="java">Java</a>
-                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-python" data-repo-language="python">Python</a>
-                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-c" data-repo-language="c">C</a>
-                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-js" data-repo-language="javascript">JavaScript</a>
-                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-go" data-repo-language="go">Go</a>
-                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-cpp" data-repo-language="c++">C++</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </span>
-                                    <textarea class="js-comment-raw d-none">@comment.Comment</textarea>
-                                    
-                                    @if (comment.Comment.Contains("\r\n")) 
-                                    {
-                                        var cmt = comment.Comment.Split("\r\n");
-                                        string codeBlockString = "";
-                                        bool codeBlock = false;
-                                        bool newLineAdded = true;
-                                        foreach (var line in cmt){
-                                            @* Preserves code block formatting *@
-                                            if (line.Contains("```")) {
-                                                codeBlock = !codeBlock;
-                                                codeBlockString += line + "\n";
-                                                if (!codeBlock)
-                                                {
-                                                    if (!newLineAdded) 
-                                                    {
-                                                        <br />
-                                                    }
-                                                    @Html.FormatAsMarkdown(codeBlockString)
-                                                    codeBlockString = "";
-                                                    newLineAdded = true;
-                                                }
-                                            }
-                                            else if (codeBlock)
-                                            {
-                                                codeBlockString += line + "\n";
-                                            }
-                                            @* Adds new lines where needed, otherwise breaks up parsing to be line by line *@
-                                            else if (line.Equals("") && !newLineAdded)
-                                            {
-                                                <br />
-                                                newLineAdded = true;
-                                            } 
-                                            else if (!line.Equals(""))
-                                            {
-                                                @Html.FormatAsMarkdown(line)
-                                                newLineAdded = false;
-                                            }
-                                        }
-                                    }
-                                    else 
-                                    {
-                                        @Html.FormatAsMarkdown(comment.Comment)
-                                    }
-                                </div>
-                            </div>
-                        </div>
+                        @foreach (var comment in unGroupedComments)
+                        {
+                            <partial name="_CommentThreadInnerPartial" model="comment" />
+                        }
+                        <partial name="_CommentThreadReplyPartial" model="String.Empty" />
                     }
 
-                    <div class="review-thread-reply">
-                        <div class="reply-cell align-middle">
-                            <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28"  aria-label="User Avatar"/>
-                        </div>
-                        <div class="reply-cell col-12">
-                            <button type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
-                        </div>
-                    </div>
+                    @if (groupedComments.Any())
+                    {
+                        var comments = groupedComments.OrderBy(x => Convert.ToInt16(x.GroupNo)).ToArray();
+                        for (int i = 0; i < comments.Length; i++) 
+                        {
+                            var comment = comments[i];
+                            var rowAnchor = $"{Model.LineId}-tr-{comment.GroupNo}";
+
+                            if (i == 0 || (Convert.ToInt16(comment.GroupNo) > Convert.ToInt16(comments[i - 1].GroupNo)))
+                            {
+                                <a class="pl-2 comment-group-anchor-link" href="#@rowAnchor">
+                                    <span class="badge badge-pill badge-light">
+                                        <small>ROW-@comment.GroupNo</small>
+                                    </span>
+                                </a>
+                            }
+                            <partial name="_CommentThreadInnerPartial" model="comment" />
+                            if (i == comments.Length - 1 || (Convert.ToInt16(comments[i + 1].GroupNo) > Convert.ToInt16(comment.GroupNo)))
+                            {
+                                <partial name="_CommentThreadReplyPartial" model="comment.GroupNo" />
+                            }
+                        }
+                    }
 
                     <div class="m-2 d-flex justify-content-between">
                         @if (Model.IsResolved)

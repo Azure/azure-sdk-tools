@@ -1,8 +1,17 @@
 ﻿@using ApiView
+@using APIView.Model
 @using APIView.DIff
 @using System.Text.RegularExpressions
 @using APIViewWeb.Models;
+@using System.Text
 @model APIViewWeb.Models.CodeLineModel
+@functions
+{
+    public static string RemoveMultipleSpaces(string str)
+    {
+        return String.Join(" ", str.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+    }
+}
 @{
     bool isRemoved = Model.Kind == DiffLineKind.Removed;
     string lineClass = Model.Kind switch
@@ -12,42 +21,67 @@
         _ => ""
     };
 
-    string foldableClass = Model.CodeLine.LineClass;
-    bool isHeading = false;
-    bool isContent = false;
-    string hiddenSectionClass = String.Empty;
-    if (!String.IsNullOrWhiteSpace(foldableClass))
-    {
-        string [] foldableClassParts = Regex.Split(foldableClass, "\\s+");
-        isHeading = foldableClassParts.Any(x => x.EndsWith("-heading"));
-        isContent = foldableClassParts.Any(x => x.EndsWith("-content"));
-        hiddenSectionClass = isContent ? "d-none" : "";
-    }
-
+    bool isSectionHeading = false;
+    bool isSubSectionHeading = false;
+    string headingClass = String.Empty;
     string documentationRow = String.Empty;
     string codeLineDisplay = String.Empty;
+    string codeLineClass = (!String.IsNullOrWhiteSpace(Model.CodeLine.LineClass)) ? Model.CodeLine.LineClass.Trim() : String.Empty;
+
+    if (Model.CodeLine.SectionKey != null )
+    {
+        isSectionHeading = true;
+        headingClass = $"code-line-section-heading-{Model.CodeLine.SectionKey}";
+    }
+
     if(Model.CodeLine.IsDocumentation)
     {
         documentationRow = "code-line-documentation";
         codeLineDisplay = "hidden-row";
     }
 
-    var userPreference = ViewData["UserPreference"] as UserPreferenceModel;
+    if (Regex.IsMatch(codeLineClass, @".*lvl_[0-9]+_parent.*"))
+    {
+        isSubSectionHeading = true;
+    }
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel ?? new UserPreferenceModel();
+    var rowClass = RemoveMultipleSpaces($"code-line {headingClass} {codeLineClass} {lineClass} {codeLineDisplay} {documentationRow}");
+    var lineDetailsClass = RemoveMultipleSpaces($"line-details-button-cell {lineClass}");
+    var codeClass = RemoveMultipleSpaces($"code {lineClass}");
+    var cellContent = String.Empty;
+    for (int i = 0; i < Model.CodeLine.Indent; i++)
+    {
+        if ((isSectionHeading || isSubSectionHeading) && (i == Model.CodeLine.Indent - 1))
+        {
+            cellContent += @"<svg height='23' width='23'>
+                                <line x1='0' y1='50%' x2='90%' y2='50%' style='stroke:rgb(217,217,214);stroke-width:1' />
+                                <line x1='0' y1='0' x2='0' y2='100%' style='stroke:rgb(217,217,214);stroke-width:1.5' />
+                            </svg>";
+        }else
+        {
+            cellContent += @"<svg height='23' width='23'>
+                                <line x1='0' y1='0' x2='0' y2='100%' style='stroke:rgb(217,217,214);stroke-width:1.5' />
+                            </svg>";
+        }
+    }
+    cellContent += Model.CodeLine.DisplayString;
 }
 
-<tr class="code-line @lineClass @foldableClass @hiddenSectionClass @codeLineDisplay @documentationRow" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+<tr class="@rowClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
     <td class="line-details">
         <table>
             <tr>
                 @if(userPreference.HideLineNumbers == true || Model.CodeLine.IsDocumentation)
                 {
-                    <td class="line-number @lineClass d-none"><span>@Model.LineNumber</span></td>
+                    var lineNumberClass = RemoveMultipleSpaces($"line-number d-none {lineClass}");
+                    <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
                 }
                 else
                 {
-                    <td class="line-number @lineClass"><span>@Model.LineNumber</span></td>
+                    var lineNumberClass = RemoveMultipleSpaces($"line-number {lineClass}");
+                    <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
                 }
-                <td class="line-details-button-cell comment-icon-cell @lineClass">
+                <td class="@lineDetailsClass comment-icon-cell">
                     @if (!isRemoved && Model.CodeLine.ElementId != null)
                     {
                         <a class="line-comment-button">+</a>
@@ -57,16 +91,16 @@
                        <a class="line-comment-button" style="visibility: hidden;">+</a> // Added for visual consistency
                     }
                 </td>
-                <td class="line-details-button-cell">
-                    @if(Model.DocumentedByLines.Length > 0)
+                <td class="@lineDetailsClass">
+                    @if(Model.DocumentedByLines?.Length  > 0)
                     {
                         <span class="line-toggle-documentation-button icon-chevron-right" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
                             &nbsp;
                         </span>
                     }
                 </td>
-                <td class="line-details-button-cell @lineClass">
-                    @if (isHeading)
+                <td class="@lineDetailsClass">
+                    @if (isSectionHeading || isSubSectionHeading)
                     {
                         <span class="row-fold-caret"><i class="fa-solid fa-angle-right"></i></span>
                     }
@@ -74,29 +108,35 @@
             </tr>
         </table>
     </td>
-    <td class="code @lineClass">
+    <td class="@codeClass">
         @{
-            string collapseMenu = isHeading ? "<span class='row-fold-elipsis'><i class='fa-solid fa-ellipsis'></i></span>" : "";
-            var indent = "";
-            for (var i = 0; i < Model.CodeLine.IndentSize; i++)
-            {
-                indent += "<span class=\"code-inner-indent\"></span>";
-            }
+            string collapseMenu = (isSectionHeading || isSubSectionHeading) ? "<span class='row-fold-elipsis'><i class='fa-solid fa-ellipsis'></i></span>" : "";
         }
         @if (Model.Kind == DiffLineKind.Removed)
         {
-            <span class="code-inner">@Html.Raw(indent)&nbsp;-&nbsp;@Html.Raw(Model.CodeLine.DisplayString)</span>
+            var codeRemovedSign = @"<svg height='23' width='23'>
+                                    <text x='40%' y='70%'>-</text>
+                                </svg>";
+            <div class="code-inner">@Html.Raw(codeRemovedSign)@Html.Raw(cellContent)</div>
         }
         else if(Model.Kind == DiffLineKind.Added)
         {
-            <span class="code-inner">@Html.Raw(indent)&nbsp;+&nbsp;@Html.Raw(Model.CodeLine.DisplayString)</span>
+            var codeAddedSign = @"<svg height='23' width='23'>
+                                        <text x='40%' y='70%'>+</text>
+                                    </svg>";
+            <div class="code-inner">@Html.Raw(codeAddedSign)@Html.Raw(cellContent)</div>
         }
         else 
         {
-            <span class="code-inner">@Html.Raw(indent)&nbsp;&nbsp;&nbsp;@Html.Raw(Model.CodeLine.DisplayString)@Html.Raw(collapseMenu)</span> 
+            var initialIndent = "<svg height='23' width='23'></svg>";
+            <div class="code-inner">@Html.Raw(initialIndent)@Html.Raw(cellContent)@Html.Raw(collapseMenu)</div> 
         }
     </td>
 </tr>
+@if (isSectionHeading)
+{
+    <partial name="_CodeLinePartial" model="@Model.CodeLine.SectionKey" />
+}
 @if (Model.Diagnostics.Any())
 {
     var errorDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Default || d.Level == APIView.CodeDiagnosticLevel.Error);

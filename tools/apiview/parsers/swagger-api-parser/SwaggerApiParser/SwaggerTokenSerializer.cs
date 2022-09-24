@@ -10,7 +10,7 @@ using ApiView;
 using APIView;
 using APIViewWeb;
 
-namespace swagger_api_parser
+namespace SwaggerApiParser
 {
     public class SwaggerTokenSerializer : LanguageService
     {
@@ -28,8 +28,13 @@ namespace swagger_api_parser
         // implementation if everyone needs to copy it as-is.
         public override bool CanUpdate(string versionString) => false;
 
-        public async Task<CodeFile> GetCodeFileInternalAsync(string originalName, Stream stream, bool runAnalysis) => 
-         SwaggerVisitor.GenerateCodeListing(originalName, await JsonDocument.ParseAsync(stream));
+        public async Task<CodeFile> GetCodeFileInternalAsync(string originalName, Stream stream, bool runAnalysis) =>
+            SwaggerVisitor.GenerateCodeListing(originalName, await JsonDocument.ParseAsync(stream));
+        
+        
+        public async Task<CodeFile> GetCodeFileFromJsonDocumentAsync(string originalName, JsonDocument jsonDoc, bool runAnalysis) =>
+            SwaggerVisitor.GenerateCodeListing(originalName, jsonDoc);
+
 
         /// <summary>
         /// Generate an ApiView listing for an OpenAPI 2.0 specification in
@@ -82,7 +87,7 @@ namespace swagger_api_parser
         /// IndentWriter provides helpful features for writing blocks of indented
         /// text (like source code, JSON, etc.).
         /// </summary>
-        internal partial class IndentWriter
+        public partial class IndentWriter
         {
             /// <summary>
             /// The buffer where tokens are written.  It is obtained by the
@@ -123,6 +128,7 @@ namespace swagger_api_parser
                     last = _tokens[i];
                     if (kind == null || last.Kind == kind) { return i; }
                 }
+
                 return -1;
             }
 
@@ -156,6 +162,7 @@ namespace swagger_api_parser
                 {
                     throw new InvalidOperationException("Cannot pop scope any further!");
                 }
+
                 Indent--;
             }
 
@@ -250,6 +257,7 @@ namespace swagger_api_parser
                 {
                     Write(kind, format, args);
                 }
+
                 PushScope();
             }
 
@@ -290,6 +298,7 @@ namespace swagger_api_parser
             ///     /* Back to normal here */
             /// </summary>
             public IDisposable Scope() => new WriterScope(this);
+
 
             /// <summary>
             /// Create a writer scope that will indent until the scope is
@@ -428,20 +437,15 @@ namespace swagger_api_parser
             public IDictionary<string, SwaggerTree> Children { get; } = new Dictionary<string, SwaggerTree>();
 
             /// <summary>
-            /// Gets the parent of the current node.
-            /// </summary>
-            private SwaggerTree _parent;
-
-            /// <summary>
             /// Gets a value indicating whether this node is the root.
             /// </summary>
-            public bool IsRoot => _parent == null;
+            public bool IsRoot => Parent == null;
 
             /// <summary>
             /// Gets a value indicating whether this node is a top-level entry.
             /// </summary>
             public bool IsTopLevel =>
-                _parent?.IsRoot == true && Text switch
+                Parent?.IsRoot == true && Text switch
                 {
                     "paths" => true,
                     "x-ms-paths" => true,
@@ -452,17 +456,28 @@ namespace swagger_api_parser
                 };
 
             /// <summary>
+            /// Gets the parent of the current node.
+            /// </summary>
+            public SwaggerTree Parent { get; private set; }
+
+            /// <summary>
             /// Gets a value indicating whether this node is a path entry.
             /// </summary>
             public bool IsPath =>
-                _parent?._parent?.IsRoot == true &&
-                (_parent.Text == "paths" || _parent.Text == "x-ms-paths");
+                Parent?.Parent?.IsRoot == true &&
+                (Parent.Text == "paths" || Parent.Text == "x-ms-paths");
+
+            public bool IsResponses => Text switch
+            {
+                "responses" => true,
+                _ => false
+            };
 
             /// <summary>
             /// Gets a value indicating whether this node's children should be
             /// added to the navigation tree.
             /// </summary>
-            public bool HasNavigableChildren => IsRoot || IsTopLevel || IsPath;
+            public bool HasNavigableChildren => IsRoot || IsTopLevel || IsPath || IsResponses;
 
             /// <summary>
             /// Add a child to the navigation tree.
@@ -475,14 +490,9 @@ namespace swagger_api_parser
             {
                 if (!Children.TryGetValue(name, out SwaggerTree next))
                 {
-                    Children[name] = next = new SwaggerTree
-                    {
-                        Text = name,
-                        LongText = longText,
-                        NavigationId = navigationId,
-                        _parent = this
-                    };
+                    Children[name] = next = new SwaggerTree {Text = name, LongText = longText, NavigationId = navigationId, Parent = this};
                 }
+
                 return next;
             }
 
@@ -491,12 +501,7 @@ namespace swagger_api_parser
             /// </summary>
             /// <returns>An ApiView navigation item.</returns>
             private NavigationItem BuildItem() =>
-                new()
-                {
-                    Text = Text,
-                    NavigationId = NavigationId,
-                    ChildItems = Children.Values.Select(c => c.BuildItem()).ToArray()
-                };
+                new() {Text = Text, NavigationId = NavigationId, ChildItems = Children.Values.Select(c => c.BuildItem()).ToArray()};
 
             /// <summary>
             /// Turn the swagger view into ApiView navigation items.
@@ -513,7 +518,11 @@ namespace swagger_api_parser
         {
             private IndentWriter _writer = new();
             private SwaggerTree _nav = new();
-            private List<string> _path = new() { "#" };
+            private List<string> _path = new() {"#"};
+
+            public SwaggerVisitor()
+            {
+            }
 
             /// <summary>
             /// Generate the ApiView code listing for a swagger document.
@@ -523,16 +532,16 @@ namespace swagger_api_parser
             /// <returns>An ApiView CodeFile.</returns>
             public static CodeFile GenerateCodeListing(string originalName, JsonDocument document)
             {
-                var navigationIdPrefix = $"{originalName}"; 
+                var navigationIdPrefix = $"{originalName}";
                 // Process the document
                 SwaggerVisitor visitor = new();
                 visitor.Visit(document.RootElement, visitor._nav, navigationIdPrefix);
 
                 // Ensure we're looking at OpenAPI 2.0
-                if (GetString(document, "swagger") != "2.0")
-                {
-                    throw new InvalidOperationException("Only Swagger 2.0 is supported.");
-                }
+                // if (GetString(document, "swagger") != "2.0")
+                // {
+                //     throw new InvalidOperationException("Only Swagger 2.0 is supported.");
+                // }
 
                 // Pull the pieces together into a listing
                 return new CodeFile()
@@ -545,21 +554,30 @@ namespace swagger_api_parser
                 };
             }
 
+            public static CodeFileToken[] GenerateCodeFileTokens(JsonDocument document)
+            {
+                SwaggerVisitor visitor = new();
+                visitor.Visit(document.RootElement, visitor._nav);
+                return visitor._writer.ToTokens();
+            }
+
             /// <summary>
             /// Generate the listing for a JSON value.
             /// </summary>
             /// <param name="element">The JSON value.</param>
             /// <param name="nav">Optional document navigation info.</param>
             /// <param name="navigationIdPrefix"></param>
-            private void Visit(JsonElement element, SwaggerTree nav = null, string navigationIdPrefix = "")
+            /// <param name="scopeStart"></param>
+            /// <param name="scopeEnd"></param>
+            private void Visit(JsonElement element, SwaggerTree nav = null, string navigationIdPrefix = "", string scopeStart = "{ ", string scopeEnd = " }")
             {
                 switch (element.ValueKind)
                 {
                     case JsonValueKind.Object:
-                        VisitObject(element, nav, navigationIdPrefix);
+                        VisitObject(element, nav, navigationIdPrefix, scopeStart, scopeEnd);
                         break;
                     case JsonValueKind.Array:
-                        VisitArray(element, navigationIdPrefix);
+                        VisitArray(element, nav, navigationIdPrefix);
                         break;
                     case JsonValueKind.False:
                     case JsonValueKind.Null:
@@ -580,61 +598,98 @@ namespace swagger_api_parser
             /// <param name="obj">The JSON object.</param>
             /// <param name="nav">Optional document navigation info.</param>
             /// <param name="navigationIdPrefix"></param>
-            private void VisitObject(JsonElement obj, SwaggerTree nav, string navigationIdPrefix)
+            /// <param name="scopeStart"></param>
+            /// <param name="scopeEnd"></param>
+            private void VisitObject(JsonElement obj, SwaggerTree nav, string navigationIdPrefix, string scopeStart = "{", string scopeEnd = "}")
             {
                 bool multiLine = !FitsOnOneLine(obj);
-                using (_writer.Scope("{ ", " }", multiLine))
+
+                using (_writer.Scope(scopeStart, scopeEnd, multiLine))
                 {
                     // Optionally sort the values
                     IEnumerable<JsonProperty> values = obj.EnumerateObject();
                     if (nav?.IsRoot != true)
                     {
-                        values = nav?.IsPath == true ?
-                            values.OrderBy(p => GetString(p.Value, "operationId") ?? p.Name, new OperationComparer()) :
-                            values.OrderBy(p => p.Name);
+                        values = nav?.IsPath == true ? values.OrderBy(p => GetString(p.Value, "operationId") ?? p.Name, new OperationComparer()) : values.OrderBy(p => p.Name);
                     }
+
                     Fenceposter fencepost = new();
 
                     // Generate the listing for each property
                     foreach (JsonProperty property in values)
                     {
-                        if (fencepost.RequiresSeparator)
+                        Boolean IsCurObjCollapsible()
                         {
-                            _writer.Write(CodeFileTokenKind.Punctuation, ", ");
-                            if (multiLine) { _writer.WriteLine(); }
+                            bool isPathScope = nav is {Text: "paths" or "x-ms-paths"};
+                            bool isMethod = nav is {IsPath: true};
+                            bool isDefinition = nav is {Text: "definitions"};
+                            bool isMethodParameters = nav is {Parent: {IsPath: true}} && property.Name == "parameters";
+                            bool isXmsExamples = nav is {Parent: {IsPath: true}} && property.Name == "x-ms-examples";
+                            bool isResponses = nav is {Text: "responses"};
+                            bool isParameters = nav is {Text: "parameters"};
+                            bool isSecurityDefinitions = nav is {Text: "securityDefinitions"};
+                            return isPathScope || isDefinition || isParameters || isSecurityDefinitions;
                         }
 
                         // Add the property to the current path
                         _path.Add(property.Name);
 
+                        var isCollapsible = IsCurObjCollapsible();
                         // Write the property name
                         _writer.Write(CodeFileTokenKind.Punctuation, "\"");
-                        _writer.Write(CodeFileTokenKind.MemberName, property.Name);
+                        var propertyType = isCollapsible ? CodeFileTokenKind.TypeName : CodeFileTokenKind.MemberName;
+                        _writer.Write(propertyType, property.Name);
+
 
                         // Create an ID for this property
 
-                        var idPrefix = navigationIdPrefix.Length==0? "": $"{navigationIdPrefix}_";
+                        var idPrefix = navigationIdPrefix.Length == 0 ? "" : $"{navigationIdPrefix}_";
 
                         string id = $"{idPrefix}{string.Join('-', _path).TrimStart('#')}";
                         _writer.AnnotateDefinition(id);
+                        if (isCollapsible)
+                        {
+                            _writer.Write(CodeFileTokenKind.FoldableSectionHeading, id);
+                        }
 
                         // Optionally add a navigation tree node
                         SwaggerTree next = null;
-                        if (nav?.HasNavigableChildren == true)
+                        if (nav?.HasNavigableChildren == true || (nav?.Parent.IsPath == true && property.Name is "responses" or "parameters"))
                         {
                             string name = property.Name;
                             string longText = property.Name;
                             if (nav.IsPath)
                             {
                                 name = GetString(property.Value, "operationId") ?? name;
-
                             }
+
                             next = nav.Add(name, id, null);
                         }
 
                         // Visit the value
-                        _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
-                        Visit(property.Value, next, navigationIdPrefix);
+                        if (isCollapsible)
+                        {
+                            _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
+                            this._writer.WriteLine();
+                            this._writer.Write(CodeFileTokenKind.FoldableSectionContentStart, null);
+                            Visit(property.Value, next, navigationIdPrefix);
+                            if (property.Name != values.Last().Name)
+                            {
+                                _writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                                if (multiLine) { _writer.WriteLine();}
+                            }
+                            this._writer.Write(CodeFileTokenKind.FoldableSectionContentEnd, null);
+                        }
+                        else
+                        {
+                            _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
+                            Visit(property.Value, next, navigationIdPrefix);
+                            if (property.Name != values.Last().Name)
+                            {
+                                _writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                                if (multiLine) { _writer.WriteLine(); }
+                            }
+                        }
 
                         // Make $refs linked
                         if (property.Name == "$ref" &&
@@ -655,13 +710,24 @@ namespace swagger_api_parser
             /// </summary>
             /// <param name="array">The array.</param>
             /// <param name="navigationIdPrefix"></param>
-            private void VisitArray(JsonElement array, string navigationIdPrefix)
+            /// <param name="scopeStart"></param>
+            /// <param name="scopeEnd"></param>
+            private void VisitArray(JsonElement array, SwaggerTree nav, string navigationIdPrefix, string scopeStart = "[ ", string scopeEnd = " ]")
             {
                 bool multiLine = !FitsOnOneLine(array);
-                using (_writer.Scope("[ ", " ]", multiLine))
+                using (_writer.Scope(scopeStart, scopeEnd, multiLine))
                 {
                     int index = 0;
                     Fenceposter fencepost = new();
+
+                    Boolean IsCurObjCollapsible()
+                    {
+                        bool isParameters = nav is {Text: "parameters"};
+                        return isParameters;
+                    }
+
+                    ;
+                    bool isCollapsible = IsCurObjCollapsible();
                     foreach (JsonElement child in array.EnumerateArray())
                     {
                         if (fencepost.RequiresSeparator)
@@ -669,6 +735,7 @@ namespace swagger_api_parser
                             _writer.Write(CodeFileTokenKind.Punctuation, ", ");
                             if (multiLine) { _writer.WriteLine(); }
                         }
+
                         _path.Add(index.ToString());
                         Visit(child, null, navigationIdPrefix);
                         _path.RemoveAt(_path.Count - 1);
@@ -736,6 +803,7 @@ namespace swagger_api_parser
                                 return false;
                             }
                         }
+
                         return true;
                     case JsonValueKind.Array:
                         int values = 0;
@@ -749,6 +817,7 @@ namespace swagger_api_parser
                                 return false;
                             }
                         }
+
                         return true;
                     case JsonValueKind.String:
                         return element.GetString().Length <= maxStringLength;
@@ -787,6 +856,7 @@ namespace swagger_api_parser
                         return null;
                     }
                 }
+
                 return element.ValueKind == JsonValueKind.String ? element.GetString() : null;
             }
 

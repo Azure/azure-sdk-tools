@@ -66,7 +66,7 @@ namespace APIViewUnitTests
             {
                 SymbolOrderProvider = new NameSymbolOrderProvider()
             }.Build(compilationFromDll, false, null);
-            var formattedModel = new CodeFileRenderer().Render(codeModel);
+            var formattedModel = new CodeFileRenderer().Render(codeModel).CodeLines;
             var formattedString = string.Join(Environment.NewLine, formattedModel.Select(l => l.DisplayString));
             _testOutputHelper.WriteLine(formattedString);
             Assert.Equal(formatted, formattedString);

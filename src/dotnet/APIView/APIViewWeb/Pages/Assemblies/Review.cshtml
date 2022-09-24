@@ -6,7 +6,8 @@
     Layout = "ReviewLayout";
     ViewData["Title"] = Model.Review.DisplayName;
     var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
-    ViewData["UserPreference"] = userPreference;
+    TempData["UserPreference"] = userPreference;
+    ViewBag.HasSections = (Model.CodeFile.LeafSections?.Count > 0) ? true : false;
 }
 
 <div class="container-fluid">

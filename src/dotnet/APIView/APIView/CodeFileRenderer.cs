@@ -2,11 +2,10 @@
 // Licensed under the MIT License.
 
 using APIView;
+using APIView.Model;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace ApiView
 {
@@ -14,24 +13,35 @@ namespace ApiView
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
-        public CodeLine[] Render(CodeFile file, bool enableSkipDiff = false)
+        public RenderResult Render(CodeFile file, bool enableSkipDiff = false)
         {
-            var list = new List<CodeLine>();
-            Render(list, file.Tokens, enableSkipDiff);
-            return list.ToArray();
+            var codeLines = new List<CodeLine>();
+            var sections = new Dictionary<int,TreeNode<CodeLine>>();
+            Render(codeLines, file.Tokens, enableSkipDiff, sections);
+            return new RenderResult(codeLines.ToArray(), sections);
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool enableSkipDiff)
+        public CodeLine[] Render(CodeFileToken[] tokens)
+        {
+            var codeLines = new List<CodeLine>();
+            var sections = new Dictionary<int, TreeNode<CodeLine>>();
+            Render(codeLines, tokens, false, sections);
+            return codeLines.ToArray();
+        }
+
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool enableSkipDiff, Dictionary<int,TreeNode<CodeLine>> sections)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
             bool isDocumentationRange = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
-            Stack<NodeInProcess> nodesInProcess = new Stack<NodeInProcess>();
-            string lastHeadingEncountered = null;
-            HashSet<string> lineIds = new HashSet<string>(); // Used to ensure there are no duplicate IDs
-            int indentSize = 0;
+            Stack<SectionType> nodesInProcess = new Stack<SectionType>();
+            int lineNumber = 0;
+            (int Count, int Curr) tableColumnCount = (0, 0);
+            (int Count, int Curr) tableRowCount = (0, 0);
+            TreeNode<CodeLine> section = null;
+            int leafSectionPlaceHolderNumber = 0;
 
             foreach (var token in node)
             {
@@ -42,30 +52,41 @@ namespace ApiView
                 switch(token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        string lineClass = "";
+                        int ? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count: null;
+                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange);
+                        if (leafSectionPlaceHolderNumber != 0)
+                        {
+                            lineNumber += leafSectionPlaceHolderNumber - 1;
+                            leafSectionPlaceHolderNumber = 0;
+                        }
                         if (nodesInProcess.Count > 0)
                         {
-                            var nodesInProcessAsArray = nodesInProcess.ToArray();
-                            for (int i = 0; i < nodesInProcessAsArray.Length; i++)
+                            if (nodesInProcess.Peek().Equals(SectionType.Heading))
                             {
-                                var classPrefix = SanitizeLineClass(nodesInProcessAsArray[i].classPrefix);
-                                if (i == 0 && nodesInProcessAsArray[i].classSuffix.Equals("heading"))
+                                if (section == null)
                                 {
-                                    lineClass += (classPrefix + "-heading ");
-                                }
-                                else if (i > 0 && nodesInProcessAsArray[i].classSuffix.Equals("heading"))
-                                {
-                                    break;
+                                    section = new TreeNode<CodeLine>(codeLine);
+                                    list.Add(codeLine);
                                 }
                                 else
                                 {
-                                    lineClass += (classPrefix + "-content ");
+                                    section = section.AddChild(codeLine);
                                 }
                             }
-                            lineClass = lineClass.Trim();
+                            else
+                            {
+                                section.AddChild(codeLine);
+                            }
                         }
-
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize, isDocumentationRange));
+                        else
+                        {
+                            if (section != null)
+                            {
+                                sections.Add(sections.Count, section);
+                                section = null;
+                            }
+                            list.Add(codeLine);
+                        }
                         currentId = null;
                         stringBuilder.Clear();
                         break;
@@ -97,86 +118,109 @@ namespace ApiView
                         break;
 
                     case CodeFileTokenKind.FoldableSectionHeading:
-                        nodesInProcess.Push(new NodeInProcess(token.Value, "heading"));
-                        lastHeadingEncountered = token.Value;
+                        nodesInProcess.Push(SectionType.Heading);
+                        currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
                         RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentStart:
-                        nodesInProcess.Push(new NodeInProcess(lastHeadingEncountered, "content"));
-                        indentSize++;
+                        nodesInProcess.Push(SectionType.Content);
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentEnd:
+                        section = (section.IsRoot) ? section : section.Parent;
                         nodesInProcess.Pop();
-                        if (nodesInProcess.Peek().classSuffix.Equals("heading"))
+                        if (nodesInProcess.Peek().Equals(SectionType.Heading))
                         {
                             nodesInProcess.Pop();
                         }
-                        indentSize--;
-                        break;
-                    default:
-                        if (token.DefinitionId != null)
+                        if (nodesInProcess.Count == 0 && section != null)
                         {
-                            currentId = token.DefinitionId;
+                            sections.Add(sections.Count, section);
+                            section = null;
                         }
-                        RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;
-                }                
-            }
-        }
 
-        private string SanitizeLineClass(string lineClass)
-        {
-            if (!String.IsNullOrEmpty(lineClass))
-            {
-                var result = lineClass.ToLower();
-                result = Regex.Replace(result, "[^a-z_0-9-]", "");
-                result = Regex.Replace(result, "^[0-9]+", "");
-                result = Regex.Replace(result, "//s+", "");
-                return result;
-            }
-            return lineClass;
-        }
+                    case CodeFileTokenKind.TableBegin:
+                        stringBuilder.Append("<table class=\"table table-sm\">");
+                        currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+                        break;
 
-        private string SanitizeLineId(string lineId, HashSet<string> lineIds)
-        {
-            int resultAsInt;
-            if (Int32.TryParse(lineId, out resultAsInt))
-            {
-                return resultAsInt.ToString();
-            }
+                    case CodeFileTokenKind.TableColumnCount:
+                        tableColumnCount.Count = Convert.ToInt16(token.Value);
+                        tableColumnCount.Curr = 0;
+                        break;
 
-            // Ensure the id is valid html id
-            if (!String.IsNullOrWhiteSpace(lineId))
-            {
-                var result = lineId.ToLower();
-                result = Regex.Replace(result, "[^a-z_0-9-:.]", "");
-                result = Regex.Replace(result, "^[0-9]+", "");
-                result = Regex.Replace(result, "//s+", "");
+                    case CodeFileTokenKind.TableRowCount:
+                        tableRowCount.Count = Convert.ToInt16(token.Value);
+                        tableRowCount.Curr = 0;
+                        break;
 
-                // Remove duplicates by appending or incrementing a number as suffix of string
-                if (lineIds.Contains(result))
-                {
-                    do
-                    {
-                        var suffixCount = Regex.Match(result, "[0-9]+$").Value;
-                        if (!String.IsNullOrWhiteSpace(suffixCount))
+                    case CodeFileTokenKind.TableColumnName:
+                        if (tableColumnCount.Curr == 0)
                         {
-                            int suffixCountAsInt = Int32.Parse(suffixCount);
-                            result = Regex.Replace(result, $"{suffixCount}$", $"{++suffixCountAsInt}");
+                            stringBuilder.Append($"<thead><tr>");
+                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">{token.Value}</th>");
+                            tableColumnCount.Curr++;
+                        }
+                        else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
+                        {
+                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">{token.Value}</th>");
+                            stringBuilder.Append("</tr></thead><tbody>");
+                            tableColumnCount.Curr = 0;
                         }
                         else
                         {
-                            result += $"_1";
+                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">{token.Value}</th>");
+                            tableColumnCount.Curr++;
                         }
-                    }
-                    while (lineIds.Contains(result));
+                        break;
+
+                    case CodeFileTokenKind.TableCellBegin:
+                        if (tableColumnCount.Curr == 0)
+                        {
+                            var rowId = $"{currentId}-tr-{tableRowCount.Curr + 1}";
+                            stringBuilder.Append($"<tr data-inline-id=\"{rowId}\"><td height=\"30\"><a class=\"line-comment-button\">+</a>");
+                            tableColumnCount.Curr++;
+                        }
+                        else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
+                        {
+                            stringBuilder.Append($"<td height=\"30\">");
+                            tableColumnCount.Curr = 0;
+                            tableRowCount.Curr++;
+                        }
+                        else
+                        {
+                            stringBuilder.Append($"<td height=\"30\">");
+                            tableColumnCount.Curr++;
+                        }
+                        break;
+
+                    case CodeFileTokenKind.TableCellEnd:
+                        stringBuilder.Append($"</td height=\"30\">");
+                        if (tableColumnCount.Curr == 0)
+                        {
+                            stringBuilder.Append($"</tr>");
+                        }
+                        break;
+
+                    case CodeFileTokenKind.TableEnd:
+                        stringBuilder.Append($"</tbody>");
+                        stringBuilder.Append("</table>");
+
+                        break;
+
+                    case CodeFileTokenKind.LeafSectionPlaceholder:
+                        stringBuilder.Append(token.Value);
+                        leafSectionPlaceHolderNumber = (int)token.NumberOfLinesinLeafSection;
+                        break;
+
+                    default:
+                        currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+                        RenderToken(token, stringBuilder, isDeprecatedToken);
+                        break;
                 }
-                lineIds.Add(result);
-                return result;
             }
-            return lineId;
         }
 
         protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken)
@@ -191,17 +235,28 @@ namespace ApiView
         // These methods should not render anything for text renderer so keeping it empty
         protected virtual void StartDocumentationRange(StringBuilder stringBuilder) { }
         protected virtual void CloseDocumentationRange(StringBuilder stringBuilder) { }
+
+        private void UpdateDefinitionId(CodeFileToken token, string currentId)
+        {
+            currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+        }
     }
 
-    public struct NodeInProcess
+    public struct RenderResult
     {
-        public NodeInProcess(string prefix, string suffix)
+        public RenderResult(CodeLine[] codeLines, Dictionary<int,TreeNode<CodeLine>> sections)
         {
-            classPrefix = prefix;
-            classSuffix = suffix;
+            CodeLines = codeLines;
+            Sections = sections;
         }
 
-        public string classPrefix { get; }
-        public string classSuffix { get; }
+        public CodeLine[] CodeLines { get; }
+        public Dictionary<int, TreeNode<CodeLine>> Sections { get; }
+    }
+
+    enum SectionType
+    {
+        Heading,
+        Content
     }
 }

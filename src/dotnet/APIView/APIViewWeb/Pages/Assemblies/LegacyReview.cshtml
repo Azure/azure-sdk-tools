@@ -4,7 +4,7 @@
 @using APIViewWeb.Models
 @{
     ViewData["Title"] = "Legacy Review";
-    ViewData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
 }
 
 <h2>This review can not be viewed anymore but here are the comments:</h2>

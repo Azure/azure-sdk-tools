@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
@@ -74,6 +75,12 @@ namespace APIViewWeb
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
 
             return new ReviewCommentsModel(reviewId, comments);
+        }
+
+        public async Task<ReviewCommentsModel> GetUsageSampleCommentsAsync(string reviewId)
+        {
+            var comments = await _commentsRepository.GetCommentsAsync(reviewId);
+            return new ReviewCommentsModel(reviewId, comments.Where((e) => e.IsUsageSampleComment));
         }
 
         public async Task AddCommentAsync(ClaimsPrincipal user, CommentModel comment)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -20,5 +20,7 @@ namespace APIViewWeb.Models
         public DateTime? EditedTimeStamp { get; set; }
         public List<string> Upvotes { get; set; } = new List<string>();
         public HashSet<string> TaggedUsers { get; set; } = new HashSet<string>();
+        public bool IsUsageSampleComment { get; set; } = false;
+        public bool ResolutionLocked { get; set; } = false;
     }
 }

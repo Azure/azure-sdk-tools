@@ -30,7 +30,48 @@
                 <br>
                 <small class="text-muted">@Model.Review.PackageDisplayName</small>
             </p>
-            <div class="my-1">
+
+            <div class="dropdown d-inline-block my-1">
+                <a class="btn btn-light btn-sm border shadow-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                    <i class="fa-solid fa-flag"></i>&nbsp;&nbsp;Request Approval
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <span class="dropdown-header">
+                        Select users to request for review
+                    </span>
+                    <span class="dropdown modal-dialog-scrollable">
+                        <form asp-resource="@Model.Review" asp-page-handler="RequestReviewers" method="post"
+                            class ="selectpicker show-tick show-menu-arrow " data-style="btn-light btn-sm border" data-selected-text-format="value" 
+                            data-live-search="true" data-size="10" data-width="100%" data-container="body" id="revisions-bootstraps-select" data-tick-icon="fa-solid fa-check">
+
+                            @foreach (var approver in Model.approvers) 
+                            {
+                                @* TODO: Sort by approver language/filter to approvers who work in Review's langauge *@
+                                <span class="checkbox dropdown-item-text">
+                                    <label>
+                                        @if (Model.Review.requestedReviewers != null && Model.Review.requestedReviewers.Contains(approver))
+                                        {
+                                            <input type="checkbox" name="reviewers" value="@approver" checked>
+                                        }
+                                        else 
+                                        {
+                                            <input type="checkbox" name="reviewers" value="@approver">
+                                        }
+                                        &nbsp;&nbsp;<img username="@approver" class="comment-icon align-self-start mr-2" height="28" width="28" />
+                                        @approver
+                                    </label>
+                                </span>
+                            }
+
+                            <span class="dropdown-item-text">
+                                <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" type="submit">Request</button>&nbsp;&nbsp;
+                                <button class="btn btn-sm btn-light shadow-sm" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitReviewRequest').click();">Request all</button>
+                            </span>
+                        </form>
+                    </span>
+                </div>
+            </div>
+            <div class="my-1 ml-2">
                 @if (Model.Revision.Approvers.Count > 0)
                 {
                     var approvers = String.Join(", ", Model.Revision.Approvers);

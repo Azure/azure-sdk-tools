@@ -1,0 +1,142 @@
+﻿@page "RequestedReviews"
+@model APIViewWeb.Pages.Assemblies.RequestedReviews
+@using APIViewWeb.Helpers
+@using APIViewWeb.Models
+@{
+    ViewData["Title"] = "Requested Reviews";
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+    ViewData["UserPreference"] = userPreference;
+}
+<div class="mx-5 row">
+    <div class="col-md-12" id="reviews-filter-partial">
+        <div class="mt-3 row">
+            <div class="col-12 p-0 border rounded table-responsive shadow-sm">
+                <table id="reviews-table" class="table table-sm table-hover m-0" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="pl-4">Name</th>
+                            <th scope="col" class="border-left pl-3">Author</th>
+                            <th scope="col" class="border-left pl-3">Last Updated</th>
+                            <th scope="col" class="border-left pl-3">Type</th>
+                            <th scope="col" class="border-left pl-3">Approval Requested</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ActiveReviews.Any())
+                        {
+                            @foreach (var review in Model.ActiveReviews)
+                            {
+                                var truncationIndex = @Math.Min(@review.DisplayName.Length, 100);
+                                <tr class="package-data-row">
+                                    <td class="align-middle pl-4 pt-0 pb-0">
+                                        @if (review.Language != null)
+                                        {
+                                            string iconClassName = "icon-" + review.GetLanguageCssSafeName();
+                                            @if (!string.IsNullOrEmpty(review.LanguageVariant) && review.LanguageVariant.ToLower() != "default")
+                                            {
+                                                iconClassName += "-" + @review.LanguageVariant.ToLower();
+                                            }
+                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@review.Language @review.LanguageVariant"></span>
+                                        }
+                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@review.ReviewId">@review.DisplayName.Substring(0, @truncationIndex)</a>
+                                        @if (review.IsApproved == true)
+                                        {
+                                            <i class="fas fa-check-circle text-success ml-2"></i>
+                                        }
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <a username="@review.Author">@review.Author</a>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.LastUpdated.ToLocalTime()"></span>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <span>@review.FilterType.ToString()</span>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.approvalRequestedOn.ToLocalTime()"></span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else 
+                        {
+                            <tr class="package-data-row"> 
+                                <td colspan="5">No reviews require approval</td>
+                            </tr>
+                    
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="mt-3 row">
+            <div class="col-12 p-0 border rounded table-responsive shadow-sm">
+                <table id="reviews-table" class="table table-sm table-hover m-0" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="pl-4">Name</th>
+                            <th scope="col" class="border-left pl-3">Author</th>
+                            <th scope="col" class="border-left pl-3">Last Updated</th>
+                            <th scope="col" class="border-left pl-3">Type</th>
+                            <th scope="col" class="border-left pl-3">Approved last</th>
+                            <th scope="col" class="border-left pl-3">Approved by</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ApprovedReviews.Any())
+                        {
+                            @foreach (var review in Model.ApprovedReviews)
+                            {
+                                var truncationIndex = @Math.Min(@review.DisplayName.Length, 100);
+                                <tr class="package-data-row">
+                                    <td class="align-middle pl-4 pt-0 pb-0">
+                                        @if (review.Language != null)
+                                        {
+                                            string iconClassName = "icon-" + review.GetLanguageCssSafeName();
+                                            @if (!string.IsNullOrEmpty(review.LanguageVariant) && review.LanguageVariant.ToLower() != "default")
+                                            {
+                                                iconClassName += "-" + @review.LanguageVariant.ToLower();
+                                            }
+                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@review.Language @review.LanguageVariant"></span>
+                                        }
+                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@review.ReviewId">@review.DisplayName.Substring(0, @truncationIndex)</a>
+                                        @if (review.IsApproved == true)
+                                        {
+                                            <i class="fas fa-check-circle text-success ml-2"></i>
+                                        }
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <a username="@review.Author">@review.Author</a>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.LastUpdated.ToLocalTime()"></span>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <span>@review.FilterType.ToString()</span>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.approvalDate.ToLocalTime()"></span>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <span>
+                                            @foreach(var approver in review.Revisions.First().Approvers) {
+                                                 <a username="@approver"> @approver </a>
+                                            }
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else 
+                        {
+                            <tr class="package-data-row">
+                                <td colspan="6">No reviews have been recently approved</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -122,5 +122,12 @@ namespace APIViewWeb
         public string ServiceName { get; set; }
 
         public string PackageDisplayName { get; set; }
+
+        // Approvers requested for review and when (for hiding older reviews)
+        public HashSet<string> requestedReviewers { get; set; } = null;
+
+        public DateTime approvalRequestedOn;
+
+        public DateTime approvalDate;
     }
 }

@@ -12,7 +12,7 @@ module.exports = {
     review: './src/review.ts',
     reviews: './src/reviews.ts',
     site: './css/site.scss',
-    usagesample: './css/usageSample.scss',
+
     c: './css/c.scss',
     cplusplus: './css/cplusplus.scss',
     csharp: './css/csharp.scss',
@@ -58,7 +58,7 @@ module.exports = {
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: '[name].css'
+      filename: "[name].css"
     }),
   ],
   resolve: {

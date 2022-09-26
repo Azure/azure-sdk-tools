@@ -28,11 +28,13 @@ COPY --from=build /usr/share/dotnet/sdk/6.0.102/DotnetTools/dotnet-dev-certs/6.0
 
 # prep the machine dev certificate
 COPY docker_build/$CERT_IMPORT_SH docker_build/dotnet-devcert.pfx docker_build/dotnet-devcert.crt $CERT_FOLDER/
+ADD run_proxy.sh /proxyserver/test-proxy
 
 RUN \
     apk add --no-cache bash nss-tools git \
     # Fix line endings
     && sed -i -e 's/\r$//' $CERT_FOLDER/$CERT_IMPORT_SH \
+    && sed -i -e 's/\r$//' /proxyserver/test-proxy \
     # Use copied dotnet-dev-certs tool
     && sed -i -e 's|dotnet dev-certs|dotnet /dotnet-dev-certs/dotnet-dev-certs.dll|' $CERT_FOLDER/$CERT_IMPORT_SH \
     # Run script to import certificate
@@ -46,6 +48,5 @@ EXPOSE 5000 5001
 WORKDIR /proxyserver
 
 COPY --from=build /proxyserver .
-ADD run_proxy.sh /proxyserver/test-proxy
 
 CMD ["test-proxy", "start", "--dump"]

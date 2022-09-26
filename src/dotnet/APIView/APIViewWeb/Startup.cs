@@ -78,8 +78,6 @@ namespace APIViewWeb
             services.AddSingleton<CosmosCommentsRepository>();
             services.AddSingleton<CosmosPullRequestsRepository>();
             services.AddSingleton<DevopsArtifactRepository>();
-            services.AddSingleton<CosmosUsageSampleRepository>();
-            services.AddSingleton<BlobUsageSampleRepository>();
 
             services.AddSingleton<ReviewManager>();
             services.AddSingleton<CommentsManager>();
@@ -87,7 +85,6 @@ namespace APIViewWeb
             services.AddSingleton<PullRequestManager>();
             services.AddSingleton<PackageNameManager>();
             services.AddSingleton<UserPreferenceCache>();
-            services.AddSingleton<UsageSampleManager>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();
@@ -196,7 +193,6 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, PullRequestPermissionRequirementHandler>();
-            services.AddSingleton<IAuthorizationHandler, UsageSampleOwnerRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());

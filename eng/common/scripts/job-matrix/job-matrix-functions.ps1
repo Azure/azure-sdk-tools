@@ -1,5 +1,7 @@
 Set-StrictMode -Version "4.0"
 
+$script:deleteKey = "%DELETE%"
+
 class MatrixConfig {
     [PSCustomObject]$displayNames
     [Hashtable]$displayNamesLookup
@@ -78,7 +80,7 @@ class MatrixParameter {
         }
 
         # Matrix naming restrictions:
-        # https://docs.microsoft.com/en-us/azure/devops/pipelines/process/phases?view=azure-devops&tabs=yaml#multi-job-configuration
+        # https://docs.microsoft.com/azure/devops/pipelines/process/phases?view=azure-devops&tabs=yaml#multi-job-configuration
         $displayName = $displayName -replace "[^A-Za-z0-9_]", ""
         return $displayName
     }
@@ -98,6 +100,8 @@ function GenerateMatrix(
             ProcessImport $config.matrixParameters $selectFromMatrixType $nonSparseParameters $config.displayNamesLookup
     if ($selectFromMatrixType -eq "sparse") {
         $matrix = GenerateSparseMatrix $matrixParameters $config.displayNamesLookup $nonSparseParameters
+    } elseif ($selectFromMatrixType -eq "randomlysparse") {
+        $matrix = GenerateRandomlySparseMatrix $matrixParameters $config.displayNamesLookup $nonSparseParameters $config.exclude
     } elseif ($selectFromMatrixType -eq "all") {
         $matrix = GenerateFullMatrix $matrixParameters $config.displayNamesLookup
     } else {
@@ -233,7 +237,6 @@ function PsObjectToMatrixParameterArray([PSCustomObject]$obj)
 
 function ProcessExcludes([Array]$matrix, [Array]$excludes)
 {
-    $deleteKey = "%DELETE%"
     $exclusionMatrix = @()
 
     foreach ($exclusion in $excludes) {
@@ -245,12 +248,12 @@ function ProcessExcludes([Array]$matrix, [Array]$excludes)
         foreach ($exclusion in $exclusionMatrix) {
             $match = MatrixElementMatch $element.parameters $exclusion.parameters
             if ($match) {
-                $element.parameters[$deleteKey] = $true
+                $element.parameters[$script:deleteKey] = $true
             }
         }
     }
 
-    return $matrix | Where-Object { !$_.parameters.Contains($deleteKey) }
+    return $matrix | Where-Object { !$_.parameters.Contains($script:deleteKey) }
 }
 
 function ProcessIncludes([MatrixConfig]$config, [Array]$matrix)
@@ -456,6 +459,81 @@ function GenerateSparseMatrix(
     }
 
     return $sparseMatrix
+}
+
+function GenerateRandomlySparseMatrix(
+    [MatrixParameter[]]$parameters,
+    [Hashtable]$displayNamesLookup,
+    [Array]$nonSparseParameters = @(),
+    [Array]$excludes = @()
+) {
+    $parameters, $nonSparse = ProcessNonSparseParameters $parameters $nonSparseParameters
+    $dimensions = GetMatrixDimensions $parameters
+    $matrix = GenerateFullMatrix $parameters $displayNamesLookup
+    $matrix = ProcessExcludes $matrix $excludes
+
+    $targets = GetRandomRemovalOrder($matrix.Length)
+    
+    foreach ($target in $targets) {
+        $current = $matrix[$target]
+        $current["parameters"][$script:deleteKey]="DELETE"
+        if($false -eq (ValidateMatrix $parameters  $matrix )) {
+            $current["parameters"].Remove($script:deleteKey)
+        }
+    }
+
+    if ($nonSparse) {
+        $allOfMatrix = GenerateFullMatrix $nonSparse $displayNamesLookup
+        return CombineMatrices $allOfMatrix $sparseMatrix $displayNamesLookup
+    }
+
+    return $matrix | Where-Object { !$_.parameters.Contains($script:deleteKey) }
+}
+
+function ValidateMatrix([MatrixParameter[]]$parameters, [Array]$matrix)
+{
+    $dimensions = @{}
+    $matrixDimensions = @{}
+    foreach($parameter in $parameters) {
+        $dimensions.Add($parameter.Name, $parameter.Value.Count)
+        $matrixDimensions.Add($parameter.Name, @{})
+    }
+    
+    foreach($cell in $matrix) {
+        if($cell.parameters.Contains($script:deleteKey)) {
+            continue
+        }
+        foreach($key in $cell.parameters.Keys) {
+            if($false -eq $matrixDimensions[$key].ContainsKey($cell.parameters[$key])){
+                $matrixDimensions[$key].Add($cell.parameters[$key], 0)
+            }
+        }   
+    }
+
+    $ret = $true;
+    foreach($parameter in $matrixDimensions.Keys) {
+        $ret = $ret -and ($matrixDimensions[$parameter].Count -eq $dimensions[$parameter])
+    }
+
+    return $ret
+}
+
+function GetRandomRemovalOrder([Int]$matrixSize)
+{
+    $list = New-Object Collections.Generic.List[Int]($matrixSize)
+    $ret = New-Object Collections.Generic.List[Int]($matrixSize)
+
+    for($i = 0; $i -lt $matrixSize; $i++) {
+        $list.Add($i)
+    }
+
+    for($i = 0; $i -lt $matrixSize; $i++) {
+        $target = Get-Random -Minimum 0 -Maximum $list.Count
+        $ret.Add($list[$target])
+        $list.RemoveAt($target)
+    }
+
+    $ret
 }
 
 function GetSparseMatrixIndexes([Array]$dimensions)

@@ -1,7 +1,7 @@
 <#
     .SYNOPSIS
         Generates a JSON object representing an Azure Pipelines Job Matrix.
-        See https://docs.microsoft.com/en-us/azure/devops/pipelines/process/phases?view=azure-devops&tabs=yaml#parallelexec
+        See https://docs.microsoft.com/azure/devops/pipelines/process/phases?view=azure-devops&tabs=yaml#parallelexec
 
     .EXAMPLE
     ./eng/common/scripts/Create-JobMatrix $context

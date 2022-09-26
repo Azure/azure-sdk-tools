@@ -204,9 +204,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Cpp'
-        LinuxPool: $(LinuxPool)
+        LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
-        WindowsPool: $(WindowsPool)
+        WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'Cpp'
         LanguageRepoName: 'Azure/azure-sdk-for-cpp'

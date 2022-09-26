@@ -1,6 +1,10 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using Microsoft.Crank.Agent;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -26,6 +30,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public override async Task<(string output, string error, object context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
+            foreach (var key in packageVersions.Keys)
+            {
+                var gitResult = UpdatePackageVersion(key, packageVersions[key]);
+
+                if (gitResult.Result.ExitCode != 0)
+                {
+                    throw new KeyNotFoundException($"Unable to find version {packageVersions[key]} for package {key}");
+                }
+
+                break;
+            }
+
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
 
             Util.DeleteIfExists(buildDirectory);
@@ -69,6 +85,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 opsPerSecond = double.Parse(match.Groups[1].Value);
             }
 
+            await Util.RunAsync(
+                "git", $"checkout main",
+                WorkingDirectory);
+
             return new IterationResult
             {
                 OperationsPerSecond = opsPerSecond,
@@ -77,11 +97,63 @@ namespace Azure.Sdk.Tools.PerfAutomation
             };
         }
 
-        public override Task CleanupAsync(string project)
+        public override async Task CleanupAsync(string project)
         {
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
             Util.DeleteIfExists(buildDirectory);
-            return Task.CompletedTask;
+            await Util.RunAsync(
+                "git", $"checkout main",
+                WorkingDirectory);
+            return;
+        }
+
+        private async Task<ProcessResult> UpdatePackageVersion(string project, string packageVersion)
+        {
+            string gitTag = ComposeGitTag(project, packageVersion);
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+            ProcessResult result;
+            if (String.Compare(packageVersion, "source", true) == 0)
+            {
+                result = await Util.RunAsync("git",
+                     $"checkout main",
+                     WorkingDirectory,
+                     outputBuilder: outputBuilder,
+                     errorBuilder: errorBuilder);
+            }
+            else
+            {
+                // first try to checkout the branch, might have been created already 
+                result = await Util.RunAsync("git",
+                    $"checkout {gitTag}",
+                    WorkingDirectory,
+                    outputBuilder: outputBuilder,
+                    errorBuilder: errorBuilder);
+
+                // this is the first time thus a branch needs to be created
+                if (result.ExitCode != 0)
+                {
+                    result = await Util.RunAsync("git",
+                        $"checkout tags/{gitTag} -b {gitTag}",
+                        WorkingDirectory,
+                        outputBuilder: outputBuilder,
+                        errorBuilder: errorBuilder);
+                }
+            }
+
+            return result;
+        }
+
+        private string ComposeGitTag(string project, string packageVersion)
+        {
+            StringBuilder tag = new StringBuilder(project.Length + packageVersion.Length);
+
+            string[] parts = project.Split('-', StringSplitOptions.RemoveEmptyEntries);
+            tag.Append(String.Join('-', parts.Take(parts.Length - 1).ToArray<string>()));
+            tag.Append('_');
+            tag.Append(packageVersion);
+
+            return tag.ToString();
         }
     }
 }

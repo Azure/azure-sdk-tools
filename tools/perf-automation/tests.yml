@@ -33,7 +33,7 @@ parameters:
   default: true
 - name: CppRepoCommitish
   type: string
-  default: 'refs/pull/3953/merge'
+  default: 'main'
 - name: PackageVersions
   type: string
   default: '12|source'
@@ -64,7 +64,7 @@ resources:
     type: github
     endpoint: Azure
     name: Azure/azure-sdk-for-cpp
-    ref: refs/pull/3953/merge
+    ref: main
 
 variables:
   # Use general pools instead of perf pools for faster startup due to more warm agents

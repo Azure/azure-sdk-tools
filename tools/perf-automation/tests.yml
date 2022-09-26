@@ -27,6 +27,13 @@ parameters:
 - name: PythonRepoCommitish
   type: string
   default: 'main'
+- name: IncludeCpp
+  displayName: Include Cpp?
+  type: boolean
+  default: true
+- name: CppRepoCommitish
+  type: string
+  default: 'main'
 - name: PackageVersions
   type: string
   default: '12|source'
@@ -52,6 +59,11 @@ resources:
     type: github
     endpoint: Azure
     name: Azure/azure-sdk-for-python
+    ref: main
+  - repository: azure-sdk-for-cpp
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-cpp
     ref: main
 
 variables:
@@ -184,6 +196,32 @@ stages:
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
 
+  - ${{ if parameters.IncludeCpp }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_Cpp'
+        LinuxPool: $(LinuxPool)
+        LinuxVmImage: $(LinuxVmImage)
+        WindowsPool: $(WindowsPool)
+        WindowsVmImage: $(WindowsVmImage)
+        Language: 'Cpp'
+        LanguageRepoName: 'Azure/azure-sdk-for-cpp'
+        LanguageRepoCommitish: ${{ parameters.CppRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        Variables:
+        - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-cpp
+        InstallLanguageSteps:
+        - template: /eng/pipelines/templates/steps/vcpkg-clone.yml@azure-sdk-for-cpp
+          parameters:
+            RepoOwner: Microsoft
+        ServiceDirectory: 'core'
+        Services: '^core$'
+        PackageVersions: 'source'
+        Tests: '^(extendedOptions)$'
+        Arguments: '.*'
+        # Iterations parameter has type 'number' so must use this variable syntax
+        Iterations: ${{ variables.Iterations }}
+
 - stage: Print_Results
   displayName: Print Results
   pool:
@@ -238,3 +276,10 @@ stages:
           get-content results-Python-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Python
+
+    - ${{ if parameters.IncludeCpp }}:
+      - pwsh: |
+          write-host results-Cpp-Linux/results.txt
+          get-content results-Cpp-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: Cpp

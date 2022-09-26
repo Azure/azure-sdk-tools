@@ -11,7 +11,7 @@ namespace APIViewWeb
 {
     public class ApproverRequirementHandler : IAuthorizationHandler
     {
-        private HashSet<string> approvers = new HashSet<string>();
+        protected HashSet<string> approvers = new HashSet<string>();
 
         public ApproverRequirementHandler(IConfiguration configuration)
         {

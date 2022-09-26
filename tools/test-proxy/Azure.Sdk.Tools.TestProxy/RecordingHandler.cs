@@ -8,18 +8,14 @@ using Azure.Sdk.Tools.TestProxy.Vendored;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Security;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -479,6 +475,23 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region SetRecordingOptions and store functionality
+        public static string GetAssetsJsonLocation(string pathToAssetsJson, string contextDirectory)
+        {
+            if (pathToAssetsJson == null)
+            {
+                return null;
+            }
+
+            var path = pathToAssetsJson;
+
+            if (!Path.IsPathFullyQualified(pathToAssetsJson))
+            {
+                path = Path.Join(contextDirectory, pathToAssetsJson);
+            }
+
+            return path;
+        }
+
         public async Task Restore(string pathToAssetsJson)
         {
             var resultingPath = await Store.Restore(pathToAssetsJson);

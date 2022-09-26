@@ -32,8 +32,10 @@ namespace Azure.Sdk.Tools.TestProxy
             var body = await HttpRequestInteractions.GetBody(Request);
 
             string file = HttpRequestInteractions.GetBodyKey(body, "x-recording-file", allowNulls: true);
-            string assetsJson = HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true);
             string recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+            var assetsJson = RecordingHandler.GetAssetsJsonLocation(
+                HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
+                _recordingHandler.ContextDirectory);
 
             if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
             {
@@ -63,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
 
-            var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
+            var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
 
             await _recordingHandler.Store.Reset(pathToAssets);
         }
@@ -73,7 +75,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
 
-            var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
+            var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
 
             await _recordingHandler.Restore(pathToAssets);
         }

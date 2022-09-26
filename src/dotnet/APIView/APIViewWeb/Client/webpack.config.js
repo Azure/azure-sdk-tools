@@ -12,7 +12,6 @@ module.exports = {
     review: './src/review.ts',
     reviews: './src/reviews.ts',
     site: './css/site.scss',
-    usagesample: './css/usageSample.scss',
     c: './css/c.scss',
     cplusplus: './css/cplusplus.scss',
     csharp: './css/csharp.scss',
@@ -24,7 +23,8 @@ module.exports = {
     python: './css/python.scss',
     swagger: './css/swagger.scss',
     swift: './css/swift.scss',
-    xml: './css/xml.scss'
+    xml: './css/xml.scss',
+    usagesample: './css/usageSample.scss'
   },
   devtool: 'source-map',
   module: {

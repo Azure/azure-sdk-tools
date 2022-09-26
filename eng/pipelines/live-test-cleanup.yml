@@ -2,14 +2,16 @@ pr: none
 trigger: none
 
 parameters:
+  - name: DryRun
+    type: boolean
+    default: false
   - name: Subscriptions
     type: object
     default:
       - DisplayName: AzureCloud - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources)
-        # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
-        # AdditionalParameters: "-DeleteNonCompliantGroups"
+        AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: AzureCloud-Preview - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources-preview)
@@ -83,6 +85,7 @@ stages:
     - ${{ each subscription in parameters.Subscriptions }}:
       - template: ./live-test-cleanup-template.yml
         parameters:
+          DryRun: ${{ parameters.DryRun }}
           DisplayName: ${{ subscription.DisplayName }}
           SubscriptionConfigurations: ${{ subscription.SubscriptionConfigurations }}
           GithubAliasCachePath: $(CachePath)/github-alias-mappings.txt

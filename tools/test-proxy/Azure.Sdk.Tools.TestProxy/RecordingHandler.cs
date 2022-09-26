@@ -8,18 +8,14 @@ using Azure.Sdk.Tools.TestProxy.Vendored;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Security;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -200,7 +196,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
-            var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
+            var upstreamRequest = CreateUpstreamRequest(incomingRequest, GZipUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
 
             HttpResponseMessage upstreamResponse = null;
 
@@ -218,7 +214,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // HEAD requests do NOT have a body regardless of the value of the Content-Length header
             if (incomingRequest.Method.ToUpperInvariant() != "HEAD")
             {
-                body = DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+                body = GZipUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
             }
 
             entry.Response.Body = body.Length == 0 ? null : body;
@@ -228,7 +224,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode != EntryRecordMode.DontRecord)
             {
-                session.Session.Entries.Add(entry);
+                lock (session.Session.Entries)
+                {
+                    session.Session.Entries.Add(entry);
+                }
 
                 Interlocked.Increment(ref Startup.RequestsRecorded);
             }
@@ -250,7 +249,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (entry.Response.Body?.Length > 0)
             {
-                var bodyData = CompressBody(entry.Response.Body, entry.Response.Headers);
+                var bodyData = GZipUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
                 outgoingResponse.ContentLength = bodyData.Length;
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
@@ -288,45 +287,6 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             return mode;
-        }
-
-        private byte[] CompressBody(byte[] incomingBody, SortedDictionary<string, string[]> headers)
-        {
-            if (headers.TryGetValue("Content-Encoding", out var values))
-            {
-                if (values.Contains("gzip"))
-                {
-                    using (var uncompressedStream = new MemoryStream(incomingBody))
-                    using (var resultStream = new MemoryStream())
-                    {
-                        using (var compressedStream = new GZipStream(resultStream, CompressionMode.Compress))
-                        {
-                            uncompressedStream.CopyTo(compressedStream);
-                        }
-                        return resultStream.ToArray();
-                    }
-                }
-            }
-
-            return incomingBody;
-        }
-
-        private byte[] DecompressBody(MemoryStream incomingBody, HttpContentHeaders headers)
-        {
-            if (headers.TryGetValues("Content-Encoding", out var values))
-            {
-                if (values.Contains("gzip"))
-                {
-                    using (var uncompressedStream = new GZipStream(incomingBody, CompressionMode.Decompress))
-                    using (var resultStream = new MemoryStream())
-                    {
-                        uncompressedStream.CopyTo(resultStream);
-                        return resultStream.ToArray();
-                    }
-                }
-            }
-
-            return incomingBody.ToArray();
         }
 
         public HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
@@ -484,7 +444,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (match.Response.Body?.Length > 0)
             {
-                var bodyData = CompressBody(match.Response.Body, match.Response.Headers);
+                var bodyData = GZipUtilities.CompressBody(match.Response.Body, match.Response.Headers);
 
                 outgoingResponse.ContentLength = bodyData.Length;
 
@@ -506,13 +466,38 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            entry.Request.Body = await ReadAllBytes(request.Body).ConfigureAwait(false);
+            byte[] bytes = await ReadAllBytes(request.Body).ConfigureAwait(false);
+
+            entry.Request.Body = GZipUtilities.DecompressBody(bytes, request.Headers);
             return entry;
         }
 
         #endregion
 
         #region SetRecordingOptions and store functionality
+        public static string GetAssetsJsonLocation(string pathToAssetsJson, string contextDirectory)
+        {
+            if (pathToAssetsJson == null)
+            {
+                return null;
+            }
+
+            var path = pathToAssetsJson;
+
+            if (!Path.IsPathFullyQualified(pathToAssetsJson))
+            {
+                path = Path.Join(contextDirectory, pathToAssetsJson);
+            }
+
+            return path;
+        }
+
+        public async Task Restore(string pathToAssetsJson)
+        {
+            var resultingPath = await Store.Restore(pathToAssetsJson);
+            ContextDirectory = resultingPath;
+        }
+
         public void SetRecordingOptions(IDictionary<string, object> options = null, string sessionId = null)
         {
             if (options != null)

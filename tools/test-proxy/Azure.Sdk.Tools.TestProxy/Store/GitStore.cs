@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
-        public async Task Restore(string pathToAssetsJson) {
+        public async Task<string> Restore(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = IsAssetsRepoInitialized(config);
 
@@ -113,6 +113,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             CheckoutRepoAtConfig(config);
+
+            return config.AssetsRepoLocation;
         }
 
         /// <summary>
@@ -227,6 +229,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
+                // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
+                // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
+                GitHandler.Run("fetch origin", config);
                 // Set non-cone mode otherwise path filters will not work in git >= 2.37.0
                 // See https://github.blog/2022-06-27-highlights-from-git-2-37/#tidbits
                 GitHandler.Run($"sparse-checkout set --no-cone {checkoutPaths}", config);

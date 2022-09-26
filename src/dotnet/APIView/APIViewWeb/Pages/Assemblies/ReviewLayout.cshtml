@@ -2,7 +2,6 @@
 {
     <script type="text/javascript" src="@Url.Content("~/review.js")" asp-append-version="true"></script>
     <script type="text/javascript" src="@Url.Content("~/comments.js")" asp-append-version="true"></script>
-    <script type="text/javascript" src="@Url.Content("~/api.js")" asp-append-version="true"></script>
     <script type="text/javascript" src="@Url.Content("~/fileInput.js")" asp-append-version="true"></script>
     <script type="text/javascript" src="@Url.Content("~/revisions.js")" asp-append-version="true"></script>
 }
@@ -11,7 +10,7 @@
     var id = ViewContext.RouteData.Values["id"];
 }
 
-<nav class="navbar-light shadow-sm bg-light sticky-top">
+<nav class="navbar-light shadow-sm bg-light">
     <div class="container-fluid py-2">
         <ul class="nav nav-pills">
             <li class="nav-item">
@@ -22,6 +21,9 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link" active-if="@TempData["page"].Equals("revisions")" asp-page="Revisions" asp-route-id="@id">Revisions</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" active-if="@TempData["page"].Equals("samples")" asp-page="Samples" asp-route-id="@id">Usage Samples</a>
             </li>
         </ul>
     </div>

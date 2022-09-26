@@ -149,12 +149,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             // 1. The AssetsReproBranch
             if (isPushTest)
             {
-                string adjustedAssetsRepoBranch = string.Format("test_{0}_{1}", testGuid, assets.TagPrefix);
-                // Call InitIntegrationBranch
-                InitIntegrationBranch(assets, adjustedAssetsRepoBranch);
+                string adjustedAssetsRepoTag = string.Format("test_{0}_{1}", testGuid, assets.TagPrefix);
+                // Call InitIntegrationTag
+                InitIntegrationTag(assets, adjustedAssetsRepoTag);
 
                 // set the TagPrefix to the adjusted test branch 
-                assets.TagPrefix = adjustedAssetsRepoBranch;
+                assets.TagPrefix = adjustedAssetsRepoTag;
                 localAssetsJsonContent = JsonSerializer.Serialize(assets);
             }
 
@@ -323,7 +323,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         /// </summary>
         /// <param name="assets"></param>
         /// <param name="adjustedAssetsRepoBranch"></param>
-        public static void InitIntegrationBranch(Assets assets, string adjustedAssetsRepoBranch)
+        public static void InitIntegrationTag(Assets assets, string adjustedAssetsRepoBranch)
         {
             // generate a test folder root
             string tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -354,7 +354,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 // Create the adjustedAssetsRepoBranch from the original branch. The reason being is that pushing
                 // to a branch of a branch is automatic
-                GitHandler.Run($"checkout -b {adjustedAssetsRepoBranch}", tmpPath);
+                GitHandler.Run($"tag {adjustedAssetsRepoBranch}", tmpPath);
                 // Push the contents of the TagPrefix into the adjustedAssetsRepoBranch
                 GitHandler.Run($"push origin {adjustedAssetsRepoBranch}", tmpPath);
             }
@@ -365,7 +365,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-        public static void CleanupIntegrationTestBranch(Assets assets)
+        public static void CleanupIntegrationTestTag(Assets assets)
         {
             var skipBranchCleanup = Environment.GetEnvironmentVariable(DisableBranchCleanupEnvVar);
             if (!String.IsNullOrWhiteSpace(skipBranchCleanup))

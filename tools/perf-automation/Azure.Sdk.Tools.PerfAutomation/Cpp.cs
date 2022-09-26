@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         protected override Language Language => Language.Cpp;
 
         public override async Task<(string output, string error, object context)> SetupAsync(
-            string project, string languageVersion, IDictionary<string, string> packageVersions)
+            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
         {
             foreach (var key in packageVersions.Keys)
             {
@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            IDictionary<string, string> packageVersions, string testName, string arguments, object context)
+            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context)
         {
             var perfExe = (string)context;
 

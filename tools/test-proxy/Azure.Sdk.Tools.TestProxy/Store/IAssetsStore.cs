@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Given a configuration, pull any remote resources down into the provided contextPath.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
-        public abstract Task Restore(string pathToAssetsJson);
+        public abstract Task<string> Restore(string pathToAssetsJson);
 
         /// <summary>
         /// Given a configuration, determine the state of the resources present under contextPath, reset those resources to their "fresh" state.

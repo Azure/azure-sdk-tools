@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
@@ -22,14 +22,18 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string resolutionLock = "off", bool usageSampleComment = false)
         {
             var comment = new CommentModel();
             comment.TimeStamp = DateTime.UtcNow;
             comment.ReviewId = reviewId;
             comment.RevisionId = revisionId;
             comment.ElementId = elementId;
+            comment.SectionClass = sectionClass;
             comment.Comment = commentText;
+            comment.GroupNo = groupNo;
+            comment.ResolutionLocked = !resolutionLock.Equals("on");
+            comment.IsUsageSampleComment = usageSampleComment;
 
             await _commentsManager.AddCommentAsync(User, comment);
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
@@ -89,3 +93,4 @@ namespace APIViewWeb.Controllers
         }
     }
 }
+

@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         protected override Language Language => Language.Python;
 
         public override async Task<(string output, string error, object context)> SetupAsync(
-            string project, string languageVersion, IDictionary<string, string> packageVersions)
+            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var env = Path.Combine(projectDirectory, _env);
@@ -42,7 +42,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // Install dev reqs
             await Util.RunAsync(pip, "install -r dev_requirements.txt", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
-            // TODO: Support multiple packages if possible.  Maybe by force installing?
             foreach (var v in packageVersions)
             {
                 var packageName = v.Key;
@@ -50,7 +49,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion == Program.PackageVersionSource)
                 {
-                    await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                    if (packageName == primaryPackage)
+                    {
+                        await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                    }
+                    // TODO: Consider installing source versions of non-primary packages.  Would require finding package in source tree.
+                    //       So far, this seems unnecessary, since dev-requirements.txt usually includes core.
                 }
                 else
                 {
@@ -62,7 +66,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            IDictionary<string, string> packageVersions, string testName, string arguments, object context)
+            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 

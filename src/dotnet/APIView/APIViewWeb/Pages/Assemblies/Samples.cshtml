@@ -1,0 +1,246 @@
+@page "{id?}/{revisionId?}"
+@model APIViewWeb.Pages.Assemblies.UsageSamplePageModel
+@using APIViewWeb.Helpers
+@using APIViewWeb.Models
+@{
+    Layout = "ReviewLayout";
+    ViewData["Title"] = "Usage Samples";
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+    ViewData["UserPreference"] = userPreference;
+}
+<link rel="stylesheet" href="~/usagesample.css">
+
+@if (Model.Samples == null || Model.Sample.FileId == "Bad Deployment" || Model.Sample.FileId == "File Content Missing") // If the samples container does not exist
+{
+    <div class="container-fluid">
+        <div class="mx-5 mt-2">
+            <div class="text-muted">
+                <p> <strong> Usage Samples are not available for this APIView deployment. </strong></p>
+                <p> Please check <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/CONTRIBUTING.md">CONTRIBUTING.md</a> to see how to enable them. </p>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container-fluid">
+        <div class="mx-5 mt-2">
+            <div class="row">
+                <div class="col p-2" data-review-id=@Model.Review.ReviewId>
+                    @if (Model.SampleContent.Length == 0) 
+                    {
+                        <div class="text-muted">
+                            <p> This review does not currently have any usage samples to display. </p>
+                            <button type="button" class="btn btn-sm border shadow-sm btn-light" data-toggle="modal" data-target="#uploadModel">Add Sample</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="usage-sample">
+                            <span class="float-right">
+                                <button type="button" class="btn btn-sm border shadow-sm btn-light" data-toggle="modal" data-target="#updateModel"><i class="fa-solid fa-pen-to-square"></i>&nbsp;&nbsp;Edit Revision</button>
+                                <button type="button" class="btn btn-sm border shadow-sm btn-light" data-toggle="modal" data-target="#uploadModel"><i class="fas fa-plus"></i>&nbsp;&nbsp;Add new Revision</button>
+                                @if (Model.Sample.CreatedBy == User.GetGitHubLogin())
+                                {
+                                    <button type="button" class="btn btn-sm border shadow-sm btn-danger" data-toggle="modal" data-target="#deleteModel"><i class="fas fa-times-circle"></i>&nbsp;&nbsp;Delete Revision</button>
+                                }
+                            </span>
+                            <form>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6 mb-0">
+                                        <label class="mb-0 ml-1"><small>Revision:</small></label>
+                                        <select class="selectpicker show-tick show-menu-arrow shadow-sm" data-style="btn-light btn-sm border" data-selected-text-format="value" data-live-search="true" data-size="10" data-width="100%" data-container="body" id="revisions-bootstraps-select" data-tick-icon="fa-solid fa-check">
+                                            @foreach (var revision in Model.SampleRevisions)
+                                            {
+                                                var urlValue = @Url.ActionLink("Samples", "Assemblies", new
+                                                {
+                                                    id = @Model.Review.ReviewId,
+                                                    revisionId = @revision.FileId,
+                                                });
+
+                                                string revTitle = revision.RevisionTitle == null ? "Rev " + revision.RevisionNumber : "Rev " + revision.RevisionNumber + " - " + revision.RevisionTitle;
+
+                                                if (revision.FileId == Model.Sample.FileId)
+                                                {
+                                                    <option selected style="font-size: 0.8em;" value="@urlValue" data-content="@revTitle"></option>
+                                                }
+                                                else 
+                                                {
+                                                    <option style="font-size: 0.8em;" value="@urlValue" data-content="@revTitle"></option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="usage-sample border rounded">
+                            <table class="code-window">
+                                <tbody>
+                                    @foreach (var line in Model.SampleContent)
+                                    {
+                                        <partial name="_codeline" model="@line" />
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <i> Sample uploaded by <strong> <a username="@Model.Sample.CreatedBy"> @Model.Sample.CreatedBy </a></strong></i>
+                    }
+                </div>
+                <partial name="_SampleCommentFormPartial" />
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container-fluid">
+        <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Usage Sample</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+
+                        <div class="form-group">
+                            <label>Pick an upload method:</label>
+
+                            <ul class="nav nav-pills nav-fill mb-3">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="home-tab" data-toggle="tab" href="#md-text">Markdown Text</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#md-file">Markdown File</a>
+                                </li>
+                            </ul>
+
+                            <!-- Tab panes -->
+                            <div class="tab-content border rounded p-3">
+                                <div class="tab-pane active" id="md-text">
+                                    <div class="new-comment-content">
+                                        <form asp-page-handler="Upload" method="post">
+                                            <div class="form-group">
+                                                <label asp-for="Upload.RevisionTitle" class="text-muted"> Enter a sample title (Optional) </label>
+                                                <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
+                                                <textarea asp-for="Upload.sampleString" class="new-thread-comment-text form-control" rows="25" placeholder="Enter your markdown formatted usage sample here"></textarea>
+                                                <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                                                @if (Model.SampleRevisions == null) 
+                                                {
+                                                    <input asp-for="Upload.RevisionNumber" hidden value="-1" />
+                                                }
+                                                else 
+                                                {
+                                                    <input asp-for="Upload.RevisionNumber" hidden value="@Model.SampleRevisions.Count()" />
+                                                }
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-sm border shadow-sm btn-outline-secondary" data-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-sm border shadow-sm btn-light" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-plus"></i>&nbsp;&nbsp;Add Revision</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="md-file">
+                                    <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
+                                        <label asp-for="Upload.RevisionTitle" class="text-muted"> Enter a sample title (Optional) </label>
+                                        <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
+                                        <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                                        <input asp-for="Upload.RevisionNumber" hidden value="@Model.SampleRevisions.Count()" />
+                                        <div class="form-group">
+                                            <div class="custom-file">
+                                                <input asp-for="Upload.File" type="file" class="custom-file-input">
+                                                <label asp-for="Upload.File" class="custom-file-label">Select usage sample for this review</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-sm border shadow-sm btn-outline-secondary" data-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-sm border shadow-sm btn-light" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i>&nbsp;&nbsp;Upload</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="modal fade" id="deleteModel" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Delete Usage Sample</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="tab-content border rounded p-3">
+                            <h3 class="modal-dialog"> This action can not be undone. </h3>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="form-group">
+                            <form asp-page-handler="Upload" method="post">
+                                <input asp-for="Upload.sampleString" hidden value="@null" />
+                                <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                                <input asp-for="Upload.Deleting" hidden type="text" value="@true" />
+                                <input asp-for="Upload.SampleId" hidden type="text" value="@Model.Samples.SampleId" />
+                                <input asp-for="Upload.FileId" hidden type="text" value="@Model.Sample.FileId" />
+                                <button type="button" class="btn btn-sm border shadow-sm btn-outline-secondary" data-dismiss="modal">Close</button>
+                                <button type="submit" name="submit" value="Submit" class="btn btn-sm border shadow-sm btn-danger"><i class="fas fa-times-circle"></i>&nbsp;&nbsp;Remove Revision</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="modal fade" id="updateModel" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Update Usage Sample</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <div class="tab-content border rounded p-3">
+                                <div class="tab-pane active" id="md-text">
+                                    <div class="new-comment-content">
+                                        <form asp-page-handler="Upload" method="post">
+                                            <label asp-for="Upload.RevisionTitle" class="text-muted"> Enter a sample title (Optional) </label>
+                                            <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
+                                            <div class="form-group">
+                                                <div class="new-sample-content">
+                                                    <textarea asp-for="Upload.updateString" class="new-thread-comment-text form-control" rows="25"></textarea>
+                                                </div>
+                                                <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                                                <input asp-for="Upload.Updating" hidden type="text" value="@true" />
+                                                <input asp-for="Upload.RevisionNumber" hidden value="@Model.SampleRevisions.Count()" />
+                                            </div>
+                                            <p class="text-muted"> This will create a new revision of the sample. </p>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-sm border shadow-sm btn-outline-secondary" data-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-sm border shadow-sm btn-light" onclick="this.form.submit(); this.disabled = true;"><i class="fa-solid fa-pen-to-square"></i>&nbsp;&nbsp;Update Revision</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

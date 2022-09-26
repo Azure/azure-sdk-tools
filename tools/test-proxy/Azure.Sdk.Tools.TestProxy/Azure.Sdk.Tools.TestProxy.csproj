@@ -13,12 +13,14 @@
   <ItemGroup Condition="'$(TargetFramework)'=='net5.0'">
     <PackageReference Include="Azure.Core" Version="1.24.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
-    <PackageReference Include="System.CommandLine.DragonFruit" Version="0.3.0-alpha.21216.1" />
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework)'=='net6.0'">
     <PackageReference Include="Azure.Core" Version="1.24.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.0" />
-    <PackageReference Include="System.CommandLine.DragonFruit" Version="0.3.0-alpha.21216.1" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
   </ItemGroup>
 </Project>

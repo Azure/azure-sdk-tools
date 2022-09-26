@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView;
 using APIView.DIff;
+using APIViewWeb.Helpers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -61,6 +62,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public int TotalActiveConversations { get; set; }
 
+        public int UsageSampleConversations { get; set; }
+
         [BindProperty(SupportsGet = true)]
         public string DiffRevisionId { get; set; }
 
@@ -81,9 +84,7 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Revision = revisionId != null ?
-                Review.Revisions.Single(r => r.RevisionId == revisionId) :
-                Review.Revisions.Last();
+            Revision = GetReviewRevision(revisionId);
             PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
 
             var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
@@ -117,9 +118,75 @@ namespace APIViewWeb.Pages.Assemblies
 
             ActiveConversations = ComputeActiveConversations(fileHtmlLines, Comments);
             TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
+            UsageSampleConversations = Comments.Threads.Count(t => t.Comments.First().IsUsageSampleComment);
             var filterPreference = _preferenceCache.GetFilterType(User.GetGitHubLogin(), Review.FilterType);
             ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName, filterPreference);
             return Page();
+        }
+
+        public async Task<PartialViewResult> OnGetCodeLineSectionAsync(string id, int sectionId, string revisionId = null)
+        {
+            Review = await _manager.GetReviewAsync(User, id);
+            Revision = GetReviewRevision(revisionId);
+            var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
+            var htmlLines = renderedCodeFile.GetCodeLineSection(sectionId);
+            var fileDiagnostics = renderedCodeFile.CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
+            Comments = await _commentsManager.GetReviewCommentsAsync(id);
+            Lines = CreateLines(fileDiagnostics, htmlLines, Comments, true);
+            TempData["CodeLineSection"] = Lines;
+            TempData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+            return Partial("_CodeLinePartial", sectionId);
+        }
+
+        public async Task<ActionResult> OnPostToggleClosedAsync(string id)
+        {
+            await _manager.ToggleIsClosedAsync(User, id);
+
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
+        {
+            await _notificationManager.ToggleSubscribedAsync(User, id);
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<IActionResult> OnPostToggleApprovalAsync(string id, string revisionId)
+        {
+            await _manager.ToggleApprovalAsync(User, id, revisionId);
+            return RedirectToPage(new { id = id });
+        }
+
+        public IActionResult OnGetUpdatePageSettings(bool hideLineNumbers = false, bool hideLeftNavigation = false)
+        {
+            _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
+            {
+                UserName = User.GetGitHubLogin(),
+                HideLeftNavigation = hideLeftNavigation,
+                HideLineNumbers = hideLineNumbers
+            });
+            return new EmptyResult();
+        }
+
+        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, string revisionId = null)
+        {
+            var routingData = new Dictionary<string, string>();
+            routingData["revisionId"] = revisionId;
+            routingData["diffRevisionId"] = diffRevisionId;
+            routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
+            return routingData;
+        }
+
+        public UserPreferenceModel GetUserPreference()
+        {
+            return _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+        }
+
+        private ReviewRevisionModel GetReviewRevision(string revisionId = null)
+        {
+            return revisionId != null ?
+                Review.Revisions.Single(r => r.RevisionId == revisionId) :
+                Review.Revisions.Last();
         }
 
         private InlineDiffLine<CodeLine>[] CreateDiffOnlyLines(InlineDiffLine<CodeLine>[] lines)
@@ -182,12 +249,12 @@ namespace APIViewWeb.Pages.Assemblies
                     diffLine.Kind != DiffLineKind.Removed ?
                         diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
                         Array.Empty<CodeDiagnostic>(),
-                    ++index,
+                    diffLine.Line.LineNumber ?? ++index,
                     new int[] { }
                 )).ToArray();
         }
 
-        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments)
+        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments, bool hideCommentRows = false)
         {
             List<int> documentedByLines = new List<int>();
             int lineNumberExcludingDocumentation = 0;
@@ -201,7 +268,7 @@ namespace APIViewWeb.Pages.Assemblies
                         return new CodeLineModel(
                             DiffLineKind.Unchanged,
                             line,
-                            comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
+                            comments.TryGetThreadForLine(line.ElementId, out var thread, hideCommentRows) ? thread : null,
                             diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
                             lineNumberExcludingDocumentation,
                             new int[] {}
@@ -212,9 +279,9 @@ namespace APIViewWeb.Pages.Assemblies
                         CodeLineModel c = new CodeLineModel(
                             DiffLineKind.Unchanged,
                             line,
-                            comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
+                            comments.TryGetThreadForLine(line.ElementId, out var thread, hideCommentRows) ? thread : null,
                             diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
-                            ++lineNumberExcludingDocumentation,
+                            line.LineNumber ?? ++lineNumberExcludingDocumentation,
                             documentedByLines.ToArray()
                         );
                         documentedByLines.Clear();
@@ -234,40 +301,13 @@ namespace APIViewWeb.Pages.Assemblies
                 }
 
                 // if we have comments for this line and the thread has not been resolved.
+                // Add "&& !thread.Comments.First().IsUsageSampleComment()" to exclude sample comments from being counted (This also prevents the popup before approval)
                 if (comments.TryGetThreadForLine(line.ElementId, out CommentThreadModel thread) && !thread.IsResolved)
                 {
                     activeThreads++;
                 }
             }
             return activeThreads;
-        }
-
-        public async Task<ActionResult> OnPostToggleClosedAsync(string id)
-        {
-            await _manager.ToggleIsClosedAsync(User, id);
-
-            return RedirectToPage(new { id = id });
-        }
-
-        public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
-        {
-            await _notificationManager.ToggleSubscribedAsync(User, id);
-            return RedirectToPage(new { id = id });
-        }
-
-        public async Task<IActionResult> OnPostToggleApprovalAsync(string id, string revisionId)
-        {
-            await _manager.ToggleApprovalAsync(User, id, revisionId);
-            return RedirectToPage(new { id = id });
-        }
-
-        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, string revisionId = null)
-        {
-            var routingData = new Dictionary<string, string>();
-            routingData["revisionId"] = revisionId;
-            routingData["diffRevisionId"] = diffRevisionId;
-            routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
-            return routingData;
         }
     }
 }

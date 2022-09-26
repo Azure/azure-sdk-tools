@@ -13,10 +13,12 @@
     "acorn": "^8.0.0",
     "core-js": "^3.3.2",
     "jquery": "3.6.0",
+    "jquery-ui": "1.13.2",
     "underscore": "^1.13.4"
   },
   "devDependencies": {
     "@types/jquery": "3.3.31",
+    "@types/jqueryui": "1.12.16",
     "@types/split.js": "^1.4.0",
     "@types/webpack-env": "^1.14.1",
     "@typescript-eslint/parser": "5.16.0",

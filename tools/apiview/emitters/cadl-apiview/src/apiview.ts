@@ -27,13 +27,14 @@ import {
   TypeReferenceNode,
   UnionExpressionNode,
   UnionStatementNode,
-  UnionVariant,
   UnionVariantNode,
 } from "@cadl-lang/compiler";
 import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
 import { ApiViewNavigation } from "./navigation.js";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
+
+const WHITESPACE = " ";
 
 export const enum ApiViewTokenKind {
   Text = 0,
@@ -101,38 +102,59 @@ export class ApiView {
     });
   }
 
-  beginGroup() {
-    this.punctuation("{", true, false);
-    this.newline();
-    this.pop();
-    this.indentString = " ".repeat(this.indentString.length + this.indentSize);
+  indent() {
+    this.trim();
+    this.indentString = WHITESPACE.repeat(this.indentString.length + this.indentSize);
     this.tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: this.indentString });
   }
 
-  endGroup(count: number = 3) {
-    this.pop(count);
-    this.indentString = " ".repeat(this.indentString.length - this.indentSize);
+  deindent() {
+    this.trim();
+    this.indentString = WHITESPACE.repeat(this.indentString.length - this.indentSize);
     this.tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: this.indentString });
+  }
+
+  trim() {
+    let last = this.tokens[this.tokens.length - 1]
+    while (last) {
+      if (last.Kind == ApiViewTokenKind.Whitespace) {
+        this.tokens.pop();
+        last = this.tokens[this.tokens.length - 1];
+      } else {
+        return;
+      }
+    }
+  }
+
+  beginGroup() {
+    this.punctuation("{", true, false);
+    this.newline();
+    this.indent();
+  }
+
+  endGroup() {
+    this.deindent();
     this.punctuation("}");
   }
 
   whitespace(count: number = 1) {
     this.tokens.push({
       Kind: ApiViewTokenKind.Whitespace,
-      Value: " ".repeat(count),
+      Value: WHITESPACE.repeat(count),
     });
   }
 
   space() {
-    if (this.tokens[-1]?.Kind != ApiViewTokenKind.Whitespace) {
+    if (this.tokens[this.tokens.length - 1]?.Kind != ApiViewTokenKind.Whitespace) {
       this.tokens.push({
         Kind: ApiViewTokenKind.Whitespace,
-        Value: " ",
+        Value: WHITESPACE,
       });
     }
   }
 
   newline() {
+    this.trim();
     this.tokens.push({
       Kind: ApiViewTokenKind.Newline,
     });
@@ -335,6 +357,7 @@ export class ApiView {
             this.tokenize(arg);
             this.punctuation(",", false, true);
           }
+          // remove trailing ", "
           this.pop(2);
           this.punctuation(")", false, false);
         }
@@ -375,7 +398,7 @@ export class ApiView {
           this.tokenize(opt);
           this.punctuation("&", true, true);
         }
-        // trim the final " & "
+        // remove trailing " & "
         this.pop(3);
         break;
       case SyntaxKind.InterfaceStatement:
@@ -442,6 +465,7 @@ export class ApiView {
           this.tokenize(val);
           this.punctuation(",", false, true);
         }
+        // remove trailing ", "
         this.pop(2);
         this.punctuation("]", true, false);
         break;
@@ -454,6 +478,7 @@ export class ApiView {
             this.tokenize(arg);
             this.punctuation(",", false, true);
           }
+          // remove trailing ", "
           this.pop(2);
           this.punctuation(">");
         }
@@ -464,7 +489,7 @@ export class ApiView {
           this.tokenize(opt);
           this.punctuation("|", true, true);
         }
-        // trim the final " | "
+        // remove trailing " | "
         this.pop(3);
         break;
       case SyntaxKind.UnionStatement:
@@ -512,7 +537,7 @@ export class ApiView {
         NamespaceStack.pop();
         this.blankLines(0);
       }
-      this.endGroup(1);
+      this.endGroup();
     } else {
       this.punctuation("{}", true, false);
     }
@@ -531,7 +556,7 @@ export class ApiView {
       this.tokenize(op);
       this.blankLines(0);
     }
-    this.endGroup(1);
+    this.endGroup();
     NamespaceStack.pop();
     this.blankLines(1);
   }
@@ -552,7 +577,7 @@ export class ApiView {
       NamespaceStack.pop();
       this.blankLines(0);
     }
-    this.endGroup(1);
+    this.endGroup();
     NamespaceStack.pop();
     this.blankLines(1);
   }
@@ -573,8 +598,7 @@ export class ApiView {
       this.punctuation(",");
       this.blankLines(0);
     }
-    this.endGroup(4);
-    this.pop(2);
+    this.endGroup();
     this.newline();
     this.punctuation("}");
     NamespaceStack.pop();
@@ -598,46 +622,67 @@ export class ApiView {
     }
   }
 
-  private tokenizeModelExpression(
-    node: ModelExpressionNode,
-    brackets: boolean,
-    inline: boolean
-  ) {
+  private tokenizeModelExpressionInline(node: ModelExpressionNode, displayBrackets: boolean) {
     if (node.properties.length) {
-      // FIXME: Fix indentation
-      if (!inline) {
-        this.newline();
-      }
-      if (brackets) {
-        this.punctuation("{", inline, inline);
-      }
-      if (!inline) {
-        this.newline();
+      if (displayBrackets) {
+        this.punctuation("{", true, true);
       }
       for (const prop of node.properties) {
         switch (prop.kind) {
           case SyntaxKind.ModelProperty:
-            this.tokenizeModelProperty(prop, inline);
+            this.tokenizeModelProperty(prop, true);
             break;
           case SyntaxKind.ModelSpreadProperty:
             this.tokenize(prop);
             break;
         }
-        this.punctuation(",", false, inline);
-        if (!inline) {
-          this.newline();
-        }
+        this.punctuation(",", false, true);
       }
       this.pop(2);
-      if (!inline) {
+      if (displayBrackets) {
+        this.punctuation("}", true, true);
+      }
+    }
+  }
+
+  private tokenizeModelExpressionExpanded(node: ModelExpressionNode, displayBrackets: boolean) {
+    // FIXME: Needs line IDs for each property.
+    if (node.properties.length) {
+      this.newline();
+      this.indent();
+      this.punctuation("{", false, false);
+      this.newline();
+      this.indent();
+      for (const prop of node.properties) {
+        switch (prop.kind) {
+          case SyntaxKind.ModelProperty:
+            this.tokenizeModelProperty(prop, false);
+            break;
+          case SyntaxKind.ModelSpreadProperty:
+            this.tokenize(prop);
+            break;
+        }
+        this.punctuation(",", false, false);
         this.newline();
       }
-      if (brackets) {
-        this.punctuation("}", inline, inline);
-      }
-      if (!inline) {
-        this.newline();
-      }
+      this.trim();
+      this.deindent();
+      this.punctuation("}", false, false);
+      this.newline();
+      this.trim();
+      this.deindent();
+    }
+  }
+
+  private tokenizeModelExpression(
+    node: ModelExpressionNode,
+    displayBrackets: boolean,
+    inline: boolean
+  ) {
+    if (inline) {
+      this.tokenizeModelExpressionInline(node, displayBrackets)
+    } else {
+      this.tokenizeModelExpressionExpanded(node, displayBrackets)
     }
   }
 

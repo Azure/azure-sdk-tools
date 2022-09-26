@@ -20,7 +20,8 @@ ENV \
     Logging__Console__FormatterName= \
     Logging__LogLevel__Default=Information \
     Logging__LogLevel__Microsoft=Information \
-    TEST_PROXY_FOLDER="/srv/testproxy/"
+    TEST_PROXY_FOLDER="/srv/testproxy/" \
+    PATH="/proxyserver:${PATH}"
 
 # dotnet-dev-certs tool is not included in aspnet image, so manually copy from sdk image
 COPY --from=build /usr/share/dotnet/sdk/6.0.102/DotnetTools/dotnet-dev-certs/6.0.2-servicing.22064.12/tools/net6.0/any/ /dotnet-dev-certs
@@ -45,5 +46,6 @@ EXPOSE 5000 5001
 WORKDIR /proxyserver
 
 COPY --from=build /proxyserver .
+ADD run_proxy.sh /proxyserver/test-proxy
 
-ENTRYPOINT ["dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--dump"]
+CMD ["test-proxy", "start", "--dump"]

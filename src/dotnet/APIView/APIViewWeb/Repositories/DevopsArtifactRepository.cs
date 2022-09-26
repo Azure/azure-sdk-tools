@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace APIViewWeb.Repositories
 {
-    public class DevopsArtifactRepository
+    public class DevopsArtifactRepository : IDevopsArtifactRepository
     {
         static readonly HttpClient _devopsClient = new();
         private readonly IConfiguration _configuration;

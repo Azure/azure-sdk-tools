@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="SampleTestFiles\SampleCodeFileWithSections.json">
+    <None Update="SampleTestFiles\TokenFileWithSectionsRevision2.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

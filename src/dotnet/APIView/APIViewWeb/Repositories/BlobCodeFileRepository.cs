@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -17,10 +17,9 @@ namespace APIViewWeb
         private BlobContainerClient _container;
         private readonly IMemoryCache _cache;
 
-        public BlobCodeFileRepository(IConfiguration configuration, IMemoryCache cache)
+        public BlobCodeFileRepository(IConfiguration configuration, IMemoryCache cache, BlobContainerClient blobContainerClient = null)
         {
-            var connectionString = configuration["Blob:ConnectionString"];
-            _container = new BlobContainerClient(connectionString, "codefiles");
+            _container = blobContainerClient ?? new BlobContainerClient(configuration["Blob:ConnectionString"], "codefiles");
             _cache = cache;
         }
 

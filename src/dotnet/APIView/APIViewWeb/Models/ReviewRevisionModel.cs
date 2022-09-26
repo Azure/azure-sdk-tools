@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -21,6 +21,8 @@ namespace APIViewWeb
         public string RevisionId { get; set; } = IdHelper.GenerateId();
 
         public List<ReviewCodeFileModel> Files { get; set; } = new List<ReviewCodeFileModel>();
+
+        public Dictionary<string, HashSet<int>> HeadingsOfSectionsWithDiff { get; set; } = new Dictionary<string, HashSet<int>>();
 
         public DateTime CreationDate { get; set; } = DateTime.Now;
 

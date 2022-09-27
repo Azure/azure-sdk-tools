@@ -176,7 +176,7 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<ActionResult> OnPostRequestReviewersAsync(string id, HashSet<string> reviewers)
         {
             // TODO: Email Notifications for those requested
-            _manager.RequestApproversAsync(User, id, reviewers);
+            await _manager.RequestApproversAsync(User, id, reviewers);
             return RedirectToPage(new { id = id });
         }
 

@@ -773,7 +773,7 @@ namespace APIViewWeb.Repositories
                 _originalsRepository.GetContainerUrl());
         }
 
-        public async void RequestApproversAsync(ClaimsPrincipal User, string ReviewId, HashSet<string> reviewers)
+        public async Task RequestApproversAsync(ClaimsPrincipal User, string ReviewId, HashSet<string> reviewers)
         {
             var review = await GetReviewAsync(User, ReviewId);
             review.requestedReviewers = reviewers;

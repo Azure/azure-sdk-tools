@@ -42,30 +42,41 @@
                     <span class="dropdown modal-dialog-scrollable">
                         <form asp-resource="@Model.Review" asp-page-handler="RequestReviewers" method="post"
                             class ="selectpicker show-tick show-menu-arrow " data-style="btn-light btn-sm border" data-selected-text-format="value" 
-                            data-live-search="true" data-size="10" data-width="100%" data-container="body" id="revisions-bootstraps-select" data-tick-icon="fa-solid fa-check">
-
-                            @foreach (var approver in Model.approvers) 
-                            {
-                                @* TODO: Sort by approver language/filter to approvers who work in Review's langauge *@
-                                <span class="checkbox dropdown-item-text">
-                                    <label>
-                                        @if (Model.Review.requestedReviewers != null && Model.Review.requestedReviewers.Contains(approver))
-                                        {
-                                            <input type="checkbox" name="reviewers" value="@approver" checked>
-                                        }
-                                        else 
-                                        {
-                                            <input type="checkbox" name="reviewers" value="@approver">
-                                        }
-                                        &nbsp;&nbsp;<img username="@approver" class="comment-icon align-self-start mr-2" height="28" width="28" />
-                                        @approver
-                                    </label>
-                                </span>
+                            data-live-search="true" data-size="10" data-width="100%" data-container="body" data-tick-icon="fa-solid fa-check">
+                            @{
+                                var anyChecked = false;
                             }
-
+                            <div style="max-height:400px;width:max-content;overflow-y:auto">
+                                @foreach (var approver in Model.approvers) 
+                                {
+                                    @* TODO: Sort by approver language/filter to approvers who work in Review's langauge *@
+                                    <span class="checkbox dropdown-item-text">
+                                        <label>
+                                            @if (Model.Review.requestedReviewers != null && Model.Review.requestedReviewers.Contains(approver))
+                                            {
+                                                <input type="checkbox" class="selectDropdownForRequest" name="reviewers" value="@approver" checked>
+                                                anyChecked = true;
+                                            }
+                                            else 
+                                            {
+                                                <input type="checkbox" class="selectDropdownForRequest"  name="reviewers" value="@approver">
+                                            }
+                                            &nbsp;&nbsp;<img username="@approver" class="comment-icon align-self-start mr-2" height="28" width="28" />
+                                            @approver
+                                        </label>
+                                    </span>
+                                }
+                            </div>
                             <span class="dropdown-item-text">
-                                <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" type="submit">Request</button>&nbsp;&nbsp;
-                                <button class="btn btn-sm btn-light shadow-sm" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitReviewRequest').click();">Request all</button>
+                                @if (anyChecked)
+                                {
+                                    <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" onclick="document.getElementById('submitRequestForReview').click()" disabled>Request Selected</button>
+                                }
+                                else 
+                                {
+                                    <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitRequestForReview').click();">Request All</button>
+                                }                                
+                                <button type="submit" id="submitRequestForReview" hidden></button>
                             </span>
                         </form>
                     </span>
@@ -91,18 +102,18 @@
                 @{
                     var popOverContent = $"<b>{Model.ActiveConversations}</b> active revision threads.<br><b>{Model.UsageSampleConversations}</b> active usage sample threads.<br><b>{Model.TotalActiveConversations}</b> total active threads.<br>"
                     + $"<b>Current Revision:</b> <em>{@Model.Revision.DisplayName}</em>";
-                    @if (Model.DiffRevisionId != null)
+                                                @if (Model.DiffRevisionId != null)
                     {
                         popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
                     }
-                    <div class="btn-group btn-group-sm shadow-sm" aria-label="Page Information">
-                        <button type="button" class="btn btn-info" id="jump-to-first-comment">
-                            <i class="far fa-comment-alt"></i>
-                        </button>
-                        <button type="button" class="btn btn-info" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
-                            <span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
-                        </button>
-                    </div>
+                                                <div class="btn-group btn-group-sm shadow-sm" aria-label="Page Information">
+                                                    <button type="button" class="btn btn-info" id="jump-to-first-comment">
+                                                        <i class="far fa-comment-alt"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-info" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
+                                                        <span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
+                                                    </button>
+                                                </div>
                 }
             </div>
             <div class="my-1">

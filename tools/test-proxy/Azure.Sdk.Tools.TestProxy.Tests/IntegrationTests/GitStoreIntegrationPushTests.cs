@@ -50,6 +50,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             {
                 GitStoretests.AssetsJson
             };
+
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
             Assets updatedAssets = null;
             string originalAssetsRepoBranch = assets.TagPrefix;

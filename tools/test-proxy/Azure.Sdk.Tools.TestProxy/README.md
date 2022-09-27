@@ -95,13 +95,13 @@ If you've already installed the tool, you can always check the installed version
 The Azure SDK Team maintains a public Azure Container Registry.
 
 ```powershell
-> docker run -v <your-volume-name-or-location>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+> docker run -v <your-volume-name-or-location>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
 
 For example, to save test recordings to disk in your repo's `/sdk/<service>/tests/recordings` directory, provide the path to the root of the repo:
 
 ```powershell
-> docker run -v C:\\repo\\azure-sdk-for-<language>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+> docker run -v C:\\repo\\azure-sdk-for-<language>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
 
 Note the **port and volume mapping** as arguments! Any files that exist in this volume locally will only be appended to/updated in place. It is a non-destructive initialize.
@@ -115,29 +115,38 @@ The azure-sdk team regularly update the image associated with the `latest` tag. 
 To ensure that your local copy is up to date, run:
 
 ```powershell
-> docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+> docker pull azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
 
 ## Command line arguments
 
 This is the help information for test-proxy. It uses the nuget package [`CommandLineParser`](https://www.nuget.org/packages/CommandLineParser) to parse arguments.
 
+The test-proxy executable fulfills one of two primary purposes:
+
+1. The test-proxy server (the only option up to this point)
+2. [`asset-sync`](#asset-sync-retrieve-external-test-recordings) push/restore/reset.
+
+This is surfaced by only showing options for the default commands. Each individual command has its own argument set that can be detailed by invoking `test-proxy <command> --help`.
+
+
 ```text
-Azure.Sdk.Tools.TestProxy
-  test-proxy
+/>test-proxy --help
+Azure.Sdk.Tools.TestProxy 1.0.0-dev.20220926.1
+c Microsoft Corporation. All rights reserved.
 
-Usage:
-  Azure.Sdk.Tools.TestProxy [options] [<args>...]
+  start      (Default Verb) Start the TestProxy.
 
-Arguments:
-  <args>  Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider. [default: ]
+  push       Push the assets, referenced by assets.json, into git.
 
-Options:
-  --insecure                             Allow untrusted SSL certs from upstream server [default: False]
-  --storage-location <storage-location>  The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized. [default: ]
-  --dump                                 Flag. Pass to dump configuration values before starting the application. [default: False]
-  --version                              Flag. Pass to get the version of the tool. [default: False]
+  reset      Reset the assets, referenced by assets.json, from git to their original files referenced by the tag. Will prompt
+             if there are pending changes.
 
+  restore    Restore the assets, referenced by assets.json, from git.
+
+  help       Display more information on a specific command.
+
+  version    Display version information.
 ```
 
 ### Storage Location
@@ -183,7 +192,7 @@ The test-proxy is integrated with the following environment variables.
 | `TEST_PROXY_FOLDER` | if command-line argument `storage-location` is not provided when invoking the proxy, this environment variable is also checked for a valid directory to use as test-proxy context. |
 | `Logging__LogLevel__Microsoft` | Defaults to `Information`. Possible valid values are `Information`, `Warning`, `Error`, `Critical`.  |
 
-Both of the above variables can be set in the `docker` runtime by providing additional arguments EG: `docker run -e Logging__LogLevel__Microsoft=Warning azsdkengsys.azurecr.io/engsys/testproxy-lin:latest`. For multiple environment variables, just use multiple `-e` provisions.
+Both of the above variables can be set in the `docker` runtime by providing additional arguments EG: `docker run -e Logging__LogLevel__Microsoft=Warning azsdkengsys.azurecr.io/engsys/test-proxy:latest`. For multiple environment variables, just use multiple `-e` provisions.
 
 ## How do I use the test-proxy to get a recording?
 

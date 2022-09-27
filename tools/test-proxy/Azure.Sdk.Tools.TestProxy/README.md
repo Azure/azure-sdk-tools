@@ -140,7 +140,7 @@ c Microsoft Corporation. All rights reserved.
   push       Push the assets, referenced by assets.json, into git.
 
   reset      Reset the assets, referenced by assets.json, from git to their original files referenced by the tag. Will prompt
-             if there's pending changes.
+             if there are pending changes.
 
   restore    Restore the assets, referenced by assets.json, from git.
 

@@ -29,7 +29,7 @@ Function Get-CloneUrl {
 
 # Returns the TEMP directory
 Function Get-TestFolder {
-  return $env:TEMP
+  return [System.IO.Path]::GetTempPath()
 }
 
 # Gets the path that will be used by the test to do Git actions. A

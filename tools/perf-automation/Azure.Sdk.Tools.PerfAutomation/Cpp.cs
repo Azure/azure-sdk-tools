@@ -85,10 +85,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 opsPerSecond = double.Parse(match.Groups[1].Value);
             }
 
-            await Util.RunAsync(
-                "git", $"checkout main",
-                WorkingDirectory);
-
             return new IterationResult
             {
                 OperationsPerSecond = opsPerSecond,

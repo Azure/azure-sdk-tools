@@ -71,6 +71,11 @@ stages:
           inputs:
             version: '6.x'
 
+        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: false
+            rootFolder: $(Build.SourcesDirectory)
+
         - template: /eng/pipelines/templates/steps/run-pester-tests.yml
           parameters:
             TargetTags: "Integration"

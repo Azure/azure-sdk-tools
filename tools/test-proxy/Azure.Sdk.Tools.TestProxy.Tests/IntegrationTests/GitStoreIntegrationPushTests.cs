@@ -13,6 +13,11 @@ using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 {
+
+    // With the use of tags, the push scenarios are going to be somewhat redundant since
+    // tags are vastly simplified, in terms of processing compared to branches. The
+    // Scenarios below are similar but use 3 different starting tags with different
+    // files and different file versions.
     public class GitStoreIntegrationPushTests
     {
         public GitStoreIntegrationPushTests()
@@ -24,13 +29,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         private GitStore _defaultStore = new GitStore();
 
         /// <summary>
-        /// New push scenario
-        /// 1. Auto Branch Doesn't Exist Yet
-        /// 2. New branch is created off of main
-        /// 3. Add/Delete/Update files
-        /// 4. Push to new branch
-        /// 5. Verify local files are what is expected
-        /// 6. Verify assets.json was updated with the new commit Tag
+        /// 1. Restore from the initial tag in pull/scenarios
+        /// 2. Add/Delete/Update files
+        /// 3. Push to new branch
+        /// 4. Verify local files are what is expected
+        /// 5. Verify assets.json was updated with the new commit Tag
         /// </summary>
         /// <param name="inputJson"></param>
         /// <returns></returns>
@@ -44,7 +47,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""Tag"": ""language/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
-        public async Task ScenarioNewPush(string inputJson)
+        public async Task Scenario1(string inputJson)
         {
             var folderStructure = new string[]
             {
@@ -53,13 +56,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
             Assets updatedAssets = null;
-            string originalAssetsRepoBranch = assets.TagPrefix;
-            string originalSHA = assets.Tag;
+            string originalTagPrefix = assets.TagPrefix;
+            string originalTag = assets.Tag;
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest:true);
             try
             {
                 // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalAssetsRepoBranch, assets.TagPrefix);
+                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -95,7 +98,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the config was updated with the new Tag as part of the push
                 updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
-                Assert.NotEqual(originalSHA, updatedAssets.Tag);
+                Assert.NotEqual(originalTag, updatedAssets.Tag);
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
@@ -108,10 +111,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         /// <summary>
-        /// Clean Push Scenario
-        /// 1. Branch already exists and we're on the latest Tag
+        /// 1. Restore from the second tag in pull/scenarios
         /// 2. Add/Delete/Update files
-        /// 3. Push commit to branch
+        /// 3. Push to new branch
         /// 4. Verify local files are what is expected
         /// 5. Verify assets.json was updated with the new commit Tag
         /// </summary>
@@ -127,7 +129,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""Tag"": ""language/tables_bb2223""
         }")]
         [Trait("Category", "Integration")]
-        public async Task ScenarioCleanPush(string inputJson)
+        public async Task Scenario2(string inputJson)
         {
             var folderStructure = new string[]
             {
@@ -135,13 +137,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             };
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
             Assets updatedAssets = null;
-            string originalAssetsRepoBranch = assets.TagPrefix;
-            string originalSHA = assets.Tag;
+            string originalTagPrefix = assets.TagPrefix;
+            string originalTag = assets.Tag;
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
                 // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalAssetsRepoBranch, assets.TagPrefix);
+                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -177,7 +179,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the config was updated with the new Tag as part of the push
                 updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
-                Assert.NotEqual(originalSHA, updatedAssets.Tag);
+                Assert.NotEqual(originalTag, updatedAssets.Tag);
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
@@ -190,10 +192,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         /// <summary>
-        /// Conflict Push Scenario
-        /// 1. Branch already exists and we're not on the latest Tag
+        /// 1. Restore from the third tag in pull/scenarios
         /// 2. Add/Delete/Update files
-        /// 3. Push commit to branch, detects a conflict
+        /// 3. Push to new branch
         /// 4. Verify local files are what is expected
         /// 5. Verify assets.json was updated with the new commit Tag
         /// </summary>
@@ -209,7 +210,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""Tag"": ""language/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
-        public async Task ScenarioConflictPush(string inputJson)
+        public async Task Scenario3(string inputJson)
         {
             var folderStructure = new string[]
             {
@@ -217,13 +218,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             };
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
             Assets updatedAssets = null;
-            string originalAssetsRepoBranch = assets.TagPrefix;
-            string originalSHA = assets.Tag;
+            string originalTagPrefix = assets.TagPrefix;
+            string originalTag = assets.Tag;
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
                 // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalAssetsRepoBranch, assets.TagPrefix);
+                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -270,7 +271,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the config was updated with the new Tag as part of the push
                 updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
-                Assert.NotEqual(originalSHA, updatedAssets.Tag);
+                Assert.NotEqual(originalTag, updatedAssets.Tag);
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);

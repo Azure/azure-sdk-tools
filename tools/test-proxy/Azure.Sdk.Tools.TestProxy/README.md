@@ -125,7 +125,7 @@ This is the help information for test-proxy. It uses the nuget package [`Command
 The test-proxy executable fulfills one of two primary purposes:
 
 1. The test-proxy server (the only option up to this point)
-2. `asset-sync` push/restore/reset.
+2. [`asset-sync`](#asset-sync-retrieve-external-test-recordings) push/restore/reset.
 
 This is surfaced by only showing options for the default commands. Each individual command has its own argument set that can be detailed by invoking `test-proxy <command> --help`.
 

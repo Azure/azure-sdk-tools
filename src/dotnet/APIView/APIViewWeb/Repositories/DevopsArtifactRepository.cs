@@ -1,9 +1,16 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.Core.WebApi;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
+using Newtonsoft.Json;
+using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -18,18 +25,14 @@ namespace APIViewWeb.Repositories
         private readonly IConfiguration _configuration;
 
         private readonly string _devopsAccessToken;
-        private readonly string _pipeline_run_rest;
         private readonly string _hostUrl;
-        private readonly string _listPipelineApi;
 
         private IMemoryCache _pipelineNameCache;
         public DevopsArtifactRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMemoryCache cache)
         {
             _configuration = configuration;
             _devopsAccessToken = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", _configuration["Azure-Devops-PAT"])));
-            _pipeline_run_rest = _configuration["Azure-Devops-Run-Ripeline-Rest"];
             _hostUrl = _configuration["APIVIew-Host-Url"];
-            _listPipelineApi = _configuration["devops-pipeline-list-api"] ?? "https://dev.azure.com/azure-sdk/internal/_apis/pipelines?api-version=6.0-preview.1";
             _pipelineNameCache = cache;
         }
 
@@ -88,26 +91,39 @@ namespace APIViewWeb.Repositories
 
         public async Task RunPipeline(string pipelineName, string reviewDetails, string originalStorageUrl)
         {
-            SetDevopsClientHeaders();
             //Create dictionary of all required parametes to run tools - generate-<language>-apireview pipeline in azure devops
             var reviewDetailsDict = new Dictionary<string, string> { { "Reviews", reviewDetails }, { "APIViewUrl", _hostUrl }, { "StorageContainerUrl", originalStorageUrl } };
-            var pipelineParams = new Dictionary<string, Dictionary<string, string>> { { "templateParameters", reviewDetailsDict } };
-            var stringContent = new StringContent(JsonSerializer.Serialize(pipelineParams), Encoding.UTF8, "application/json");
-            var pipelineApiURl = string.Format(_pipeline_run_rest, await GetPipelineId(pipelineName));
-            var response = await _devopsClient.PostAsync(pipelineApiURl, stringContent);
-            response.EnsureSuccessStatusCode();
+            var devOpsCreds = new VssBasicCredential("nobody", _configuration["Azure-Devops-PAT"]);
+            var devOpsConnection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk/"), devOpsCreds);
+
+            var buildClient = await devOpsConnection.GetClientAsync<BuildHttpClient>();
+            var definitionId = await GetPipelineId(pipelineName);
+            var definition = await buildClient.GetDefinitionAsync("internal", definitionId);
+
+            var projectClient = await devOpsConnection.GetClientAsync<ProjectHttpClient>();
+            var project = await projectClient.GetProject("internal");
+
+
+            var build = new Build()
+            {
+                Definition = definition,
+                Project = project,
+                Parameters = JsonConvert.SerializeObject(reviewDetailsDict)
+            };
+
+            await buildClient.QueueBuildAsync(build);
         }
 
-        private async Task<string> GetPipelineId(string pipelineName)
+        private async Task<int> GetPipelineId(string pipelineName)
         {
-            string pipelineId = null;
-            if(!_pipelineNameCache.TryGetValue(pipelineName, out pipelineId))
+            int pipelineId = 0;
+            if (!_pipelineNameCache.TryGetValue(pipelineName, out pipelineId))
             {
                 await FetchPipelineDetails();
             }
 
             _pipelineNameCache.TryGetValue(pipelineName, out pipelineId);
-            if(string.IsNullOrEmpty(pipelineId))
+            if (pipelineId == 0)
             {
                 throw new Exception(string.Format("Azure Devops pipeline is not found in internal project with name {0}. Please recheck and ensure pipeline exists with this name", pipelineName));
             }
@@ -116,15 +132,27 @@ namespace APIViewWeb.Repositories
         }
 
         private async Task FetchPipelineDetails()
-        {
-            SetDevopsClientHeaders();
-            var response = await _devopsClient.GetAsync(_listPipelineApi);
-            response.EnsureSuccessStatusCode();
-            var pipelineListDetails = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            if(pipelineListDetails != null)
+        {          
+            var devOpsCreds = new VssBasicCredential("nobody", _configuration["Azure-Devops-PAT"]);
+            var devOpsConnection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk/"), devOpsCreds);
+            var client = await devOpsConnection.GetClientAsync<BuildHttpClient>();
+            
+            try
             {
-
+                var pipelines = await client.GetFullDefinitionsAsync2(project: "internal");
+                if (pipelines != null)
+                {
+                    foreach (var pipeline in pipelines.Where(p => p.Name.StartsWith("tools - generate")))
+                    {
+                        _pipelineNameCache.Set(pipeline.Name, pipeline.Id);
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
             }
         }
     }
+
 }

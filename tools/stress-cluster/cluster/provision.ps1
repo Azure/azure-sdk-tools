@@ -84,7 +84,7 @@ function DeployStaticResources([hashtable]$params)
 {
     Write-Host "Deploying static resources"
 
-    $formattedTags = $params.tags.GetEnumerator() | ForEach-Object { "$($_.Name)=$($_.Value)" }
+    $formattedTags = $params.tags.GetEnumerator() | ForEach-Object { "'$($_.Name)=$($_.Value)'" }
     $formattedTags = $formattedTags -join ' '
 
     RunOrExitOnFailure az group create `

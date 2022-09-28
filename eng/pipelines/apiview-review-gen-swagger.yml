@@ -33,6 +33,11 @@ jobs:
     workingDirectory: $(Pipeline.Workspace)
     displayName: Setup working directory for Swagger Parser.
 
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core sdk 6.x'
+    inputs:
+      version: '6.x'
+
   - script: >
       dotnet tool install
       Azure.Sdk.Tools.SwaggerApiParser

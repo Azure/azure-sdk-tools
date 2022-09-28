@@ -47,11 +47,6 @@ jobs:
     workingDirectory: $(SwaggerParserInstallPath)
     displayName: 'Install Swagger APIView Parser'
 
-  - script: >
-      ls *
-    workingDirectory: $(SwaggerParserInstallPath)
-    displayName: 'List installed files'
-
   - template: /eng/pipelines/templates/steps/apiview-review-gen.yml
     parameters:
       Reviews: ${{ parameters.Reviews }}

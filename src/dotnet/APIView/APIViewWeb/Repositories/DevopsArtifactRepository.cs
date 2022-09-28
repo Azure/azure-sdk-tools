@@ -95,64 +95,34 @@ namespace APIViewWeb.Repositories
             var reviewDetailsDict = new Dictionary<string, string> { { "Reviews", reviewDetails }, { "APIViewUrl", _hostUrl }, { "StorageContainerUrl", originalStorageUrl } };
             var devOpsCreds = new VssBasicCredential("nobody", _configuration["Azure-Devops-PAT"]);
             var devOpsConnection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk/"), devOpsCreds);
+            string projectName = _configuration["Azure-Devops-internal-project"] ?? "internal";
 
-            var buildClient = await devOpsConnection.GetClientAsync<BuildHttpClient>();
-            var definitionId = await GetPipelineId(pipelineName);
-            var definition = await buildClient.GetDefinitionAsync("internal", definitionId);
-
+            BuildHttpClient buildClient = await devOpsConnection.GetClientAsync<BuildHttpClient>();
             var projectClient = await devOpsConnection.GetClientAsync<ProjectHttpClient>();
-            var project = await projectClient.GetProject("internal");
-
-
-            var build = new Build()
+            int definitionId = await GetPipelineId(pipelineName, buildClient, projectName);
+            if (definitionId == 0)
+            {
+                throw new Exception(string.Format("Azure Devops pipeline is not found in internal project with name {0}. Please recheck and ensure pipeline exists with this name", pipelineName));
+            }
+            
+            var definition = await buildClient.GetDefinitionAsync(projectName, definitionId);            
+            var project = await projectClient.GetProject(projectName);
+            await buildClient.QueueBuildAsync(new Build()
             {
                 Definition = definition,
                 Project = project,
                 Parameters = JsonConvert.SerializeObject(reviewDetailsDict)
-            };
-
-            await buildClient.QueueBuildAsync(build);
+            });
         }
 
-        private async Task<int> GetPipelineId(string pipelineName)
-        {
-            int pipelineId = 0;
-            if (!_pipelineNameCache.TryGetValue(pipelineName, out pipelineId))
-            {
-                await FetchPipelineDetails();
-            }
-
-            _pipelineNameCache.TryGetValue(pipelineName, out pipelineId);
-            if (pipelineId == 0)
-            {
-                throw new Exception(string.Format("Azure Devops pipeline is not found in internal project with name {0}. Please recheck and ensure pipeline exists with this name", pipelineName));
-            }
-
-            return pipelineId;
-        }
-
-        private async Task FetchPipelineDetails()
+        private async Task<int> GetPipelineId(string pipelineName, BuildHttpClient client, string projectName)
         {          
-            var devOpsCreds = new VssBasicCredential("nobody", _configuration["Azure-Devops-PAT"]);
-            var devOpsConnection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk/"), devOpsCreds);
-            var client = await devOpsConnection.GetClientAsync<BuildHttpClient>();
-            
-            try
+            var pipelines = await client.GetFullDefinitionsAsync2(project: projectName);
+            if (pipelines != null)
             {
-                var pipelines = await client.GetFullDefinitionsAsync2(project: "internal");
-                if (pipelines != null)
-                {
-                    foreach (var pipeline in pipelines.Where(p => p.Name.StartsWith("tools - generate")))
-                    {
-                        _pipelineNameCache.Set(pipeline.Name, pipeline.Id);
-                    }
-                }
+                return pipelines.Single(p => p.Name == pipelineName).Id;
             }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
+            return 0;
         }
     }
-
 }

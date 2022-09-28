@@ -53,3 +53,4 @@ jobs:
       APIViewURL: ${{ parameters.APIViewURL }}
       StorageContainerUrl: ${{ parameters.StorageContainerUrl }}
       ApiviewGenScript: './Create-Apiview-Token-Swagger.ps1'
+      ParserPath: $(SwaggerParserInstallPath)/SwaggerApiParser

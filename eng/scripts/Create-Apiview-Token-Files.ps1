@@ -11,7 +11,8 @@ param (
   [Parameter(Mandatory = $true)]
   [string]$ContainerSas,
   [Parameter(Mandatory = $true)]
-  [string]$ApiviewGenScript
+  [string]$ApiviewGenScript,
+  [string]$ParserPath = ""
 )
 
 
@@ -38,7 +39,14 @@ if ($reviews -ne $null)
         }
 
         $reviewGenScriptPath = Join-Path $PSScriptRoot $ApiviewGenScript
-        &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath
+        if ($ParserPath -eq "")
+        {
+            &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath
+        }
+        else
+        {
+            &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath -ParserPath $ParserPath
+        }
     }
 }
 else

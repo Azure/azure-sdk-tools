@@ -29,5 +29,5 @@ dependencies:
   repository: https://charts.chaos-mesh.org
   condition: deploy.chaosmesh
 - name: stress-test-addons
-  version: 0.1.19
+  version: 0.1.20
   repository: "@stress-test-charts"

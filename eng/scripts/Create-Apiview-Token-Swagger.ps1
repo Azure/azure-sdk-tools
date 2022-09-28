@@ -4,7 +4,7 @@ param (
   [string]$SourcePath,
   [Parameter(Mandatory = $true)]
   [string]$OutPath,
-  [string]$ParserPath
+  [string]$ParserPath = $null
 )
 
 Write-Host "Generating API review token file: $($SourcePath)"

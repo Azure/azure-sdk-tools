@@ -28,7 +28,7 @@ jobs:
   - template: /eng/pipelines/templates/variables/globals.yml
 
   steps:
-  - script: >
+  - script: |
       mkdir SwaggerApiParser
       $env:SWAGGER_PARSER_PATH = $(SwaggerParserInstallPath)
     workingDirectory: $(Pipeline.Workspace)

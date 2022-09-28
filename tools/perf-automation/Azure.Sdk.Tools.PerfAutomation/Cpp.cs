@@ -89,7 +89,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = result.StandardOutput,
-                StandardError = result.StandardError
+                StandardError = result.StandardError,
+                PackageVersions = packageVersions
             };
         }
 

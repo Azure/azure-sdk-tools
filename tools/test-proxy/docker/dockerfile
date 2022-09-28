@@ -39,6 +39,7 @@ RUN \
     && sed -i -e 's|dotnet dev-certs|dotnet /dotnet-dev-certs/dotnet-dev-certs.dll|' $CERT_FOLDER/$CERT_IMPORT_SH \
     # Run script to import certificate
     && chmod +x $CERT_FOLDER/$CERT_IMPORT_SH \
+    && chmod +x /proxyserver/test-proxy \
     && $CERT_FOLDER/$CERT_IMPORT_SH \
     && rm $CERT_FOLDER/$CERT_IMPORT_SH \
     && mkdir -p /srv/testproxy

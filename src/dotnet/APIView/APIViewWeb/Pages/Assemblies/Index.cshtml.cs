@@ -15,13 +15,15 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private readonly ReviewManager _manager;
         public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileManager _userProfileManager;
         public const int _defaultPageSize = 50;
         public const string _defaultSortField = "LastUpdated";
 
-        public IndexPageModel(ReviewManager manager, UserPreferenceCache preferenceCache)
+        public IndexPageModel(ReviewManager manager, UserProfileManager userProfileManager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _preferenceCache = preferenceCache;
+            _userProfileManager = userProfileManager;
         }
 
         [FromForm]
@@ -39,6 +41,14 @@ namespace APIViewWeb.Pages.Assemblies
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
             IEnumerable<string> status, IEnumerable<string> type, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
+            var userProfile = await _userProfileManager.tryGetUserProfileAsync(User);
+
+            if(User.Identity.IsAuthenticated && userProfile.UserName == null)
+            {
+                return Redirect("/Assemblies/Profile");
+            }
+
+            if (search.Count == 0 && languages.Count == 0 && state.Count == 0 && status.Count == 0 && type.Count == 0)
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())
             {
                 UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
@@ -48,6 +58,7 @@ namespace APIViewWeb.Pages.Assemblies
                 type = userPreference.FilterType.Select(x => x.ToString());
             }
             await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
+            return Page();
         }
 
         public async Task<PartialViewResult> OnGetReviewsPartialAsync(

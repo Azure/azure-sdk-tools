@@ -4,8 +4,7 @@ param (
   [string]$SourcePath,
   [Parameter(Mandatory = $true)]
   [string]$OutPath,
-  [Parameter(Mandatory = $true)]
-  [string]$ParserPath,
+  [string]$ParserPath = $env:SwaggerParserInstallPath,
 )
 
 Write-Host "Generating API review token file: $($SourcePath)"
@@ -14,4 +13,4 @@ $OutFileName = $FileName -replace ".swagger", "_swagger.json"
 $OutFilePath = Join-Path -Path $OutPath $OutFileName
 Write-Host "Converting Swagger file $($SourcePath) to APIview code file $($OutFilePath)"
 Get-Item $ParserPath
-$($ParserPath)/SwaggerApiParser $SourcePath --output $OutFilePath
+&$($ParserPath)/SwaggerApiParser $SourcePath --output $OutFilePath

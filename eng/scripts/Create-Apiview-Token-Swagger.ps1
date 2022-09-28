@@ -12,9 +12,12 @@ $FileName = Split-Path -Leaf $SourcePath
 $OutFileName = $FileName -replace ".swagger", "_swagger.json"
 $OutFilePath = Join-Path -Path $OutPath $OutFileName
 Write-Host "Converting Swagger file $($SourcePath) to APIview code file $($OutFilePath)"
+Write-Host "Workspace: $(Pipeline.Workspace)"
+Write-Host "Swagger path: $(SwaggerParserInstallPath)"
+Write-Host "Swagger path2: $($env:SwaggerParserInstallPath)"
 if ($ParserPath -eq "")
 {
-  $ParserPath = Join-Path -Path $($env:Pipeline.Workspace) "SwaggerApiParser/SwaggerApiParser"
+  $ParserPath = Join-Path -Path $($env:SwaggerParserInstallPath) "SwaggerApiParser/SwaggerApiParser"
 }
 Write-Host "Parser Path: $($ParserPath)"
 Get-Item $ParserPath

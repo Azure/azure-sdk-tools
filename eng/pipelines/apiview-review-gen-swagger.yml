@@ -30,7 +30,6 @@ jobs:
   steps:
   - script: |
       mkdir SwaggerApiParser
-      $env:SWAGGER_PARSER_PATH = $(SwaggerParserInstallPath)
     workingDirectory: $(Pipeline.Workspace)
     displayName: Setup working directory for Swagger Parser.
 

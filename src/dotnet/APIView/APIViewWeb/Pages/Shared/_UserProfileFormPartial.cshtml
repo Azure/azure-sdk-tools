@@ -1,0 +1,16 @@
+﻿@using APIViewWeb.Models;
+@model UserProfileModel;
+
+@if(Model != null)
+{
+    <form data-post-update="userProfile" asp-controller="UserProfile" asp-action="Update" method="post">
+        <div class="form-group">
+            <label for="UserName" class="text-muted"> GitHub User Profile </label>
+            <input name="UserName" class="form-control" type="text" readonly value="@Model.UserName" /><br />
+            <label for="Email" class="text-muted"> Email </label>
+            <input name="Email" class="form-control" type="email" value="@Model.Email" /><br />
+            <hr />
+            <input class="btn btn-primary" type="submit" value="Save Changes" />
+        </div>
+    </form>
+}

@@ -11,6 +11,7 @@ module.exports = {
     navbar: './src/navbar.ts',
     review: './src/review.ts',
     reviews: './src/reviews.ts',
+    userProfile: './src/user-profile.ts',
     site: './css/site.scss',
     c: './css/c.scss',
     cplusplus: './css/cplusplus.scss',

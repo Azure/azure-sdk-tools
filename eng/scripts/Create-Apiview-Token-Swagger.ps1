@@ -14,7 +14,7 @@ $OutFilePath = Join-Path -Path $OutPath $OutFileName
 Write-Host "Converting Swagger file $($SourcePath) to APIview code file $($OutFilePath)"
 if ($ParserPath -eq $null)
 {
-  $ParserPath = (Join-Path -Path $env:Pipeline.Workspace "SwaggerApiParser"
+  $ParserPath = Join-Path -Path $env:Pipeline.Workspace "SwaggerApiParser"
 }
 Write-Host "Parser Path: $($ParserPath)"
 Get-Item $ParserPath

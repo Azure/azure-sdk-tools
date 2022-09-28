@@ -18,4 +18,4 @@ if ($ParserPath -eq $null)
 }
 Write-Host "Parser Path: $($ParserPath)"
 Get-Item $ParserPath
-&$($ParserPath)/SwaggerApiParser $SourcePath --output $OutFilePath
+&$($ParserPath/SwaggerApiParser) $SourcePath --output $OutFilePath

@@ -3,7 +3,14 @@
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
 @{
-    ViewData["Title"] = "Profile";
+    if(Model.User.GetGitHubLogin().Equals(Model.userProfile.UserName)) 
+    {
+        ViewData["Title"] = "Your profile";
+    }
+    else 
+    {
+        ViewData["Title"] = Model.userProfile.UserName;
+    }
     TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
 
     List<string> themes = new List<string>()
@@ -43,7 +50,7 @@
                 <form data-post-update="userProfile" asp-controller="UserProfile" asp-action="Update" method="post">
                     <div class="d-flex flex-column align-items-center">
                         <img username="@User.GetGitHubLogin()" class="w-25 rounded-circle my-3" style="min-width:80px; max-width:160px" aria-label="GitHub User Avatar" />
-                        <h4 class="w-100 text-center">@Model.userProfile.UserName</h4>
+                        <h4 class="w-100 text-center"><a style="text-decoration: none;" class="text-dark" href="https://github.com/@(Model.userProfile.UserName)">@Model.userProfile.UserName</a></h4>
                     </div>
                     <hr />
                     <div class="form-group form-row">
@@ -94,7 +101,7 @@
             <div class="p-2 w-50">
                 <div class="d-flex flex-column align-items-center">
                     <img username="@Model.userProfile.UserName" class="w-25 rounded-circle my-3" style="min-width:80px; max-width:160px" aria-label="GitHub User Avatar" />
-                    <h4 class="w-100 text-center">@Model.userProfile.UserName</h4> 
+                    <h4 class="w-100 text-center"><a style="text-decoration: none;" class="text-dark" href="https://github.com/@(Model.userProfile.UserName)">@Model.userProfile.UserName</a></h4>
                 </div>
                 <hr />
 
@@ -102,7 +109,7 @@
                     <label for="Email" class="col-sm-2 font-weight-bold" style="line-height:48px"> Email </label>
                     <input name="Email" class="form-control form-control-lg col-sm-10 bg-light" type="email" value="@Model.userProfile.Email" disabled /><br />
                     <label for="GitLink" class="col-sm-2 font-weight-bold" style="line-height:48px"> GitHub Link </label>
-                    <a username="@Model.userProfile.UserName" target="_blank" class="form-control form-control-lg col-sm-10 bg-light">
+                    <a href="https://github.com/@(Model.userProfile.UserName)" target="_blank" class="form-control form-control-lg col-sm-10 bg-light">
                         @Model.userProfile.UserName's GitHub Page
                     </a>
                 </div>

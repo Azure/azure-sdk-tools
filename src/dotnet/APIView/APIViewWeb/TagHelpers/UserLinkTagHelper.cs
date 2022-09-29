@@ -9,7 +9,7 @@ namespace APIViewWeb.TagHelpers
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
-            string url = "https://github.com/" + Username;
+            string url = "/Assemblies/Profile/" + Username;
             output.Attributes.SetAttribute("href", url);
         }
     }

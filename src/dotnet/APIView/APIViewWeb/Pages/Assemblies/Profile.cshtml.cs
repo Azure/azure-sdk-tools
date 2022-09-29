@@ -21,7 +21,11 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<IActionResult> OnGetAsync(string UserName)
         {
             UserProfileModel profile;
-            if (User.GetGitHubLogin().Equals(UserName))
+            if(UserName == null)
+            {
+                profile = await this._manager.tryGetUserProfileAsync(User);
+            }
+            else if (User.GetGitHubLogin().Equals(UserName))
             {
                 profile = await this._manager.tryGetUserProfileAsync(User);
             }

@@ -8,7 +8,6 @@ module.exports = {
     comments: './src/comments.ts',
     revisions: './src/revisions.ts',
     fileInput: './src/file-input.ts',
-    navbar: './src/navbar.ts',
     review: './src/review.ts',
     reviews: './src/reviews.ts',
     userProfile: './src/user-profile.ts',

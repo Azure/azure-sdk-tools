@@ -1,7 +1,27 @@
 ﻿@page
 @model APIViewWeb.Pages.Assemblies.ProfileModel
+@using APIViewWeb.Helpers
+@using APIViewWeb.Models
 @{
-    <div>
-        <partial name="_UserProfileFormPartial" model="Model.userProfile" />
-    </div>
+    ViewData["Title"] = "Profile";
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
 }
+@section Scripts
+{
+    <script type="text/javascript" src="@Url.Content("~/userProfile.js")" asp-append-version="true"></script>
+}
+<div class="container-fluid py-2">
+    <div>
+        @if(Model.userProfile.Email == null) {
+            <h3>Setup Profile</h3>
+        } else {
+            <h3>Edit Profile</h3>
+        }
+    </div>
+    <hr />
+    <div class="d-flex justify-content-center">
+        <div class="p-2 w-50">
+            <partial name="_UserProfileFormPartial" model="Model.userProfile" />
+        </div>
+    </div>
+</div>

@@ -11,8 +11,6 @@ namespace APIViewWeb.TagHelpers
         {
             string url = "https://github.com/" + Username + ".png?size=28";
             output.Attributes.SetAttribute("src", url);
-            output.Attributes.SetAttribute("height", "28");
-            output.Attributes.SetAttribute("width", "28");
         }
     }
 }

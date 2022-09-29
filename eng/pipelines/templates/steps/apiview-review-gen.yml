@@ -28,7 +28,7 @@ steps:
       -WorkingDir "$(Pipeline.Workspace)"
       -StorageBaseUrl "${{ parameters.StorageContainerUrl }}"
       -ApiviewGenScript "${{ parameters.ApiviewGenScript }}"
-      -ContainerSas "$(apiview-originals-sas)"
+      -ContainerSas "$(apiview-staging-originals-sas)"
       -ParserPath "${{ parameters.ParserPath }}"
 
 - task: PublishBuildArtifacts@1

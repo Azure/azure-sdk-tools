@@ -18,16 +18,21 @@ namespace APIViewWeb.Pages.Assemblies
             _preferenceCache = preferenceCache;
         }
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(string UserName)
         {
-            UserProfileModel profile = await this._manager.tryGetUserProfileAsync(User);
-            if(profile.UserName == null)
+            UserProfileModel profile;
+            if (User.GetGitHubLogin().Equals(UserName))
             {
-                profile.UserName = User.GetGitHubLogin();
-                string.Join(",", profile.Languages);
+                profile = await this._manager.tryGetUserProfileAsync(User);
             }
+            else
+            {
+                profile = await this._manager.tryGetUserProfileByNameAsync(UserName);
+            }
+            
 
             userProfile = profile;
+            return Page();
         }
     }
 }

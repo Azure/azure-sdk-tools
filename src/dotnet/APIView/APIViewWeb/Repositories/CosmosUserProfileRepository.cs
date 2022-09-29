@@ -34,6 +34,18 @@ namespace APIViewWeb
             }
         }
 
+        public async Task<UserProfileModel> tryGetUserProfileByNameAsync(string UserName)
+        {
+            try
+            {
+                return await _userProfileContainer.ReadItemAsync<UserProfileModel>(UserName, new PartitionKey(UserName));
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public async Task upsertUserProfileAsync(ClaimsPrincipal User, UserProfileModel userModel)
         {
             if(User.GetGitHubLogin().Equals(userModel.UserName))

@@ -31,6 +31,11 @@ namespace APIViewWeb
             return await _UserProfileRepository.tryGetUserProfileAsync(User);
         }
 
+        public async Task<UserProfileModel> tryGetUserProfileByNameAsync(string UserName)
+        {
+            return await _UserProfileRepository.tryGetUserProfileByNameAsync(UserName);
+        }
+
         public async Task updateEmailAsync(ClaimsPrincipal User, string email)
         {
             UserProfileModel UserProfile = await tryGetUserProfileAsync(User);

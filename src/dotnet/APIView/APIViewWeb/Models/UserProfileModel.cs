@@ -34,5 +34,7 @@ namespace APIViewWeb.Models
         // Approvers only
         public HashSet<string> Languages { get; set; }
 
+        public UserPreferenceModel Preferences { get; set; }
+
     }
 }

@@ -30,6 +30,11 @@ namespace APIViewWeb.Pages.Assemblies
                 profile = await this._manager.tryGetUserProfileByNameAsync(UserName);
             }
             
+            // Default/original behaviour case - send them to the github page if the user profile doesn't exist yet. (Useful until everyone is up to date)
+            if(profile == null)
+            {
+                return Redirect("https://github.com/" + UserName);
+            } 
 
             userProfile = profile;
             return Page();

@@ -25,8 +25,7 @@ namespace APIViewWeb.Controllers
                 await _userProfileManager.createUserProfileAsync(User, email, Languages);
             } else
             {
-                await _userProfileManager.updateEmailAsync(User, email);
-                await _userProfileManager.updateLanguagesAsync(User, Languages);
+                await _userProfileManager.updateUserProfile(User, email, Languages);
             }
             return RedirectToPage("/Assemblies/Index");
         }

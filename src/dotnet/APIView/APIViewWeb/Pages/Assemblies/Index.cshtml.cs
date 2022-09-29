@@ -43,7 +43,7 @@ namespace APIViewWeb.Pages.Assemblies
         {
             var userProfile = await _userProfileManager.tryGetUserProfileAsync(User);
 
-            if(User.Identity.IsAuthenticated && userProfile.UserName == null)
+            if(User.Identity.IsAuthenticated && (userProfile.UserName == null || userProfile.Email == null))
             {
                 return Redirect("/Assemblies/Profile");
             }

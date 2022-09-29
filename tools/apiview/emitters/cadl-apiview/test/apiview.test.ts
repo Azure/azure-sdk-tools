@@ -130,10 +130,13 @@ describe("apiview: tests", () => {
 
       op GetFoo is ResourceRead<
         {
+          @query
+          @doc("The name")
           name: string;
         },
         {
           parameters: {
+            @query
             @doc("The collection id.")
             fooId: string;
           };

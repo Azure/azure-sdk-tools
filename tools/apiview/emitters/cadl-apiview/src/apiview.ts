@@ -128,7 +128,7 @@ export class ApiView {
 
   beginGroup() {
     this.punctuation("{", true, false);
-    this.newline();
+    this.blankLines(0);
     this.indent();
   }
 
@@ -599,7 +599,7 @@ export class ApiView {
       this.blankLines(0);
     }
     this.endGroup();
-    this.newline();
+    this.blankLines(0);
     this.punctuation("}");
     NamespaceStack.pop();
     this.blankLines(1);
@@ -648,29 +648,37 @@ export class ApiView {
   private tokenizeModelExpressionExpanded(node: ModelExpressionNode, displayBrackets: boolean) {
     // FIXME: Needs line IDs for each property.
     if (node.properties.length) {
-      this.newline();
+      this.blankLines(0);
       this.indent();
       this.punctuation("{", false, false);
-      this.newline();
+      this.blankLines(0);
       this.indent();
+      NamespaceStack.push("anonymous");
       for (const prop of node.properties) {
+        const propName = this.getNameForNode(prop);
+        NamespaceStack.push(propName);
+        this.lineMarker();
         switch (prop.kind) {
           case SyntaxKind.ModelProperty:
             this.tokenizeModelProperty(prop, false);
             break;
           case SyntaxKind.ModelSpreadProperty:
             this.tokenize(prop);
-            break;
         }
         this.punctuation(",", false, false);
-        this.newline();
+        NamespaceStack.pop();
+        this.blankLines(0);
       }
-      this.trim();
+      NamespaceStack.pop();
+      this.pop(3);
+      this.blankLines(0);
       this.deindent();
       this.punctuation("}", false, false);
-      this.newline();
+      this.blankLines(0);
       this.trim();
       this.deindent();
+    } else {
+      this.punctuation("{}", true, false);
     }
   }
 
@@ -733,7 +741,8 @@ export class ApiView {
   private tokenizeDecorators(nodes: readonly DecoratorExpressionNode[], inline: boolean) {
     const filteredNodes = this.filterDecorators(nodes);
     if (!inline && filteredNodes.length) {
-      this.blankLines(1);
+      const lineCount = this.tokens[this.tokens.length - 3].Kind == ApiViewTokenKind.Punctuation ? 0 : 1;
+      this.blankLines(lineCount);
     }
     for (const node of filteredNodes) {
       NamespaceStack.push(generateId(node)!);
@@ -743,7 +752,7 @@ export class ApiView {
       }
       NamespaceStack.pop();
       if (!inline) {
-        this.newline();
+        this.blankLines(0);
       }
     }
   }

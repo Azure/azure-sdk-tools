@@ -59,7 +59,23 @@ describe("apiview: tests", () => {
     return counts;
   }
 
-  it("describes enums", async () => {
+  it("describes model", async () => {
+    const input = `
+    @Cadl.serviceTitle("Model Test")
+    namespace Azure.Test {
+      model Foo {
+        name: string;
+        age?: int16;
+      }
+    }
+    `;
+    const apiview = await apiViewFor(input, {});
+    const lines = apiViewText(apiview);
+    strictEqual(stringifyLines(lines, 4, 7), `enum SomeEnum {Plain,"Literal",}`);  
+  });
+
+
+  it("describes enum", async () => {
     const input = `
     @Cadl.serviceTitle("Enum Test")
     namespace Azure.Test {
@@ -72,14 +88,6 @@ describe("apiview: tests", () => {
       enum SomeStringEnum {
         A: "A",
         B: "B",
-      }
-
-      namespace BuildingBlocks {
-        model Block is string;
-
-        model Thing {
-          someInt: SomeIntEnum;
-        }
       }
 
       enum SomeIntEnum {
@@ -122,7 +130,7 @@ describe("apiview: tests", () => {
     strictEqual(stringifyLines(lines, 12, 16), `union MyUnion {cat: Cat,dog: Dog,snake: Snake}`);
   });
 
-  it("describes operations", async () =>{
+  it("describes operation", async () =>{
     const input = `
     @Cadl.serviceTitle("Operation Test")
     namespace Azure.Test {
@@ -148,4 +156,25 @@ describe("apiview: tests", () => {
     strictEqual(indentCounts(lines, 4, 6), [0, 2, 4]);
     strictEqual(indentCounts(lines, 7, 10), [0, 2, 4, 4]);
   });
+
+  it("describes interface", async () => {
+    const input = `
+    @Cadl.serviceTitle("Model Test")
+    namespace Azure.Test {
+      interface Foo {
+        @get 
+        @route("get/{name}")
+        get(@path name: string): string;
+
+
+        @get
+        @route("list")
+        list(): string[];
+      }
+    }
+    `;
+    const apiview = await apiViewFor(input, {});
+    const lines = apiViewText(apiview);
+    strictEqual(stringifyLines(lines, 4, 7), `enum SomeEnum {Plain,"Literal",}`);  
+  });  
 });

@@ -598,6 +598,8 @@ export class ApiView {
       this.punctuation(",");
       this.blankLines(0);
     }
+    // remove trailing comma
+    this.pop(4);
     this.endGroup();
     this.blankLines(0);
     this.punctuation("}");

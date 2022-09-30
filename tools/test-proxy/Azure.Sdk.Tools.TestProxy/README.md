@@ -84,11 +84,15 @@ After successful installation, run the tool:
 > test-proxy --storage-location <location>
 ```
 
+This will start the test-proxy with the storage-location set to `<location>`
+
 If you've already installed the tool, you can always check the installed version by invoking:
 
 ```powershell
 > test-proxy --version
 ```
+
+The `--version` option can also be invoked as part of a command and will display the version prior to running the command.
 
 ### Via Docker Image
 
@@ -128,7 +132,6 @@ The test-proxy executable fulfills one of two primary purposes:
 2. [`asset-sync`](#asset-sync-retrieve-external-test-recordings) push/restore/reset.
 
 This is surfaced by only showing options for the default commands. Each individual command has its own argument set that can be detailed by invoking `test-proxy <command> --help`.
-
 
 ```text
 />test-proxy --help
@@ -177,10 +180,12 @@ $env:ASPNETCORE_URLS="http://*3331;https://*:8881"  // set custom ports for both
 
 #### Input arguments
 
-Use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration.  For example, to only bind to localhost http 5000, provide the argument `--urls http://localhost:9000`.
+When starting the test proxy there are Verbs, as shown in the test-proxy --help output above. For the start  verb, there can be additional command arguments that need to get passed to **Host.CreateDefaultBuilder** 'as is'. The way this is done is through the use of `--` or dashdash as it's referred to. If `--` is on the command line, everything after will be treated as arguments that will be passed into this Host call.
+
+For example, you can use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration. To bind to localhost http 5000, provide the argument `-- --urls http://localhost:9000`. Note that `--`, space, then the `--urls http://localhost:9000`.
 
 ```powershell
-test-proxy --urls "http://localhost:9000;https://localhost:9001"
+test-proxy -- --urls "http://localhost:9000;https://localhost:9001"
 ```
 
 ## Environment Variables
@@ -521,11 +526,11 @@ Example:
 
 ```jsonc
 // POST to URI: https://localhost:5001/Admin/SetRecordingOptions
-// body is a json dictionary, the value of HandleRedirects can be multiple representation of "true" 
+// body is a json dictionary, the value of HandleRedirects can be multiple representation of "true"
 {
     "HandleRedirects": true
 }
-// ...or 
+// ...or
 {
     "HandleRedirects": 1
 }
@@ -534,7 +539,7 @@ Example:
 {
     "HandleRedirects": false
 }
-// ...or 
+// ...or
 {
     "HandleRedirects": "false"
 }
@@ -616,8 +621,6 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
-**Please note**, this feature is under active development as of July 2022 and is not fully integrated or complete.
-
 ![image](https://user-images.githubusercontent.com/45376673/180101415-cf864d95-8a8b-4d43-bb05-42604e9f7622.png)
 
 In the context of a `monorepo`, this means that we store FAR less data per feature.
@@ -640,17 +643,17 @@ An `assets.json` takes the form:
 {
   "AssetsRepo": "Azure/azure-sdk-assets-integration",
   "AssetsRepoPrefixPath": "python/recordings/",
-  "AssetsRepoBranch": "auto/test",
-  "SHA": "786b4f3d380d9c36c91f5f146ce4a7661ffee3b9"
+  "TagPrefix": "main",
+  "TAG": "language/tables_fc54d0"
 }
 ```
 
 | Property | Description |
 |---|---|
 | AssetsRepo | The full name of the external github repo storing the data. EG: `Azure/azure-sdk-assets` |
-| AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. Populate this property with that path. EG: `python/recordings`. |
-| AssetsRepoBranch | The branch within the assets repo that your updated recordings will be pushed to. |
-| SHA | The reference SHA the recordings that should be restored from the assets repository. |
+| AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. Populate this property with that path, which will typically be the language. EG: `python`. |
+| TagPrefix | This prefix will typically be the `<language>/<ServiceDirectory>`, `<language>/<ServiceDirectory>/<library>` or deeper if things are nested that way. |
+| Tag | The targeted Tag within the AssetsRepo. Initially empty until the first push has been done at which point it'll be populated. When restore/reset operations are performed they'll be restored from the tag. When subsequent push operations are performed the tag will be updated as part of the operation. |
 
 Comments within the assets.json are allowed and _maintained_ by the tooling. Feel free to leave notes to yourself. They will not be eliminated.
 
@@ -662,26 +665,40 @@ Interactions with the external assets repository are accessible when the proxy i
 
 | Route | Description |
 |---|---|
-| `/Playback/Restore` | Retrieve files from external git repo as targeted in the SHA from assets.json |
-| `/Playback/Reset` | Discard pending changes and reset to the original SHA from targeted assets.json. |
+| `/Playback/Restore` | Retrieve files from external git repo as targeted in the Tag from assets.json |
+| `/Playback/Reset` | Discard pending changes and reset to the original Tag from targeted assets.json. |
 | `/Record/Push` | Push changes if they are pending for files described by targeted assets.json. |
 
-### Restore, push, reset as a CLI app
+### test-proxy CLI commands
 
-The test-proxy also offers interactions with the external assets repository as a CLI app. What this means is that one could invoke
+The test-proxy also offers interactions with the external assets repository as a CLI. Invoking `test-proxy --help` will show the available list of commands. `test-proxy <command> --help` will show the help and options for an individual command. The options for a given command are all --option, for example, `--assets-json-path`, but each option has an abbreviation and those are only a single. For example the abbreviation for `--assets-json-path` is `-a`.
+
+#### The following CLI commands are available for manipulation of assets
+
+##### Restore
+
+Restore will pull the assets at the Tag, in the AssetsRepo, from the targeted assets.json
 
 ```bash
-> test-proxy --command restore --asetsJsonPath <assetsJsonPath>
+> test-proxy restore --assets-json-path <assetsJsonPath>
 ```
 
-to pull the necessary recordings files down for a targeted assets.json. The following commands are available.
+##### Reset
+
+Reset will reset the assets back to the Tag, in the AssetsRepo, from the targeted assets.json. Reset would be used if the assets were already restored, modified (maybe re-recorded while library development was done), and then needed to be reset back to their originals. If there are pending changes, the user will be prompted to overwrite.
 
 ```bash
-> test-proxy --command reset --asetsJsonPath <assetsJsonPath>
-> test-proxy --command restore --asetsJsonPath <assetsJsonPath>
-> test-proxy --command push --asetsJsonPath <assetsJsonPath>
+> test-proxy reset --assets-json-path <assetsJsonPath>
 ```
 
-When a `push` activity is completed, the `SHA` value within the targeted `assets.json` will be UPDATED with the new reference to the external assets repository.
+If there are no pending changes, and the assets are unchanged from the previous restore, then reset is no-op. Otherwise, the following prompt will be displayed.
+`There are pending git changes, are you sure you want to reset? [Y|N]`
+Selecting N will leave things as they are, selecting Y will restore the assets back to the assets referenced by the Tag, from the AssetsRepo, in the targeted assets.json file.
 
-As a user, ensure that this new SHA is commit alongside your code changes.
+##### Push
+
+After assets are restored and then modified (re-recorded etc.) a push will update the assets in the AssetsRepo, from the targeted assets.json. After the push completes, the `Tag` within the targeted assets.json will be updated with the new Tag. The updated asset.json will need to be committed into the language repository along with the code changes.
+
+```bash
+> test-proxy restore --assets-json-path <assetsJsonPath>
+```

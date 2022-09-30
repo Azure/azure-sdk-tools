@@ -10,9 +10,10 @@ namespace APIViewWeb.Models
         public UserProfileModel() 
         {
             Languages = new HashSet<string>();
+            Preferences = new UserPreferenceModel();
         }
 
-        public UserProfileModel(ClaimsPrincipal User, string email, HashSet<string> languages)
+        public UserProfileModel(ClaimsPrincipal User, string email, HashSet<string> languages, UserPreferenceModel preferences)
         {
             UserName = User.GetGitHubLogin();
             Email = email;
@@ -25,6 +26,13 @@ namespace APIViewWeb.Models
                 Languages = new HashSet<string>();
             }
             
+            if(preferences != null)
+            {
+                Preferences = preferences;
+            } else
+            {
+                Preferences = new UserPreferenceModel();
+            }
         }
 
         [JsonProperty("id")]

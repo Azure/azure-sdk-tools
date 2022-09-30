@@ -21,9 +21,9 @@ namespace APIViewWeb
             _UserProfileRepository = UserProfileRepository;
         }
 
-        public async Task createUserProfileAsync(ClaimsPrincipal User, string Email, HashSet<string> Langauges = null)
+        public async Task createUserProfileAsync(ClaimsPrincipal User, string Email, HashSet<string> Langauges = null, UserPreferenceModel Preferences = null)
         {
-            await _UserProfileRepository.upsertUserProfileAsync(User, new UserProfileModel(User, Email, Langauges));
+            await _UserProfileRepository.upsertUserProfileAsync(User, new UserProfileModel(User, Email, Langauges, Preferences));
         }
 
         public async Task<UserProfileModel> tryGetUserProfileAsync(ClaimsPrincipal User)
@@ -48,7 +48,7 @@ namespace APIViewWeb
             await _UserProfileRepository.upsertUserProfileAsync(User, UserProfile);
         }
 
-        public async Task updateUserProfile(ClaimsPrincipal User, string email, HashSet<string> languages)
+        public async Task updateUserProfile(ClaimsPrincipal User, string email, HashSet<string> languages, UserPreferenceModel preferences)
         {
             UserProfileModel UserProfile = await tryGetUserProfileAsync(User);
             if (UserProfile.UserName == null)
@@ -60,9 +60,10 @@ namespace APIViewWeb
             {
                 UserProfile.Languages = languages;
             }
-            else
+
+            if(preferences != null)
             {
-                UserProfile.Languages = new HashSet<string>();
+                UserProfile.Preferences = preferences;
             }
 
             UserProfile.Email = email;

@@ -11,6 +11,9 @@ parameters:
   - name: ApiviewGenScript
     type: string
     default: ''
+  - name: ParserPath
+    type: string
+    default: ''
 
 steps:
 - task: Powershell@2
@@ -23,9 +26,10 @@ steps:
       -ReviewDetailsJson "${{ parameters.Reviews }}"
       -StagingPath "$(Build.ArtifactStagingDirectory)"
       -WorkingDir "$(Pipeline.Workspace)"
-      -StorageBaseUrl "${{parameters.StorageContainerUrl}}"
-      -ApiviewGenScript "${{parameters.ApiviewGenScript}}"
+      -StorageBaseUrl "${{ parameters.StorageContainerUrl }}"
+      -ApiviewGenScript "${{ parameters.ApiviewGenScript }}"
       -ContainerSas "$(apiview-originals-sas)"
+      -ParserPath "${{ parameters.ParserPath }}"
 
 - task: PublishBuildArtifacts@1
   inputs:
@@ -40,3 +44,4 @@ steps:
     filePath: $(Build.SourcesDirectory)/eng/scripts/Apiview-Update-Generated-Review.ps1
     arguments: >
       -BuildId $(Build.BuildId)
+      -ApiviewUpdateUrl "${{ parameters.APIViewURL}}/review/UpdateApiReview"

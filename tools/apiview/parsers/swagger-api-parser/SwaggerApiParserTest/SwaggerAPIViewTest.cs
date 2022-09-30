@@ -91,14 +91,30 @@ public class SwaggerApiViewTest
     [Fact]
     public async Task TestDeviceUpdate()
     {
-        const string petStoreFilePath = "./fixtures/deviceupdate.json";
-        var deviceUpdateSwagger = await SwaggerDeserializer.Deserialize(petStoreFilePath);
+        const string deviceUpdatePath = "./fixtures/deviceupdate.json";
+        var deviceUpdateSwagger = await SwaggerDeserializer.Deserialize(deviceUpdatePath);
 
         SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.DeviceUpdate", "Microsoft.DeviceUpdate");
-        root.AddSwaggerSpec(deviceUpdateSwagger, Path.GetFullPath(petStoreFilePath), "Microsoft.DeviceUpdate");
+        root.AddSwaggerSpec(deviceUpdateSwagger, Path.GetFullPath(deviceUpdatePath), "Microsoft.DeviceUpdate");
 
         var codeFile = root.GenerateCodeFile();
         var outputFilePath = Path.GetFullPath("./deviceupdate_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
+    
+    [Fact]
+    public async Task TestDeviceUpdateSmall()
+    {
+        const string deviceUpdatePath = "./fixtures/deviceupdatesmall.json";
+        var deviceUpdateSwagger = await SwaggerDeserializer.Deserialize(deviceUpdatePath);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.DeviceUpdate", "Microsoft.DeviceUpdate");
+        root.AddSwaggerSpec(deviceUpdateSwagger, Path.GetFullPath(deviceUpdatePath), "Microsoft.DeviceUpdate");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./deviceupdatesmall_codefile.json");
         this.output.WriteLine($"Write output to: {outputFilePath}");
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);

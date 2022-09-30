@@ -8,13 +8,28 @@ using ApiView;
 
 namespace APIViewWeb
 {
-    public class SwaggerLanguageService : JsonLanguageService
+    public class SwaggerLanguageService : LanguageProcessor
     {
         public override string Name { get; } = "Swagger";
 
+        public override string Extension { get; } = ".swagger";
+
+        public override string VersionString { get; } = "1.0.0";
+
+        public override string ProcessName => throw new NotImplementedException();
+
+        public SwaggerLanguageService()
+        {
+            IsReviewGenByPipeline = true;
+        }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
             return await CodeFile.DeserializeAsync(stream, true);
+        }
+
+        public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
+        {
+            throw new NotImplementedException();
         }
     }
 }

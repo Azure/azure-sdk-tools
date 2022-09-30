@@ -50,7 +50,11 @@ namespace SwaggerApiParser
 
                 var enumerable = swaggerFiles as string[] ?? swaggerFiles.ToArray();
 
-                await HandleGenerateCodeFile(enumerable, outputFile, package, swaggerLinksArray, Path.GetFullPath(readme), tag);
+                if (readme != null)
+                {
+                    readme = Path.GetFullPath(readme);
+                }
+                await HandleGenerateCodeFile(enumerable, outputFile, package, swaggerLinksArray, readme, tag);
             }, swaggers, output, packageName, swaggerLinks, readmeFile, readmeTag);
 
             return Task.FromResult(cmd.Invoke(args));

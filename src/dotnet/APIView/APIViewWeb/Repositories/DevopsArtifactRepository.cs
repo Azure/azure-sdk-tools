@@ -102,7 +102,7 @@ namespace APIViewWeb.Repositories
             int definitionId = await GetPipelineId(pipelineName, buildClient, projectName);
             if (definitionId == 0)
             {
-                throw new Exception(string.Format("Azure Devops pipeline is not found in internal project with name {0}. Please recheck and ensure pipeline exists with this name", pipelineName));
+                throw new Exception(string.Format("Azure Devops pipeline is not found with name {0}. Please recheck and ensure pipeline exists with this name", pipelineName));
             }
             
             var definition = await buildClient.GetDefinitionAsync(projectName, definitionId);            

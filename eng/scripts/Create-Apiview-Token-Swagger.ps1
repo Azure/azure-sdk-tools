@@ -13,5 +13,4 @@ $FileName = Split-Path -Leaf $SourcePath
 $OutFileName = $FileName -replace ".swagger", "_swagger.json"
 $OutFilePath = Join-Path -Path $OutPath $OutFileName
 Write-Host "Converting Swagger file $($SourcePath) to APIview code file $($OutFilePath)"
-Write-Host "Swagger path2: $($ParserPath)"
 &($ParserPath) $SourcePath --output $OutFilePath

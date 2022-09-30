@@ -133,6 +133,7 @@ export class ApiView {
   }
 
   endGroup() {
+    this.blankLines(0);
     this.deindent();
     this.punctuation("}");
   }
@@ -285,12 +286,6 @@ export class ApiView {
     this.navigationItems.push(item);
   }
 
-  pop(count: number = 1) {
-    for (let x = 0; x < count; x++) {
-      this.tokens.pop();
-    }
-  }
-
   emit(program: Program) {
     let allNamespaces = new Map<string, Namespace>();
 
@@ -352,13 +347,15 @@ export class ApiView {
         this.punctuation("@", false, false);
         this.tokenizeIdentifer(obj.target, "member");
         if (obj.arguments.length) {
+          const last = obj.arguments.length - 1;
           this.punctuation("(", false, false);
-          for (const arg of obj.arguments) {
+          for (let x = 0; x < obj.arguments.length; x++) {
+            const arg = obj.arguments[x];
             this.tokenize(arg);
-            this.punctuation(",", false, true);
+            if (x != last) {
+              this.punctuation(",", false, true);
+            }
           }
-          // remove trailing ", "
-          this.pop(2);
           this.punctuation(")", false, false);
         }
         break;
@@ -394,12 +391,13 @@ export class ApiView {
         throw new Error(`Case "ImportStatement" not implemented`);
       case SyntaxKind.IntersectionExpression:
         obj = node as IntersectionExpressionNode;
-        for (const opt of obj.options) {
+        for (let x = 0; x < obj.options.length; x++) {
+          const opt = obj.options[x];
           this.tokenize(opt);
-          this.punctuation("&", true, true);
+          if (x != obj.options.length - 1) {
+            this.punctuation("&", true, true);
+          }
         }
-        // remove trailing " & "
-        this.pop(3);
         break;
       case SyntaxKind.InterfaceStatement:
         this.tokenizeInterfaceStatement(node as InterfaceStatementNode);
@@ -461,36 +459,39 @@ export class ApiView {
       case SyntaxKind.TupleExpression:
         obj = node as TupleExpressionNode;
         this.punctuation("[", true, true);
-        for (const val of obj.values) {
+        for (let x = 0; x < obj.values.length; x++) {
+          const val = obj.values[x];
           this.tokenize(val);
-          this.punctuation(",", false, true);
+          if (x != obj.values.length - 1) {
+            this.punctuation(",", false, true);
+          }
         }
-        // remove trailing ", "
-        this.pop(2);
         this.punctuation("]", true, false);
         break;
       case SyntaxKind.TypeReference:
         obj = node as TypeReferenceNode;
         this.tokenizeIdentifer(obj.target, "reference");
         if (obj.arguments.length) {
-          this.punctuation("<", false, false);
-          for (const arg of obj.arguments) {
+          this.punctuation("<", false, false);  
+          for (let x = 0; x < obj.arguments.length; x++) {
+            const arg = obj.arguments[x];
             this.tokenize(arg);
-            this.punctuation(",", false, true);
+            if (x != obj.arguments.length - 1) {
+              this.punctuation(",", false, true);
+            }
           }
-          // remove trailing ", "
-          this.pop(2);
           this.punctuation(">");
         }
         break;
       case SyntaxKind.UnionExpression:
         obj = node as UnionExpressionNode;
-        for (const opt of obj.options) {
+        for (let x = 0; x < obj.options.length; x++) {
+          const opt = obj.options[x];
           this.tokenize(opt);
-          this.punctuation("|", true, true);
+          if (x != obj.options.length -1) {
+            this.punctuation("|", true, true);
+          }
         }
-        // remove trailing " | "
-        this.pop(3);
         break;
       case SyntaxKind.UnionStatement:
         this.tokenizeUnionStatement(node as UnionStatementNode);
@@ -542,7 +543,6 @@ export class ApiView {
       this.punctuation("{}", true, false);
     }
     NamespaceStack.pop();
-    this.blankLines(1);
   }
 
   private tokenizeInterfaceStatement(node: InterfaceStatementNode) {
@@ -552,13 +552,13 @@ export class ApiView {
     this.tokenizeIdentifer(node.id, "declaration");
     this.lineMarker();
     this.beginGroup();
-    for (const op of node.operations) {
-      this.tokenize(op);
-      this.blankLines(0);
+    for (let x = 0; x < node.operations.length; x++) {
+      const op = node.operations[x];
+      this.tokenizeOperationStatement(op, true);
+      this.blankLines((x != node.operations.length -1) ? 1 : 0);
     }
     this.endGroup();
     NamespaceStack.pop();
-    this.blankLines(1);
   }
 
   private tokenizeEnumStatement(node: EnumStatementNode) {
@@ -579,7 +579,6 @@ export class ApiView {
     }
     this.endGroup();
     NamespaceStack.pop();
-    this.blankLines(1);
   }
 
   private tokenizeUnionStatement(node: UnionStatementNode) {
@@ -589,22 +588,20 @@ export class ApiView {
     this.tokenizeIdentifer(node.id, "declaration");
     this.lineMarker();
     this.beginGroup();
-    for (const variant of node.options) {
+    for (let x = 0; x < node.options.length; x++) {
+      const variant = node.options[x];
       const variantName = this.getNameForNode(node);
       NamespaceStack.push(variantName);
       this.tokenize(variant);
       this.lineMarker();
       NamespaceStack.pop();
-      this.punctuation(",");
+      if (x != node.options.length - 1) {
+        this.punctuation(",");
+      }
       this.blankLines(0);
     }
-    // remove trailing comma
-    this.pop(4);
-    this.endGroup();
-    this.blankLines(0);
-    this.punctuation("}");
     NamespaceStack.pop();
-    this.blankLines(1);
+    this.endGroup();
   }
 
   private tokenizeUnionVariant(node: UnionVariantNode) {
@@ -629,7 +626,8 @@ export class ApiView {
       if (displayBrackets) {
         this.punctuation("{", true, true);
       }
-      for (const prop of node.properties) {
+      for (let x = 0; x < node.properties.length; x++) {
+        const prop = node.properties[x];
         switch (prop.kind) {
           case SyntaxKind.ModelProperty:
             this.tokenizeModelProperty(prop, true);
@@ -638,9 +636,10 @@ export class ApiView {
             this.tokenize(prop);
             break;
         }
-        this.punctuation(",", false, true);
+        if (x != node.properties.length - 1) {
+          this.punctuation(",", false, true);
+        }
       }
-      this.pop(2);
       if (displayBrackets) {
         this.punctuation("}", true, true);
       }
@@ -656,7 +655,8 @@ export class ApiView {
       this.blankLines(0);
       this.indent();
       NamespaceStack.push("anonymous");
-      for (const prop of node.properties) {
+      for (let x = 0; x < node.properties.length; x++) {
+        const prop = node.properties[x];
         const propName = this.getNameForNode(prop);
         NamespaceStack.push(propName);
         this.lineMarker();
@@ -667,12 +667,13 @@ export class ApiView {
           case SyntaxKind.ModelSpreadProperty:
             this.tokenize(prop);
         }
-        this.punctuation(",", false, false);
         NamespaceStack.pop();
+        if (x != node.properties.length - 1) {
+          this.punctuation(",", false, false);
+        }
         this.blankLines(0);
       }
       NamespaceStack.pop();
-      this.pop(3);
       this.blankLines(0);
       this.deindent();
       this.punctuation("}", false, false);
@@ -696,15 +697,17 @@ export class ApiView {
     }
   }
 
-  private tokenizeOperationStatement(node: OperationStatementNode) {
+  private tokenizeOperationStatement(node: OperationStatementNode, suppressOpKeyword: boolean = false) {
     this.tokenizeDecorators(node.decorators, false);
-    this.keyword("op", false, true);
+    if (!suppressOpKeyword) {
+      this.keyword("op", false, true);
+    }
     NamespaceStack.push(node.id.sv);
     this.tokenizeIdentifer(node.id, "declaration");
     this.lineMarker();
     this.tokenize(node.signature);
+    this.punctuation(";", false, false);
     NamespaceStack.pop();
-    this.blankLines(0);
   }
 
   private tokenizeNamespaceModel(model: NamespaceModel) {
@@ -716,16 +719,18 @@ export class ApiView {
     this.beginGroup();
     for (const node of model.operations.values()) {
       this.tokenize(node);
+      this.blankLines(1);
     }
     for (const node of model.resources.values()) {
       this.tokenize(node);
+      this.blankLines(1);
     }
     for (const node of model.models.values()) {
       this.tokenize(node);
+      this.blankLines(1);
     }
     this.endGroup();
     NamespaceStack.pop();
-    this.blankLines(1);
   }
 
   private filterDecorators(nodes: readonly DecoratorExpressionNode[]): DecoratorExpressionNode[] {

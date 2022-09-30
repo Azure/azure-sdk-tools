@@ -10,7 +10,14 @@
     <tr class="comment-row @Model.LineClass" data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="3">
             <a class="comment-thread-anchor"></a>
-            @if (Model.IsResolved)
+            @if (Model.IsResolved && Model.Comments.First().Username == User.GetGitHubLogin())
+            {
+                @:This thread is marked resolved by @Model.ResolvedBy <a href="#" class="toggle-comments">(show)</a>
+                <br />
+
+                <strong class="text-muted">You started this thread.</strong>
+            }
+            else if (Model.IsResolved)
             {
                 @:This thread is marked resolved by @Model.ResolvedBy <a href="#" class="toggle-comments">(show)</a>
             }
@@ -56,15 +63,48 @@
                     <div class="m-2 d-flex justify-content-between">
                         @if (Model.IsResolved)
                         {
-                            <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
-                                <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Unresolve</button>
-                            </form>
+                            @if(Model.Comments.First().ResolutionLocked)
+                            {
+                                <span asp-resource="@Model" asp-requirement="@ResolverRequirement.Instance">
+                                    <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
+                                        <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Unresolve</button>
+                                    </form>
+                                </span>
+                                <p>
+                                    &nbsp;&nbsp;Please ask
+                                    <a username="@Model.Comments.First().Username" class="font-weight-bolder text-dark mt-0">@Model.Comments.First().Username</a>
+                                    (or an APIView approver) to unresolve this conversation.
+                                </p>
+                            } 
+                            else 
+                            {
+                                <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
+                                    <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Unresolve</button>
+                                </form>
+                            }
                         }
                         else
                         {
-                            <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve" asp-route-reviewId="@Model.ReviewId">
-                                <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Resolve</button>
-                            </form>
+                            @if (Model.Comments.First().ResolutionLocked)
+                            {
+                                <span asp-resource="@Model" asp-requirement="@ResolverRequirement.Instance">
+                                    <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve" asp-route-reviewId="@Model.ReviewId">
+                                        <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Resolve</button>
+                                    </form>
+                                </span>
+                                <p>
+                                    &nbsp;&nbsp;Please ask
+                                    <a username="@Model.Comments.First().Username" class="font-weight-bolder text-dark mt-0">@Model.Comments.First().Username</a>
+                                    (or an APIView approver) to resolve this conversation.
+                                </p>
+
+                            }
+                            else
+                            {
+                                <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve" asp-route-reviewId="@Model.ReviewId">
+                                    <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Resolve</button>
+                                </form>
+                            }
                         }
                         <div class="comment-navigation-buttons">
                             <!-- Navigation button are added via JavaScript-->

@@ -56,6 +56,7 @@ namespace Azure.Sdk.Tools.TestProxy
         /// <param name="args">CommandLineParser arguments. In server mode use double dash '--' and everything after that becomes additional arguments to Host.CreateDefaultBuilder. Ex. -- arg1 value1 arg2 value2 </param>
         public static async Task Main(string[] args = null)
         {
+            VerifyVerb(args);
             // JRS - Temporarily disable this check because of https://github.com/Azure/azure-sdk-tools/issues/4116
             // This throws and will exit
             // new GitProcessHandler().VerifyGitMinVersion();
@@ -66,8 +67,55 @@ namespace Azure.Sdk.Tools.TestProxy
                 settings.HelpWriter = System.Console.Out;
                 settings.EnableDashDash = true;
             });
-            
-            await parser.ParseArguments<StartOptions, PushOptions, ResetOptions, RestoreOptions>(args).WithParsedAsync(Run);
+
+            await parser.ParseArguments<StartOptions, PushOptions, ResetOptions, RestoreOptions>(args)
+                .WithNotParsed(ExitWithError)
+                .WithParsedAsync(Run);
+        }
+
+        static void ExitWithError(IEnumerable<Error> errors)
+        {
+            Environment.Exit(1);
+        }
+
+        /// <summary>
+        /// This is only necessary because if there's a default verb defined, ours is start,
+        /// CommandLineParser doesn't verify the verb. If the issue is fixed this function
+        /// can be removed.
+        /// https://github.com/commandlineparser/commandline/issues/849
+        /// </summary>
+        /// <param name="args"></param>
+        static void VerifyVerb(string[] args)
+        {
+            // no arguments means the server is starting with all the default options
+            if (args.Length == 0)
+            {
+                return;
+            }
+
+            // if the first argument starts with a dash then they're options and the
+            // default verb is being used.
+            if (args[0].StartsWith("-"))
+            {
+                return;
+            }
+
+            // last but not least, the first argument is a verb, verify it's our verb
+            string[] array = { "start", "reset", "restore", "push" };
+            if (!array.Contains(args[0]))
+            {
+                // The odd looking formatting is to make this look like the same error
+                // CommandLineParser would output if the verb wasn't recognized.
+                string error = @$"ERROR(S):
+  Verb '{args[0]}' is not recognized.
+
+  --help       Display this help screen.
+
+  --version    Display version information.
+";
+                System.Console.WriteLine(error);
+                Environment.Exit(1);
+            }
         }
 
         private static async Task Run(object commandObj)
@@ -91,13 +139,16 @@ namespace Azure.Sdk.Tools.TestProxy
                     StartServer(startOptions);
                     break;
                 case PushOptions pushOptions:
-                    await DefaultStore.Push(pushOptions.AssetsJsonPath);
+                    var assetsJson = RecordingHandler.GetAssetsJsonLocation(pushOptions.AssetsJsonPath, TargetLocation);
+                    await DefaultStore.Push(assetsJson);
                     break;
                 case ResetOptions resetOptions:
-                    await DefaultStore.Reset(resetOptions.AssetsJsonPath);
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(resetOptions.AssetsJsonPath, TargetLocation);
+                    await DefaultStore.Reset(assetsJson);
                     break;
                 case RestoreOptions restoreOptions:
-                    await DefaultStore.Restore(restoreOptions.AssetsJsonPath);
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(restoreOptions.AssetsJsonPath, TargetLocation);
+                    await DefaultStore.Restore(assetsJson);
                     break;
                 default:
                     throw new ArgumentException("Invalid verb. The only supported verbs are start, push, reset and restore.");

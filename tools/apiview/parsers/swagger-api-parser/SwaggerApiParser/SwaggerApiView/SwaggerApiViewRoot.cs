@@ -21,9 +21,9 @@ public class SwaggerApiViewRoot : ITokenSerializable
         this.schemaCache = new SchemaCache();
     }
 
-    public void AddSwaggerSpec(SwaggerSpec swaggerSpec, string swaggerFilePath, string resourceProvider = "")
+    public void AddSwaggerSpec(SwaggerSpec swaggerSpec, string swaggerFilePath, string resourceProvider = "", string swaggerLink="")
     {
-        var swaggerApiViewSpec = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, swaggerFilePath, this.schemaCache, resourceProvider);
+        var swaggerApiViewSpec = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, swaggerFilePath, this.schemaCache, resourceProvider, swaggerLink);
         this.SwaggerApiViewSpecs.Add(swaggerFilePath, swaggerApiViewSpec);
     }
 
@@ -61,6 +61,7 @@ public class SwaggerApiViewRoot : ITokenSerializable
             var specToken = kv.Value.TokenSerialize(specContext);
 
             ret.AddRange(specToken);
+            ret.Add(TokenSerializer.NewLine());
         }
 
         return ret.ToArray();

@@ -30,7 +30,7 @@ namespace APIViewWeb
             }
             catch
             {
-                return new UserProfileModel();
+                return new UserProfileModel(User, null, null, null);
             }
         }
 

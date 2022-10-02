@@ -32,7 +32,7 @@
     {
         <h1> User profile does not exist. </h1>
     }
-    else if(Model.userProfile.UserName.Equals(User.GetGitHubLogin())) 
+    else if (Model.userProfile.UserName == null || Model.userProfile.UserName.Equals(User.GetGitHubLogin()))
     {
         <div>
             @if (Model.userProfile.Email == null)

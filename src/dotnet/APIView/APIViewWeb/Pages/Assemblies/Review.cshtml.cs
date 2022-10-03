@@ -161,10 +161,9 @@ namespace APIViewWeb.Pages.Assemblies
         {
             _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
             {
-                UserName = User.GetGitHubLogin(),
                 HideLeftNavigation = hideLeftNavigation,
                 HideLineNumbers = hideLineNumbers
-            });
+            }, User.GetGitHubLogin());
             return new EmptyResult();
         }
 
@@ -179,7 +178,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public UserPreferenceModel GetUserPreference()
         {
-            return _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+            return _preferenceCache.GetUserPreferences(User.GetGitHubLogin()).Result;
         }
 
         private ReviewRevisionModel GetReviewRevision(string revisionId = null)

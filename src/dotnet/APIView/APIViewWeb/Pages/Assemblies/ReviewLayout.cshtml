@@ -5,6 +5,10 @@
     <script type="text/javascript" src="@Url.Content("~/fileInput.js")" asp-append-version="true"></script>
     <script type="text/javascript" src="@Url.Content("~/revisions.js")" asp-append-version="true"></script>
 }
+@section Styles
+{
+    <link rel="stylesheet" href="~/usagesample.css" asp-append-version="true">
+}
 @{
     Layout = "Shared/_Layout";
     var id = ViewContext.RouteData.Values["id"];

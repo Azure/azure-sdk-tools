@@ -33,7 +33,6 @@ variables:
   PythonVersion: '3.10.5'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
-  TestProjectPath: 'src/dotnet/APIView/**/*Tests.csproj'
   NodeVersion: '12.x'
   BuildConfiguration: 'Release'
   TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parser'
@@ -168,6 +167,33 @@ stages:
               packageType: runtime
               version: '$(DotNetRuntimeVersion)'
 
+          - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+            - task: Powershell@2
+              inputs:
+                filePath: $(Build.SourcesDirectory)/eng/common/scripts/Start-DotNetApp.ps1
+                arguments: >
+                  -ArgumentList "run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj"
+                  -Port "5000"
+                pwsh: true
+              displayName: 'Start APIView Application'
+              env:
+                APIVIEW_BLOB__CONNECTIONSTRING: $(apiview-blob-connectionstring)
+                APIVIEW_COSMOS__CONNECTIONSTRING: $(apiview-cosmos-connectionstring)
+                APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
+                APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
+
+            - task: DotNetCoreCLI@2
+              displayName: 'Build & Test'
+              env:
+                DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+                DOTNET_CLI_TELEMETRY_OPTOUT: 1
+                DOTNET_MULTILEVEL_LOOKUP: 0
+              inputs:
+                command: test
+                projects: src/dotnet/APIView/**/APIViewUITests.csproj
+                arguments: --logger trx
+                publishTestResults: false
+
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
             env:
@@ -176,7 +202,9 @@ stages:
               DOTNET_MULTILEVEL_LOOKUP: 0
             inputs:
               command: test
-              projects: '$(TestProjectPath)'
+              projects: |
+                src/dotnet/APIView/**/APIViewUnitTests.csproj
+                src/dotnet/APIView/**/APIViewIntegrationTests.csproj
               arguments: --logger trx
               publishTestResults: false
 

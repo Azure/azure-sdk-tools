@@ -135,6 +135,11 @@ namespace APIViewWeb.Pages.Assemblies
         {
             List<List<string>> lines = new List<List<string>>();
 
+            if (Sample == null)
+            {
+                return lines;
+            }
+
             foreach (var revision in Sample.Revisions.ToArray().Reverse())
             {
                 string rawContent = await _samplesManager.GetUsageSampleContentAsync(revision.FileId);

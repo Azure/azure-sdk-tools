@@ -30,25 +30,26 @@ export class ApiViewNavigation {
       | IntersectionExpressionNode
       | ProjectionModelExpressionNode
       | UnionStatementNode
-      | UnionExpressionNode
+      | UnionExpressionNode,
+      stack: NamespaceStack
   ) {
     let obj;
     switch (objNode.kind) {
       case SyntaxKind.NamespaceStatement:
-        NamespaceStack.push(objNode.name);
+        stack.push(objNode.name);
         this.Text = objNode.name;
         this.Tags = { TypeKind: ApiViewNavigationKind.Module };
         const operationItems = new Array<ApiViewNavigation>();
         for (const node of objNode.operations.values()) {
-          operationItems.push(new ApiViewNavigation(node));
+          operationItems.push(new ApiViewNavigation(node, stack));
         }
         const resourceItems = new Array<ApiViewNavigation>();
         for (const node of objNode.resources.values()) {
-          resourceItems.push(new ApiViewNavigation(node));
+          resourceItems.push(new ApiViewNavigation(node, stack));
         }
         const modelItems = new Array<ApiViewNavigation>();
         for (const node of objNode.models.values()) {
-          modelItems.push(new ApiViewNavigation(node));
+          modelItems.push(new ApiViewNavigation(node, stack));
         }
         this.ChildItems = [
           { Text: "Operations", ChildItems: operationItems, Tags: { TypeKind: ApiViewNavigationKind.Method }, NavigationId: "" },
@@ -58,38 +59,38 @@ export class ApiViewNavigation {
         break;
       case SyntaxKind.ModelStatement:
         obj = objNode as ModelStatementNode;
-        NamespaceStack.push(obj.id.sv);
+        stack.push(obj.id.sv);
         this.Text = obj.id.sv;
         this.Tags = { TypeKind: ApiViewNavigationKind.Class };
         this.ChildItems = [];
         break;
       case SyntaxKind.EnumStatement:
         obj = objNode as EnumStatementNode;
-        NamespaceStack.push(obj.id.sv);
+        stack.push(obj.id.sv);
         this.Text = obj.id.sv;
         this.Tags = { TypeKind: ApiViewNavigationKind.Enum };
         this.ChildItems = [];
         break;
       case SyntaxKind.OperationStatement:
         obj = objNode as OperationStatementNode;
-        NamespaceStack.push(obj.id.sv);
+        stack.push(obj.id.sv);
         this.Text = obj.id.sv;
         this.Tags = { TypeKind: ApiViewNavigationKind.Method };
         this.ChildItems = [];
         break;
       case SyntaxKind.InterfaceStatement:
         obj = objNode as InterfaceStatementNode;
-        NamespaceStack.push(obj.id.sv);
+        stack.push(obj.id.sv);
         this.Text = obj.id.sv;
         this.Tags = { TypeKind: ApiViewNavigationKind.Method };
         this.ChildItems = [];
         for (const child of obj.operations) {
-          this.ChildItems.push(new ApiViewNavigation(child));
+          this.ChildItems.push(new ApiViewNavigation(child, stack));
         }
         break;
       case SyntaxKind.UnionStatement:
         obj = objNode as UnionStatementNode;
-        NamespaceStack.push(obj.id.sv);
+        stack.push(obj.id.sv);
         this.Text = obj.id.sv;
         this.Tags = { TypeKind: ApiViewNavigationKind.Enum };
         this.ChildItems = [];
@@ -103,8 +104,8 @@ export class ApiViewNavigation {
       default:
         throw new Error(`Navigation unsupported for "${objNode.kind.toString()}".`);
     }
-    this.NavigationId = NamespaceStack.value();
-    NamespaceStack.pop();
+    this.NavigationId = stack.value();
+    stack.pop();
   }
 }
 

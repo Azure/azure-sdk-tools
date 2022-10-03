@@ -37,28 +37,6 @@ describe("apiview: tests", () => {
     return vals.join("").split("\n");
   }
 
-  function stringifyLines(lines: string[], start: number, end: number): string {
-    const slice = lines.slice(start, end + 1)
-    return slice.join("");
-  }
-
-  function indentCounts(lines: string[], start: number, end: number): number[] {
-    const counts = Array<number>();
-    const slice = lines.slice(start, end + 1);
-    for (const line of slice) {
-      let count = 0;
-      for (const char of [...line]) {
-        if (char == " ") {
-          count += 1;
-        } else {
-          break;
-        }
-      }
-      counts.push(count);
-    }
-    return counts;
-  }
-
   function compare(expect: string, lines: string[], offset: number) {
     // split the input into lines and ignore leading or trailing empty lines.
     let expectedLines = expect.split("\n");
@@ -92,7 +70,7 @@ describe("apiview: tests", () => {
     `;
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(input, actual, 2);
+    compare(input, actual, 3);
   });
 
 
@@ -136,7 +114,7 @@ describe("apiview: tests", () => {
     }`;
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 2);
+    compare(expect, actual, 3);
   });
 
   it("describes union", async () =>{
@@ -187,7 +165,7 @@ describe("apiview: tests", () => {
     `;
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 2);
+    compare(expect, actual, 3);
   });
 
   it("describes operation", async () =>{
@@ -217,15 +195,13 @@ describe("apiview: tests", () => {
       op GetFoo is ResourceRead<
         {
           @query
-          @doc("The name")
-          name: string;
+          name: string
         },
         {
           parameters: {
             @query
-            @doc("The collection id.")
-            fooId: string;
-          };
+            fooId: string
+          }
         }
       >;
 
@@ -233,7 +209,7 @@ describe("apiview: tests", () => {
     }`;
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
-    compare(expect, lines, 2);
+    compare(expect, lines, 3);
   });
 
   it("describes interface", async () => {
@@ -258,7 +234,10 @@ describe("apiview: tests", () => {
       interface Foo {
         @get
         @route("get/{name}")
-        get(@path name: string): string;
+        get(
+          @path
+          name: string
+        ): string;
 
         @get
         @route("list")
@@ -268,6 +247,6 @@ describe("apiview: tests", () => {
     `;
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
-    compare(expect, lines, 2);
+    compare(expect, lines, 3);
   });  
 });

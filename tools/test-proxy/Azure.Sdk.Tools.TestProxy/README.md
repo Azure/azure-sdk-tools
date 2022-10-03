@@ -175,9 +175,9 @@ $env:ASPNETCORE_URLS="http://*3331;https://*:8881"  // set custom ports for both
 
 #### Input arguments
 
-When starting the test proxy there are Verbs, as shown in the test-proxy --help output above. For the start  verb, there can be additional command arguments that need to get passed to **Host.CreateDefaultBuilder** 'as is'. The way this is done is through the use of `--` or dashdash as it's referred to. If `--` is on the command line, everything after will be treated as arguments that will be passed into this Host call.
+When starting the test proxy there are Verbs, as shown in the test-proxy --help output above. For the `start` verb, there can be additional command arguments that need to get passed to **Host.CreateDefaultBuilder** 'as is'. The way this is done is through the use of `--` or dashdash as it's referred to. If `--` is on the command line, everything after will be treated as arguments that will be passed into this Host call.
 
-For example, you can use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration. To bind to localhost http 5000, provide the argument `-- --urls http://localhost:9000`. Note that `--`, space, then the `--urls http://localhost:9000`.
+For example, you can use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration. To bind to localhost http 9000, provide the argument `-- --urls http://localhost:9000`. Note that `--`, space, then the `--urls http://localhost:9000`.
 
 ```powershell
 test-proxy -- --urls "http://localhost:9000;https://localhost:9001"

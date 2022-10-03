@@ -25,10 +25,9 @@
 
   Cpp:
     DefaultVersions:
-    - source
+    - 3.20.0
     OptionalVersions:
-    - 1.7.1
-    - 1.7.2
+    - 3.13.0
 
 Services:
 - Service: sample

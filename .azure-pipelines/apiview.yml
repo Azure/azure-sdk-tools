@@ -170,7 +170,7 @@ stages:
           - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
             - task: Powershell@2
               inputs:
-                filePath: $(Build.SourcesDirectory)/eng/common/scripts/Start-DotNetApp.ps1
+                filePath: $(Build.SourcesDirectory)/eng/scripts/Start-DotNetApp.ps1
                 arguments: >
                   -ArgumentList "run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj"
                   -Port "5000"

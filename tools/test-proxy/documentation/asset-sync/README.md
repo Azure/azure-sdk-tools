@@ -50,7 +50,7 @@ Interactions with the external assets repository are accessible when the proxy i
 |---|---|
 | `/Playback/Restore` | Retrieve files from external git repo as targeted in the Tag from assets.json |
 | `/Playback/Reset` | Discard pending changes and reset to the original Tag from targeted assets.json. |
-| `/Record/Push` | Push changes if they are pending for files described by targeted assets.json. Updates the Tag in assets.json the new tag generated from the push operation. |
+| `/Record/Push` | Push changes if they are pending for files described by targeted assets.json. Updates the Tag in assets.json to match the new tag generated from the push operation. |
 
 ## test-proxy CLI commands
 
@@ -60,7 +60,7 @@ The test-proxy also offers interactions with the external assets repository as a
 
 #### Restore
 
-Restore will pull the assets at the Tag, from the AssetsRepo referenced by the targeted assets.json
+A restore operation is merely a test-proxy-encapsulated `clone or pull` operation. A given `asets.json` provides the target `Tag` and `AssetsRepo`.
 
 ```bash
 > test-proxy restore --assets-json-path <assetsJsonPath>
@@ -68,9 +68,11 @@ Restore will pull the assets at the Tag, from the AssetsRepo referenced by the t
 
 #### Reset
 
-Reset will reset the assets back to the Tag, from the AssetsRepo referenced by the targeted assets.json. Reset would be used if the assets were already restored, modified (maybe re-recorded while library development was done), and then needed to be reset back to their original files. If there are pending changes, the user will be prompted to overwrite. If there are no pending changes, then reset is no-op, otherwise, the following prompt will be displayed.
+Reset discards local changes to a targeted assets.json files and resets the local copy of the files back to the version targeted by the given assets.json Tag.  Reset would be used if the assets were already restored, modified (maybe re-recorded while library development was done), and then needed to be reset back to their original files. If there are pending changes, the user will be prompted to overwrite. If there are no pending changes, then reset is no-op, otherwise, the following prompt will be displayed.
 `There are pending git changes, are you sure you want to reset? [Y|N]`
-Selecting N will leave things as they are, selecting Y will restore the assets back to their original files referenced by the Tag, from the AssetsRepo referenced by the targeted assets.json file.
+
+- Selecting `N` will leave things as they are.
+- Selecting `Y` will discard pending changes and reset the locally cloned assets to the Tag within the targeted `assets.json`.
 
 ```bash
 > test-proxy reset --assets-json-path <assetsJsonPath>

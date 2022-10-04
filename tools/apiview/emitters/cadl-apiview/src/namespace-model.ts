@@ -164,7 +164,16 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       break;
     case SyntaxKind.ModelSpreadProperty:
       node = obj as ModelSpreadPropertyNode;
-      return generateId(node.target);
+      switch (node.target.target.kind) {
+        case SyntaxKind.Identifier:
+          name = (node.target.target as IdentifierNode).sv;
+          break;
+        case SyntaxKind.MemberExpression:
+          name = (node.target.target as MemberExpressionNode).id.sv;
+          break;
+      }
+      parentId = generateId(node.parent);
+      break;
     case SyntaxKind.ModelStatement:
       node = obj as ModelStatementNode;
       name = node.id.sv;

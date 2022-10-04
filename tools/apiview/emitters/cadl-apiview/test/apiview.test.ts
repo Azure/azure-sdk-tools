@@ -172,19 +172,25 @@ describe("apiview: tests", () => {
     const input = `
     @Cadl.serviceTitle("Operation Test")
     namespace Azure.Test {
+      model FooParams {
+        a: string,
+        b: string
+      }
+
       op ResourceRead<TResource, TParams>(resource: TResource, params: TParams): TResource;
 
       op GetFoo is ResourceRead<
         {
           @query
           @doc("The name")
-          name: string;
+          name: string,
+          ...FooParams
         },
         {
           parameters: {
             @query
             @doc("The collection id.")
-            fooId: string;
+            fooId: string
           };
         }
       >;
@@ -195,7 +201,8 @@ describe("apiview: tests", () => {
       op GetFoo is ResourceRead<
         {
           @query
-          name: string
+          name: string,
+          ...FooParams
         },
         {
           parameters: {

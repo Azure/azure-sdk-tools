@@ -351,7 +351,8 @@ export class ApiView {
       case SyntaxKind.DecoratorExpression:
         obj = node as DecoratorExpressionNode;
         this.punctuation("@", false, false);
-        this.tokenizeIdentifer(obj.target, "member");
+        this.tokenizeIdentifier(obj.target, "member");
+        this.lineMarker();
         if (obj.arguments.length) {
           const last = obj.arguments.length - 1;
           this.punctuation("(", false, false);
@@ -372,7 +373,8 @@ export class ApiView {
       case SyntaxKind.EnumMember:
         obj = node as EnumMemberNode;
         this.tokenizeDecorators(obj.decorators, false);
-        this.tokenizeIdentifer(obj.id, "member");
+        this.tokenizeIdentifier(obj.id, "member");
+        this.lineMarker();
         if (obj.value != undefined) {
           this.punctuation(":", false, true);
           this.tokenize(obj.value);
@@ -382,6 +384,7 @@ export class ApiView {
         obj = node as EnumSpreadMemberNode;
         this.punctuation("...", false, false);
         this.tokenize(obj.target);
+        this.lineMarker();
         break;
       case SyntaxKind.EnumStatement:
         this.tokenizeEnumStatement(node as EnumStatementNode);
@@ -413,7 +416,7 @@ export class ApiView {
       case SyntaxKind.LineComment:
         throw new Error(`Case "LineComment" not implemented`);
       case SyntaxKind.MemberExpression:
-        this.tokenizeIdentifer(node as MemberExpressionNode, "reference");
+        this.tokenizeIdentifier(node as MemberExpressionNode, "reference");
         break;
       case SyntaxKind.ModelExpression:
         this.tokenizeModelExpression(node as ModelExpressionNode, true, false);
@@ -425,6 +428,7 @@ export class ApiView {
         obj = node as ModelSpreadPropertyNode;
         this.punctuation("...");
         this.tokenize(obj.target);
+        this.lineMarker();
         break;
       case SyntaxKind.ModelStatement:
         obj = node as ModelStatementNode;
@@ -477,7 +481,7 @@ export class ApiView {
         break;
       case SyntaxKind.TypeReference:
         obj = node as TypeReferenceNode;
-        this.tokenizeIdentifer(obj.target, "reference");
+        this.tokenizeIdentifier(obj.target, "reference");
         if (obj.arguments.length) {
           this.punctuation("<", false, false);  
           for (let x = 0; x < obj.arguments.length; x++) {
@@ -521,10 +525,10 @@ export class ApiView {
   }
 
   private tokenizeModelStatement(node: ModelStatementNode) {
+    this.namespaceStack.push(node.id.sv);
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("model", false, true);
-    this.namespaceStack.push(node.id.sv);
-    this.tokenizeIdentifer(node.id, "declaration");
+    this.tokenizeIdentifier(node.id, "declaration");
     this.lineMarker();
     if (node.extends != undefined) {
       this.keyword("extends", true, true);
@@ -541,7 +545,6 @@ export class ApiView {
         this.namespaceStack.push(propName);
         this.tokenize(prop);
         this.punctuation(";", false, false);
-        this.lineMarker();
         this.namespaceStack.pop();
         this.blankLines(0);
       }
@@ -553,10 +556,10 @@ export class ApiView {
   }
 
   private tokenizeInterfaceStatement(node: InterfaceStatementNode) {
+    this.namespaceStack.push(node.id.sv);
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("interface", false, true);
-    this.namespaceStack.push(node.id.sv);
-    this.tokenizeIdentifer(node.id, "declaration");
+    this.tokenizeIdentifier(node.id, "declaration");
     this.lineMarker();
     this.beginGroup();
     for (let x = 0; x < node.operations.length; x++) {
@@ -569,10 +572,10 @@ export class ApiView {
   }
 
   private tokenizeEnumStatement(node: EnumStatementNode) {
+    this.namespaceStack.push(node.id.sv);
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("enum", false, true);
-    this.namespaceStack.push(node.id.sv);
-    this.tokenizeIdentifer(node.id, "declaration");
+    this.tokenizeIdentifier(node.id, "declaration");
     this.lineMarker();
     this.beginGroup();
     for (const member of node.members) {
@@ -580,7 +583,6 @@ export class ApiView {
       this.namespaceStack.push(memberName);
       this.tokenize(member);
       this.punctuation(",");
-      this.lineMarker();
       this.namespaceStack.pop();
       this.blankLines(0);
     }
@@ -589,10 +591,10 @@ export class ApiView {
   }
 
   private tokenizeUnionStatement(node: UnionStatementNode) {
+    this.namespaceStack.push(node.id.sv);
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("union", false, true);
-    this.namespaceStack.push(node.id.sv);
-    this.tokenizeIdentifer(node.id, "declaration");
+    this.tokenizeIdentifier(node.id, "declaration");
     this.lineMarker();
     this.beginGroup();
     for (let x = 0; x < node.options.length; x++) {
@@ -600,7 +602,6 @@ export class ApiView {
       const variantName = this.getNameForNode(node);
       this.namespaceStack.push(variantName);
       this.tokenize(variant);
-      this.lineMarker();
       this.namespaceStack.pop();
       if (x != node.options.length - 1) {
         this.punctuation(",");
@@ -613,14 +614,16 @@ export class ApiView {
 
   private tokenizeUnionVariant(node: UnionVariantNode) {
     this.tokenizeDecorators(node.decorators, false);
-    this.tokenizeIdentifer(node.id, "member");
+    this.tokenizeIdentifier(node.id, "member");
+    this.lineMarker();
     this.punctuation(":", false, true);
     this.tokenize(node.value);
   }
 
   private tokenizeModelProperty(node: ModelPropertyNode, inline: boolean) {
     this.tokenizeDecorators(node.decorators, inline);
-    this.tokenizeIdentifer(node.id, "member");
+    this.tokenizeIdentifier(node.id, "member");
+    this.lineMarker();
     this.punctuation(node.optional ? "?:" : ":", false, true);
     this.tokenize(node.value);
     if (node.default != undefined) {
@@ -668,7 +671,6 @@ export class ApiView {
         const prop = node.properties[x];
         const propName = this.getNameForNode(prop);
         this.namespaceStack.push(propName);
-        this.lineMarker();
         switch (prop.kind) {
           case SyntaxKind.ModelProperty:
             this.tokenizeModelProperty(prop, false);
@@ -709,12 +711,12 @@ export class ApiView {
   }
 
   private tokenizeOperationStatement(node: OperationStatementNode, suppressOpKeyword: boolean = false) {
+    this.namespaceStack.push(node.id.sv);
     this.tokenizeDecorators(node.decorators, false);
     if (!suppressOpKeyword) {
       this.keyword("op", false, true);
     }
-    this.namespaceStack.push(node.id.sv);
-    this.tokenizeIdentifer(node.id, "declaration");
+    this.tokenizeIdentifier(node.id, "declaration");
     this.lineMarker();
     this.tokenize(node.signature);
     this.punctuation(";", false, false);
@@ -722,9 +724,9 @@ export class ApiView {
   }
 
   private tokenizeNamespaceModel(model: NamespaceModel) {
+    this.namespaceStack.push(model.name);
     this.tokenizeDecorators(model.node.decorators, false);
     this.keyword("namespace", false, true);
-    this.namespaceStack.push(model.name);
     this.typeDeclaration(model.name, this.namespaceStack.value());
     this.lineMarker();
     this.beginGroup();
@@ -778,9 +780,7 @@ export class ApiView {
     for (const node of filteredNodes) {
       this.namespaceStack.push(generateId(node)!);
       this.tokenize(node);
-      if (!inline) {
-        this.lineMarker();
-      } else {
+      if (inline) {
         this.whitespace();
       }
       this.namespaceStack.pop();
@@ -799,7 +799,7 @@ export class ApiView {
     }
   }
 
-  private tokenizeIdentifer(
+  private tokenizeIdentifier(
     node: IdentifierNode | MemberExpressionNode | StringLiteralNode,
     style: "declaration" | "reference" | "member"
   ) {

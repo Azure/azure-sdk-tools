@@ -23,6 +23,8 @@ import {
   Program,
   StringLiteralNode,
   SyntaxKind,
+  TemplateParameter,
+  TemplateParameterDeclarationNode,
   TupleExpressionNode,
   TypeReferenceNode,
   UnionExpressionNode,
@@ -466,7 +468,10 @@ export class ApiView {
         this.stringLiteral(obj.value);
         break;
       case SyntaxKind.TemplateParameterDeclaration:
-        throw new Error(`Case "TemplateParameter" not implemented`);
+        obj = node as TemplateParameterDeclarationNode;
+        // FIXME: Implement this!!
+        this.tokenize(obj.id);
+        break;
       case SyntaxKind.TupleExpression:
         obj = node as TupleExpressionNode;
         this.punctuation("[", true, true);
@@ -474,7 +479,7 @@ export class ApiView {
           const val = obj.values[x];
           this.tokenize(val);
           if (x != obj.values.length - 1) {
-            this.punctuation(",", false, true);
+            this.renderComma();
           }
         }
         this.punctuation("]", true, false);
@@ -488,7 +493,7 @@ export class ApiView {
             const arg = obj.arguments[x];
             this.tokenize(arg);
             if (x != obj.arguments.length - 1) {
-              this.punctuation(",", false, true);
+              this.renderComma();
             }
           }
           this.punctuation(">");
@@ -538,6 +543,7 @@ export class ApiView {
       this.keyword("is", true, true);
       this.tokenize(node.is);
     }
+    this.tokenizeTemplateParameters(node.templateParameters);
     if (node.properties.length) {
       this.beginGroup();
       for (const prop of node.properties) {
@@ -657,7 +663,6 @@ export class ApiView {
   }
 
   private tokenizeModelExpressionExpanded(node: ModelExpressionNode, displayBrackets: boolean) {
-    // FIXME: Needs line IDs for each property.
     if (node.properties.length) {
       this.blankLines(0);
       this.indent();
@@ -680,7 +685,7 @@ export class ApiView {
         }
         this.namespaceStack.pop();
         if (x != node.properties.length - 1) {
-          this.punctuation(",", false, false);
+          this.renderComma();          
         }
         this.blankLines(0);
       }
@@ -718,6 +723,7 @@ export class ApiView {
     }
     this.tokenizeIdentifier(node.id, "declaration");
     this.lineMarker();
+    this.tokenizeTemplateParameters(node.templateParameters);
     this.tokenize(node.signature);
     this.punctuation(";", false, false);
     this.namespaceStack.pop();
@@ -743,6 +749,7 @@ export class ApiView {
       this.blankLines(1);
     }
     this.endGroup();
+    this.newline();
     this.namespaceStack.pop();
   }
 
@@ -839,6 +846,21 @@ export class ApiView {
     }
   }
 
+  private tokenizeTemplateParameters(nodes: readonly TemplateParameterDeclarationNode[]) {
+    if (nodes.length) {
+      this.punctuation("<", false, false);  
+      for (let x = 0; x < nodes.length; x++) {
+        const param = nodes[x];
+        this.tokenize(param);
+        if (x != nodes.length - 1) {
+          this.renderComma();
+          this.whitespace();
+        }
+      }
+      this.punctuation(">");
+    }
+  }
+
   private buildNavigation(ns: NamespaceModel) {
     this.namespaceStack.reset();
     this.navigation(new ApiViewNavigation(ns, this.namespaceStack));
@@ -851,6 +873,17 @@ export class ApiView {
     } else {
       throw new Error("Unable to get name for node.");
     }
+  }
+
+  private renderComma() {
+    const last = this.tokens.pop()!;
+    if (last?.Kind == ApiViewTokenKind.Whitespace) {
+      // hacky workaround to ensure comma is after trailing bracket for expanded anonymous models
+      this.tokens.pop();
+    } else {
+      this.tokens.push(last);
+    }
+    this.punctuation(",", false, false);
   }
 
   resolveMissingTypeReferences() {

@@ -60,7 +60,7 @@ describe("apiview: tests", () => {
 
   it("describes model", async () => {
     const input = `
-    @Cadl.serviceTitle("Model Test")
+    @Cadl.serviceTitle("Test")
     namespace Azure.Test {
       model Foo {
         name: string;
@@ -73,10 +73,24 @@ describe("apiview: tests", () => {
     compare(input, actual, 3);
   });
 
+  it("describes templated model", async () => {
+    const input = `
+    @Cadl.serviceTitle("Test")
+    namespace Azure.Test {
+      model Foo<TOne, TTwo> {
+        one: TOne;
+        two: TTwo;
+      }
+    }
+    `;
+    const apiview = await apiViewFor(input, {});
+    const actual = apiViewText(apiview);
+    compare(input, actual, 3);
+  });
 
   it("describes enum", async () => {
     const input = `
-    @Cadl.serviceTitle("Enum Test")
+    @Cadl.serviceTitle("Test")
     namespace Azure.Test {
 
       enum SomeEnum {
@@ -95,7 +109,7 @@ describe("apiview: tests", () => {
       }
     }`;
     const expect = `
-    @Cadl.serviceTitle("Enum Test")
+    @Cadl.serviceTitle("Test")
     namespace Azure.Test {
       enum SomeEnum {
         Plain,
@@ -119,7 +133,7 @@ describe("apiview: tests", () => {
 
   it("describes union", async () =>{
     const input = `
-    @Cadl.serviceTitle("Union Test")
+    @Cadl.serviceTitle("Test")
     namespace Azure.Test {
       union MyUnion {
         cat: Cat,
@@ -141,7 +155,7 @@ describe("apiview: tests", () => {
       }
     }`;
     const expect = `
-    @Cadl.serviceTitle("Union Test")
+    @Cadl.serviceTitle("Test")
     namespace Azure.Test {
       model Cat {
         name: string;
@@ -168,13 +182,13 @@ describe("apiview: tests", () => {
     compare(expect, actual, 3);
   });
 
-  it("describes operation", async () =>{
+  it("describes template operation", async () =>{
     const input = `
-    @Cadl.serviceTitle("Operation Test")
+    @Cadl.serviceTitle("Test")
     namespace Azure.Test {
       model FooParams {
-        a: string,
-        b: string
+        a: string;
+        b: string;
       }
 
       op ResourceRead<TResource, TParams>(resource: TResource, params: TParams): TResource;
@@ -196,7 +210,7 @@ describe("apiview: tests", () => {
       >;
     }`;
     const expect = `
-    @Cadl.serviceTitle("Operation Test")
+    @Cadl.serviceTitle("Test")
     namespace Azure.Test {
       op GetFoo is ResourceRead<
         {
@@ -205,14 +219,55 @@ describe("apiview: tests", () => {
           ...FooParams
         },
         {
-          parameters: {
-            @query
-            fooId: string
-          }
+          parameters:
+            {
+              @query
+              fooId: string
+            }
         }
       >;
 
-      op ResourceRead<TResource, TParams>(resource: TResource, params: TParams): TResource;
+      op ResourceRead<TResource, TParams>(
+        resource: TResource,
+        params: TParams
+      ): TResource;
+
+      model FooParams {
+        a: string;
+        b: string;
+      }
+    }`;
+    const apiview = await apiViewFor(input, {});
+    const lines = apiViewText(apiview);
+    compare(expect, lines, 3);
+  });
+
+  it("describes operation with anonymous models", async () =>{
+    const input = `
+    @Cadl.serviceTitle("Test")
+    namespace Azure.Test {
+      op SomeOp(
+        param1: {
+          name: string
+        },
+        param2: {
+          age: int16
+        }
+      ): string;
+    }`;
+    const expect = `
+    @Cadl.serviceTitle("Test")
+    namespace Azure.Test {
+      op SomeOp(
+        param1:
+          {
+            name: string
+          },
+        param2:
+          {
+            age: int16
+          }
+      ): string;
     }`;
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
@@ -221,7 +276,7 @@ describe("apiview: tests", () => {
 
   it("describes interface", async () => {
     const input = `
-    @Cadl.serviceTitle("Model Test")
+    @Cadl.serviceTitle("Test")
     namespace Azure.Test {
       interface Foo {
         @get 
@@ -236,7 +291,7 @@ describe("apiview: tests", () => {
     }
     `;
     const expect = `
-    @Cadl.serviceTitle("Model Test")
+    @Cadl.serviceTitle("Test")
     namespace Azure.Test {
       interface Foo {
         @get

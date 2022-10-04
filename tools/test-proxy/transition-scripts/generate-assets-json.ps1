@@ -63,7 +63,7 @@ Function Get-Repo-Language {
     Write-Error $GitRepoOnDiskErr
     exit 1
   }
-  $lang = $remotes[0] | ForEach-Object { if ($_ -match "azure-sdk-for-([a-zA-Z0-9\-\_\.]+)?(\.git)?") {
+  $lang = $remotes[0] | ForEach-Object { if ($_ -match "azure-sdk-for-(.+?)(?:\.git|-pr|$)") {
       #Return match from group 1 which will be the language, pulled from the repository
       return $Matches[1]
     }

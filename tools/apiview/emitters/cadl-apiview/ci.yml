@@ -56,11 +56,10 @@ stages:
             workingDirectory: $(CadlEmitterDirectory)
             displayName: "Build CADL emitter"
 
-          # Enable below step once test issues are resolved
-          # - script: |
-          #     npm run-script test
-          #   workingDirectory: $(CadlEmitterDirectory)
-          #   displayName: "Test CADL emitter"
+          - script: |
+              npm run-script test
+            workingDirectory: $(CadlEmitterDirectory)
+            displayName: "Test CADL emitter"
 
           - pwsh: |
               npm pack $(CadlEmitterDirectory)

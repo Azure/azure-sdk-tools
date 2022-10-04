@@ -30,7 +30,10 @@ public enum TokenKind {
 
     // for any metadata that should not be compared when checking diff
     SKIP_DIFF_START(15),
-    SKIP_DIFF_END(16);
+    SKIP_DIFF_END(16),
+
+    // for external links
+    EXTERNAL_LINK(28);
 
     private final int id;
 

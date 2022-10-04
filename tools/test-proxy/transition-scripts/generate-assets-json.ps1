@@ -63,15 +63,28 @@ Function Get-Repo-Language {
     Write-Error $GitRepoOnDiskErr
     exit 1
   }
-  $lang = $remotes[0] | ForEach-Object { if ($_ -match "azure-sdk-for-([a-zA-Z0-9\-\_\.]+)?(\.git)?") {
+
+  # The regular expression needed to be updated to handle the following types of input:
+  # origin git@github.com:Azure/azure-sdk-for-python.git (fetch)
+  # origin git@github.com:Azure/azure-sdk-for-python-pr.git (fetch)
+  # fork git@github.com:UserName/azure-sdk-for-python (fetch)
+  # azure-sdk https://github.com/azure-sdk/azure-sdk-for-net.git (fetch)
+  # ForEach-Object splits the string on whitespace so each of the above strings is actually
+  # 3 different strings. The first and last pieces won't match anything, the middle string
+  # will match what is below. If the regular expression needs to be updated the following
+  # link below will go to a regex playground
+  # https://regex101.com/r/btVW5A/1
+  $lang = $remotes[0] | ForEach-Object { if ($_ -match "azure-sdk-for-(?<lang>[^\-\.]+)") {
       #Return match from group 1 which will be the language, pulled from the repository
-      return $Matches[1]
+      return $Matches["lang"]
     }
   }
+
   if ([String]::IsNullOrWhitespace($lang)) {
     Write-Error $GitRepoOnDiskErr
     exit 1
   }
+
   Write-Host "Current language=$lang"
   return $lang
 }

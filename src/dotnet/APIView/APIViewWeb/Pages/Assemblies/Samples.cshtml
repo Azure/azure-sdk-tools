@@ -5,10 +5,9 @@
 @{
     Layout = "ReviewLayout";
     ViewData["Title"] = "Usage Samples";
-    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
-    ViewData["UserPreference"] = userPreference;
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin());
+    TempData["UserPreference"] = userPreference;
 }
-<link rel="stylesheet" href="~/usagesample.css">
 
 @if (Model.Samples == null || Model.Sample.FileId == "Bad Deployment" || Model.Sample.FileId == "File Content Missing") // If the samples container does not exist
 {

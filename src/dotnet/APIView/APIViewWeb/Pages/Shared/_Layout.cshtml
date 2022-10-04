@@ -37,6 +37,7 @@
             <link rel="stylesheet" href=@hrefNew asp-append-version="true"/>
         }
     }
+    @RenderSection("Styles", required: false)
 </head>
 @{
     var userPreference = (TempData["UserPreference"] as UserPreferenceModel) ?? new UserPreferenceModel();
@@ -46,7 +47,7 @@
         "dark-theme",
         "dark-solarized-theme"
     };
-    var theme = userPreference.Theme ?? "light-theme";
+    var theme = userPreference.Theme;
 }
 <body class="@theme">
     <header>
@@ -66,26 +67,26 @@
                         }
                     </ul>
                     <ul class="navbar-nav ml-auto">
-                        <li class="nav-item mt-1">
-                            <select class="selectpicker show-tick p-0" data-style="btn-light btn-sm border m-0" data-width="fit" id="theme-selector" data-tick-icon="fa-solid fa-check">
-                                @foreach(var item in themes)
-                                {
-                                    var displayName = item.Replace("-theme", "");
-                                    if (item.Equals(theme))
-                                    {
-                                        <option value="@item" selected>@displayName</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@item">@displayName</option>
-                                    }
-                                }
-                            </select>
-                        </li>
                         @if (User.Identity.IsAuthenticated) {
-                        <li class="nav-item">
-                            <a asp-action="Logout" asp-controller="Account" class="nav-link">Log Out</a>
-                        </li>
+                            <li class="nav-item mt-1">
+                                <select class="selectpicker show-tick p-0" data-style="btn-light btn-sm border m-0" data-width="fit" id="theme-selector" data-tick-icon="fa-solid fa-check">
+                                    @foreach(var item in themes)
+                                    {
+                                        var displayName = item.Replace("-theme", "");
+                                        if (item.Equals(theme))
+                                        {
+                                            <option value="@item" selected>@displayName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@item">@displayName</option>
+                                        }
+                                    }
+                                </select>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-action="Logout" asp-controller="Account" class="nav-link">Log Out</a>
+                            </li>
                         }
                         <li class="nav-item">
                             <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" class="nav-link">Help</a>

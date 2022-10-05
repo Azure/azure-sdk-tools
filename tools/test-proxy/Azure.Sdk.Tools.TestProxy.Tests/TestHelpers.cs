@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using System;
 using System.IO;
 using System.Text;
@@ -49,6 +49,41 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             writer.Flush();
             stream.Position = 0;
             return stream;
+        }
+
+        public static string GenerateRandomFile(double sizeInMb, string destinationFolder)
+        {
+            if (!Directory.Exists(destinationFolder))
+            {
+                throw new Exception($"To generate a new test file, the destination folder {destinationFolder} must exist.");
+            }
+
+            var fileName = Path.Join(destinationFolder, $"{Guid.NewGuid()}.txt");
+
+            const int blockSize = 1024 * 8;
+            const int blocksPerMb = (1024 * 1024) / blockSize;
+
+            byte[] data = new byte[blockSize];
+            Random rng = new Random();
+
+            try
+            {
+                using (FileStream stream = File.OpenWrite(fileName))
+                {
+                    for (int i = 0; i < sizeInMb * blocksPerMb; i++)
+                    {
+                        rng.NextBytes(data);
+                        stream.Write(data, 0, data.Length);
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                return e.ToString();
+            }
+            
+
+            return fileName;
         }
 
         public static ModifiableRecordSession LoadRecordSession(string path)

@@ -205,7 +205,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // already initialized and ready to be customized is definitely the efficient way to go.
             // 
             // To properly account for that, we need to _null out_ the Content property to actually allow the .NET httpclient to send without the added header.
-            if (!incomingRequest.Headers.ContainsKey("Content-Length"))
+            if (incomingRequest.ContentLength == null && incomingRequest.ContentType == null)
             {
                 upstreamRequest.Content = null;
             }

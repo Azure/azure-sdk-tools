@@ -210,8 +210,7 @@ namespace Azure.Sdk.Tools.TestProxy
             //
             // The .NET http client is a bit weird about attaching the Content-Length header though. If you HAVE the .Content property defined, a Content-Length
             // header WILL be added. This is due to the fact that on send, the client considers a populated Client property as having a body, even if it's zero length.
-            incomingRequest.Headers.TryGetValue("transfer-encoding", out var transferEncoding);
-            if (incomingRequest.ContentLength == null && transferEncoding != "chunked")
+            if (incomingRequest.ContentLength == null && incomingRequest.Headers["TransferEncoding"] != "chunked")
             {
                 upstreamRequest.Content = null;
             }

@@ -200,13 +200,29 @@ namespace Azure.Sdk.Tools.TestProxy
 
             HttpResponseMessage upstreamResponse = null;
 
+            // We don't want to erroneously send a Content-Length header if one is not present. The reason this is happening is that the outgoing response we are modifying
+            // is already initialized as if a body were going to be present. This is due to the fact that ASP.NET doesn't KNOW if there going to be response yet, and having everything
+            // already initialized and ready to be customized is definitely the efficient way to go.
+            // 
+            // To properly account for that, we need to _null out_ the Content property to actually allow the .NET httpclient to send without the added header.
+            if (!incomingRequest.Headers.ContainsKey("Content-Length"))
+            {
+                upstreamRequest.Content = null;
+            }
+
             if (HandleRedirects)
             {
-                upstreamResponse = await (session.Client ?? RedirectableClient).SendAsync(upstreamRequest).ConfigureAwait(false);
+                var client = session.Client ?? RedirectableClient;
+
+                var defaultHeaders = client.DefaultRequestHeaders;
+
+                upstreamResponse = await (client).SendAsync(upstreamRequest).ConfigureAwait(false);
             }
             else
             {
-                upstreamResponse = await (session.Client ?? RedirectlessClient).SendAsync(upstreamRequest).ConfigureAwait(false);
+                var client = session.Client ?? RedirectlessClient;
+
+                upstreamResponse = await (client).SendAsync(upstreamRequest).ConfigureAwait(false);
             }
 
             byte[] body = Array.Empty<byte>();

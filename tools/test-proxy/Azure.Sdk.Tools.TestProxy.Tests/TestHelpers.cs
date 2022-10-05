@@ -3,14 +3,9 @@ using System;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Azure.Sdk.Tools.TestProxy.Store;
-using System.Diagnostics;
-using Moq;
-using Microsoft.Build.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {

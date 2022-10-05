@@ -22,7 +22,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string resolutionLock = "off", bool usageSampleComment = false, string[] taggedUsers)
         {
             var comment = new CommentModel();
             comment.TimeStamp = DateTime.UtcNow;
@@ -32,8 +32,8 @@ namespace APIViewWeb.Controllers
             comment.SectionClass = sectionClass;
             comment.Comment = commentText;
             comment.GroupNo = groupNo;
-            comment.ResolutionLocked = !resolutionLock.Equals("on");
             comment.IsUsageSampleComment = usageSampleComment;
+            comment.ResolutionLocked = !resolutionLock.Equals("on");
 
             foreach(string user in taggedUsers)
             {
@@ -99,4 +99,3 @@ namespace APIViewWeb.Controllers
         }
     }
 }
-

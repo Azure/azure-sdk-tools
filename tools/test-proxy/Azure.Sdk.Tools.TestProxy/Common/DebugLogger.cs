@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             else
             {
-                Debug.WriteLine(details);
+                System.Console.WriteLine(details);
             }
         }
 

@@ -5,7 +5,7 @@ namespace SwaggerApiParser
 {
     public class SwaggerApiViewGenerator
     {
-        public static SwaggerApiViewSpec GenerateSwaggerApiView(SwaggerSpec swaggerSpec, string swaggerFilePath, SchemaCache schemaCache, string packageName = "")
+        public static SwaggerApiViewSpec GenerateSwaggerApiView(SwaggerSpec swaggerSpec, string swaggerFilePath, SchemaCache schemaCache, string packageName = "", string swaggerLink = "")
         {
             SwaggerApiViewSpec ret = new SwaggerApiViewSpec
             {
@@ -19,7 +19,9 @@ namespace SwaggerApiParser
                     produces = swaggerSpec.produces,
                     security = swaggerSpec.security,
                     securityDefinitions = swaggerSpec.securityDefinitions,
-                    xMsParameterizedHost = swaggerSpec.xMsParameterizedHost
+                    xMsParameterizedHost = swaggerSpec.xMsParameterizedHost,
+                    swaggerLink = swaggerLink
+                    
                 },
                 fileName = Path.GetFileName(swaggerFilePath),
                 packageName = packageName

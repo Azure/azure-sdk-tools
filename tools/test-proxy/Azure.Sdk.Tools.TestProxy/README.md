@@ -47,9 +47,6 @@
       - [ASP.NET and web development](#aspnet-and-web-development)
       - [Windows IIS](#windows-iis)
   - [Asset Sync (Retrieve External Test Recordings)](#asset-sync-retrieve-external-test-recordings)
-    - [The `assets.json` and how it enables external recordings](#the-assetsjson-and-how-it-enables-external-recordings)
-    - [Restore, push, reset when proxy is waiting for requests](#restore-push-reset-when-proxy-is-waiting-for-requests)
-    - [Restore, push, reset as a CLI app](#restore-push-reset-as-a-cli-app)
 
 For a detailed explanation and more-or-less spec, check the [README.md](../README.md) one level up from this one.
 
@@ -90,18 +87,20 @@ If you've already installed the tool, you can always check the installed version
 > test-proxy --version
 ```
 
+The `--version` option can also be invoked as part of a command and will display the version prior to running the command.
+
 ### Via Docker Image
 
 The Azure SDK Team maintains a public Azure Container Registry.
 
 ```powershell
-> docker run -v <your-volume-name-or-location>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+> docker run -v <your-volume-name-or-location>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
 
 For example, to save test recordings to disk in your repo's `/sdk/<service>/tests/recordings` directory, provide the path to the root of the repo:
 
 ```powershell
-> docker run -v C:\\repo\\azure-sdk-for-<language>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+> docker run -v C:\\repo\\azure-sdk-for-<language>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
 
 Note the **port and volume mapping** as arguments! Any files that exist in this volume locally will only be appended to/updated in place. It is a non-destructive initialize.
@@ -115,36 +114,44 @@ The azure-sdk team regularly update the image associated with the `latest` tag. 
 To ensure that your local copy is up to date, run:
 
 ```powershell
-> docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+> docker pull azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
 
 ## Command line arguments
 
 This is the help information for test-proxy. It uses the nuget package [`CommandLineParser`](https://www.nuget.org/packages/CommandLineParser) to parse arguments.
 
+The test-proxy executable fulfills one of two primary purposes:
+
+1. The test-proxy server (the only option up to this point)
+2. [`asset-sync`](#asset-sync-retrieve-external-test-recordings) push/restore/reset.
+
+This is surfaced by only showing options for the default commands. Each individual command has its own argument set that can be detailed by invoking `test-proxy <command> --help`.
+
 ```text
-Azure.Sdk.Tools.TestProxy
-  test-proxy
+/>test-proxy --help
+Azure.Sdk.Tools.TestProxy 1.0.0-dev.20220926.1
+c Microsoft Corporation. All rights reserved.
 
-Usage:
-  Azure.Sdk.Tools.TestProxy [options] [<args>...]
+  start      (Default Verb) Start the TestProxy.
 
-Arguments:
-  <args>  Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider. [default: ]
+  push       Push the assets, referenced by assets.json, into git.
 
-Options:
-  --insecure                             Allow untrusted SSL certs from upstream server [default: False]
-  --storage-location <storage-location>  The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized. [default: ]
-  --dump                                 Flag. Pass to dump configuration values before starting the application. [default: False]
-  --version                              Flag. Pass to get the version of the tool. [default: False]
+  reset      Reset the assets, referenced by assets.json, from git to their original files referenced by the tag. Will prompt
+             if there are pending changes.
 
+  restore    Restore the assets, referenced by assets.json, from git.
+
+  help       Display more information on a specific command.
+
+  version    Display version information.
 ```
 
 ### Storage Location
 
 The test-proxy resolves the storage location via:
 
-1. Command Line argument `storage-location`
+1. Command Line argument `--storage-location` or the abbreviation `-l`
 2. Environment variable TEST_PROXY_FOLDER
 3. If neither are present, the working directory from which the server is invoked.
 
@@ -168,10 +175,12 @@ $env:ASPNETCORE_URLS="http://*3331;https://*:8881"  // set custom ports for both
 
 #### Input arguments
 
-Use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration.  For example, to only bind to localhost http 5000, provide the argument `--urls http://localhost:9000`.
+When starting the test proxy there are Verbs, as shown in the test-proxy --help output above. For the `start` verb, there can be additional command arguments that need to get passed to **Host.CreateDefaultBuilder** 'as is'. The way this is done is through the use of `--` or dashdash as it's referred to. If `--` is on the command line, everything after will be treated as arguments that will be passed into this Host call.
+
+For example, you can use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration. To bind to localhost http 9000, provide the argument `-- --urls http://localhost:9000`. Note that `--`, space, then the `--urls http://localhost:9000`.
 
 ```powershell
-test-proxy --urls "http://localhost:9000;https://localhost:9001"
+test-proxy -- --urls "http://localhost:9000;https://localhost:9001"
 ```
 
 ## Environment Variables
@@ -183,7 +192,7 @@ The test-proxy is integrated with the following environment variables.
 | `TEST_PROXY_FOLDER` | if command-line argument `storage-location` is not provided when invoking the proxy, this environment variable is also checked for a valid directory to use as test-proxy context. |
 | `Logging__LogLevel__Microsoft` | Defaults to `Information`. Possible valid values are `Information`, `Warning`, `Error`, `Critical`.  |
 
-Both of the above variables can be set in the `docker` runtime by providing additional arguments EG: `docker run -e Logging__LogLevel__Microsoft=Warning azsdkengsys.azurecr.io/engsys/testproxy-lin:latest`. For multiple environment variables, just use multiple `-e` provisions.
+Both of the above variables can be set in the `docker` runtime by providing additional arguments EG: `docker run -e Logging__LogLevel__Microsoft=Warning azsdkengsys.azurecr.io/engsys/test-proxy:latest`. For multiple environment variables, just use multiple `-e` provisions.
 
 ## How do I use the test-proxy to get a recording?
 
@@ -243,7 +252,7 @@ The implementation is language specific, but what you want to do is:
 2. Make the following changes to every outgoing request
     1. Place original request scheme + hostname in header `x-recording-upstream-base-uri`
        - Example header setting: `x-recording-upstream-base-uri: "https://fakeazsdktestaccount.table.core.windows.net"`
-    2. Replace request <scheme:hostname> with Proxy Server <scheme:hostname>. (currently https://localhost:5001 or http://localhost:5000)
+    2. Replace request <scheme:hostname> with Proxy Server <scheme:hostname>. (currently `https://localhost:5001` or `http://localhost:5000`)
        - Example transformation: `https://fakeazsdktestaccount.table.core.windows.net/Tables` -> `http://localhost:5001/Tables`.
     3. Add header `"x-recording-id": <x-recording-id>` from startup step
     4. Add header `"x-recording-mode": "record"`
@@ -287,7 +296,7 @@ This will **finalize** your recording by:
 
 In the above example notice that there is an optional body. This is extremely useful when your tests have an element of "randomness" to them. A great example of non-secret randomness would be a `tablename` provided during `tables storage` tests. It is extremely common for a given azure-sdk test framework to generate a name like `u324bca`. Unfortunately, randomness can lead to difficulties during `playback`. The URI, headers, and body of a request must match _exactly_ with a recording entry.
 
-Given that reccordings are _not traditionally accessible_ to the client code, there is no way to "retrieve" what those random non-secret values WERE. Without that capability, one must sanitize _everything_ that could be possibly random.
+Given that recordings are _not traditionally accessible_ to the client code, there is no way to "retrieve" what those random non-secret values WERE. Without that capability, one must sanitize _everything_ that could be possibly random.
 
 An alternative is this `variable` concept. During a final POST to `/Record/Stop`, set the `Content-Type` header and make the `body` of the request a simple JSON map. The test-proxy will pass back these values in the `body` of `/Playback/Start`.
 
@@ -512,11 +521,11 @@ Example:
 
 ```jsonc
 // POST to URI: https://localhost:5001/Admin/SetRecordingOptions
-// body is a json dictionary, the value of HandleRedirects can be multiple representation of "true" 
+// body is a json dictionary, the value of HandleRedirects can be multiple representation of "true"
 {
     "HandleRedirects": true
 }
-// ...or 
+// ...or
 {
     "HandleRedirects": 1
 }
@@ -525,7 +534,7 @@ Example:
 {
     "HandleRedirects": false
 }
-// ...or 
+// ...or
 {
     "HandleRedirects": "false"
 }
@@ -541,7 +550,7 @@ In normal running, the test-proxy actually sets the Host header automatically. I
 
 ## Testing
 
-This project uses `xunit` as the test framework. This is the most popular .NET test solution [according to this twitter poll](https://twitter.com/shahedC/status/1131337874903896065?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E1131337874903896065%7Ctwgr%5E%7Ctwcon%5Es1_c10&ref_url=https%3A%2F%2Fwakeupandcode.com%2Funit-testing-in-asp-net-core%2F) and it's also what the majority of the test projects in the `Azure/azure-sdk-tools` repo utilize as well.
+This project uses `Xunit` as the test framework. This is the most popular .NET test solution [according to this twitter poll](https://twitter.com/shahedC/status/1131337874903896065?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E1131337874903896065%7Ctwgr%5E%7Ctwcon%5Es1_c10&ref_url=https%3A%2F%2Fwakeupandcode.com%2Funit-testing-in-asp-net-core%2F) and it's also what the majority of the test projects in the `Azure/azure-sdk-tools` repo utilize as well.
 
 ## SSL Support
 
@@ -607,72 +616,4 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
-**Please note**, this feature is under active development as of July 2022 and is not fully integrated or complete.
-
-![image](https://user-images.githubusercontent.com/45376673/180101415-cf864d95-8a8b-4d43-bb05-42604e9f7622.png)
-
-In the context of a `monorepo`, this means that we store FAR less data per feature.
-
-The test-proxy is an excellent place to integrate external data, as packages within the azure-sdk that have moved to leverage it only pass it a single key when loading a recording. That key is passed in the `x-recording-file` header during a POST to `/Playback/Start/`.
-
-This header will contain a value of where the test framework "expects" the recording to be located, expressed as a relative path. EG `tests/SessionRecords/recording1.json`.
-
-The combination of the the `assets.json` context and this relative path will allow the test-proxy to restore a set of recordings to a path, then _load_ the recording from that newly gathered data. The path to the recording file within the external assets repo can be _predictably_ calculated and retrieved given just the location of the `assets.json` within the code repo, the requested file name during playback or record start, and the properties within the assets.json itself. The diagram above has colors to show how the paths are used in context.
-
-### The `assets.json` and how it enables external recordings
-
-An `assets.json` contains _targeting_ information for use by the test-proxy when restoring (or updating) recordings "below" a specific path.
-
-> For the `azure-sdk` team specifically, engineers are encouraged to place their `assets.json` files under a path of form `sdk/<service>/assets.json`
-
-An `assets.json` takes the form:
-
-```jsonc
-{
-  "AssetsRepo": "Azure/azure-sdk-assets-integration",
-  "AssetsRepoPrefixPath": "python/recordings/",
-  "AssetsRepoBranch": "auto/test",
-  "SHA": "786b4f3d380d9c36c91f5f146ce4a7661ffee3b9"
-}
-```
-
-| Property | Description |
-|---|---|
-| AssetsRepo | The full name of the external github repo storing the data. EG: `Azure/azure-sdk-assets` |
-| AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. Populate this property with that path. EG: `python/recordings`. |
-| AssetsRepoBranch | The branch within the assets repo that your updated recordings will be pushed to. |
-| SHA | The reference SHA the recordings that should be restored from the assets repository. |
-
-Comments within the assets.json are allowed and _maintained_ by the tooling. Feel free to leave notes to yourself. They will not be eliminated.
-
-As one can see in the example image above, the test-proxy does the heavy lifting for push and pull of files to and from the assets repository.
-
-### Restore, push, reset when proxy is waiting for requests
-
-Interactions with the external assets repository are accessible when the proxy is actively serving requests. These are available through routes:
-
-| Route | Description |
-|---|---|
-| `/Playback/Restore` | Retrieve files from external git repo as targeted in the SHA from assets.json |
-| `/Playback/Reset` | Discard pending changes and reset to the original SHA from targeted assets.json. |
-| `/Record/Push` | Push changes if they are pending for files described by targeted assets.json. |
-
-### Restore, push, reset as a CLI app
-
-The test-proxy also offers interactions with the external assets repository as a CLI app. What this means is that one could invoke
-
-```bash
-> test-proxy --command restore --asetsJsonPath <assetsJsonPath>
-```
-
-to pull the necessary recordings files down for a targeted assets.json. The following commands are available.
-
-```bash
-> test-proxy --command reset --asetsJsonPath <assetsJsonPath>
-> test-proxy --command restore --asetsJsonPath <assetsJsonPath>
-> test-proxy --command push --asetsJsonPath <assetsJsonPath>
-```
-
-When a `push` activity is completed, the `SHA` value within the targeted `assets.json` will be UPDATED with the new reference to the external assets repository.
-
-As a user, ensure that this new SHA is commit alongside your code changes.
+For further reading about this feature, please refer to the [asset-sync documentation folder](../documentation/asset-sync/README.md).

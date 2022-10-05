@@ -20,16 +20,11 @@ param (
 
 ####################################################################################################################
 
-$query = [System.Web.HttpUtility]::ParseQueryString('')
-$query.Add('artifact', $ArtifactName)
-$query.Add('buildId', $BuildId)
-$query.Add('repoName', $repoName)
-$uri = [System.UriBuilder]$APIViewUri
-$uri.query = $query.toString()
-Write-Host "Request URI: $($uri.Uri.OriginalString)"
+$uri = $ApiviewUpdateUrl + "?artifact=" + $ArtifactName + "&buildId=" + $BuildId + "&repoName=" + $repoName
+Write-Host "Request URI: $($uri)"
 try
 {
-    $Response = Invoke-WebRequest -Method 'GET' -Uri $uri.Uri -MaximumRetryCount 3
+    $Response = Invoke-WebRequest -Method 'GET' $uri -MaximumRetryCount 3
     Write-Host "Response status : $($Response.StatusCode)"
 }
 catch

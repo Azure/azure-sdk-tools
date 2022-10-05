@@ -285,9 +285,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         /// <summary>
-        /// 1. Restore from a tag that has minimal existing files and a long destination path.
-        /// 2. Add a _bunch_ of files.
-        /// 3. Push.
+        /// 1. Restore from a tag that has minimal existing files and a long destination path
+        /// 2. Add a _bunch_ of files
+        /// 3. Push
         /// 4. Verify local files are what is expected
         /// 5. Verify assets.json was updated with the new commit Tag
         /// </summary>

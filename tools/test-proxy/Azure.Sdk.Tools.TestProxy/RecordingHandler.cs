@@ -206,7 +206,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // If an incoming request...
             //    ...has a Content-Length 0 header, and no body. We should send along the Content-Length: 0 header with the upstreamrequest.
             //    ...has no Content-Length header, and no body. We _should not_ send along the Content-Length: 0 header.
-            //    ...has no Content-Length header, a 0 length body, but a TransferEncoding header with value "chunked"
+            //    ...has no Content-Length header, a 0 length body, but a TransferEncoding header with value "chunked". We _should_ allow the Content-Length to stick around.
             //
             // The .NET http client is a bit weird about attaching the Content-Length header though. If you HAVE the .Content property defined, a Content-Length
             // header WILL be added. This is due to the fact that on send, the client considers a populated Client property as having a body, even if it's zero length.

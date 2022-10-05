@@ -35,6 +35,7 @@ import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
 import { ApiViewNavigation } from "./navigation.js";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
+import { type } from "os";
 
 const WHITESPACE = " ";
 
@@ -254,6 +255,7 @@ export class ApiView {
     }
     this.tokens.push({
       Kind: ApiViewTokenKind.TypeName,
+      DefinitionId: typeId,
       Value: typeName,
     });
   }
@@ -541,7 +543,6 @@ export class ApiView {
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("model", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
-    this.lineMarker();
     if (node.extends != undefined) {
       this.keyword("extends", true, true);
       this.tokenize(node.extends);
@@ -573,7 +574,6 @@ export class ApiView {
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("interface", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
-    this.lineMarker();
     this.tokenizeTemplateParameters(node.templateParameters);
     this.beginGroup();
     for (let x = 0; x < node.operations.length; x++) {
@@ -590,7 +590,6 @@ export class ApiView {
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("enum", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
-    this.lineMarker();
     this.beginGroup();
     for (const member of node.members) {
       const memberName = this.getNameForNode(member);
@@ -609,7 +608,6 @@ export class ApiView {
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("union", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
-    this.lineMarker();
     this.beginGroup();
     for (let x = 0; x < node.options.length; x++) {
       const variant = node.options[x];
@@ -731,7 +729,6 @@ export class ApiView {
       this.keyword("op", false, true);
     }
     this.tokenizeIdentifier(node.id, "declaration");
-    this.lineMarker();
     this.tokenizeTemplateParameters(node.templateParameters);
     this.tokenize(node.signature);
     this.punctuation(";", false, false);
@@ -743,7 +740,6 @@ export class ApiView {
     this.tokenizeDecorators(model.node.decorators, false);
     this.keyword("namespace", false, true);
     this.typeDeclaration(model.name, this.namespaceStack.value());
-    this.lineMarker();
     this.beginGroup();
     for (const node of model.operations.values()) {
       this.tokenize(node);

@@ -1397,12 +1397,15 @@ public class JavaASTAnalyser implements Analyser {
                     line2 = StringEscapeUtils.unescapeHtml(line2);
                 }
                 addToken(makeWhitespace());
+
+                // convert http/s links to external clickable links
                 Matcher urlMatch = MiscUtils.URL_MATCH.matcher(line2);
                 int currentIndex = 0;
                 while(urlMatch.find(currentIndex) == true) {
                     int start = urlMatch.start();
                     int end = urlMatch.end();
 
+                    // if the current search index != start of match, there was text between two hyperlinks
                     if(currentIndex != start) {
                         String betweenValue = line2.substring(currentIndex, start);
                         addToken(new Token(COMMENT, betweenValue));
@@ -1414,6 +1417,7 @@ public class JavaASTAnalyser implements Analyser {
                     addToken(new Token(EXTERNAL_LINK_END));
                     currentIndex = end;
                 }
+                // end of line will be anything between the end of the last found link, and the end of the string
                 String finalValue = line2.substring(currentIndex);
                 addToken(new Token(COMMENT, finalValue));
                 addNewLine();

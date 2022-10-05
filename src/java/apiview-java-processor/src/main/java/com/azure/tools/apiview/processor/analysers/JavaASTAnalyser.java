@@ -65,6 +65,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -97,6 +98,8 @@ import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_START;
 import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
+import static com.azure.tools.apiview.processor.model.TokenKind.EXTERNAL_LINK_START;
+import static com.azure.tools.apiview.processor.model.TokenKind.EXTERNAL_LINK_END;
 
 public class JavaASTAnalyser implements Analyser {
     public static final String MAVEN_KEY = "Maven";
@@ -1394,7 +1397,25 @@ public class JavaASTAnalyser implements Analyser {
                     line2 = StringEscapeUtils.unescapeHtml(line2);
                 }
                 addToken(makeWhitespace());
-                addToken(new Token(COMMENT, line2));
+                Matcher urlMatch = MiscUtils.URL_MATCH.matcher(line2);
+                int currentIndex = 0;
+                while(urlMatch.find(currentIndex) == true) {
+                    int start = urlMatch.start();
+                    int end = urlMatch.end();
+
+                    if(currentIndex != start) {
+                        String betweenValue = line2.substring(currentIndex, start);
+                        addToken(new Token(COMMENT, betweenValue));
+                    }
+
+                    String matchedValue = line2.substring(start, end);
+                    addToken(new Token(EXTERNAL_LINK_START, matchedValue));
+                    addToken(new Token(COMMENT, matchedValue));
+                    addToken(new Token(EXTERNAL_LINK_END));
+                    currentIndex = end;
+                }
+                String finalValue = line2.substring(currentIndex);
+                addToken(new Token(COMMENT, finalValue));
                 addNewLine();
             });
         });

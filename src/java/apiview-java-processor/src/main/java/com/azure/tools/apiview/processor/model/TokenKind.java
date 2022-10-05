@@ -33,7 +33,8 @@ public enum TokenKind {
     SKIP_DIFF_END(16),
 
     // for external links
-    EXTERNAL_LINK(28);
+    EXTERNAL_LINK_START(28),
+    EXTERNAL_LINK_END(29);
 
     private final int id;
 

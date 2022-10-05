@@ -154,6 +154,7 @@ namespace APIViewUITests
                     if (reviewNames.Any())
                     {
                         wait.Until(ExpectedConditions.ElementToBeClickable(By.ClassName("review-name")));
+                        reviewNames = driver.FindElements(By.ClassName("review-name"));
                         reviewNames[0].Click();
                         Assert.NotEqual("Error - apiview.dev", driver.Title);
                         Assert.NotEqual("Internal Server Error", driver.Title);
@@ -175,6 +176,7 @@ namespace APIViewUITests
                     if (reviewNames.Any())
                     {
                         wait.Until(ExpectedConditions.ElementToBeClickable(By.ClassName("review-name")));
+                        reviewNames = driver.FindElements(By.ClassName("review-name"));
                         reviewNames[0].Click();
                         Assert.NotEqual("Error - apiview.dev", driver.Title);
                         Assert.NotEqual("Internal Server Error", driver.Title);

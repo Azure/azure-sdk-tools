@@ -145,7 +145,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             (String.IsNullOrEmpty(options.LanguageVersions) || Regex.IsMatch(v, options.LanguageVersions)) &&
                             !(l.Key == Language.Net && v == "net461" && !Util.IsWindows)),
                     OptionalVersions = l.Value.OptionalVersions.Where(v =>
-                            (String.IsNullOrEmpty(options.LanguageVersions) && Regex.IsMatch(v, options.LanguageVersions)) &&
+                            (!String.IsNullOrEmpty(options.LanguageVersions) && Regex.IsMatch(v, options.LanguageVersions)) &&
                             !(l.Key == Language.Net && v == "net461" && !Util.IsWindows))
                 });
 

@@ -97,7 +97,7 @@ namespace APIViewWeb.Repositories
         }
 
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
-            List<string> search, List<string> languages, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
+            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
         {
             var result = await _reviewsRepository.GetReviewsAsync(search, languages, isClosed, filterTypes, isApproved, offset, limit, orderBy);
 
@@ -435,8 +435,8 @@ namespace APIViewWeb.Repositories
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            var lastRevisionTextLines = lastRevisionFile.RenderText(skipDiff: true);
-            var fileTextLines = renderedCodeFile.RenderText(skipDiff: true);
+            var lastRevisionTextLines = lastRevisionFile.RenderText(false, skipDiff: true);
+            var fileTextLines = renderedCodeFile.RenderText(false,skipDiff: true);
             return lastRevisionTextLines.SequenceEqual(fileTextLines);
         }
 

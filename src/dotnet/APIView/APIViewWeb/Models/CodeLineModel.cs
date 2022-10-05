@@ -9,7 +9,7 @@ namespace APIViewWeb.Models
 {
     public readonly struct CodeLineModel
     {
-        public CodeLineModel(DiffLineKind kind, CodeLine codeLine, CommentThreadModel commentThread, CodeDiagnostic[] diagnostics, int lineNumber, int[] documentedByLines)
+        public CodeLineModel(DiffLineKind kind, CodeLine codeLine, CommentThreadModel commentThread, CodeDiagnostic[] diagnostics, int lineNumber, int[] documentedByLines = null)
         {
             CodeLine = codeLine;
             CommentThread = commentThread;

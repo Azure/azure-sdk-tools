@@ -16,8 +16,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         protected override Language Language => Language.JS;
 
-        public override async Task<(string output, string error, string context)> SetupAsync(
-            string project, string languageVersion, IDictionary<string, string> packageVersions)
+        public override async Task<(string output, string error, object context)> SetupAsync(
+            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
         {
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
@@ -29,19 +29,25 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var projectFile = Path.Combine(projectDirectory, "package.json");
             var projectJson = JObject.Parse(File.ReadAllText(projectFile));
 
+            var testUtilsProjectFile = Path.Combine(WorkingDirectory, "sdk", "test-utils", "perf", "package.json");
+            var testUtilsProjectJson = JObject.Parse(File.ReadAllText(testUtilsProjectFile));
+
             var track1 = projectDirectory.EndsWith("track-1", StringComparison.OrdinalIgnoreCase);
-            var track2 = !track1;
 
             // Track 1
-            // 1. If not source, modify package.json
+            // 1. Modify package.json
             // 2. rush update (OR install)
             // 3. [projectDir] npm run setup
             //
             // Track 2
-            // 1. If not source, modify package.json and common-versions.json
+            // 1. Modify package.json
             // 2. rush update
             // 3. Extract project name from package.json in project folder
             // 4. rush build -t projectName
+            // 5. Get runtime package versions
+            //    A. rush deploy-init -p projectName
+            //    B. rush deploy -p projectName
+            //    C. npm ls --all
 
             foreach (var v in packageVersions)
             {
@@ -50,23 +56,17 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion != Program.PackageVersionSource)
                 {
-                    foreach (var dependencyType in new string[] { "dependencies", "devDependencies" })
-                    {
-                        if (projectJson[dependencyType]?[packageName] != null)
-                        {
-                            projectJson[dependencyType][packageName] = packageVersion;
-                        }
-                    }
+                    commonVersionsJson["preferredVersions"][packageName] = packageVersion;
 
-                    if (track2)
+                    foreach (var packageJson in new JObject[] { projectJson, testUtilsProjectJson })
                     {
-                        if (commonVersionsJson["allowedAlternativeVersions"]?[packageName] != null)
+                        foreach (var dependencyType in new string[] { "dependencies", "devDependencies" })
                         {
-                            ((JArray)commonVersionsJson["allowedAlternativeVersions"][packageName]).Add(packageVersion);
-                        }
-                        else
-                        {
-                            commonVersionsJson["allowedAlternativeVersions"][packageName] = new JArray(packageVersion);
+                            // Only update existing dependencies.  Not necessary to add dependencies not already present.
+                            if (packageJson[dependencyType]?[packageName] != null)
+                            {
+                                packageJson[dependencyType][packageName] = packageVersion;
+                            }
                         }
                     }
                 }
@@ -78,7 +78,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.Copy(projectFile, projectFile + ".bak", overwrite: true);
             File.WriteAllText(projectFile, projectJson.ToString() + Environment.NewLine);
 
-            await Util.RunAsync("node", $"{_rush} update", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            File.Copy(testUtilsProjectFile, testUtilsProjectFile + ".bak", overwrite: true);
+            File.WriteAllText(testUtilsProjectFile, testUtilsProjectJson.ToString() + Environment.NewLine);
+
+            await Util.RunAsync("node", $"{_rush} update --full", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             if (track1)
             {
@@ -88,22 +91,46 @@ namespace Azure.Sdk.Tools.PerfAutomation
             else
             {
                 var projectName = projectJson["name"];
+
                 await Util.RunAsync("node", $"{_rush} build --to {projectName}", WorkingDirectory,
                     outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+
+                // Create common/config/rush/deploy.json
+                await Util.RunAsync("node", $"{_rush} init-deploy -p {projectName}",
+                    WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+
+                // Deploy project to 
+                await Util.RunAsync("node", $"{_rush} deploy -p {projectName}",
+                    WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             }
 
-            return (outputBuilder.ToString(), errorBuilder.ToString(), null);
+            var deployDirectory = track1 ?
+                Path.Combine(WorkingDirectory, project) :
+                Path.Combine(WorkingDirectory, "common", "deploy", project);
+
+            // npm@8 is required to correctly list dependency versions.  npm@6 cannot fully handle the package layout generated by rush.
+            await Util.RunAsync("npm", "install --global npm@8", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+
+            // "npm ls" frequently returns an error code (that can be ignored) due to "missing" dev dependencies
+            var npmListResult = await Util.RunAsync("npm", "ls --all --omit dev",
+                deployDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);
+
+            var runtimePackageVersions = GetRuntimePackageVersions(npmListResult.StandardOutput);
+
+            return (outputBuilder.ToString(), errorBuilder.ToString(), runtimePackageVersions);
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            IDictionary<string, string> packageVersions, string testName, string arguments, string context, bool profile)
+            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context, bool profile)
         {
+            var runtimePackageVersions = (Dictionary<string, string>) context;
+
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
-            var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} --list-transitive-dependencies {arguments}",
+            var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",
                 projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);
 
             var match = Regex.Match(testResult.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
@@ -116,7 +143,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             return new IterationResult
             {
-                PackageVersions = GetRuntimePackageVersions(testResult.StandardOutput),
+                PackageVersions = runtimePackageVersions,
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = outputBuilder.ToString(),
                 StandardError = errorBuilder.ToString(),
@@ -133,18 +160,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             var runtimePackageVersions = new Dictionary<string, List<string>>();
 
-            var versionOutputStart = standardOutput.IndexOf("=== Versions ===", StringComparison.OrdinalIgnoreCase);
-            var versionOutputEnd = standardOutput.IndexOf("=== Parsed options ===", StringComparison.OrdinalIgnoreCase);
-
-            if (versionOutputStart == -1 | versionOutputEnd == -1)
+            foreach (var line in standardOutput.ToLines())
             {
-                return new Dictionary<string, string>();
-            }
-
-            var versionOutput = standardOutput.Substring(versionOutputStart, versionOutputEnd);
-
-            foreach (var line in versionOutput.ToLines())
-            {
+                // "Extraneous" packages are not listed on the parent package's dependencies list and should be skipped
                 if (line.Contains("UNMET DEPENDENCY", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
@@ -161,7 +179,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         version = version[..version.IndexOf(' ')];
                     }
 
-                    version = version.Replace(" extraneous", string.Empty).Replace(" deduped", string.Empty);
+                    version = version.Replace(" deduped", string.Empty);
 
                     if (!runtimePackageVersions.ContainsKey(name))
                     {
@@ -203,14 +221,19 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override Task CleanupAsync(string project)
         {
-            var projectDirectory = Path.Combine(WorkingDirectory, project);
+            // Cleanup previous deployments
+            File.Delete(Path.Combine(WorkingDirectory, "common", "config", "rush", "deploy.json"));
+            Util.DeleteIfExists(Path.Combine(WorkingDirectory, "common", "deploy"));
 
             var commonVersionsFile = Path.Combine(WorkingDirectory, "common", "config", "rush", "common-versions.json");
+            var projectDirectory = Path.Combine(WorkingDirectory, project);
             var projectFile = Path.Combine(projectDirectory, "package.json");
+            var testUtilsProjectFile = Path.Combine(WorkingDirectory, "sdk", "test-utils", "perf", "package.json");
 
             // Restore backups
             File.Move(commonVersionsFile + ".bak", commonVersionsFile, overwrite: true);
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
+            File.Move(testUtilsProjectFile + ".bak", testUtilsProjectFile, overwrite: true);
 
             return Task.CompletedTask;
         }

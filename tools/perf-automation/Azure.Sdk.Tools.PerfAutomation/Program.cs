@@ -280,13 +280,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 string setupOutput = null;
                 string setupError = null;
-                string context = null;
+                object context = null;
                 string setupException = null;
 
                 try
                 {
                     (setupOutput, setupError, context) = await _languages[language].SetupAsync(
-                        serviceLanguageInfo.Project, languageVersion, packageVersions);
+                        serviceLanguageInfo.Project, languageVersion, serviceLanguageInfo.PrimaryPackage, packageVersions);
                 }
                 catch (Exception e)
                 {
@@ -382,6 +382,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                     iterationResult = await _languages[language].RunAsync(
                                         serviceLanguageInfo.Project,
                                         languageVersion,
+                                        serviceLanguageInfo.PrimaryPackage,
                                         packageVersions,
                                         test.TestNames[language],
                                         allArguments,

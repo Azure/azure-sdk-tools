@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Threading.Tasks;
@@ -35,46 +36,37 @@ namespace APIViewWeb.Pages.Assemblies
             int CurrentPage, int? PreviousPage, int? NextPage) PagedResults { get; set; }
 
         public async Task OnGetAsync(
-            List<string> search = null, List<string> languages=null, List<string> state =null,
-            List<string> status =null, List<string> type =null, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
+            IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
+            IEnumerable<string> status, IEnumerable<string> type, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            if (search.Count == 0 && languages.Count == 0 && state.Count == 0 && status.Count == 0 && type.Count == 0)
+            if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())
             {
-                UserPreferenceModel userPreference = _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
-                if (userPreference != null)
-                {
-                    languages = userPreference.Language.ToList();
-                    state = userPreference.State.ToList();
-                    status = userPreference.Status.ToList();
-                    type = new List<string>();
-                    if (userPreference.FilterType.Contains(ReviewType.Manual)) { type.Add("Manual"); }
-                    if (userPreference.FilterType.Contains(ReviewType.Automatic)) { type.Add("Automatic"); }
-                    if (userPreference.FilterType.Contains(ReviewType.PullRequest)) { type.Add("PullRequest"); }
-                }
+                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+                languages = userPreference.Language;
+                state = userPreference.State;
+                status = userPreference.Status;
+                type = userPreference.FilterType.Select(x => x.ToString());
             }
             await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
         }
 
         public async Task<PartialViewResult> OnGetReviewsPartialAsync(
-            List<string> search = null, List<string> languages = null, List<string> state = null,
-            List<string> status = null, List<string> type = null, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
+            IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
+            IEnumerable<string> status, IEnumerable<string> type, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
             await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
             return Partial("_ReviewsPartial", PagedResults);
         }
 
-        public async Task<PartialViewResult> OnGetReviewsLanguagesAsync(List<string> selectedLanguages = null)
+        public async Task<PartialViewResult> OnGetReviewsLanguagesAsync(IEnumerable<string> selectedLanguages)
         {
-            if (selectedLanguages.Count == 0)
+            if (!selectedLanguages.Any())
             {
-                UserPreferenceModel userPreference = _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
-                if (userPreference != null)
-                {
-                    selectedLanguages = userPreference.Language.ToList();
-                }
+                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+                selectedLanguages = userPreference.Language.ToList();
             }
             ReviewsProperties.Languages.All = await _manager.GetReviewPropertiesAsync("Revisions[0].Files[0].Language");
-            selectedLanguages = selectedLanguages.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            selectedLanguages = selectedLanguages.Select(x => HttpUtility.UrlDecode(x));
             ReviewsProperties.Languages.Selected = selectedLanguages;
             return Partial("_SelectPickerPartial", ReviewsProperties.Languages);
         }
@@ -100,31 +92,31 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage();
         }
 
-        private async Task RunGetRequest(List<string> search, List<string> languages,
-            List<string> state, List<string> status, List<string> type, int pageNo, int pageSize, string sortField)
+        private async Task RunGetRequest(IEnumerable<string> search, IEnumerable<string> languages,
+            IEnumerable<string> state, IEnumerable<string> status, IEnumerable<string> type, int pageNo, int pageSize, string sortField)
         {
-            search = search.Select(x => HttpUtility.UrlDecode(x)).ToList();
-            languages = languages.Select(x => HttpUtility.UrlDecode(x)).ToList();
-            state = state.Select(x => HttpUtility.UrlDecode(x)).ToList();
-            status = status.Select(x => HttpUtility.UrlDecode(x)).ToList();
-            type = type.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            search = search.Select(x => HttpUtility.UrlDecode(x));
+            languages = languages.Select(x => HttpUtility.UrlDecode(x));
+            state = state.Select(x => HttpUtility.UrlDecode(x));
+            status = status.Select(x => HttpUtility.UrlDecode(x));
+            type = type.Select(x => HttpUtility.UrlDecode(x));
 
             // Update selected properties
-            if (state.Count() > 0)
+            if (state.Any())
             {
                 ReviewsProperties.State.Selected = state;
             }
             else 
             {
-                state = ReviewsProperties.State.Selected.ToList();
+                state = ReviewsProperties.State.Selected;
             }
 
-            if (status.Count() > 0)
+            if (status.Any())
             {
                 ReviewsProperties.Status.Selected = status;
             }
 
-            if (type.Count() > 0)
+            if (type.Any())
             {
                 ReviewsProperties.Type.Selected = type;
             }
@@ -145,18 +137,15 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             // Resolve FilterType
-            List<int> filterTypes = new List<int>();
-            if (type.Contains("Manual")) { filterTypes.Add((int)ReviewType.Manual); }
-            if (type.Contains("Automatic")) { filterTypes.Add((int)ReviewType.Automatic); }
-            if (type.Contains("PullRequest")) { filterTypes.Add((int)ReviewType.PullRequest); }
+            IEnumerable<ReviewType> filterTypes = type.Select(x => (ReviewType)Enum.Parse(typeof(ReviewType), x));
+            IEnumerable<int> filterTypesAsInt = filterTypes.Select(x => (int)x);
 
             _preferenceCache.UpdateUserPreference(new UserPreferenceModel {
-                UserName = User.GetGitHubLogin(),
-                FilterType = filterTypes.Cast<ReviewType>().ToList(),
+                FilterType = filterTypes,
                 Language = languages,
                 State = state,
                 Status = status
-            });
+            }, User.GetGitHubLogin());
 
             bool? isApproved = null;
             // Resolve Approval State
@@ -174,7 +163,7 @@ namespace APIViewWeb.Pages.Assemblies
             }
             var offset = (pageNo - 1) * pageSize;
 
-            PagedResults = await _manager.GetPagedReviewsAsync(search, languages, isClosed, filterTypes, isApproved, offset, pageSize, sortField);
+            PagedResults = await _manager.GetPagedReviewsAsync(search, languages, isClosed, filterTypesAsInt, isApproved, offset, pageSize, sortField);
         }
     }
 

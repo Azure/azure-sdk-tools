@@ -304,7 +304,12 @@ namespace Azure.Sdk.Tools.TestProxy
             var upstreamRequest = new HttpRequestMessage();
             upstreamRequest.RequestUri = GetRequestUri(incomingRequest);
             upstreamRequest.Method = new HttpMethod(incomingRequest.Method);
-            upstreamRequest.Content = new ReadOnlyMemoryContent(incomingBody);
+            upstreamRequest.Method = new HttpMethod(incomingRequest.Method);
+
+            if (incomingBody != null)
+            {
+                upstreamRequest.Content = new ReadOnlyMemoryContent(incomingBody);
+            }
 
             foreach (var header in incomingRequest.Headers)
             {

@@ -1,6 +1,6 @@
 import { resolvePath } from "@cadl-lang/compiler";
 import { expectDiagnosticEmpty } from "@cadl-lang/compiler/testing";
-import { fail, strictEqual } from "assert";
+import assert, { fail, strictEqual } from "assert";
 import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
 import { ApiViewEmitterOptions } from "../src/lib.js";
 import { createApiViewTestRunner } from "./test-host.js";
@@ -64,13 +64,28 @@ describe("apiview: tests", () => {
     const definitionIds = new Set<string>();
     const defIdsPerLine = new Array<Array<string>>();
     let index = 0;
+    defIdsPerLine[index] = new Array<string>();
     for (const token of apiview.Tokens) {
+      // ensure that there are no repeated definition IDs.
       if (token.DefinitionId != undefined) {
         if (definitionIds.has(token.DefinitionId)) {
           fail(`Duplicate defintion ID ${token.DefinitionId}.`);
         }
         definitionIds.add(token.DefinitionId);
       }
+      // Collect the definition IDs that exist on each line
+      if (token.DefinitionId != undefined) {
+        defIdsPerLine[index].push(token.DefinitionId);
+      }
+      if (token.Kind == ApiViewTokenKind.Newline) {
+        index++;
+        defIdsPerLine[index] = new Array<string>();
+      }
+    }
+    // ensure that each line has either 0 or 1 definition ID.
+    for (let x = 0; x < defIdsPerLine.length; x++) {
+      const row = defIdsPerLine[x];
+      assert(row.length == 0 || row.length == 1, `Too many definition IDs (${row.length}) on line ${x}`);
     }
   }
 

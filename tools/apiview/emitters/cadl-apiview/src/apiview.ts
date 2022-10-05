@@ -6,6 +6,7 @@ import {
   EnumMemberNode,
   EnumSpreadMemberNode,
   EnumStatementNode,
+  Expression,
   IdentifierNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
@@ -23,7 +24,6 @@ import {
   Program,
   StringLiteralNode,
   SyntaxKind,
-  TemplateParameter,
   TemplateParameterDeclarationNode,
   TupleExpressionNode,
   TypeReferenceNode,
@@ -451,9 +451,10 @@ export class ApiView {
         obj = node as OperationSignatureDeclarationNode;
         this.punctuation("(", false, false);
         // TODO: heuristic for whether operation signature should be inlined or not.
-        this.tokenizeModelExpression(obj.parameters, false, false);
+        const inline = false;
+        this.tokenizeModelExpression(obj.parameters, false, inline);
         this.punctuation("):", false, true);
-        this.tokenize(obj.returnType);
+        this.tokenizeReturnType(obj, inline);
         break;
       case SyntaxKind.OperationSignatureReference:
         obj = node as OperationSignatureReferenceNode;
@@ -869,6 +870,20 @@ export class ApiView {
     }
   }
 
+  private tokenizeReturnType(node: OperationSignatureDeclarationNode, inline: boolean) {
+    if (!inline && node.parameters.properties.length) {
+      const offset = this.tokens.length;
+      this.tokenize(node.returnType);
+      const returnTokens = this.tokens.slice(offset);
+      const returnTypeString = returnTokens.filter((x) => x.Value).flatMap((x) => x.Value).join("");
+      this.namespaceStack.push(returnTypeString);
+      this.lineMarker();
+      this.namespaceStack.pop();
+    } else {
+      this.tokenize(node.returnType);
+    }
+  }
+
   private buildNavigation(ns: NamespaceModel) {
     this.namespaceStack.reset();
     this.navigation(new ApiViewNavigation(ns, this.namespaceStack));
@@ -881,6 +896,11 @@ export class ApiView {
     } else {
       throw new Error("Unable to get name for node.");
     }
+  }
+
+  /** Will collect the return type tokens and return them as a string */
+  private getReturnTypeString(offset: number): string {
+    return "";
   }
 
   private renderComma() {

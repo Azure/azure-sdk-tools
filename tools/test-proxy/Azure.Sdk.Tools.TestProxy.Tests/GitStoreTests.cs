@@ -6,6 +6,8 @@ using System.IO;
 using System.Threading.Tasks;
 using Xunit;
 using System.Text.Json;
+using System.Linq;
+using System.ComponentModel;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -549,6 +551,60 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 DirectoryHelper.DeleteGitDirectory(testFolder);
             }
         }
+
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""python/recordings"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": "" python/tables89f51431""
+        }")]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""python"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": ""python/tables4f724f0c""
+        }")]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": """",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": ""python/tablesdd6aec01""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task GetPathResolves(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                Path.Combine("sdk", "tables", GitStoretests.AssetsJson)
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: false);
+
+            try
+            {
+                var jsonFileLocation = Path.Join(testFolder, "sdk/tables", GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+                await _defaultStore.Restore(jsonFileLocation);
+
+                var result = await _defaultStore.GetPath(jsonFileLocation);
+
+                Assert.True(File.Exists(Path.Combine(result, "sdk", "tables", "azure-data-tables", "tests", "recordings", "test_retry.pyTestStorageRetrytest_retry_on_server_error.json")));
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
 
         [Fact(Skip ="Skipping because we don't have an integration test suite working yet.")]
         public async Task GitCallHonorsLocalCredential()

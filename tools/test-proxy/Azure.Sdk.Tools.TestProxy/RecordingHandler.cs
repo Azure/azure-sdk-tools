@@ -212,17 +212,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (HandleRedirects)
             {
-                var client = session.Client ?? RedirectableClient;
-
-                var defaultHeaders = client.DefaultRequestHeaders;
-
-                upstreamResponse = await (client).SendAsync(upstreamRequest).ConfigureAwait(false);
+                upstreamResponse = await (session.Client ?? RedirectableClient).SendAsync(upstreamRequest).ConfigureAwait(false);
             }
             else
             {
-                var client = session.Client ?? RedirectlessClient;
-
-                upstreamResponse = await (client).SendAsync(upstreamRequest).ConfigureAwait(false);
+                upstreamResponse = await (session.Client ?? RedirectlessClient).SendAsync(upstreamRequest).ConfigureAwait(false);
             }
 
             byte[] body = Array.Empty<byte>();

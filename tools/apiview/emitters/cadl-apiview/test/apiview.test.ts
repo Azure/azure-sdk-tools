@@ -1,6 +1,6 @@
 import { resolvePath } from "@cadl-lang/compiler";
 import { expectDiagnosticEmpty } from "@cadl-lang/compiler/testing";
-import { strictEqual } from "assert";
+import { fail, strictEqual } from "assert";
 import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
 import { ApiViewEmitterOptions } from "../src/lib.js";
 import { createApiViewTestRunner } from "./test-host.js";
@@ -37,6 +37,7 @@ describe("apiview: tests", () => {
     return vals.join("").split("\n");
   }
 
+  /** Compares an expected string to a subset of the actual output. */
   function compare(expect: string, lines: string[], offset: number) {
     // split the input into lines and ignore leading or trailing empty lines.
     let expectedLines = expect.split("\n");
@@ -58,34 +59,147 @@ describe("apiview: tests", () => {
     }
   }
 
+  /** Validates that there are no repeat defintion IDs and that each line has only one definition ID. */
+  function validateDefinitionIds(apiview: ApiViewDocument) {
+    const definitionIds = new Set<string>();
+    const defIdsPerLine = new Array<Array<string>>();
+    let index = 0;
+    for (const token of apiview.Tokens) {
+      if (token.DefinitionId != undefined) {
+        if (definitionIds.has(token.DefinitionId)) {
+          fail(`Duplicate defintion ID ${token.DefinitionId}.`);
+        }
+        definitionIds.add(token.DefinitionId);
+      }
+    }
+  }
+
   it("describes model", async () => {
     const input = `
     @Cadl.serviceTitle("Test")
     namespace Azure.Test {
-      model Foo {
-        name: string;
-        age?: int16;
+      model Animal {
+        species: string;
       }
+
+      model Pet {
+        name?: string;
+      }
+
+      model Dog {
+        ...Animal;
+        ...Pet;
+      }
+
+      model Cat {
+        species: string;
+        name?: string = "fluffy";
+      }
+
+      model Pig extends Animal {}
+    }
+    `;
+    const expect = `
+    @Cadl.serviceTitle("Test")
+    namespace Azure.Test {
+      model Animal {
+        species: string;
+      }
+
+      model Cat {
+        species: string;
+        name?: string = "fluffy";
+      }
+
+      model Dog {
+        ...Animal;
+        ...Pet;
+      }
+
+      model Pet {
+        name?: string;
+      }
+
+      model Pig extends Animal {}
     }
     `;
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(input, actual, 3);
+    compare(expect, actual, 3);
+    validateDefinitionIds(apiview);
   });
 
   it("describes templated model", async () => {
     const input = `
     @Cadl.serviceTitle("Test")
     namespace Azure.Test {
-      model Foo<TOne, TTwo> {
-        one: TOne;
-        two: TTwo;
+      model Thing<T> {
+        property: T;
+      }
+
+      model StringThing is Thing<string>;
+
+      model Page<T = string> {
+        size: int16;
+        item: T[];
+      }
+
+      model StringPage {
+        ...Page<int16>;
+      }
+
+      model ConstrainedSimple<X extends string> {
+        prop: X;
+      }
+
+      model ConstrainedComplex<X extends {name: string}> {
+        prop: X;
+      }
+      
+      model ConstrainedWithDefault<X extends string = "abc"> {
+        prop: X;
+      }
+    }
+    `;
+    const expect = `
+    @Cadl.serviceTitle("Test")
+    namespace Azure.Test {
+      model ConstrainedComplex<X extends
+        {
+          name: string
+        }
+      > {
+        prop: X;
+      }
+
+      model ConstrainedSimple<X extends string> {
+        prop: X;
+      }
+
+      model ConstrainedWithDefault<X extends string = "abc"> {
+        prop: X;
+      }
+
+      model Page<T = string> {
+        size: int16;
+        item: T[];
+      }
+
+      model StringPage {
+        ...Page<int16>;
+      }
+
+      model StringThing is Thing<string> {}
+
+      model Thing<T> {
+        property: T;
       }
     }
     `;
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(input, actual, 3);
+    compare(expect, actual, 3);
+    validateDefinitionIds(apiview);
   });
 
   it("describes enum", async () => {
@@ -129,6 +243,7 @@ describe("apiview: tests", () => {
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
     compare(expect, actual, 3);
+    validateDefinitionIds(apiview);
   });
 
   it("describes union", async () =>{
@@ -180,6 +295,7 @@ describe("apiview: tests", () => {
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
     compare(expect, actual, 3);
+    validateDefinitionIds(apiview);
   });
 
   it("describes template operation", async () =>{
@@ -240,6 +356,7 @@ describe("apiview: tests", () => {
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
     compare(expect, lines, 3);
+    validateDefinitionIds(apiview);
   });
 
   it("describes operation with anonymous models", async () =>{
@@ -272,6 +389,7 @@ describe("apiview: tests", () => {
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
     compare(expect, lines, 3);
+    validateDefinitionIds(apiview);
   });
 
   it("describes interface", async () => {
@@ -310,5 +428,6 @@ describe("apiview: tests", () => {
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
     compare(expect, lines, 3);
-  });  
+    validateDefinitionIds(apiview);
+  });
 });

@@ -19,6 +19,7 @@ import {
   MemberExpressionNode,
   UnionStatementNode,
   UnionExpressionNode,
+  UnionVariantNode,
 } from "@cadl-lang/compiler";
 
 export class NamespaceModel {
@@ -187,6 +188,18 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
     case SyntaxKind.UnionStatement:
       node = obj as UnionStatementNode;
       name = node.id.sv;
+      parentId = generateId(node.parent);
+      break;
+    case SyntaxKind.UnionVariant:
+      node = obj as UnionVariantNode;
+      switch (node.id.kind) {
+        case SyntaxKind.Identifier:
+          name = node.id.sv;
+          break;
+        case SyntaxKind.StringLiteral:
+          name = node.id.value;
+          break;
+      }
       parentId = generateId(node.parent);
       break;
     default:

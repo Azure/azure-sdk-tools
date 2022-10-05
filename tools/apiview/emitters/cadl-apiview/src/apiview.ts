@@ -254,7 +254,6 @@ export class ApiView {
     }
     this.tokens.push({
       Kind: ApiViewTokenKind.TypeName,
-      DefinitionId: typeId,
       Value: typeName,
     });
   }
@@ -469,8 +468,15 @@ export class ApiView {
         break;
       case SyntaxKind.TemplateParameterDeclaration:
         obj = node as TemplateParameterDeclarationNode;
-        // FIXME: Implement this!!
         this.tokenize(obj.id);
+        if (obj.constraint != undefined) {
+          this.keyword("extends", true, true);
+          this.tokenize(obj.constraint);
+        }
+        if (obj.default != undefined) {
+          this.punctuation("=", true, true);
+          this.tokenize(obj.default);
+        }
         break;
       case SyntaxKind.TupleExpression:
         obj = node as TupleExpressionNode;
@@ -567,6 +573,7 @@ export class ApiView {
     this.keyword("interface", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
     this.lineMarker();
+    this.tokenizeTemplateParameters(node.templateParameters);
     this.beginGroup();
     for (let x = 0; x < node.operations.length; x++) {
       const op = node.operations[x];
@@ -605,7 +612,7 @@ export class ApiView {
     this.beginGroup();
     for (let x = 0; x < node.options.length; x++) {
       const variant = node.options[x];
-      const variantName = this.getNameForNode(node);
+      const variantName = this.getNameForNode(variant);
       this.namespaceStack.push(variantName);
       this.tokenize(variant);
       this.namespaceStack.pop();
@@ -633,6 +640,7 @@ export class ApiView {
     this.punctuation(node.optional ? "?:" : ":", false, true);
     this.tokenize(node.value);
     if (node.default != undefined) {
+      this.punctuation("=", true, true);
       this.tokenize(node.default);
     }
   }

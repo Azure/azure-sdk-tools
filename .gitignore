@@ -499,3 +499,7 @@ tools/oav-traffic-converter/build/
 # ios
 src/swift/*.xcworkspace/xcuserdata/
 src/swift/**/*.xcodeproj/xcuserdata/
+
+# Cadl APIView
+cadl-output/
+tools/apiview/emitters/cadl-apiview/temp/

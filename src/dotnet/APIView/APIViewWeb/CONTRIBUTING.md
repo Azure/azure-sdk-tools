@@ -70,6 +70,7 @@ Create following Azure resources in your Azure subscription.
    | Comments            | /ReviewId          |
    | PullRequests        | /PullRequestNumber |
    | UsageSamples        | /ReviewId          |
+   | UserPreference      | /UserName          |
    
 
 

@@ -87,6 +87,8 @@ If you've already installed the tool, you can always check the installed version
 > test-proxy --version
 ```
 
+The `--version` option can also be invoked as part of a command and will display the version prior to running the command.
+
 ### Via Docker Image
 
 The Azure SDK Team maintains a public Azure Container Registry.
@@ -126,7 +128,6 @@ The test-proxy executable fulfills one of two primary purposes:
 
 This is surfaced by only showing options for the default commands. Each individual command has its own argument set that can be detailed by invoking `test-proxy <command> --help`.
 
-
 ```text
 />test-proxy --help
 Azure.Sdk.Tools.TestProxy 1.0.0-dev.20220926.1
@@ -150,7 +151,7 @@ c Microsoft Corporation. All rights reserved.
 
 The test-proxy resolves the storage location via:
 
-1. Command Line argument `storage-location`
+1. Command Line argument `--storage-location` or the abbreviation `-l`
 2. Environment variable TEST_PROXY_FOLDER
 3. If neither are present, the working directory from which the server is invoked.
 
@@ -174,10 +175,12 @@ $env:ASPNETCORE_URLS="http://*3331;https://*:8881"  // set custom ports for both
 
 #### Input arguments
 
-Use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration.  For example, to only bind to localhost http 5000, provide the argument `--urls http://localhost:9000`.
+When starting the test proxy there are Verbs, as shown in the test-proxy --help output above. For the `start` verb, there can be additional command arguments that need to get passed to **Host.CreateDefaultBuilder** 'as is'. The way this is done is through the use of `--` or dashdash as it's referred to. If `--` is on the command line, everything after will be treated as arguments that will be passed into this Host call.
+
+For example, you can use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration. To bind to localhost http 9000, provide the argument `-- --urls http://localhost:9000`. Note that `--`, space, then the `--urls http://localhost:9000`.
 
 ```powershell
-test-proxy --urls "http://localhost:9000;https://localhost:9001"
+test-proxy -- --urls "http://localhost:9000;https://localhost:9001"
 ```
 
 ## Environment Variables
@@ -249,7 +252,7 @@ The implementation is language specific, but what you want to do is:
 2. Make the following changes to every outgoing request
     1. Place original request scheme + hostname in header `x-recording-upstream-base-uri`
        - Example header setting: `x-recording-upstream-base-uri: "https://fakeazsdktestaccount.table.core.windows.net"`
-    2. Replace request <scheme:hostname> with Proxy Server <scheme:hostname>. (currently https://localhost:5001 or http://localhost:5000)
+    2. Replace request <scheme:hostname> with Proxy Server <scheme:hostname>. (currently `https://localhost:5001` or `http://localhost:5000`)
        - Example transformation: `https://fakeazsdktestaccount.table.core.windows.net/Tables` -> `http://localhost:5001/Tables`.
     3. Add header `"x-recording-id": <x-recording-id>` from startup step
     4. Add header `"x-recording-mode": "record"`
@@ -293,7 +296,7 @@ This will **finalize** your recording by:
 
 In the above example notice that there is an optional body. This is extremely useful when your tests have an element of "randomness" to them. A great example of non-secret randomness would be a `tablename` provided during `tables storage` tests. It is extremely common for a given azure-sdk test framework to generate a name like `u324bca`. Unfortunately, randomness can lead to difficulties during `playback`. The URI, headers, and body of a request must match _exactly_ with a recording entry.
 
-Given that reccordings are _not traditionally accessible_ to the client code, there is no way to "retrieve" what those random non-secret values WERE. Without that capability, one must sanitize _everything_ that could be possibly random.
+Given that recordings are _not traditionally accessible_ to the client code, there is no way to "retrieve" what those random non-secret values WERE. Without that capability, one must sanitize _everything_ that could be possibly random.
 
 An alternative is this `variable` concept. During a final POST to `/Record/Stop`, set the `Content-Type` header and make the `body` of the request a simple JSON map. The test-proxy will pass back these values in the `body` of `/Playback/Start`.
 
@@ -518,11 +521,11 @@ Example:
 
 ```jsonc
 // POST to URI: https://localhost:5001/Admin/SetRecordingOptions
-// body is a json dictionary, the value of HandleRedirects can be multiple representation of "true" 
+// body is a json dictionary, the value of HandleRedirects can be multiple representation of "true"
 {
     "HandleRedirects": true
 }
-// ...or 
+// ...or
 {
     "HandleRedirects": 1
 }
@@ -531,7 +534,7 @@ Example:
 {
     "HandleRedirects": false
 }
-// ...or 
+// ...or
 {
     "HandleRedirects": "false"
 }
@@ -547,7 +550,7 @@ In normal running, the test-proxy actually sets the Host header automatically. I
 
 ## Testing
 
-This project uses `xunit` as the test framework. This is the most popular .NET test solution [according to this twitter poll](https://twitter.com/shahedC/status/1131337874903896065?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E1131337874903896065%7Ctwgr%5E%7Ctwcon%5Es1_c10&ref_url=https%3A%2F%2Fwakeupandcode.com%2Funit-testing-in-asp-net-core%2F) and it's also what the majority of the test projects in the `Azure/azure-sdk-tools` repo utilize as well.
+This project uses `Xunit` as the test framework. This is the most popular .NET test solution [according to this twitter poll](https://twitter.com/shahedC/status/1131337874903896065?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E1131337874903896065%7Ctwgr%5E%7Ctwcon%5Es1_c10&ref_url=https%3A%2F%2Fwakeupandcode.com%2Funit-testing-in-asp-net-core%2F) and it's also what the majority of the test projects in the `Azure/azure-sdk-tools` repo utilize as well.
 
 ## SSL Support
 

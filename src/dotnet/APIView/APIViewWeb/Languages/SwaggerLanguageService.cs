@@ -14,7 +14,7 @@ namespace APIViewWeb
 
         public override string Extension { get; } = ".swagger";
 
-        public override string VersionString { get; } = "1.0.0";
+        public override string VersionString { get; } = "0";
 
         public override string ProcessName => throw new NotImplementedException();
 
@@ -30,6 +30,10 @@ namespace APIViewWeb
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
             throw new NotImplementedException();
+        }
+        public override bool CanUpdate(string versionString)
+        {
+            return false;
         }
     }
 }

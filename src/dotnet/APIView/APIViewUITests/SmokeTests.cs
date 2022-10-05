@@ -142,7 +142,7 @@ namespace APIViewUITests
                 }
 
                 // Status Filters Work Without Errors
-                var statusSelector = driver.FindElement(By.Id("status-filter-bootstraps-select"));
+                /*var statusSelector = driver.FindElement(By.Id("status-filter-bootstraps-select"));
                 var statusSelectElement = new SelectElement(statusSelector);
                 List<string> statuses = statusSelectElement.Options.Select(c => c.Text).ToList();
                 foreach (var status in statuses)
@@ -160,7 +160,7 @@ namespace APIViewUITests
                         driver.Navigate().Back();
                         driver.FindElement(By.Id("reset-filter-button")).Click();
                     }
-                }
+                }*/
 
                 // Type Filters Work Without Errors
                 var typeSelector = driver.FindElement(By.Id("type-filter-bootstraps-select"));

@@ -24,8 +24,14 @@ namespace APIViewWeb.Models
         public CodeFile CodeFile { get; }
         public RenderResult RenderResult { get; private set; }
 
-        public CodeLine[] Render()
+        public CodeLine[] Render(bool showDocumentation)
         {
+            //Always render when documentation is requested to avoid cach thrashing
+            if (showDocumentation)
+            {
+                return CodeFileHtmlRenderer.Normal.Render(CodeFile, showDocumentation: true).CodeLines;
+            }
+
             if (_rendered == null)
             {
                 RenderResult = CodeFileHtmlRenderer.Normal.Render(CodeFile);
@@ -35,8 +41,13 @@ namespace APIViewWeb.Models
             return _rendered;
         }
 
-        public CodeLine[] RenderReadOnly()
+        public CodeLine[] RenderReadOnly(bool showDocumentation)
         {
+            if (showDocumentation)
+            {
+                return CodeFileHtmlRenderer.ReadOnly.Render(CodeFile, showDocumentation: true).CodeLines;
+            }
+
             if (_renderedReadOnly == null)
             {
                 RenderResult = CodeFileHtmlRenderer.ReadOnly.Render(CodeFile);
@@ -46,11 +57,11 @@ namespace APIViewWeb.Models
             return _renderedReadOnly;
         }
 
-        internal CodeLine[] RenderText(bool skipDiff = false)
+        internal CodeLine[] RenderText(bool showDocumentation, bool skipDiff = false)
         {
-            if (skipDiff)
+            if (showDocumentation || skipDiff)
             {
-                RenderResult = CodeFileRenderer.Instance.Render(CodeFile, enableSkipDiff: skipDiff);
+                RenderResult = CodeFileRenderer.Instance.Render(CodeFile, showDocumentation: showDocumentation, enableSkipDiff: skipDiff);
                 return RenderResult.CodeLines;
             }
 

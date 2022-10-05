@@ -139,7 +139,8 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        Iterations: ${{ parameters.Iterations }}
+        # Iterations parameter has type 'number' so must use this variable syntax
+        Iterations: ${{ variables.Iterations }}
         Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeJava }}:
@@ -173,7 +174,8 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        Iterations: ${{ parameters.Iterations }}
+        # Iterations parameter has type 'number' so must use this variable syntax
+        Iterations: ${{ variables.Iterations }}
         Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeJS }}:
@@ -200,6 +202,7 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
+        # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
 
@@ -230,7 +233,9 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        Iterations: ${{ parameters.Iterations }}
+        # Iterations parameter has type 'number' so must use this variable syntax
+        Iterations: ${{ variables.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeCpp }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -256,7 +261,8 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        Iterations: ${{ parameters.Iterations }}
+        # Iterations parameter has type 'number' so must use this variable syntax
+        Iterations: ${{ variables.Iterations }}
         Profile: ${{ parameters.Profile }}
 
 - stage: Print_Results

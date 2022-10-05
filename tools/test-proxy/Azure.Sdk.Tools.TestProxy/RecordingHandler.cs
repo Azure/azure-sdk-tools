@@ -200,12 +200,18 @@ namespace Azure.Sdk.Tools.TestProxy
 
             HttpResponseMessage upstreamResponse = null;
 
-            // We don't want to erroneously send a Content-Length header if one is not present. The reason this is happening is that the outgoing response we are modifying
-            // is already initialized as if a body were going to be present. This is due to the fact that ASP.NET doesn't KNOW if there going to be response yet, and having everything
-            // already initialized and ready to be customized is definitely the efficient way to go.
-            // 
-            // To properly account for that, we need to _null out_ the Content property to actually allow the .NET httpclient to send without the added header.
-            if (incomingRequest.ContentLength == null && incomingRequest.ContentType == null)
+            // The experience around Content-Length is a bit weird in .NET. We're using the .NET native HttpClient class to send our requests. This comes with
+            // some automagic.
+            //
+            // If an incoming request...
+            //    ...has a Content-Length 0 header, and no body. We should send along the Content-Length: 0 header with the upstreamrequest.
+            //    ...has no Content-Length header, and no body. We _should not_ send along the Content-Length: 0 header.
+            //    ...has no Content-Length header, a 0 length body, but a TransferEncoding header with value "chunked"
+            //
+            // The .NET http client is a bit weird about attaching the Content-Length header though. If you HAVE the .Content property defined, a Content-Length
+            // header WILL be added. This is due to the fact that on send, the client considers a populated Client property as having a body, even if it's zero length.
+            incomingRequest.Headers.TryGetValue("transfer-encoding", out var transferEncoding);
+            if (incomingRequest.ContentLength == null && transferEncoding.Count > 0 && transferEncoding != "chunked")
             {
                 upstreamRequest.Content = null;
             }

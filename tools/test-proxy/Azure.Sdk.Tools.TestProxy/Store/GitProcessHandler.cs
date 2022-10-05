@@ -122,6 +122,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     DebugLogger.LogInformation($"git {arguments}");
                     var process = Process.Start(processStartInfo);
+
+                    process.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
+                    {
+                        // Prepend line numbers to each line of the output.
+                        if (!String.IsNullOrEmpty(e.Data))
+                        {
+                            System.Console.WriteLine(e.Data);
+                        }
+                    });
+
                     string stdOut = process.StandardOutput.ReadToEnd();
                     string stdErr = process.StandardError.ReadToEnd();
                     process.WaitForExit();

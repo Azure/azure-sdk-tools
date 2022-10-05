@@ -61,22 +61,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             byte[] data = new byte[blockSize];
             Random rng = new Random();
 
-            try
+            using (FileStream stream = File.OpenWrite(fileName))
             {
-                using (FileStream stream = File.OpenWrite(fileName))
+                for (int i = 0; i < sizeInMb * blocksPerMb; i++)
                 {
-                    for (int i = 0; i < sizeInMb * blocksPerMb; i++)
-                    {
-                        rng.NextBytes(data);
-                        stream.Write(data, 0, data.Length);
-                    }
+                    rng.NextBytes(data);
+                    stream.Write(data, 0, data.Length);
                 }
             }
-            catch(Exception e)
-            {
-                return e.ToString();
-            }
-            
 
             return fileName;
         }

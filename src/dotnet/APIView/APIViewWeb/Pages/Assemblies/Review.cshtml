@@ -148,8 +148,8 @@
                         </label>
                     </span>
                     <span class="dropdown-item" id="show-documentation-component">
-                        <input type="checkbox" id="show-doc-checkbox">
-                        <a class="text-dark show-document">
+                        <input asp-for="@Model.ShowDocumentation" class="show-doc-checkbox">
+                        <a class="text-dark show-document" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly, revisionId: Model.Revision.RevisionId)>
                             <label>&nbsp;Show Documentation</label>
                         </a>
                     </span>
@@ -269,7 +269,8 @@
                         var optionName = revision.IsApproved ? $"{@revision.DisplayName} {@approvedBadge}" : @revision.DisplayName;
                         var urlValue = @Url.ActionLink("Review", "Assemblies", new {
                             id = @Model.Review.ReviewId,
-                            revisionId = @revision.RevisionId
+                            revisionId = @revision.RevisionId,
+                            doc = @Model.ShowDocumentation
                         });
                         if (@revision.DisplayName == @Model.Revision.DisplayName)
                         {
@@ -292,6 +293,7 @@
                             id = @Model.Review.ReviewId,
                             revisionId = @Model.Revision.RevisionId,
                             diffRevisionId = @Model.DiffRevisionId,
+                            doc = @Model.ShowDocumentation,
                             diffOnly = @Model.ShowDiffOnly
                         });
                         <label class="mb-0 ml-1"><a href="@urlValue"><small>Diff With:</small></a></label>
@@ -302,6 +304,7 @@
                             id = @Model.Review.ReviewId,
                             revisionId = @Model.Revision.RevisionId,
                             diffRevisionId = @Model.PreviousRevisions.Last().RevisionId,
+                            doc = @Model.ShowDocumentation,
                             diffOnly = @Model.ShowDiffOnly
                         });
                         <label class="mb-0 ml-1"><a href="@urlValue"><small>Diff:</small></a></label>
@@ -319,7 +322,8 @@
                                 id = @Model.Review.ReviewId,
                                 diffRevisionId = @revision.RevisionId,
                                 diffOnly = @Model.ShowDiffOnly,
-                                revisionId = @Model.Revision.RevisionId
+                                revisionId = @Model.Revision.RevisionId,
+                                doc = @Model.ShowDocumentation
                             });
                             if (@Model.DiffRevisionId != null)
                             {

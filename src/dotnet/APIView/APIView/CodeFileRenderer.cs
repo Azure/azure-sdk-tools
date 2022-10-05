@@ -13,11 +13,11 @@ namespace ApiView
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
-        public RenderResult Render(CodeFile file, bool enableSkipDiff = false)
+        public RenderResult Render(CodeFile file, bool showDocumentation = false, bool enableSkipDiff = false)
         {
             var codeLines = new List<CodeLine>();
             var sections = new Dictionary<int,TreeNode<CodeLine>>();
-            Render(codeLines, file.Tokens, enableSkipDiff, sections);
+            Render(codeLines, file.Tokens, showDocumentation, enableSkipDiff, sections);
             return new RenderResult(codeLines.ToArray(), sections);
         }
 
@@ -25,11 +25,11 @@ namespace ApiView
         {
             var codeLines = new List<CodeLine>();
             var sections = new Dictionary<int, TreeNode<CodeLine>>();
-            Render(codeLines, tokens, false, sections);
+            Render(codeLines, tokens, false, false, sections);
             return codeLines.ToArray();
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool enableSkipDiff, Dictionary<int,TreeNode<CodeLine>> sections)
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff, Dictionary<int,TreeNode<CodeLine>> sections)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
@@ -49,7 +49,10 @@ namespace ApiView
                 if (enableSkipDiff && isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
                     continue;
 
-                switch(token.Kind)
+                if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
+                    continue;
+
+                switch (token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
                         int ? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count: null;

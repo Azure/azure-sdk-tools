@@ -67,6 +67,10 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(SupportsGet = true)]
         public string DiffRevisionId { get; set; }
 
+        // Flag to decide whether to  include documentation
+        [BindProperty(Name = "doc", SupportsGet = true)]
+        public bool ShowDocumentation { get; set; }
+
         [BindProperty(Name = "diffOnly", SupportsGet = true)]
         public bool ShowDiffOnly { get; set; }
 
@@ -91,7 +95,7 @@ namespace APIViewWeb.Pages.Assemblies
             CodeFile = renderedCodeFile.CodeFile;
 
             var fileDiagnostics = CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
-            var fileHtmlLines = renderedCodeFile.Render();
+            var fileHtmlLines = renderedCodeFile.Render(ShowDocumentation);
 
             if (DiffRevisionId != null)
             {
@@ -99,9 +103,9 @@ namespace APIViewWeb.Pages.Assemblies
 
                 var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
 
-                var previousHtmlLines = previousRevisionFile.RenderReadOnly();
-                var previousRevisionTextLines = previousRevisionFile.RenderText();
-                var fileTextLines = renderedCodeFile.RenderText();
+                var previousHtmlLines = previousRevisionFile.RenderReadOnly(ShowDocumentation);
+                var previousRevisionTextLines = previousRevisionFile.RenderText(ShowDocumentation);
+                var fileTextLines = renderedCodeFile.RenderText(ShowDocumentation);
 
                 var diffLines = InlineDiff.Compute(
                     previousRevisionTextLines,
@@ -167,11 +171,12 @@ namespace APIViewWeb.Pages.Assemblies
             return new EmptyResult();
         }
 
-        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, string revisionId = null)
+        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, bool? showDocumentation = null, string revisionId = null)
         {
             var routingData = new Dictionary<string, string>();
             routingData["revisionId"] = revisionId;
             routingData["diffRevisionId"] = diffRevisionId;
+            routingData["doc"] = (showDocumentation ?? false).ToString();
             routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
             return routingData;
         }

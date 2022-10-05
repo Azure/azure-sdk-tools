@@ -142,7 +142,7 @@ namespace APIViewUITests
                 }
 
                 // Status Filters Work Without Errors
-                var statusSelector = driver.FindElement(By.Id("status-filter-bootstraps-select"));
+                /*var statusSelector = driver.FindElement(By.Id("status-filter-bootstraps-select"));
                 var statusSelectElement = new SelectElement(statusSelector);
                 List<string> statuses = statusSelectElement.Options.Select(c => c.Text).ToList();
                 foreach (var status in statuses)
@@ -154,14 +154,13 @@ namespace APIViewUITests
                     if (reviewNames.Any())
                     {
                         wait.Until(ExpectedConditions.ElementToBeClickable(By.ClassName("review-name")));
-                        reviewNames = driver.FindElements(By.ClassName("review-name"));
                         reviewNames[0].Click();
                         Assert.NotEqual("Error - apiview.dev", driver.Title);
                         Assert.NotEqual("Internal Server Error", driver.Title);
                         driver.Navigate().Back();
                         driver.FindElement(By.Id("reset-filter-button")).Click();
                     }
-                }
+                }*/
 
                 // Type Filters Work Without Errors
                 var typeSelector = driver.FindElement(By.Id("type-filter-bootstraps-select"));
@@ -176,7 +175,6 @@ namespace APIViewUITests
                     if (reviewNames.Any())
                     {
                         wait.Until(ExpectedConditions.ElementToBeClickable(By.ClassName("review-name")));
-                        reviewNames = driver.FindElements(By.ClassName("review-name"));
                         reviewNames[0].Click();
                         Assert.NotEqual("Error - apiview.dev", driver.Title);
                         Assert.NotEqual("Internal Server Error", driver.Title);

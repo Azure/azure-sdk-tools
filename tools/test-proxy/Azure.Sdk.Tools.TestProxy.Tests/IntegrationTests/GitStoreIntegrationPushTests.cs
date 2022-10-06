@@ -1,9 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
@@ -356,6 +354,81 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(updatedAssets);
+            }
+        }
+
+        /// <summary>
+        /// 1. Restore from a tag that has minimal existing files and a long destination path
+        /// 2. Add a _bunch_ of files
+        /// 3. Push
+        /// 4. Verify local files are what is expected
+        /// 5. Verify assets.json was updated with the new commit Tag
+        /// </summary>
+        /// <param name="inputJson"></param>
+        /// <returns></returns>
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(1000, 0.15)] // 1000 0.15MB files
+        [InlineData(150, 0.25)]  // 150  0.25MB files
+        [InlineData(100, 0.50)]  // 100  0.5MB files
+        [InlineData(10, 90)]     // 10   90MB files
+        [Trait("Category", "Integration")]
+        public async Task LargePushPerformance(int numberOfFiles, double fileSize)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+            Assets assets = JsonSerializer.Deserialize<Assets>(@"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""python"",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": ""python/tables4f724f0c""
+            }");
+            Assets updatedAssets = null;
+            List<string> testFiles = new List<string>();
+            string originalTagPrefix = assets.TagPrefix;
+            string originalTag = assets.Tag;
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
+
+            try
+            {
+                // Ensure that the TagPrefix was updated
+                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+                await _defaultStore.Restore(jsonFileLocation);
+
+                var assetRepoRoot = await _defaultStore.GetPath(jsonFileLocation);
+                var deepPath = Path.Join(assetRepoRoot, "sdk", "tables", "azure-data-tables", "tests", "recordings");
+
+                // generate a bunch of files
+                for (var i = 0; i < numberOfFiles; i++)
+                {
+                    testFiles.Add(TestHelpers.GenerateRandomFile(fileSize, deepPath));
+                }
+
+                await _defaultStore.Push(jsonFileLocation);
+
+                // Verify that after the push the directory still contains our updated files
+                Assert.Equal(3 + testFiles.Count, System.IO.Directory.EnumerateFiles(deepPath).Count());
+                foreach (var path in testFiles)
+                {
+                    Assert.True(File.Exists(path));
+                }
+
+                // Ensure that the config was updated with the new Tag as part of the push
+                updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
+                Assert.NotEqual(originalTag, updatedAssets.Tag);
+
+                // Ensure that the targeted tag is present on the repo
+                TestHelpers.CheckExistenceOfTag(updatedAssets, assetRepoRoot);
             }
             finally
             {

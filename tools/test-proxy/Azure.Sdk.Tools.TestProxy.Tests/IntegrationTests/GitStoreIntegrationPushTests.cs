@@ -437,5 +437,3 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
     }
 }
-    }
-}

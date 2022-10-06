@@ -281,7 +281,18 @@ namespace Stress.Watcher
                 return false;
             }
 
-            return (pod.Status.Phase == "Succeeded") || (pod.Status.Phase == "Failed");
+            if (pod.Status.Phase == "Succeeded" || pod.Status.Phase == "Failed")
+            {
+                if (pod.Metadata.Labels.TryGetValue("Skip.RemoveTestResources", out var skipRemove) && skipRemove == "true")
+                {
+                    Logger.Information($"Resource has Skip.RemoveTestResources=true label, skipping resource deletion.");
+                    return false;
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         public string GetResourceGroupName(V1Pod pod)

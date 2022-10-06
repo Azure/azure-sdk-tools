@@ -1,14 +1,10 @@
-[CmdletBinding(DefaultParameterSetName = 'RepositoryFile', SupportsShouldProcess = $true)]
+[CmdletBinding(DefaultParameterSetName = 'Repositories', SupportsShouldProcess = $true)]
 param (
     [Parameter(Mandatory = $true, Position = 0)]
     [int] $ProjectNumber,
 
     [Parameter(Mandatory = $true, Position = 1)]
     [string[]] $Labels,
-
-    [Parameter(ParameterSetName = 'RepositoryFile')]
-    [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
-    [string]$RepositoryFilePath = "./repositories.txt",
 
     [Parameter(ParameterSetName = 'Repositories')]
     [Alias("repos")]
@@ -26,6 +22,10 @@ param (
     [Parameter(ParameterSetName = 'Languages')]
     [ValidateNotNullOrEmpty()]
     [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python'),
+
+    [Parameter(ParameterSetName = 'RepositoryFile')]
+    [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
+    [string]$RepositoryFilePath = "./repositories.txt",
 
     [Parameter()]
     [ValidateNotNullOrEmpty()]
@@ -110,14 +110,14 @@ The project (beta) number in the Azure organization. This project (beta) should 
 .PARAMETER Labels
 The required labels used to select issues from each lanuage repository.
 
-.PARAMETER RepositoryFilePath
-The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
-
 .PARAMETER Repositories
 The GitHub repositories to query for issues e.g., "Azure/azure-sdk-for-net".
 
 .PARAMETER Languages
 The Azure SDK languages to query for issues e.g., "net" for "Azure/azure-sdk-for-net".
+
+.PARAMETER RepositoryFilePath
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
 
 .PARAMETER Fields
 Custom fields defined by the project to set when adding issues.

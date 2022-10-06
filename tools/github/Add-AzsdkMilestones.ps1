@@ -94,12 +94,12 @@ foreach ($repo in $Repositories) {
 Creates Azure SDK milestones in the form of "yyyy-MM".
 .DESCRIPTION
 Creates Azure SDK milestones in the form of "yyyy-MM" with the due date set to the first Friday of the following month at 11:59 PM UTC.
+.PARAMETER RepositoryFilePath
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
 .PARAMETER Repositories
 The GitHub repositories to update.
 .PARAMETER Languages
 The Azure SDK languages to query for milestones e.g., "net" for "Azure/azure-sdk-for-net".
-.PARAMETER RepositoryFilePath
-The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
 .PARAMETER StartDate
 The starting date for new milestones.
 .PARAMETER EndDate

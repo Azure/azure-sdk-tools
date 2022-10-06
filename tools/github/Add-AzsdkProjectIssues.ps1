@@ -110,14 +110,14 @@ The project (beta) number in the Azure organization. This project (beta) should 
 .PARAMETER Labels
 The required labels used to select issues from each lanuage repository.
 
+.PARAMETER RepositoryFilePath
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
+
 .PARAMETER Repositories
 The GitHub repositories to query for issues e.g., "Azure/azure-sdk-for-net".
 
 .PARAMETER Languages
 The Azure SDK languages to query for issues e.g., "net" for "Azure/azure-sdk-for-net".
-
-.PARAMETER RepositoryFilePath
-The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
 
 .PARAMETER Fields
 Custom fields defined by the project to set when adding issues.

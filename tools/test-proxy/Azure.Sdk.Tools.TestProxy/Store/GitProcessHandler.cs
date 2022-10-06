@@ -159,8 +159,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
 
                         result.ExitCode = process.ExitCode;
-                        result.StdErr = string.Join(Environment.NewLine, stdOut);
-                        result.StdOut = string.Join(Environment.NewLine, stdError);
+                        result.StdErr = string.Join(Environment.NewLine, stdError);
+                        result.StdOut = string.Join(Environment.NewLine, stdOut);
 
                         if (result.ExitCode != 0)
                         {

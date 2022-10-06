@@ -12,6 +12,8 @@ using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Console;
 using System.Collections.Concurrent;
+using System.Reflection.Metadata;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -23,7 +25,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     }
 
     /// <summary>
-    /// This class provides an abtraction for dealing with git assets that are stored in an external repository. An "assets.json" within a repo folder is used to inform targeting.
+    /// This class provides an abstraction for dealing with git assets that are stored in an external repository. An "assets.json" within a repo folder is used to inform targeting.
     /// </summary>
     public class GitStore : IAssetsStore
     {
@@ -40,7 +42,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public ConcurrentDictionary<string, string> Assets = new ConcurrentDictionary<string, string>();
 
-        public GitStore() 
+        public GitStore()
         {
             _consoleWrapper = new ConsoleWrapper();
         }
@@ -99,7 +101,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     throw GenerateInvokeException(e.Result);
                 }
-
                 await UpdateAssetsJson(generatedTagName, config);
             }
         }
@@ -129,7 +130,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
-        public async Task Reset(string pathToAssetsJson) 
+        public async Task Reset(string pathToAssetsJson)
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = IsAssetsRepoInitialized(config);
@@ -261,7 +262,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var ownerName = Environment.GetEnvironmentVariable(GIT_COMMIT_OWNER_ENV_VAR);
             // If the owner wasn't set as part of the environment, check to see if there's
-            // a user.name set, if not 
+            // a user.name set, if not
             if (string.IsNullOrWhiteSpace(ownerName))
             {
                 ownerName = GitHandler.Run("config --get user.name", config).StdOut;
@@ -278,7 +279,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var ownerEmail = Environment.GetEnvironmentVariable(GIT_COMMIT_EMAIL_ENV_VAR);
             // If the owner wasn't set as part of the environment, check to see if there's
-            // a user.name set, if not 
+            // a user.name set, if not
             if (string.IsNullOrWhiteSpace(ownerEmail))
             {
                 ownerEmail = GitHandler.Run("config --get user.email", config).StdOut;
@@ -524,7 +525,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public DirectoryEvaluation EvaluateDirectory(string directoryPath)
         {
             var fileAttributes = File.GetAttributes(directoryPath);
-            
+
             if (!(fileAttributes == FileAttributes.Directory))
             {
                 directoryPath = Path.GetDirectoryName(directoryPath);
@@ -559,8 +560,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 var currentSHA = (await ParseConfigurationFile(config.AssetsJsonLocation)).Tag;
                 var content = await File.ReadAllTextAsync(config.AssetsJsonLocation);
-                content = content.Replace(currentSHA, newSha);
-
+                if (String.IsNullOrEmpty(currentSHA))
+                {
+                    string pattern = @"""Tag"":\s*""\s*""";
+                    content = Regex.Replace(content, pattern, $"\"Tag\": \"{newSha}\"", RegexOptions.IgnoreCase);
+                }
+                else
+                {
+                    content = content.Replace(currentSHA, newSha);
+                }
                 File.WriteAllText(config.AssetsJsonLocation, content);
             }
         }

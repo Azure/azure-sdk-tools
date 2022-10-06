@@ -42,3 +42,7 @@ We need to do this because the language is used in several places.
 1. The AssetsRepoPrefixPath in assets.json is set to the language.
 2. The TagPrefix is set to the `<language>/<ServiceDirectory>` or `<language>/<ServiceDirectory>/<Library>` etc.
 3. The language also used to determine what the [recording directories within a repository are named](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/transition-scripts/generate-assets-json.ps1#L47).
+
+## A final note about the initial push
+
+If a directory with several thousand recordings is being migrated, the move and the initial push can take several minutes. For example, during testing azure-sdk-for-java\sdk\storage was tried. There are 4,693 files with a combined size of 666 MB and the initial push took about 7 minutes. This time is only the initial push because these files don't exist and everything had to be pushed to git. Subsequent pushes took only several seconds.

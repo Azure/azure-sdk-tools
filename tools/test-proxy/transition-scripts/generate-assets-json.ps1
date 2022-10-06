@@ -19,9 +19,41 @@ Generated assets.json file contents
               are nested in such a manner.
 4. Tag: "" - Initially empty, as nothing has yet been pushed
 #>
+param(
+  [Parameter(Mandatory = $false)]
+  [bool] $InitialPush = $false,
+  [bool] $UseTestRepo = $false
+)
+
+# Git needs to be in the path to determine the language and, if the initial push
+# is being performed, for the CLI commands to work
+$GitExe = "git"
+# If the initial push is being performed, test-proxy needs to be in the path in
+# order for the CLI commands to be executed
+$TestProxyExe = "test-proxy"
+
+$OriginalProxyAssetsFolder = $env:PROXY_ASSETS_FOLDER
+
+$DefaultAssetsRepo = "Azure/azure-sdk-assets"
+if ($UseTestRepo) {
+  $DefaultAssetsRepo = "Azure/azure-sdk-assets-integration"
+  Write-Host "UseTestRepo was true, setting default repo to $DefaultAssetsRepo"
+}
+
+# Unsure of the following language recording directories:
+# 1. andriod
+# 2. c
+# 3. ios
+$LangRecordingDirs = @{"cpp" = "recordings";
+  "go"                       = "recordings";
+  "java"                     = "session-records";
+  "js"                       = "recordings";
+  "net"                      = "SessionRecords";
+  "python"                   = "recordings";
+};
 
 class Assets {
-  [string]$AssetsRepo = "Azure/azure-sdk-assets"
+  [string]$AssetsRepo = $DefaultAssetsRepo
   [string]$AssetsRepoPrefixPath = ""
   [string]$TagPrefix = ""
   [string]$Tag = ""
@@ -75,7 +107,7 @@ Function Get-Repo-Language {
   # link below will go to a regex playground
   # https://regex101.com/r/btVW5A/1
   $lang = $remotes[0] | ForEach-Object { if ($_ -match "azure-sdk-for-(?<lang>[^\-\.]+)") {
-      #Return match from group 1 which will be the language, pulled from the repository
+      #Return the named language match
       return $Matches["lang"]
     }
   }
@@ -89,28 +121,183 @@ Function Get-Repo-Language {
   return $lang
 }
 
-Test-Exe-In-Path -ExeToLookFor "git"
-$AssetsRepoPrefixPath = Get-Repo-Language
-
-[string] $currentDir = Get-Location
-
-$sdkDir = "$([IO.Path]::DirectorySeparatorChar)sdk$([IO.Path]::DirectorySeparatorChar)"
-
-# if we're not in a <reporoot>/sdk/<ServiceDirectory> or deeper then this script isn't
-# being run in the right place
-if (-not $currentDir.contains($sdkDir)) {
-  Write-Error "This script needs to be run at an sdk/<ServiceDirectory> or deeper."
-  exit 1
+Function Get-Repo-Root {
+  [string] $currentDir = Get-Location
+  # -1 to strip off the trialing directory separator
+  return $currentDir.Substring(0, $currentDir.LastIndexOf("sdk") - 1)
 }
 
-$TagPrefix = $currentDir.Substring($currentDir.LastIndexOf("sdk") + 4)
-$TagPrefix = $TagPrefix.Replace("\", "/")
-$TagPrefix = "$($AssetsRepoPrefixPath)/$($TagPrefix)"
-[Assets]$Assets = [Assets]::new($AssetsRepoPrefixPath, $TagPrefix)
+Function New-Assets-Json-File {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Language
+  )
+  $AssetsRepoPrefixPath = $Language
 
-$AssetsJson = $Assets | ConvertTo-Json
+  [string] $currentDir = Get-Location
 
-$AssetsFileName = Join-Path -Path $currentDir -ChildPath "assets.json"
-Write-Host "Writing file $AssetsFileName with the following contents"
-Write-Host $AssetsJson
-$Assets | ConvertTo-Json | Out-File $AssetsFileName
+  $sdkDir = "$([IO.Path]::DirectorySeparatorChar)sdk$([IO.Path]::DirectorySeparatorChar)"
+
+  # if we're not in a <reporoot>/sdk/<ServiceDirectory> or deeper then this script isn't
+  # being run in the right place
+  if (-not $currentDir.contains($sdkDir)) {
+    Write-Error "This script needs to be run at an sdk/<ServiceDirectory> or deeper."
+    exit 1
+  }
+
+  $TagPrefix = $currentDir.Substring($currentDir.LastIndexOf("sdk") + 4)
+  $TagPrefix = $TagPrefix.Replace("\", "/")
+  $TagPrefix = "$($AssetsRepoPrefixPath)/$($TagPrefix)"
+  [Assets]$Assets = [Assets]::new($AssetsRepoPrefixPath, $TagPrefix)
+
+  $AssetsJson = $Assets | ConvertTo-Json
+
+  $AssetsFileName = Join-Path -Path $currentDir -ChildPath "assets.json"
+  Write-Host "Writing file $AssetsFileName with the following contents"
+  Write-Host $AssetsJson
+  $Assets | ConvertTo-Json | Out-File $AssetsFileName
+
+  return $AssetsFileName
+}
+
+# Invoke the proxy command and echo the output.
+Function Invoke-ProxyCommand {
+  param(
+    [string] $TestProxyExe,
+    [string] $CommandArgs
+  )
+
+  Write-Host "$TestProxyExe $CommandArgs"
+  [array] $output = & "$TestProxyExe" $CommandArgs.Split(" ")
+  # echo the command output
+  foreach ($line in $output) {
+    Write-Host "$line"
+  }
+}
+
+Function Get-TempPath {
+  return [System.IO.Path]::GetTempPath()
+}
+# Set the PROXY_ASSETS_FOLDER to [System.IO.Path]::GetTempPath()/<Guid>
+# This is a temporary directory that'll be used for the restore/push operatios
+# on the assets.json that was just created. This is temporary, as the original
+# PROXY_ASSETS_FOLDER value was saved at the beginning of the script and
+# the original value will be restored at the end of the script.
+Function Set-ProxyAssetsFolder {
+  $guid = [Guid]::NewGuid()
+  $tempPath = Get-TempPath
+  $proxyAssetsFolder = Join-Path -Path $tempPath -ChildPath $guid
+  New-Item -Type Directory -Force -Path $proxyAssetsFolder | Out-Null
+  $env:PROXY_ASSETS_FOLDER = $proxyAssetsFolder
+  return $proxyAssetsFolder
+}
+
+# Get the shorthash directory under PROXY_ASSETS_FOLDER
+Function Get-AssetsRoot {
+  param(
+    [string] $AssetsJsonFile
+  )
+
+  $startingPath = $env:PROXY_ASSETS_FOLDER
+  # It's odd that $folder.Count and $folders.Lenght work and we need to do this
+  $numDirs = Get-ChildItem $startingPath -Directory | Measure-Object | ForEach-Object { $_.Count }
+  $folders = Get-ChildItem $startingPath -Directory
+  # There should only be one folder
+  if (1 -ne $numDirs) {
+    Write-Error "The assets directory ($startingPath) should only contain 1 subfolder not $numDirs ($folders -join $([Environment]::NewLine))"
+    exit 1
+  }
+  $assetsRoot = $folders[0].FullName
+  $repoRoot = Get-Repo-Root
+  $assets = Get-Content $AssetsJsonFile | Out-String | ConvertFrom-Json
+  $assetsJsonPath = Split-Path -Path $AssetsJsonFile
+  $relPath = [IO.Path]::GetRelativePath($repoRoot, $assetsJsonPath)
+  $assetsRoot = Join-Path -Path $folders[0].FullName -ChildPath $assets.AssetsRepoPrefixPath -AdditionalChildPath $relPath
+
+  return $assetsRoot
+}
+
+Function Move-AssetsFromLangRepo {
+  param(
+    [string] $AssetsRoot
+  )
+  $filter = $LangRecordingDirs[$language]
+  Write-Host "Language recording directory name=$filter"
+  Write-Host "Get-ChildItem -Recurse -Filter ""*.json"" | Where-Object { `$_.DirectoryName.Split([IO.Path]::DirectorySeparatorChar) -contains ""$filter"" }"
+  $filesToMove = Get-ChildItem -Recurse -Filter "*.json" | Where-Object { $_.DirectoryName.Split([IO.Path]::DirectorySeparatorChar) -contains "$filter" }
+  [string] $currentDir = Get-Location
+  foreach ($fromFile in $filesToMove) {
+    $relPath = [IO.Path]::GetRelativePath($currentDir, $fromFile)
+    $toFile = Join-Path -Path $AssetsRoot -ChildPath $relPath
+    # Write-Host "Moving from=$fromFile"
+    # Write-Host "          to=$toFile"
+    $toPath = Split-Path -Path $toFile
+    if(!(Test-Path $toPath))
+    {
+        New-Item -Path $toPath -ItemType Directory -Force | Out-Null
+    }
+    Move-Item -LiteralPath $fromFile -Destination $toFile
+  }
+}
+
+Function Remove-ProxyAssetsFolder {
+  if (![string]::IsNullOrWhitespace($env:DISABLE_INTEGRATION_BRANCH_CLEANUP)) {
+    return
+  }
+  Write-Host "cleaning up $env:PROXY_ASSETS_FOLDER"
+  Remove-Item -LiteralPath $env:PROXY_ASSETS_FOLDER -Force -Recurse
+}
+
+
+Test-Exe-In-Path -ExeToLookFor $GitExe
+$language = Get-Repo-Language
+
+# If the initial push is being performed, ensure that test-proxy is
+# in the path and that we're able to map the language's recording
+# directories
+if ($InitialPush) {
+  Test-Exe-In-Path -ExeToLookFor $TestProxyExe
+  if (!$LangRecordingDirs.ContainsKey($language)) {
+    Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
+    exit 1
+  }
+}
+
+# Create the assets-json file
+$assetsJsonFile = New-Assets-Json-File -Language $language
+
+# If the initial push is being done:
+# 1. Do a restore on the assetsJsonFile, it'll setup the directory that will allow a push to be done
+# 2. Move all of the assets over, preserving the directory structure
+# 3. Push the repository which will update the assets.json with the new Tag
+if ($InitialPush) {
+
+  try {
+    $proxyAssetsFolder = Set-ProxyAssetsFolder
+    Write-Host "proxyAssetsFolder=$proxyAssetsFolder"
+
+    # Execute a restore on the current assets.json, it'll prep the root directory that
+    # the recordings need to be copied into
+    $CommandArgs = "restore --assets-json-path $assetsJsonFile"
+    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
+
+    $assetsRoot = Get-AssetsRoot -AssetsJsonFile $assetsJsonFile
+    Write-Host "assetsRoot=$assetsRoot"
+
+    Move-AssetsFromLangRepo -AssetsRoot $assetsRoot
+
+    $CommandArgs = "push --assets-json-path $assetsJsonFile"
+    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
+
+    # Verify that the assets.json file was updated
+    $updatedAssets = Get-Content $assetsJsonFile | Out-String | ConvertFrom-Json
+    if ([String]::IsNullOrWhitespace($($updatedAssets.Tag))) {
+      Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated"
+      exit 1
+    }
+  }
+  finally {
+    Remove-ProxyAssetsFolder
+    $env:PROXY_ASSETS_FOLDER = $OriginalProxyAssetsFolder
+  }
+}

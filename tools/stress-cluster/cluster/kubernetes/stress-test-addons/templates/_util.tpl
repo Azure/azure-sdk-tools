@@ -39,11 +39,8 @@ See https://github.com/Masterminds/sprig/tree/master/docs for template function 
 {{- /* Use lowercase alphanumeric characters beginning with a letter for maximum azure resource naming compatibility */ -}}
 {{- $uniqueTestId := lower (print "s" (trunc 5 (sha1sum $resourceGroupName) ) ) -}}
 {{- /* Create add Stress context to top level keys of global context */}}
-{{- $_stress := dict "Scenario" $_scenario.Scenario "ResourceGroupName" $resourceGroupName "BaseName" $uniqueTestId -}}
-{{- range $key, $val := $_scenario -}}
-{{- $scenarioProperty := dict $key $val -}}
-{{- $_stress := merge $_stress $scenarioProperty -}}
-{{- end }}
+{{- $_stress := dict "ResourceGroupName" $resourceGroupName "BaseName" $uniqueTestId -}}
+{{- $_stress := merge $_stress $_scenario -}}
 {{- $_instance := deepCopy ($_global | merge (dict "Stress" $_stress )) -}}
 {{ toYaml ($_instance) }}
 {{- end -}}

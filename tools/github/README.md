@@ -31,14 +31,15 @@ This area is focused on the management of the Azure SDK GitHub repositories, con
  ```
  
  ### `Add-AzsdkProjectIssues.ps1`
- _Adds a set of Azure SDK repository issues tagged with a given set of labels to a GitHub project.  With the default parameter set, the issues with the specified labels will be queried from repositories in the 'repositories.txt' file._
+ _Adds a set of Azure SDK repository issues tagged with a given set of labels to a GitHub project.  With the default parameter set, the issues with the specified labels will be queried from a set of core language repositories._
    
  ```bash
- # Adds issues with the "Client" and "KeyVault" labels to project #150, querying the default repositories.
+ # Adds issues with the "Client" and "KeyVault" labels to project #150, querying a set 
+ # of core language  repositories.
  pwsh ./Add-AzsdkProjectIssues.ps1 -ProjectNumber 150 -Labels Client, KeyVault
    
- # Adds issues with the "KeyVault" label in the .NET repository to project #150, setting the "Status"
- # custom field to "Todo".
+ # Adds issues with the "KeyVault" label in the .NET repository to project #150, setting
+ # the "Status" custom field to "Todo".
  pwsh ./Add-AzsdkProjectIssues.ps1 -Languages 'net' -ProjectNumber 150 -Labels KeyVault -Fields @{Status="Todo"}
    
  # View the help for the full set of parameters.

@@ -1,6 +1,5 @@
 [CmdletBinding(DefaultParameterSetName = 'Repositories', SupportsShouldProcess = $true)]
 param (
-
     [Parameter(ParameterSetName = 'Repositories')]
     [ValidateNotNullOrEmpty()]
     [string[]] $Repositories = @(

@@ -25,7 +25,7 @@ variables:
   NodeVersion: '16.x'
   CadlEmitterDirectory: 'tools/apiview/emitters/cadl-apiview'
   ArtifactName: 'apiview'
-  FeedRegistry: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
+  FeedRegistry: 'https://registry.npmjs.org/'
 
 stages:
   - stage: 'Build'
@@ -42,10 +42,6 @@ stages:
               versionSpec: '$(NodeVersion)'
             displayName: 'Use NodeJS $(NodeVersion)'
 
-          - script: |
-              npm install -g npm@8.16.0
-            displayName: "Install npm 8.16.0"
-          
           - script: |
               npm install
             workingDirectory: $(CadlEmitterDirectory)
@@ -71,7 +67,7 @@ stages:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)'
               artifactName: $(ArtifactName)
 
-  - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
+  - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'), ne(variables['Skip.PublishPackage'], 'true'))}}:
     - stage: 'Release'
       dependsOn: Build
       condition: Succeeded()
@@ -90,16 +86,9 @@ stages:
             Write-Host "Detected package name: $detectedPackageName"
             $registry="$(FeedRegistry)"
             $regAuth=$registry.replace("https:","")
-            $npmReg = $regAuth.replace("registry/","");
-            $env:NPM_TOKEN="$(azure-sdk-devops-npm-token)"
+            $env:NPM_TOKEN="$(azure-sdk-npm-token)"
+            npm config set $regAuth`:_authToken=`$`{NPM_TOKEN`}
             Write-Host "Publishing to $($regAuth)"
-            npm config set $regAuth`:username=azure-sdk
-            npm config set $regAuth`:_password=`$`{NPM_TOKEN`}
-            npm config set $regAuth`:email=not_set
-            npm config set $npmReg`:username=azure-sdk
-            npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
-            npm config set $npmReg`:email=not_set
-            Write-Host "Publishing package"
-            Write-Host "npm publish $detectedPackageName --registry=$registry --always-auth=true"
-            npm publish $detectedPackageName --registry=$registry --always-auth=true
+            Write-Host "npm publish $detectedPackageName --registry=$registry --always-auth=true --access='public'"
+            npm publish $detectedPackageName --registry=$registry --always-auth=true --access="public"
           displayName: Publish package

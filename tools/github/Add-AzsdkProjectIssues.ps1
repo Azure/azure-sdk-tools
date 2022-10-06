@@ -1,10 +1,14 @@
-[CmdletBinding(DefaultParameterSetName = 'Repositories', SupportsShouldProcess = $true)]
+[CmdletBinding(DefaultParameterSetName = 'RepositoryFile', SupportsShouldProcess = $true)]
 param (
     [Parameter(Mandatory = $true, Position = 0)]
     [int] $ProjectNumber,
 
     [Parameter(Mandatory = $true, Position = 1)]
     [string[]] $Labels,
+
+    [Parameter(ParameterSetName = 'RepositoryFile')]
+    [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
+    [string]$RepositoryFilePath = "./repositories.txt",
 
     [Parameter(ParameterSetName = 'Repositories')]
     [Alias("repos")]
@@ -55,6 +59,10 @@ if ($PSCmdlet.ParameterSetName -eq 'Languages') {
     }
 }
 
+if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
+    $Repositories = Get-Content $RepositoryFilePath
+}
+
 if ($Fields) {
     $fieldArgs = @()
     foreach ($key in $Fields.Keys) {
@@ -101,6 +109,9 @@ The project (beta) number in the Azure organization. This project (beta) should 
 
 .PARAMETER Labels
 The required labels used to select issues from each lanuage repository.
+
+.PARAMETER RepositoryFilePath
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
 
 .PARAMETER Repositories
 The GitHub repositories to query for issues e.g., "Azure/azure-sdk-for-net".

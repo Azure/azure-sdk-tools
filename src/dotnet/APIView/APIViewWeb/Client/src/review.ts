@@ -269,10 +269,8 @@ $(() => {
               navItemRow.removeClass("nav-list-collapsed");
             }
           }
-          else {
-            navItemRow.removeClass("nav-list-collapsed");
-          }
         }
+        navItemRow.removeClass("nav-list-collapsed");
       }
       else {
         navItemRow.removeClass("nav-list-collapsed");

@@ -2,7 +2,7 @@
 param (
     [Parameter(ParameterSetName = 'RepositoryFile')]
     [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
-    [string]$RepositoryFilePath = "./repositories.txt",
+    [string]$RepositoryFilePath = '$PSScriptRoot/repositories.txt',
 
     [Parameter(ParameterSetName = 'Repositories')]
     [ValidateNotNullOrEmpty()]
@@ -50,18 +50,17 @@ $milestones = do {
     $date = [DateTimeOffset]::Parse("$($date.ToString('yyyy-MM'))-01T23:59:59Z")
 
     # The end date is always the first Friday of the month.
-    $next = $date
-    while ($next.DayOfWeek -ne 5) {
-        $next = $next.AddDays(1)
+    while ($date.DayOfWeek -ne 5) {
+        $date = $date.AddDays(1)
     }
     [pscustomobject]@{
         Title = $date.ToString("yyyy-MM")
         Description = $date.ToString("MMMM yyyy")
-        DueOn = $next.ToString('s') + 'Z'
+        DueOn = $date.ToString('s') + 'Z'
     }
 
-    # The next date to consider is the first of the following month.
-    $date = [DateTimeOffset]::Parse("$($next.AddMonths(1).ToString('yyyy-MM'))-01T23:59:59Z")
+    # The next date to consider is the following month.
+    $date = $date.AddMonths(1)
 } while ($date -lt $EndDate)
 
 if (!$milestones) {

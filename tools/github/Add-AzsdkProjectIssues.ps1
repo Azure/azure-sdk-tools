@@ -25,7 +25,7 @@ param (
 
     [Parameter(ParameterSetName = 'RepositoryFile')]
     [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
-    [string]$RepositoryFilePath = "./repositories.txt",
+    [string]$RepositoryFilePath = '$PSScriptRoot/repositories.txt',
 
     [Parameter()]
     [ValidateNotNullOrEmpty()]

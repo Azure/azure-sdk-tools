@@ -1,4 +1,4 @@
-﻿@page "{id?}"
+@page "{id?}"
 @model APIViewWeb.Pages.Assemblies.ConversationModel
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
@@ -68,16 +68,19 @@
                                     <table class="code-window">
                                         @foreach (var thread in revision.Value.OrderBy(e => int.Parse(e.LineId.Split("-").Last())))
                                         {
-                                            var elementId = thread.LineId;
-                                            <tr class="code-line"><td class="code p-2" style="word-break: break-all;"><a class="comment-url" asp-page="Samples"
-                                                asp-route-id=@Model.Review.ReviewId
-                                                asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
-                                                asp-fragment=@Uri.EscapeUriString(elementId)>
-                                                @Html.Raw(
-                                                    Model.SampleLines.ElementAt(revision.Key.RevisionNumber-skipped)
-                                                        .ElementAt(int.Parse(thread.Comments.First().ElementId.Split("-").Last())-1))
-                                                </a>
-                                            </td></tr>
+                                            @if(thread.Comments.Any())
+                                            {
+                                                var elementId = thread.LineId;
+                                                <tr class="code-line">
+                                                    <td class="code p-2" style="word-break: break-all;">
+                                                        <a class="comment-url" asp-page="Samples"
+                                                           asp-route-id=@Model.Review.ReviewId
+                                                           asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
+                                                           asp-fragment=@Uri.EscapeUriString(elementId)>@Html.Raw(Model.SampleLines.ElementAt(revision.Key.RevisionNumber-skipped).ElementAt(int.Parse(thread.Comments.First().ElementId.Split("-").Last())-1))
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
                                             <partial name="_CommentThreadPartial" model="@thread" />
                                         }
                                     </table>

@@ -372,11 +372,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         /// <param name="inputJson"></param>
         /// <returns></returns>
         [EnvironmentConditionalSkipTheory]
-        [InlineData(1000, 0.15)] // 1000 0.15 MB files
-        [InlineData(150, 0.25)]  // 150  0.25 MB files
-        [InlineData(100, 0.50)]  // 100  0.5 MB files
-        [InlineData(10, 1.50)]   // 10   1.5 MB files
-        [InlineData(1, 1024)]    // 11   1 GB file
+        [InlineData(1000, 0.15)] // 1000 0.15MB files
+        [InlineData(150, 0.25)]  // 150  0.25MB files
+        [InlineData(100, 0.50)]  // 100  0.5MB files
+        [InlineData(10, 90)]     // 10   90MB files
         [Trait("Category", "Integration")]
         public async Task LargePushPerformance(int numberOfFiles, double fileSize)
         {

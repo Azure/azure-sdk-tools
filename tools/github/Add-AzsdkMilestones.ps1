@@ -1,5 +1,9 @@
-[CmdletBinding(DefaultParameterSetName = 'Repositories', SupportsShouldProcess = $true)]
+[CmdletBinding(DefaultParameterSetName = 'RepositoryFile', SupportsShouldProcess = $true)]
 param (
+    [Parameter(ParameterSetName = 'RepositoryFile')]
+    [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
+    [string]$RepositoryFilePath = "./repositories.txt",
+
     [Parameter(ParameterSetName = 'Repositories')]
     [ValidateNotNullOrEmpty()]
     [string[]] $Repositories = @(
@@ -36,13 +40,17 @@ if ($PSCmdlet.ParameterSetName -eq 'Languages') {
     }
 }
 
+if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
+    $Repositories = Get-Content $RepositoryFilePath
+}
+
 $date = $StartDate
 $milestones = do {
     # Start with the first of the month at 23:59 UTC.
     $date = [DateTimeOffset]::Parse("$($date.ToString('yyyy-MM'))-01T23:59:59Z")
 
-    # The end date is always the first Friday of next month.
-    $next = $date.AddMonths(1)
+    # The end date is always the first Friday of the month.
+    $next = $date
     while ($next.DayOfWeek -ne 5) {
         $next = $next.AddDays(1)
     }
@@ -52,7 +60,8 @@ $milestones = do {
         DueOn = $next.ToString('s') + 'Z'
     }
 
-    $date = $next
+    # The next date to consider is the first of the following month.
+    $date = [DateTimeOffset]::Parse("$($next.AddMonths(1).ToString('yyyy-MM'))-01T23:59:59Z")
 } while ($date -lt $EndDate)
 
 if (!$milestones) {
@@ -89,6 +98,8 @@ Creates Azure SDK milestones in the form of "yyyy-MM" with the due date set to t
 The GitHub repositories to update.
 .PARAMETER Languages
 The Azure SDK languages to query for milestones e.g., "net" for "Azure/azure-sdk-for-net".
+.PARAMETER RepositoryFilePath
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
 .PARAMETER StartDate
 The starting date for new milestones.
 .PARAMETER EndDate

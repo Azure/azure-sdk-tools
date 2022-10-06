@@ -1,10 +1,14 @@
-[CmdletBinding(DefaultParameterSetName = 'Repositories', SupportsShouldProcess = $true)]
+[CmdletBinding(DefaultParameterSetName = 'RepositoryFile', SupportsShouldProcess = $true)]
 param (
     [Parameter(Mandatory = $true, Position = 0)]
     [int] $ProjectNumber,
 
     [Parameter(Mandatory = $true, Position = 1)]
     [string[]] $Labels,
+
+    [Parameter(ParameterSetName = 'RepositoryFile')]
+    [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
+    [string]$RepositoryFilePath = "./repositories.txt",
 
     [Parameter(ParameterSetName = 'Repositories')]
     [Alias("repos")]
@@ -53,6 +57,10 @@ if ($PSCmdlet.ParameterSetName -eq 'Languages') {
     $Repositories = foreach ($lang in $Languages) {
         "Azure/azure-sdk-for-$lang"
     }
+}
+
+if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
+    $Repositories = Get-Content $RepositoryFilePath
 }
 
 if ($Fields) {
@@ -107,6 +115,9 @@ The GitHub repositories to query for issues e.g., "Azure/azure-sdk-for-net".
 
 .PARAMETER Languages
 The Azure SDK languages to query for issues e.g., "net" for "Azure/azure-sdk-for-net".
+
+.PARAMETER RepositoryFilePath
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
 
 .PARAMETER Fields
 Custom fields defined by the project to set when adding issues.

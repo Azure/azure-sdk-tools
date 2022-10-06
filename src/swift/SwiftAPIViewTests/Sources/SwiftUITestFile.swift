@@ -25,35 +25,14 @@
 // --------------------------------------------------------------------------
 
 import Foundation
+import SwiftUI
 
-public class PropertiesTestStruct {
-
-    public var totalSteps: Int = 0 {
-        willSet(newTotalSteps) {
-            print("About to set totalSteps to \(newTotalSteps)")
-
-        }
-        didSet {
-            if totalSteps > oldValue  {
-                print("Added \(totalSteps - oldValue) steps")
-
-            }
-        }
+public class ViewBuilderExample {
+    public func testViewBuilder(@ViewBuilder content: () -> Content) {
+        self.content = content
     }
 
-    public var someReadOnly: String {
-        return "test"
-    }
-
-    private var _secretValue: String = ""
-    public var someReadWrite: String {
-        get {
-            return "test"
-        }
-
-        set {
-            self._secretValue = newValue
-        }
+    @ViewBuilder public func createView() -> some View {
+        return Button()
     }
 }
-

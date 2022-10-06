@@ -560,7 +560,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 var currentSHA = (await ParseConfigurationFile(config.AssetsJsonLocation)).Tag;
                 var content = await File.ReadAllTextAsync(config.AssetsJsonLocation);
-                if (String.IsNullOrEmpty(currentSHA))
+                if (String.IsNullOrWhiteSpace(currentSHA))
                 {
                     string pattern = @"""Tag"":\s*""\s*""";
                     content = Regex.Replace(content, pattern, $"\"Tag\": \"{newSha}\"", RegexOptions.IgnoreCase);

@@ -1,7 +1,7 @@
 # Invoke-Pester .\CLIIntegration.Tests.ps1 -PassThru
 BeforeAll {
     . $PSScriptRoot/assets.Tests.Helpers.ps1
-    . $PSScriptRoot/../../../eng/common/scripts/common.ps1
+    . $PSScriptRoot/../../../../eng/common/scripts/common.ps1
 
     # Each machine installs test-proxy.exe and adds it to the path. Verify that
     # the it's on the path prior to trying to run tests

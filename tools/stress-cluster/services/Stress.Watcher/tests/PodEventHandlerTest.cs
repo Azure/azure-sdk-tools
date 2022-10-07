@@ -186,6 +186,10 @@ namespace Stress.Watcher.Tests
             handler.ShouldDeleteResources(pod).Should().BeTrue();
             pod.Status.Phase = "Unknown";
             handler.ShouldDeleteResources(pod).Should().BeFalse();
+
+            pod.Status.Phase = "Failed";
+            pod.Metadata.Labels.Add("Skip.RemoveTestResources", "true");
+            handler.ShouldDeleteResources(pod).Should().BeFalse();
         }
 
         [Fact]

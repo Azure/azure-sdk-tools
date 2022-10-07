@@ -1,10 +1,7 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
-using Microsoft.Crank.Agent;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -24,24 +21,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
     public class Cpp : LanguageBase
     {
         private const string _buildDirectory = "build";
+        private const string _vcpkgFile = "vcpkg.json";
 
         protected override Language Language => Language.Cpp;
 
         public override async Task<(string output, string error, object context)> SetupAsync(
             string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
         {
-            foreach (var key in packageVersions.Keys)
-            {
-                var gitResult = UpdatePackageVersion(key, packageVersions[key]);
-
-                if (gitResult.Result.ExitCode != 0)
-                {
-                    throw new KeyNotFoundException($"Unable to find version {packageVersions[key]} for package {key}");
-                }
-
-                break;
-            }
-
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
 
             Util.DeleteIfExists(buildDirectory);
@@ -49,6 +35,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
+
+            await UpdatePackageVersion(packageVersions);
 
             // Windows and Linux require different arguments to build Release config
             var additionalGenerateArguments = Util.IsWindows ? "-DDISABLE_AZURE_CORE_OPENTELEMETRY=ON" : "-DCMAKE_BUILD_TYPE=Release";
@@ -96,49 +84,103 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override async Task CleanupAsync(string project)
         {
+            var fullVcpkgPath = Path.Combine(WorkingDirectory, _vcpkgFile);
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
             Util.DeleteIfExists(buildDirectory);
-            await Util.RunAsync(
-                "git", $"checkout main",
-                WorkingDirectory);
+            //cleanup the vcpkg file
+            await Util.RunAsync("git", $"checkout -- {fullVcpkgPath}", WorkingDirectory);
             return;
         }
 
-        private async Task<ProcessResult> UpdatePackageVersion(string project, string packageVersion)
+        private async Task<bool> UpdatePackageVersion(IDictionary<string, string> packageVersions)
         {
-            string gitTag = ComposeGitTag(project, packageVersion);
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
-            ProcessResult result;
-            if (String.Compare(packageVersion, "source", true) == 0)
-            {
-                result = await Util.RunAsync("git",
-                     $"checkout main",
-                     WorkingDirectory,
-                     outputBuilder: outputBuilder,
-                     errorBuilder: errorBuilder);
-            }
-            else
-            {
-                // first try to checkout the branch, might have been created already 
-                result = await Util.RunAsync("git",
-                    $"checkout {gitTag}",
-                    WorkingDirectory,
-                    outputBuilder: outputBuilder,
-                    errorBuilder: errorBuilder);
+            var fullVcpkgPath = Path.Combine(WorkingDirectory, _vcpkgFile);
+            bool updated = false;
+            VcpkgDefinition document;
 
-                // this is the first time thus a branch needs to be created
-                if (result.ExitCode != 0)
+            // make sure we have the latest version of vcpkg declaration file before attempting any changes.
+            var result = await Util.RunAsync("git", $"checkout -- {fullVcpkgPath}", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+
+            if (result.ExitCode != 0)
+            {
+                throw new Exception($"Unable to git checkout main version of {fullVcpkgPath}.{Environment.NewLine}Output: {outputBuilder.ToString()} {Environment.NewLine}Error: {errorBuilder.ToString()}");
+            }
+
+            using (StreamReader r = new StreamReader(fullVcpkgPath))
+            {
+                string json = r.ReadToEnd();
+                document = JsonConvert.DeserializeObject<VcpkgDefinition>(json);
+                Console.WriteLine($"Original {fullVcpkgPath} {Environment.NewLine}{json}");
+            }
+
+            foreach (var package in packageVersions.Keys)
+            {
+                var packageVersion = packageVersions[package];
+                // we don't need to make any updates we want the latest version
+                if (String.Compare(packageVersion, "source", true) == 0)
                 {
-                    result = await Util.RunAsync("git",
-                        $"checkout tags/{gitTag} -b {gitTag}",
-                        WorkingDirectory,
-                        outputBuilder: outputBuilder,
-                        errorBuilder: errorBuilder);
+                    continue;
+                }
+                bool found = false;
+
+                foreach (VcpkgDependency dependency in document.Dependencies)
+                {
+                    if (dependency.Name == package)
+                    {
+                        dependency.VersionGt = packageVersion;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    VcpkgDependency vcpkgDependency = new VcpkgDependency();
+                    vcpkgDependency.Name = package;
+                    vcpkgDependency.VersionGt = packageVersion;
+                    document.Dependencies.Add(vcpkgDependency);
+                }
+
+                if (document.Overrides == null)
+                {
+                    document.Overrides = new List<VcpkgDependency>();
+                }
+
+                found = false;
+
+                foreach (VcpkgDependency overrideEntry in document.Overrides)
+                {
+                    if (overrideEntry.Name == package)
+                    {
+                        overrideEntry.Version = packageVersion;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    VcpkgDependency overrideEntry = new VcpkgDependency();
+                    overrideEntry.Name = package;
+                    overrideEntry.Version = packageVersion;
+                    document.Overrides.Add(overrideEntry);
+                }
+                updated = true;
+            }
+
+            if (updated)
+            {
+                using (StreamWriter writer = new StreamWriter(fullVcpkgPath))
+                {
+                    string serializedDocument = JsonConvert.SerializeObject(document, Formatting.Indented);
+                    Console.WriteLine($"Updated {fullVcpkgPath}{Environment.NewLine}{serializedDocument}");
+                    writer.Write(serializedDocument);
                 }
             }
 
-            return result;
+            return updated;
         }
 
         private string ComposeGitTag(string project, string packageVersion)

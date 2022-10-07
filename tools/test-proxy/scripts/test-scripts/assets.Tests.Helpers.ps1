@@ -251,6 +251,34 @@ Function Invoke-ProxyCommand {
   }
 }
 
+# Invoke the proxy command and echo the output. The WriteOutput
+# is used to output a command response when executing Reset commands.
+# When Reset detects pending changes it'll prompt to override. This
+# works because there's a single response required.
+Function Invoke-DockerProxyCommand {
+  param(
+    [string] $CommandArgs,
+    [string] $MountDirectory,
+    [string] $WriteOutput = $null
+  )
+
+  $invocation = "docker run --rm --name transition.test.proxy -v '${MountDirectory}:/srv/testproxy' 'azsdkengsys.azurecr.io/engsys/test-proxy@latest'"
+  Write-Host "$invocation $CommandArgs"
+
+  # Need to cast the output into an array otherwise it'll be one long string with no newlines
+  if ($WriteOutput) {
+      # CommandArgs needs to be split otherwise all of the arguments will be quoted into a single
+      # argument.
+      [array] $output = Write-Output $WriteOutput | & "$invocation" $CommandArgs.Split(" ")
+  } else {
+      [array] $output = & "$invocation" $CommandArgs.Split(" ")
+  }
+  # echo the command output
+  foreach ($line in $output) {
+    Write-Host "$line"
+  }
+}
+
 # The assets directory will either be in the .assets directory, in the same
 # directory as the assets.json file OR the PROXY_ASSETS_FOLDER. Now, in order
 # to not have a ridiculous subdirectory length, the proxy creates a 10 character

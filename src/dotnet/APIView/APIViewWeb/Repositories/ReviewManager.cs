@@ -408,7 +408,7 @@ namespace APIViewWeb.Repositories
             {
                 //Approve revision
                 revision.Approvers.Add(userId);
-                review.approvalDate = DateTime.Now;
+                review.ApprovalDate = DateTime.Now;
             }
             await _reviewsRepository.UpsertReviewAsync(review);
         }
@@ -776,8 +776,8 @@ namespace APIViewWeb.Repositories
         public async Task RequestApproversAsync(ClaimsPrincipal User, string ReviewId, HashSet<string> reviewers)
         {
             var review = await GetReviewAsync(User, ReviewId);
-            review.requestedReviewers = reviewers;
-            review.approvalRequestedOn = DateTime.Now;
+            review.RequestedReviewers = reviewers;
+            review.ApprovalRequestedOn = DateTime.Now;
             await _reviewsRepository.UpsertReviewAsync(review);
         }
     }

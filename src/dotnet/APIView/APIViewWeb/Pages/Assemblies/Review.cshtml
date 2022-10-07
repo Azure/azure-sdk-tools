@@ -52,7 +52,7 @@
                                     @* TODO: Sort by approver language/filter to approvers who work in Review's langauge *@
                                     <span class="checkbox dropdown-item-text">
                                         <label>
-                                            @if (Model.Review.requestedReviewers != null && Model.Review.requestedReviewers.Contains(approver))
+                                            @if (Model.Review.RequestedReviewers != null && Model.Review.RequestedReviewers.Contains(approver))
                                             {
                                                 <input type="checkbox" class="selectDropdownForRequest" name="reviewers" value="@approver" checked>
                                                 anyChecked = true;

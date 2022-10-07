@@ -5,7 +5,7 @@
 @{
     ViewData["Title"] = "Requested Reviews";
     var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
-    ViewData["UserPreference"] = userPreference;
+    TempData["UserPreference"] = userPreference;
 }
 <div class="mx-5 row">
     <div class="col-md-12" id="reviews-filter-partial">
@@ -55,7 +55,7 @@
                                         <span>@review.FilterType.ToString()</span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.approvalRequestedOn.ToLocalTime()"></span>
+                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.ApprovalRequestedOn.ToLocalTime()"></span>
                                     </td>
                                 </tr>
                             }
@@ -118,7 +118,7 @@
                                         <span>@review.FilterType.ToString()</span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.approvalDate.ToLocalTime()"></span>
+                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.ApprovalDate.ToLocalTime()"></span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
                                         <span>

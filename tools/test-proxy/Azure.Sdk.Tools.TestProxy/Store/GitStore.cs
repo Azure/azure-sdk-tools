@@ -82,7 +82,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task Push(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var pendingChanges = DetectPendingChanges(config);
-            var generatedTagName = config.TagPrefix + Guid.NewGuid().ToString();
+            var generatedTagName = config.TagPrefix;
 
             if (pendingChanges.Length > 0)
             {
@@ -94,6 +94,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     GitHandler.Run($"checkout {config.TagPrefix}", config);
                     GitHandler.Run($"add -A .", config);
                     GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit -m \"Automatic asset update from test-proxy.\"", config);
+                    // Get the first 10 digits of the commit SHA. The generatedTagName will be the
+                    // config.TagPrefix_<SHA>
+                    if (GitHandler.TryRun("rev-parse --short=10 HEAD", config, out CommandResult SHAResult))
+                    {
+                        var newSHA = SHAResult.StdOut.Trim();
+                        generatedTagName += $"_{newSHA}";
+                    } else
+                    {
+                        throw GenerateInvokeException(SHAResult);
+                    }
                     GitHandler.Run($"tag {generatedTagName}", config);
                     GitHandler.Run($"push origin {generatedTagName}", config);
                 }

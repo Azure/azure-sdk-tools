@@ -1,4 +1,4 @@
-﻿import Split from "split.js";
+import Split from "split.js";
 import { updatePageSettings } from "./helpers";
 
 $(() => {  
@@ -265,16 +265,10 @@ $(() => {
                 navItemRow.removeClass("nav-list-collapsed");
               });
             }
-            else {
-              navItemRow.removeClass("nav-list-collapsed");
-            }
           }
         }
       }
-      else {
-        navItemRow.removeClass("nav-list-collapsed");
-      }
-      
+      navItemRow.removeClass("nav-list-collapsed");
     }
     else {
       navItemRow.addClass("nav-list-collapsed");

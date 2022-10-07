@@ -33,7 +33,7 @@ Describe "AssetsModuleTests" {
             $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
             $assetsFile = Join-Path $testFolder "assets.json"
             $CommandArgs = "restore --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -56,7 +56,7 @@ Describe "AssetsModuleTests" {
             $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
             $assetsFile = Join-Path $testFolder "assets.json"
             $CommandArgs = "restore --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 4
@@ -80,7 +80,7 @@ Describe "AssetsModuleTests" {
             $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
             $assetsFile = Join-Path $testFolder "assets.json"
             $CommandArgs = "restore --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -110,7 +110,7 @@ Describe "AssetsModuleTests" {
             $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
             $assetsFile = Join-Path $testFolder "assets.json"
             $CommandArgs = "restore --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -119,7 +119,7 @@ Describe "AssetsModuleTests" {
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
 
             $CommandArgs = "reset --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
             # With no pending changes, the reset should leave everything alone
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
@@ -140,7 +140,7 @@ Describe "AssetsModuleTests" {
             $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
             $assetsFile = Join-Path $testFolder "assets.json"
             $CommandArgs = "restore --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -160,7 +160,7 @@ Describe "AssetsModuleTests" {
 
             # Reset answering Y and they should all go back to original restore
             $CommandArgs = "reset --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs -WriteOutput "Y"
+            Invoke-DockerProxyCommand $CommandArgs -WriteOutput "Y"
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
@@ -180,7 +180,7 @@ Describe "AssetsModuleTests" {
             $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
             $assetsFile = Join-Path $testFolder "assets.json"
             $CommandArgs = "restore --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -202,7 +202,7 @@ Describe "AssetsModuleTests" {
 
             # Reset answering N and they should remain changed as per the previous changes
             $CommandArgs = "reset --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs -WriteOutput "N"
+            Invoke-DockerProxyCommand $CommandArgs -WriteOutput "N"
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 4
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
@@ -238,7 +238,7 @@ Describe "AssetsModuleTests" {
             $CommandArgs = "restore --assets-json-path $assetsFile"
 
             # The initial restore/verification
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -257,7 +257,7 @@ Describe "AssetsModuleTests" {
 
             # Push the changes
             $CommandArgs = "push --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
 
             # Verify that after the push the directory still contains our updated files
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -292,7 +292,7 @@ Describe "AssetsModuleTests" {
             $CommandArgs = "restore --assets-json-path $assetsFile"
 
             # The initial restore/verification
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -311,7 +311,7 @@ Describe "AssetsModuleTests" {
 
             # Push the changes
             $CommandArgs = "push --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
 
             # Verify that after the push the directory still contains our updated files
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -346,7 +346,7 @@ Describe "AssetsModuleTests" {
             $CommandArgs = "restore --assets-json-path $assetsFile"
 
             # The initial restore/verification
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 4
@@ -369,7 +369,7 @@ Describe "AssetsModuleTests" {
 
             # Push the changes
             $CommandArgs = "push --assets-json-path $assetsFile"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe $CommandArgs
+            Invoke-DockerProxyCommand $CommandArgs
 
             # Verify that after the push the directory still contains our updated files
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3

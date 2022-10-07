@@ -1,5 +1,9 @@
-[CmdletBinding(DefaultParameterSetName = 'Repositories', SupportsShouldProcess = $true)]
+[CmdletBinding(DefaultParameterSetName = 'RepositoryFile', SupportsShouldProcess = $true)]
 param (
+    [Parameter(ParameterSetName = 'RepositoryFile')]
+    [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
+    [string]$RepositoryFilePath = "$PSScriptRoot/../repositories.txt",
+
     [Parameter(ParameterSetName = 'Repositories')]
     [ValidateNotNullOrEmpty()]
     [string[]] $Repositories = @(
@@ -36,23 +40,27 @@ if ($PSCmdlet.ParameterSetName -eq 'Languages') {
     }
 }
 
+if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
+    $Repositories = Get-Content $RepositoryFilePath
+}
+
 $date = $StartDate
 $milestones = do {
     # Start with the first of the month at 23:59 UTC.
     $date = [DateTimeOffset]::Parse("$($date.ToString('yyyy-MM'))-01T23:59:59Z")
 
-    # The end date is always the first Friday of next month.
-    $next = $date.AddMonths(1)
-    while ($next.DayOfWeek -ne 5) {
-        $next = $next.AddDays(1)
+    # The end date is always the first Friday of the month.
+    while ($date.DayOfWeek -ne 5) {
+        $date = $date.AddDays(1)
     }
     [pscustomobject]@{
         Title = $date.ToString("yyyy-MM")
         Description = $date.ToString("MMMM yyyy")
-        DueOn = $next.ToString('s') + 'Z'
+        DueOn = $date.ToString('s') + 'Z'
     }
 
-    $date = $next
+    # The next date to consider is the following month.
+    $date = $date.AddMonths(1)
 } while ($date -lt $EndDate)
 
 if (!$milestones) {
@@ -83,18 +91,28 @@ foreach ($repo in $Repositories) {
 <#
 .SYNOPSIS
 Creates Azure SDK milestones in the form of "yyyy-MM".
+
 .DESCRIPTION
 Creates Azure SDK milestones in the form of "yyyy-MM" with the due date set to the first Friday of the following month at 11:59 PM UTC.
+
 .PARAMETER Repositories
 The GitHub repositories to update.
+
 .PARAMETER Languages
 The Azure SDK languages to query for milestones e.g., "net" for "Azure/azure-sdk-for-net".
+
+.PARAMETER RepositoryFilePath
+The fully-qualified path (including filename) to a new line-delmited file of respositories to update.
+
 .PARAMETER StartDate
 The starting date for new milestones.
+
 .PARAMETER EndDate
 The end date for new milestones.
+
 .PARAMETER Force
 Create milestones for each repository without prompting.
+
 .EXAMPLE
 Add-AzsdkMilestones.ps1 -WhatIf
 See how many milestones may be created for each repository without actually adding them.

@@ -262,16 +262,31 @@ Function Invoke-DockerProxyCommand {
     [string] $WriteOutput = $null
   )
 
-  $invocation = "docker run --rm --name transition.test.proxy -v '${MountDirectory}:/srv/testproxy' 'azsdkengsys.azurecr.io/engsys/test-proxy@latest'"
-  Write-Host "$invocation $CommandArgs"
+  $updatedDirectory = $MountDirectory.ToString().Replace("`\", "/")   # docker doesn't play well with windows style paths when binding a volume, lets keep it simple.
+  $token = $env:GIT_TOKEN
+  $commiter = $env:GIT_COMMIT_OWNER
+  $email = $env:GIT_COMMIT_EMAIL
+
+  $AmendedArgs = @(
+    "run --rm --name transition.test.proxy",
+    "-v `"${updatedDirectory}:/srv/testproxy`"",
+    "-e `"GIT_TOKEN=${token}`"",
+    "-e `"GIT_COMMIT_OWNER=${commiter}`"",
+    "-e `"GIT_COMMIT_EMAIL=${email}`"",
+    "azsdkengsys.azurecr.io/engsys/test-proxy:latest",
+    "test-proxy",
+    $CommandArgs
+  ) -join " "
+
+  Write-Host "docker $AmendedArgs"
 
   # Need to cast the output into an array otherwise it'll be one long string with no newlines
   if ($WriteOutput) {
       # CommandArgs needs to be split otherwise all of the arguments will be quoted into a single
       # argument.
-      [array] $output = Write-Output $WriteOutput | & "$invocation" $CommandArgs.Split(" ")
+      [array] $output = Write-Output $WriteOutput | & "docker" $AmendedArgs.Split(" ")
   } else {
-      [array] $output = & "$invocation" $CommandArgs.Split(" ")
+      [array] $output = & "docker" $AmendedArgs.Split(" ")
   }
   # echo the command output
   foreach ($line in $output) {

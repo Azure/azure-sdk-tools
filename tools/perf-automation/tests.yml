@@ -37,6 +37,13 @@ parameters:
 - name: PackageVersions
   type: string
   default: '12|source'
+  # Use general pools instead of perf pools for faster startup due to more warm agents
+- name: LinuxPool
+  type: string
+  default: 'azsdk-pool-mms-ubuntu-2004-general'
+- name: WindowsPool
+  type: string
+  default: 'azsdk-pool-mms-win-2019-general'
 
 resources:
   repositories:
@@ -67,10 +74,7 @@ resources:
     ref: main
 
 variables:
-  # Use general pools instead of perf pools for faster startup due to more warm agents
-  LinuxPool: 'azsdk-pool-mms-ubuntu-2004-general'
   LinuxVmImage: 'MMSUbuntu20.04'
-  WindowsPool: 'azsdk-pool-mms-win-2019-general'
   WindowsVmImage: 'MMS2019'
   ToolsRepoCommitish: $(Build.SourceVersion)
   Services: '^storage-blob$'
@@ -86,9 +90,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Net'
-        LinuxPool: $(LinuxPool)
+        LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
-        WindowsPool: $(WindowsPool)
+        WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'Net'
         LanguageRepoName: 'Azure/azure-sdk-for-net'
@@ -112,9 +116,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Java'
-        LinuxPool: $(LinuxPool)
+        LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
-        WindowsPool: $(WindowsPool)
+        WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'Java'
         LanguageRepoName: 'Azure/azure-sdk-for-java'
@@ -145,9 +149,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_JS'
-        LinuxPool: $(LinuxPool)
+        LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
-        WindowsPool: $(WindowsPool)
+        WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'JS'
         LanguageRepoName: 'Azure/azure-sdk-for-js'
@@ -171,9 +175,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Python'
-        LinuxPool: $(LinuxPool)
+        LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
-        WindowsPool: $(WindowsPool)
+        WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'Python'
         LanguageRepoName: 'Azure/azure-sdk-for-python'
@@ -200,9 +204,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Cpp'
-        LinuxPool: $(LinuxPool)
+        LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
-        WindowsPool: $(WindowsPool)
+        WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'Cpp'
         LanguageRepoName: 'Azure/azure-sdk-for-cpp'

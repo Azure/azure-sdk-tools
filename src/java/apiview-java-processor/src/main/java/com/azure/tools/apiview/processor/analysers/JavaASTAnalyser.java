@@ -1398,7 +1398,6 @@ public class JavaASTAnalyser implements Analyser {
                 addNewLine();
             });
         });
-        addToken(makeWhitespace());
         addToken(new Token(DOCUMENTATION_RANGE_END));
     }
 

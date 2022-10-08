@@ -37,12 +37,18 @@ class SignatureModel: Tokenizable {
     struct ParameterModel: Tokenizable {
 
         var name: String
+        var attributes: AttributesModel?
         var typeModel: TypeAnnotationModel
         var defaultValue: String?
         var isVariadic: Bool
 
         init(from source: FunctionSignature.Parameter) {
             name = source.externalName?.textDescription ?? source.localName.textDescription
+            if let attrs = source.attributes {
+                attributes = AttributesModel(from: attrs)
+            } else {
+                attributes = nil
+            }
             typeModel = TypeAnnotationModel(from: source.typeAnnotation)!
             // TODO: This may not be a good assumption
             defaultValue = source.defaultArgumentClause?.textDescription
@@ -50,6 +56,7 @@ class SignatureModel: Tokenizable {
         }
 
         func tokenize(apiview a: APIViewModel) {
+            attributes?.tokenize(apiview: a)
             a.member(name: name)
             a.punctuation(":", postfixSpace: true)
             typeModel.tokenize(apiview: a)

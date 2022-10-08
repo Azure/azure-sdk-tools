@@ -1,10 +1,10 @@
-﻿import Split from "split.js";
+import Split from "split.js";
 import { updatePageSettings } from "./helpers";
 
 $(() => {  
   const SEL_DOC_CLASS = ".documentation";
   const SHOW_DOC_CHECK_COMPONENT = "#show-documentation-component";
-  const SHOW_DOC_CHECKBOX = "#show-doc-checkbox";
+  const SHOW_DOC_CHECKBOX = ".show-doc-checkbox";
   const SHOW_DOC_HREF = ".show-document";
   const SHOW_DIFFONLY_CHECKBOX = ".show-diffonly-checkbox";
   const SHOW_DIFFONLY_HREF = ".show-diffonly";
@@ -265,16 +265,10 @@ $(() => {
                 navItemRow.removeClass("nav-list-collapsed");
               });
             }
-            else {
-              navItemRow.removeClass("nav-list-collapsed");
-            }
           }
         }
       }
-      else {
-        navItemRow.removeClass("nav-list-collapsed");
-      }
-      
+      navItemRow.removeClass("nav-list-collapsed");
     }
     else {
       navItemRow.addClass("nav-list-collapsed");
@@ -294,7 +288,8 @@ $(() => {
   /* TOGGLE PAGE OPTIONS
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $(SHOW_DOC_CHECKBOX).on("click", e => {
-    if((e.target as HTMLInputElement).checked) {
+    $(SHOW_DOC_HREF)[0].click();
+    /*if((e.target as HTMLInputElement).checked) {
       // show all documentation
       $(".code-line-documentation").removeClass('hidden-row');
       $(TOGGLE_DOCUMENTATION).children('i').removeClass("fa-square-plus");
@@ -308,7 +303,7 @@ $(() => {
       $(TOGGLE_DOCUMENTATION).children('i').addClass("fa-square-plus");
       $(TOGGLE_DOCUMENTATION).children('i').css("color", "darkcyan");
       $(TOGGLE_DOCUMENTATION).children('svg').addClass("invisible");
-    }
+    }*/
   });
 
   $(SHOW_DOC_HREF).on("click", e => {

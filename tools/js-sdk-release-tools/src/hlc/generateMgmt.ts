@@ -114,6 +114,8 @@ export async function generateMgmt(options: {
                     const breakingChangeItems = changelog.getBreakingChangeItems();
                     if (!!breakingChangeItems && breakingChangeItems.length > 0) {
                         outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
+                    } else {
+                        outputPackageInfo.changelog['breakingChangeItems'] = [];
                     }
                 }
                 

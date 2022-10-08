@@ -72,6 +72,11 @@ namespace APIViewWeb
             memoryStream.Position = 0;
             await GetBlobClient(revisionId, codeFileId, out var key).UploadAsync(memoryStream, overwrite: true);
             _cache.Remove(key);
+
+            var renderedCodeFile = new RenderedCodeFile(codeFile);
+            _cache.CreateEntry(key)
+            .SetSlidingExpiration(TimeSpan.FromMinutes(10))
+            .SetValue(renderedCodeFile);
         }
 
         public async Task DeleteCodeFileAsync(string revisionId, string codeFileId)

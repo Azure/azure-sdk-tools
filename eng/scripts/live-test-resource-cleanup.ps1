@@ -269,6 +269,17 @@ function FindOrCreateDeleteAfterTag {
     [object]$ResourceGroup
   )
 
+  if (!$ResourceGroup) {
+      return
+  }
+
+  # Possible states are Canceled, Deleting, Failed, InProgress, Succeeded
+  # https://learn.microsoft.com/dotnet/api/microsoft.azure.management.websites.models.provisioningstate
+  if ($ResourceGroup.ProvisioningState -in @('Deleting', 'InProgress')) {
+      Write-Host "Skipping tag query/update for group '$($ResourceGroup.ResourceGroupName)' as it is in '$($ResourceGroup.ProvisioningState)' state"
+      return
+  }
+
   $deleteAfter = GetTag $ResourceGroup "DeleteAfter"
   if (!$deleteAfter -or !($deleteAfter -as [datetime])) {
     $deleteAfter = [datetime]::UtcNow.AddHours($DeleteAfterHours)

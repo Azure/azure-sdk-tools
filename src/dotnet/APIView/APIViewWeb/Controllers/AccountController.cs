@@ -41,11 +41,10 @@ namespace APIViewWeb.Controllers
         {
             _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
             {
-                UserName = User.GetGitHubLogin(),
                 HideLeftNavigation = hideLeftNavigation,
                 HideLineNumbers = hideLineNumbers,
                 Theme = theme
-            });
+            }, User.GetGitHubLogin());
             return Ok();
         }
     }

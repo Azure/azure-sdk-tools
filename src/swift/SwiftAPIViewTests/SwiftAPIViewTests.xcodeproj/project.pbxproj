@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0A2E6B5028EF4F1B001F313D /* SwiftUITestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A2E6B4F28EF4F1B001F313D /* SwiftUITestFile.swift */; };
 		0A34D5C127FF40A3008A76A6 /* ExtensionTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A34D5BA27FF40A2008A76A6 /* ExtensionTestFile.swift */; };
 		0A34D5C227FF40A3008A76A6 /* AttributesTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A34D5BB27FF40A2008A76A6 /* AttributesTestFile.swift */; };
 		0A34D5C327FF40A3008A76A6 /* EnumerationsTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A34D5BC27FF40A2008A76A6 /* EnumerationsTestFile.swift */; };
@@ -30,6 +31,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0A2E6B4F28EF4F1B001F313D /* SwiftUITestFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUITestFile.swift; sourceTree = "<group>"; };
 		0A34D5BA27FF40A2008A76A6 /* ExtensionTestFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExtensionTestFile.swift; sourceTree = "<group>"; };
 		0A34D5BB27FF40A2008A76A6 /* AttributesTestFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AttributesTestFile.swift; sourceTree = "<group>"; };
 		0A34D5BC27FF40A2008A76A6 /* EnumerationsTestFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EnumerationsTestFile.swift; sourceTree = "<group>"; };
@@ -74,6 +76,7 @@
 				0A35C1FF28298ED0008C99AD /* PropertiesTestFile.swift */,
 				0A34D5BD27FF40A2008A76A6 /* ProtocolTestFile.swift */,
 				0A34D5BF27FF40A2008A76A6 /* SwiftAPIViewTests.h */,
+				0A2E6B4F28EF4F1B001F313D /* SwiftUITestFile.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -213,6 +216,7 @@
 				0A34D5C527FF40A3008A76A6 /* GenericsTestFile.swift in Sources */,
 				0A34D5C427FF40A3008A76A6 /* ProtocolTestFile.swift in Sources */,
 				0A34D5C927FF40AF008A76A6 /* FunctionsTestFile.swift in Sources */,
+				0A2E6B5028EF4F1B001F313D /* SwiftUITestFile.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -373,7 +377,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.3;
+				MARKETING_VERSION = 0.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.SwiftAPIViewTests;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -403,7 +407,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.3;
+				MARKETING_VERSION = 0.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.SwiftAPIViewTests;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

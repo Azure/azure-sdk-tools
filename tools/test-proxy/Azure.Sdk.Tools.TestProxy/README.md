@@ -66,7 +66,7 @@ There is a walkthrough through the process below in the [how do I use the test p
 
 ### Via Local Compile or .NET
 
-1. [Install .Net 5.0](https://dotnet.microsoft.com/download)
+1. [Install .Net 5.0 or 6.0](https://dotnet.microsoft.com/download)
 2. Install test-proxy
 
 ```powershell

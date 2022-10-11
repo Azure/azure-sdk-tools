@@ -129,7 +129,7 @@ Services:
       Cpp: extendedOptions
   - Test: base64
     Arguments:
-    - 
+    - --parallel 1
     TestNames:
       Cpp: base64
 

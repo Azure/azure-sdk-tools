@@ -274,7 +274,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (!File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} does not exist", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
@@ -307,7 +307,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (!File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} does not exist", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
@@ -333,7 +333,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} already exists", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} already exists", fullFileName);
                 throw new ArgumentException(errorString);
             }
 

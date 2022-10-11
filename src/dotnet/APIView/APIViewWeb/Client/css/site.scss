@@ -624,6 +624,7 @@ code {
     max-width: 780px;
     position: sticky;
     left: 10px;
+    z-index: 100; // for user suggestion box, position sticky creates new stacking order, so z-index has to be set here too
 }
 
 .comment-icon {

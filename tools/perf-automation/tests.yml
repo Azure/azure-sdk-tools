@@ -221,7 +221,7 @@ stages:
         ServiceDirectory: 'core'
         Services: '^core$'
         PackageVersions: ${{ parameters.PackageVersions }}
-        Tests: '^(extendedOptions)$'
+        Tests: '^(base64)$'
         Arguments: '.*'
         # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}

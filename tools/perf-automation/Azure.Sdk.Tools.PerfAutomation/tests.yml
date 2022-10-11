@@ -127,7 +127,12 @@ Services:
     - -e 1
     TestNames:
       Cpp: extendedOptions
-       
+  - Test: base64
+    Arguments:
+    - 
+    TestNames:
+      Cpp: base64
+
 - Service: storage-blob
   Languages:
     Net:

@@ -1,4 +1,4 @@
-﻿﻿ /* Themes
+ /* Themes
 ------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .light-theme {
     --background-color: #fff;
@@ -195,15 +195,14 @@ input[type="search"]::-webkit-search-cancel-button {
     height: auto;
     overflow: auto;
     max-height: 100vh;
+    padding: 5px 0px 5px 10px;
 }
 
 #review-right {
     max-width: 100%;
     min-width: 100px;
-    height: auto;
-    overflow: auto;
     padding: 0px;
-    max-height: 100vh
+    overflow-y: auto;
 }
 /*---------------------------------------------------------------------*/
 
@@ -1184,4 +1183,9 @@ mark {
     text-indent: 0px;
     text-transform: none;
     word-spacing: 0px;
+}
+
+.position-relative-top-1 {
+    position: relative;
+    top: 1px;
 }

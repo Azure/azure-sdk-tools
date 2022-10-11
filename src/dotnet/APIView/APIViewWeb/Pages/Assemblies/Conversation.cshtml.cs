@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,6 +28,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public IOrderedEnumerable<KeyValuePair<ReviewRevisionModel, List<CommentThreadModel>>> Threads { get; set; }
         public Dictionary<UsageSampleRevisionModel, List<CommentThreadModel>> UsageSampleThreads { get; set; }
+        public HashSet<GithubUser> TaggableUsers { get; set; }
         public ConversationModel(
             IConfiguration configuration,
             BlobCodeFileRepository codeFileRepository,
@@ -46,6 +47,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
+            TaggableUsers = _commentsManager.TaggableUsers;
             TempData["Page"] = "conversation";
             Review = await _reviewManager.GetReviewAsync(User, id);
             Sample = (await _samplesManager.GetReviewUsageSampleAsync(id)).FirstOrDefault();

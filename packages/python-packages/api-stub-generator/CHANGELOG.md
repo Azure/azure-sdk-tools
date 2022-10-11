@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.5 (Unreleased)
+Fixed issue where properties could be inadvertently rendered as TypedDict keys.
+
 ## Version 0.3.4 (2022-08-11)
 Fixed issue so that APIView is still generated even if pylint parsing fails.
 Fixed issue where diagnostics could be duplicated on functions with the same name.

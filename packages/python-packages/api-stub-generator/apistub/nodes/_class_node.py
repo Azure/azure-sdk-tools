@@ -205,7 +205,7 @@ class ClassNode(NodeEntityBase):
                 for (item_name, item_type) in child_obj.items():
                     if item_name.startswith("_"):
                         continue
-                    if is_typeddict and inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing":
+                    if is_typeddict and (inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing"):
                         self.child_nodes.append(
                             KeyNode(self.namespace, self, item_name, item_type)
                         )

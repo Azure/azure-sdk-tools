@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -45,10 +45,10 @@ namespace APIViewWeb.Pages.Assemblies
 
             if(User.Identity.IsAuthenticated && (userProfile.UserName == null || userProfile.Email == null))
             {
-                return Redirect("/Assemblies/Profile");
+                Response.Redirect("/Assemblies/Profile");
+                return;
             }
 
-            if (search.Count == 0 && languages.Count == 0 && state.Count == 0 && status.Count == 0 && type.Count == 0)
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())
             {
                 UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
@@ -58,7 +58,6 @@ namespace APIViewWeb.Pages.Assemblies
                 type = userPreference.FilterType.Select(x => x.ToString());
             }
             await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
-            return Page();
         }
 
         public async Task<PartialViewResult> OnGetReviewsPartialAsync(

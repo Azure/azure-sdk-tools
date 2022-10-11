@@ -3,9 +3,14 @@ BeforeAll {
     . $PSScriptRoot/assets.Tests.Helpers.ps1
     . $PSScriptRoot/../../../../eng/common/scripts/common.ps1
 
-    # Each machine installs test-proxy.exe and adds it to the path. Verify that
-    # the it's on the path prior to trying to run tests
     $TestProxyExe = "test-proxy"
+
+    # By default, this test set runs against the `test-proxy` CLI tool
+    # if the environment variable TEST_PROXY_CLI_DOCKER is set to "true", run the tests in DOCKER mode.
+    # this also means skipping a couple of the reset tests.
+    if($env:TEST_PROXY_CLI_DOCKER){
+        $TestProxyExe = "docker"
+    }
     $proxyInPath = Test-Exe-In-Path($TestProxyExe)
     if (-not $proxyInPath) {
         LogError "$TestProxyExe was not found in the path. Please ensure the install has been done prior to running tests."
@@ -127,6 +132,12 @@ Describe "AssetsModuleTests" {
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
         }
         It "It should call Reset and prompt Yes to restore files" {
+            # Write-Output doesn't cooperate with the docker run. Need to find a different method. Covered in #4374.
+            if ($env:TEST_PROXY_CLI_DOCKER) {
+                Set-ItResult
+                return
+            }
+
             $recordingJson = [PSCustomObject]@{
                 AssetsRepo           = "Azure/azure-sdk-assets-integration"
                 AssetsRepoPrefixPath = "pull/scenarios"
@@ -167,6 +178,12 @@ Describe "AssetsModuleTests" {
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
         }
         It "It should call Reset and prompt No to restore files" {
+            # Write-Output doesn't cooperate with the docker run. Need to find a different method. Covered in #4374.
+            if ($env:TEST_PROXY_CLI_DOCKER) {
+                Set-ItResult
+                return
+            }
+
             $recordingJson = [PSCustomObject]@{
                 AssetsRepo           = "Azure/azure-sdk-assets-integration"
                 AssetsRepoPrefixPath = "pull/scenarios"

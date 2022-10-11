@@ -85,6 +85,7 @@ namespace APIViewWeb.Repositories
             var reviewLink = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}#{Uri.EscapeUriString(comment.ElementId)}");
             var commentText = comment.Comment;
             var poster = comment.Username;
+            Console.WriteLine("User: " + poster);
             var userLink = new Uri($"{_endpoint}/Assemblies/Profile/{poster}");
             var sb = new StringBuilder();
             sb.Append($"<a href='{userLink.ToString()}'>{poster}</a>");
@@ -147,6 +148,11 @@ namespace APIViewWeb.Repositories
         
         private async Task SendUserEmailsAsync(ReviewModel review, UserProfileModel user, string plainTextContent, string htmlContent)
         {
+            Console.WriteLine("Review Name: "+review.DisplayName);
+            Console.WriteLine("Username: "+user.UserName);
+            Console.WriteLine("PlainText: "+plainTextContent);
+            Console.WriteLine("HTMLText: "+htmlContent);
+            Console.WriteLine("Email: "+user.Email);
             ClaimsPrincipal userBackup = new ClaimsPrincipal();
             EmailAddress e;
             if (!user.Email.IsNullOrEmpty())

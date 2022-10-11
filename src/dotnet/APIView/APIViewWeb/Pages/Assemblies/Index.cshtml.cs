@@ -46,7 +46,6 @@ namespace APIViewWeb.Pages.Assemblies
             if(User.Identity.IsAuthenticated && (userProfile.UserName == null || userProfile.Email == null))
             {
                 Response.Redirect("/Assemblies/Profile");
-                return;
             }
 
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())

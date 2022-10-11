@@ -62,7 +62,6 @@ namespace Azure.Sdk.Tools.TestProxy
             // new GitProcessHandler().VerifyGitMinVersion();
             var parser = new Parser(settings =>
             {
-                settings.AutoVersion = false;
                 settings.CaseSensitive = false;
                 settings.HelpWriter = System.Console.Out;
                 settings.EnableDashDash = true;
@@ -121,13 +120,6 @@ namespace Azure.Sdk.Tools.TestProxy
         private static async Task Run(object commandObj)
         {
             DefaultOptions defaultOptions = (DefaultOptions)commandObj;
-            if (defaultOptions.VersionFlag)
-            {
-                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-                var assemblyVersion = assembly.GetName().Version;
-                System.Console.WriteLine($"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}-dev.{semanticVersion}");
-            }
 
             TargetLocation = resolveRepoLocation(defaultOptions.StorageLocation);
             Resolver = new StoreResolver();

@@ -87,8 +87,6 @@ If you've already installed the tool, you can always check the installed version
 > test-proxy --version
 ```
 
-The `--version` option can also be invoked as part of a command and will display the version prior to running the command.
-
 ### Via Docker Image
 
 The Azure SDK Team maintains a public Azure Container Registry.

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -52,12 +52,6 @@ namespace APIViewWeb
             {
                 await _userProfileContainer.UpsertItemAsync(userModel, new PartitionKey(User.GetGitHubLogin()));
             }
-        }
-
-        // DEBUG/TESTING ONLY - REMOVE BEFORE PR
-        public async Task deleteUserProfileAsync(ClaimsPrincipal User)
-        {
-            await _userProfileContainer.DeleteItemStreamAsync(User.GetGitHubLogin(), new PartitionKey(User.GetGitHubLogin()));
         }
     }
 }

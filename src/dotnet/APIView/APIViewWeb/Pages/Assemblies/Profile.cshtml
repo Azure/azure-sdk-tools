@@ -105,13 +105,9 @@
                 </div>
                 <hr />
 
-                <div class="form-group form-row">
-                    <label for="Email" class="col-sm-2 font-weight-bold" style="line-height:48px"> Email </label>
-                    <input name="Email" class="form-control form-control-lg col-sm-10 bg-light" type="email" value="@Model.userProfile.Email" disabled /><br />
-                    <label for="GitLink" class="col-sm-2 font-weight-bold" style="line-height:48px"> GitHub Link </label>
-                    <a href="https://github.com/@(Model.userProfile.UserName)" target="_blank" class="form-control form-control-lg col-sm-10 bg-light">
-                        @Model.userProfile.UserName's GitHub Page
-                    </a>
+                <div class="text-center">
+                    <a href="mailto:@Model.userProfile.Email" target="_blank">@Model.userProfile.Email </a> <br />
+                    <a href="https://github.com/@(Model.userProfile.UserName)" target="_blank">@Model.userProfile.UserName's GitHub Page </a>
                 </div>
             </div>
         </div>

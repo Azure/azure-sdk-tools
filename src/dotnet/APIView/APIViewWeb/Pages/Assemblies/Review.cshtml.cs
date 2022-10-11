@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,6 +59,7 @@ namespace APIViewWeb.Pages.Assemblies
         public CodeLineModel[] Lines { get; set; }
         public InlineDiffLine<CodeLine>[] DiffLines { get; set; }
         public ReviewCommentsModel Comments { get; set; }
+        public HashSet<GithubUser> TaggableUsers { get; set; }
 
         /// <summary>
         /// The number of active conversations for this iteration
@@ -93,6 +94,8 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }
+
+            TaggableUsers = _commentsManager.TaggableUsers;
 
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
             Revision = GetReviewRevision(revisionId);

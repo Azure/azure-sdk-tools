@@ -2,12 +2,18 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Microsoft.Extensions.Options;
 
 namespace APIViewWeb
 {
@@ -19,14 +25,48 @@ namespace APIViewWeb
 
         private readonly NotificationManager _notificationManager;
 
+        private readonly OrganizationOptions _Options;
+
+        public HashSet<GithubUser> TaggableUsers;
+
         public CommentsManager(
             IAuthorizationService authorizationService,
             CosmosCommentsRepository commentsRepository,
-            NotificationManager notificationManager)
+            NotificationManager notificationManager,
+            IOptions<OrganizationOptions> options)
         {
             _authorizationService = authorizationService;
             _commentsRepository = commentsRepository;
             _notificationManager = notificationManager;
+            _Options = options.Value;
+
+            TaggableUsers = new HashSet<GithubUser>();
+
+            LoadTaggableUsers();
+        }
+
+        public async void LoadTaggableUsers()
+        {
+            HttpClient c = new HttpClient();
+
+            // UserAgent is required
+            ProductInfoHeaderValue userAgent = new ProductInfoHeaderValue("APIView", Startup.VersionHash);
+
+            foreach (string requiredOrg in _Options.RequiredOrganization)
+            {
+                HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, string.Format("https://api.github.com/orgs/{0}/public_members?page={1}&per_page=100", requiredOrg, 1));
+                req.Headers.UserAgent.Add(userAgent);
+
+                HttpResponseMessage res = await c.SendAsync(req);
+                string body = await res.Content.ReadAsStringAsync();
+                GithubUser[] users = JsonConvert.DeserializeObject<GithubUser[]>(body);
+                foreach (GithubUser user in users)
+                {
+                    TaggableUsers.Add(user);
+                }
+            }
+            // Order users alphabetically
+            TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
 
         public async Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId)
@@ -54,12 +94,24 @@ namespace APIViewWeb
             }
         }
 
-        public async Task<CommentModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText)
+        public async Task<CommentModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText, string[] taggedUsers)
         {
             var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
             await AssertOwnerAsync(user, comment);
             comment.EditedTimeStamp = DateTime.Now;
             comment.Comment = commentText;
+
+            HashSet<string> newTaggedUsers = new HashSet<string>();
+            foreach(string taggedUser in taggedUsers)
+            {
+                if(!comment.TaggedUsers.Contains(taggedUser))
+                {
+                    // TODO: notify users they have been tagged
+                }
+                newTaggedUsers.Add(taggedUser);
+            }
+            comment.TaggedUsers = newTaggedUsers;
+
             await _commentsRepository.UpsertCommentAsync(comment);
             await _notificationManager.NotifySubscribersOnComment(user, comment);
             return comment;

@@ -57,9 +57,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public static async Task Main(string[] args = null)
         {
             VerifyVerb(args);
-            // JRS - Temporarily disable this check because of https://github.com/Azure/azure-sdk-tools/issues/4116
-            // This throws and will exit
-            // new GitProcessHandler().VerifyGitMinVersion();
+            new GitProcessHandler().VerifyGitMinVersion();
             var parser = new Parser(settings =>
             {
                 settings.CaseSensitive = false;

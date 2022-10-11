@@ -30,7 +30,59 @@
                 <br>
                 <small class="text-muted">@Model.Review.PackageDisplayName</small>
             </p>
-            <div class="my-1">
+
+            <div class="dropdown d-inline-block my-1">
+                <a class="btn btn-light btn-sm border shadow-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                    <i class="fa-solid fa-flag"></i>&nbsp;&nbsp;Request Approval
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <span class="dropdown-header">
+                        Select users to request for review
+                    </span>
+                    <span class="dropdown modal-dialog-scrollable">
+                        <form asp-resource="@Model.Review" asp-page-handler="RequestReviewers" method="post"
+                            class ="selectpicker show-tick show-menu-arrow " data-style="btn-light btn-sm border" data-selected-text-format="value" 
+                            data-live-search="true" data-size="10" data-width="100%" data-container="body" data-tick-icon="fa-solid fa-check">
+                            @{
+                                var anyChecked = false;
+                            }
+                            <div style="max-height:400px;width:max-content;overflow-y:auto">
+                                @foreach (var approver in Model.approvers) 
+                                {
+                                    @* TODO: Sort by approver language/filter to approvers who work in Review's langauge *@
+                                    <span class="checkbox dropdown-item-text">
+                                        <label>
+                                            @if (Model.Review.RequestedReviewers != null && Model.Review.RequestedReviewers.Contains(approver))
+                                            {
+                                                <input type="checkbox" class="selectDropdownForRequest" name="reviewers" value="@approver" checked>
+                                                anyChecked = true;
+                                            }
+                                            else 
+                                            {
+                                                <input type="checkbox" class="selectDropdownForRequest"  name="reviewers" value="@approver">
+                                            }
+                                            &nbsp;&nbsp;<img username="@approver" class="comment-icon align-self-start mr-2" height="28" width="28" />
+                                            @approver
+                                        </label>
+                                    </span>
+                                }
+                            </div>
+                            <span class="dropdown-item-text">
+                                @if (anyChecked)
+                                {
+                                    <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" onclick="document.getElementById('submitRequestForReview').click()" disabled>Request Selected</button>
+                                }
+                                else 
+                                {
+                                    <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitRequestForReview').click();">Request All</button>
+                                }                                
+                                <button type="submit" id="submitRequestForReview" hidden></button>
+                            </span>
+                        </form>
+                    </span>
+                </div>
+            </div>
+            <div class="my-1 ml-2">
                 @if (Model.Revision.Approvers.Count > 0)
                 {
                     var approvers = String.Join(", ", Model.Revision.Approvers);

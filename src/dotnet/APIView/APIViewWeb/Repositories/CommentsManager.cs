@@ -100,13 +100,14 @@ namespace APIViewWeb
             await AssertOwnerAsync(user, comment);
             comment.EditedTimeStamp = DateTime.Now;
             comment.Comment = commentText;
+            comment.Username = user.GetGitHubLogin();
 
             HashSet<string> newTaggedUsers = new HashSet<string>();
             foreach(string taggedUser in taggedUsers)
             {
                 if(!comment.TaggedUsers.Contains(taggedUser))
                 {
-                    // TODO: notify users they have been tagged
+                    await _notificationManager.NotifyUserOnCommentTag(taggedUser, comment);
                 }
                 newTaggedUsers.Add(taggedUser);
             }

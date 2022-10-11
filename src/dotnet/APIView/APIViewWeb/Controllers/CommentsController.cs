@@ -34,11 +34,12 @@ namespace APIViewWeb.Controllers
             comment.GroupNo = groupNo;
             comment.IsUsageSampleComment = usageSampleComment;
             comment.ResolutionLocked = !resolutionLock.Equals("on");
+            comment.Username = User.GetGitHubLogin();
 
             foreach(string user in taggedUsers)
             {
                 comment.TaggedUsers.Add(user);
-                // TODO: notify users they have been tagged
+                await _notificationManager.NotifyUserOnCommentTag(user, comment);
             }
 
             await _commentsManager.AddCommentAsync(User, comment);

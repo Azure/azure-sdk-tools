@@ -378,6 +378,40 @@ $(() => {
       }
     });
   });
+  
+  /* BUTTON FOR REQUEST REVIEW (CHANGES BETWEEN REQUEST ALL AND REQUEST SELECTED IN THE REQUEST APPROVAL SECTION)
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  $('.selectDropdownForRequest').on("click", function () {
+    var reviewers = document.getElementsByName('reviewers');
+    var button = document.getElementById('submitReviewRequest') as HTMLInputElement | null;
+    var anyChecked = false;
+
+    if (button == null) return; // Case to remove null warnings
+    button.disabled = false;
+
+    for (var i = 0; i < reviewers.length; i++) {
+      var element = reviewers[i] as HTMLInputElement | null;
+      if (element?.checked) {
+        anyChecked = true;
+        button.innerText = "Request Selected";
+        button.onclick = function () { document.getElementById("submitRequestForReview")?.click(); };
+        break;
+      }
+    }
+
+    if (!anyChecked) {
+      button.innerText = "Request All";
+      button.onclick = function () {
+        var reviewers = document.getElementsByName('reviewers');
+        // Select all, submit
+        reviewers.forEach(f => {
+          var e = f as HTMLInputElement | null;
+          if(e != null) e.checked = true;
+          document.getElementById("submitRequestForReview")?.click();
+        });
+      };
+    }
+  });
 
   /* COLLAPSIBLE CODE LINES (EXPAND AND COLLAPSE FEATURE)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/

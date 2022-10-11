@@ -15,7 +15,7 @@ Before running the script, understand that **only services that have migrated to
 Running the script requires the following:
 
 - [x] The targeted library is already migrated to use the test-proxy.
-- [x] Git version `>2.32.1` needs to be on the machine and in the path. Git is used by the script and test-proxy.
+- [x] Git version `>2.25.0` needs to be on the machine and in the path. Git is used by the script and test-proxy.
 - [x] Test-proxy needs to be on the machine and in the path. Instructions for that are [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/Azure.Sdk.Tools.TestProxy/README.md#installation). The script uses test-proxy's CLI commands.
 - [x] [Powershell Core](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) at least version 7.
 

@@ -218,6 +218,14 @@ namespace ApiView
                         leafSectionPlaceHolderNumber = (int)token.NumberOfLinesinLeafSection;
                         break;
 
+                    case CodeFileTokenKind.ExternalLinkStart:
+                        stringBuilder.Append($"<a target=\"_blank\" href=\"{token.Value}\">");
+                        break;
+
+                    case CodeFileTokenKind.ExternalLinkEnd:
+                        stringBuilder.Append("</a>");
+                        break;
+
                     default:
                         currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
                         RenderToken(token, stringBuilder, isDeprecatedToken);

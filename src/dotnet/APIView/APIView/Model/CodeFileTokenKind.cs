@@ -31,6 +31,8 @@ namespace APIView
         TableColumnName = 24,
         TableCellBegin = 25,
         TableCellEnd = 26,
-        LeafSectionPlaceholder = 27
+        LeafSectionPlaceholder = 27,
+        ExternalLinkStart = 28,
+        ExternalLinkEnd = 29
     }
 }

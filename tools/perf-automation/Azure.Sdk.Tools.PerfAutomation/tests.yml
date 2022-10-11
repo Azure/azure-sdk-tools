@@ -59,9 +59,9 @@ Services:
       Project: sdk/core/azure-core-perf
       PrimaryPackage: 'com.azure:azure-core'
       PackageVersions:
-      - 'com.azure:azure-core': 1.31.0
-        'com.azure:azure-core-http-netty': 1.12.4
-        'com.azure:azure-core-http-okhttp': 1.11.1
+      - 'com.azure:azure-core': 1.32.0
+        'com.azure:azure-core-http-netty': 1.12.5
+        'com.azure:azure-core-http-okhttp': 1.11.2
       - 'com.azure:azure-core': source
         'com.azure:azure-core-http-netty': source
         'com.azure:azure-core-http-okhttp': source
@@ -130,21 +130,21 @@ Services:
     Net:
       Project: sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj
       PackageVersions:
-      - Azure.Storage.Blobs: 12.13.0
+      - Azure.Storage.Blobs: 12.13.1
       - Azure.Storage.Blobs: source
     Java:
       Project: sdk/storage/azure-storage-perf
       PrimaryPackage: 'com.azure:azure-storage-blob'
       PackageVersions: &java-storage-package-versions
-      - 'com.azure:azure-storage-common': 12.18.0
-        'com.azure:azure-storage-blob': 12.19.0
-        'com.azure:azure-storage-blob-cryptography': 12.18.0
-        'com.azure:azure-storage-file-share': 12.15.0
-        'com.azure:azure-storage-file-datalake': 12.12.0
-        'com.azure:azure-core': 1.31.0
-        'com.azure:azure-core-http-netty': 1.12.4
-        'com.azure:azure-core-http-okhttp': 1.11.1
-        'io.projectreactor:reactor-core': 3.4.21
+      - 'com.azure:azure-storage-common': 12.18.1
+        'com.azure:azure-storage-blob': 12.19.1
+        'com.azure:azure-storage-blob-cryptography': 12.18.1
+        'com.azure:azure-storage-file-share': 12.15.1
+        'com.azure:azure-storage-file-datalake': 12.12.1
+        'com.azure:azure-core': 1.32.0
+        'com.azure:azure-core-http-netty': 1.12.5
+        'com.azure:azure-core-http-okhttp': 1.11.2
+        'io.projectreactor:reactor-core': 3.4.22
       - 'com.azure:azure-storage-common': source
         'com.azure:azure-storage-blob': source
         'com.azure:azure-storage-blob-cryptography': source
@@ -160,11 +160,11 @@ Services:
       PrimaryPackage: '@azure/storage-blob'
       PackageVersions:
       - '@azure/storage-blob': 12.11.0
-        '@azure/core-auth': 1.3.2
-        '@azure/core-http': 2.2.5
-        '@azure/core-lro': 2.2.4
+        '@azure/core-auth': 1.4.0
+        '@azure/core-http': 2.2.7
+        '@azure/core-lro': 2.3.1
         '@azure/core-paging': 1.3.0
-        '@azure/core-rest-pipeline': 1.9.0
+        '@azure/core-rest-pipeline': 1.9.2
         '@azure/core-tracing': 1.0.1
         '@azure/core-util': 1.1.0
         '@azure/abort-controller': 1.1.0
@@ -183,7 +183,7 @@ Services:
       Project: sdk/storage/azure-storage-blob
       PrimaryPackage: azure-storage-blob
       PackageVersions:
-      - azure-core: 1.25.0
+      - azure-core: 1.25.1
         azure-storage-blob: 12.13.1
       - azure-core: source
         azure-storage-blob: source
@@ -335,7 +335,7 @@ Services:
       Project: sdk/storage/azure-storage-file-share
       PrimaryPackage: azure-storage-file-share
       PackageVersions:
-      - azure-core: 1.25.0
+      - azure-core: 1.25.1
         azure-storage-file-share: 12.9.0
       - azure-core: source
         azure-storage-file-share: source
@@ -378,7 +378,7 @@ Services:
       Project: sdk/storage/azure-storage-file-datalake
       PrimaryPackage: azure-storage-file-datalake
       PackageVersions:
-      - azure-core: 1.25.0
+      - azure-core: 1.25.1
         azure-storage-file-datalake: 12.8.0
       - azure-core: source
         azure-storage-file-datalake: source

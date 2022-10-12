@@ -4,9 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
@@ -36,7 +39,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
-            await UpdatePackageVersion(packageVersions);
+            await UpdatePackageVersions(packageVersions);
 
             // Windows and Linux require different arguments to build Release config
             var additionalGenerateArguments = Util.IsWindows ? "-DDISABLE_AZURE_CORE_OPENTELEMETRY=ON" : "-DCMAKE_BUILD_TYPE=Release";
@@ -64,6 +67,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var result = await Util.RunAsync(perfExe, $"{testName} {arguments}", WorkingDirectory);
 
+            IDictionary<string,string> reportedVersions = new Dictionary<string, string>();
+
             // Completed 54 operations in a weighted-average of 1s (52.766473 ops/s, 0.0189514 s/op)
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
 
@@ -73,12 +78,26 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 opsPerSecond = double.Parse(match.Groups[1].Value);
             }
 
+            foreach (var key in packageVersions.Keys)
+            {
+                var packageMatch = Regex.Match(result.StandardOutput, @$"{key.ToUpper()} VERSION ?.*");
+                if (packageMatch.Success)
+                {
+                    var version = packageMatch.Captures[0].Value.Split(' ');
+
+                    if (version.Length > 0)
+                    {
+                        reportedVersions.Add(key, version[version.Length - 1]);
+                    }
+                }
+            }
+
             return new IterationResult
             {
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = result.StandardOutput,
                 StandardError = result.StandardError,
-                PackageVersions = packageVersions
+                PackageVersions = reportedVersions
             };
         }
 
@@ -92,7 +111,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return;
         }
 
-        private async Task<bool> UpdatePackageVersion(IDictionary<string, string> packageVersions)
+        private async Task<bool> UpdatePackageVersions(IDictionary<string, string> packageVersions)
         {
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
@@ -118,6 +137,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             foreach (var package in packageVersions.Keys)
             {
                 var packageVersion = packageVersions[package];
+                var envName = $"VCPKG-{package.ToUpper()}";
                 // we don't need to make any updates we want the latest version
                 if (String.Compare(packageVersion, "source", true) == 0)
                 {
@@ -168,6 +188,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     document.Overrides.Add(overrideEntry);
                 }
                 updated = true;
+                Environment.SetEnvironmentVariable(envName, packageVersion);
             }
 
             if (updated)
@@ -181,18 +202,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
 
             return updated;
-        }
-
-        private string ComposeGitTag(string project, string packageVersion)
-        {
-            StringBuilder tag = new StringBuilder(project.Length + packageVersion.Length);
-
-            string[] parts = project.Split('-', StringSplitOptions.RemoveEmptyEntries);
-            tag.Append(String.Join('-', parts.Take(parts.Length - 1).ToArray<string>()));
-            tag.Append('_');
-            tag.Append(packageVersion);
-
-            return tag.ToString();
         }
     }
 }

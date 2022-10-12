@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIViewWeb.Models;
@@ -47,17 +47,17 @@ namespace APIViewWeb.Repositories
         public async Task NotifyUserOnCommentTag(string username, CommentModel comment)
         {
             ReviewModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
-            UserProfileModel user = await _userProfileRepository.tryGetUserProfileByNameAsync(username);
+            UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
             await SendUserEmailsAsync(review, user, GetCommentTagPlainTextContent(comment), GetCommentTagHtmlContent(comment, review));
         }
         
         public async Task NotifyApproversOfReview(ClaimsPrincipal user, string reviewId, HashSet<String> reviewers)
         {
-            UserProfileModel userProfile = await _userProfileRepository.tryGetUserProfileAsync(user);
+            UserProfileModel userProfile = await _userProfileRepository.tryGetUserProfileAsync(user.GetGitHubLogin());
             ReviewModel review = await _reviewRepository.GetReviewAsync(reviewId);
             foreach (string reviewer in reviewers)
             {
-                UserProfileModel reviewerProfile = await _userProfileRepository.tryGetUserProfileByNameAsync(reviewer);
+                UserProfileModel reviewerProfile = await _userProfileRepository.tryGetUserProfileAsync(reviewer);
                 await SendUserEmailsAsync(review, reviewerProfile, 
                     GetApproverReviewContentHeading(userProfile,false), 
                     GetApproverReviewHtmlContent(userProfile, review));

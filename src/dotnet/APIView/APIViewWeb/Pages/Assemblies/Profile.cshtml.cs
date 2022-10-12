@@ -21,11 +21,7 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<IActionResult> OnGetAsync(string UserName)
         {
             UserProfileModel profile;
-            if(UserName == null)
-            {
-                profile = await this._manager.tryGetUserProfileAsync(User);
-            }
-            else if (User.GetGitHubLogin().Equals(UserName))
+            if(UserName == null || User.GetGitHubLogin().Equals(UserName))
             {
                 profile = await this._manager.tryGetUserProfileAsync(User);
             }
@@ -35,7 +31,7 @@ namespace APIViewWeb.Pages.Assemblies
             }
             
             // Default/original behaviour case - send them to the github page if the user profile doesn't exist yet. (Useful until everyone is up to date)
-            if(profile == null)
+            if(profile.Email == null)
             {
                 return Redirect("https://github.com/" + UserName);
             } 

@@ -22,6 +22,13 @@ namespace APIViewWeb.Models
             Preferences = preferences ?? new UserPreferenceModel();
         }
 
+        public UserProfileModel(string username)
+        {
+            Languages = new HashSet<string>();
+            Preferences = new UserPreferenceModel();
+            UserName = username;
+        }
+
         [JsonProperty("id")]
         public string UserName { get; set; }
         public string Email { get; set; }

@@ -8,6 +8,7 @@ using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Azure;
+using System.Security.Claims;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -43,9 +44,17 @@ namespace APIViewWeb.Pages.Assemblies
         {
             var userProfile = await _userProfileManager.tryGetUserProfileAsync(User);
 
-            if(User.Identity.IsAuthenticated && (userProfile.UserName == null || userProfile.Email == null))
+            if(User.Identity.IsAuthenticated && userProfile.Email == null)
             {
-                Response.Redirect("/Assemblies/Profile");
+                string email = User.FindFirstValue(ClaimConstants.Email);
+                if (email == null)
+                {
+                    await _userProfileManager.updateUserProfile(User, email, null, (await _preferenceCache.GetUserPreferences(User.GetGitHubLogin())));
+                }
+                else
+                {
+                    Response.Redirect("/Assemblies/Profile");
+                }
             }
 
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())

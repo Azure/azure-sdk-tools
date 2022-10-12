@@ -1,4 +1,4 @@
-﻿@page "{UserName?}"
+@page "{UserName?}"
 @model APIViewWeb.Pages.Assemblies.ProfileModel
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
@@ -11,7 +11,7 @@
     {
         ViewData["Title"] = Model.userProfile.UserName;
     }
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin());
 
     List<string> themes = new List<string>()
     {
@@ -32,7 +32,7 @@
     {
         <h1> User profile does not exist. </h1>
     }
-    else if (Model.userProfile.UserName == null || Model.userProfile.UserName.Equals(User.GetGitHubLogin()))
+    else if (Model.userProfile.UserName.Equals(User.GetGitHubLogin()))
     {
         <div>
             @if (Model.userProfile.Email == null)

@@ -28,33 +28,25 @@ namespace APIViewWeb
 
         public async Task<UserProfileModel> tryGetUserProfileAsync(ClaimsPrincipal User)
         {   
-            return await _UserProfileRepository.tryGetUserProfileAsync(User);
+            return await _UserProfileRepository.tryGetUserProfileAsync(User.GetGitHubLogin());
         }
 
         public async Task<UserProfileModel> tryGetUserProfileByNameAsync(string UserName)
         {
-            return await _UserProfileRepository.tryGetUserProfileByNameAsync(UserName);
+            return await _UserProfileRepository.tryGetUserProfileAsync(UserName);
         }
 
         public async Task updateUserPreferences(ClaimsPrincipal User, UserPreferenceModel preferences)
         {
             UserProfileModel UserProfile = await tryGetUserProfileAsync(User);
-            if (UserProfile.UserName == null)
-            {
-                return;
-            }
 
-            UserProfile.Preferences = preferences;
+            UserProfile.Preferences = preferences ?? new UserPreferenceModel();
             await _UserProfileRepository.upsertUserProfileAsync(User, UserProfile);
         }
 
         public async Task updateUserProfile(ClaimsPrincipal User, string email, HashSet<string> languages, UserPreferenceModel preferences)
         {
             UserProfileModel UserProfile = await tryGetUserProfileAsync(User);
-            if (UserProfile.UserName == null)
-            {
-                return;
-            }
 
             if (languages != null)
             {

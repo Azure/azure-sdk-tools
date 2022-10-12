@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.Services.Graph.Client;
 
@@ -22,19 +24,7 @@ namespace APIViewWeb
             _userProfileContainer = client.GetContainer("APIView", "Profiles");
         }
 
-        public async Task<UserProfileModel> tryGetUserProfileAsync(ClaimsPrincipal User)
-        {
-            try
-            {
-                return await _userProfileContainer.ReadItemAsync<UserProfileModel>(User.GetGitHubLogin(), new PartitionKey(User.GetGitHubLogin()));
-            }
-            catch
-            {
-                return new UserProfileModel(User, null, null, null);
-            }
-        }
-
-        public async Task<UserProfileModel> tryGetUserProfileByNameAsync(string UserName)
+        public async Task<UserProfileModel> tryGetUserProfileAsync(string UserName)
         {
             try
             {
@@ -42,7 +32,7 @@ namespace APIViewWeb
             }
             catch
             {
-                return null;
+                return new UserProfileModel(UserName);
             }
         }
 

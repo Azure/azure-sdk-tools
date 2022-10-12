@@ -41,13 +41,13 @@ Describe "AssetsModuleTests" {
 
 
             Write-Host "Before"
-            Get-ChildItem -Recurse -Force $testFolder | Out-Null
+            Get-ChildItem -Recurse -Force $testFolder
 
             $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
             Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
 
             Write-Host "After"
-            Get-ChildItem -Recurse -Force $testFolder | Out-Null
+            Get-ChildItem -Recurse -Force $testFolder
 
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile

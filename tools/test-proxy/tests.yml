@@ -103,7 +103,7 @@ stages:
             ./prepare.ps1
 
             docker build -t $(CLI_TEST_DOCKER_TAG) .
-          workingDirectory: /tools/test-proxy/docker/
+          workingDirectory: tools/test-proxy/docker/
 
         - template: /eng/pipelines/templates/steps/run-pester-tests.yml
           parameters:

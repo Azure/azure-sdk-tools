@@ -1,4 +1,4 @@
-﻿@page "{id}/{revisionId?}"
+@page "{id}/{revisionId?}"
 @model APIViewWeb.Pages.Assemblies.ReviewPageModel
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
@@ -13,23 +13,58 @@
 <div class="container-fluid">
     <div class="row mx-1 px-0 py-2 border-bottom">
         <div class="col-lg-12 d-flex px-0">
-            @if (Model.Review.Language != null)
-            {
-                string iconClassName = "icon-" + Model.Review.GetLanguageCssSafeName();
-                @if (!string.IsNullOrEmpty(Model.Review.LanguageVariant) && Model.Review.LanguageVariant.ToLower() != "default")
-                {
-                    iconClassName += "-" + @Model.Review.LanguageVariant.ToLower();
-                }
-                <span role="img" class="mr-2 mt-1 p-1 border rounded icon-language @iconClassName" aria-label="@Model.Review.Language @Model.Review.LanguageVariant"></span>
-            }
-            <p class="h6 mb-0 mr-auto">
-                @if (Model.Review.ServiceName != null)
-                {
-                    @Model.Review.ServiceName
-                }
-                <br>
-                <small class="text-muted">@Model.Review.PackageDisplayName</small>
-            </p>
+            <partial name="Shared/_ReviewBadge" model=" Model.Review" />
+            <div class="dropdown d-inline-block my-1">
+                <a class="btn btn-light btn-sm border shadow-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                    <i class="fa-solid fa-flag"></i>&nbsp;&nbsp;Request Approval
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <span class="dropdown-header">
+                        Select users to request for review
+                    </span>
+                    <span class="dropdown modal-dialog-scrollable">
+                        <form asp-resource="@Model.Review" asp-page-handler="RequestReviewers" method="post"
+                            class ="selectpicker show-tick show-menu-arrow " data-style="btn-light btn-sm border" data-selected-text-format="value" 
+                            data-live-search="true" data-size="10" data-width="100%" data-container="body" data-tick-icon="fa-solid fa-check">
+                            @{
+                                var anyChecked = false;
+                            }
+                            <div style="max-height:400px;width:max-content;overflow-y:auto">
+                                @foreach (var approver in Model.approvers) 
+                                {
+                                    @* TODO: Sort by approver language/filter to approvers who work in Review's langauge *@
+                                    <span class="checkbox dropdown-item-text">
+                                        <label>
+                                            @if (Model.Review.RequestedReviewers != null && Model.Review.RequestedReviewers.Contains(approver))
+                                            {
+                                                <input type="checkbox" class="selectDropdownForRequest" name="reviewers" value="@approver" checked>
+                                                anyChecked = true;
+                                            }
+                                            else 
+                                            {
+                                                <input type="checkbox" class="selectDropdownForRequest"  name="reviewers" value="@approver">
+                                            }
+                                            &nbsp;&nbsp;<img username="@approver" class="comment-icon align-self-start mr-2" height="28" width="28" />
+                                            @approver
+                                        </label>
+                                    </span>
+                                }
+                            </div>
+                            <span class="dropdown-item-text">
+                                @if (anyChecked)
+                                {
+                                    <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" onclick="document.getElementById('submitRequestForReview').click()" disabled>Request Selected</button>
+                                }
+                                else 
+                                {
+                                    <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitRequestForReview').click();">Request All</button>
+                                }                                
+                                <button type="submit" id="submitRequestForReview" hidden></button>
+                            </span>
+                        </form>
+                    </span>
+                </div>
+            </div>
             <div class="my-1">
                 @if (Model.Revision.Approvers.Count > 0)
                 {
@@ -50,18 +85,18 @@
                 @{
                     var popOverContent = $"<b>{Model.ActiveConversations}</b> active revision threads.<br><b>{Model.UsageSampleConversations}</b> active usage sample threads.<br><b>{Model.TotalActiveConversations}</b> total active threads.<br>"
                     + $"<b>Current Revision:</b> <em>{@Model.Revision.DisplayName}</em>";
-                    @if (Model.DiffRevisionId != null)
+                        @if (Model.DiffRevisionId != null)
                     {
                         popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
                     }
-                    <div class="btn-group btn-group-sm shadow-sm" aria-label="Page Information">
-                        <button type="button" class="btn btn-info" id="jump-to-first-comment">
-                            <i class="far fa-comment-alt"></i>
-                        </button>
-                        <button type="button" class="btn btn-info" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
-                            <span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
-                        </button>
-                    </div>
+                        <div class="btn-group btn-group-sm shadow-sm" aria-label="Page Information">
+                            <button type="button" class="btn btn-info" id="jump-to-first-comment">
+                                <i class="far fa-comment-alt"></i>
+                            </button>
+                            <button type="button" class="btn btn-info" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
+                                <span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
+                            </button>
+                        </div>
                 }
             </div>
             <div class="my-1">
@@ -360,12 +395,14 @@
                 reviewRightSize = "12";
             }
         }
-        <div id="review-left" class="col-2 rounded-1 border @reviewLeftDisplay">
-            <div class="namespace-view">
-                @if (Model.CodeFile != null)
-                {
-                    <partial name="Shared/Navigation" model=" Model.CodeFile.Navigation" />
-                }
+        <div id="review-left" class="col-2 sticky-top border rounded-1 @reviewLeftDisplay">
+            <div>
+                <div class="namespace-view">
+                    @if (Model.CodeFile != null)
+                    {
+                        <partial name="Shared/Navigation" model=" Model.CodeFile.Navigation" />
+                    }
+                </div>
             </div>
         </div>
 
@@ -380,5 +417,5 @@
             </table>
         </div>
     </div>
-    <partial name="_CommentFormPartial" /> 
+    <partial name="_CommentFormPartial" model="@Model.TaggableUsers" /> 
 </div>

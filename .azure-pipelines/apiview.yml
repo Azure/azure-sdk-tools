@@ -181,6 +181,7 @@ stages:
                 APIVIEW_COSMOS__CONNECTIONSTRING: $(apiview-cosmos-connectionstring)
                 APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
                 APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
+                APIVIEW_AUTHENTICATIONSCHEME: "Test"
 
             - task: DotNetCoreCLI@2
               displayName: 'Build & Test'

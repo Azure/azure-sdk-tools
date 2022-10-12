@@ -37,6 +37,9 @@ parameters:
 - name: PackageVersions
   type: string
   default: '12|source'
+- name: Iterations
+  type: number
+  default: 1
   # Use general pools instead of perf pools for faster startup due to more warm agents
 - name: LinuxPool
   type: string
@@ -80,7 +83,6 @@ variables:
   Services: '^storage-blob$'
   Tests: '^(download)$'
   Arguments: '(10240)'
-  Iterations: '1'
 
 stages:
 - stage: Test
@@ -110,7 +112,7 @@ stages:
         Tests: $(Tests)
         Arguments: $(Arguments)
         # Iterations parameter has type 'number' so must use this variable syntax
-        Iterations: ${{ variables.Iterations }}
+        Iterations: ${{ parameters.Iterations }}
 
   - ${{ if parameters.IncludeJava }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -143,7 +145,7 @@ stages:
         Tests: $(Tests)
         Arguments: $(Arguments)
         # Iterations parameter has type 'number' so must use this variable syntax
-        Iterations: ${{ variables.Iterations }}
+        Iterations: ${{ parameters.Iterations }}
 
   - ${{ if parameters.IncludeJS }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -169,7 +171,7 @@ stages:
         Tests: $(Tests)
         Arguments: $(Arguments)
         # Iterations parameter has type 'number' so must use this variable syntax
-        Iterations: ${{ variables.Iterations }}
+        Iterations: ${{ parameters.Iterations }}
 
   - ${{ if parameters.IncludePython }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -198,7 +200,7 @@ stages:
         Tests: $(Tests)
         Arguments: $(Arguments)
         # Iterations parameter has type 'number' so must use this variable syntax
-        Iterations: ${{ variables.Iterations }}
+        Iterations: ${{ parameters.Iterations }}
 
   - ${{ if parameters.IncludeCpp }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -224,7 +226,7 @@ stages:
         Tests: '^(extendedOptions)$'
         Arguments: '.*'
         # Iterations parameter has type 'number' so must use this variable syntax
-        Iterations: ${{ variables.Iterations }}
+        Iterations: ${{ parameters.Iterations }}
 
 - stage: Print_Results
   displayName: Print Results

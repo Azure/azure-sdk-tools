@@ -90,16 +90,23 @@ stages:
       pool:
         name: 'azsdk-pool-mms-ubuntu-2004-general'
 
+      variables:
+        CLI_TEST_DOCKER_TAG: LocalTestProxyInstance
+
       steps:
         - task: UseDotNet@2
           displayName: 'Use .NET Core sdk 6.x'
           inputs:
             version: '6.x'
 
-        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+        # need to build local docker tag
+        - template: /eng/pipelines/templates/steps/build-docker-image.yml
           parameters:
-            runProxy: false
-            rootFolder: $(Build.SourcesDirectory)
+              ImageName: $(CLI_TEST_DOCKER_TAG)
+              ImageTag: ''
+              PrepareScript: 'tools/test-proxy/docker/prepare.ps1'
+              DockerFile: 'tools/test-proxy/docker/dockerfile'
+              AdditionalDockerBuildArgs: ${{ config.AdditionalDockerArgs }}
 
         - template: /eng/pipelines/templates/steps/run-pester-tests.yml
           parameters:
@@ -109,7 +116,8 @@ stages:
               GIT_TOKEN: $(azuresdk-github-pat)
               GIT_COMMIT_OWNER: azure-sdk
               GIT_COMMIT_EMAIL: azuresdk@microsoft.com
-              CLI_TEST_WITH_DOCKER: true
+              CLI_TEST_DOCKER: true
+              CLI_TEST_DOCKER_TAG: $(CLI_TEST_DOCKER_TAG)
 
   - stage: RepoUnitTests
     displayName: Repo-Specific Unit Tests

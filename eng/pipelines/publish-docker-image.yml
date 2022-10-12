@@ -41,10 +41,13 @@ jobs:
         name: ${{ config.pool }}
         vmImage: ${{ config.vmImage }}
       steps:
-        - ${{ if config.prepareScript }}:
-          - pwsh: |
-              ./${{ config.prepareScript }}
-            displayName: "Run prep script"
+        - template: /eng/pipelines/templates/steps/build-docker-image.yml
+          parameters:
+              ImageName: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}
+              ImageTag: ${{ parameters.ImageTag }}
+              PrepareScript: ${{ config.prepareScript }}
+              DockerFile: ${{ config.dockerFile }}
+              AdditionalDockerBuildArgs: ${{ config.AdditionalDockerArgs }}
 
         - task: Docker@2
           displayName: Build ${{ config.name }}:${{ parameters.ImageTag }}

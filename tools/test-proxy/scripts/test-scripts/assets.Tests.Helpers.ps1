@@ -259,13 +259,15 @@ Function Invoke-ProxyCommand {
     $commiter = $env:GIT_COMMIT_OWNER
     $email = $env:GIT_COMMIT_EMAIL
 
+    $targetImage = if ($env:CLI_TEST_DOCKER_TAG) { $env:CLI_TEST_DOCKER_TAG } else { "azsdkengsys.azurecr.io/engsys/test-proxy:latest" }
+
     $AmendedArgs = @(
       "run --rm --name transition.test.proxy",
       "-v `"${updatedDirectory}:/srv/testproxy`"",
       "-e `"GIT_TOKEN=${token}`"",
       "-e `"GIT_COMMIT_OWNER=${commiter}`"",
       "-e `"GIT_COMMIT_EMAIL=${email}`"",
-      "azsdkengsys.azurecr.io/engsys/test-proxy:latest",
+      $targetImage,
       "test-proxy",
       $CommandArgs
     ) -join " "

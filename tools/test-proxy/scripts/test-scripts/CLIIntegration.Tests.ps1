@@ -39,8 +39,6 @@ Describe "AssetsModuleTests" {
             $assetsFile = Join-Path $testFolder "assets.json"
             $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
 
-            Write-Host $assetsFile
-
             $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
             Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
             $LASTEXITCODE | Should -Be 0
@@ -100,7 +98,6 @@ Describe "AssetsModuleTests" {
         #     Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
         # }
         AfterEach {
-            Get-ChildItem -Force -Recurse $testFolder
             Remove-Test-Folder $testFolder
         }
     }

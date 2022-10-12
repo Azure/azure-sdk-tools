@@ -65,6 +65,12 @@ parameters:
     type: string
     default: "''"
 
+  - name: sdkPR
+    type: object
+    default:
+      "prLink": "''"
+      "prNumber": "''"
+
 stages:
   - stage: SdkGeneration
     jobs:
@@ -102,3 +108,4 @@ stages:
               trigger: ${{ parameters.clientAgent }}
               sdkGenerationName: ${{ parameters.sdkGenerationName }}
               triggerType: ${{ parameters.triggerType }}
+              sdkPR: ${{ parameters.sdkPR }}

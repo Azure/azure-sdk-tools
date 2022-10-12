@@ -17,14 +17,7 @@ namespace APIViewWeb.Models
         {
             UserName = User.GetGitHubLogin();
             Email = email;
-            if(languages != null)
-            {
-                Languages = languages;
-            }
-            else
-            {
-                Languages = new HashSet<string>();
-            }
+            Languages = languages ?? new HashSet<string>();
             
             if(preferences != null)
             {

@@ -104,6 +104,7 @@ stages:
 
             docker build -t $(CLI_TEST_DOCKER_TAG) .
           workingDirectory: tools/test-proxy/docker/
+          displayName: "Prepare and Build local docker image"
 
         - template: /eng/pipelines/templates/steps/run-pester-tests.yml
           parameters:

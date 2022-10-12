@@ -3,8 +3,8 @@ parameters:
     type: object
 steps:
   - bash: |
-      if [ 2 -lt ${#prLinkParameter} ];then
-        echo "2 -lt ${#prLinkParameter}"
+      if [ 2 -lt ${{ #parameters.sdkPR.prLink }} ];then
+        echo "2 -lt ${{ parameters.sdkPR.prLink }}"
       if
     displayName: Check parameters
 

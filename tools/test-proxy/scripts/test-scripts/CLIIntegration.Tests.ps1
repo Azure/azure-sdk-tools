@@ -43,6 +43,7 @@ Describe "AssetsModuleTests" {
 
             $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
             Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3

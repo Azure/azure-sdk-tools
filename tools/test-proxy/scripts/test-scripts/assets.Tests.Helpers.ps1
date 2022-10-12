@@ -272,6 +272,7 @@ Function Invoke-ProxyCommand {
       $CommandArgs
     ) -join " "
 
+    Write-Host "$TestProxyExe $AmendedArgs"
     # Need to cast the output into an array otherwise it'll be one long string with no newlines
     [array] $output = Write-Output $WriteOutput | & $TestProxyExe $AmendedArgs.Split(" ")
 

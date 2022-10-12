@@ -254,9 +254,11 @@ function HasExpiredDeleteAfterTag([string]$DeleteAfter) {
 }
 
 function HasException([object]$ResourceGroup) {
-  if ($Exceptions.Count -and $Exceptions.Contains($ResourceGroup.ResourceGroupName)) {
-    Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it is in the allow list '$AllowListPath'"
-    return $true
+  foreach ($ex in $Exceptions) {
+    if ($ResourceGroup.ResourceGroupName -like $ex) {
+      Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it matches pattern '$ex' in the allow list '$AllowListPath'"
+      return $true
+    }
   }
   return $false
 }
@@ -266,6 +268,17 @@ function FindOrCreateDeleteAfterTag {
   param(
     [object]$ResourceGroup
   )
+
+  if (!$ResourceGroup) {
+      return
+  }
+
+  # Possible states are Canceled, Deleting, Failed, InProgress, Succeeded
+  # https://learn.microsoft.com/dotnet/api/microsoft.azure.management.websites.models.provisioningstate
+  if ($ResourceGroup.ProvisioningState -in @('Deleting', 'InProgress')) {
+      Write-Host "Skipping tag query/update for group '$($ResourceGroup.ResourceGroupName)' as it is in '$($ResourceGroup.ProvisioningState)' state"
+      return
+  }
 
   $deleteAfter = GetTag $ResourceGroup "DeleteAfter"
   if (!$deleteAfter -or !($deleteAfter -as [datetime])) {

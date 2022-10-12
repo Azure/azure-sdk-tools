@@ -16,6 +16,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
         * [Customize Docker Build](#customize-docker-build)
      * [Manifest Special Fields](#manifest-special-fields)
      * [Job Manifest](#job-manifest)
+        * [Built-In Labels](#built-in-labels)
      * [Chaos Manifest](#chaos-manifest)
      * [Scenarios and values.yaml](#scenarios-and-valuesyaml)
      * [Node Size Requirements](#node-size-requirements)
@@ -309,6 +310,8 @@ In the example below, the "deploy-job-template.from-pod" template is used, which
 {{- define "stress.deploy-example" -}}
 metadata:
   labels:
+    # Add this label to keep test resources around after test completion until their DeleteAfter tag expiry
+    # Skip.RemoveTestResources: "true"
     testName: "deploy-example"
 spec:
   containers:
@@ -325,6 +328,11 @@ spec:
       {{- include "stress-test-addons.container-env" . | nindent 6 }}
 {{- end -}}
 ```
+
+#### Built-In Labels
+
+- `chaos` - set this to "true" to enable chaos for your pod
+- `Skip.RemoveTestResources` set this to "true" to prevent resources from being deleted immediately after test completion
 
 ### Chaos Manifest
 

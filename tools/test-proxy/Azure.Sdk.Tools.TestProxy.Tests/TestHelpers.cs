@@ -1,16 +1,11 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using System;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Azure.Sdk.Tools.TestProxy.Store;
-using System.Diagnostics;
-using Moq;
-using Microsoft.Build.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -49,6 +44,33 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             writer.Flush();
             stream.Position = 0;
             return stream;
+        }
+
+        public static string GenerateRandomFile(double sizeInMb, string destinationFolder)
+        {
+            if (!Directory.Exists(destinationFolder))
+            {
+                throw new Exception($"To generate a new test file, the destination folder {destinationFolder} must exist.");
+            }
+
+            var fileName = Path.Join(destinationFolder, $"{Guid.NewGuid()}.txt");
+
+            const int blockSize = 1024 * 8;
+            const int blocksPerMb = (1024 * 1024) / blockSize;
+
+            byte[] data = new byte[blockSize];
+            Random rng = new Random();
+
+            using (FileStream stream = File.OpenWrite(fileName))
+            {
+                for (int i = 0; i < sizeInMb * blocksPerMb; i++)
+                {
+                    rng.NextBytes(data);
+                    stream.Write(data, 0, data.Length);
+                }
+            }
+
+            return fileName;
         }
 
         public static ModifiableRecordSession LoadRecordSession(string path)
@@ -149,12 +171,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             // 1. The AssetsReproBranch
             if (isPushTest)
             {
-                string adjustedAssetsRepoBranch = string.Format("test_{0}_{1}", testGuid, assets.TagPrefix);
-                // Call InitIntegrationBranch
-                InitIntegrationBranch(assets, adjustedAssetsRepoBranch);
+                string adjustedAssetsRepoTag = string.Format("test_{0}_{1}", testGuid, assets.TagPrefix);
+                // Call InitIntegrationTag
+                InitIntegrationTag(assets, adjustedAssetsRepoTag);
 
                 // set the TagPrefix to the adjusted test branch 
-                assets.TagPrefix = adjustedAssetsRepoBranch;
+                assets.TagPrefix = adjustedAssetsRepoTag;
                 localAssetsJsonContent = JsonSerializer.Serialize(assets);
             }
 
@@ -252,7 +274,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (!File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} does not exist", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
@@ -285,7 +307,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (!File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} does not exist", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
@@ -311,7 +333,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} already exists", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} already exists", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
@@ -323,7 +345,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         /// </summary>
         /// <param name="assets"></param>
         /// <param name="adjustedAssetsRepoBranch"></param>
-        public static void InitIntegrationBranch(Assets assets, string adjustedAssetsRepoBranch)
+        public static void InitIntegrationTag(Assets assets, string adjustedAssetsRepoBranch)
         {
             // generate a test folder root
             string tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -354,7 +376,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 // Create the adjustedAssetsRepoBranch from the original branch. The reason being is that pushing
                 // to a branch of a branch is automatic
-                GitHandler.Run($"checkout -b {adjustedAssetsRepoBranch}", tmpPath);
+                GitHandler.Run($"tag {adjustedAssetsRepoBranch}", tmpPath);
                 // Push the contents of the TagPrefix into the adjustedAssetsRepoBranch
                 GitHandler.Run($"push origin {adjustedAssetsRepoBranch}", tmpPath);
             }
@@ -365,13 +387,25 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-        public static void CleanupIntegrationTestBranch(Assets assets)
+        /// <summary>
+        /// This function is only called by Push tests to cleanup the integration test tag.
+        /// </summary>
+        /// <param name="assets">The updated assets.json content which contains the tag to delete</param>
+        public static void CleanupIntegrationTestTag(Assets assets)
         {
             var skipBranchCleanup = Environment.GetEnvironmentVariable(DisableBranchCleanupEnvVar);
             if (!String.IsNullOrWhiteSpace(skipBranchCleanup))
             {
                 return;
             }
+
+            // Assets can be null of something in the push testcase happens (throw or assert) before
+            // the push completes and updates the assets.json
+            if (assets == null)
+            {
+                return;
+            }
+
             // generate a test folder root
             string tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
             try
@@ -397,6 +431,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static Assets LoadAssetsFromFile(string jsonFileLocation)
         {
             return JsonSerializer.Deserialize<Assets>(File.ReadAllText(jsonFileLocation));
+        }
+
+        /// <summary>
+        /// Update the assets.json from the input Assets
+        /// </summary>
+        /// <param name="jsonFileLocation">locaion of the assets.json on disk</param>
+        /// <returns></returns>
+        public static void UpdateAssetsFile(Assets assets, string jsonFileLocation)
+        {
+            string localAssetsJsonContent = JsonSerializer.Serialize(assets);
+            WriteTestFile(localAssetsJsonContent, jsonFileLocation);
         }
 
         /// <summary>

@@ -32,9 +32,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         class GitMinVersion
         {
-            // The minimum version of git supported is 2.37.0 due to cone/non-cone options for sparse-checkout
+            // As per https://github.com/Azure/azure-sdk-tools/issues/4146, the min version of git
+            // that supports what we need is 2.25.0.
             public static int Major = 2;
-            public static int Minor = 37;
+            public static int Minor = 25;
             public static int Patch = 0;
             public static string minVersionString = $"{Major}.{Minor}.{Patch}";
         }
@@ -121,25 +122,51 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     DebugLogger.LogInformation($"git {arguments}");
-                    var process = Process.Start(processStartInfo);
-                    string stdOut = process.StandardOutput.ReadToEnd();
-                    string stdErr = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
 
-                    int returnCode = process.ExitCode;
+                    var output = new List<string>();
+                    var error = new List<string>();
 
-                    DebugLogger.LogDebug($"StdOut: {stdOut}");
-                    DebugLogger.LogDebug($"StdErr: {stdErr}");
-                    DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
-
-
-                    result.ExitCode = process.ExitCode;
-                    result.StdErr = stdErr;
-                    result.StdOut = stdOut;
-
-                    if (result.ExitCode != 0)
+                    using (var process = new Process())
                     {
-                        throw new GitProcessException(result);
+                        process.StartInfo = processStartInfo;
+
+                        process.OutputDataReceived += (s, e) =>
+                        {
+                            lock (output)
+                            {
+                                output.Add(e.Data);
+                            }
+                        };
+
+                        process.ErrorDataReceived += (s, e) =>
+                        {
+                            lock (error)
+                            {
+                                error.Add(e.Data);
+                            }
+                        };
+
+                        process.Start();
+                        process.BeginErrorReadLine();
+                        process.BeginOutputReadLine();
+                        process.WaitForExit();
+
+                        int returnCode = process.ExitCode;
+                        var stdOut = string.Join(Environment.NewLine, output);
+                        var stdError = string.Join(Environment.NewLine, error);
+
+                        DebugLogger.LogDebug($"StdOut: {stdOut}");
+                        DebugLogger.LogDebug($"StdErr: {stdError}");
+                        DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+                        result.ExitCode = process.ExitCode;
+                        result.StdErr = string.Join(Environment.NewLine, stdError);
+                        result.StdOut = string.Join(Environment.NewLine, stdOut);
+
+                        if (result.ExitCode != 0)
+                        {
+                            throw new GitProcessException(result);
+                        }
                     }
                 }
                 catch (Exception e)
@@ -176,24 +203,50 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     DebugLogger.LogInformation($"git {arguments}");
-                    var process = Process.Start(processStartInfo);
-                    string stdOut = process.StandardOutput.ReadToEnd();
-                    string stdErr = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
+                    var output = new List<string>();
+                    var error = new List<string>();
 
-                    int returnCode = process.ExitCode;
-
-                    DebugLogger.LogDebug($"StdOut: {stdOut}");
-                    DebugLogger.LogDebug($"StdErr: {stdErr}");
-                    DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
-
-                    commandResult = new CommandResult()
+                    using (var process = new Process())
                     {
-                        ExitCode = process.ExitCode,
-                        StdErr = stdErr,
-                        StdOut = stdOut,
-                        Arguments = arguments
-                    };
+                        process.StartInfo = processStartInfo;
+
+                        process.OutputDataReceived += (s, e) =>
+                        {
+                            lock (output)
+                            {
+                                output.Add(e.Data);
+                            }
+                        };
+
+                        process.ErrorDataReceived += (s, e) =>
+                        {
+                            lock (error)
+                            {
+                                error.Add(e.Data);
+                            }
+                        };
+
+                        process.Start();
+                        process.BeginErrorReadLine();
+                        process.BeginOutputReadLine();
+                        process.WaitForExit();
+
+                        int returnCode = process.ExitCode;
+                        var stdOut = string.Join(Environment.NewLine, output);
+                        var stdError = string.Join(Environment.NewLine, error);
+
+                        DebugLogger.LogDebug($"StdOut: {stdOut}");
+                        DebugLogger.LogDebug($"StdErr: {stdError}");
+                        DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+                        commandResult = new CommandResult()
+                        {
+                            ExitCode = process.ExitCode,
+                            StdErr = stdError,
+                            StdOut = stdOut,
+                            Arguments = arguments
+                        };
+                    }
                 }
                 catch (Exception e)
                 {

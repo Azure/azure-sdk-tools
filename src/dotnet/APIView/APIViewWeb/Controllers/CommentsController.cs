@@ -22,14 +22,24 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false)
         {
             var comment = new CommentModel();
             comment.TimeStamp = DateTime.UtcNow;
             comment.ReviewId = reviewId;
             comment.RevisionId = revisionId;
             comment.ElementId = elementId;
+            comment.SectionClass = sectionClass;
             comment.Comment = commentText;
+            comment.GroupNo = groupNo;
+            comment.IsUsageSampleComment = usageSampleComment;
+            comment.ResolutionLocked = !resolutionLock.Equals("on");
+
+            foreach(string user in taggedUsers)
+            {
+                comment.TaggedUsers.Add(user);
+                // TODO: notify users they have been tagged
+            }
 
             await _commentsManager.AddCommentAsync(User, comment);
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
@@ -41,9 +51,9 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Update(string reviewId, string commentId, string commentText)
+        public async Task<ActionResult> Update(string reviewId, string commentId, string commentText, string[] taggedUsers)
         {
-            var comment =  await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText);
+            var comment =  await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText, taggedUsers);
 
             return await CommentPartialAsync(reviewId, comment.ElementId);
         }

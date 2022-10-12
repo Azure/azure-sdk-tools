@@ -3,6 +3,8 @@
 metadata:
   labels:
     testName: "deploy-example"
+    # Add this label to keep test resources around after test completion until their DeleteAfter tag expiry
+    # Skip.RemoveTestResources: "true"
 spec:
   containers:
     - name: deployment-example

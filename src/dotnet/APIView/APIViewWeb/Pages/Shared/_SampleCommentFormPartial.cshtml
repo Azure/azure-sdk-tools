@@ -1,0 +1,27 @@
+﻿<div id="js-comment-form-template" class="d-none">
+    <div class="comment-form border-top new-thread-comment">
+        <form data-post-update="comments" class="new-thread-comment-form comment" method="post" asp-controller="Comments" asp-action="Add">
+            <div class="new-comment-content">
+                <textarea class="new-thread-comment-text form-control" name="commentText" rows="3" placeholder="Click Add Comment or press Ctrl+Enter to add your comment."></textarea>
+            </div>
+            <input name="usageSampleComment" value="true" hidden type="text" />
+            <button type="submit" name="submit" value="Submit" class="comment-submit-button btn btn-outline-dark">Add Comment</button>
+            <button type="button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
+            <input type="checkbox" name="resolutionLock" checked class="custom-checkbox btn-outline-dark" />
+            <label for="resolutionLock" class="text-muted small"> Allow anyone to resolve conversation </label>
+        </form>
+    </div>
+</div>
+<div id="js-comment-edit-form-template" class="d-none">
+    <div class="comment-form border-top new-thread-comment">
+        <form data-post-update="comments" class="new-thread-comment-form comment" method="post" asp-controller="Comments" asp-action="Update">
+            <div class="new-comment-content">
+                <textarea class="new-thread-comment-text form-control" name="commentText" rows="3" placeholder="Click Save or press Ctrl+Enter to update your comment."></textarea>
+            </div>
+            <input type="hidden" class="js-comment-id" name="commentId" />
+            <input name="usageSampleComment" value="@true" hidden type="text" />
+            <button type="submit" name="submit" value="Submit" class="comment-submit-button btn btn-outline-dark">Save</button>
+            <button type="button" name="cancel" value="Cancel" class="comment-cancel-button btn btn-outline-dark">Cancel</button>
+        </form>
+    </div>
+</div> 

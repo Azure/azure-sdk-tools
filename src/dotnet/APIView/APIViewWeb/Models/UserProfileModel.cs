@@ -19,13 +19,7 @@ namespace APIViewWeb.Models
             Email = email;
             Languages = languages ?? new HashSet<string>();
             
-            if(preferences != null)
-            {
-                Preferences = preferences;
-            } else
-            {
-                Preferences = new UserPreferenceModel();
-            }
+            Preferences = preferences ?? new UserPreferenceModel();
         }
 
         [JsonProperty("id")]

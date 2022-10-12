@@ -49,14 +49,6 @@ jobs:
               DockerFile: ${{ config.dockerFile }}
               AdditionalDockerBuildArgs: ${{ config.AdditionalDockerArgs }}
 
-        - task: Docker@2
-          displayName: Build ${{ config.name }}:${{ parameters.ImageTag }}
-          inputs:
-            command: build
-            Dockerfile: ${{ config.dockerFile }}
-            tags: ${{ parameters.ImageTag }}
-            arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }} ${{ config.AdditionalDockerArgs }}'
-
         - ${{ if parameters.Publish }}:
           - task: Docker@2
             displayName: Push ${{ config.name }}:${{ parameters.ImageTag }}

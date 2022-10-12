@@ -30,6 +30,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public readonly UserPreferenceCache _preferenceCache;
 
+        private readonly CosmosUserProfileRepository _userProfileRepository;
+
         private readonly IConfiguration _configuration;
 
         public ReviewPageModel(
@@ -38,6 +40,7 @@ namespace APIViewWeb.Pages.Assemblies
             CommentsManager commentsManager,
             NotificationManager notificationManager,
             UserPreferenceCache preferenceCache,
+            CosmosUserProfileRepository userProfileRepository,
             IConfiguration configuration)
         {
             _manager = manager;
@@ -45,6 +48,7 @@ namespace APIViewWeb.Pages.Assemblies
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
             _preferenceCache = preferenceCache;
+            _userProfileRepository = userProfileRepository;
             _configuration = configuration;
 
         }
@@ -141,7 +145,12 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 foreach (var username in approverConfig.Split(","))
                 {
-                    approvers.Add(username);
+                    UserProfileModel user = await _userProfileRepository.tryGetUserProfileByNameAsync(username);
+                    var langs = user.Languages;
+                    if (langs.Contains(Review.Language.ToLower()))
+                    {
+                        approvers.Add(username);
+                    }
                 }
             }
 

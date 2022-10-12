@@ -13,9 +13,7 @@
 
   JS:
     DefaultVersions:
-    - 14.20.0
-    OptionalVersions:
-    - 16.14.0
+    - 16
   
   Python:
     DefaultVersions:

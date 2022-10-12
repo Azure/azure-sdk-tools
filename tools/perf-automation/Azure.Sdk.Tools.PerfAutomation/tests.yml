@@ -71,9 +71,9 @@ Services:
     Cpp:
       Project: azure-perf-test
       PackageVersions:
-      - azure-core-cpp: source
-      - azure-core-cpp: 1.7.2
       - azure-core-cpp: 1.7.1
+      - azure-core-cpp: 1.7.2
+      - azure-core-cpp: source
 
   Tests:
   - Test: jsonsend

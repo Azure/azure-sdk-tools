@@ -8,7 +8,7 @@ BeforeAll {
     # By default, this test set runs against the `test-proxy` CLI tool
     # if the environment variable TEST_PROXY_CLI_DOCKER is set to "true", run the tests in DOCKER mode.
     # this also means skipping a couple of the reset tests.
-    if($env:TEST_PROXY_CLI_DOCKER){
+    if($env:CLI_TEST_WITH_DOCKER){
         $TestProxyExe = "docker"
     }
     $proxyInPath = Test-Exe-In-Path($TestProxyExe)
@@ -40,7 +40,7 @@ Describe "AssetsModuleTests" {
             $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
 
             $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -64,7 +64,7 @@ Describe "AssetsModuleTests" {
             $assetsFile = Join-Path $testFolder "assets.json"
             $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
             $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 4
@@ -89,7 +89,7 @@ Describe "AssetsModuleTests" {
             $assetsFile = Join-Path $testFolder "assets.json"
             $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
             $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -120,7 +120,7 @@ Describe "AssetsModuleTests" {
             $assetsFile = Join-Path $testFolder "assets.json"
             $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
             $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -129,7 +129,7 @@ Describe "AssetsModuleTests" {
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
 
             $CommandArgs = "reset --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
             # With no pending changes, the reset should leave everything alone
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
@@ -139,99 +139,99 @@ Describe "AssetsModuleTests" {
         It "It should call Reset and prompt Yes to restore files" {
             # Write-Output doesn't cooperate with the docker run. Need to find a different method. Covered in #4374.
             if ($env:TEST_PROXY_CLI_DOCKER) {
-                Set-ItResult
-                return
+                Set-ItResult -Skipped
             }
-
-            $recordingJson = [PSCustomObject]@{
-                AssetsRepo           = "Azure/azure-sdk-assets-integration"
-                AssetsRepoPrefixPath = "pull/scenarios"
-                AssetsRepoId         = ""
-                TagPrefix            = "main"
-                Tag                  = "language/tables_fc54d0"
+            else {
+                $recordingJson = [PSCustomObject]@{
+                    AssetsRepo           = "Azure/azure-sdk-assets-integration"
+                    AssetsRepoPrefixPath = "pull/scenarios"
+                    AssetsRepoId         = ""
+                    TagPrefix            = "main"
+                    Tag                  = "language/tables_fc54d0"
+                }
+                $files = @(
+                    "assets.json"
+                )
+                $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
+                $assetsFile = Join-Path $testFolder "assets.json"
+                $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
+                $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Be 0
+                $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
+    
+                # Create a new file and verify
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -Version 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
+                # Update a file and verify
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -Version 2
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
+                # Delete a file
+                $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file2.txt"
+                Remove-Item -Path $fileToRemove
+    
+                # Reset answering Y and they should all go back to original restore
+                $CommandArgs = "reset --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder -WriteOutput "Y"
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
             }
-            $files = @(
-                "assets.json"
-            )
-            $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
-            $assetsFile = Join-Path $testFolder "assets.json"
-            $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
-            $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
-            $LASTEXITCODE | Should -Be 0
-            $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
-            Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
-
-            # Create a new file and verify
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -Version 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
-            # Update a file and verify
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -Version 2
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
-            # Delete a file
-            $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file2.txt"
-            Remove-Item -Path $fileToRemove
-
-            # Reset answering Y and they should all go back to original restore
-            $CommandArgs = "reset --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder -WriteOutput "Y"
-            Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
         }
         It "It should call Reset and prompt No to restore files" {
             # Write-Output doesn't cooperate with the docker run. Need to find a different method. Covered in #4374.
             if ($env:TEST_PROXY_CLI_DOCKER) {
-                Set-ItResult
-                return
+                Set-ItResult -Skipped
             }
-
-            $recordingJson = [PSCustomObject]@{
-                AssetsRepo           = "Azure/azure-sdk-assets-integration"
-                AssetsRepoPrefixPath = "pull/scenarios"
-                AssetsRepoId         = ""
-                TagPrefix            = "main"
-                Tag                  = "language/tables_fc54d0"
+            else {
+                $recordingJson = [PSCustomObject]@{
+                    AssetsRepo           = "Azure/azure-sdk-assets-integration"
+                    AssetsRepoPrefixPath = "pull/scenarios"
+                    AssetsRepoId         = ""
+                    TagPrefix            = "main"
+                    Tag                  = "language/tables_fc54d0"
+                }
+                $files = @(
+                    "assets.json"
+                )
+                $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
+                $assetsFile = Join-Path $testFolder "assets.json"
+                $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
+                $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Be 0
+                $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
+    
+                # Create two new files and verify
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -Version 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -Version 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
+                # Update a file and verify
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -Version 2
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
+                # Delete a file
+                $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file2.txt"
+                Remove-Item -Path $fileToRemove
+    
+                # Reset answering N and they should remain changed as per the previous changes
+                $CommandArgs = "reset --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder -WriteOutput "N"
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 4
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
             }
-            $files = @(
-                "assets.json"
-            )
-            $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
-            $assetsFile = Join-Path $testFolder "assets.json"
-            $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
-            $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
-            $LASTEXITCODE | Should -Be 0
-            $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
-            Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
-
-            # Create two new files and verify
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -Version 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -Version 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
-            # Update a file and verify
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -Version 2
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
-            # Delete a file
-            $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file2.txt"
-            Remove-Item -Path $fileToRemove
-
-            # Reset answering N and they should remain changed as per the previous changes
-            $CommandArgs = "reset --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder -WriteOutput "N"
-            Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 4
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
         }
         AfterEach {
             Remove-Test-Folder $testFolder
@@ -261,7 +261,7 @@ Describe "AssetsModuleTests" {
             $assetsFile = Join-Path $testFolder "assets.json"
             $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
             $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
 
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
@@ -281,7 +281,7 @@ Describe "AssetsModuleTests" {
 
             # Push the changes
             $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
 
             # Verify that after the push the directory still contains our updated files
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -317,7 +317,7 @@ Describe "AssetsModuleTests" {
             $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
 
             # The initial restore/verification
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -336,7 +336,7 @@ Describe "AssetsModuleTests" {
 
             # Push the changes
             $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
 
             # Verify that after the push the directory still contains our updated files
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
@@ -372,7 +372,7 @@ Describe "AssetsModuleTests" {
             $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
 
             # The initial restore/verification
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
             $LASTEXITCODE | Should -Be 0
             $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 4
@@ -395,7 +395,7 @@ Describe "AssetsModuleTests" {
 
             # Push the changes
             $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
-            Invoke-DockerProxyCommand $CommandArgs $testFolder
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
 
             # Verify that after the push the directory still contains our updated files
             Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3

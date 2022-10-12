@@ -106,7 +106,6 @@ stages:
               ImageTag: ''
               PrepareScript: 'tools/test-proxy/docker/prepare.ps1'
               DockerFile: 'tools/test-proxy/docker/dockerfile'
-              AdditionalDockerBuildArgs: ${{ config.AdditionalDockerArgs }}
 
         - template: /eng/pipelines/templates/steps/run-pester-tests.yml
           parameters:

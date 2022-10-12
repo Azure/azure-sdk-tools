@@ -105,7 +105,7 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, SwiftLanguageService>();
             services.AddSingleton<LanguageService, XmlLanguageService>();
 
-            if (Environment.IsDevelopment()) 
+            if (Environment.IsDevelopment() && Configuration["AuthenticationScheme"] == "Test") 
             {
                 services.AddAuthentication("Test")
                     .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });

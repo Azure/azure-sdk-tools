@@ -32,9 +32,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         class GitMinVersion
         {
-            // The minimum version of git supported is 2.37.0 due to cone/non-cone options for sparse-checkout
+            // As per https://github.com/Azure/azure-sdk-tools/issues/4146, the min version of git
+            // that supports what we need is 2.25.0.
             public static int Major = 2;
-            public static int Minor = 37;
+            public static int Minor = 25;
             public static int Patch = 0;
             public static string minVersionString = $"{Major}.{Minor}.{Patch}";
         }

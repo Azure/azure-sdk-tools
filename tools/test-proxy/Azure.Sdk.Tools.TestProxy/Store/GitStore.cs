@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private IConsoleWrapper _consoleWrapper;
         public GitProcessHandler GitHandler = new GitProcessHandler();
         public string DefaultBranch = "main";
-        public string FileName = "assets.json";
+        public string AssetsJsonFileName = "assets.json";
         public static readonly string GIT_TOKEN_ENV_VAR = "GIT_TOKEN";
         // Note: These are slightly different from the GIT_COMMITTER_NAME and GIT_COMMITTER_EMAIL
         // variables that GIT recognizes, this is on purpose.
@@ -372,13 +372,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var combinedPath = Path.Join(config.AssetsRepoPrefixPath ?? String.Empty, config.AssetsJsonRelativeLocation).Replace("\\", "/");
 
-            if (combinedPath.ToLower() == FileName)
+            if (combinedPath.ToLower() == AssetsJsonFileName)
             {
                 return "./";
             }
             else
             {
-                return combinedPath.Substring(0, combinedPath.Length - (FileName.Length + 1));
+                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1));
             }
         }
         #endregion
@@ -394,7 +394,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             if (!File.Exists(assetsJsonPath) && !Directory.Exists(assetsJsonPath))
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"The provided {FileName} path of \"{assetsJsonPath}\" does not exist.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"The provided {AssetsJsonFileName} path of \"{assetsJsonPath}\" does not exist.");
             }
 
             var pathToAssets = ResolveAssetsJson(assetsJsonPath);
@@ -402,7 +402,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (string.IsNullOrWhiteSpace(assetsContent) || assetsContent.Trim() == "{}")
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"The provided {FileName} at \"{assetsJsonPath}\" did not have valid json present.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"The provided {AssetsJsonFileName} at \"{assetsJsonPath}\" did not have valid json present.");
             }
 
             try
@@ -411,7 +411,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 if (string.IsNullOrWhiteSpace(assetConfig.AssetsRepo))
                 {
-                    throw new HttpException(HttpStatusCode.BadRequest, $"Unable to utilize the {FileName} present at \"{assetsJsonPath}. It must contain value for the key \"AssetsRepo\" to be considered a valid {FileName}.");
+                    throw new HttpException(HttpStatusCode.BadRequest, $"Unable to utilize the {AssetsJsonFileName} present at \"{assetsJsonPath}. It must contain value for the key \"AssetsRepo\" to be considered a valid {AssetsJsonFileName}.");
                 }
 
                 var repoRoot = AscendToRepoRoot(pathToAssets);
@@ -419,13 +419,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 assetConfig.AssetsJsonLocation = pathToAssets;
                 assetConfig.AssetsJsonRelativeLocation = Path.GetRelativePath(repoRoot, pathToAssets);
                 assetConfig.RepoRoot = repoRoot;
-                assetConfig.AssetsFileName = FileName;
+                assetConfig.AssetsFileName = AssetsJsonFileName;
 
                 return assetConfig;
             }
             catch (Exception e)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse {FileName} content at \"{assetsJsonPath}\". Exception: {e.Message}");
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse {AssetsJsonFileName} content at \"{assetsJsonPath}\". Exception: {e.Message}");
             }
         }
 
@@ -498,14 +498,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Given a startup path, ascend the directory tree until we either reach git root (success) or disk root (failure).
+        /// Verify that the inputPath is either a full path to the assets json or a full directory path that contains an assets.json
         /// </summary>
         /// <param name="inputPath">A valid directory. If passed an assets json file directly instead of a directory, that value will be returned.</param>
         /// <returns>A path to a file named "assets.json"</returns>
         /// <exception cref="HttpException"></exception>
         public string ResolveAssetsJson(string inputPath)
         {
-            if (inputPath.ToLowerInvariant().EndsWith(FileName))
+            if (inputPath.ToLowerInvariant().EndsWith(AssetsJsonFileName))
             {
                 return inputPath;
             }
@@ -513,18 +513,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             var originalPath = inputPath.Clone();
             var directoryEval = EvaluateDirectory(inputPath);
 
-            while (!directoryEval.IsRoot && !directoryEval.IsGitRoot && !directoryEval.AssetsJsonPresent)
-            {
-                inputPath = Path.GetDirectoryName(inputPath);
-                directoryEval = EvaluateDirectory(inputPath);
-            }
-
             if (directoryEval.AssetsJsonPresent)
             {
-                return Path.Join(inputPath, FileName);
+                return Path.Join(inputPath, AssetsJsonFileName);
             }
 
-            throw new HttpException(HttpStatusCode.BadRequest, $"Unable to locate an {FileName} at or above the targeted directory \"{originalPath}\".");
+            throw new HttpException(HttpStatusCode.BadRequest, $"Unable to locate an {AssetsJsonFileName} at or above the targeted directory \"{originalPath}\".");
         }
 
         /// <summary>
@@ -541,7 +535,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 directoryPath = Path.GetDirectoryName(directoryPath);
             }
 
-            var assetsJsonLocation = Path.Join(directoryPath, FileName);
+            var assetsJsonLocation = Path.Join(directoryPath, AssetsJsonFileName);
             var gitLocation = Path.Join(directoryPath, ".git");
 
             return new DirectoryEvaluation()

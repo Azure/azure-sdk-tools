@@ -274,7 +274,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (!File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} does not exist", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
@@ -307,7 +307,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (!File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} does not exist", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
@@ -333,7 +333,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} already exists", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} already exists", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
@@ -387,6 +387,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
+        /// <summary>
+        /// This function is only called by Push tests to cleanup the integration test tag.
+        /// </summary>
+        /// <param name="assets">The updated assets.json content which contains the tag to delete</param>
         public static void CleanupIntegrationTestTag(Assets assets)
         {
             var skipBranchCleanup = Environment.GetEnvironmentVariable(DisableBranchCleanupEnvVar);
@@ -394,6 +398,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 return;
             }
+
+            // Assets can be null of something in the push testcase happens (throw or assert) before
+            // the push completes and updates the assets.json
+            if (assets == null)
+            {
+                return;
+            }
+
             // generate a test folder root
             string tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
             try
@@ -419,6 +431,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static Assets LoadAssetsFromFile(string jsonFileLocation)
         {
             return JsonSerializer.Deserialize<Assets>(File.ReadAllText(jsonFileLocation));
+        }
+
+        /// <summary>
+        /// Update the assets.json from the input Assets
+        /// </summary>
+        /// <param name="jsonFileLocation">locaion of the assets.json on disk</param>
+        /// <returns></returns>
+        public static void UpdateAssetsFile(Assets assets, string jsonFileLocation)
+        {
+            string localAssetsJsonContent = JsonSerializer.Serialize(assets);
+            WriteTestFile(localAssetsJsonContent, jsonFileLocation);
         }
 
         /// <summary>

@@ -408,6 +408,7 @@ namespace APIViewWeb.Repositories
             {
                 //Approve revision
                 revision.Approvers.Add(userId);
+                review.ApprovalDate = DateTime.Now;
             }
             await _reviewsRepository.UpsertReviewAsync(review);
         }
@@ -770,6 +771,14 @@ namespace APIViewWeb.Repositories
             await _devopsArtifactRepository.RunPipeline($"tools - generate-{language}-apireview", 
                 reviewParamString, 
                 _originalsRepository.GetContainerUrl());
+        }
+
+        public async Task RequestApproversAsync(ClaimsPrincipal User, string ReviewId, HashSet<string> reviewers)
+        {
+            var review = await GetReviewAsync(User, ReviewId);
+            review.RequestedReviewers = reviewers;
+            review.ApprovalRequestedOn = DateTime.Now;
+            await _reviewsRepository.UpsertReviewAsync(review);
         }
     }
 }

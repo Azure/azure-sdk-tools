@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
@@ -19,12 +19,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         // 2.37.0 is the min version of git required by the TestProxy
         // Windows git version strings
         [InlineData("git version 2.37.2.windows.2", false)]
-        [InlineData("git version 2.36.0.windows.2", true)]
+        [InlineData("git version 2.24.0.windows.2", true)]
         // Mac git version strings
         [InlineData("git version 2.37.1 (Apple Git-133)", false)]
         [InlineData("git version 1.37.1 (Apple Git-133)", true)]
         // Linux git version string
-        [InlineData("git version 2.37.0", false)]
+        [InlineData("git version 2.25.0", false)]
         // Check the actual version on the machine
         [InlineData(null, false)]
         public void CheckGitVersionTests(string gitTestVersionString, bool shouldThrow)

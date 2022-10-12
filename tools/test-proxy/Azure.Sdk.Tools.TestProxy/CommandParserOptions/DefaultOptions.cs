@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 
 namespace Azure.Sdk.Tools.TestProxy.CommandParserOptions
 {
@@ -12,8 +12,5 @@ namespace Azure.Sdk.Tools.TestProxy.CommandParserOptions
 
         [Option('p', "storage-plugin", Default = "GitStore", HelpText = "The plugin for the selected storage, default is Git storage is GitStore. (Currently the only option)")]
         public string StoragePlugin { get; set; }
-
-        [Option('v', "version", Default = false, HelpText = "Flag. Output the TestProxy version.")]
-        public bool VersionFlag { get; set; }
     }
 }

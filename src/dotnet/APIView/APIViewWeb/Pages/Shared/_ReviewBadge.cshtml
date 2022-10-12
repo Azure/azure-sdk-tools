@@ -1,0 +1,21 @@
+@using APIViewWeb;
+@using System
+@using System.Text.RegularExpressions;
+@model ReviewModel;
+@if (Model.Language != null)
+{
+    string iconClassName = "icon-" + Model.GetLanguageCssSafeName();
+    @if (!string.IsNullOrEmpty(Model.LanguageVariant) && Model.LanguageVariant.ToLower() != "default")
+    {
+        iconClassName += "-" + @Model.LanguageVariant.ToLower();
+    }
+    <span role="img" class="mr-2 mt-1 p-1 border rounded icon-language @iconClassName" aria-label="@Model.Language @Model.LanguageVariant"></span>
+}
+<p class="h6 mb-0 mr-auto">
+    @if (Model.ServiceName != null)
+    {
+        @Model.ServiceName
+    }
+    <br>
+    <small class="text-muted">@Model.PackageDisplayName</small>
+</p>

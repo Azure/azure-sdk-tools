@@ -29,7 +29,7 @@ steps:
           $config.Filter.Tag = $tags
         }
 
-        Invoke-Pester -Configuration $config
+        Invoke-Pester -Configuration $config -PassThru
       displayName: Run Tests
       env: ${{ parameters.EnvVars }}
       workingDirectory: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}

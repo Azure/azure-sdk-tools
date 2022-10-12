@@ -79,7 +79,7 @@ stages:
         - template: /eng/pipelines/templates/steps/run-pester-tests.yml
           parameters:
             TargetTags: "Integration"
-            TargetDirectory: tools/test-proxy/test-scripts/
+            TargetDirectory: tools/test-proxy/scripts/test-scripts/
             EnvVars:
               GIT_TOKEN: $(azuresdk-github-pat)
               GIT_COMMIT_OWNER: azure-sdk
@@ -104,7 +104,7 @@ stages:
         - template: /eng/pipelines/templates/steps/run-pester-tests.yml
           parameters:
             TargetTags: "Integration"
-            TargetDirectory: tools/test-proxy/test-scripts/
+            TargetDirectory: tools/test-proxy/scripts/test-scripts/
             EnvVars:
               GIT_TOKEN: $(azuresdk-github-pat)
               GIT_COMMIT_OWNER: azure-sdk

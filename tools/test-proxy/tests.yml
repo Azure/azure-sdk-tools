@@ -116,6 +116,7 @@ stages:
               GIT_COMMIT_EMAIL: azuresdk@microsoft.com
               CLI_TEST_WITH_DOCKER: true
               CLI_TEST_DOCKER_TAG: $(CLI_TEST_DOCKER_TAG)
+              DISABLE_INTEGRATION_BRANCH_CLEANUP: true
 
   # - stage: RepoUnitTests
   #   displayName: Repo-Specific Unit Tests

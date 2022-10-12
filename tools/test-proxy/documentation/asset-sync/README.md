@@ -2,17 +2,15 @@
 
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
-**Please note**, this feature is under active development as of July 2022 and is not fully integrated or complete.
-
 ![image](https://user-images.githubusercontent.com/45376673/180101415-cf864d95-8a8b-4d43-bb05-42604e9f7622.png)
 
-In the context of a `monorepo`, this means that we store FAR less data per feature.
+In the context of a `monorepo`, this means that we store FAR less data per feature. To update recordings, the only change alongside the source code is to update the targeted tag.
 
-The test-proxy is an excellent place to integrate external data, as packages within the azure-sdk that have moved to leverage it only pass it a single key when loading a recording. That key is passed in the `x-recording-file` header during a POST to `/Playback/Start/`.
+With the addition of asset-sync capabilities, the test-proxy now responds to a new key in the intial `Record/Start` or `/Playback/Start` POST request.
 
-This header will contain a value of where the test framework "expects" the recording to be located, expressed as a relative path. EG `tests/SessionRecords/recording1.json`.
+The header `x-recording-assets-file` will contain a value of where the `assets.json` is located within the language repo, expressed as a relative path. EG `sdk/tables/assets.json`.
 
-The combination of the the `assets.json` context and this relative path will allow the test-proxy to restore a set of recordings to a path, then _load_ the recording from that newly gathered data. The path to the recording file within the external assets repo can be _predictably_ calculated and retrieved given just the location of the `assets.json` within the code repo, the requested file name during playback or record start, and the properties within the assets.json itself. The diagram above has colors to show how the paths are used in context.
+The combination of the the `assets.json` context and the original test-path will allow the test-proxy to restore a set of recordings to a path, then _load_ the recording from that newly gathered data. The path to the recording file within the external assets repo can be _predictably_ calculated and retrieved given just the location of the `assets.json` within the code repo, the requested file name during playback or record start, and the properties within the assets.json itself. The diagram above has colors to show how the paths are used in context.
 
 ## The `assets.json` and how it enables external recordings
 
@@ -27,7 +25,7 @@ An `assets.json` takes the form:
   "AssetsRepo": "Azure/azure-sdk-assets-integration",
   "AssetsRepoPrefixPath": "python",
   "TagPrefix": "python/core",
-  "Tag": "python/core<Guid>"
+  "Tag": "python/core<10-character-commit-SHA>"
 }
 ```
 
@@ -36,11 +34,13 @@ An `assets.json` takes the form:
 | AssetsRepo | The full name of the external github repo storing the data. EG: `Azure/azure-sdk-assets` |
 | AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. The default is the language that the assets belong to. EG: `python`, `net`, `java` etc. |
 | TagPrefix | `<Language>/<ServiceDirectory>` or `<Language>/<ServiceDirectory>/<Library>` or deeper if things are nested in such a manner. |
-| Tag | Initially empty until after the first push at which point the tag will be the `<TagPrefix><Guid>` |
+| Tag | Initially empty until after the first push at which point the tag will be the `<TagPrefix><10-character-commit-SHA>` |
 
 Comments within the assets.json are allowed and _maintained_ by the tooling. Feel free to leave notes to yourself. They will not be eliminated.
 
 As one can see in the example image above, the test-proxy does the heavy lifting for push and pull of files to and from the assets repository.
+
+The `Tag` "commit SHA" is literally the SHA of the tag being pushed. This allows us limited restore capabilities in the case of non-GC-ed accidentally-deleted tags.
 
 ## Restore, push, reset when proxy is waiting for requests
 

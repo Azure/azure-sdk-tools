@@ -47,7 +47,7 @@ namespace APIViewWeb.Pages.Assemblies
             if(User.Identity.IsAuthenticated && userProfile.Email == null)
             {
                 string email = User.FindFirstValue(ClaimConstants.Email);
-                if (email == null)
+                if (email != null)
                 {
                     await _userProfileManager.updateUserProfile(User, email, null, (await _preferenceCache.GetUserPreferences(User.GetGitHubLogin())));
                 }

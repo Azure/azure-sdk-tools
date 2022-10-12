@@ -158,7 +158,7 @@ Function Describe-TestFolder {
     $AssetsJsonContent.TagPrefix = $adjustedAssetsRepoTag
   }
 
-  "test content" | Set-Content -Path (Join-Path $testPath ".git")
+  New-Item -ItemType Directory -Path (Join-Path $testPath ".git")
   $assetJsonLocation = Join-Path $testPath "assets.json"
 
   # if a path ending with assets.json is provided, the assets.json content will be written there

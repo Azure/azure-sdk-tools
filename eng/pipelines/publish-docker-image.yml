@@ -41,13 +41,17 @@ jobs:
         name: ${{ config.pool }}
         vmImage: ${{ config.vmImage }}
       steps:
-        - template: /eng/pipelines/templates/steps/build-docker-image.yml
-          parameters:
-              ImageName: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}
-              ImageTag: ${{ parameters.ImageTag }}
-              PrepareScript: ${{ config.prepareScript }}
-              DockerFile: ${{ config.dockerFile }}
-              AdditionalDockerBuildArgs: ${{ config.AdditionalDockerArgs }}
+        - ${{ if config.prepareScript }}:
+          - pwsh: |
+              ./${{ config.prepareScript }}
+            displayName: "Run prep script"
+        - task: Docker@2
+          displayName: Build ${{ config.name }}:${{ parameters.ImageTag }}
+          inputs:
+            command: build
+            Dockerfile: ${{ config.dockerFile }}
+            tags: ${{ parameters.ImageTag }}
+            arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }} ${{ config.AdditionalDockerArgs }}'
 
         - ${{ if parameters.Publish }}:
           - task: Docker@2

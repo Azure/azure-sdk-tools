@@ -226,7 +226,7 @@ stages:
         Tests: '^(extendedOptions)$'
         Arguments: '.*'
         # Iterations parameter has type 'number' so must use this variable syntax
-        Iterations: ${{ variables.Iterations }}
+        Iterations: ${{ parameters.Iterations }}
 
 - stage: Print_Results
   displayName: Print Results

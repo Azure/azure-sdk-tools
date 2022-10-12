@@ -141,7 +141,12 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 foreach (var username in approverConfig.Split(","))
                 {
-                    approvers.Add(username);
+                    UserProfileModel user = await _userProfileRepository.tryGetUserProfileByNameAsync(username);
+                    var langs = user.Languages;
+                    if (langs.Contains(Review.Language.ToLower()))
+                    {
+                        approvers.Add(username);
+                    }
                 }
             }
 

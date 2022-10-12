@@ -6,7 +6,7 @@ BeforeAll {
     $TestProxyExe = "test-proxy"
 
     # By default, this test set runs against the `test-proxy` CLI tool
-    # if the environment variable TEST_PROXY_CLI_DOCKER is set to "true", run the tests in DOCKER mode.
+    # if the environment variable CLI_TEST_WITH_DOCKER is set to "true", run the tests in DOCKER mode.
     # this also means skipping a couple of the reset tests.
     if($env:CLI_TEST_WITH_DOCKER){
         $TestProxyExe = "docker"
@@ -138,7 +138,7 @@ Describe "AssetsModuleTests" {
         }
         It "It should call Reset and prompt Yes to restore files" {
             # Write-Output doesn't cooperate with the docker run. Need to find a different method. Covered in #4374.
-            if ($env:TEST_PROXY_CLI_DOCKER) {
+            if ($env:CLI_TEST_WITH_DOCKER) {
                 Set-ItResult -Skipped
             }
             else {
@@ -185,7 +185,7 @@ Describe "AssetsModuleTests" {
         }
         It "It should call Reset and prompt No to restore files" {
             # Write-Output doesn't cooperate with the docker run. Need to find a different method. Covered in #4374.
-            if ($env:TEST_PROXY_CLI_DOCKER) {
+            if ($env:CLI_TEST_WITH_DOCKER) {
                 Set-ItResult -Skipped
             }
             else {

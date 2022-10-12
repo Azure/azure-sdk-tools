@@ -147,7 +147,7 @@ namespace APIViewWeb.Pages.Assemblies
                 {
                     UserProfileModel user = await _userProfileRepository.tryGetUserProfileByNameAsync(username);
                     var langs = user.Languages;
-                    if (langs.Contains(Review.Language.ToLower()))
+                    if (langs.Contains(Review.Language))
                     {
                         approvers.Add(username);
                     }

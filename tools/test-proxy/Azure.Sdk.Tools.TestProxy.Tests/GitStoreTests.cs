@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Store;
 using System;
@@ -183,31 +183,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-
-        [Fact]
-        public void ResolveAssetsJsonFindsAssetsAboveTargetFolder()
-        {
-            string[] folderStructure = new string[]
-            {
-                AssetsJson,
-                "folder1",
-            };
-
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, folderStructure);
-            try
-            {
-                var evaluationDirectory = Path.Join(testFolder, "folder1");
-
-                var path = _defaultStore.ResolveAssetsJson(evaluationDirectory);
-
-                Assert.Equal(Path.Join(testFolder, "assets.json"), path);
-            }
-            finally
-            {
-                DirectoryHelper.DeleteGitDirectory(testFolder);
-            }
-
-        }
 
         [Fact]
         public void ResolveAssetsJsonThrowsOnUnableToLocate()

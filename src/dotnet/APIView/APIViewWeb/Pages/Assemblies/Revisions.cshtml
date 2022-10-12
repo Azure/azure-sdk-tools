@@ -1,4 +1,4 @@
-﻿@page "{id?}"
+@page "{id?}"
 @model APIViewWeb.Pages.Assemblies.RevisionsPageModel
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
@@ -8,7 +8,12 @@
     TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin());
 }
 <div class="container-fluid">
-    <div class="mx-5 mt-2">
+    <div class="mx-5">
+        <div class="row py-2 border-bottom">
+            <div class="col-lg-12 d-flex px-0">
+                <partial name="Shared/_ReviewBadge" model=" Model.Review" />
+            </div>
+        </div>
         <div class="row" asp-resource="@Model.Review" asp-requirement="@AutoReviewModifierRequirement.Instance">
             <div class="bottom-right-floating">
                 <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>ADD</small></br><i class="fas fa-sm fa-plus"></i></br><small>REVISION</small></button>
@@ -46,7 +51,7 @@
         </div>
 
         <div class="row">
-            <div class="col">
+            <div class="col-lg-12 px-0">
                 <ul class="list-group mt-2">
                     @foreach (var revision in Model.Review.Revisions.Reverse())
                     {

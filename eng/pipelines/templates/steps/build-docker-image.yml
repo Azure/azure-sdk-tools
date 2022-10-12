@@ -13,27 +13,26 @@ parameters:
 
 
 steps:
-   - ${{ if parameters.prepareScript }}:
-      - pwsh: |
-         ./${{ parameters.prepareScript }}
-        displayName: "Run prep script"
+  - ${{ if parameters.prepareScript }}:
+    - pwsh: |
+        ./${{ parameters.prepareScript }}
+      displayName: "Run prep script"
 
-   # we have an image name + tag combo (this is for images that will end up on our ACR)
-   - ${{ if gt(len(parameters.ImageTag), 0) }}:
-      - task: Docker@2
-         displayName: Build ${{ parameters.ImageName }}:${{ parameters.ImageTag }}
-         inputs:
-         command: build
-         Dockerfile: ${{ parameters.DockerFile }}
-         tags: ${{ parameters.ImageTag }}
-         arguments: '-t ${{ parameters.ImageName }}:${{ parameters.ImageTag }} ${{ parameters.AdditionalDockerBuildArgs }}'
+  # we have an image name + tag combo (this is for images that will end up on our ACR)
+  - ${{ if gt(len(parameters.ImageTag), 0) }}:
+    - task: Docker@2
+      displayName: Build ${{ parameters.ImageName }}:${{ parameters.ImageTag }}
+      inputs:
+        command: build
+        Dockerfile: ${{ parameters.DockerFile }}
+        tags: ${{ parameters.ImageTag }}
+        arguments: '-t ${{ parameters.ImageName }}:${{ parameters.ImageTag }} ${{ parameters.AdditionalDockerBuildArgs }}'
 
-   # we have an image name only (this is for images that will only ever exist locally)
-   - ${{ if eq(len(parameters.ImageTag), 0) }}:
-      - task: Docker@2
-         displayName: Build ${{ parameters.ImageName }}:${{ parameters.ImageTag }}
-         inputs:
-         command: build
-         Dockerfile: ${{ parameters.DockerFile }}
-         arguments: '-t ${{ parameters.ImageName }} ${{ parameters.AdditionalDockerBuildArgs }}'
-   
+  # we have an image name only (this is for images that will only ever exist locally)
+  - ${{ if eq(len(parameters.ImageTag), 0) }}:
+    - task: Docker@2
+      displayName: Build ${{ parameters.ImageName }}:${{ parameters.ImageTag }}
+      inputs:
+        command: build
+        Dockerfile: ${{ parameters.DockerFile }}
+        arguments: '-t ${{ parameters.ImageName }} ${{ parameters.AdditionalDockerBuildArgs }}'

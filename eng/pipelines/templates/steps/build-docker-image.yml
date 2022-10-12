@@ -16,7 +16,7 @@ steps:
    - ${{ if parameters.prepareScript }}:
       - pwsh: |
          ./${{ parameters.prepareScript }}
-      displayName: "Run prep script"
+        displayName: "Run prep script"
 
    # we have an image name + tag combo (this is for images that will end up on our ACR)
    - ${{ if gt(len(parameters.ImageTag), 0) }}:

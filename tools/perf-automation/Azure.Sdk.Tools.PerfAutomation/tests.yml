@@ -19,9 +19,7 @@
   
   Python:
     DefaultVersions:
-    - 3.7.13
-    OptionalVersions:
-    - 3.10.0
+    - 3.10
 
   Cpp:
     DefaultVersions:

@@ -158,7 +158,7 @@ Function Describe-TestFolder {
     $AssetsJsonContent.TagPrefix = $adjustedAssetsRepoTag
   }
 
-  "test content" | Set-Content -Path (Join-Path $testPath ".git")
+  New-Item -ItemType Directory -Path (Join-Path $testPath ".git") | Out-Null
   $assetJsonLocation = Join-Path $testPath "assets.json"
 
   # if a path ending with assets.json is provided, the assets.json content will be written there
@@ -207,6 +207,11 @@ Function Describe-TestFolder {
       }
     }
   }
+
+  if($IsLinux -or $IsMacOS){
+    chmod 777 $testPath
+  }
+
   return $testPath
 }
 
@@ -233,21 +238,56 @@ Function Invoke-ProxyCommand {
   param(
     [string] $TestProxyExe,
     [string] $CommandArgs,
+    [string] $MountDirectory,
     [string] $WriteOutput = $null
   )
 
-  Write-Host "$TestProxyExe $CommandArgs"
-  # Need to cast the output into an array otherwise it'll be one long string with no newlines
-  if ($WriteOutput) {
-      # CommandArgs needs to be split otherwise all of the arguments will be quoted into a single
-      # argument.
-      [array] $output = Write-Output $WriteOutput | & "$TestProxyExe" $CommandArgs.Split(" ")
-  } else {
-      [array] $output = & "$TestProxyExe" $CommandArgs.Split(" ")
+  if ($TestProxyExe.Trim().ToLower() -eq "test-proxy") {
+    $CommandArgs += " --storage-location=`"$MountDirectory`""
+    Write-Host "$TestProxyExe $CommandArgs"
+    # Need to cast the output into an array otherwise it'll be one long string with no newlines
+    if ($WriteOutput) {
+        # CommandArgs needs to be split otherwise all of the arguments will be quoted into a single
+        # argument.
+        [array] $output = Write-Output $WriteOutput | & "$TestProxyExe" $CommandArgs.Split(" ")
+    } else {
+        [array] $output = & "$TestProxyExe" $CommandArgs.Split(" ")
+    }
+    # echo the command output
+    foreach ($line in $output) {
+      Write-Host "$line"
+    }
   }
-  # echo the command output
-  foreach ($line in $output) {
-    Write-Host "$line"
+  elseif ($TestProxyExe.Trim().ToLower() -eq "docker"){
+    $updatedDirectory = $MountDirectory.ToString().Replace("`\", "/")   # docker doesn't play well with windows style paths when binding a volume, lets keep it simple.
+    $token = $env:GIT_TOKEN
+    $commiter = $env:GIT_COMMIT_OWNER
+    $email = $env:GIT_COMMIT_EMAIL
+
+    $targetImage = if ($env:CLI_TEST_DOCKER_TAG) { $env:CLI_TEST_DOCKER_TAG } else { "azsdkengsys.azurecr.io/engsys/test-proxy:latest" }
+
+    $AmendedArgs = @(
+      "run --rm --name transition.test.proxy",
+      "-v `"${updatedDirectory}:/srv/testproxy`"",
+      "-e `"GIT_TOKEN=${token}`"",
+      "-e `"GIT_COMMIT_OWNER=${commiter}`"",
+      "-e `"GIT_COMMIT_EMAIL=${email}`"",
+      $targetImage,
+      "test-proxy",
+      $CommandArgs
+    ) -join " "
+
+    Write-Host "$TestProxyExe $AmendedArgs"
+    # Need to cast the output into an array otherwise it'll be one long string with no newlines
+    [array] $output = Write-Output $WriteOutput | & $TestProxyExe $AmendedArgs.Split(" ")
+
+    # echo the command output
+    foreach ($line in $output) {
+      Write-Host "$line"
+    }
+  }
+  else {
+    throw "Unrecognized exe `"$TestProxyExe`""
   }
 }
 

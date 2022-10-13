@@ -18,7 +18,6 @@ namespace APIViewWeb.Models
             UserName = User.GetGitHubLogin();
             Email = email;
             Languages = languages ?? new HashSet<string>();
-            
             Preferences = preferences ?? new UserPreferenceModel();
         }
 

@@ -42,21 +42,6 @@ namespace APIViewWeb.Pages.Assemblies
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
             IEnumerable<string> status, IEnumerable<string> type, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            var userProfile = await _userProfileManager.tryGetUserProfileAsync(User);
-
-            if(User.Identity.IsAuthenticated && userProfile.Email == null)
-            {
-                string email = User.FindFirstValue(ClaimConstants.Email);
-                if (email != null)
-                {
-                    await _userProfileManager.updateUserProfile(User, email, null, (await _preferenceCache.GetUserPreferences(User)));
-                }
-                else
-                {
-                    Response.Redirect("/Assemblies/Profile");
-                }
-            }
-
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())
             {
                 UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User);

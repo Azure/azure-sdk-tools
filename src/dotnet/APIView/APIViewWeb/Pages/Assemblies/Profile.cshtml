@@ -54,10 +54,12 @@
                     </div>
                     <hr />
                     <div class="form-group form-row">
+                        <p class="text-muted">APIView can send emails to notify you about what is happening in reviews that you subscribe to, as well as when you are tagged or requested to review a library. The email address below is what is currently being used to notify you (and you can empty this field to not receive notifications)</p>
                         <label for="Email" class="col-sm-2 font-weight-bold" style="line-height:48px"> Email </label>
-                        <input name="Email" class="form-control form-control-lg col-sm-10" type="email" value="@Model.userProfile.Email" required /><br />
+                        <input name="Email" class="form-control form-control-lg col-sm-10" type="email" value="@Model.userProfile.Email" /><br />
                     </div>
                     <div class="form-group form-row" asp-requirement="@ApproverRequirement.Instance" asp-resource="@Model">
+                        <p class="text-muted">Not everyone in APIView is allowed to approve reviews - but you are! To limit the number of people who can approve for a given language, we ask that all approvers self-identify the languages that they want approval abilities for. You can do this by selecting the appropriate languages in the dropdown list below.</p>
                         <label for="Languages" class="col-sm-2 font-weight-bold" style="line-height: 38px"> Review Languages </label>
                         <select name="Languages" class="selectpicker col-sm-10 px-0" multiple>
                             @foreach (string language in Languages)

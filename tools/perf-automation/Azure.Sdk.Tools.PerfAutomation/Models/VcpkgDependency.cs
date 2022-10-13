@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
+
 namespace Azure.Sdk.Tools.PerfAutomation.Models
 {
     // common for both dependency and override

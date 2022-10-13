@@ -59,21 +59,11 @@ namespace APIViewUITests
 
                 // Review Options Changes without Errors
                 driver.FindElement(By.CssSelector(".btn.btn-light.btn-sm.border.shadow-sm.dropdown-toggle")).Click();
-                driver.FindElement(By.Id("show-comments-checkbox")).Click();
-                Assert.NotEqual("Error - apiview.dev", driver.Title);
-                Assert.NotEqual("Internal Server Error", driver.Title);
 
-                driver.FindElement(By.Id("show-system-comments-checkbox")).Click();
-                Assert.NotEqual("Error - apiview.dev", driver.Title);
-                Assert.NotEqual("Internal Server Error", driver.Title);
-
-                driver.FindElement(By.Id("hide-line-numbers")).Click();
-                Assert.NotEqual("Error - apiview.dev", driver.Title);
-                Assert.NotEqual("Internal Server Error", driver.Title);
-
-                driver.FindElement(By.Id("hide-left-navigation")).Click();
-                Assert.NotEqual("Error - apiview.dev", driver.Title);
-                Assert.NotEqual("Internal Server Error", driver.Title);
+                TestForInternalError(driver, "show-comments-checkbox");
+                TestForInternalError(driver, "show-system-comments-checkbox");
+                TestForInternalError(driver, "hide-line-numbers");
+                TestForInternalError(driver, "hide-left-navigation");
 
                 // Change Reviews and Revisions Withous Errors
                 var revisionSelector = driver.FindElement(By.Id("revisions-bootstraps-select"));
@@ -88,6 +78,17 @@ namespace APIViewUITests
                     Assert.NotEqual("Internal Server Error", driver.Title);
                 }
             }
+        }
+
+        private void TestForInternalError(IWebDriver driver, string elementId)
+        {
+            var element = driver.FindElement(By.Id(elementId));
+            if (element != null && element.Enabled && element.Displayed)
+            {
+                element.Click();
+                Assert.NotEqual("Error - apiview.dev", driver.Title);
+                Assert.NotEqual("Internal Server Error", driver.Title);
+            }            
         }
 
         [Fact]

@@ -57,7 +57,6 @@ namespace Azure.Sdk.Tools.TestProxy
         public static async Task Main(string[] args = null)
         {
             VerifyVerb(args);
-            new GitProcessHandler().VerifyGitMinVersion();
             var parser = new Parser(settings =>
             {
                 settings.CaseSensitive = false;
@@ -117,6 +116,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private static async Task Run(object commandObj)
         {
+            new GitProcessHandler().VerifyGitMinVersion();
             DefaultOptions defaultOptions = (DefaultOptions)commandObj;
 
             TargetLocation = resolveRepoLocation(defaultOptions.StorageLocation);

@@ -70,7 +70,7 @@ namespace APIViewWeb.Repositories
             var reviewLink = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}");
             var poster = user.UserName;
             var userLink = new Uri($"{_endpoint}/Assemblies/Profile/{poster}");
-            var requestsLink = new Uri($"{_endpoint}/Assemblies/RequestedReviews/RequestedReviews");
+            var requestsLink = new Uri($"{_endpoint}/Assemblies/RequestedReviews/");
             var sb = new StringBuilder();
             sb.Append($"<a href='{userLink.ToString()}'>{poster}</a>");
             sb.Append($" requested you to review <a href='{reviewLink.ToString()}'><b>{reviewName}</b></a>");

@@ -53,7 +53,7 @@ export http_proxy="xxx"
 export https_proxy="xxx"
 
 # Not necessary but also works
-export http_proty="http://localhost:5000/"
+export http_proxy="http://localhost:5000/"
 ```
 
 ## Go

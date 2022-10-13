@@ -49,7 +49,7 @@ namespace APIViewWeb.Pages.Assemblies
                 string email = User.FindFirstValue(ClaimConstants.Email);
                 if (email != null)
                 {
-                    await _userProfileManager.updateUserProfile(User, email, null, (await _preferenceCache.GetUserPreferences(User.GetGitHubLogin())));
+                    await _userProfileManager.updateUserProfile(User, email, null, (await _preferenceCache.GetUserPreferences(User)));
                 }
                 else
                 {
@@ -59,7 +59,7 @@ namespace APIViewWeb.Pages.Assemblies
 
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())
             {
-                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User);
                 languages = userPreference.Language;
                 state = userPreference.State;
                 status = userPreference.Status;
@@ -80,7 +80,7 @@ namespace APIViewWeb.Pages.Assemblies
         {
             if (!selectedLanguages.Any())
             {
-                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User);
                 selectedLanguages = userPreference.Language.ToList();
             }
             ReviewsProperties.Languages.All = await _manager.GetReviewPropertiesAsync("Revisions[0].Files[0].Language");
@@ -163,7 +163,7 @@ namespace APIViewWeb.Pages.Assemblies
                 Language = languages,
                 State = state,
                 Status = status
-            }, User.GetGitHubLogin());
+            }, User);
 
             bool? isApproved = null;
             // Resolve Approval State

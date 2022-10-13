@@ -1,13 +1,14 @@
-﻿using APIViewWeb.Models;
+﻿using System.Security.Claims;
+using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 
 namespace APIViewWeb.Helpers
 {
     public static class PageModelHelpers
     {
-        public static UserPreferenceModel GetUserPreference(UserPreferenceCache preferenceCache, string userName)
+        public static UserPreferenceModel GetUserPreference(UserPreferenceCache preferenceCache, ClaimsPrincipal User)
         {
-            return preferenceCache.GetUserPreferences(userName).Result;
+            return preferenceCache.GetUserPreferences(User).Result;
         }
     }
 }

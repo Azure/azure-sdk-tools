@@ -1,11 +1,11 @@
-﻿@page "{id}/{revisionId?}"
+@page "{id}/{revisionId?}"
 @model APIViewWeb.Pages.Assemblies.ReviewPageModel
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
 @{
     Layout = "ReviewLayout";
     ViewData["Title"] = Model.Review.DisplayName;
-    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin());
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
     TempData["UserPreference"] = userPreference;
     ViewBag.HasSections = (Model.CodeFile.LeafSections?.Count > 0) ? true : false;
 }

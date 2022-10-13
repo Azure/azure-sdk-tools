@@ -21,7 +21,7 @@ namespace APIViewWeb.Controllers
         public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme")
         {
             UserProfileModel profile = await _userProfileManager.tryGetUserProfileAsync(User);
-            UserPreferenceModel preference = await _userPreferenceCache.GetUserPreferences(User.GetGitHubLogin());
+            UserPreferenceModel preference = await _userPreferenceCache.GetUserPreferences(User);
 
             preference.Theme = theme;
 
@@ -33,6 +33,7 @@ namespace APIViewWeb.Controllers
             {
                 await _userProfileManager.updateUserProfile(User, email, Languages, preference);
             }
+            this._userPreferenceCache.UpdateUserPreference(preference, User);
 
             return RedirectToPage("/Assemblies/Index");
         }

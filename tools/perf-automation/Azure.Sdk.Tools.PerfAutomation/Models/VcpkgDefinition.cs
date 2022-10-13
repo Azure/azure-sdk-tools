@@ -1,11 +1,5 @@
 ﻿using Newtonsoft.Json;
-
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 namespace Azure.Sdk.Tools.PerfAutomation.Models
 {
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]

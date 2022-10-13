@@ -4,12 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
@@ -67,7 +64,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var result = await Util.RunAsync(perfExe, $"{testName} {arguments}", WorkingDirectory);
 
-            IDictionary<string,string> reportedVersions = new Dictionary<string, string>();
+            IDictionary<string, string> reportedVersions = new Dictionary<string, string>();
 
             // Completed 54 operations in a weighted-average of 1s (52.766473 ops/s, 0.0189514 s/op)
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);

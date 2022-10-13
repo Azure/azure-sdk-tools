@@ -34,7 +34,7 @@
 
   <ItemGroup>
     <PackageReference Include="Markdig.Signed" Version="0.30.2" />
-    <PackageReference Include="NuGet.CommandLine" Version="6.0.2">
+    <PackageReference Include="NuGet.CommandLine" Version="6.2.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

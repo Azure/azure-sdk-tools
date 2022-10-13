@@ -208,6 +208,10 @@ Function Describe-TestFolder {
     }
   }
 
+  if($IsLinux -or $IsMacOS){
+    chmod 777 $testPath
+  }
+
   return $testPath
 }
 

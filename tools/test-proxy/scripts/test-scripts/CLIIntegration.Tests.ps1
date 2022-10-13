@@ -244,172 +244,187 @@ Describe "AssetsModuleTests" {
             $testFolder = $null
         }
         It "Should push new, updated and deleted files, original restore from first push of assets." {
-            $recordingJson = [PSCustomObject]@{
-                AssetsRepo           = "Azure/azure-sdk-assets-integration"
-                AssetsRepoPrefixPath = "pull/scenarios"
-                AssetsRepoId         = ""
-                TagPrefix            = "language/tables"
-                Tag                  = "language/tables_fc54d0"
+            if ($env:CLI_TEST_WITH_DOCKER) {
+                Set-ItResult -Skipped
             }
-            $files = @(
-                "assets.json"
-            )
+            else {
+                $recordingJson = [PSCustomObject]@{
+                    AssetsRepo           = "Azure/azure-sdk-assets-integration"
+                    AssetsRepoPrefixPath = "pull/scenarios"
+                    AssetsRepoId         = ""
+                    TagPrefix            = "language/tables"
+                    Tag                  = "language/tables_fc54d0"
+                }
+                $files = @(
+                    "assets.json"
+                )
 
-            $originalTagPrefix = $recordingJson.TagPrefix
-            $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $true
-            # Ensure that the TagPrefix was updated for testing
-            $originalTagPrefix | Should -not -Be $recordingJson.TagPrefix
-            $assetsFile = Join-Path $testFolder "assets.json"
-            $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
-            $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $originalTagPrefix = $recordingJson.TagPrefix
+                $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $true
+                # Ensure that the TagPrefix was updated for testing
+                $originalTagPrefix | Should -not -Be $recordingJson.TagPrefix
+                $assetsFile = Join-Path $testFolder "assets.json"
+                $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
+                $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
 
-            $LASTEXITCODE | Should -Be 0
-            $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
-            Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
+                $LASTEXITCODE | Should -Be 0
+                $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
 
-            # Create a new file
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -Version 1
-            # Update the version on an existing file
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -Version 2
-            # Delete a file
-            $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file2.txt"
-            Remove-Item -Path $fileToRemove
-            $assetsFile = Join-Path $testFolder "assets.json"
+                # Create a new file
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -Version 1
+                # Update the version on an existing file
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -Version 2
+                # Delete a file
+                $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file2.txt"
+                Remove-Item -Path $fileToRemove
+                $assetsFile = Join-Path $testFolder "assets.json"
 
-            # Push the changes
-            $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                # Push the changes
+                $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
 
-            # Verify that after the push the directory still contains our updated files
-            Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
+                # Verify that after the push the directory still contains our updated files
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
 
-            $updatedAssets = Update-AssetsFromFile -AssetsJsonContent $assetsFile
-            Write-Host "updatedAssets.Tag=$($updatedAssets.Tag), originalAssets.Tag=$($recordingJson.Tag)"
-            $updatedAssets.Tag | Should -not -Be $recordingJson.Tag
+                $updatedAssets = Update-AssetsFromFile -AssetsJsonContent $assetsFile
+                Write-Host "updatedAssets.Tag=$($updatedAssets.Tag), originalAssets.Tag=$($recordingJson.Tag)"
+                $updatedAssets.Tag | Should -not -Be $recordingJson.Tag
 
-            $exists = Test-TagExists -AssetsJsonContent $updatedAssets -WorkingDirectory $localAssetsFilePath
-            $exists | Should -Be $true
+                $exists = Test-TagExists -AssetsJsonContent $updatedAssets -WorkingDirectory $localAssetsFilePath
+                $exists | Should -Be $true
+            }
         }
         It "Should push new, updated and deleted files, original restore from second push of assets." {
-            $recordingJson = [PSCustomObject]@{
-                AssetsRepo           = "Azure/azure-sdk-assets-integration"
-                AssetsRepoPrefixPath = "pull/scenarios"
-                AssetsRepoId         = ""
-                TagPrefix            = "language/tables"
-                Tag                  = "language/tables_bb2223"
+            if ($env:CLI_TEST_WITH_DOCKER) {
+                Set-ItResult -Skipped
             }
+            else {
+                $recordingJson = [PSCustomObject]@{
+                    AssetsRepo           = "Azure/azure-sdk-assets-integration"
+                    AssetsRepoPrefixPath = "pull/scenarios"
+                    AssetsRepoId         = ""
+                    TagPrefix            = "language/tables"
+                    Tag                  = "language/tables_bb2223"
+                }
 
-            $files = @(
-                "assets.json"
-            )
-            $originalTagPrefix = $recordingJson.TagPrefix
-            $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $true
-            # Ensure that the TagPrefix was updated for testing
-            $originalTagPrefix | Should -not -Be $recordingJson.TagPrefix
-            $assetsFile = Join-Path $testFolder "assets.json"
-            $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
-            $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                $files = @(
+                    "assets.json"
+                )
+                $originalTagPrefix = $recordingJson.TagPrefix
+                $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $true
+                # Ensure that the TagPrefix was updated for testing
+                $originalTagPrefix | Should -not -Be $recordingJson.TagPrefix
+                $assetsFile = Join-Path $testFolder "assets.json"
+                $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
+                $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
 
-            # The initial restore/verification
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
-            $LASTEXITCODE | Should -Be 0
-            $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
-            Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 2
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
+                # The initial restore/verification
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Be 0
+                $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 2
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
 
-            # Create a new file
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file6.txt" -Version 1
-            # Update the version on an existing file
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -Version 3
-            # Delete a file
-            $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file5.txt"
-            Remove-Item -Path $fileToRemove
-            $assetsFile = Join-Path $testFolder "assets.json"
+                # Create a new file
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file6.txt" -Version 1
+                # Update the version on an existing file
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -Version 3
+                # Delete a file
+                $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file5.txt"
+                Remove-Item -Path $fileToRemove
+                $assetsFile = Join-Path $testFolder "assets.json"
 
-            # Push the changes
-            $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                # Push the changes
+                $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
 
-            # Verify that after the push the directory still contains our updated files
-            Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 3
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file6.txt" -ExpectedVersion 1
+                # Verify that after the push the directory still contains our updated files
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file6.txt" -ExpectedVersion 1
 
-            $updatedAssets = Update-AssetsFromFile -AssetsJsonContent $assetsFile
-            Write-Host "updatedAssets.Tag=$($updatedAssets.Tag), originalAssets.Tag=$($recordingJson.Tag)"
-            $updatedAssets.Tag | Should -not -Be $recordingJson.Tag
+                $updatedAssets = Update-AssetsFromFile -AssetsJsonContent $assetsFile
+                Write-Host "updatedAssets.Tag=$($updatedAssets.Tag), originalAssets.Tag=$($recordingJson.Tag)"
+                $updatedAssets.Tag | Should -not -Be $recordingJson.Tag
 
-            $exists = Test-TagExists -AssetsJsonContent $updatedAssets -WorkingDirectory $localAssetsFilePath
-            $exists | Should -Be $true
+                $exists = Test-TagExists -AssetsJsonContent $updatedAssets -WorkingDirectory $localAssetsFilePath
+                $exists | Should -Be $true
+            }
         }
         It "Should push new, updated and deleted files, original restore from third push of assets." {
-            $recordingJson = [PSCustomObject]@{
-                AssetsRepo           = "Azure/azure-sdk-assets-integration"
-                AssetsRepoPrefixPath = "pull/scenarios"
-                AssetsRepoId         = ""
-                TagPrefix            = "language/tables"
-                Tag                  = "language/tables_9e81fb"
+            if ($env:CLI_TEST_WITH_DOCKER) {
+                Set-ItResult -Skipped
             }
+            else {
+                $recordingJson = [PSCustomObject]@{
+                    AssetsRepo           = "Azure/azure-sdk-assets-integration"
+                    AssetsRepoPrefixPath = "pull/scenarios"
+                    AssetsRepoId         = ""
+                    TagPrefix            = "language/tables"
+                    Tag                  = "language/tables_9e81fb"
+                }
 
-            $files = @(
-                "assets.json"
-            )
-            $originalTagPrefix = $recordingJson.TagPrefix
-            $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $true
-            # Ensure that the TagPrefix was updated for testing
-            $originalTagPrefix | Should -not -Be $recordingJson.TagPrefix
-            $assetsFile = Join-Path $testFolder "assets.json"
-            $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
-            $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                $files = @(
+                    "assets.json"
+                )
+                $originalTagPrefix = $recordingJson.TagPrefix
+                $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $true
+                # Ensure that the TagPrefix was updated for testing
+                $originalTagPrefix | Should -not -Be $recordingJson.TagPrefix
+                $assetsFile = Join-Path $testFolder "assets.json"
+                $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
+                $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
 
-            # The initial restore/verification
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
-            $LASTEXITCODE | Should -Be 0
-            $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
-            Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 4
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 2
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 2
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
+                # The initial restore/verification
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Be 0
+                $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 4
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 2
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 2
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
 
-            # Create a new file
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file6.txt" -Version 1
-            # Update the version on an existing file
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -Version 2
-            Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -Version 3
-            # Delete files 3 & 4
-            $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file3.txt"
-            Remove-Item -Path $fileToRemove
-            $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file4.txt"
-            Remove-Item -Path $fileToRemove
-            $assetsFile = Join-Path $testFolder "assets.json"
+                # Create a new file
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file6.txt" -Version 1
+                # Update the version on an existing file
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -Version 2
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -Version 3
+                # Delete files 3 & 4
+                $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file3.txt"
+                Remove-Item -Path $fileToRemove
+                $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file4.txt"
+                Remove-Item -Path $fileToRemove
+                $assetsFile = Join-Path $testFolder "assets.json"
 
-            # Push the changes
-            $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
-            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                # Push the changes
+                $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
 
-            # Verify that after the push the directory still contains our updated files
-            Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 3
-            Test-FileVersion -FilePath $localAssetsFilePath -FileName "file6.txt" -ExpectedVersion 1
+                # Verify that after the push the directory still contains our updated files
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 2
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file6.txt" -ExpectedVersion 1
 
-            $updatedAssets = Update-AssetsFromFile -AssetsJsonContent $assetsFile
-            Write-Host "updatedAssets.Tag=$($updatedAssets.Tag), originalAssets.Tag=$($recordingJson.Tag)"
-            $updatedAssets.Tag | Should -not -Be $recordingJson.Tag
+                $updatedAssets = Update-AssetsFromFile -AssetsJsonContent $assetsFile
+                Write-Host "updatedAssets.Tag=$($updatedAssets.Tag), originalAssets.Tag=$($recordingJson.Tag)"
+                $updatedAssets.Tag | Should -not -Be $recordingJson.Tag
 
-            $exists = Test-TagExists -AssetsJsonContent $updatedAssets -WorkingDirectory $localAssetsFilePath
-            $exists | Should -Be $true
+                $exists = Test-TagExists -AssetsJsonContent $updatedAssets -WorkingDirectory $localAssetsFilePath
+                $exists | Should -Be $true
+            }
         }
         AfterEach {
             Remove-Test-Folder $testFolder

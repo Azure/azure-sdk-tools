@@ -34,6 +34,10 @@ $TestProxyExe = "test-proxy"
 
 $OriginalProxyAssetsFolder = $env:PROXY_ASSETS_FOLDER
 
+# The built test proxy on a dev machine will have the version 1.0.0-dev.20221013.1
+# whereas the one installed from nuget will have the version 20221013.1 (minus the 1.0.0-dev.)
+$MinTestProxyVersion = "20221012.1"
+
 $DefaultAssetsRepo = "Azure/azure-sdk-assets"
 if ($UseTestRepo) {
   $DefaultAssetsRepo = "Azure/azure-sdk-assets-integration"
@@ -66,10 +70,71 @@ class Assets {
   }
 }
 
+class Version {
+  [int]$Year
+  [int]$Month
+  [int]$Day
+  [int]$Revision
+  Version(
+    [string]$VersionString
+  ) {
+    if ($VersionString -match "(?<year>20\d{2})(?<month>\d{2})(?<day>\d{2}).(?<revision>\d+)") {
+      $this.Year = [int]$Matches["year"]
+      $this.Month = [int]$Matches["month"]
+      $this.Day = [int]$Matches["day"]
+      $this.Revision = [int]$Matches["revision"]
+    }
+    else {
+      # This should be a Write-Error however powershell apparently cannot utilize that
+      # in the constructor in certain cases
+      Write-Warning "Version String '$($VersionString)' is invalid and cannot be parsed"
+      exit 1
+    }
+  }
+  [bool] IsGreaterEqual([string]$OtherVersionString) {
+    [Version]$OtherVersion = [Version]::new($OtherVersionString)
+    if ($this.Year -lt $OtherVersion.Year) {
+      return $false
+    }
+    elseif ($this.Year -eq $OtherVersion.Year) {
+      if ($this.Month -lt $OtherVersion.Month) {
+        return $false
+      }
+      elseif ($this.Month -eq $OtherVersion.Month) {
+        if ($this.Day -lt $OtherVersion.Day) {
+          return $false
+        }
+        elseif ($this.Day -eq $OtherVersion.Day) {
+          if ($this.Revision -lt $OtherVersion.Revision) {
+            return $false
+          }
+        }
+      }
+    }
+    return $true
+  }
+}
+
 Function Test-Exe-In-Path {
   Param([string] $ExeToLookFor)
   if ($null -eq (Get-Command $ExeToLookFor -ErrorAction SilentlyContinue)) {
     Write-Error "Unable to find $ExeToLookFor in your PATH"
+    exit 1
+  }
+}
+
+Function Test-TestProxyVersion {
+  param(
+    [string] $TestProxyExe
+  )
+
+  Write-Host "$TestProxyExe --version"
+  [string] $output = & "$TestProxyExe" --version
+
+  [Version]$CurrentProxyVersion = [Version]::new($output)
+  if (!$CurrentProxyVersion.IsGreaterEqual($MinTestProxyVersion)) {
+    Write-Error "$TestProxyExe version, $output, is less than the minimum version $MinTestProxyVersion"
+    Write-Error "Please refer to https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/Azure.Sdk.Tools.TestProxy/README.md#installation to upgrade your $TestProxyExe"
     exit 1
   }
 }
@@ -232,9 +297,8 @@ Function Move-AssetsFromLangRepo {
     # Write-Host "Moving from=$fromFile"
     # Write-Host "          to=$toFile"
     $toPath = Split-Path -Path $toFile
-    if(!(Test-Path $toPath))
-    {
-        New-Item -Path $toPath -ItemType Directory -Force | Out-Null
+    if (!(Test-Path $toPath)) {
+      New-Item -Path $toPath -ItemType Directory -Force | Out-Null
     }
     Move-Item -LiteralPath $fromFile -Destination $toFile
   }
@@ -248,7 +312,6 @@ Function Remove-ProxyAssetsFolder {
   Remove-Item -LiteralPath $env:PROXY_ASSETS_FOLDER -Force -Recurse
 }
 
-
 Test-Exe-In-Path -ExeToLookFor $GitExe
 $language = Get-Repo-Language
 
@@ -257,6 +320,7 @@ $language = Get-Repo-Language
 # directories
 if ($InitialPush) {
   Test-Exe-In-Path -ExeToLookFor $TestProxyExe
+  Test-TestProxyVersion -TestProxyExe $TestProxyExe
   if (!$LangRecordingDirs.ContainsKey($language)) {
     Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
     exit 1

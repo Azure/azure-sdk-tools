@@ -45,7 +45,7 @@ Also note that taken to trust this cert will _also apply to installing the dotne
 
 On a Mac(OS X), If port 5000 is the problem, you need to check the 'AirPlay' sharing feature in settings or kill port process. [see here](https://github.com/Azure/azure-sdk-tools/pull/3739#issuecomment-1207217025)
 
-Make sure you don't have customized proxy settings in .bash or .zshrc file, otherwise any test that tries to connect to local proxy may hang forever.
+Make sure you don't have customized proxy settings as environment variables in .bashrc or .zshrc file, otherwise any test that tries to connect to local proxy may hang forever.
 
 ```
 # DO NOT have settings like below unless it's set to localhost 5000

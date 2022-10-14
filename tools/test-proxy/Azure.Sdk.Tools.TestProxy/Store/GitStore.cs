@@ -40,6 +40,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public static readonly string GIT_COMMIT_OWNER_ENV_VAR = "GIT_COMMIT_OWNER";
         public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
 
+        public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
+
+
         public ConcurrentDictionary<string, string> Assets = new ConcurrentDictionary<string, string>();
 
         public GitStore()
@@ -72,6 +75,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             return config.AssetsRepoLocation;
+        }
+
+        public async Task UpdateBreadCrumb(string pathToAssetsJson)
+        {
+            var config = await ParseConfigurationFile(pathToAssetsJson);
         }
 
         /// <summary>

@@ -149,7 +149,7 @@ namespace APIViewWeb.Pages.Assemblies
                     {
                         var userCache = _preferenceCache.GetUserPreferences(User).Result;
                         var langs = userCache.ApprovedLanguages.ToHashSet();
-                        if (langs.IsNullOrEmpty())
+                        if (!langs.Any())
                         {
                             UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
                             langs = user.Languages;

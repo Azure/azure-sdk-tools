@@ -1,10 +1,10 @@
-﻿@page "RequestedReviews"
+@page ""
 @model APIViewWeb.Pages.Assemblies.RequestedReviews
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
 @{
     ViewData["Title"] = "Requested Reviews";
-    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User) ?? new UserPreferenceModel();
     TempData["UserPreference"] = userPreference;
 }
 <div class="mx-5 row">

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -158,7 +158,7 @@ namespace APIViewWeb.Pages.Assemblies
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
             Lines = CreateLines(fileDiagnostics, htmlLines, Comments, true);
             TempData["CodeLineSection"] = Lines;
-            TempData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+            TempData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User) ?? new UserPreferenceModel();
             return Partial("_CodeLinePartial", sectionId);
         }
 
@@ -182,8 +182,8 @@ namespace APIViewWeb.Pages.Assemblies
         }
         public async Task<ActionResult> OnPostRequestReviewersAsync(string id, HashSet<string> reviewers)
         {
-            // TODO: Email Notifications for those requested
             await _manager.RequestApproversAsync(User, id, reviewers);
+            await _notificationManager.NotifyApproversOfReview(User, id, reviewers);
             return RedirectToPage(new { id = id });
         }
 
@@ -193,7 +193,7 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 HideLeftNavigation = hideLeftNavigation,
                 HideLineNumbers = hideLineNumbers
-            }, User.GetGitHubLogin());
+            }, User);
             return new EmptyResult();
         }
 
@@ -209,7 +209,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public UserPreferenceModel GetUserPreference()
         {
-            return _preferenceCache.GetUserPreferences(User.GetGitHubLogin()).Result;
+            return _preferenceCache.GetUserPreferences(User).Result;
         }
 
         private ReviewRevisionModel GetReviewRevision(string revisionId = null)

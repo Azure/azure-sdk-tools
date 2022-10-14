@@ -5,7 +5,7 @@
 @{
     Layout = "ReviewLayout";
     ViewData["Title"] = "Conversation";
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin());
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
 }
 <div class="container-fluid">
     <div class="mx-5">

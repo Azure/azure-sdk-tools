@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model APIViewWeb.Pages.Assemblies.IndexPageModel
 @using APIViewWeb
 @using System
@@ -7,7 +7,7 @@
 @using APIViewWeb.Models
 @{
     ViewData["Title"] = "Reviews";
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin());
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
 }
 @section Scripts
 {
@@ -230,4 +230,3 @@
         </div> 
     </div>
 </div>
-

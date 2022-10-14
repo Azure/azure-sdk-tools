@@ -25,9 +25,9 @@
 
   Cpp:
     DefaultVersions:
-    - default
+    - 3.20.0
     OptionalVersions:
-    - optional
+    - 3.13.0
 
 Services:
 - Service: sample
@@ -71,7 +71,10 @@ Services:
     Cpp:
       Project: azure-perf-test
       PackageVersions:
+      - azure-core-cpp: 1.7.1
+      - azure-core-cpp: 1.7.2
       - azure-core-cpp: source
+
   Tests:
   - Test: jsonsend
     Arguments: &core-document-sizes

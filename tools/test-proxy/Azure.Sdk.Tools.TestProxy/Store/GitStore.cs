@@ -475,7 +475,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var originalPath = path.Clone();
             var fileAttributes = File.GetAttributes(path);
-            if (!(fileAttributes == FileAttributes.Directory))
+            if (!(fileAttributes.HasFlag(FileAttributes.Directory)))
             {
                 path = Path.GetDirectoryName(path);
             }
@@ -530,7 +530,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var fileAttributes = File.GetAttributes(directoryPath);
 
-            if (!(fileAttributes == FileAttributes.Directory))
+            if (!(fileAttributes.HasFlag(FileAttributes.Directory)))
             {
                 directoryPath = Path.GetDirectoryName(directoryPath);
             }

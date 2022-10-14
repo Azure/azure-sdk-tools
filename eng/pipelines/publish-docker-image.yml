@@ -45,7 +45,6 @@ jobs:
           - pwsh: |
               ./${{ config.prepareScript }}
             displayName: "Run prep script"
-
         - task: Docker@2
           displayName: Build ${{ config.name }}:${{ parameters.ImageTag }}
           inputs:

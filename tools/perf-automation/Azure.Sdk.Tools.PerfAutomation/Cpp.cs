@@ -1,4 +1,5 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,6 +21,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
     public class Cpp : LanguageBase
     {
         private const string _buildDirectory = "build";
+        private const string _vcpkgFile = "vcpkg.json";
 
         protected override Language Language => Language.Cpp;
 
@@ -33,6 +35,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
+
+            await UpdatePackageVersions(packageVersions);
 
             // Windows and Linux require different arguments to build Release config
             var additionalGenerateArguments = Util.IsWindows ? "-DDISABLE_AZURE_CORE_OPENTELEMETRY=ON" : "-DCMAKE_BUILD_TYPE=Release";
@@ -60,6 +64,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var result = await Util.RunAsync(perfExe, $"{testName} {arguments}", WorkingDirectory);
 
+            IDictionary<string, string> reportedVersions = new Dictionary<string, string>();
+
             // Completed 54 operations in a weighted-average of 1s (52.766473 ops/s, 0.0189514 s/op)
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
 
@@ -69,19 +75,130 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 opsPerSecond = double.Parse(match.Groups[1].Value);
             }
 
+            foreach (var key in packageVersions.Keys)
+            {
+                var packageMatch = Regex.Match(result.StandardOutput, @$"{key.ToUpper()} VERSION ?.*");
+                if (packageMatch.Success)
+                {
+                    var version = packageMatch.Captures[0].Value.Split(' ');
+
+                    if (version.Length > 0)
+                    {
+                        reportedVersions.Add(key, version[version.Length - 1]);
+                    }
+                }
+            }
+
             return new IterationResult
             {
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = result.StandardOutput,
-                StandardError = result.StandardError
+                StandardError = result.StandardError,
+                PackageVersions = reportedVersions
             };
         }
 
-        public override Task CleanupAsync(string project)
+        public override async Task CleanupAsync(string project)
         {
+            var fullVcpkgPath = Path.Combine(WorkingDirectory, _vcpkgFile);
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
             Util.DeleteIfExists(buildDirectory);
-            return Task.CompletedTask;
+            //cleanup the vcpkg file
+            await Util.RunAsync("git", $"checkout -- {fullVcpkgPath}", WorkingDirectory);
+            return;
+        }
+
+        private async Task<bool> UpdatePackageVersions(IDictionary<string, string> packageVersions)
+        {
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+            var fullVcpkgPath = Path.Combine(WorkingDirectory, _vcpkgFile);
+            bool updated = false;
+            VcpkgDefinition document;
+
+            // make sure we have the latest version of vcpkg declaration file before attempting any changes.
+            var result = await Util.RunAsync("git", $"checkout -- {fullVcpkgPath}", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+
+            if (result.ExitCode != 0)
+            {
+                throw new Exception($"Unable to git checkout main version of {fullVcpkgPath}.{Environment.NewLine}Output: {outputBuilder.ToString()} {Environment.NewLine}Error: {errorBuilder.ToString()}");
+            }
+
+            using (StreamReader r = new StreamReader(fullVcpkgPath))
+            {
+                string json = r.ReadToEnd();
+                document = JsonConvert.DeserializeObject<VcpkgDefinition>(json);
+                Console.WriteLine($"Original {fullVcpkgPath} {Environment.NewLine}{json}");
+            }
+
+            foreach (var package in packageVersions.Keys)
+            {
+                var packageVersion = packageVersions[package];
+                var envName = $"VCPKG-{package.ToUpper()}";
+                // we don't need to make any updates we want the latest version
+                if (String.Compare(packageVersion, "source", true) == 0)
+                {
+                    continue;
+                }
+                bool found = false;
+
+                foreach (VcpkgDependency dependency in document.Dependencies)
+                {
+                    if (dependency.Name == package)
+                    {
+                        dependency.VersionGt = packageVersion;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    VcpkgDependency vcpkgDependency = new VcpkgDependency();
+                    vcpkgDependency.Name = package;
+                    vcpkgDependency.VersionGt = packageVersion;
+                    document.Dependencies.Add(vcpkgDependency);
+                }
+
+                if (document.Overrides == null)
+                {
+                    document.Overrides = new List<VcpkgDependency>();
+                }
+
+                found = false;
+
+                foreach (VcpkgDependency overrideEntry in document.Overrides)
+                {
+                    if (overrideEntry.Name == package)
+                    {
+                        overrideEntry.Version = packageVersion;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    VcpkgDependency overrideEntry = new VcpkgDependency();
+                    overrideEntry.Name = package;
+                    overrideEntry.Version = packageVersion;
+                    document.Overrides.Add(overrideEntry);
+                }
+                updated = true;
+                Environment.SetEnvironmentVariable(envName, packageVersion);
+            }
+
+            if (updated)
+            {
+                using (StreamWriter writer = new StreamWriter(fullVcpkgPath))
+                {
+                    string serializedDocument = JsonConvert.SerializeObject(document, Formatting.Indented);
+                    Console.WriteLine($"Updated {fullVcpkgPath}{Environment.NewLine}{serializedDocument}");
+                    writer.Write(serializedDocument);
+                }
+            }
+
+            return updated;
         }
     }
 }

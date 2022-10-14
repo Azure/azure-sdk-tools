@@ -222,7 +222,7 @@ stages:
             RepoOwner: Microsoft
         ServiceDirectory: 'core'
         Services: '^core$'
-        PackageVersions: 'source'
+        PackageVersions: ${{ parameters.PackageVersions }}
         Tests: '^(extendedOptions)$'
         Arguments: '.*'
         # Iterations parameter has type 'number' so must use this variable syntax

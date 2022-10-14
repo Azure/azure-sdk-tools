@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
         {
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
-            
+
             Util.DeleteIfExists(buildDirectory);
             Directory.CreateDirectory(buildDirectory);
 

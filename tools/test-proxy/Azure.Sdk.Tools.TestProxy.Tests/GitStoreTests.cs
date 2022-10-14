@@ -428,8 +428,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Assert.Equal(fakeSha, configuration.Tag);
                 var newConfiguration = await _defaultStore.ParseConfigurationFile(testFolder);
                 Assert.Equal(fakeSha, newConfiguration.Tag);
-
-                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { Path.Combine(testFolder, "assets.json") });
             }
             finally
             {
@@ -522,7 +520,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 Assert.NotEqual(contentBeforeUpdate, contentAfterUpdate);
                 Assert.Equal(contentBeforeUpdate.Replace(originalSHA, fakeSha), contentAfterUpdate);
-                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });
             }
             finally
             {

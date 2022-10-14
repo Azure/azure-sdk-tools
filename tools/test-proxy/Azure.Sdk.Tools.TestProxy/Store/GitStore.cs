@@ -302,8 +302,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return ownerEmail.Trim();
         }
 
-        public static string GetCloneUrl(string assetsRepo)
+        public static string GetCloneUrl(string assetsRepo, string repositoryLocation)
         {
+            if (!String.IsNullOrEmpty(repositoryLocation))
+            {
+                var GitHandler = new GitProcessHandler();
+                var result = GitHandler.Run("remote -v", repositoryLocation);
+                var repoRemote = result.StdOut.Split(Environment.NewLine).First();
+                if (!String.IsNullOrEmpty(repoRemote) && repoRemote.Contains("git@"))
+                {
+                    return $"git@github.com:{assetsRepo}.git";
+                }
+            }
+
             var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
 
             if (!string.IsNullOrWhiteSpace(gitToken)){
@@ -347,7 +358,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {GetCloneUrl(config.AssetsRepo)} .", config);
+                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
+                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
                     GitHandler.Run($"sparse-checkout init", config);
                 }
                 catch(GitProcessException e)

@@ -8,12 +8,19 @@ using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
 
+    /// <summary>
+    /// Used to store and retrieve values from the breadcrumb file.
+    /// </summary>
     public class BreadcrumbLine
     {
         public string PathToAssetsJson;
         public string ShortHash;
         public string Tag;
 
+        /// <summary>
+        /// Creates a breadcrumb (with relevant details) from an existing breadcrumb line.
+        /// </summary>
+        /// <param name="line"></param>
         public BreadcrumbLine(string line)
         {
             // split the line here. assign values
@@ -45,12 +52,24 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
     }
 
+    /// <summary>
+    /// The breadcrumb store is shared across any asset repo within a given asset store. Given that, we need to control access
+    /// to one update at any given time. This ensures that parallel updates can't accidentally flatten the breadcrumb lines from
+    /// each other.
+    /// 
+    /// This simple class merely abstracts the enqueuing of that work so that users don't need to worry about the above.
+    /// </summary>
     public class GitStoreBreadcrumb
     {
         TaskQueue BreadCrumbWorker = new TaskQueue();
 
         public GitStoreBreadcrumb() { }
 
+        /// <summary>
+        /// Updates an existing breadcrumb file with an assets configuration. Add/Update only. Should never remove.
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
         public async Task Update(GitAssetsConfiguration configuration)
         {
             var breadcrumbFile = Path.Join(configuration.ResolveAssetsStoreLocation(), ".breadcrumb");

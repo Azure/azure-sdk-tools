@@ -77,11 +77,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return config.AssetsRepoLocation;
         }
 
-        public async Task UpdateBreadCrumb(string pathToAssetsJson)
-        {
-            var config = await ParseConfigurationFile(pathToAssetsJson);
-        }
-
         /// <summary>
         /// Pushes a set of changed files to the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>

@@ -9,19 +9,39 @@ Requirements:
 needs to be run at an sdk/<ServiceDirectory> or deeper. For example sdk/core if the assets.json is
 being created at the service directory level or sdk/core/<somelibrary> if the assets.json is being
 created at the library level. A good rule here would be to run this in the same directory where the ci.yml
-file lives. For most this is the sdk/<ServiceDirectory> but, in some service directories, each library
-has its own ci.yml and pipeline and for these the ci.yml would be in the sdk/<ServiceDirectory>/<library>.
+file lives. For most this is the sdk/<ServiceDirectory>, but some services emplace a ci.yml alongside each package.
+In that case, the assets.json should live alongside the ci.yml in the sdk/<ServiceDirectory>/<library> directory.
 
 Generated assets.json file contents
-1. AssetsRepo: "Azure/azure-sdk-assets" - This is the assets repository
-2. AssetsRepoPrefixPath: "<language>" - this is will be computed from repository it's being run in
-3. TagPrefix: "<language>/<ServiceDirectory>" or "<language>/<ServiceDirectory>/<library>" or deeper if things
-              are nested in such a manner.
-4. Tag: "" - Initially empty, as nothing has yet been pushed
+- AssetsRepo: "Azure/azure-sdk-assets" - This is the assets repository, aka where your recordings will live after this script runs.
+- AssetsRepoPrefixPath: "<language>" - this is will be computed from repository it's being run in. 
+- TagPrefix: "<language>/<ServiceDirectory>" or "<language>/<ServiceDirectory>/<library>" or deeper if things
+              are nested in such a manner. All tags created for this assets.json will start with this name.
+- Tag: "" - Initially empty, as nothing has yet been pushed.
+
+If arg InitialPush is set to $true, recordings will be automatically pushed to the assets repo and the Tag property updated.
+
+.PARAMETER InitialPush
+Set this setting to $true to automagically move all recordings found UNDER your assets.json to an assets repo.
+
+Detailed process:
+- Create a temp directory.
+- Call "restore" against that assets directory to prepare it to receive updates.
+- Move all recordings found under the assets.json within the language repo to the assets directory prepared by the restore operation in the previous step.
+- Update the assets.json with the new tag.
+
+.PARAMETER UseTestRepo
+Setting this parameter to $true will result in an assets.json that points at repo Azure/azure-sdk-assets-integration.This is the
+integration repo that the azure-sdk EngSys team uses to integration test this script and other asset-sync features.
+
+Most library devs should ignore this setting unless directed otherwise (or if they're curious!). Permissions to the integration
+repo are identical to the default assets repo.
+
 #>
 param(
   [Parameter(Mandatory = $false)]
   [bool] $InitialPush = $false,
+  [Parameter(Mandatory = $false)]
   [bool] $UseTestRepo = $false
 )
 
@@ -31,8 +51,6 @@ $GitExe = "git"
 # If the initial push is being performed, test-proxy needs to be in the path in
 # order for the CLI commands to be executed
 $TestProxyExe = "test-proxy"
-
-$OriginalProxyAssetsFolder = $env:PROXY_ASSETS_FOLDER
 
 # The built test proxy on a dev machine will have the version 1.0.0-dev.20221013.1
 # whereas the one installed from nuget will have the version 20221013.1 (minus the 1.0.0-dev.)
@@ -240,23 +258,6 @@ Function Invoke-ProxyCommand {
   }
 }
 
-Function Get-TempPath {
-  return [System.IO.Path]::GetTempPath()
-}
-# Set the PROXY_ASSETS_FOLDER to [System.IO.Path]::GetTempPath()/<Guid>
-# This is a temporary directory that'll be used for the restore/push operatios
-# on the assets.json that was just created. This is temporary, as the original
-# PROXY_ASSETS_FOLDER value was saved at the beginning of the script and
-# the original value will be restored at the end of the script.
-Function Set-ProxyAssetsFolder {
-  $guid = [Guid]::NewGuid()
-  $tempPath = Get-TempPath
-  $proxyAssetsFolder = Join-Path -Path $tempPath -ChildPath $guid
-  New-Item -Type Directory -Force -Path $proxyAssetsFolder | Out-Null
-  $env:PROXY_ASSETS_FOLDER = $proxyAssetsFolder
-  return $proxyAssetsFolder
-}
-
 # Get the shorthash directory under PROXY_ASSETS_FOLDER
 Function Get-AssetsRoot {
   param(
@@ -304,14 +305,6 @@ Function Move-AssetsFromLangRepo {
   }
 }
 
-Function Remove-ProxyAssetsFolder {
-  if (![string]::IsNullOrWhitespace($env:DISABLE_INTEGRATION_BRANCH_CLEANUP)) {
-    return
-  }
-  Write-Host "cleaning up $env:PROXY_ASSETS_FOLDER"
-  Remove-Item -LiteralPath $env:PROXY_ASSETS_FOLDER -Force -Recurse
-}
-
 Test-Exe-In-Path -ExeToLookFor $GitExe
 $language = Get-Repo-Language
 
@@ -340,28 +333,24 @@ if ($InitialPush) {
     $proxyAssetsFolder = Set-ProxyAssetsFolder
     Write-Host "proxyAssetsFolder=$proxyAssetsFolder"
 
-    # Execute a restore on the current assets.json, it'll prep the root directory that
-    # the recordings need to be copied into
-    $CommandArgs = "restore --assets-json-path $assetsJsonFile"
-    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
+    # # Execute a restore on the current assets.json, it'll prep the root directory that
+    # # the recordings need to be copied into
+    # $CommandArgs = "restore --assets-json-path $assetsJsonFile"
+    # Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
 
-    $assetsRoot = Get-AssetsRoot -AssetsJsonFile $assetsJsonFile
-    Write-Host "assetsRoot=$assetsRoot"
+    # $assetsRoot = Get-AssetsRoot -AssetsJsonFile $assetsJsonFile
+    # Write-Host "assetsRoot=$assetsRoot"
 
-    Move-AssetsFromLangRepo -AssetsRoot $assetsRoot
+    # Move-AssetsFromLangRepo -AssetsRoot $assetsRoot
 
-    $CommandArgs = "push --assets-json-path $assetsJsonFile"
-    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
+    # $CommandArgs = "push --assets-json-path $assetsJsonFile"
+    # Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
 
-    # Verify that the assets.json file was updated
-    $updatedAssets = Get-Content $assetsJsonFile | Out-String | ConvertFrom-Json
-    if ([String]::IsNullOrWhitespace($($updatedAssets.Tag))) {
-      Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated"
-      exit 1
-    }
-  }
-  finally {
-    Remove-ProxyAssetsFolder
-    $env:PROXY_ASSETS_FOLDER = $OriginalProxyAssetsFolder
+    # # Verify that the assets.json file was updated
+    # $updatedAssets = Get-Content $assetsJsonFile | Out-String | ConvertFrom-Json
+    # if ([String]::IsNullOrWhitespace($($updatedAssets.Tag))) {
+    #   Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated"
+    #   exit 1
+    # }
   }
 }

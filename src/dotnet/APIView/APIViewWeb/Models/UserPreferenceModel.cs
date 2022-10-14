@@ -7,6 +7,7 @@ namespace APIViewWeb.Models
     public class UserPreferenceModel
     {
         internal IEnumerable<string> _language;
+        internal IEnumerable<string> _approvedLanguages;
         internal IEnumerable<ReviewType> _filterType;
         internal IEnumerable<string> _state;
         internal IEnumerable<string> _status;
@@ -23,6 +24,13 @@ namespace APIViewWeb.Models
         public IEnumerable<string> Language { 
             get => _language ?? new List<string>();
             set => _language = value;
+        }
+
+        [Name("ApprovedLanguages")]
+        public IEnumerable<string> ApprovedLanguages
+        {
+            get => _approvedLanguages ?? new List<string>();
+            set => _approvedLanguages = value;
         }
 
         [Name("FilterType")]

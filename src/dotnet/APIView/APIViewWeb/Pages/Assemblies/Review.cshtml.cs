@@ -145,11 +145,30 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 foreach (var username in approverConfig.Split(","))
                 {
-                    UserProfileModel user = await _userProfileRepository.tryGetUserProfileByNameAsync(username);
-                    var langs = user.Languages;
-                    if (langs.Contains(Review.Language.ToLower()))
+                    if (username.Equals(User.GetGitHubLogin()))
                     {
-                        approvers.Add(username);
+                        var userCache = _preferenceCache.GetUserPreferences(User).Result;
+                        var langs = userCache.ApprovedLanguages.ToHashSet();
+                        if (langs.IsNullOrEmpty())
+                        {
+                            UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                            langs = user.Languages;
+                            userCache.ApprovedLanguages = langs;
+                            _preferenceCache.UpdateUserPreference(userCache, User);
+                        }
+                        if (langs.Contains(Review.Language))
+                        {
+                            approvers.Add(username);
+                        }
+                    }
+                    else
+                    {
+                        UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                        var langs = user.Languages;
+                        if (langs.Contains(Review.Language))
+                        {
+                            approvers.Add(username);
+                        }
                     }
                 }
             }

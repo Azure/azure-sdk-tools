@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                _consoleWrapper.WriteLine("There are pending git changes, are you sure you want to reset? [Y|N]");
+                _consoleWrapper.WriteLine($"There are pending git changes, are you sure you want to reset? [Y|N]");
                 while (true)
                 {
                     string response = _consoleWrapper.ReadLine();
@@ -304,24 +304,38 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public static string GetCloneUrl(string assetsRepo, string repositoryLocation)
         {
-            if (!String.IsNullOrEmpty(repositoryLocation))
+            var GitHandler = new GitProcessHandler();
+            var consoleWrapper = new ConsoleWrapper();
+
+            var sshUrl = $"git@github.com:{assetsRepo}.git";
+            var httpUrl = $"https://github.com/{assetsRepo}";
+            var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
+            if (!string.IsNullOrWhiteSpace(gitToken))
             {
-                var GitHandler = new GitProcessHandler();
+                httpUrl = $"https://{gitToken}@github.com/{assetsRepo}";
+            }
+
+            if (String.IsNullOrEmpty(repositoryLocation))
+            {
+                consoleWrapper.WriteLine("No git repository detected, defaulting to https protocol for assets repository.");
+                return httpUrl;
+            }
+
+            try
+            {
                 var result = GitHandler.Run("remote -v", repositoryLocation);
                 var repoRemote = result.StdOut.Split(Environment.NewLine).First();
                 if (!String.IsNullOrEmpty(repoRemote) && repoRemote.Contains("git@"))
                 {
-                    return $"git@github.com:{assetsRepo}.git";
+                    return sshUrl;
                 }
+                return httpUrl;
             }
-
-            var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
-
-            if (!string.IsNullOrWhiteSpace(gitToken)){
-                return $"https://{gitToken}@github.com/{assetsRepo}";
+            catch
+            {
+                consoleWrapper.WriteLine("No git repository detected, defaulting to https protocol for assets repository.");
+                return httpUrl;
             }
-
-            return $"https://github.com/{assetsRepo}";
         }
 
         public bool IsAssetsRepoInitialized(GitAssetsConfiguration config)

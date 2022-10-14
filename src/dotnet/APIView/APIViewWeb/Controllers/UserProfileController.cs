@@ -26,7 +26,7 @@ namespace APIViewWeb.Controllers
             preference.Theme = theme;
 
             HashSet<string> Languages = new HashSet<string>(languages);
-            preference.Language = Languages;
+            preference.ApprovedLanguages = Languages;
             
             if(profile.UserName == null)
             {

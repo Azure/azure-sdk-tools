@@ -322,7 +322,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                     await _defaultStore.Restore(jsonFileLocation);
                 });
                 Assert.Contains(httpException, assertion.Message);
-                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {

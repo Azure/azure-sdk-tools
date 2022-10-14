@@ -195,7 +195,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 {
                     if (fullPath.EndsWith("assets.json"))
                     {
-                        assetsJsonPath = fullPath;
+                        // write assets json if we were passed content
+                        if (!String.IsNullOrWhiteSpace(localAssetsJsonContent) || ignoreEmptyAssetsJson)
+                        {
+                            WriteTestFile(localAssetsJsonContent, fullPath);
+                        }
                     }
                     else
                     {
@@ -224,12 +228,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             // write a .git file into the root
             WriteTestFile(String.Empty, Path.Combine(tmpPath, ".git"));
-
-            // write assets json if we were passed content
-            if (!String.IsNullOrWhiteSpace(localAssetsJsonContent) || ignoreEmptyAssetsJson)
-            {
-                WriteTestFile(localAssetsJsonContent, assetsJsonPath);
-            }
 
             return testFolder.ToString();
         }

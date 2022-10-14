@@ -489,7 +489,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 var creationTime = File.GetLastWriteTime(pathToAssets);
 
                 var configuration = await _defaultStore.ParseConfigurationFile(testFolder);
-                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });
                 await _defaultStore.UpdateAssetsJson(configuration.Tag, configuration);
                 var postUpdateLastWrite = File.GetLastWriteTime(pathToAssets);
 
@@ -585,10 +584,56 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-        [Fact]
-        public void BreadcrumbContainsMultipleAssetRefs()
+        [EnvironmentConditionalSkipFact]
+        [Trait("Category", "Integration")]
+        public async Task BreadcrumbContainsMultipleAssetRefs()
         {
-            throw new NotImplementedException("scbedd to implement prior to checkin");
+            var inputJson = @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": """",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": ""python/tablesdd6aec01""
+            }";
+
+            var target1 = Path.Combine("sdk", "tables", GitStoretests.AssetsJson);
+            var target2 = Path.Combine("sdk", GitStoretests.AssetsJson);
+            var target3 = Path.Combine(GitStoretests.AssetsJson);
+
+            var folderStructure = new string[]
+            {
+                target1,
+                target2,
+                target3
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: false);
+
+            try
+            {
+                var assetStore = (await _defaultStore.ParseConfigurationFile(Path.Join(testFolder, target1))).ResolveAssetsStoreLocation();
+                var breadCrumbFile = Path.Join(assetStore, ".breadcrumb");
+
+                // run 3 restore operations
+                foreach (var assetsJson in folderStructure)
+                {
+                    var jsonFileLocation = Path.Join(testFolder, assetsJson);
+                    var parsedJson = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+
+                    await _defaultStore.Restore(jsonFileLocation);
+
+                    TestHelpers.CheckBreadcrumbAgainstAssetsConfig(parsedJson);
+                }
+
+                var crumbs = File.ReadAllLines(breadCrumbFile).Select(x => new BreadcrumbLine(x));
+                // we have already validated that each tag contains what we expect, just confirm we aren't eliminating lines now.
+                Assert.Equal(3, crumbs.Count());
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
         }
 
         [Fact(Skip = "Skipping because we don't have an integration test suite working yet.")]

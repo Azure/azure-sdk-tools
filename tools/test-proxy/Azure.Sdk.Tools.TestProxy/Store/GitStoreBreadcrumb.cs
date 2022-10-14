@@ -17,13 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public BreadcrumbLine(string line)
         {
             // split the line here. assign values
-            var values = line.Split(";;").Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
-
-            // we should have exactly 3 values.
-            if (values.Count() != 3)
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse breadcrumb line \"{line}\".");
-            }
+            var values = line.Split(";;").Select(x => x.Trim()).ToList();
 
             PathToAssetsJson = values[0];
             ShortHash = values[1];

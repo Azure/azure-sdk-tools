@@ -61,5 +61,18 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 DirectoryHelper.DeleteGitDirectory(testFolder);
             }
         }
+
+        [Theory]
+        [InlineData("assets.json;;abcdemeep;;atargetedTag", "assets.json", "abcdemeep", "atargetedTag")]
+        [InlineData("sdk/assets.json;;12341516;;ADifferentTag", "sdk/assets.json", "12341516", "ADifferentTag")]
+        [InlineData("sdk/blahblah/coolÑ/assets.json;;  hello!  ;;BlahTag", "sdk/blahblah/coolÑ/assets.json", "hello!", "BlahTag")]
+        [InlineData("sdk/blahblah/coolÑ/assets.json;;abcde12345;;  ", "sdk/blahblah/coolÑ/assets.json", "abcde12345", "")]
+        public void TestBreadcrumbParsing(string incomingString, string expectedPath, string expectedHash, string expectedTag)
+        {
+            BreadcrumbLine breadcrumbLine = new BreadcrumbLine(incomingString);
+            Assert.Equal(expectedPath, breadcrumbLine.PathToAssetsJson);
+            Assert.Equal(expectedHash, breadcrumbLine.ShortHash);
+            Assert.Equal(expectedTag, breadcrumbLine.Tag);
+        }
     }
 }

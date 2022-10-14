@@ -354,6 +354,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var breadCrumbFile = Path.Join(assetsStorePath, ".breadcrumb");
             var targetKey = configuration.AssetsJsonRelativeLocation.Replace("\\", "/");
 
+            Assert.True(File.Exists(breadCrumbFile));
+
             var contents = File.ReadAllLines(breadCrumbFile).Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
 
             Assert.True(contents.ContainsKey(targetKey));

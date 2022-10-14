@@ -52,8 +52,6 @@ $GitExe = "git"
 # order for the CLI commands to be executed
 $TestProxyExe = "test-proxy"
 
-$OriginalProxyAssetsFolder = $env:PROXY_ASSETS_FOLDER
-
 # The built test proxy on a dev machine will have the version 1.0.0-dev.20221013.1
 # whereas the one installed from nuget will have the version 20221013.1 (minus the 1.0.0-dev.)
 $MinTestProxyVersion = "20221012.1"
@@ -260,23 +258,6 @@ Function Invoke-ProxyCommand {
   }
 }
 
-Function Get-TempPath {
-  return [System.IO.Path]::GetTempPath()
-}
-# Set the PROXY_ASSETS_FOLDER to [System.IO.Path]::GetTempPath()/<Guid>
-# This is a temporary directory that'll be used for the restore/push operatios
-# on the assets.json that was just created. This is temporary, as the original
-# PROXY_ASSETS_FOLDER value was saved at the beginning of the script and
-# the original value will be restored at the end of the script.
-Function Set-ProxyAssetsFolder {
-  $guid = [Guid]::NewGuid()
-  $tempPath = Get-TempPath
-  $proxyAssetsFolder = Join-Path -Path $tempPath -ChildPath $guid
-  New-Item -Type Directory -Force -Path $proxyAssetsFolder | Out-Null
-  $env:PROXY_ASSETS_FOLDER = $proxyAssetsFolder
-  return $proxyAssetsFolder
-}
-
 # Get the shorthash directory under PROXY_ASSETS_FOLDER
 Function Get-AssetsRoot {
   param(
@@ -324,14 +305,6 @@ Function Move-AssetsFromLangRepo {
   }
 }
 
-Function Remove-ProxyAssetsFolder {
-  if (![string]::IsNullOrWhitespace($env:DISABLE_INTEGRATION_BRANCH_CLEANUP)) {
-    return
-  }
-  Write-Host "cleaning up $env:PROXY_ASSETS_FOLDER"
-  Remove-Item -LiteralPath $env:PROXY_ASSETS_FOLDER -Force -Recurse
-}
-
 Test-Exe-In-Path -ExeToLookFor $GitExe
 $language = Get-Repo-Language
 
@@ -360,28 +333,24 @@ if ($InitialPush) {
     $proxyAssetsFolder = Set-ProxyAssetsFolder
     Write-Host "proxyAssetsFolder=$proxyAssetsFolder"
 
-    # Execute a restore on the current assets.json, it'll prep the root directory that
-    # the recordings need to be copied into
-    $CommandArgs = "restore --assets-json-path $assetsJsonFile"
-    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
+    # # Execute a restore on the current assets.json, it'll prep the root directory that
+    # # the recordings need to be copied into
+    # $CommandArgs = "restore --assets-json-path $assetsJsonFile"
+    # Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
 
-    $assetsRoot = Get-AssetsRoot -AssetsJsonFile $assetsJsonFile
-    Write-Host "assetsRoot=$assetsRoot"
+    # $assetsRoot = Get-AssetsRoot -AssetsJsonFile $assetsJsonFile
+    # Write-Host "assetsRoot=$assetsRoot"
 
-    Move-AssetsFromLangRepo -AssetsRoot $assetsRoot
+    # Move-AssetsFromLangRepo -AssetsRoot $assetsRoot
 
-    $CommandArgs = "push --assets-json-path $assetsJsonFile"
-    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
+    # $CommandArgs = "push --assets-json-path $assetsJsonFile"
+    # Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
 
-    # Verify that the assets.json file was updated
-    $updatedAssets = Get-Content $assetsJsonFile | Out-String | ConvertFrom-Json
-    if ([String]::IsNullOrWhitespace($($updatedAssets.Tag))) {
-      Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated"
-      exit 1
-    }
-  }
-  finally {
-    Remove-ProxyAssetsFolder
-    $env:PROXY_ASSETS_FOLDER = $OriginalProxyAssetsFolder
+    # # Verify that the assets.json file was updated
+    # $updatedAssets = Get-Content $assetsJsonFile | Out-String | ConvertFrom-Json
+    # if ([String]::IsNullOrWhitespace($($updatedAssets.Tag))) {
+    #   Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated"
+    #   exit 1
+    # }
   }
 }

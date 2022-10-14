@@ -18,6 +18,7 @@ Running the script requires the following:
 - [x] Git version `>2.25.0` needs to be on the machine and in the path. Git is used by the script and test-proxy.
 - [x] Test-proxy needs to be on the machine and in the path. Instructions for that are [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/Azure.Sdk.Tools.TestProxy/README.md#installation). The script uses test-proxy's CLI commands.
 - [x] [Powershell Core](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) at least version 7.
+- [x] Global git config settings for `user.name` and `user.email` are updated. [Reference](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup)
 
 ## Permissions
 
@@ -47,7 +48,7 @@ The location of the automatically restored assets is colloquially referred to as
 
 ```powershell
 cd "<target-language-repo>/sdk/<service>"
-<language-repo-root>/tools/test-proxy/transition-scripts/generate-assets-json.ps1
+<tools-repo-root>/tools/test-proxy/transition-scripts/generate-assets-json.ps1
 ```
 
 The script needs to be executed inside an `sdk/<ServiceDirectory>` or deeper, in an up to date language repository. A good rule here would be look at where the ci.yml is for an service directory. In the case where each library for a given service directory has their own pipelines, at the `sdk/<ServiceDirectory><Library>` level, it is recommended that the assets.json is created there. If the `ci.yml` exists deeper then the `sdk/<ServiceDirectory>/<Library>` level, then it is recommended to run the script from that directory.
@@ -71,7 +72,7 @@ Given the previous example of `sdk/attestation` transition script invocation, us
 
 - Creation of the assets.json file in the `sdk/attestation` directory.
   - If `-InitialPush $true` has not been set, the script stops here and exits.
-- A temp directory is created and the test-proxy's CLI restore is called on the current assets.json. Since there's nothing there, it'll just initialize an empty assets directory.
+- test-proxy's CLI restore is called on the current assets.json. Since there's nothing there, it'll just initialize an empty assets directory under the `.assets` directory under repo root.
 - The recordings are moved from their initial directories within the language repo into a temp directory that was created in the previous step.
   - The relative paths from root are preserved.
   - For example, the recordings for `C:/src/azure-sdk-for-python/sdk/tables` live in the `azure-data-tables/tests/recordings` subdirectory and in the target repository they'll live in `python/sdk/tables/azure-data-tables/tests/recordings`. All the azure-sdk supported languages will leverage [Azure/azure-sdk-assets](https://github.com/Azure/azure-sdk-assets), so adding a prefix to the output path `python` ensures that these recordings can live alongside others in the assets repo.

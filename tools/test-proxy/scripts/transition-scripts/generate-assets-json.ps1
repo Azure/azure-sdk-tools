@@ -9,19 +9,39 @@ Requirements:
 needs to be run at an sdk/<ServiceDirectory> or deeper. For example sdk/core if the assets.json is
 being created at the service directory level or sdk/core/<somelibrary> if the assets.json is being
 created at the library level. A good rule here would be to run this in the same directory where the ci.yml
-file lives. For most this is the sdk/<ServiceDirectory> but, in some service directories, each library
-has its own ci.yml and pipeline and for these the ci.yml would be in the sdk/<ServiceDirectory>/<library>.
+file lives. For most this is the sdk/<ServiceDirectory>, but some services emplace a ci.yml alongside each package.
+In that case, the assets.json should live alongside the ci.yml in the sdk/<ServiceDirectory>/<library> directory.
 
 Generated assets.json file contents
-1. AssetsRepo: "Azure/azure-sdk-assets" - This is the assets repository
-2. AssetsRepoPrefixPath: "<language>" - this is will be computed from repository it's being run in
-3. TagPrefix: "<language>/<ServiceDirectory>" or "<language>/<ServiceDirectory>/<library>" or deeper if things
-              are nested in such a manner.
-4. Tag: "" - Initially empty, as nothing has yet been pushed
+- AssetsRepo: "Azure/azure-sdk-assets" - This is the assets repository, aka where your recordings will live after this script runs.
+- AssetsRepoPrefixPath: "<language>" - this is will be computed from repository it's being run in. 
+- TagPrefix: "<language>/<ServiceDirectory>" or "<language>/<ServiceDirectory>/<library>" or deeper if things
+              are nested in such a manner. All tags created for this assets.json will start with this name.
+- Tag: "" - Initially empty, as nothing has yet been pushed.
+
+If arg InitialPush is set to $true, recordings will be automatically pushed to the assets repo and the Tag property updated.
+
+.PARAMETER InitialPush
+Set this setting to $true to automagically move all recordings found UNDER your assets.json to an assets repo.
+
+Detailed process:
+- Create a temp directory.
+- Call "restore" against that assets directory to prepare it to receive updates.
+- Move all recordings found under the assets.json within the language repo to the assets directory prepared by the restore operation in the previous step.
+- Update the assets.json with the new tag.
+
+.PARAMETER UseTestRepo
+Setting this parameter to $true will result in an assets.json that points at repo Azure/azure-sdk-assets-integration.This is the
+integration repo that the azure-sdk EngSys team uses to integration test this script and other asset-sync features.
+
+Most library devs should ignore this setting unless directed otherwise (or if they're curious!). Permissions to the integration
+repo are identical to the default assets repo.
+
 #>
 param(
   [Parameter(Mandatory = $false)]
   [bool] $InitialPush = $false,
+  [Parameter(Mandatory = $false)]
   [bool] $UseTestRepo = $false
 )
 

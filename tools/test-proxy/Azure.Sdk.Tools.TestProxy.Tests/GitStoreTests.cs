@@ -496,8 +496,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Assert.Equal(creationTime, postUpdateLastWrite);
                 var newConfiguration = await _defaultStore.ParseConfigurationFile(testFolder);
                 Assert.Equal(configuration.Tag, newConfiguration.Tag);
-
-                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });
             }
             finally
             {
@@ -540,7 +538,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
               ""AssetsRepoPrefixPath"": ""python/recordings"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""python/tables"",
-              ""Tag"": "" python/tables89f51431""
+              ""Tag"": ""python/tables89f51431""
         }")]
         [InlineData(
         @"{

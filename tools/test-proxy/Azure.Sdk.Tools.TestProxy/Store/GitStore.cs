@@ -120,6 +120,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     throw GenerateInvokeException(e.Result);
                 }
                 await UpdateAssetsJson(generatedTagName, config);
+                await BreadCrumb.Update(config);
             }
         }
 
@@ -138,6 +139,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             CheckoutRepoAtConfig(config);
+            await BreadCrumb.Update(config);
 
             return config.AssetsRepoLocation;
         }
@@ -200,6 +202,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 if (!string.IsNullOrWhiteSpace(config.Tag))
                 {
                     CheckoutRepoAtConfig(config);
+                    await BreadCrumb.Update(config);
                 }
             }
         }

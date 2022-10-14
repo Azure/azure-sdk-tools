@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
@@ -56,12 +57,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public GitStoreBreadcrumb() { }
 
-        public void Update(GitAssetsConfiguration configuration)
+        public async Task Update(GitAssetsConfiguration configuration)
         {
             var breadcrumbFile = Path.Join(configuration.ResolveAssetsStoreLocation(), ".breadcrumb");
             var targetKey = configuration.AssetsJsonRelativeLocation.Replace("\\", "/");
 
-            BreadCrumbWorker.Enqueue(() =>
+            await BreadCrumbWorker.EnqueueAsync(async () =>
             {
                 IEnumerable<string> linesForWriting = null;
 
@@ -71,7 +72,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
                 else
                 {
-                    var lines = File.ReadAllLines(breadcrumbFile).Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
+                    var readLines = await File.ReadAllLinesAsync(breadcrumbFile);
+                    var lines = readLines.Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
                     lines[targetKey] = new BreadcrumbLine(configuration);
                     linesForWriting = lines.Values.Select(x => x.ToString());
                 }

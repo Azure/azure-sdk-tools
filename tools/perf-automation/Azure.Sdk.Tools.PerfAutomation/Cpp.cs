@@ -138,6 +138,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 // we don't need to make any updates we want the latest version
                 if (String.Compare(packageVersion, "source", true) == 0)
                 {
+                    Environment.SetEnvironmentVariable(envName, null);
                     continue;
                 }
                 bool found = false;

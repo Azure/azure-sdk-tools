@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.TestProxy.Store;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -383,7 +384,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         /// information.
         /// </summary>
         /// <param name="configuration"></param>
-        public static async void CheckBreadcrumbAgainstAssetsJsons(IEnumerable<string> jsonFileLocations)
+        public static async Task CheckBreadcrumbAgainstAssetsJsons(IEnumerable<string> jsonFileLocations)
         {
             GitStore store = new GitStore();
 

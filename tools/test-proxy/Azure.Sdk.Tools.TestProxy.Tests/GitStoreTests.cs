@@ -429,7 +429,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 var newConfiguration = await _defaultStore.ParseConfigurationFile(testFolder);
                 Assert.Equal(fakeSha, newConfiguration.Tag);
 
-                TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { Path.Combine(testFolder, "assets.json") });
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { Path.Combine(testFolder, "assets.json") });
             }
             finally
             {
@@ -472,7 +472,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 var result = _defaultStore.ResolveCheckoutPaths(configuration);
                 Assert.Equal(expectedResult, result);
-                TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { configLocation });
             }
             finally
             {
@@ -490,7 +489,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 var creationTime = File.GetLastWriteTime(pathToAssets);
 
                 var configuration = await _defaultStore.ParseConfigurationFile(testFolder);
-                TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });
                 await _defaultStore.UpdateAssetsJson(configuration.Tag, configuration);
                 var postUpdateLastWrite = File.GetLastWriteTime(pathToAssets);
 
@@ -498,7 +497,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 var newConfiguration = await _defaultStore.ParseConfigurationFile(testFolder);
                 Assert.Equal(configuration.Tag, newConfiguration.Tag);
 
-                TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });
             }
             finally
             {
@@ -526,7 +525,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 Assert.NotEqual(contentBeforeUpdate, contentAfterUpdate);
                 Assert.Equal(contentBeforeUpdate.Replace(originalSHA, fakeSha), contentAfterUpdate);
-                TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });
             }
             finally
             {
@@ -578,7 +577,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 await _defaultStore.Restore(jsonFileLocation);
 
                 var result = await _defaultStore.GetPath(jsonFileLocation);
-                TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
 
                 Assert.True(File.Exists(Path.Combine(result, "sdk", "tables", "azure-data-tables", "tests", "recordings", "test_retry.pyTestStorageRetrytest_retry_on_server_error.json")));
             }
@@ -588,9 +587,26 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-        public async Task BreadcrumbContainsMultipleAssetRefs()
+        [Fact]
+        public void BreadcrumbContainsMultipleAssetRefs()
         {
             throw new NotImplementedException("scbedd to implement prior to checkin");
+        }
+
+        [Fact(Skip = "Skipping because we don't have an integration test suite working yet.")]
+        public async Task GitCallHonorsLocalCredential()
+        {
+            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, basicFolderStructure);
+            try
+            {
+                var config = await _defaultStore.ParseConfigurationFile(testFolder);
+
+                var workDone = _defaultStore.InitializeAssetsRepo(config);
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
         }
 
         [Fact(Skip = "Skipping due to integration tests not figured out yet.")]

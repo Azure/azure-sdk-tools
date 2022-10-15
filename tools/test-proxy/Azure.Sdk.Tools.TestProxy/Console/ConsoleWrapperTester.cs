@@ -38,6 +38,7 @@ namespace Azure.Sdk.Tools.TestProxy.Console
         }
         public string ReadLine()
         {
+            System.Console.WriteLine($"ReadLine response for test: '{_readLineResponse}'");
             return _readLineResponse;
         }
     }

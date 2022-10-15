@@ -107,6 +107,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <exception cref="GitProcessException">Throws GitProcessException on returnCode != 0 OR if an unexpected exception is thrown during invocation.</exception>
         public virtual CommandResult Run(string arguments, string workingDirectory)
         {
+            // Surface an easy to understand error when we shoot ourselves in the foot
+            if (arguments.StartsWith("git"))
+            {
+                throw new Exception("GitProcessHandler commands should not start with 'git'");
+            }
+
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(workingDirectory);
             processStartInfo.Arguments = arguments;
 
@@ -192,6 +198,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public virtual bool TryRun(string arguments, GitAssetsConfiguration config, out CommandResult result)
         {
+            // Surface an easy to understand error when we shoot ourselves in the foot
+            if (arguments.StartsWith("git"))
+            {
+                throw new Exception("GitProcessHandler commands should not start with 'git'");
+            }
+
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(config.AssetsRepoLocation);
             processStartInfo.Arguments = arguments;
             var commandResult = new CommandResult();
@@ -271,9 +283,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Verify that the version of git running on the machine is greater equal the git minimum version. 
+        /// Verify that the version of git running on the machine is greater equal the git minimum version.
         /// This is more for the people running the CLI/TestProxy locally than for lab machines which seem
-        /// to be running on the latest, released versions. The reason is that any git version less than 
+        /// to be running on the latest, released versions. The reason is that any git version less than
         /// 2.37.0 won't have the cone/no-cone options used by sparse-checkout.
         /// </summary>
         /// <exception cref="GitProcessException">Thrown by the internal call to Run.</exception>
@@ -326,7 +338,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 // In theory we shouldn't get here. If git isn't installed or on the path, the Run command should throw.
                 throw new GitVersionException($"Unable to determine the local git version from the returned version string '{localGitVersion}'. Please ensure that git is installed on the machine and has been added to the PATH.");
-            }    
+            }
         }
     }
 }

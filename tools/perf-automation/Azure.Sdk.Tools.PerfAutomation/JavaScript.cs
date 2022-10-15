@@ -168,7 +168,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     continue;
                 }
 
-                var match = Regex.Match(line, @"(@azure.*?)@(.*)$");
+                var match = Regex.Match(line, @"^[^@]*(@azure.*?)@(.*)$");
                 if (match.Success)
                 {
                     var name = match.Groups[1].Value;

@@ -374,7 +374,7 @@ Services:
       AdditionalArguments: *java-additional-arguments
     JS:
       Project: sdk/storage/perf-tests/storage-file-datalake
-      PackageVersions: *js-storage-pacakge-versions
+      PackageVersions: *js-storage-package-versions
     Python:
       Project: sdk/storage/azure-storage-file-datalake
       PrimaryPackage: azure-storage-file-datalake

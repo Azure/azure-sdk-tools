@@ -333,6 +333,7 @@ Services:
       AdditionalArguments: *java-additional-arguments
     JS:
       Project: sdk/storage/perf-tests/storage-file-share
+      PrimaryPackage: '@azure/storage-file-share'
       PackageVersions: *js-storage-package-versions
     Python:
       Project: sdk/storage/azure-storage-file-share
@@ -374,6 +375,7 @@ Services:
       AdditionalArguments: *java-additional-arguments
     JS:
       Project: sdk/storage/perf-tests/storage-file-datalake
+      PrimaryPackage: '@azure/storage-file-datalake'
       PackageVersions: *js-storage-package-versions
     Python:
       Project: sdk/storage/azure-storage-file-datalake

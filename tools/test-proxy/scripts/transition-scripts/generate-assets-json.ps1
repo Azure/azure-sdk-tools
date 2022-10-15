@@ -292,17 +292,14 @@ Function Get-AssetsRoot {
   param(
     [string] $AssetsJsonFile
   )
-
   $repoRoot = Get-Repo-Root
-  $relPath = [IO.Path]::GetRelativePath($repoRoot, $AssetsJsonFile)
-
+  $relPath = [IO.Path]::GetRelativePath($repoRoot, $AssetsJsonFile).Replace("`\", "/")
   $breadcrumbFile = Join-Path $repoRoot ".assets" ".breadcrumb"
-  $breadcrumbString = Get-Content $breadcrumbFile | Where-Object { $_.StartsWith($relPath) }
-  $assetRepoSHA = $breadcrumbString.Split(";;")[0]
-  
-  $result = Join-Path $repoRoot ".assets" $assetRepoSHA
 
-  return $result
+  $breadcrumbString = Get-Content $breadcrumbFile | Where-Object { $_.StartsWith($relPath) }
+  $assetRepoSHA = $breadcrumbString.Split(";;")[1]
+
+  return Join-Path $repoRoot ".assets" $assetRepoSHA
 }
 
 Function Move-AssetsFromLangRepo {
@@ -314,12 +311,16 @@ Function Move-AssetsFromLangRepo {
   Write-Host "Get-ChildItem -Recurse -Filter ""*.json"" | Where-Object { `$_.DirectoryName.Split([IO.Path]::DirectorySeparatorChar) -contains ""$filter"" }"
   $filesToMove = Get-ChildItem -Recurse -Filter "*.json" | Where-Object { $_.DirectoryName.Split([IO.Path]::DirectorySeparatorChar) -contains "$filter" }
   [string] $currentDir = Get-Location
+
   foreach ($fromFile in $filesToMove) {
+    Write-Host $fromFile
     $relPath = [IO.Path]::GetRelativePath($currentDir, $fromFile)
     $toFile = Join-Path -Path $AssetsRoot -ChildPath $relPath
     # Write-Host "Moving from=$fromFile"
     # Write-Host "          to=$toFile"
     $toPath = Split-Path -Path $toFile
+
+    Write-Host $toFile
     if (!(Test-Path $toPath)) {
       New-Item -Path $toPath -ItemType Directory -Force | Out-Null
     }
@@ -335,10 +336,13 @@ $language = Get-Repo-Language
 # directories
 if ($InitialPush) {
   Test-Exe-In-Path -ExeToLookFor $TestProxyExe
-  Test-TestProxyVersion -TestProxyExe $TestProxyExe
-  if (!$LangRecordingDirs.ContainsKey($language)) {
-    Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
-    exit 1
+
+  if ($TestProxyExe -eq "test-proxy") {
+    Test-TestProxyVersion -TestProxyExe $TestProxyExe
+    if (!$LangRecordingDirs.ContainsKey($language)) {
+      Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
+      exit 1
+    }
   }
 }
 
@@ -358,22 +362,22 @@ if ($InitialPush) {
     # Execute a restore on the current assets.json, it'll prep the root directory that
     # the recordings need to be copied into
     $CommandArgs = "restore --assets-json-path $assetsJsonRelPath"
-    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $repoRoot
+    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -TargetDirectory $repoRoot
 
     $assetsRoot = Get-AssetsRoot -AssetsJsonFile $assetsJsonFile
     Write-Host "assetsRoot=$assetsRoot"
 
     Move-AssetsFromLangRepo -AssetsRoot $assetsRoot
 
-    $CommandArgs = "push --assets-json-path $assetsJsonFile"
-    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $repoRoot
+    # $CommandArgs = "push --assets-json-path $assetsJsonFile"
+    # Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -TargetDirectory $repoRoot
 
-    # Verify that the assets.json file was updated
-    $updatedAssets = Get-Content $assetsJsonFile | Out-String | ConvertFrom-Json
-    if ([String]::IsNullOrWhitespace($($updatedAssets.Tag))) {
-      Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated"
-      exit 1
-    }
+    # # Verify that the assets.json file was updated
+    # $updatedAssets = Get-Content $assetsJsonFile | Out-String | ConvertFrom-Json
+    # if ([String]::IsNullOrWhitespace($($updatedAssets.Tag))) {
+    #   Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated"
+    #   exit 1
+    # }
   }
   catch {
     $ex = $_

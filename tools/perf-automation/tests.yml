@@ -49,16 +49,16 @@ parameters:
 - name: CppServiceDirectory
   type: string
   default: 'core'
-- name: 'Services'
+- name: Services
   type: string
   default: '^storage-blob$'
-- name: 'PackageVersions'
+- name: PackageVersions
   type: string
   default: '12|source'
-- name: 'Tests'
+- name: Tests
   type: string
   default: '^(download)$'
-- name: 'Arguments'
+- name: Arguments
   type: string
   default: '(10240)'
 - name: Iterations

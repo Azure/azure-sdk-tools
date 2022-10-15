@@ -297,9 +297,10 @@ Function Get-AssetsRoot {
   $breadcrumbFile = Join-Path $repoRoot ".assets" ".breadcrumb"
 
   $breadcrumbString = Get-Content $breadcrumbFile | Where-Object { $_.StartsWith($relPath) }
-  $assetRepoSHA = $breadcrumbString.Split(";;")[1]
+  $assetRepo = $breadcrumbString.Split(";;")[1]
+  $assetsPrefix = (Get-Content $AssetsJsonFile | Out-String | ConvertFrom-Json).AssetsRepoPrefixPath
 
-  return Join-Path $repoRoot ".assets" $assetRepoSHA
+  return Join-Path $repoRoot ".assets" $assetRepo $assetsPrefix $relPath
 }
 
 Function Move-AssetsFromLangRepo {
@@ -324,7 +325,7 @@ Function Move-AssetsFromLangRepo {
     if (!(Test-Path $toPath)) {
       New-Item -Path $toPath -ItemType Directory -Force | Out-Null
     }
-    Move-Item -LiteralPath $fromFile -Destination $toFile
+    Move-Item -LiteralPath $fromFile -Destination $toFile -Force
   }
 }
 
@@ -369,15 +370,15 @@ if ($InitialPush) {
 
     Move-AssetsFromLangRepo -AssetsRoot $assetsRoot
 
-    # $CommandArgs = "push --assets-json-path $assetsJsonFile"
-    # Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -TargetDirectory $repoRoot
+    $CommandArgs = "push --assets-json-path $assetsJsonRelPath"
+    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -TargetDirectory $repoRoot
 
-    # # Verify that the assets.json file was updated
-    # $updatedAssets = Get-Content $assetsJsonFile | Out-String | ConvertFrom-Json
-    # if ([String]::IsNullOrWhitespace($($updatedAssets.Tag))) {
-    #   Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated"
-    #   exit 1
-    # }
+    # Verify that the assets.json file was updated
+    $updatedAssets = Get-Content $assetsJsonFile | Out-String | ConvertFrom-Json
+    if ([String]::IsNullOrWhitespace($($updatedAssets.Tag))) {
+      Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated. Check above output messages for erroneous git output."
+      exit 1
+    }
   }
   catch {
     $ex = $_

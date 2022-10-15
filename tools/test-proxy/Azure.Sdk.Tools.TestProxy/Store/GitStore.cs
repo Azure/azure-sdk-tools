@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                _consoleWrapper.WriteLine("There are pending git changes, are you sure you want to reset? [Y|N]");
+                _consoleWrapper.WriteLine($"There are pending git changes, are you sure you want to reset? [Y|N]");
                 while (true)
                 {
                     string response = _consoleWrapper.ReadLine();
@@ -302,15 +302,40 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return ownerEmail.Trim();
         }
 
-        public static string GetCloneUrl(string assetsRepo)
+        public static string GetCloneUrl(string assetsRepo, string repositoryLocation)
         {
-            var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
+            var GitHandler = new GitProcessHandler();
+            var consoleWrapper = new ConsoleWrapper();
 
-            if (!string.IsNullOrWhiteSpace(gitToken)){
-                return $"https://{gitToken}@github.com/{assetsRepo}";
+            var sshUrl = $"git@github.com:{assetsRepo}.git";
+            var httpUrl = $"https://github.com/{assetsRepo}";
+            var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
+            if (!string.IsNullOrWhiteSpace(gitToken))
+            {
+                httpUrl = $"https://{gitToken}@github.com/{assetsRepo}";
             }
 
-            return $"https://github.com/{assetsRepo}";
+            if (String.IsNullOrEmpty(repositoryLocation))
+            {
+                consoleWrapper.WriteLine("No git repository detected, defaulting to https protocol for assets repository.");
+                return httpUrl;
+            }
+
+            try
+            {
+                var result = GitHandler.Run("remote -v", repositoryLocation);
+                var repoRemote = result.StdOut.Split(Environment.NewLine).First();
+                if (!String.IsNullOrEmpty(repoRemote) && repoRemote.Contains("git@"))
+                {
+                    return sshUrl;
+                }
+                return httpUrl;
+            }
+            catch
+            {
+                consoleWrapper.WriteLine("No git repository detected, defaulting to https protocol for assets repository.");
+                return httpUrl;
+            }
         }
 
         public bool IsAssetsRepoInitialized(GitAssetsConfiguration config)
@@ -347,7 +372,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {GetCloneUrl(config.AssetsRepo)} .", config);
+                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
+                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
                     GitHandler.Run($"sparse-checkout init", config);
                 }
                 catch(GitProcessException e)

@@ -30,7 +30,7 @@
                                 var anyChecked = false;
                             }
                             <div style="max-height:400px;width:max-content;overflow-y:auto">
-                                @foreach (var approver in Model.approvers) 
+                                @foreach (var approver in Model.PreferredApprovers)
                                 {
                                     <span class="checkbox dropdown-item-text">
                                         <label>
@@ -111,7 +111,7 @@
                         }
                         else
                         {
-                            @if (Model.ActiveConversations > 0 && Model.approvers.Contains(User.GetGitHubLogin()))
+                            @if (Model.ActiveConversations > 0 && Model.PreferredApprovers.Contains(User.GetGitHubLogin()))
                             {
                                 <button type="button" class="btn btn-sm shadow-sm btn-success ml-2" data-toggle="modal" data-target="#approveModel">
                                     <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve
@@ -141,7 +141,7 @@
                             }
                             else
                             {
-                                @if (Model.approvers.Contains(User.GetGitHubLogin()))
+                                @if (Model.PreferredApprovers.Contains(User.GetGitHubLogin()))
                                 {
                                     <button type="submit" class="btn btn-sm shadow-sm btn-success ml-2">
                                         <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve

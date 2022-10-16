@@ -30,6 +30,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public readonly UserPreferenceCache _preferenceCache;
 
+        private readonly CosmosUserProfileRepository _userProfileRepository;
+
         private readonly IConfiguration _configuration;
 
         public ReviewPageModel(
@@ -38,6 +40,7 @@ namespace APIViewWeb.Pages.Assemblies
             CommentsManager commentsManager,
             NotificationManager notificationManager,
             UserPreferenceCache preferenceCache,
+            CosmosUserProfileRepository userProfileRepository,
             IConfiguration configuration)
         {
             _manager = manager;
@@ -45,6 +48,7 @@ namespace APIViewWeb.Pages.Assemblies
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
             _preferenceCache = preferenceCache;
+            _userProfileRepository = userProfileRepository;
             _configuration = configuration;
 
         }
@@ -141,7 +145,31 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 foreach (var username in approverConfig.Split(","))
                 {
-                    approvers.Add(username);
+                    if (username.Equals(User.GetGitHubLogin()))
+                    {
+                        var userCache = _preferenceCache.GetUserPreferences(User).Result;
+                        var langs = userCache.ApprovedLanguages.ToHashSet();
+                        if (!langs.Any())
+                        {
+                            UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                            langs = user.Languages;
+                            userCache.ApprovedLanguages = langs;
+                            _preferenceCache.UpdateUserPreference(userCache, User);
+                        }
+                        if (langs.Contains(Review.Language))
+                        {
+                            approvers.Add(username);
+                        }
+                    }
+                    else
+                    {
+                        UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                        var langs = user.Languages;
+                        if (langs.Contains(Review.Language))
+                        {
+                            approvers.Add(username);
+                        }
+                    }
                 }
             }
 

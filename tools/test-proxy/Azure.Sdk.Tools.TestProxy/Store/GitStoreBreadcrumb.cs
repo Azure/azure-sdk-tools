@@ -26,6 +26,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             // split the line here. assign values
             var values = line.Split(";;").Select(x => x.Trim()).ToList();
 
+            if (values.Count() != 3)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse the line {line}");
+            }
+
             PathToAssetsJson = values[0];
             ShortHash = values[1];
             Tag = values[2];

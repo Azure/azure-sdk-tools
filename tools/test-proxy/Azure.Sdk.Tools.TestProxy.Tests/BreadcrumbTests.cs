@@ -1,4 +1,5 @@
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Models;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Store;
@@ -73,6 +74,29 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(expectedPath, breadcrumbLine.PathToAssetsJson);
             Assert.Equal(expectedHash, breadcrumbLine.ShortHash);
             Assert.Equal(expectedTag, breadcrumbLine.Tag);
+        }
+
+        [Theory]
+        [InlineData("sdk/assets.json;;12341516;;   ")]
+        [InlineData("sdk/assets.json;;12341516;;")]
+        public void TestBreadCrumbHandlesEmptyTag(string testString)
+        {
+            BreadcrumbLine breadcrumbLine = new BreadcrumbLine(testString);
+
+            Assert.Equal("12341516", breadcrumbLine.ShortHash);
+            Assert.Equal("sdk/assets.json", breadcrumbLine.PathToAssetsJson);
+            Assert.Empty(breadcrumbLine.Tag);
+        }
+
+        [Fact]
+        public void TestBreadCrumbThrows()
+        {
+            var testString = "sdk/assets.json;;12341516";
+
+            var assertion = Assert.Throws<HttpException>(() =>
+            {
+                BreadcrumbLine breadcrumbLine = new BreadcrumbLine(testString);
+            });
         }
     }
 }

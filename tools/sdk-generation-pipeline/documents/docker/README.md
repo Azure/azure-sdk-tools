@@ -25,7 +25,7 @@ Command
     ```
 2. Generate codes with CADL:
     ```shell
-    docker run -it --privileged -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir -v sdkgeneration.azurecr.io/sdk-generation:latest --readme={relative_cadl_project} --sdk={sdk_to_generate}
+    docker run -it --privileged -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir -v sdkgeneration.azurecr.io/sdk-generation:latest --cadl-project={relative_cadl_project} --sdk={sdk_to_generate}
     ```
 Parameter description:
 

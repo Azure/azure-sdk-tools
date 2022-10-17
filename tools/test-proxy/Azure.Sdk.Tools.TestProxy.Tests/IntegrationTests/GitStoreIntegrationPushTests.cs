@@ -100,6 +100,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {
@@ -181,6 +182,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {
@@ -273,6 +275,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {
@@ -354,6 +357,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {
@@ -480,6 +484,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath2, "file1.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath2, "file2.txt", 3));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath2, "file6.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
 
             }
             finally
@@ -557,6 +562,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, assetRepoRoot);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {

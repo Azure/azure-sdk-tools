@@ -40,6 +40,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public static readonly string GIT_COMMIT_OWNER_ENV_VAR = "GIT_COMMIT_OWNER";
         public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
 
+        public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
+
+
         public ConcurrentDictionary<string, string> Assets = new ConcurrentDictionary<string, string>();
 
         public GitStore()
@@ -112,6 +115,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     throw GenerateInvokeException(e.Result);
                 }
                 await UpdateAssetsJson(generatedTagName, config);
+                await BreadCrumb.Update(config);
             }
         }
 
@@ -130,6 +134,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             CheckoutRepoAtConfig(config);
+            await BreadCrumb.Update(config);
 
             return config.AssetsRepoLocation;
         }
@@ -192,6 +197,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 if (!string.IsNullOrWhiteSpace(config.Tag))
                 {
                     CheckoutRepoAtConfig(config);
+                    await BreadCrumb.Update(config);
                 }
             }
         }

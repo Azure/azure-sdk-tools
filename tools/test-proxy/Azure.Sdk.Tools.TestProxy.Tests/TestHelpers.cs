@@ -7,6 +7,10 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Azure.Sdk.Tools.TestProxy.Store;
+using System.Collections.Generic;
+using System.Linq;
+using Xunit;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -192,7 +196,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 {
                     if (fullPath.EndsWith("assets.json"))
                     {
-                        assetsJsonPath = fullPath;
+                        // write assets json if we were passed content
+                        if (!String.IsNullOrWhiteSpace(localAssetsJsonContent) || ignoreEmptyAssetsJson)
+                        {
+                            WriteTestFile(localAssetsJsonContent, fullPath);
+                        }
                     }
                     else
                     {
@@ -225,12 +233,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             // set a dummy git remote, used for protocol detection
             string gitCloneUrl = GitStore.GetCloneUrl("testrepo", Directory.GetCurrentDirectory());
             GitHandler.Run($"remote add test {gitCloneUrl}", tmpPath);
-
-            // write assets json if we were passed content
-            if (!String.IsNullOrWhiteSpace(localAssetsJsonContent) || ignoreEmptyAssetsJson)
-            {
-                WriteTestFile(localAssetsJsonContent, assetsJsonPath);
-            }
 
             return testFolder.ToString();
         }
@@ -343,6 +345,57 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
 
             File.WriteAllText(fullFileName, "1");
+        }
+
+        /// <summary>
+        /// This function is used to confirm that the .breadcrumb file under the assets store contains the appropriate
+        /// information.
+        /// </summary>
+        /// <param name="configuration"></param>
+        public static void CheckBreadcrumbAgainstAssetsConfig(GitAssetsConfiguration configuration)
+        {
+            var assetsStorePath = configuration.ResolveAssetsStoreLocation();
+            var breadCrumbFile = Path.Join(assetsStorePath, ".breadcrumb");
+            var targetKey = configuration.AssetsJsonRelativeLocation.Replace("\\", "/");
+
+            Assert.True(File.Exists(breadCrumbFile));
+
+            var contents = File.ReadAllLines(breadCrumbFile).Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
+
+            Assert.True(contents.ContainsKey(targetKey));
+
+            Assert.Equal(configuration.Tag, contents[targetKey].Tag);
+            Assert.Equal(targetKey, contents[targetKey].PathToAssetsJson);
+            Assert.Equal(configuration.AssetRepoShortHash, contents[targetKey].ShortHash);
+        }
+
+        /// <summary>
+        /// This function is used to confirm that the .breadcrumb file under the assets store contains the appropriate
+        /// information.
+        /// </summary>
+        /// <param name="configuration"></param>
+        public static void CheckBreadcrumbAgainstAssetsConfigs(IEnumerable<GitAssetsConfiguration> configuration)
+        {
+            foreach (var config in configuration)
+            {
+                CheckBreadcrumbAgainstAssetsConfig(config);
+            }
+        }
+
+        /// <summary>
+        /// This function is used to confirm that the .breadcrumb file under the assets store contains the appropriate
+        /// information.
+        /// </summary>
+        /// <param name="configuration"></param>
+        public static async Task CheckBreadcrumbAgainstAssetsJsons(IEnumerable<string> jsonFileLocations)
+        {
+            GitStore store = new GitStore();
+
+            foreach (var jsonFile in jsonFileLocations)
+            {
+                var config = await store.ParseConfigurationFile(jsonFile);
+                CheckBreadcrumbAgainstAssetsConfig(config);
+            }
         }
 
         /// <summary>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -75,6 +75,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             } 
             finally
             {
@@ -130,6 +131,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {
@@ -186,6 +188,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {
@@ -240,6 +243,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // this is the first time this Gitstore has seen this assets.json. This allows
                 // us to simulate a re-entrant command on an already initialized repo.
                 await additionalStore.Restore(jsonFileLocation);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {
@@ -279,6 +283,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
 
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {
@@ -354,6 +359,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 var result = (await _defaultStore.ParseConfigurationFile(pathToAssets)).AssetsRepoLocation;
 
                 Assert.Equal(result, recordingHandler.ContextDirectory);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });
             }
             finally
             {

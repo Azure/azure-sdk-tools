@@ -90,7 +90,7 @@ cd c:/src/azure-sdk-for-java/sdk/attestation
 ```
 
 ```powershell
-# calling transition script against tool, given local clones of azure-sdk-for-java and azure-sdk-tools
+# calling transition script against docker, given local clones of azure-sdk-for-java and azure-sdk-tools
 $env:GIT_TOKEN="my git token"
 cd c:/src/azure-sdk-for-java/sdk/attestation
 <path-to-transition-script>/generate-assets-json.ps1 -TestProxyExe "docker" -InitialPush

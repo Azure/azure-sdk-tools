@@ -45,7 +45,7 @@ Example Command:
     ```
 2. Generate codes with CADL:
     ```shell
-    docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest --readme="specification/agrifood/Agrifood" --sdk=js,java
+    docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest --cadl-project="specification/agrifood/Agrifood" --sdk=js,java
     ```
 
 After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can [open your local vscode and connect to docker container](./vscode-connect-docker-container.md) for further grow up development.
@@ -150,7 +150,7 @@ Example Command:
     ```
 2. Generate codes with CADL:
     ```shell
-    docker run --privileged -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --cadl-project=specification/agrifood/Agrifood
+    docker run --privileged -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --cadl-project="specification/agrifood/Agrifood"
     ```
 
 After running the command in pipeline, docker will execute tasks automatically. Also, there will be output files generated, which will be used by pipeline's other job, such as upload codes, parsing logs.

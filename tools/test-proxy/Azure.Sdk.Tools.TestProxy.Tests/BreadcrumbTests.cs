@@ -64,10 +64,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        [InlineData("assets.json;;abcdemeep;;atargetedTag", "assets.json", "abcdemeep", "atargetedTag")]
-        [InlineData("sdk/assets.json;;12341516;;ADifferentTag", "sdk/assets.json", "12341516", "ADifferentTag")]
-        [InlineData("sdk/blahblah/coolÑ/assets.json;;  hello!  ;;BlahTag", "sdk/blahblah/coolÑ/assets.json", "hello!", "BlahTag")]
-        [InlineData("sdk/blahblah/coolÑ/assets.json;;abcde12345;;  ", "sdk/blahblah/coolÑ/assets.json", "abcde12345", "")]
+        [InlineData("assets.json;abcdemeep;atargetedTag", "assets.json", "abcdemeep", "atargetedTag")]
+        [InlineData("sdk/assets.json;12341516;ADifferentTag", "sdk/assets.json", "12341516", "ADifferentTag")]
+        [InlineData("sdk/blahblah/coolÑ/assets.json;  hello!  ;BlahTag", "sdk/blahblah/coolÑ/assets.json", "hello!", "BlahTag")]
+        [InlineData("sdk/blahblah/coolÑ/assets.json;abcde12345;  ", "sdk/blahblah/coolÑ/assets.json", "abcde12345", "")]
         public void TestBreadcrumbParsing(string incomingString, string expectedPath, string expectedHash, string expectedTag)
         {
             BreadcrumbLine breadcrumbLine = new BreadcrumbLine(incomingString);
@@ -77,8 +77,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        [InlineData("sdk/assets.json;;12341516;;   ")]
-        [InlineData("sdk/assets.json;;12341516;;")]
+        [InlineData("sdk/assets.json;12341516;   ")]
+        [InlineData("sdk/assets.json;12341516;")]
         public void TestBreadCrumbHandlesEmptyTag(string testString)
         {
             BreadcrumbLine breadcrumbLine = new BreadcrumbLine(testString);
@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestBreadCrumbThrows()
         {
-            var testString = "sdk/assets.json;;12341516";
+            var testString = "sdk/assets.json;12341516";
 
             var assertion = Assert.Throws<HttpException>(() =>
             {

@@ -28,7 +28,7 @@ Running the script requires the base requirements.
 - [x] Git version `>2.25.0` needs to be on the machine and in the path. Git is used by the script and test-proxy.
 - [x] [Powershell Core](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) at least version 7.
 - [x] Ensure global git config settings for `user.name` and `user.email` are updated. [Reference](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup)
-  - Override with environment variables `GIT_COMMIT_EMAIL` and `GIT_COMMIT_OWNER`
+  - Override with environment variables `GIT_COMMIT_EMAIL` and `GIT_COMMIT_OWNER`. If either of these are set, they will override the default values pulled from `git config --global`.
 
 Once the above requirements are met, developers are welcome to choose one of the following paths.
 

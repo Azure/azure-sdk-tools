@@ -255,10 +255,18 @@ Function Invoke-ProxyCommand {
 
   if ($TestProxyExe -eq "docker" -or $TestProxyExe -eq "podman"){
     $token = $env:GIT_TOKEN
-    $commiter = $env:GIT_COMMIT_OWNER
+    $committer = $env:GIT_COMMIT_OWNER
     $email = $env:GIT_COMMIT_EMAIL
 
-    if(-not $token -or -not $commiter -or -not $email){
+    if (-not $committer) {
+      $committer = & git config --global user.name
+    }
+
+    if (-not $email) {
+      $email = & git config --global user.email
+    }
+
+    if(-not $token -or -not $committer -or -not $email){
       Write-Error "When running this transition script in `"docker`" or `"podman`" mode, " `
         + "the environment variables GIT_TOKEN, GIT_COMMIT_OWNER, GIT_COMMIT_EMAIL must be set to reflect the appropriate user. "
     }
@@ -269,7 +277,7 @@ Function Invoke-ProxyCommand {
       "run --rm --name transition.test.proxy",
       "-v `"${updatedDirectory}:/srv/testproxy`"",
       "-e `"GIT_TOKEN=${token}`"",
-      "-e `"GIT_COMMIT_OWNER=${commiter}`"",
+      "-e `"GIT_COMMIT_OWNER=${committer}`"",
       "-e `"GIT_COMMIT_EMAIL=${email}`"",
       $targetImage,
       "test-proxy",

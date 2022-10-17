@@ -70,10 +70,15 @@ There is a walkthrough through the process below in the [how do I use the test p
 2. Install test-proxy
 
 ```powershell
-> dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json --version 1.0.0-dev*
+dotnet tool update azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json --version "1.0.0-dev*"
 ```
 
-This feed is available in [the public azure-sdk project.](https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk)
+To uninstall an existing test-proxy
+```powershell
+> dotnet tool uninstall --global azure.sdk.tools.testproxy
+```
+
+The test-proxy is also available from the [azure-sdk-for-net public feed](https://dev.azure.com/azure-sdk/public/_artifacts/feed/azure-sdk-for-net)
 
 After successful installation, run the tool:
 
@@ -86,8 +91,6 @@ If you've already installed the tool, you can always check the installed version
 ```powershell
 > test-proxy --version
 ```
-
-The `--version` option can also be invoked as part of a command and will display the version prior to running the command.
 
 ### Via Docker Image
 

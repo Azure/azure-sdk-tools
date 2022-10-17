@@ -19,6 +19,7 @@ namespace APIViewWeb.Models
         public bool IsResolve { get; set; }
         public DateTime? EditedTimeStamp { get; set; }
         public List<string> Upvotes { get; set; } = new List<string>();
+        public HashSet<string> TaggedUsers { get; set; } = new HashSet<string>();
         public bool IsUsageSampleComment { get; set; } = false;
         public bool ResolutionLocked { get; set; } = false;
     }

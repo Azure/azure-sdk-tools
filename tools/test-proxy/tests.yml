@@ -79,11 +79,44 @@ stages:
         - template: /eng/pipelines/templates/steps/run-pester-tests.yml
           parameters:
             TargetTags: "Integration"
-            TargetDirectory: tools/test-proxy/test-scripts/
+            TargetDirectory: tools/test-proxy/scripts/test-scripts/
             EnvVars:
               GIT_TOKEN: $(azuresdk-github-pat)
               GIT_COMMIT_OWNER: azure-sdk
               GIT_COMMIT_EMAIL: azuresdk@microsoft.com
+
+    - job: Docker_CLI_Integration_Test
+
+      pool:
+        name: 'azsdk-pool-mms-ubuntu-2004-general'
+
+      variables:
+        CLI_TEST_DOCKER_TAG: localproxyinstance
+
+      steps:
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core sdk 6.x'
+          inputs:
+            version: '6.x'
+
+        - pwsh: |
+            ./prepare.ps1
+
+            docker build -t $(CLI_TEST_DOCKER_TAG) .
+          workingDirectory: tools/test-proxy/docker/
+          displayName: "Prepare and Build local docker image"
+
+        - template: /eng/pipelines/templates/steps/run-pester-tests.yml
+          parameters:
+            TargetTags: "Integration"
+            TargetDirectory: tools/test-proxy/scripts/test-scripts/
+            EnvVars:
+              GIT_TOKEN: $(azuresdk-github-pat)
+              GIT_COMMIT_OWNER: azure-sdk
+              GIT_COMMIT_EMAIL: azuresdk@microsoft.com
+              CLI_TEST_WITH_DOCKER: true
+              CLI_TEST_DOCKER_TAG: $(CLI_TEST_DOCKER_TAG)
+              DISABLE_INTEGRATION_BRANCH_CLEANUP: true
 
   - stage: RepoUnitTests
     displayName: Repo-Specific Unit Tests

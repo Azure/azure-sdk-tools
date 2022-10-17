@@ -11,6 +11,7 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -29,18 +30,26 @@ namespace APIViewWeb.Pages.Assemblies
 
         public readonly UserPreferenceCache _preferenceCache;
 
+        private readonly CosmosUserProfileRepository _userProfileRepository;
+
+        private readonly IConfiguration _configuration;
+
         public ReviewPageModel(
             ReviewManager manager,
             BlobCodeFileRepository codeFileRepository,
             CommentsManager commentsManager,
             NotificationManager notificationManager,
-            UserPreferenceCache preferenceCache)
+            UserPreferenceCache preferenceCache,
+            CosmosUserProfileRepository userProfileRepository,
+            IConfiguration configuration)
         {
             _manager = manager;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
             _preferenceCache = preferenceCache;
+            _userProfileRepository = userProfileRepository;
+            _configuration = configuration;
 
         }
 
@@ -54,6 +63,7 @@ namespace APIViewWeb.Pages.Assemblies
         public CodeLineModel[] Lines { get; set; }
         public InlineDiffLine<CodeLine>[] DiffLines { get; set; }
         public ReviewCommentsModel Comments { get; set; }
+        public HashSet<GithubUser> TaggableUsers { get; set; }
 
         /// <summary>
         /// The number of active conversations for this iteration
@@ -76,6 +86,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public IEnumerable<ReviewModel> ReviewsForPackage { get; set; } = new List<ReviewModel>();
 
+        public readonly HashSet<string> approvers = new HashSet<string>();
+
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
             TempData["Page"] = "api";
@@ -86,6 +98,8 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }
+
+            TaggableUsers = _commentsManager.TaggableUsers;
 
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
             Revision = GetReviewRevision(revisionId);
@@ -125,6 +139,40 @@ namespace APIViewWeb.Pages.Assemblies
             UsageSampleConversations = Comments.Threads.Count(t => t.Comments.FirstOrDefault()?.IsUsageSampleComment == true);
             var filterPreference = _preferenceCache.GetFilterType(User.GetGitHubLogin(), Review.FilterType);
             ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName, filterPreference);
+
+            var approverConfig = _configuration["approvers"];
+            if (!string.IsNullOrEmpty(approverConfig))
+            {
+                foreach (var username in approverConfig.Split(","))
+                {
+                    if (username.Equals(User.GetGitHubLogin()))
+                    {
+                        var userCache = _preferenceCache.GetUserPreferences(User).Result;
+                        var langs = userCache.ApprovedLanguages.ToHashSet();
+                        if (!langs.Any())
+                        {
+                            UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                            langs = user.Languages;
+                            userCache.ApprovedLanguages = langs;
+                            _preferenceCache.UpdateUserPreference(userCache, User);
+                        }
+                        if (langs.Contains(Review.Language))
+                        {
+                            approvers.Add(username);
+                        }
+                    }
+                    else
+                    {
+                        UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                        var langs = user.Languages;
+                        if (langs.Contains(Review.Language))
+                        {
+                            approvers.Add(username);
+                        }
+                    }
+                }
+            }
+
             return Page();
         }
 
@@ -138,7 +186,7 @@ namespace APIViewWeb.Pages.Assemblies
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
             Lines = CreateLines(fileDiagnostics, htmlLines, Comments, true);
             TempData["CodeLineSection"] = Lines;
-            TempData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User.GetGitHubLogin()) ?? new UserPreferenceModel();
+            TempData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User) ?? new UserPreferenceModel();
             return Partial("_CodeLinePartial", sectionId);
         }
 
@@ -160,6 +208,12 @@ namespace APIViewWeb.Pages.Assemblies
             await _manager.ToggleApprovalAsync(User, id, revisionId);
             return RedirectToPage(new { id = id });
         }
+        public async Task<ActionResult> OnPostRequestReviewersAsync(string id, HashSet<string> reviewers)
+        {
+            await _manager.RequestApproversAsync(User, id, reviewers);
+            await _notificationManager.NotifyApproversOfReview(User, id, reviewers);
+            return RedirectToPage(new { id = id });
+        }
 
         public IActionResult OnGetUpdatePageSettings(bool hideLineNumbers = false, bool hideLeftNavigation = false)
         {
@@ -167,7 +221,7 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 HideLeftNavigation = hideLeftNavigation,
                 HideLineNumbers = hideLineNumbers
-            }, User.GetGitHubLogin());
+            }, User);
             return new EmptyResult();
         }
 
@@ -183,7 +237,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public UserPreferenceModel GetUserPreference()
         {
-            return _preferenceCache.GetUserPreferences(User.GetGitHubLogin()).Result;
+            return _preferenceCache.GetUserPreferences(User).Result;
         }
 
         private ReviewRevisionModel GetReviewRevision(string revisionId = null)

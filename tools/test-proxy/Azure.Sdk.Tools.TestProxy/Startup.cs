@@ -57,12 +57,8 @@ namespace Azure.Sdk.Tools.TestProxy
         public static async Task Main(string[] args = null)
         {
             VerifyVerb(args);
-            // JRS - Temporarily disable this check because of https://github.com/Azure/azure-sdk-tools/issues/4116
-            // This throws and will exit
-            // new GitProcessHandler().VerifyGitMinVersion();
             var parser = new Parser(settings =>
             {
-                settings.AutoVersion = false;
                 settings.CaseSensitive = false;
                 settings.HelpWriter = System.Console.Out;
                 settings.EnableDashDash = true;
@@ -75,6 +71,18 @@ namespace Azure.Sdk.Tools.TestProxy
 
         static void ExitWithError(IEnumerable<Error> errors)
         {
+
+            // ParseArguments lumps help/--help and version/--version into WithNotParsed
+            // but their type is VersionRequestedError and HelpRequestedError/HelpVerbRequestedError.
+            // If the user is requesting help or version, don't exit 1, just exit 0
+            if (errors.Count() == 1)
+            {
+                Error err = errors.First();
+                if ((err.Tag == ErrorType.HelpVerbRequestedError || err.Tag == ErrorType.HelpRequestedError || err.Tag == ErrorType.VersionRequestedError))
+                {
+                    Environment.Exit(0);
+                }
+            }
             Environment.Exit(1);
         }
 
@@ -101,7 +109,8 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             // last but not least, the first argument is a verb, verify it's our verb
-            string[] array = { "start", "reset", "restore", "push" };
+            // version and help are default verbs and need to be in here
+            string[] array = { "start", "reset", "restore", "push", "version", "help" };
             if (!array.Contains(args[0]))
             {
                 // The odd looking formatting is to make this look like the same error
@@ -120,14 +129,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private static async Task Run(object commandObj)
         {
+            new GitProcessHandler().VerifyGitMinVersion();
             DefaultOptions defaultOptions = (DefaultOptions)commandObj;
-            if (defaultOptions.VersionFlag)
-            {
-                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-                var assemblyVersion = assembly.GetName().Version;
-                System.Console.WriteLine($"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}-dev.{semanticVersion}");
-            }
 
             TargetLocation = resolveRepoLocation(defaultOptions.StorageLocation);
             Resolver = new StoreResolver();

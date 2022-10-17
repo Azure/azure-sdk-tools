@@ -24,6 +24,7 @@ steps:
         $config = New-PesterConfiguration
         $config.CodeCoverage.Enabled = $true
         $config.TestResult.Enabled = $true
+        $config.Run.PassThru = $true
 
         if ($tags) {
           $config.Filter.Tag = $tags

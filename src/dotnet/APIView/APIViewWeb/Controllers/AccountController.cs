@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -44,7 +44,7 @@ namespace APIViewWeb.Controllers
                 HideLeftNavigation = hideLeftNavigation,
                 HideLineNumbers = hideLineNumbers,
                 Theme = theme
-            }, User.GetGitHubLogin());
+            }, User);
             return Ok();
         }
     }

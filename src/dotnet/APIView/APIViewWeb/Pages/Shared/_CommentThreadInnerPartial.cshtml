@@ -1,10 +1,10 @@
-﻿@using APIViewWeb.Models
+@using APIViewWeb.Models
 @model CommentModel
 
 <div id="@Model.CommentId" class="review-comment" data-comment-id="@Model.CommentId">
     <div class="media">
         <a username="@Model.Username" title="Github Profile of Commenter">
-            <img username="@Model.Username" class="comment-icon align-self-start mr-3" height="28" width="28" aria-label="User Avatar of Commenter"/>
+            <img username="@Model.Username" size="28" class="comment-icon align-self-start mr-3" height="28" width="28" aria-label="User Avatar of Commenter"/>
         </a>
         <div class="media-body comment-contents">
             <span>
@@ -54,7 +54,51 @@
                 </div>
             </span>
             <textarea class="js-comment-raw d-none">@Model.Comment</textarea>
-            @Html.FormatAsMarkdown(@Model.Comment)
+            @if (Model.Comment.Contains("\r\n"))
+            {
+                var cmt = Model.Comment.Split("\r\n");
+                string codeBlockString = "";
+                bool codeBlock = false;
+                bool newLineAdded = true;
+                foreach (var line in cmt)
+                {
+                    @* Preserves code block formatting *@
+                    if (line.Contains("```"))
+                    {
+                        codeBlock = !codeBlock;
+                        codeBlockString += line + "\n";
+                        if (!codeBlock)
+                        {
+                            if (!newLineAdded)
+                            {
+                                <br />
+                            }
+                            @Html.FormatAsMarkdown(codeBlockString)
+                            codeBlockString = "";
+                            newLineAdded = true;
+                        }
+                    }
+                    else if (codeBlock)
+                    {
+                        codeBlockString += line + "\n";
+                    }
+                    @* Adds new lines where needed, otherwise breaks up parsing to be line by line *@
+                    else if (line.Equals("") && !newLineAdded)
+                    {
+                        <br />
+                        newLineAdded = true;
+                    }
+                    else if (!line.Equals(""))
+                    {
+                        @Html.FormatAsMarkdown(line)
+                        newLineAdded = false;
+                    }
+                }
+            }
+            else
+            {
+                @Html.FormatAsMarkdown(Model.Comment)
+            }
         </div>
     </div>
 </div>

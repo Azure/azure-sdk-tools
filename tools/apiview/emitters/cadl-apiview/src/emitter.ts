@@ -16,7 +16,7 @@ const defaultOptions = {
 } as const;
 
 export interface ResolvedApiViewEmitterOptions {
-  "output-file": string;
+  outputFile: string;
 }
 
 export async function $onEmit(program: Program, emitterOptions?: ApiViewEmitterOptions) {
@@ -32,8 +32,8 @@ export function resolveOptions(
   const resolvedOptions = { ...defaultOptions, ...options };
 
   return {
-    "output-file": resolvePath(
-      program.compilerOptions.outputPath ?? "./output",
+    outputFile: resolvePath(
+      resolvedOptions["output-dir"] ?? program.compilerOptions.outputDir ?? "./cadl-output",
       resolvedOptions["output-file"]
     ),
   };
@@ -58,10 +58,11 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
     apiview.emit(program);
     apiview.resolveMissingTypeReferences();
 
-    const tokenJson = JSON.stringify(apiview.asApiViewDocument()) + "\n";
-    await emitFile(program, {
-      path: options["output-file"],
-      content: tokenJson,
-    });
+    if (!program.compilerOptions.noEmit && !program.hasError()) {
+      await emitFile(program, {
+        path: options.outputFile,
+        content: JSON.stringify(apiview.asApiViewDocument()) + "\n"
+      });  
+    }
   }
 }

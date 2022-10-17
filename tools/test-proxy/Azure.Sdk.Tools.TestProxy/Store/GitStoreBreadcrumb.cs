@@ -24,7 +24,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public BreadcrumbLine(string line)
         {
             // split the line here. assign values
-            var values = line.Split(";;").Select(x => x.Trim()).ToList();
+            var values = line.Split(";").Select(x => x.Trim()).ToList();
+
+            if (values.Count() != 3)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse the line {line}");
+            }
 
             PathToAssetsJson = values[0];
             ShortHash = values[1];
@@ -43,12 +48,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Contract is AssetsJsonRelative;;ShortHash;;TargetTag
+        /// Contract is AssetsJsonRelative;ShortHash;TargetTag
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            return $"{PathToAssetsJson.Replace("\\", "/")};;{ShortHash};;{Tag}";
+            return $"{PathToAssetsJson.Replace("\\", "/")};{ShortHash};{Tag}";
         }
     }
 

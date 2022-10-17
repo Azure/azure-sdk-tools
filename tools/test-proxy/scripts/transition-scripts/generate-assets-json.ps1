@@ -25,7 +25,7 @@ If flag InitialPush is set, recordings will be automatically pushed to the asset
 The executable used during the "InitialPush" action. Defaults to the dotnet tool test-proxy, but also supports "docker" or "podman".
 
 .PARAMETER InitialPush
-Set this setting to $true to automagically move all recordings found UNDER your assets.json to an assets repo.
+Pass this flag to automagically move all recordings found UNDER your assets.json to an assets repo.
 
 Detailed process:
 - Create a temp directory.

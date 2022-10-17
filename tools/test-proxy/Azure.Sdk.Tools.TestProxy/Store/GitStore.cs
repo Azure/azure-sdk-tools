@@ -246,6 +246,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
+                // Workaround for git directory ownership checks that may fail when running in a container as a different user.
+                if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER")) {
+                    GitHandler.Run($"config --global --add safe.directory {config.AssetsRepoLocation}", config);
+                }
                 // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
                 // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
                 GitHandler.Run("fetch --tags origin", config);

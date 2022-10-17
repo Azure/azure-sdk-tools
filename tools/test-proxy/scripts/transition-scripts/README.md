@@ -22,7 +22,7 @@ wget https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-pro
 
 Before running the script, understand that **only services that have migrated to use the `test-proxy` as their record/playback solution can store recordings into the external assets repository.** The test-proxy itself contains the code for `restoring`/`push`ing recordings, so if it is NOT being used for record/playback, that work must be completed before recordings can be moved.
 
-Running the script requires the base requirements.
+Running the script requires these base requirements.
 
 - [x] The targeted library is already migrated to use the test-proxy.
 - [x] Git version `>2.25.0` needs to be on the machine and in the path. Git is used by the script and test-proxy.

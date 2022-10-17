@@ -15,7 +15,7 @@ Invoke-WebRequest -OutFile "generate-assets-json.ps1" https://raw.githubusercont
 ```
 
 ```bash
-wget https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/scripts/transition-scripts/generate-assets-json.ps1
+wget https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/scripts/transition-scripts/generate-assets-json.ps1 -o generate-assets-json.ps1
 ```
 
 ## Setup
@@ -81,7 +81,7 @@ cd "<target-language-repo>/sdk/<service>"
 <path-to-transition-script>/generate-assets-json.ps1
 ```
 
-The script needs to be executed inside an `sdk/<ServiceDirectory>` or deeper and from within an up to date language repository. A good rule here would be look at where the ci.yml is for an service directory. In the case where each library for a given service directory has their own pipelines, at the `sdk/<ServiceDirectory><Library>` level, it is recommended that the assets.json is created there. If the `ci.yml` exists deeper then the `sdk/<ServiceDirectory>/<Library>` level, then it is recommended to run the script from that directory.
+The script needs to be executed inside an `sdk/<ServiceDirectory>` or deeper and from within an up to date language repository. A good rule here would be look at where the ci.yml is for an service directory. In the case where each library for a given service directory has their own pipelines, at the `sdk/<ServiceDirectory>/<Library>` level, it is recommended that the assets.json is created there. If the `ci.yml` exists deeper than the `sdk/<ServiceDirectory>/<Library>` level, then it is recommended to run the script from that directory.
 
 ```powershell
 # calling transition script against tool, given local clones of azure-sdk-for-java and azure-sdk-tools
@@ -90,7 +90,7 @@ cd c:/src/azure-sdk-for-java/sdk/attestation
 ```
 
 ```powershell
-# calling transition script against tool, given local clones of azure-sdk-for-java and azure-sdk-tools
+# calling transition script against docker, given local clones of azure-sdk-for-java and azure-sdk-tools
 $env:GIT_TOKEN="my git token"
 cd c:/src/azure-sdk-for-java/sdk/attestation
 <path-to-transition-script>/generate-assets-json.ps1 -TestProxyExe "docker" -InitialPush

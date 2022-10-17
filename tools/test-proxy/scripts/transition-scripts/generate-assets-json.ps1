@@ -25,16 +25,17 @@ If flag InitialPush is set, recordings will be automatically pushed to the asset
 The executable used during the "InitialPush" action. Defaults to the dotnet tool test-proxy, but also supports "docker" or "podman".
 
 .PARAMETER InitialPush
-Set this setting to $true to automagically move all recordings found UNDER your assets.json to an assets repo.
+Pass this flag to automagically move all recordings found UNDER your assets.json to an assets repo.
 
 Detailed process:
 - Create a temp directory.
 - Call "restore" against that assets directory to prepare it to receive updates.
 - Move all recordings found under the assets.json within the language repo to the assets directory prepared by the restore operation in the previous step.
+- Push moved recordings to the assets repo.
 - Update the assets.json with the new tag.
 
 .PARAMETER UseTestRepo
-Setting this parameter to $true will result in an assets.json that points at repo Azure/azure-sdk-assets-integration.This is the
+Enabling this parameter will result in an assets.json that points at repo Azure/azure-sdk-assets-integration. This is the
 integration repo that the azure-sdk EngSys team uses to integration test this script and other asset-sync features.
 
 Most library devs should ignore this setting unless directed otherwise (or if they're curious!). Permissions to the integration

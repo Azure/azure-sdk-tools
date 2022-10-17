@@ -27,6 +27,7 @@ export class DockerTaskEngineContext {
     generateAndBuildTaskLog: string;
     mockTestTaskLog: string;
     readmeMdPath: string;
+    cadlProjectFolderPath: string;
     specRepo: {
         repoPath: string;
         headSha: string;
@@ -63,6 +64,7 @@ export class DockerTaskEngineContext {
         this.generateAndBuildTaskLog = path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.generateAndBuildTaskLog);
         this.mockTestTaskLog = path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.mockTestTaskLog);
         this.readmeMdPath = dockerContext.readmeMdPath;
+        this.cadlProjectFolderPath = dockerContext.cadlProjectFolderPath;
         this.specRepo = {
             repoPath: dockerContext.specRepo,
             headSha: dockerTaskEngineConfigProperties.headSha ?? dockerContext.isPublicRepo?

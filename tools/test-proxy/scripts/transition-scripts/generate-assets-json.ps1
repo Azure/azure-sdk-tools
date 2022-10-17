@@ -9,17 +9,43 @@ Requirements:
 needs to be run at an sdk/<ServiceDirectory> or deeper. For example sdk/core if the assets.json is
 being created at the service directory level or sdk/core/<somelibrary> if the assets.json is being
 created at the library level. A good rule here would be to run this in the same directory where the ci.yml
-file lives. For most this is the sdk/<ServiceDirectory> but, in some service directories, each library
-has its own ci.yml and pipeline and for these the ci.yml would be in the sdk/<ServiceDirectory>/<library>.
+file lives. For most this is the sdk/<ServiceDirectory>, but some services emplace a ci.yml alongside each package.
+In that case, the assets.json should live alongside the ci.yml in the sdk/<ServiceDirectory>/<library> directory.
 
 Generated assets.json file contents
-1. AssetsRepo: "Azure/azure-sdk-assets" - This is the assets repository
-2. AssetsRepoPrefixPath: "<language>" - this is will be computed from repository it's being run in
-3. TagPrefix: "<language>/<ServiceDirectory>" or "<language>/<ServiceDirectory>/<library>" or deeper if things
-              are nested in such a manner.
-4. Tag: "" - Initially empty, as nothing has yet been pushed
+- AssetsRepo: "Azure/azure-sdk-assets" - This is the assets repository, aka where your recordings will live after this script runs.
+- AssetsRepoPrefixPath: "<language>" - this is will be computed from repository it's being run in. 
+- TagPrefix: "<language>/<ServiceDirectory>" or "<language>/<ServiceDirectory>/<library>" or deeper if things
+              are nested in such a manner. All tags created for this assets.json will start with this name.
+- Tag: "" - Initially empty, as nothing has yet been pushed.
+
+If flag InitialPush is set, recordings will be automatically pushed to the assets repo and the Tag property updated.
+
+.PARAMETER TestProxyExe
+The executable used during the "InitialPush" action. Defaults to the dotnet tool test-proxy, but also supports "docker" or "podman".
+
+.PARAMETER InitialPush
+Pass this flag to automagically move all recordings found UNDER your assets.json to an assets repo.
+
+Detailed process:
+- Create a temp directory.
+- Call "restore" against that assets directory to prepare it to receive updates.
+- Move all recordings found under the assets.json within the language repo to the assets directory prepared by the restore operation in the previous step.
+- Push moved recordings to the assets repo.
+- Update the assets.json with the new tag.
+
+.PARAMETER UseTestRepo
+Enabling this parameter will result in an assets.json that points at repo Azure/azure-sdk-assets-integration. This is the
+integration repo that the azure-sdk EngSys team uses to integration test this script and other asset-sync features.
+
+Most library devs should ignore this setting unless directed otherwise (or if they're curious!). Permissions to the integration
+repo are identical to the default assets repo.
+
 #>
 param(
+  [ValidateSet("test-proxy", "docker", "podman", IgnoreCase = $true)]
+  [Parameter(Mandatory = $false)]
+  [string] $TestProxyExe = "test-proxy",
   [switch] $InitialPush,
   [switch] $UseTestRepo
 )
@@ -27,15 +53,10 @@ param(
 # Git needs to be in the path to determine the language and, if the initial push
 # is being performed, for the CLI commands to work
 $GitExe = "git"
-# If the initial push is being performed, test-proxy needs to be in the path in
-# order for the CLI commands to be executed
-$TestProxyExe = "test-proxy"
-
-$OriginalProxyAssetsFolder = $env:PROXY_ASSETS_FOLDER
 
 # The built test proxy on a dev machine will have the version 1.0.0-dev.20221013.1
 # whereas the one installed from nuget will have the version 20221013.1 (minus the 1.0.0-dev.)
-$MinTestProxyVersion = "20221012.1"
+$MinTestProxyVersion = "20221017.1"
 
 $DefaultAssetsRepo = "Azure/azure-sdk-assets"
 if ($UseTestRepo) {
@@ -228,8 +249,42 @@ Function New-Assets-Json-File {
 Function Invoke-ProxyCommand {
   param(
     [string] $TestProxyExe,
-    [string] $CommandArgs
+    [string] $CommandArgs,
+    [string] $TargetDirectory
   )
+  $updatedDirectory = $TargetDirectory.Replace("`\", "/")
+
+  if ($TestProxyExe -eq "docker" -or $TestProxyExe -eq "podman"){
+    $token = $env:GIT_TOKEN
+    $committer = $env:GIT_COMMIT_OWNER
+    $email = $env:GIT_COMMIT_EMAIL
+
+    if (-not $committer) {
+      $committer = & git config --global user.name
+    }
+
+    if (-not $email) {
+      $email = & git config --global user.email
+    }
+
+    if(-not $token -or -not $committer -or -not $email){
+      Write-Error "When running this transition script in `"docker`" or `"podman`" mode, " `
+        + "the environment variables GIT_TOKEN, GIT_COMMIT_OWNER, GIT_COMMIT_EMAIL must be set to reflect the appropriate user. "
+    }
+
+    $targetImage = if ($env:TRANSITION_SCRIPT_DOCKER_TAG) { $env:TRANSITION_SCRIPT_DOCKER_TAG } else { "azsdkengsys.azurecr.io/engsys/test-proxy:latest" }
+
+    $CommandArgs = @(
+      "run --rm --name transition.test.proxy",
+      "-v `"${updatedDirectory}:/srv/testproxy`"",
+      "-e `"GIT_TOKEN=${token}`"",
+      "-e `"GIT_COMMIT_OWNER=${committer}`"",
+      "-e `"GIT_COMMIT_EMAIL=${email}`"",
+      $targetImage,
+      "test-proxy",
+      $CommandArgs
+    ) -join " "
+  }
 
   Write-Host "$TestProxyExe $CommandArgs"
   [array] $output = & "$TestProxyExe" $CommandArgs.Split(" ")
@@ -239,46 +294,20 @@ Function Invoke-ProxyCommand {
   }
 }
 
-Function Get-TempPath {
-  return [System.IO.Path]::GetTempPath()
-}
-# Set the PROXY_ASSETS_FOLDER to [System.IO.Path]::GetTempPath()/<Guid>
-# This is a temporary directory that'll be used for the restore/push operatios
-# on the assets.json that was just created. This is temporary, as the original
-# PROXY_ASSETS_FOLDER value was saved at the beginning of the script and
-# the original value will be restored at the end of the script.
-Function Set-ProxyAssetsFolder {
-  $guid = [Guid]::NewGuid()
-  $tempPath = Get-TempPath
-  $proxyAssetsFolder = Join-Path -Path $tempPath -ChildPath $guid
-  New-Item -Type Directory -Force -Path $proxyAssetsFolder | Out-Null
-  $env:PROXY_ASSETS_FOLDER = $proxyAssetsFolder
-  return $proxyAssetsFolder
-}
-
 # Get the shorthash directory under PROXY_ASSETS_FOLDER
 Function Get-AssetsRoot {
   param(
     [string] $AssetsJsonFile
   )
-
-  $startingPath = $env:PROXY_ASSETS_FOLDER
-  # It's odd that $folder.Count and $folders.Lenght work and we need to do this
-  $numDirs = Get-ChildItem $startingPath -Directory | Measure-Object | ForEach-Object { $_.Count }
-  $folders = Get-ChildItem $startingPath -Directory
-  # There should only be one folder
-  if (1 -ne $numDirs) {
-    Write-Error "The assets directory ($startingPath) should only contain 1 subfolder not $numDirs ($folders -join $([Environment]::NewLine))"
-    exit 1
-  }
-  $assetsRoot = $folders[0].FullName
   $repoRoot = Get-Repo-Root
-  $assets = Get-Content $AssetsJsonFile | Out-String | ConvertFrom-Json
-  $assetsJsonPath = Split-Path -Path $AssetsJsonFile
-  $relPath = [IO.Path]::GetRelativePath($repoRoot, $assetsJsonPath)
-  $assetsRoot = Join-Path -Path $folders[0].FullName -ChildPath $assets.AssetsRepoPrefixPath -AdditionalChildPath $relPath
+  $relPath = [IO.Path]::GetRelativePath($repoRoot, $AssetsJsonFile).Replace("`\", "/")
+  $breadcrumbFile = Join-Path $repoRoot ".assets" ".breadcrumb"
 
-  return $assetsRoot
+  $breadcrumbString = Get-Content $breadcrumbFile | Where-Object { $_.StartsWith($relPath) }
+  $assetRepo = $breadcrumbString.Split(";;")[1]
+  $assetsPrefix = (Get-Content $AssetsJsonFile | Out-String | ConvertFrom-Json).AssetsRepoPrefixPath
+
+  return Join-Path $repoRoot ".assets" $assetRepo $assetsPrefix $relPath
 }
 
 Function Move-AssetsFromLangRepo {
@@ -290,25 +319,21 @@ Function Move-AssetsFromLangRepo {
   Write-Host "Get-ChildItem -Recurse -Filter ""*.json"" | Where-Object { `$_.DirectoryName.Split([IO.Path]::DirectorySeparatorChar) -contains ""$filter"" }"
   $filesToMove = Get-ChildItem -Recurse -Filter "*.json" | Where-Object { $_.DirectoryName.Split([IO.Path]::DirectorySeparatorChar) -contains "$filter" }
   [string] $currentDir = Get-Location
+
   foreach ($fromFile in $filesToMove) {
+    Write-Host $fromFile
     $relPath = [IO.Path]::GetRelativePath($currentDir, $fromFile)
     $toFile = Join-Path -Path $AssetsRoot -ChildPath $relPath
     # Write-Host "Moving from=$fromFile"
     # Write-Host "          to=$toFile"
     $toPath = Split-Path -Path $toFile
+
+    Write-Host $toFile
     if (!(Test-Path $toPath)) {
       New-Item -Path $toPath -ItemType Directory -Force | Out-Null
     }
-    Move-Item -LiteralPath $fromFile -Destination $toFile
+    Move-Item -LiteralPath $fromFile -Destination $toFile -Force
   }
-}
-
-Function Remove-ProxyAssetsFolder {
-  if (![string]::IsNullOrWhitespace($env:DISABLE_INTEGRATION_BRANCH_CLEANUP)) {
-    return
-  }
-  Write-Host "cleaning up $env:PROXY_ASSETS_FOLDER"
-  Remove-Item -LiteralPath $env:PROXY_ASSETS_FOLDER -Force -Recurse
 }
 
 Test-Exe-In-Path -ExeToLookFor $GitExe
@@ -319,12 +344,17 @@ $language = Get-Repo-Language
 # directories
 if ($InitialPush) {
   Test-Exe-In-Path -ExeToLookFor $TestProxyExe
-  Test-TestProxyVersion -TestProxyExe $TestProxyExe
-  if (!$LangRecordingDirs.ContainsKey($language)) {
-    Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
-    exit 1
+
+  if ($TestProxyExe -eq "test-proxy") {
+    Test-TestProxyVersion -TestProxyExe $TestProxyExe
+    if (!$LangRecordingDirs.ContainsKey($language)) {
+      Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
+      exit 1
+    }
   }
 }
+
+$repoRoot = Get-Repo-Root
 
 # Create the assets-json file
 $assetsJsonFile = New-Assets-Json-File -Language $language
@@ -334,33 +364,32 @@ $assetsJsonFile = New-Assets-Json-File -Language $language
 # 2. Move all of the assets over, preserving the directory structure
 # 3. Push the repository which will update the assets.json with the new Tag
 if ($InitialPush) {
-
   try {
-    $proxyAssetsFolder = Set-ProxyAssetsFolder
-    Write-Host "proxyAssetsFolder=$proxyAssetsFolder"
+    $assetsJsonRelPath = [System.IO.Path]::GetRelativePath($repoRoot, $assetsJsonFile)
 
     # Execute a restore on the current assets.json, it'll prep the root directory that
     # the recordings need to be copied into
-    $CommandArgs = "restore --assets-json-path $assetsJsonFile"
-    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
+    $CommandArgs = "restore --assets-json-path $assetsJsonRelPath"
+    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -TargetDirectory $repoRoot
 
     $assetsRoot = Get-AssetsRoot -AssetsJsonFile $assetsJsonFile
     Write-Host "assetsRoot=$assetsRoot"
 
     Move-AssetsFromLangRepo -AssetsRoot $assetsRoot
 
-    $CommandArgs = "push --assets-json-path $assetsJsonFile"
-    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs
+    $CommandArgs = "push --assets-json-path $assetsJsonRelPath"
+    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -TargetDirectory $repoRoot
 
     # Verify that the assets.json file was updated
     $updatedAssets = Get-Content $assetsJsonFile | Out-String | ConvertFrom-Json
     if ([String]::IsNullOrWhitespace($($updatedAssets.Tag))) {
-      Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated"
+      Write-Error "AssetsJsonFile ($assetsJsonFile) did not have it's tag updated. Check above output messages for erroneous git output."
       exit 1
     }
   }
-  finally {
-    Remove-ProxyAssetsFolder
-    $env:PROXY_ASSETS_FOLDER = $OriginalProxyAssetsFolder
+  catch {
+    $ex = $_
+    Write-Host $ex
+    exit 1
   }
 }

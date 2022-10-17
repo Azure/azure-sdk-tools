@@ -45,10 +45,8 @@ param(
   [ValidateSet("test-proxy", "docker", "podman", IgnoreCase = $true)]
   [Parameter(Mandatory = $false)]
   [string] $TestProxyExe = "test-proxy",
-  [Parameter(Mandatory = $false)]
-  [bool] $InitialPush = $false,
-  [Parameter(Mandatory = $false)]
-  [bool] $UseTestRepo = $false
+  [switch] $InitialPush,
+  [switch] $UseTestRepo
 )
 
 # Git needs to be in the path to determine the language and, if the initial push
@@ -57,7 +55,7 @@ $GitExe = "git"
 
 # The built test proxy on a dev machine will have the version 1.0.0-dev.20221013.1
 # whereas the one installed from nuget will have the version 20221013.1 (minus the 1.0.0-dev.)
-$MinTestProxyVersion = "20221012.1"
+$MinTestProxyVersion = "20221017.1"
 
 $DefaultAssetsRepo = "Azure/azure-sdk-assets"
 if ($UseTestRepo) {

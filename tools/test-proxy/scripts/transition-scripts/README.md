@@ -8,6 +8,8 @@ The script `generate-assets-json.ps1` will execute the initial migration of your
 
 The script is [generate-assets-json.ps1](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/transition-scripts/generate-assets-json.ps1)
 
+### Download the transition script locally
+
 ```powershell
 Invoke-WebRequest -OutFile "generate-assets-json.ps1" https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/scripts/transition-scripts/generate-assets-json.ps1
 ```
@@ -34,8 +36,9 @@ Once the above requirements are met, developers are welcome to choose one of the
 
 Provide `TestProxyExe` argument of `test-proxy` or leave it **blank**. This is the default use-case of this transition script.
 
-- [x] Test-proxy needs to be on the machine and in the path. Instructions for that are [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/Azure.Sdk.Tools.TestProxy/README.md#installation). The script uses test-proxy's CLI commands.
+- [x] Test-proxy needs to be on the machine and in the path. Instructions for that are [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/Azure.Sdk.Tools.TestProxy/README.md#installation).
 
+The newly installed test-proxy tool will be used during the recording migration portion of this script.
 
 ### `docker` or `podman` invocation
 
@@ -43,9 +46,8 @@ To utilize this methodology, the user must set input argument `TestProxyExe` to 
 
 Other requirements:
 
-- Install [docker](https://docs.docker.com/engine/install/) or [podman](https://podman.io/getting-started/installation.html)
-- [x] Set the following environment variables to valid values:
-  - `GIT_TOKEN`
+- [x] Install [docker](https://docs.docker.com/engine/install/) or [podman](https://podman.io/getting-started/installation.html)
+- [x] Set the environment variable `GIT_TOKEN` a valid token representing YOUR user
 
 ## Permissions
 
@@ -71,12 +73,12 @@ The location of the automatically restored assets is colloquially referred to as
 
 ## Running the script
 
-[generate-assets-json.ps1](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/transition-scripts/generate-assets-json.ps1) is a standalone powershell script with no supporting script requirements. The easiest way to run the script would be to use a one-liner defined above to grab the file directly. If you run into issues, it is up to you to ensure you have the newest version of the script!
+[generate-assets-json.ps1](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/transition-scripts/generate-assets-json.ps1) is a standalone powershell script with no supporting script requirements. The easiest way to run the script would be to use a one-liner [defined above](#download-the-transition-script-locally) to grab the file directly. **Please ensure you have the newest version of this script before continuing!**
 
 ```powershell
 # if downloading the file singly, cd to the directory containing generate-assets-json.ps1
 cd "<target-language-repo>/sdk/<service>"
-<tools-repo-root>/tools/test-proxy/transition-scripts/generate-assets-json.ps1
+<path-to-transition-script>/generate-assets-json.ps1
 ```
 
 The script needs to be executed inside an `sdk/<ServiceDirectory>` or deeper and from within an up to date language repository. A good rule here would be look at where the ci.yml is for an service directory. In the case where each library for a given service directory has their own pipelines, at the `sdk/<ServiceDirectory><Library>` level, it is recommended that the assets.json is created there. If the `ci.yml` exists deeper then the `sdk/<ServiceDirectory>/<Library>` level, then it is recommended to run the script from that directory.
@@ -84,14 +86,14 @@ The script needs to be executed inside an `sdk/<ServiceDirectory>` or deeper and
 ```powershell
 # calling transition script against tool, given local clones of azure-sdk-for-java and azure-sdk-tools
 cd c:/src/azure-sdk-for-java/sdk/attestation
-c:/src/azure-sdk-tools/tools/test-proxy/transition-scripts/generate-assets-json.ps1 -TestProxyExe "test-proxy" -InitialPush
+<path-to-transition-script>/generate-assets-json.ps1 -TestProxyExe "test-proxy" -InitialPush
 ```
 
 ```powershell
 # calling transition script against tool, given local clones of azure-sdk-for-java and azure-sdk-tools
 $env:GIT_TOKEN="my git token"
 cd c:/src/azure-sdk-for-java/sdk/attestation
-c:/src/azure-sdk-tools/tools/test-proxy/transition-scripts/generate-assets-json.ps1 -TestProxyExe "docker" -InitialPush
+<path-to-transition-script>/generate-assets-json.ps1 -TestProxyExe "docker" -InitialPush
 ```
 
 After running a script, executing a `git status` from within the language repo, where the script was invoked from, will reflect two primary results:

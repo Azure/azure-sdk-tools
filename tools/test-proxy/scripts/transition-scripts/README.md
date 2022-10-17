@@ -15,7 +15,7 @@ Invoke-WebRequest -OutFile "generate-assets-json.ps1" https://raw.githubusercont
 ```
 
 ```bash
-wget https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/scripts/transition-scripts/generate-assets-json.ps1
+wget https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/scripts/transition-scripts/generate-assets-json.ps1 -o generate-assets-json.ps1
 ```
 
 ## Setup

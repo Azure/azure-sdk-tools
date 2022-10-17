@@ -1,4 +1,5 @@
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using System;
 using System.IO;
 using System.Text;
@@ -148,13 +149,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         /// <summary>
         /// Used to define any set of file constructs we want. This enables us to roll a target environment to point various GitStore functionalities at.
-        /// 
+        ///
         /// Creates folder under the temp directory.
         /// </summary>
         /// <param name="assetsJsonContent">The content of the assets json, if any.</param>
         /// <param name="sampleFiles">A set of relative paths defining what the folder structure of the test folder. Paths should be relative to the root of the newly created temp folder.
         /// If one of the paths ends with assets.json, that path will receive the assetsJsonContent string, instead of defaulting to the root of the temp folder.</param>
-        /// <param name="ignoreEmptyAssetsJson">Normally passing string.Empty to assetsJsonContent argument will result in no assets.json being written. 
+        /// <param name="ignoreEmptyAssetsJson">Normally passing string.Empty to assetsJsonContent argument will result in no assets.json being written.
         /// Passing true to this argument will ensure that the file is still created without content.</param>
         /// <param name="isPushTest">Whether or not the scenario being run is a push test</param>
         /// <returns>The absolute path to the created folder.</returns>
@@ -179,7 +180,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 // Call InitIntegrationTag
                 InitIntegrationTag(assets, adjustedAssetsRepoTag);
 
-                // set the TagPrefix to the adjusted test branch 
+                // set the TagPrefix to the adjusted test branch
                 assets.TagPrefix = adjustedAssetsRepoTag;
                 localAssetsJsonContent = JsonSerializer.Serialize(assets);
             }
@@ -226,8 +227,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             }
 
-            // write a .git file into the root
-            WriteTestFile(String.Empty, Path.Combine(tmpPath, ".git"));
+            // initialize git repository into root
+            GitProcessHandler GitHandler = new GitProcessHandler();
+            GitHandler.Run($"init -q", tmpPath);
+            // set a dummy git remote, used for protocol detection
+            string gitCloneUrl = GitStore.GetCloneUrl("testrepo", Directory.GetCurrentDirectory());
+            GitHandler.Run($"remote add test {gitCloneUrl}", tmpPath);
 
             return testFolder.ToString();
         }
@@ -411,7 +416,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 Directory.CreateDirectory(tmpPath);
                 GitProcessHandler GitHandler = new GitProcessHandler();
-                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
                 // Clone the original assets repo
                 GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
                 // Check to see if there's already a branch
@@ -465,7 +470,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 Directory.CreateDirectory(tmpPath);
                 GitProcessHandler GitHandler = new GitProcessHandler();
-                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
                 GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
                 GitHandler.Run($"push origin --delete {assets.Tag}", tmpPath);
             }
@@ -506,7 +511,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static bool CheckExistenceOfTag(Assets assets, string workingDirectory)
         {
             GitProcessHandler GitHandler = new GitProcessHandler();
-            var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+            var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
             CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
             return result.StdOut.Trim().Length > 0;
         }

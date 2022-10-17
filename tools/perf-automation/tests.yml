@@ -6,6 +6,9 @@ parameters:
 - name: NetRepoCommitish
   type: string
   default: 'main'
+- name: NetServiceDirectory
+  type: string
+  default: 'storage/Azure.Storage.Blobs'
 - name: IncludeJava
   displayName: Include Java?
   type: boolean
@@ -13,6 +16,9 @@ parameters:
 - name: JavaRepoCommitish
   type: string
   default: 'main'
+- name: JavaServiceDirectory
+  type: string
+  default: 'storage/azure-storage-blob'
 - name: IncludeJS
   displayName: Include JS?
   type: boolean
@@ -20,6 +26,9 @@ parameters:
 - name: JSRepoCommitish
   type: string
   default: 'main'
+- name: JSServiceDirectory
+  type: string
+  default: 'storage/storage-blob'
 - name: IncludePython
   displayName: Include Python?
   type: boolean
@@ -27,6 +36,9 @@ parameters:
 - name: PythonRepoCommitish
   type: string
   default: 'main'
+- name: PythonServiceDirectory
+  type: string
+  default: 'storage/azure-storage-blob'
 - name: IncludeCpp
   displayName: Include Cpp?
   type: boolean
@@ -34,9 +46,33 @@ parameters:
 - name: CppRepoCommitish
   type: string
   default: 'main'
+- name: CppServiceDirectory
+  type: string
+  default: 'core'
+- name: CppServices
+  type: string
+  default: '^core$'
+- name: CppPackageVersions
+  type: string
+  default: '1|source'
+- name: CppTests
+  type: string
+  default: '^(extendedOptions)$'
+- name: CppArguments
+  type: string
+  default: '(-e 1)'
+- name: Services
+  type: string
+  default: '^storage-blob$'
 - name: PackageVersions
   type: string
   default: '12|source'
+- name: Tests
+  type: string
+  default: '^(download)$'
+- name: Arguments
+  type: string
+  default: '(10240)'
 - name: Iterations
   type: number
   default: 1
@@ -80,9 +116,6 @@ variables:
   LinuxVmImage: 'MMSUbuntu20.04'
   WindowsVmImage: 'MMS2019'
   ToolsRepoCommitish: $(Build.SourceVersion)
-  Services: '^storage-blob$'
-  Tests: '^(download)$'
-  Arguments: '(10240)'
 
 stages:
 - stage: Test
@@ -106,12 +139,11 @@ stages:
         - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
           parameters:
             EnableNuGetCache: false
-        ServiceDirectory: 'storage/Azure.Storage.Blobs'
-        Services: $(Services)
+        ServiceDirectory: ${{ parameters.NetServiceDirectory }}
+        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
-        Tests: $(Tests)
-        Arguments: $(Arguments)
-        # Iterations parameter has type 'number' so must use this variable syntax
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
 
   - ${{ if parameters.IncludeJava }}:
@@ -139,12 +171,11 @@ stages:
             java -version
             mvn --version
           displayName: Print Java Versions
-        ServiceDirectory: 'storage/azure-storage-blob'
-        Services: $(Services)
+        ServiceDirectory: ${{ parameters.JavaServiceDirectory }}
+        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
-        Tests: $(Tests)
-        Arguments: $(Arguments)
-        # Iterations parameter has type 'number' so must use this variable syntax
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
 
   - ${{ if parameters.IncludeJS }}:
@@ -165,12 +196,11 @@ stages:
         - template: /eng/pipelines/templates/steps/use-node-version.yml@azure-sdk-for-js
           parameters:
             NodeVersion: 14.x
-        ServiceDirectory: 'storage/storage-blob'
-        Services: $(Services)
+        ServiceDirectory: ${{ parameters.JSServiceDirectory }}
+        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
-        Tests: $(Tests)
-        Arguments: $(Arguments)
-        # Iterations parameter has type 'number' so must use this variable syntax
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
 
   - ${{ if parameters.IncludePython }}:
@@ -194,12 +224,11 @@ stages:
           displayName: "Use Python $(PythonVersion)"
           inputs:
             versionSpec: $(PythonVersion)
-        ServiceDirectory: 'storage/azure-storage-blob'
-        Services: $(Services)
+        ServiceDirectory: ${{ parameters.PythonServiceDirectory }}
+        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
-        Tests: $(Tests)
-        Arguments: $(Arguments)
-        # Iterations parameter has type 'number' so must use this variable syntax
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
 
   - ${{ if parameters.IncludeCpp }}:
@@ -220,12 +249,11 @@ stages:
         - template: /eng/pipelines/templates/steps/vcpkg-clone.yml@azure-sdk-for-cpp
           parameters:
             RepoOwner: Microsoft
-        ServiceDirectory: 'core'
-        Services: '^core$'
-        PackageVersions: ${{ parameters.PackageVersions }}
-        Tests: '^(extendedOptions)$'
-        Arguments: '.*'
-        # Iterations parameter has type 'number' so must use this variable syntax
+        ServiceDirectory: ${{ parameters.CppServiceDirectory }}
+        Services: ${{ parameters.CppServices }}
+        PackageVersions: ${{ parameters.CppPackageVersions }}
+        Tests: ${{ parameters.CppTests }}
+        Arguments: ${{ parameters.CppArguments }}
         Iterations: ${{ parameters.Iterations }}
 
 - stage: Print_Results

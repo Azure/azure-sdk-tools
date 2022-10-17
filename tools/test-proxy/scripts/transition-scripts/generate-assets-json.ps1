@@ -34,7 +34,7 @@ Detailed process:
 - Update the assets.json with the new tag.
 
 .PARAMETER UseTestRepo
-Setting this parameter to $true will result in an assets.json that points at repo Azure/azure-sdk-assets-integration.This is the
+Enabling this parameter will result in an assets.json that points at repo Azure/azure-sdk-assets-integration. This is the
 integration repo that the azure-sdk EngSys team uses to integration test this script and other asset-sync features.
 
 Most library devs should ignore this setting unless directed otherwise (or if they're curious!). Permissions to the integration

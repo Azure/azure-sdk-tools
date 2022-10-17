@@ -75,7 +75,7 @@ dotnet tool update azure.sdk.tools.testproxy --global --add-source https://pkgs.
 
 To uninstall an existing test-proxy
 ```powershell
-> dotnet tool uninstall --global azure.sdk.tools.testproxy
+dotnet tool uninstall --global azure.sdk.tools.testproxy
 ```
 
 The test-proxy is also available from the [azure-sdk-for-net public feed](https://dev.azure.com/azure-sdk/public/_artifacts/feed/azure-sdk-for-net)
@@ -83,13 +83,13 @@ The test-proxy is also available from the [azure-sdk-for-net public feed](https:
 After successful installation, run the tool:
 
 ```powershell
-> test-proxy --storage-location <location>
+test-proxy --storage-location <location>
 ```
 
 If you've already installed the tool, you can always check the installed version by invoking:
 
 ```powershell
-> test-proxy --version
+test-proxy --version
 ```
 
 ### Via Docker Image
@@ -97,18 +97,24 @@ If you've already installed the tool, you can always check the installed version
 The Azure SDK Team maintains a public Azure Container Registry.
 
 ```powershell
-> docker run -v <your-volume-name-or-location>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/test-proxy:latest
+docker run -v <your-volume-name-or-location>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
 
 For example, to save test recordings to disk in your repo's `/sdk/<service>/tests/recordings` directory, provide the path to the root of the repo:
 
 ```powershell
-> docker run -v C:\\repo\\azure-sdk-for-<language>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/test-proxy:latest
+docker run -v C:\\repo\\azure-sdk-for-<language>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
 
 Note the **port and volume mapping** as arguments! Any files that exist in this volume locally will only be appended to/updated in place. It is a non-destructive initialize.
 
 Within the container, recording outputs are written within the directory `/srv/testproxy/`.
+
+NOTE: if you are authenticated to github via SSH keys instead of a credential manager with https, you must mount your ssh credentials into docker. The following command shows an example mounting the default ssh key ~/.ssh/id_rsa on linux:
+
+```bash
+docker run -v /home/ben/.ssh:/root/.ssh -v /home/ben/sdk/azure-sdk-for-go:/srv/testproxy --add-host=host.docker.internal:host-gateway -p 5001:5001 -p 5000:5000 testproxy bash -c 'eval `ssh-agent` && ssh-add /root/.ssh/id_rsa && test-proxy start --dump'
+```
 
 #### A note about docker caching
 
@@ -117,7 +123,7 @@ The azure-sdk team regularly update the image associated with the `latest` tag. 
 To ensure that your local copy is up to date, run:
 
 ```powershell
-> docker pull azsdkengsys.azurecr.io/engsys/test-proxy:latest
+docker pull azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
 
 ## Command line arguments
@@ -576,7 +582,7 @@ There are two options here, generate your own SSL Cert, or import an existing on
 Invoke the command:
 
 ```powershell
-> dotnet dev-certs https --trust
+dotnet dev-certs https --trust
 ```
 
 This will be automatically retrieved if you run the nuget installed version of the tool. You may optionally use `openssl` [like so](https://raw.githubusercontent.com/BorisWilhelms/create-dotnet-devcert/f3b5da6f9107834eb31ea5ba7c0583e14cda6b31/create-dotnet-devcert.sh) to generate a certificate. Note that this shell script creates a dev cert that is compatible with ubuntu.

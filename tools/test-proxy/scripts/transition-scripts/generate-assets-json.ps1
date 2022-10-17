@@ -20,9 +20,8 @@ Generated assets.json file contents
 4. Tag: "" - Initially empty, as nothing has yet been pushed
 #>
 param(
-  [Parameter(Mandatory = $false)]
-  [bool] $InitialPush = $false,
-  [bool] $UseTestRepo = $false
+  [switch] $InitialPush,
+  [switch] $UseTestRepo
 )
 
 # Git needs to be in the path to determine the language and, if the initial push

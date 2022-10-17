@@ -55,7 +55,7 @@ The script needs to be executed inside an `sdk/<ServiceDirectory>` or deeper, in
 ```powershell
 # in practice, given local clones of azure-sdk-for-java and azure-sdk-tools
 cd c:/src/azure-sdk-for-java/sdk/attestation
-c:/src/azure-sdk-tools/tools/test-proxy/transition-scripts/generate-assets-json.ps1 -InitialPush $true
+c:/src/azure-sdk-tools/tools/test-proxy/transition-scripts/generate-assets-json.ps1 -InitialPush
 ```
 
 After running a script, executing a `git status` from within the language repo, where the script was invoked from, will reflect two primary results:
@@ -70,7 +70,7 @@ Running the script without the `-InitialPush` option will just create the assets
 Given the previous example of `sdk/attestation` transition script invocation, users should see the following:
 
 - Creation of the assets.json file in the `sdk/attestation` directory.
-  - If `-InitialPush $true` has not been set, the script stops here and exits.
+  - If `-InitialPush` has not been specified, the script stops here and exits.
 - A temp directory is created and the test-proxy's CLI restore is called on the current assets.json. Since there's nothing there, it'll just initialize an empty assets directory.
 - The recordings are moved from their initial directories within the language repo into a temp directory that was created in the previous step.
   - The relative paths from root are preserved.

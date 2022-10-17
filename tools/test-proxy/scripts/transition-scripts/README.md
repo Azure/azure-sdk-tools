@@ -11,11 +11,11 @@ The script is [generate-assets-json.ps1](https://github.com/Azure/azure-sdk-tool
 ### Download the transition script locally
 
 ```powershell
-Invoke-WebRequest -OutFile "generate-assets-json.ps1" https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/scripts/transition-scripts/generate-assets-json.ps1
+Invoke-WebRequest -OutFile "generate-assets-json.ps1" https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/scripts/transition-scripts/generate-assets-json.ps1
 ```
 
 ```bash
-wget https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/scripts/transition-scripts/generate-assets-json.ps1
+wget https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/test-proxy/scripts/transition-scripts/generate-assets-json.ps1
 ```
 
 ## Setup

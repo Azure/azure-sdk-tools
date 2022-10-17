@@ -19,7 +19,7 @@ Generated assets.json file contents
               are nested in such a manner. All tags created for this assets.json will start with this name.
 - Tag: "" - Initially empty, as nothing has yet been pushed.
 
-If arg InitialPush is set to $true, recordings will be automatically pushed to the assets repo and the Tag property updated.
+If flag InitialPush is set, recordings will be automatically pushed to the assets repo and the Tag property updated.
 
 .PARAMETER TestProxyExe
 The executable used during the "InitialPush" action. Defaults to the dotnet tool test-proxy, but also supports "docker" or "podman".

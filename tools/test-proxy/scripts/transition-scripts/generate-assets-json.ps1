@@ -31,6 +31,7 @@ Detailed process:
 - Create a temp directory.
 - Call "restore" against that assets directory to prepare it to receive updates.
 - Move all recordings found under the assets.json within the language repo to the assets directory prepared by the restore operation in the previous step.
+- Push moved recordings to the assets repo.
 - Update the assets.json with the new tag.
 
 .PARAMETER UseTestRepo

@@ -389,5 +389,6 @@ if ($InitialPush) {
   catch {
     $ex = $_
     Write-Host $ex
+    exit 1
   }
 }

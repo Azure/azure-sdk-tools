@@ -86,7 +86,7 @@ The script needs to be executed inside an `sdk/<ServiceDirectory>` or deeper and
 ```powershell
 # calling transition script against tool, given local clones of azure-sdk-for-java and azure-sdk-tools
 cd c:/src/azure-sdk-for-java/sdk/attestation
-<path-to-transition-script>/generate-assets-json.ps1 -TestProxyExe "test-proxy" -InitialPush
+<path-to-transition-script>/generate-assets-json.ps1 -InitialPush
 ```
 
 ```powershell

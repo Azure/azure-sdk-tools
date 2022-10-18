@@ -60,7 +60,7 @@ export async function generateMgmt(options: {
     const changedPackageDirectories: Set<string> = await getChangedPackageDirectory(!options.skipGeneration);
     for (const changedPackageDirectory of changedPackageDirectories) {
         const packagePath: string = path.join(options.sdkRepo, changedPackageDirectory);
-        let outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd);
+        let outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, undefined);
 
         try {
             logger.logGreen(`Installing dependencies for ${changedPackageDirectory}...`);

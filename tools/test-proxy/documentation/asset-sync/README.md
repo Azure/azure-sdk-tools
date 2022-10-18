@@ -136,16 +136,22 @@ The below diagram illustrates how your assets.json, language repo, and assets re
 
 ![assets diagram](../_images/organization_of_assets.png)
 
-As you can see, one can use visual inspection of the `.breadcrumb` file to _find_ which folder contains the files for your assets.json.
+> Side note: the `.breadcrumb` file is created/updated as an artifact of the test-proxy restore/push/reset operations. Don't look for one if you haven't at least restored an assets.json first!
+
+One can use visual inspection of the `.breadcrumb` file to _find_ which folder contains the files for your assets.json. Or, they can simply use one of the one-liners below to change directory into their assets.
+
+Powershell one-liner:
+
+```powershell
+# From root of repo. Substitute your target assets.json path in the StartsWith clause.
+cd ".assets/$((Get-Content ".assets/.breadcrumb" | Where-Object { $_.StartsWith("sdk/tables/assets.json") }).Split(";")[1])"
+```
 
 Bash one-liner:
 
 ```bash
-```
-
-Pwsh one-liner:
-
-```powershell
+# From root of repo. Substitute your target assets.json path in the initial grep
+A=$(grep "sdk/tables/assets.json" .assets/.breadcrumb | awk '{split($0,a,";"); print a[2];}'); cd .assets/$A
 ```
 
 Manual resolution is up to the user. For help external to Microsoft, file an issue against this repo with `question` label. Within Microsoft, please reference the [test-proxy teams channel](https://teams.microsoft.com/l/channel/19%3ab7c3eda7e0864d059721517174502bdb%40thread.skype/Test-Proxy%2520-%2520Questions%252C%2520Help%252C%2520and%2520Discussion?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) for additional context and assistance.

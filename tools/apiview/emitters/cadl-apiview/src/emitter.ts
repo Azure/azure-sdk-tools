@@ -33,7 +33,7 @@ export function resolveOptions(
 
   return {
     outputFile: resolvePath(
-      resolvedOptions["output-dir"] ?? program.compilerOptions.outputDir ?? "./cadl-output",
+      resolvedOptions["output-dir"] ?? program.compilerOptions.outputDir!,
       resolvedOptions["output-file"]
     ),
   };

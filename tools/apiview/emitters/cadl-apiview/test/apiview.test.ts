@@ -117,7 +117,7 @@ describe("apiview: tests", () => {
     const expect = `
     @Cadl.service(
       {
-        title: "Test"
+        title: "Test";
       }
     )
     namespace Azure.Test {
@@ -183,13 +183,13 @@ describe("apiview: tests", () => {
     const expect = `
     @Cadl.service(
       {
-        title: "Test"
+        title: "Test";
       }
     )
     namespace Azure.Test {
       model ConstrainedComplex<X extends
         {
-          name: string
+          name: string;
         }
       > {
         prop: X;
@@ -248,7 +248,7 @@ describe("apiview: tests", () => {
     const expect = `
     @Cadl.service(
       {
-        title: "Test"
+        title: "Test";
       }
     )
     namespace Azure.Test {
@@ -299,7 +299,7 @@ describe("apiview: tests", () => {
     const expect = `
     @Cadl.service(
       {
-        title: "Test"
+        title: "Test";
       }
     )
     namespace Azure.Test {
@@ -359,22 +359,24 @@ describe("apiview: tests", () => {
     const expect = `
     @Cadl.service(
       {
-        title: "Test"
+        title: "Test";
       }
     )
     namespace Azure.Test {
       op GetFoo is ResourceRead<
         {
           @query
-          name: string,
-          ...FooParams
+          @doc("The name")
+          name: string;
+          ...FooParams;
         },
         {
           parameters:
             {
               @query
-              fooId: string
-            }
+              @doc("The collection id.")
+              fooId: string;
+            };
         }
       >;
 
@@ -410,18 +412,18 @@ describe("apiview: tests", () => {
     const expect = `
     @Cadl.service(
       {
-        title: "Test"
+        title: "Test";
       }
     )
     namespace Azure.Test {
       op SomeOp(
         param1:
           {
-            name: string
+            name: string;
           },
         param2:
           {
-            age: int16
+            age: int16;
           }
       ): string;
     }`;
@@ -450,7 +452,7 @@ describe("apiview: tests", () => {
     const expect = `
     @Cadl.service(
       {
-        title: "Test"
+        title: "Test";
       }
     )
     namespace Azure.Test {
@@ -461,7 +463,6 @@ describe("apiview: tests", () => {
           @path
           name: string
         ): string;
-
         @get
         @route("list")
         list(): string[];

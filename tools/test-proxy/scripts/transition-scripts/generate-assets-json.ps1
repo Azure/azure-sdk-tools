@@ -56,7 +56,7 @@ $GitExe = "git"
 
 # The built test proxy on a dev machine will have the version 1.0.0-dev.20221013.1
 # whereas the one installed from nuget will have the version 20221013.1 (minus the 1.0.0-dev.)
-$MinTestProxyVersion = "20221017.1"
+$MinTestProxyVersion = "20221017.4"
 
 $DefaultAssetsRepo = "Azure/azure-sdk-assets"
 if ($UseTestRepo) {
@@ -347,10 +347,11 @@ if ($InitialPush) {
 
   if ($TestProxyExe -eq "test-proxy") {
     Test-TestProxyVersion -TestProxyExe $TestProxyExe
-    if (!$LangRecordingDirs.ContainsKey($language)) {
-      Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
-      exit 1
-    }
+  }
+
+  if (!$LangRecordingDirs.ContainsKey($language)) {
+    Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
+    exit 1
   }
 }
 

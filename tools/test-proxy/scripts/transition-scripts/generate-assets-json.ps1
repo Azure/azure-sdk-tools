@@ -287,7 +287,7 @@ Function Invoke-ProxyCommand {
   }
 
   Write-Host "$TestProxyExe $CommandArgs"
-  [array] $output = & "$TestProxyExe" $CommandArgs.Split(" ")
+  [array] $output = & "$TestProxyExe" $CommandArgs.Split(" ") --storage-location="$updatedDirectory"
   # echo the command output
   foreach ($line in $output) {
     Write-Host "$line"
@@ -301,13 +301,14 @@ Function Get-AssetsRoot {
   )
   $repoRoot = Get-Repo-Root
   $relPath = [IO.Path]::GetRelativePath($repoRoot, $AssetsJsonFile).Replace("`\", "/")
+  $assetsJsonDirectory = Split-Path $relPath
   $breadcrumbFile = Join-Path $repoRoot ".assets" ".breadcrumb"
 
   $breadcrumbString = Get-Content $breadcrumbFile | Where-Object { $_.StartsWith($relPath) }
-  $assetRepo = $breadcrumbString.Split(";;")[1]
+  $assetRepo = $breadcrumbString.Split(";")[1]
   $assetsPrefix = (Get-Content $AssetsJsonFile | Out-String | ConvertFrom-Json).AssetsRepoPrefixPath
 
-  return Join-Path $repoRoot ".assets" $assetRepo $assetsPrefix $relPath
+  return Join-Path $repoRoot ".assets" $assetRepo $assetsPrefix $assetsJsonDirectory
 }
 
 Function Move-AssetsFromLangRepo {
@@ -321,8 +322,8 @@ Function Move-AssetsFromLangRepo {
   [string] $currentDir = Get-Location
 
   foreach ($fromFile in $filesToMove) {
-    Write-Host $fromFile
     $relPath = [IO.Path]::GetRelativePath($currentDir, $fromFile)
+
     $toFile = Join-Path -Path $AssetsRoot -ChildPath $relPath
     # Write-Host "Moving from=$fromFile"
     # Write-Host "          to=$toFile"
@@ -373,7 +374,7 @@ if ($InitialPush) {
     $CommandArgs = "restore --assets-json-path $assetsJsonRelPath"
     Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -TargetDirectory $repoRoot
 
-    $assetsRoot = Get-AssetsRoot -AssetsJsonFile $assetsJsonFile
+    $assetsRoot = (Get-AssetsRoot -AssetsJsonFile $assetsJsonFile)
     Write-Host "assetsRoot=$assetsRoot"
 
     Move-AssetsFromLangRepo -AssetsRoot $assetsRoot

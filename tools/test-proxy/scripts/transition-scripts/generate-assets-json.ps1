@@ -297,7 +297,7 @@ Function Invoke-ProxyCommand {
     Write-Host $LASTEXITCODE
     Write-Host "Non-zero proxy invocations are unexpected in this transition script, please read error messages above."
     Write-Host "$TestProxyExe $CommandArgs"
-    exit 1
+    exit $LASTEXITCODE
   }
 }
 

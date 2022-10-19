@@ -292,6 +292,11 @@ Function Invoke-ProxyCommand {
   foreach ($line in $output) {
     Write-Host "$line"
   }
+
+  if ($LASTEXITCODE -ne 0){
+    Write-Error "Non-zero proxy invocations are unexpected in this transition script, please read error messages above."
+    exit 1
+  }
 }
 
 # Get the shorthash directory under PROXY_ASSETS_FOLDER

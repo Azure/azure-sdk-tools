@@ -145,8 +145,8 @@ stages:
         ServiceDirectory: ${{ parameters.NetServiceDirectory }}
         Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
-        Tests: $(Tests)
-        Arguments: $(Arguments)
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
 
@@ -178,8 +178,8 @@ stages:
         ServiceDirectory: ${{ parameters.JavaServiceDirectory }}
         Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
-        Tests: $(Tests)
-        Arguments: $(Arguments)
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
 
@@ -204,8 +204,8 @@ stages:
         ServiceDirectory: ${{ parameters.JSServiceDirectory }}
         Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
-        Tests: $(Tests)
-        Arguments: $(Arguments)
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
 
@@ -233,8 +233,8 @@ stages:
         ServiceDirectory: ${{ parameters.PythonServiceDirectory }}
         Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
-        Tests: $(Tests)
-        Arguments: $(Arguments)
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
 

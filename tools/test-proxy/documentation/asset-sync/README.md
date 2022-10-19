@@ -90,6 +90,10 @@ test-proxy restore --assets-json-path <assetsJsonPath>
 
 ## Using `asset-sync` for azure sdk development
 
+### Where are my files?
+
+
+
 ### My tests don't use the test-proxy at all currently, how do I externalize my recordings?
 
 You don't. Your first step is to integrate your test framework with the `test-proxy`.
@@ -110,9 +114,39 @@ First, ensure that your language-specific "shim" supports the automatic addition
 
 Use [the transition script](../../scripts/transition-scripts/generate-assets-json.ps1) and follow the [readme](../../scripts/transition-scripts/README.md)!
 
-### I have existing recordings and I want to update them
+### What does this look like in practice?
 
-TODO:
+Test-Proxy maintains a _separate clone_ for each assets.json. This means that for _every_ assets.json that the test-proxy has interacted with. By default, this will be located _just_ under your repo root under the `.assets` folder.
+
+```text
++-------------------------------+
+|  azure-sdk-for-python/        |
+|    sdk/                       |
+|      storage/                 |
+| +------assets.json            |
+| |    appconfiguration/        |
+| | +----assets.json            |
+| | |  keyvault/                |
+| | |    azure-keyvault-secrets |
+| | |      assets.json-------+  |
+| | |    azure-keyvault-keys |  |
+| | |      assets.json---+   |  |
+| | |                    |   |  |
+| | |.assets/            |   |  |
+| | +--AuN9me8zrT/       |   |  |
+| |      <sparse clone>  |   |  |
+| +----5hgHKwvMaN/       |   |  |
+|        <sparse clone>  |   |  |
+|      AuN9me8zrT--------+   |  |
+|        <sparse clone>      |  |
+|      BSdGcyN2XL------------+  |
+|        <sparse clone>         |
++-------------------------------+
+```
+
+As you run tests in `recording` or `playback` mode, the `test-proxy` automatically checks out the appropriate tag in each local assets repo. After running docs in `record` mode, the newly updated recordings will be sitting within the appropriate assets repository.
+
+To view the changes before pushing, use one of the one-liners defined below [below.](#attempt-to-manually-resolve).
 
 ### I am getting weird errors out of my test-proxy operations
 

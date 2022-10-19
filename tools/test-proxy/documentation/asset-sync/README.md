@@ -92,30 +92,6 @@ test-proxy restore --assets-json-path <assetsJsonPath>
 
 ### Where are my files?
 
-
-
-### My tests don't use the test-proxy at all currently, how do I externalize my recordings?
-
-You don't. Your first step is to integrate your test framework with the `test-proxy`.
-
-Refer to:
-
-- [Test-Proxy Readme](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/Azure.Sdk.Tools.TestProxy/README.md)
-- [Test-Proxy Sample Recording Clients](https://github.com/Azure/azure-sdk-tools/tree/main/tools/test-proxy/sample-clients)
-
-### I'm a dev who uses the test-proxy currently, how do I externalize my recordings?
-
-First, ensure that your language-specific "shim" supports the automatic addition of the `x-recording-assets-file` key to the test-proxy `Record|Playback/Start/` endpoints.
-
-- [Enabling in .NET](https://github.com/Azure/azure-sdk-for-net/pull/31157)
-- [Enabling in Python](https://github.com/Azure/azure-sdk-for-python/pull/26078)
-- [Enabling in JS](https://github.com/Azure/azure-sdk-for-js/pull/23405)
-- [Enabling in Go(https://github.com/Azure/azure-sdk-for-go/pull/19322)
-
-Use [the transition script](../../scripts/transition-scripts/generate-assets-json.ps1) and follow the [readme](../../scripts/transition-scripts/README.md)!
-
-### What does this look like in practice?
-
 Test-Proxy maintains a _separate clone_ for each assets.json. This means that for _every_ assets.json that the test-proxy has interacted with. By default, this will be located _just_ under your repo root under the `.assets` folder.
 
 ```text
@@ -147,6 +123,30 @@ Test-Proxy maintains a _separate clone_ for each assets.json. This means that fo
 As you run tests in `recording` or `playback` mode, the `test-proxy` automatically checks out the appropriate tag in each local assets repo. After running docs in `record` mode, the newly updated recordings will be sitting within the appropriate assets repository.
 
 To view the changes before pushing, use one of the one-liners defined below [below.](#attempt-to-manually-resolve).
+
+### My tests don't use the test-proxy at all currently, how do I externalize my recordings?
+
+You don't. Your first step is to integrate your test framework with the `test-proxy`.
+
+Refer to:
+
+- [Test-Proxy Readme](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/Azure.Sdk.Tools.TestProxy/README.md)
+- [Test-Proxy Sample Recording Clients](https://github.com/Azure/azure-sdk-tools/tree/main/tools/test-proxy/sample-clients)
+
+### I'm a dev who uses the test-proxy currently, how do I externalize my recordings?
+
+First, ensure that your language-specific "shim" supports the automatic addition of the `x-recording-assets-file` key to the test-proxy `Record|Playback/Start/` endpoints.
+
+- [Enabling in .NET](https://github.com/Azure/azure-sdk-for-net/pull/31157)
+- [Enabling in Python](https://github.com/Azure/azure-sdk-for-python/pull/26078)
+- [Enabling in JS](https://github.com/Azure/azure-sdk-for-js/pull/23405)
+- [Enabling in Go(https://github.com/Azure/azure-sdk-for-go/pull/19322)
+
+Use [the transition script](../../scripts/transition-scripts/generate-assets-json.ps1) and follow the [readme](../../scripts/transition-scripts/README.md)!
+
+### What does this look like in practice?
+
+TODO: complete "run in record mode, look at recordings, test-proxy push" section
 
 ### I am getting weird errors out of my test-proxy operations
 

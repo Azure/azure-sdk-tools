@@ -4,7 +4,6 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from typing import NewType
 from apistub.nodes import ClassNode
 from apistubgentest.models import (
     AliasNewType,
@@ -23,7 +22,7 @@ from apistubgentest.models import (
     SomethingWithProperties
 )
 
-from ._test_util import _check, _tokenize, _merge_lines, _render_lines, _render_string
+from ._test_util import _check, _tokenize, _merge_lines, _render_lines
 
 
 def _check_all(actual, expect, obj):

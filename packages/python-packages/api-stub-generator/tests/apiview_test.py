@@ -7,11 +7,12 @@
 from apistub import ApiView, TokenKind, StubGenerator
 from apistub.nodes import PylintParser
 import os
+from pytest import fail
 import tempfile
 
 
 class TestApiView:
-    def _count_newlines(self, apiview):
+    def _count_newlines(self, apiview: ApiView):
         newline_count = 0
         for token in apiview.tokens[::-1]:
             if token.kind == TokenKind.Newline:
@@ -19,6 +20,29 @@ class TestApiView:
             else:
                 break
         return newline_count
+
+    # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
+    def _validate_definition_ids(self, apiview: ApiView):
+        definition_ids = set()
+        def_ids_per_line = [[]]
+        index = 0
+        for token in apiview.tokens:
+            # ensure that there are no repeated definition IDs.
+            if token.definition_id:
+                if token.definition_id in definition_ids:
+                    fail(f"Duplicate defintion ID {token.definition_id}.")
+                definition_ids.add(token.definition_id)
+            # Collect the definition IDs that exist on each line
+            if token.definition_id:
+                def_ids_per_line[index].append(token.definition_id)
+            if token.kind == TokenKind.Newline:
+                index += 1
+                def_ids_per_line.append([])
+        # ensure that each line has either 0 or 1 definition ID.
+        failures = [row for row in def_ids_per_line if len(row) > 1]
+        if failures:
+            fail(f"Some lines have more than one definition ID. {failures}")
+        
 
     def test_multiple_newline_only_add_one(self):
         apiview = ApiView()
@@ -62,3 +86,10 @@ class TestApiView:
         assert len(tokens) == 2
         assert tokens[0].kind == TokenKind.TypeName
         assert tokens[1].kind == TokenKind.Punctuation
+
+    def test_definition_ids(self):
+        pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
+        temp_path = tempfile.gettempdir()
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
+        apiview = stub_gen.generate_tokens()
+        self._validate_definition_ids(apiview)

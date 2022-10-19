@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -8,6 +8,7 @@ using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Azure;
+using System.Security.Claims;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -15,13 +16,15 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private readonly ReviewManager _manager;
         public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileManager _userProfileManager;
         public const int _defaultPageSize = 50;
         public const string _defaultSortField = "LastUpdated";
 
-        public IndexPageModel(ReviewManager manager, UserPreferenceCache preferenceCache)
+        public IndexPageModel(ReviewManager manager, UserProfileManager userProfileManager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _preferenceCache = preferenceCache;
+            _userProfileManager = userProfileManager;
         }
 
         [FromForm]
@@ -41,7 +44,7 @@ namespace APIViewWeb.Pages.Assemblies
         {
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())
             {
-                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User);
                 languages = userPreference.Language;
                 state = userPreference.State;
                 status = userPreference.Status;
@@ -62,7 +65,7 @@ namespace APIViewWeb.Pages.Assemblies
         {
             if (!selectedLanguages.Any())
             {
-                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
+                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User);
                 selectedLanguages = userPreference.Language.ToList();
             }
             ReviewsProperties.Languages.All = await _manager.GetReviewPropertiesAsync("Revisions[0].Files[0].Language");
@@ -145,7 +148,7 @@ namespace APIViewWeb.Pages.Assemblies
                 Language = languages,
                 State = state,
                 Status = status
-            }, User.GetGitHubLogin());
+            }, User);
 
             bool? isApproved = null;
             // Resolve Approval State

@@ -71,6 +71,7 @@ Create following Azure resources in your Azure subscription.
    | PullRequests        | /PullRequestNumber |
    | UsageSamples        | /ReviewId          |
    | UserPreference      | /UserName          |
+   | Profiles            | /id                |
    
 
 

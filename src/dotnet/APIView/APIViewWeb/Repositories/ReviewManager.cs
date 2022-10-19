@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -94,6 +94,11 @@ namespace APIViewWeb.Repositories
         public async Task<IEnumerable<string>> GetReviewPropertiesAsync(string propertyName)
         {
             return await _reviewsRepository.GetReviewFirstLevelPropertiesAsync(propertyName);
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetRequestedReviews(string userName)
+        {
+            return await _reviewsRepository.GetRequestedReviews(userName);
         }
 
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
@@ -408,6 +413,7 @@ namespace APIViewWeb.Repositories
             {
                 //Approve revision
                 revision.Approvers.Add(userId);
+                review.ApprovalDate = DateTime.Now;
             }
             await _reviewsRepository.UpsertReviewAsync(review);
         }
@@ -770,6 +776,14 @@ namespace APIViewWeb.Repositories
             await _devopsArtifactRepository.RunPipeline($"tools - generate-{language}-apireview", 
                 reviewParamString, 
                 _originalsRepository.GetContainerUrl());
+        }
+
+        public async Task RequestApproversAsync(ClaimsPrincipal User, string ReviewId, HashSet<string> reviewers)
+        {
+            var review = await GetReviewAsync(User, ReviewId);
+            review.RequestedReviewers = reviewers;
+            review.ApprovalRequestedOn = DateTime.Now;
+            await _reviewsRepository.UpsertReviewAsync(review);
         }
     }
 }

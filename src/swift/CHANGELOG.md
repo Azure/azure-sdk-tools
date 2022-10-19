@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.1.4 (Unreleased)
+- Allow attributes inside function signatures.
+
 ## Version 0.1.3 (Unreleased)
 - Support for getter/setter blocks.
 - Fixed issue where read-only properties would appear as

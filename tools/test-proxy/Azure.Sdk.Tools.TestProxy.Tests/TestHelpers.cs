@@ -1,16 +1,16 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using System;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Azure.Sdk.Tools.TestProxy.Store;
-using System.Diagnostics;
-using Moq;
-using Microsoft.Build.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Xunit;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -49,6 +49,33 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             writer.Flush();
             stream.Position = 0;
             return stream;
+        }
+
+        public static string GenerateRandomFile(double sizeInMb, string destinationFolder)
+        {
+            if (!Directory.Exists(destinationFolder))
+            {
+                throw new Exception($"To generate a new test file, the destination folder {destinationFolder} must exist.");
+            }
+
+            var fileName = Path.Join(destinationFolder, $"{Guid.NewGuid()}.txt");
+
+            const int blockSize = 1024 * 8;
+            const int blocksPerMb = (1024 * 1024) / blockSize;
+
+            byte[] data = new byte[blockSize];
+            Random rng = new Random();
+
+            using (FileStream stream = File.OpenWrite(fileName))
+            {
+                for (int i = 0; i < sizeInMb * blocksPerMb; i++)
+                {
+                    rng.NextBytes(data);
+                    stream.Write(data, 0, data.Length);
+                }
+            }
+
+            return fileName;
         }
 
         public static ModifiableRecordSession LoadRecordSession(string path)
@@ -122,13 +149,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         /// <summary>
         /// Used to define any set of file constructs we want. This enables us to roll a target environment to point various GitStore functionalities at.
-        /// 
+        ///
         /// Creates folder under the temp directory.
         /// </summary>
         /// <param name="assetsJsonContent">The content of the assets json, if any.</param>
         /// <param name="sampleFiles">A set of relative paths defining what the folder structure of the test folder. Paths should be relative to the root of the newly created temp folder.
         /// If one of the paths ends with assets.json, that path will receive the assetsJsonContent string, instead of defaulting to the root of the temp folder.</param>
-        /// <param name="ignoreEmptyAssetsJson">Normally passing string.Empty to assetsJsonContent argument will result in no assets.json being written. 
+        /// <param name="ignoreEmptyAssetsJson">Normally passing string.Empty to assetsJsonContent argument will result in no assets.json being written.
         /// Passing true to this argument will ensure that the file is still created without content.</param>
         /// <param name="isPushTest">Whether or not the scenario being run is a push test</param>
         /// <returns>The absolute path to the created folder.</returns>
@@ -153,7 +180,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 // Call InitIntegrationTag
                 InitIntegrationTag(assets, adjustedAssetsRepoTag);
 
-                // set the TagPrefix to the adjusted test branch 
+                // set the TagPrefix to the adjusted test branch
                 assets.TagPrefix = adjustedAssetsRepoTag;
                 localAssetsJsonContent = JsonSerializer.Serialize(assets);
             }
@@ -169,7 +196,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 {
                     if (fullPath.EndsWith("assets.json"))
                     {
-                        assetsJsonPath = fullPath;
+                        // write assets json if we were passed content
+                        if (!String.IsNullOrWhiteSpace(localAssetsJsonContent) || ignoreEmptyAssetsJson)
+                        {
+                            WriteTestFile(localAssetsJsonContent, fullPath);
+                        }
                     }
                     else
                     {
@@ -196,14 +227,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             }
 
-            // write a .git file into the root
-            WriteTestFile(String.Empty, Path.Combine(tmpPath, ".git"));
-
-            // write assets json if we were passed content
-            if (!String.IsNullOrWhiteSpace(localAssetsJsonContent) || ignoreEmptyAssetsJson)
-            {
-                WriteTestFile(localAssetsJsonContent, assetsJsonPath);
-            }
+            // initialize git repository into root
+            GitProcessHandler GitHandler = new GitProcessHandler();
+            GitHandler.Run($"init -q", tmpPath);
+            // set a dummy git remote, used for protocol detection
+            string gitCloneUrl = GitStore.GetCloneUrl("testrepo", Directory.GetCurrentDirectory());
+            GitHandler.Run($"remote add test {gitCloneUrl}", tmpPath);
 
             return testFolder.ToString();
         }
@@ -252,7 +281,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (!File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} does not exist", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
@@ -285,7 +314,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (!File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} does not exist", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} does not exist", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
@@ -311,11 +340,62 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (File.Exists(fullFileName))
             {
-                string errorString = String.Format("FileName {0} already exists", fullFileName);
+                string errorString = String.Format("AssetsJsonFileName {0} already exists", fullFileName);
                 throw new ArgumentException(errorString);
             }
 
             File.WriteAllText(fullFileName, "1");
+        }
+
+        /// <summary>
+        /// This function is used to confirm that the .breadcrumb file under the assets store contains the appropriate
+        /// information.
+        /// </summary>
+        /// <param name="configuration"></param>
+        public static void CheckBreadcrumbAgainstAssetsConfig(GitAssetsConfiguration configuration)
+        {
+            var assetsStorePath = configuration.ResolveAssetsStoreLocation();
+            var breadCrumbFile = Path.Join(assetsStorePath, ".breadcrumb");
+            var targetKey = configuration.AssetsJsonRelativeLocation.Replace("\\", "/");
+
+            Assert.True(File.Exists(breadCrumbFile));
+
+            var contents = File.ReadAllLines(breadCrumbFile).Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
+
+            Assert.True(contents.ContainsKey(targetKey));
+
+            Assert.Equal(configuration.Tag, contents[targetKey].Tag);
+            Assert.Equal(targetKey, contents[targetKey].PathToAssetsJson);
+            Assert.Equal(configuration.AssetRepoShortHash, contents[targetKey].ShortHash);
+        }
+
+        /// <summary>
+        /// This function is used to confirm that the .breadcrumb file under the assets store contains the appropriate
+        /// information.
+        /// </summary>
+        /// <param name="configuration"></param>
+        public static void CheckBreadcrumbAgainstAssetsConfigs(IEnumerable<GitAssetsConfiguration> configuration)
+        {
+            foreach (var config in configuration)
+            {
+                CheckBreadcrumbAgainstAssetsConfig(config);
+            }
+        }
+
+        /// <summary>
+        /// This function is used to confirm that the .breadcrumb file under the assets store contains the appropriate
+        /// information.
+        /// </summary>
+        /// <param name="configuration"></param>
+        public static async Task CheckBreadcrumbAgainstAssetsJsons(IEnumerable<string> jsonFileLocations)
+        {
+            GitStore store = new GitStore();
+
+            foreach (var jsonFile in jsonFileLocations)
+            {
+                var config = await store.ParseConfigurationFile(jsonFile);
+                CheckBreadcrumbAgainstAssetsConfig(config);
+            }
         }
 
         /// <summary>
@@ -336,7 +416,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 Directory.CreateDirectory(tmpPath);
                 GitProcessHandler GitHandler = new GitProcessHandler();
-                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
                 // Clone the original assets repo
                 GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
                 // Check to see if there's already a branch
@@ -365,6 +445,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
+        /// <summary>
+        /// This function is only called by Push tests to cleanup the integration test tag.
+        /// </summary>
+        /// <param name="assets">The updated assets.json content which contains the tag to delete</param>
         public static void CleanupIntegrationTestTag(Assets assets)
         {
             var skipBranchCleanup = Environment.GetEnvironmentVariable(DisableBranchCleanupEnvVar);
@@ -372,13 +456,21 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 return;
             }
+
+            // Assets can be null of something in the push testcase happens (throw or assert) before
+            // the push completes and updates the assets.json
+            if (assets == null)
+            {
+                return;
+            }
+
             // generate a test folder root
             string tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
             try
             {
                 Directory.CreateDirectory(tmpPath);
                 GitProcessHandler GitHandler = new GitProcessHandler();
-                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
                 GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
                 GitHandler.Run($"push origin --delete {assets.Tag}", tmpPath);
             }
@@ -400,6 +492,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         /// <summary>
+        /// Update the assets.json from the input Assets
+        /// </summary>
+        /// <param name="jsonFileLocation">locaion of the assets.json on disk</param>
+        /// <returns></returns>
+        public static void UpdateAssetsFile(Assets assets, string jsonFileLocation)
+        {
+            string localAssetsJsonContent = JsonSerializer.Serialize(assets);
+            WriteTestFile(localAssetsJsonContent, jsonFileLocation);
+        }
+
+        /// <summary>
         /// Given a test assets config, check to see if the tag exists on the assets repo.
         /// </summary>
         /// <param name="assets"></param>
@@ -408,7 +511,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static bool CheckExistenceOfTag(Assets assets, string workingDirectory)
         {
             GitProcessHandler GitHandler = new GitProcessHandler();
-            var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo);
+            var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
             CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
             return result.StdOut.Trim().Length > 0;
         }

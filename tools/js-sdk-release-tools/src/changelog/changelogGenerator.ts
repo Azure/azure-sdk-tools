@@ -520,6 +520,19 @@ const findInterfaceParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: 
                         return;
                     }
                 });
+                if (modelFromNew.extends?.length > 0) {
+                    modelFromNew.extends.forEach(parentInterfaceName => {
+                        const parentInterface = metaDataNew.modelInterface[parentInterfaceName];
+                        if (!!parentInterfaceName && parentInterface instanceof InterfaceDeclaration) {
+                            parentInterface.properties.forEach(pNew => {
+                                if (pNew.name === pOld.name) {
+                                    find = true;
+                                    return;
+                                }
+                            })
+                        }
+                    });
+                }
                 if (!find) {
                     interfaceDeleteParam.push('Interface ' + model + ' no longer has parameter ' + pOld.name);
                 }

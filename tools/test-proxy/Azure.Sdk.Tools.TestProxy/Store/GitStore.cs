@@ -12,6 +12,8 @@ using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Console;
 using System.Collections.Concurrent;
+using System.Reflection.Metadata;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -23,7 +25,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     }
 
     /// <summary>
-    /// This class provides an abtraction for dealing with git assets that are stored in an external repository. An "assets.json" within a repo folder is used to inform targeting.
+    /// This class provides an abstraction for dealing with git assets that are stored in an external repository. An "assets.json" within a repo folder is used to inform targeting.
     /// </summary>
     public class GitStore : IAssetsStore
     {
@@ -31,16 +33,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private IConsoleWrapper _consoleWrapper;
         public GitProcessHandler GitHandler = new GitProcessHandler();
         public string DefaultBranch = "main";
-        public string FileName = "assets.json";
+        public string AssetsJsonFileName = "assets.json";
         public static readonly string GIT_TOKEN_ENV_VAR = "GIT_TOKEN";
         // Note: These are slightly different from the GIT_COMMITTER_NAME and GIT_COMMITTER_EMAIL
         // variables that GIT recognizes, this is on purpose.
         public static readonly string GIT_COMMIT_OWNER_ENV_VAR = "GIT_COMMIT_OWNER";
         public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
 
+        public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
+
+
         public ConcurrentDictionary<string, string> Assets = new ConcurrentDictionary<string, string>();
 
-        public GitStore() 
+        public GitStore()
         {
             _consoleWrapper = new ConsoleWrapper();
         }
@@ -63,6 +68,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task<string> GetPath(string pathToAssetsJson)
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
+
+            if (!string.IsNullOrWhiteSpace(config.AssetsRepoPrefixPath))
+            {
+                return Path.Combine(config.AssetsRepoLocation, config.AssetsRepoPrefixPath);
+            }
+
             return config.AssetsRepoLocation;
         }
 
@@ -74,7 +85,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task Push(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var pendingChanges = DetectPendingChanges(config);
-            var generatedTagName = config.TagPrefix + Guid.NewGuid().ToString();
+            var generatedTagName = config.TagPrefix;
 
             if (pendingChanges.Length > 0)
             {
@@ -86,6 +97,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     GitHandler.Run($"checkout {config.TagPrefix}", config);
                     GitHandler.Run($"add -A .", config);
                     GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit -m \"Automatic asset update from test-proxy.\"", config);
+                    // Get the first 10 digits of the commit SHA. The generatedTagName will be the
+                    // config.TagPrefix_<SHA>
+                    if (GitHandler.TryRun("rev-parse --short=10 HEAD", config, out CommandResult SHAResult))
+                    {
+                        var newSHA = SHAResult.StdOut.Trim();
+                        generatedTagName += $"_{newSHA}";
+                    } else
+                    {
+                        throw GenerateInvokeException(SHAResult);
+                    }
                     GitHandler.Run($"tag {generatedTagName}", config);
                     GitHandler.Run($"push origin {generatedTagName}", config);
                 }
@@ -93,8 +114,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     throw GenerateInvokeException(e.Result);
                 }
-
                 await UpdateAssetsJson(generatedTagName, config);
+                await BreadCrumb.Update(config);
             }
         }
 
@@ -113,6 +134,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             CheckoutRepoAtConfig(config);
+            await BreadCrumb.Update(config);
 
             return config.AssetsRepoLocation;
         }
@@ -123,7 +145,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
-        public async Task Reset(string pathToAssetsJson) 
+        public async Task Reset(string pathToAssetsJson)
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
             var initialized = IsAssetsRepoInitialized(config);
@@ -138,7 +160,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                _consoleWrapper.WriteLine("There are pending git changes, are you sure you want to reset? [Y|N]");
+                _consoleWrapper.WriteLine($"There are pending git changes, are you sure you want to reset? [Y|N]");
                 while (true)
                 {
                     string response = _consoleWrapper.ReadLine();
@@ -175,6 +197,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 if (!string.IsNullOrWhiteSpace(config.Tag))
                 {
                     CheckoutRepoAtConfig(config);
+                    await BreadCrumb.Update(config);
                 }
             }
         }
@@ -229,9 +252,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
+                // Workaround for git directory ownership checks that may fail when running in a container as a different user.
+                if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER")) {
+                    GitHandler.Run($"config --global --add safe.directory {config.AssetsRepoLocation}", config);
+                }
                 // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
                 // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
-                GitHandler.Run("fetch origin", config);
+                GitHandler.Run("fetch --tags origin", config);
                 // Set non-cone mode otherwise path filters will not work in git >= 2.37.0
                 // See https://github.blog/2022-06-27-highlights-from-git-2-37/#tidbits
                 GitHandler.Run($"sparse-checkout set --no-cone {checkoutPaths}", config);
@@ -255,7 +282,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var ownerName = Environment.GetEnvironmentVariable(GIT_COMMIT_OWNER_ENV_VAR);
             // If the owner wasn't set as part of the environment, check to see if there's
-            // a user.name set, if not 
+            // a user.name set, if not
             if (string.IsNullOrWhiteSpace(ownerName))
             {
                 ownerName = GitHandler.Run("config --get user.name", config).StdOut;
@@ -272,7 +299,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var ownerEmail = Environment.GetEnvironmentVariable(GIT_COMMIT_EMAIL_ENV_VAR);
             // If the owner wasn't set as part of the environment, check to see if there's
-            // a user.name set, if not 
+            // a user.name set, if not
             if (string.IsNullOrWhiteSpace(ownerEmail))
             {
                 ownerEmail = GitHandler.Run("config --get user.email", config).StdOut;
@@ -285,15 +312,40 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return ownerEmail.Trim();
         }
 
-        public static string GetCloneUrl(string assetsRepo)
+        public static string GetCloneUrl(string assetsRepo, string repositoryLocation)
         {
-            var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
+            var GitHandler = new GitProcessHandler();
+            var consoleWrapper = new ConsoleWrapper();
 
-            if (!string.IsNullOrWhiteSpace(gitToken)){
-                return $"https://{gitToken}@github.com/{assetsRepo}";
+            var sshUrl = $"git@github.com:{assetsRepo}.git";
+            var httpUrl = $"https://github.com/{assetsRepo}";
+            var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
+            if (!string.IsNullOrWhiteSpace(gitToken))
+            {
+                httpUrl = $"https://{gitToken}@github.com/{assetsRepo}";
             }
 
-            return $"https://github.com/{assetsRepo}";
+            if (String.IsNullOrEmpty(repositoryLocation))
+            {
+                consoleWrapper.WriteLine("No git repository detected, defaulting to https protocol for assets repository.");
+                return httpUrl;
+            }
+
+            try
+            {
+                var result = GitHandler.Run("remote -v", repositoryLocation);
+                var repoRemote = result.StdOut.Split(Environment.NewLine).First();
+                if (!String.IsNullOrEmpty(repoRemote) && repoRemote.Contains("git@"))
+                {
+                    return sshUrl;
+                }
+                return httpUrl;
+            }
+            catch
+            {
+                consoleWrapper.WriteLine("No git repository detected, defaulting to https protocol for assets repository.");
+                return httpUrl;
+            }
         }
 
         public bool IsAssetsRepoInitialized(GitAssetsConfiguration config)
@@ -330,7 +382,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {GetCloneUrl(config.AssetsRepo)} .", config);
+                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
+                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
                     GitHandler.Run($"sparse-checkout init", config);
                 }
                 catch(GitProcessException e)
@@ -355,13 +408,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var combinedPath = Path.Join(config.AssetsRepoPrefixPath ?? String.Empty, config.AssetsJsonRelativeLocation).Replace("\\", "/");
 
-            if (combinedPath.ToLower() == FileName)
+            if (combinedPath.ToLower() == AssetsJsonFileName)
             {
                 return "./";
             }
             else
             {
-                return combinedPath.Substring(0, combinedPath.Length - (FileName.Length + 1));
+                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1));
             }
         }
         #endregion
@@ -377,7 +430,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             if (!File.Exists(assetsJsonPath) && !Directory.Exists(assetsJsonPath))
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"The provided {FileName} path of \"{assetsJsonPath}\" does not exist.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"The provided {AssetsJsonFileName} path of \"{assetsJsonPath}\" does not exist.");
             }
 
             var pathToAssets = ResolveAssetsJson(assetsJsonPath);
@@ -385,7 +438,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (string.IsNullOrWhiteSpace(assetsContent) || assetsContent.Trim() == "{}")
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"The provided {FileName} at \"{assetsJsonPath}\" did not have valid json present.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"The provided {AssetsJsonFileName} at \"{assetsJsonPath}\" did not have valid json present.");
             }
 
             try
@@ -394,7 +447,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 if (string.IsNullOrWhiteSpace(assetConfig.AssetsRepo))
                 {
-                    throw new HttpException(HttpStatusCode.BadRequest, $"Unable to utilize the {FileName} present at \"{assetsJsonPath}. It must contain value for the key \"AssetsRepo\" to be considered a valid {FileName}.");
+                    throw new HttpException(HttpStatusCode.BadRequest, $"Unable to utilize the {AssetsJsonFileName} present at \"{assetsJsonPath}. It must contain value for the key \"AssetsRepo\" to be considered a valid {AssetsJsonFileName}.");
                 }
 
                 var repoRoot = AscendToRepoRoot(pathToAssets);
@@ -402,13 +455,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 assetConfig.AssetsJsonLocation = pathToAssets;
                 assetConfig.AssetsJsonRelativeLocation = Path.GetRelativePath(repoRoot, pathToAssets);
                 assetConfig.RepoRoot = repoRoot;
-                assetConfig.AssetsFileName = FileName;
+                assetConfig.AssetsFileName = AssetsJsonFileName;
 
                 return assetConfig;
             }
             catch (Exception e)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse {FileName} content at \"{assetsJsonPath}\". Exception: {e.Message}");
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable to parse {AssetsJsonFileName} content at \"{assetsJsonPath}\". Exception: {e.Message}");
             }
         }
 
@@ -458,7 +511,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var originalPath = path.Clone();
             var fileAttributes = File.GetAttributes(path);
-            if (!(fileAttributes == FileAttributes.Directory))
+            if (!(fileAttributes.HasFlag(FileAttributes.Directory)))
             {
                 path = Path.GetDirectoryName(path);
             }
@@ -481,14 +534,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Given a startup path, ascend the directory tree until we either reach git root (success) or disk root (failure).
+        /// Verify that the inputPath is either a full path to the assets json or a full directory path that contains an assets.json
         /// </summary>
         /// <param name="inputPath">A valid directory. If passed an assets json file directly instead of a directory, that value will be returned.</param>
         /// <returns>A path to a file named "assets.json"</returns>
         /// <exception cref="HttpException"></exception>
         public string ResolveAssetsJson(string inputPath)
         {
-            if (inputPath.ToLowerInvariant().EndsWith(FileName))
+            if (inputPath.ToLowerInvariant().EndsWith(AssetsJsonFileName))
             {
                 return inputPath;
             }
@@ -496,18 +549,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             var originalPath = inputPath.Clone();
             var directoryEval = EvaluateDirectory(inputPath);
 
-            while (!directoryEval.IsRoot && !directoryEval.IsGitRoot && !directoryEval.AssetsJsonPresent)
-            {
-                inputPath = Path.GetDirectoryName(inputPath);
-                directoryEval = EvaluateDirectory(inputPath);
-            }
-
             if (directoryEval.AssetsJsonPresent)
             {
-                return Path.Join(inputPath, FileName);
+                return Path.Join(inputPath, AssetsJsonFileName);
             }
 
-            throw new HttpException(HttpStatusCode.BadRequest, $"Unable to locate an {FileName} at or above the targeted directory \"{originalPath}\".");
+            throw new HttpException(HttpStatusCode.BadRequest, $"Unable to locate an {AssetsJsonFileName} at or above the targeted directory \"{originalPath}\".");
         }
 
         /// <summary>
@@ -518,13 +565,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public DirectoryEvaluation EvaluateDirectory(string directoryPath)
         {
             var fileAttributes = File.GetAttributes(directoryPath);
-            
-            if (!(fileAttributes == FileAttributes.Directory))
+
+            if (!(fileAttributes.HasFlag(FileAttributes.Directory)))
             {
                 directoryPath = Path.GetDirectoryName(directoryPath);
             }
 
-            var assetsJsonLocation = Path.Join(directoryPath, FileName);
+            var assetsJsonLocation = Path.Join(directoryPath, AssetsJsonFileName);
             var gitLocation = Path.Join(directoryPath, ".git");
 
             return new DirectoryEvaluation()
@@ -553,8 +600,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 var currentSHA = (await ParseConfigurationFile(config.AssetsJsonLocation)).Tag;
                 var content = await File.ReadAllTextAsync(config.AssetsJsonLocation);
-                content = content.Replace(currentSHA, newSha);
-
+                if (String.IsNullOrWhiteSpace(currentSHA))
+                {
+                    string pattern = @"""Tag"":\s*""\s*""";
+                    content = Regex.Replace(content, pattern, $"\"Tag\": \"{newSha}\"", RegexOptions.IgnoreCase);
+                }
+                else
+                {
+                    content = content.Replace(currentSHA, newSha);
+                }
                 File.WriteAllText(config.AssetsJsonLocation, content);
             }
         }

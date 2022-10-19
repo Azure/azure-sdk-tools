@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
+
 
 namespace APIViewWeb
 {
@@ -114,6 +114,21 @@ namespace APIViewWeb
                 reviews.AddRange(result.Resource);
             }
             return reviews.OrderBy(r => r.Name).ThenByDescending(r => r.LastUpdated);
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetRequestedReviews(string userName)
+        {
+            var query = $"SELECT * FROM Reviews r WHERE IS_DEFINED(r.RequestedReviewers) AND ARRAY_CONTAINS(r.RequestedReviewers, @userName)";
+            var allReviews = new List<ReviewModel>();
+            var queryDefinition = new QueryDefinition(query).WithParameter("@userName", userName);
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                allReviews.AddRange(result.Resource);
+            }
+
+            return allReviews.OrderByDescending(r => r.LastUpdated);
         }
 
         public async Task<IEnumerable<string>> GetReviewFirstLevelPropertiesAsync(string propertyName)

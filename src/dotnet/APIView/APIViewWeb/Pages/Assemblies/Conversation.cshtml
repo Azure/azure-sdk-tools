@@ -1,16 +1,21 @@
-﻿@page "{id?}"
+@page "{id?}"
 @model APIViewWeb.Pages.Assemblies.ConversationModel
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
 @{
     Layout = "ReviewLayout";
     ViewData["Title"] = "Conversation";
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User.GetGitHubLogin());
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
 }
 <div class="container-fluid">
-    <div class="mx-5 mt-2">
-        <div class="row">
-            <div class="col p-2" data-review-id=@Model.Review.ReviewId>
+    <div class="mx-5">
+        <div class="row py-2 border-bottom">
+            <div class="col-lg-12 d-flex px-0">
+                <partial name="Shared/_ReviewBadge" model=" Model.Review" />
+            </div>
+        </div>
+        <div class="row py-2">
+            <div class="col-lg-12 px-0" data-review-id=@Model.Review.ReviewId>
                 @if (!Model.Threads.Any() && !Model.UsageSampleThreads.Any())
                 {
                     <div class="text-muted">There are no comments in the review.</div>
@@ -68,16 +73,19 @@
                                     <table class="code-window">
                                         @foreach (var thread in revision.Value.OrderBy(e => int.Parse(e.LineId.Split("-").Last())))
                                         {
-                                            var elementId = thread.LineId;
-                                            <tr class="code-line"><td class="code p-2" style="word-break: break-all;"><a class="comment-url" asp-page="Samples"
-                                                asp-route-id=@Model.Review.ReviewId
-                                                asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
-                                                asp-fragment=@Uri.EscapeUriString(elementId)>
-                                                @Html.Raw(
-                                                    Model.SampleLines.ElementAt(revision.Key.RevisionNumber-skipped)
-                                                        .ElementAt(int.Parse(thread.Comments.First().ElementId.Split("-").Last())-1))
-                                                </a>
-                                            </td></tr>
+                                            @if(thread.Comments.Any())
+                                            {
+                                                var elementId = thread.LineId;
+                                                <tr class="code-line">
+                                                    <td class="code p-2" style="word-break: break-all;">
+                                                        <a class="comment-url" asp-page="Samples"
+                                                           asp-route-id=@Model.Review.ReviewId
+                                                           asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
+                                                           asp-fragment=@Uri.EscapeUriString(elementId)>@Html.Raw(Model.SampleLines.ElementAt(revision.Key.RevisionNumber-skipped).ElementAt(int.Parse(thread.Comments.First().ElementId.Split("-").Last())-1))
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
                                             <partial name="_CommentThreadPartial" model="@thread" />
                                         }
                                     </table>
@@ -88,7 +96,7 @@
                 }
 
         </div>
-        <partial name="_CommentFormPartial" />
+        <partial name="_CommentFormPartial" model="@Model.TaggableUsers" />
     </div>
 </div>
 

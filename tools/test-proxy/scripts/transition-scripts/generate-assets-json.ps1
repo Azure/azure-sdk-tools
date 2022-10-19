@@ -56,7 +56,7 @@ $GitExe = "git"
 
 # The built test proxy on a dev machine will have the version 1.0.0-dev.20221013.1
 # whereas the one installed from nuget will have the version 20221013.1 (minus the 1.0.0-dev.)
-$MinTestProxyVersion = "20221017.1"
+$MinTestProxyVersion = "20221017.4"
 
 $DefaultAssetsRepo = "Azure/azure-sdk-assets"
 if ($UseTestRepo) {
@@ -287,7 +287,7 @@ Function Invoke-ProxyCommand {
   }
 
   Write-Host "$TestProxyExe $CommandArgs"
-  [array] $output = & "$TestProxyExe" $CommandArgs.Split(" ")
+  [array] $output = & "$TestProxyExe" $CommandArgs.Split(" ") --storage-location="$updatedDirectory"
   # echo the command output
   foreach ($line in $output) {
     Write-Host "$line"
@@ -304,7 +304,7 @@ Function Get-AssetsRoot {
   $breadcrumbFile = Join-Path $repoRoot ".assets" ".breadcrumb"
 
   $breadcrumbString = Get-Content $breadcrumbFile | Where-Object { $_.StartsWith($relPath) }
-  $assetRepo = $breadcrumbString.Split(";;")[1]
+  $assetRepo = $breadcrumbString.Split(";")[1]
   $assetsPrefix = (Get-Content $AssetsJsonFile | Out-String | ConvertFrom-Json).AssetsRepoPrefixPath
 
   return Join-Path $repoRoot ".assets" $assetRepo $assetsPrefix $relPath

@@ -168,7 +168,7 @@ export async function generateRLCInPipeline(options: {
         if (!packagePath || !relativePackagePath) {
             const changedPackageDirectories: Set<string> = await getChangedPackageDirectory(!options.skipGeneration);
             if (changedPackageDirectories.size !== 1) {
-                throw new Error(`Find unexpected changed package directory. Length: ${changedPackageDirectories}. Value: ${Array.from(changedPackageDirectories).join(', ')}. Please only change files in one directory`)
+                throw new Error(`Find unexpected changed package directory. Length: ${changedPackageDirectories}. Value: ${[...changedPackageDirectories].join(', ')}. Please only change files in one directory`)
             }
             for (const d of changedPackageDirectories) relativePackagePath = d;
             packagePath = path.join(options.sdkRepo, relativePackagePath!);

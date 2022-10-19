@@ -17,9 +17,9 @@ export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | un
             "result": "succeeded"
         };
         if (cadlProject) {
-            outputPackageInfo['cadlProject'] = cadlProject;
+            outputPackageInfo['cadlProject'] = [cadlProject];
         } else {
-            outputPackageInfo['readmeMd'] = readmeMd;
+            outputPackageInfo['readmeMd'] = [readmeMd];
         }
     } else if (runningEnvironment === RunningEnvironment.SdkGeneration) {
         outputPackageInfo = {

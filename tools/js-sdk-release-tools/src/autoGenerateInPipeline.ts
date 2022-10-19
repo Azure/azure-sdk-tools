@@ -41,7 +41,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     const readmeMd = isCadlProject? undefined : typeof readmeFiles === 'string'? readmeFiles : readmeFiles![0];
     const cadlProject = isCadlProject? typeof cadlProjectFolder === 'string'? cadlProjectFolder : cadlProjectFolder![0] : undefined;
     const isMgmt = isCadlProject? false : readmeMd!.includes('resource-manager');
-    const runningEnvironment = typeof readmeFiles === 'string'? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
+    const runningEnvironment = typeof readmeFiles === 'string' || typeof cadlProjectFolder === 'string'? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
     if (isMgmt) {
         await generateMgmt({
             sdkRepo: String(shell.pwd()),

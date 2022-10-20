@@ -275,10 +275,21 @@ export class ApiView {
   }
 
   stringLiteral(value: string) {
-    this.tokens.push({
-      Kind: ApiViewTokenKind.StringLiteral,
-      Value: `\u0022${value}\u0022`,
-    });
+    const lines = value.split("\n");
+    if (lines.length == 1) {
+      this.tokens.push({
+        Kind: ApiViewTokenKind.StringLiteral,
+        Value: `\u0022${value}\u0022`,
+      });  
+    } else {
+      this.punctuation(`"""`);
+      this.newline();
+      for (const line of lines) {
+        this.literal(line);
+        this.newline();
+      }
+      this.punctuation(`"""`);
+    }
   }
 
   literal(value: string) {
@@ -833,6 +844,9 @@ export class ApiView {
             break;
           case "member":
             this.member(defId);
+            break;
+          case "keyword":
+            this.keyword(defId);
             break;
           case "declaration":
             throw new Error(`MemberExpression cannot be a "declaration".`);

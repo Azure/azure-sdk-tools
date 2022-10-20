@@ -474,4 +474,42 @@ describe("apiview: tests", () => {
     compare(expect, lines, 3);
     validateDefinitionIds(apiview);
   });
+
+  it("describes string literals", async () => {
+    const input = `
+    @Cadl.service( { title: "Test" } )
+    namespace Azure.Test {
+      @doc("Short string")
+      model Foo {};
+
+      @doc("""
+      A long string,
+      with line breaks
+      and stuff...
+      """)
+      model Bar {};
+    }
+    `;
+    const expect = `
+    @Cadl.service(
+      {
+        title: "Test";
+      }
+    )
+    namespace Azure.Test {
+      @doc("""
+      A long string,
+      with line breaks
+      and stuff...
+      """)
+      model Bar {}
+      @doc("Short string")
+      model Foo {}
+    }
+    `;
+    const apiview = await apiViewFor(input, {});
+    const lines = apiViewText(apiview);
+    compare(expect, lines, 3);
+    validateDefinitionIds(apiview);
+  });
 });

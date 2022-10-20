@@ -531,7 +531,7 @@ Services:
       Python: SendEventBatchTest
   - Test: process-events-batch
     Arguments: 
-    - --event-size 1024 --max-batch-size 100 --preload 1000000 --parallel 64
+    - --event-size 1024 --max-batch-size 100 --preload 1000000
     TestNames:
       Python: ProcessEventsBatchTest
 

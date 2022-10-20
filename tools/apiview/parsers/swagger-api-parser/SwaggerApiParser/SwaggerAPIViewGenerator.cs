@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -26,23 +27,31 @@ namespace SwaggerApiParser
                 packageName = packageName
             };
 
-            foreach (var definition in swaggerSpec.definitions)
+            if (swaggerSpec.definitions != null)
             {
-                if (!schemaCache.Cache.ContainsKey(definition.Key))
+                foreach (var definition in swaggerSpec.definitions)
                 {
-                    schemaCache.AddSchema(swaggerFilePath, definition.Key, definition.Value);
+                    if (!schemaCache.Cache.ContainsKey(definition.Key))
+                    {
+                        schemaCache.AddSchema(swaggerFilePath, definition.Key, definition.Value);
+                    }
                 }
             }
+           
 
-            foreach (var parameter in swaggerSpec.parameters)
+            if (swaggerSpec.parameters != null)
             {
-                if (!schemaCache.ParametersCache.ContainsKey(parameter.Key))
+                foreach (var parameter in swaggerSpec.parameters)
                 {
-                    schemaCache.AddParameter(swaggerFilePath, parameter.Key, parameter.Value);
+                    if (!schemaCache.ParametersCache.ContainsKey(parameter.Key))
+                    {
+                        schemaCache.AddParameter(swaggerFilePath, parameter.Key, parameter.Value);
+                    }
                 }
             }
+           
             
-            ret.SwaggerApiViewGeneral.xMsParameterizedHost.ResolveParameters(schemaCache, swaggerFilePath);
+            ret.SwaggerApiViewGeneral.xMsParameterizedHost?.ResolveParameters(schemaCache, swaggerFilePath);
             
 
 

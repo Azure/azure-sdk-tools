@@ -26,7 +26,8 @@
     "tags": {
       "value": {
         "environment": "pg",
-        "owners": "bebroder"
+        "owners": "bebroder, albertcheng",
+        "DoNotDelete": ""
       }
     }
   }

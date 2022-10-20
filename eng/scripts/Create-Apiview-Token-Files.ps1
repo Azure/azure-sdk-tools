@@ -11,7 +11,8 @@ param (
   [Parameter(Mandatory = $true)]
   [string]$ContainerSas,
   [Parameter(Mandatory = $true)]
-  [string]$ApiviewGenScript
+  [string]$ApiviewGenScript,
+  [string]$ParserPath = ""
 )
 
 
@@ -27,7 +28,7 @@ if ($reviews -ne $null)
 
         $pkgWorkingDir = Join-Path -Path $WorkingDir $r.ReviewID | Join-Path -ChildPath $r.RevisionID
         $codeDir = New-Item -Path $pkgWorkingDir -ItemType Directory
-        $sourcePath = $StorageBaseUrl + "/" + $r.FileID + $ContainerSas
+        $sourcePath = $StorageBaseUrl + "/" + $r.FileID + "?"+ $ContainerSas
         Write-Host "Copying $($sourcePath)"
         azcopy cp "$sourcePath" $codeDir/$($r.FileName) --recursive=true
 
@@ -38,7 +39,14 @@ if ($reviews -ne $null)
         }
 
         $reviewGenScriptPath = Join-Path $PSScriptRoot $ApiviewGenScript
-        &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath
+        if ($ParserPath -eq "")
+        {
+            &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath
+        }
+        else
+        {
+            &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath -ParserPath $ParserPath
+        }
     }
 }
 else

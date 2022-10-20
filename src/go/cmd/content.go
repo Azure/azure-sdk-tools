@@ -323,10 +323,9 @@ func (c *content) filterDeclarations(typ string, decls map[string]Declaration, t
 	return results
 }
 
-// searchForMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.
-func (c *content) searchForMethods(s string, tokenList *[]Token) {
+// findMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.
+func (c *content) findMethods(s string) map[string]Func {
 	methods := map[string]Func{}
-	methodNames := []string{}
 	for key, fn := range c.Funcs {
 		name := fn.Name()
 		if unicode.IsLower(rune(name[0])) {
@@ -339,14 +338,23 @@ func (c *content) searchForMethods(s string, tokenList *[]Token) {
 		}
 		if s == n || "*"+s == n {
 			methods[key] = fn
-			methodNames = append(methodNames, key)
-			delete(c.Funcs, key)
 		}
+	}
+	return methods
+}
+
+// searchForMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.
+func (c *content) searchForMethods(s string, tokenList *[]Token) {
+	methods := c.findMethods(s)
+	methodNames := []string{}
+	for key := range methods {
+		methodNames = append(methodNames, key)
 	}
 	sort.Strings(methodNames)
 	for _, name := range methodNames {
 		fn := methods[name]
 		*tokenList = append(*tokenList, fn.MakeTokens()...)
+		delete(c.Funcs, name)
 	}
 }
 

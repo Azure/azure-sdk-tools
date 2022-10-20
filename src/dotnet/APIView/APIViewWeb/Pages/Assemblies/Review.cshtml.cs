@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView;
 using APIView.DIff;
+using APIViewWeb.Helpers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -26,20 +28,28 @@ namespace APIViewWeb.Pages.Assemblies
 
         private readonly NotificationManager _notificationManager;
 
-        private readonly UserPreferenceCache _preferenceCache;
+        public readonly UserPreferenceCache _preferenceCache;
+
+        private readonly CosmosUserProfileRepository _userProfileRepository;
+
+        private readonly IConfiguration _configuration;
 
         public ReviewPageModel(
             ReviewManager manager,
             BlobCodeFileRepository codeFileRepository,
             CommentsManager commentsManager,
             NotificationManager notificationManager,
-            UserPreferenceCache preferenceCache)
+            UserPreferenceCache preferenceCache,
+            CosmosUserProfileRepository userProfileRepository,
+            IConfiguration configuration)
         {
             _manager = manager;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
             _preferenceCache = preferenceCache;
+            _userProfileRepository = userProfileRepository;
+            _configuration = configuration;
 
         }
 
@@ -53,6 +63,7 @@ namespace APIViewWeb.Pages.Assemblies
         public CodeLineModel[] Lines { get; set; }
         public InlineDiffLine<CodeLine>[] DiffLines { get; set; }
         public ReviewCommentsModel Comments { get; set; }
+        public HashSet<GithubUser> TaggableUsers { get; set; }
 
         /// <summary>
         /// The number of active conversations for this iteration
@@ -60,6 +71,8 @@ namespace APIViewWeb.Pages.Assemblies
         public int ActiveConversations { get; set; }
 
         public int TotalActiveConversations { get; set; }
+
+        public int UsageSampleConversations { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public string DiffRevisionId { get; set; }
@@ -73,6 +86,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public IEnumerable<ReviewModel> ReviewsForPackage { get; set; } = new List<ReviewModel>();
 
+        public readonly HashSet<string> approvers = new HashSet<string>();
+
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
             TempData["Page"] = "api";
@@ -84,10 +99,10 @@ namespace APIViewWeb.Pages.Assemblies
                 return RedirectToPage("LegacyReview", new { id = id });
             }
 
+            TaggableUsers = _commentsManager.TaggableUsers;
+
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Revision = revisionId != null ?
-                Review.Revisions.Single(r => r.RevisionId == revisionId) :
-                Review.Revisions.Last();
+            Revision = GetReviewRevision(revisionId);
             PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
 
             var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
@@ -121,9 +136,115 @@ namespace APIViewWeb.Pages.Assemblies
 
             ActiveConversations = ComputeActiveConversations(fileHtmlLines, Comments);
             TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
+            UsageSampleConversations = Comments.Threads.Count(t => t.Comments.FirstOrDefault()?.IsUsageSampleComment == true);
             var filterPreference = _preferenceCache.GetFilterType(User.GetGitHubLogin(), Review.FilterType);
             ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName, filterPreference);
+
+            var approverConfig = _configuration["approvers"];
+            if (!string.IsNullOrEmpty(approverConfig))
+            {
+                foreach (var username in approverConfig.Split(","))
+                {
+                    if (username.Equals(User.GetGitHubLogin()))
+                    {
+                        var userCache = _preferenceCache.GetUserPreferences(User).Result;
+                        var langs = userCache.ApprovedLanguages.ToHashSet();
+                        if (!langs.Any())
+                        {
+                            UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                            langs = user.Languages;
+                            userCache.ApprovedLanguages = langs;
+                            _preferenceCache.UpdateUserPreference(userCache, User);
+                        }
+                        if (langs.Contains(Review.Language))
+                        {
+                            approvers.Add(username);
+                        }
+                    }
+                    else
+                    {
+                        UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                        var langs = user.Languages;
+                        if (langs.Contains(Review.Language))
+                        {
+                            approvers.Add(username);
+                        }
+                    }
+                }
+            }
+
             return Page();
+        }
+
+        public async Task<PartialViewResult> OnGetCodeLineSectionAsync(string id, int sectionId, string revisionId = null)
+        {
+            Review = await _manager.GetReviewAsync(User, id);
+            Revision = GetReviewRevision(revisionId);
+            var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
+            var htmlLines = renderedCodeFile.GetCodeLineSection(sectionId);
+            var fileDiagnostics = renderedCodeFile.CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
+            Comments = await _commentsManager.GetReviewCommentsAsync(id);
+            Lines = CreateLines(fileDiagnostics, htmlLines, Comments, true);
+            TempData["CodeLineSection"] = Lines;
+            TempData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User) ?? new UserPreferenceModel();
+            return Partial("_CodeLinePartial", sectionId);
+        }
+
+        public async Task<ActionResult> OnPostToggleClosedAsync(string id)
+        {
+            await _manager.ToggleIsClosedAsync(User, id);
+
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
+        {
+            await _notificationManager.ToggleSubscribedAsync(User, id);
+            return RedirectToPage(new { id = id });
+        }
+
+        public async Task<IActionResult> OnPostToggleApprovalAsync(string id, string revisionId)
+        {
+            await _manager.ToggleApprovalAsync(User, id, revisionId);
+            return RedirectToPage(new { id = id });
+        }
+        public async Task<ActionResult> OnPostRequestReviewersAsync(string id, HashSet<string> reviewers)
+        {
+            await _manager.RequestApproversAsync(User, id, reviewers);
+            await _notificationManager.NotifyApproversOfReview(User, id, reviewers);
+            return RedirectToPage(new { id = id });
+        }
+
+        public IActionResult OnGetUpdatePageSettings(bool hideLineNumbers = false, bool hideLeftNavigation = false)
+        {
+            _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
+            {
+                HideLeftNavigation = hideLeftNavigation,
+                HideLineNumbers = hideLineNumbers
+            }, User);
+            return new EmptyResult();
+        }
+
+        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, bool? showDocumentation = null, string revisionId = null)
+        {
+            var routingData = new Dictionary<string, string>();
+            routingData["revisionId"] = revisionId;
+            routingData["diffRevisionId"] = diffRevisionId;
+            routingData["doc"] = (showDocumentation ?? false).ToString();
+            routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
+            return routingData;
+        }
+
+        public UserPreferenceModel GetUserPreference()
+        {
+            return _preferenceCache.GetUserPreferences(User).Result;
+        }
+
+        private ReviewRevisionModel GetReviewRevision(string revisionId = null)
+        {
+            return revisionId != null ?
+                Review.Revisions.Single(r => r.RevisionId == revisionId) :
+                Review.Revisions.Last();
         }
 
         private InlineDiffLine<CodeLine>[] CreateDiffOnlyLines(InlineDiffLine<CodeLine>[] lines)
@@ -186,20 +307,45 @@ namespace APIViewWeb.Pages.Assemblies
                     diffLine.Kind != DiffLineKind.Removed ?
                         diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
                         Array.Empty<CodeDiagnostic>(),
-                    ++index
+                    diffLine.Line.LineNumber ?? ++index,
+                    new int[] { }
                 )).ToArray();
         }
 
-        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments)
+        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments, bool hideCommentRows = false)
         {
+            List<int> documentedByLines = new List<int>();
+            int lineNumberExcludingDocumentation = 0;
             return lines.Select(
-                (line, index) => new CodeLineModel(
-                    DiffLineKind.Unchanged,
-                    line,
-                    comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
-                    diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
-                    ++index
-                )).ToArray();
+                (line, index) =>
+                {
+                    if (line.IsDocumentation)
+                    {
+                        // documentedByLines must include the index of a line, assuming that documentation lines are counted
+                        documentedByLines.Add(++index);
+                        return new CodeLineModel(
+                            DiffLineKind.Unchanged,
+                            line,
+                            comments.TryGetThreadForLine(line.ElementId, out var thread, hideCommentRows) ? thread : null,
+                            diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
+                            lineNumberExcludingDocumentation,
+                            new int[] {}
+                        );
+                    }
+                    else
+                    {
+                        CodeLineModel c = new CodeLineModel(
+                            DiffLineKind.Unchanged,
+                            line,
+                            comments.TryGetThreadForLine(line.ElementId, out var thread, hideCommentRows) ? thread : null,
+                            diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
+                            line.LineNumber ?? ++lineNumberExcludingDocumentation,
+                            documentedByLines.ToArray()
+                        );
+                        documentedByLines.Clear();
+                        return c;
+                    }
+                }).ToArray();
         }
 
         private int ComputeActiveConversations(CodeLine[] lines, ReviewCommentsModel comments)
@@ -213,56 +359,13 @@ namespace APIViewWeb.Pages.Assemblies
                 }
 
                 // if we have comments for this line and the thread has not been resolved.
+                // Add "&& !thread.Comments.First().IsUsageSampleComment()" to exclude sample comments from being counted (This also prevents the popup before approval)
                 if (comments.TryGetThreadForLine(line.ElementId, out CommentThreadModel thread) && !thread.IsResolved)
                 {
                     activeThreads++;
                 }
             }
             return activeThreads;
-        }
-
-        public async Task<ActionResult> OnPostToggleClosedAsync(string id)
-        {
-            await _manager.ToggleIsClosedAsync(User, id);
-
-            return RedirectToPage(new { id = id });
-        }
-
-        public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
-        {
-            await _notificationManager.ToggleSubscribedAsync(User, id);
-            return RedirectToPage(new { id = id });
-        }
-
-        public async Task<IActionResult> OnPostToggleApprovalAsync(string id, string revisionId)
-        {
-            await _manager.ToggleApprovalAsync(User, id, revisionId);
-            return RedirectToPage(new { id = id });
-        }
-
-        public IActionResult OnGetUpdatePageSettings(bool hideLineNumbers = false, bool hideLeftNavigation = false)
-        {   
-            _preferenceCache.UpdateUserPreference(new UserPreferenceModel() {
-                UserName = User.GetGitHubLogin(),
-                HideLeftNavigation = hideLeftNavigation,
-                HideLineNumbers = hideLineNumbers
-            });
-            return new EmptyResult();
-        }
-
-        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null, string revisionId = null)
-        {
-            var routingData = new Dictionary<string, string>();
-            routingData["revisionId"] = revisionId;
-            routingData["diffRevisionId"] = diffRevisionId;
-            routingData["doc"] = (showDocumentation ?? false).ToString();
-            routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
-            return routingData;
-        }
-
-        public UserPreferenceModel GetUserPreference()
-        {
-            return _preferenceCache.GetUserPreferences(User.GetGitHubLogin());
         }
     }
 }

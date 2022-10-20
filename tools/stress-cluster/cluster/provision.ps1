@@ -47,8 +47,7 @@ function _run([string]$CustomWhatIfFlag)
             $cmdArgs += $CustomWhatIfFlag
         }
         Write-Host "`n==> $cmdArgs`n" -ForegroundColor Green
-        $command, $arguments = $cmdArgs
-        & $command $arguments
+        Invoke-Expression "$($cmdArgs -join ' ')"
     }
     if ($LASTEXITCODE) {
         Write-Error "Command '$args' failed with code: $LASTEXITCODE" -ErrorAction 'Continue'
@@ -85,10 +84,15 @@ function DeployStaticResources([hashtable]$params)
 {
     Write-Host "Deploying static resources"
 
+    $formattedTags = $params.tags.GetEnumerator() | ForEach-Object { "'$($_.Name)=$($_.Value)'" }
+    $formattedTags = $formattedTags -join ' '
+
     RunOrExitOnFailure az group create `
         -n $params.staticTestSecretsKeyvaultGroup `
         -l $params.clusterLocation `
-        --subscription $params.subscriptionId
+        --subscription $params.subscriptionId `
+        --tags $formattedTags
+
     $kv = Run az keyvault show `
         -n $params.staticTestSecretsKeyvaultName `
         -g $params.staticTestSecretsKeyvaultGroup `
@@ -270,6 +274,10 @@ function main()
     # we don't inadvertently check a $LASTEXITCODE value from before the script invocation
     if ($WhatIfPreference) {
         helm -h > $null
+    }
+
+    if ($Environment -NotIn "prod", "pg" -and !$LocalAddonsPath) {
+        throw "When using a custom environment you must set -LocalAddonsPath to provide the stress-infrastructure release with environment values"
     }
 
     if ($PSCmdlet.ParameterSetName -eq 'Provisioner') {

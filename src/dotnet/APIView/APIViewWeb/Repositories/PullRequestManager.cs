@@ -293,6 +293,12 @@ namespace APIViewWeb.Repositories
                     var prevRevisionId = review.Revisions.Last().RevisionId;
                     review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel, true);
                     review.ReviewId = pullRequestModel.ReviewId;
+                    //Remove previous revisions with revision ID.
+                    //Currently revision ID is getting duplicated when a PR api review is created for a brand new package.
+                    //In case of brand new package, we don't have any baseline from automatic review. So it uses previous PR api review as baseline and
+                    //below revision ID copy step makes duplicate revision IDs in such cases.
+                    //We should ensure that no revision exists in review with previous revision ID before we update new revision
+                    review.Revisions.RemoveAll(r => r.RevisionId == prevRevisionId);
                     newRevision.RevisionId = prevRevisionId;
                 }
             }
@@ -310,8 +316,8 @@ namespace APIViewWeb.Repositories
         private async Task GetFormattedDiff(RenderedCodeFile renderedCodeFile, ReviewRevisionModel lastRevision, StringBuilder stringBuilder)
         {
             RenderedCodeFile autoReview = await _codeFileRepository.GetCodeFileAsync(lastRevision, false);
-            var autoReviewTextFile = autoReview.RenderText(showDocumentation: false, skipDiff: true);
-            var prCodeTextFile = renderedCodeFile.RenderText(showDocumentation: false, skipDiff: true);
+            var autoReviewTextFile = autoReview.RenderText(false, skipDiff: true);
+            var prCodeTextFile = renderedCodeFile.RenderText(false, skipDiff: true);
             var diffLines = InlineDiff.Compute(autoReviewTextFile, prCodeTextFile, autoReviewTextFile, prCodeTextFile);
             if (diffLines == null || diffLines.Length == 0 || diffLines.Count(l=>l.Kind != DiffLineKind.Unchanged) > 10)
             {

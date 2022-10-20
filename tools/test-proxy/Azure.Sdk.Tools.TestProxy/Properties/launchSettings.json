@@ -10,7 +10,6 @@
   "profiles": {
     "Azure.Sdk.Tools.TestProxy": {
       "commandName": "Project",
-      "commandLineArgs": "--help",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "Logging__LogLevel__Microsoft": "Information"

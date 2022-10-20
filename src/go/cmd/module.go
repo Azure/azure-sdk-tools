@@ -48,6 +48,11 @@ func NewModule(dir string) (*Module, error) {
 	m := Module{Name: filepath.Base(dir), packages: map[string]*Pkg{}}
 
 	baseImportPath := path.Dir(mf.Module.Mod.Path) + "/"
+	if baseImportPath == "./" {
+		// this is a relative path in the tests, so remove this prefix.
+		// if not, then the package name added below won't match the imported packages.
+		baseImportPath = ""
+	}
 	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			if !indexTestdata && strings.Contains(path, "testdata") {
@@ -120,8 +125,31 @@ func NewModule(dir string) (*Module, error) {
 					t = p.c.addInterface(*def.p, alias, p.Name(), n)
 				case *ast.StructType:
 					t = p.c.addStruct(*def.p, alias, p.Name(), def.n)
+					hoistMethodsForType(source, alias, p)
+					// ensure that all struct field types that are structs are also aliased from this package
+					for _, field := range n.Fields.List {
+						fieldTypeName := unwrapStructFieldTypeName(field)
+						if fieldTypeName == "" {
+							// we can ignore this field
+							continue
+						}
+
+						// ensure that our package exports this type
+						if _, ok := p.typeAliases[fieldTypeName]; ok {
+							// found an alias
+							continue
+						}
+
+						// no alias, add a diagnostic
+						p.diagnostics = append(p.diagnostics, Diagnostic{
+							Level:    DiagnosticLevelError,
+							TargetID: t.ID(),
+							Text:     missingAliasFor + fieldTypeName,
+						})
+					}
 				case *ast.Ident:
 					t = p.c.addSimpleType(*p, alias, p.Name(), def.n.Type.(*ast.Ident).Name)
+					hoistMethodsForType(source, alias, p)
 				default:
 					fmt.Printf("unexpected node type %T\n", def.n.Type)
 					t = p.c.addSimpleType(*p, alias, p.Name(), originalName)
@@ -129,6 +157,7 @@ func NewModule(dir string) (*Module, error) {
 			} else {
 				fmt.Println("found no definition for " + qn)
 			}
+
 			if t != nil {
 				p.diagnostics = append(p.diagnostics, Diagnostic{
 					Level:    level,
@@ -139,6 +168,52 @@ func NewModule(dir string) (*Module, error) {
 		}
 	}
 	return &m, nil
+}
+
+// returns the type name for the specified struct field.
+// if the field can be ignored, an empty string is returned.
+func unwrapStructFieldTypeName(field *ast.Field) string {
+	if field.Names != nil && !field.Names[0].IsExported() {
+		// field isn't exported so skip it
+		return ""
+	}
+
+	// start with the field expression
+	exp := field.Type
+
+	// if it's an array, get the element expression.
+	// current codegen doesn't support *[]Type so no need to handle it.
+	if at, ok := exp.(*ast.ArrayType); ok {
+		// FieldName []FieldType
+		// FieldName []*FieldType
+		exp = at.Elt
+	}
+
+	// from here we either have a pointer-to-type or type
+	var ident *ast.Ident
+	if se, ok := exp.(*ast.StarExpr); ok {
+		// FieldName *FieldType
+		ident, _ = se.X.(*ast.Ident)
+	} else {
+		// FieldName FieldType
+		ident, _ = exp.(*ast.Ident)
+	}
+
+	// !IsExported() is a hacky way to ignore primitive types
+	// FieldName bool
+	if ident == nil || !ident.IsExported() {
+		return ""
+	}
+
+	// returns FieldType
+	return ident.Name
+}
+
+func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg) {
+	methods := pkg.c.findMethods(typeName)
+	for sig, fn := range methods {
+		target.c.Funcs[sig] = fn.ForAlias(target.Name())
+	}
 }
 
 func parseModFile(dir string) (*modfile.File, error) {

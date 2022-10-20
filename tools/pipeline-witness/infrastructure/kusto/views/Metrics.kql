@@ -1,0 +1,14 @@
+.create-or-alter materialized-view with (docstring = 'Log extracted metrics') Metrics on table BuildLogLine
+{
+BuildLogLine
+    | where Message has_all ("logmetric", "name", "value", "timestamp")
+    | where Message startswith "logmetric:"
+    | extend json = todynamic(extract(@"^(?i:logmetric):\s*(.*?)\s*$", 1, Message))
+    | where not(isnull(json["name"]))
+    | extend
+        Name = tostring(json.name),
+        Labels = todynamic(json.labels),
+        Value = toreal(json.value),
+        Timestamp = todatetime(json.timestamp)
+    | summarize arg_max(LogId, LineNumber, Name, Value, Timestamp, Labels) by OrganizationName, ProjectId, BuildId, Hash=hash_sha1(Message)
+}

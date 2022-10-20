@@ -8,17 +8,24 @@ import { comment, serialize } from '@azure-tools/codegen';
 
 export class Helper {
     static dumpBuf: Record<string, any> = {};
-    public static async outputToModelerfour(host: AutorestExtensionHost, session: Session<CodeModel>, exportExplicitTypes: boolean): Promise<void> {
+    public static async outputToModelerfour(
+        host: AutorestExtensionHost,
+        session: Session<CodeModel>,
+        exportExplicitTypes: boolean,
+        explicitTypes: string[] = undefined,
+    ): Promise<void> {
         // write the final result first which is hardcoded in the Session class to use to build the model..
         // overwrite the modelerfour which should be fine considering our change is backward compatible
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const modelerfourOptions = await session.getValue('modelerfour', {});
         if (modelerfourOptions['emit-yaml-tags'] !== false) {
             if (exportExplicitTypes) {
-                codeModelSchema.explicit = (codeModelSchema.explicit || []).concat(codeModelSchema.implicit);
-                codeModelSchema.implicit = [];
-                codeModelSchema.compiledExplicit = (codeModelSchema.compiledExplicit || []).concat(codeModelSchema.compiledImplicit);
-                codeModelSchema.compiledImplicit = [];
+                codeModelSchema.explicit = codeModelSchema.explicit.concat(codeModelSchema.implicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)));
+                codeModelSchema.implicit = codeModelSchema.implicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
+                codeModelSchema.compiledExplicit = codeModelSchema.compiledExplicit.concat(
+                    codeModelSchema.compiledImplicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)),
+                );
+                codeModelSchema.compiledImplicit = codeModelSchema.compiledImplicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
             }
             host.writeFile({
                 filename: 'code-model-v4.yaml',
@@ -33,6 +40,10 @@ export class Helper {
                 artifactType: 'code-model-v4-no-tags',
             });
         }
+    }
+
+    private static isExplicitTypes(tag: string, explicitTypes: string[] = undefined): boolean {
+        return tag && (explicitTypes || []).some((t) => tag.endsWith(t));
     }
 
     public static addCodeModelDump(session: Session<CodeModel>, fileName: string, withTags: boolean, debugOnly = true) {

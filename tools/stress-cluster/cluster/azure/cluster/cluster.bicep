@@ -9,7 +9,7 @@ param enableHighMemAgentPool bool = false
 // monitoring parameters
 param workspaceId string
 
-var kubernetesVersion = '1.22.4'
+var kubernetesVersion = '1.24.3'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 
 var defaultAgentPool = {
@@ -67,6 +67,9 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
         config: {
           logAnalyticsWorkspaceResourceID: workspaceId
         }
+      }
+      azurepolicy: {
+        enabled: true
       }
     }
     kubernetesVersion: kubernetesVersion

@@ -65,6 +65,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -97,6 +98,8 @@ import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_START;
 import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
+import static com.azure.tools.apiview.processor.model.TokenKind.EXTERNAL_LINK_START;
+import static com.azure.tools.apiview.processor.model.TokenKind.EXTERNAL_LINK_END;
 
 public class JavaASTAnalyser implements Analyser {
     public static final String MAVEN_KEY = "Maven";
@@ -280,7 +283,7 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void tokeniseMavenPom(Pom mavenPom) {
-        apiListing.addChildItem(new ChildItem(MAVEN_KEY, MAVEN_KEY, TypeKind.ASSEMBLY));
+        apiListing.addChildItem(new ChildItem(MAVEN_KEY, MAVEN_KEY, TypeKind.MAVEN));
 
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, "maven", MAVEN_KEY), SPACE);
@@ -655,7 +658,7 @@ public class JavaASTAnalyser implements Analyser {
             } else if (typeDeclaration.isEnumDeclaration()) {
                 typeKind = TypeKind.ENUM;
             } else if (typeDeclaration.isAnnotationDeclaration()) {
-                typeKind = TypeKind.INTERFACE;
+                typeKind = TypeKind.ANNOTATION;
             } else {
                 typeKind = TypeKind.UNKNOWN;
             }
@@ -1324,7 +1327,7 @@ public class JavaASTAnalyser implements Analyser {
         @Override
         public void visit(CompilationUnit compilationUnit, Map<String, String> arg) {
             compilationUnit.getModule().ifPresent(moduleDeclaration ->
-                apiListing.addChildItem(new ChildItem(MODULE_INFO_KEY, MODULE_INFO_KEY, TypeKind.CLASS)));
+                apiListing.addChildItem(new ChildItem(MODULE_INFO_KEY, MODULE_INFO_KEY, TypeKind.MODULE)));
 
             for (final TypeDeclaration<?> typeDeclaration : compilationUnit.getTypes()) {
                 buildTypeHierarchyForNavigation(typeDeclaration);
@@ -1394,11 +1397,32 @@ public class JavaASTAnalyser implements Analyser {
                     line2 = StringEscapeUtils.unescapeHtml(line2);
                 }
                 addToken(makeWhitespace());
-                addToken(new Token(COMMENT, line2));
+
+                // convert http/s links to external clickable links
+                Matcher urlMatch = MiscUtils.URL_MATCH.matcher(line2);
+                int currentIndex = 0;
+                while(urlMatch.find(currentIndex) == true) {
+                    int start = urlMatch.start();
+                    int end = urlMatch.end();
+
+                    // if the current search index != start of match, there was text between two hyperlinks
+                    if(currentIndex != start) {
+                        String betweenValue = line2.substring(currentIndex, start);
+                        addToken(new Token(COMMENT, betweenValue));
+                    }
+
+                    String matchedValue = line2.substring(start, end);
+                    addToken(new Token(EXTERNAL_LINK_START, matchedValue));
+                    addToken(new Token(COMMENT, matchedValue));
+                    addToken(new Token(EXTERNAL_LINK_END));
+                    currentIndex = end;
+                }
+                // end of line will be anything between the end of the last found link, and the end of the string
+                String finalValue = line2.substring(currentIndex);
+                addToken(new Token(COMMENT, finalValue));
                 addNewLine();
             });
         });
-        addToken(makeWhitespace());
         addToken(new Token(DOCUMENTATION_RANGE_END));
     }
 

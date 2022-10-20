@@ -94,6 +94,10 @@ jobs:
             TargetRepos:
               azure-sdk/azure-resource-manager-schemas:
 
+          Azure/azure-dev:
+            TargetRepos:
+              Azure/azure-dev-pr:
+
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)

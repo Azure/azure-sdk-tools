@@ -1943,7 +1943,7 @@ class NonCoreNetworkImport(BaseChecker):
             self._check_import(import_, node)
 
     def visit_importfrom(self, node):
-        """Check that we aren't import from a blocked package."""
+        """Check that we aren't importing from a blocked package."""
         if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME): 
             return
         self._check_import(node.modname, node)
@@ -1956,6 +1956,34 @@ class NonCoreNetworkImport(BaseChecker):
                     msgid=f"networking-import-outside-azure-core-transport", node=node, confidence=None
                 )
 
+class NonAbstractTransportImport(BaseChecker):
+    """Rule to check that we aren't importing transports outside of `azure.core.pipeline.transport`.
+    Transport selection should be up to `azure.core` or the end-user, not individual SDKs.
+    """
+    name = "non-abstract-transport-import"
+    priority = -1
+    msgs = {
+        "C4750": (
+            "Only import abstract transports.",
+            "non-abstract-transport-import",
+            "Only import abstract transports. Let core or end-user decide which transport to use.",
+        ),
+    }
+    AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
+    ABSTRACT_CLASSES = {"HttpTransport", "HttpRequest", "HttpResponse", "AsyncHttpTransport", "AsyncHttpResponse"}
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from a blocked package."""
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME): 
+            return
+        if node.modname == self.AZURE_CORE_TRANSPORT_NAME: 
+            for name, _ in node.names:
+                if name not in self.ABSTRACT_CLASSES:
+                    self.add_message(
+                        msgid=f"non-abstract-transport-import",
+                        node=node,
+                        confidence=None,
+                    )
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
@@ -1979,6 +2007,7 @@ def register(linter):
     linter.register_checker(CheckEnum(linter))
     linter.register_checker(NonCoreNetworkImport(linter))
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
+    linter.register_checker(NonAbstractTransportImport(linter))
 
 
 

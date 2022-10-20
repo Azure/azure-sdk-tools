@@ -25,7 +25,7 @@ export async function processRequest(host: AutorestExtensionHost): Promise<void>
     codeModel.genMockTests(session);
     await codeModel.loadTestResources(session);
 
-    await Helper.outputToModelerfour(host, session, config.getValue(Config.exportExplicitType));
+    await Helper.outputToModelerfour(host, session, config.getValue(Config.exportExplicitType), config.getValue(Config.explicitTypes));
     if (config.getValue(Config.exportCodemodel)) {
         Helper.addCodeModelDump(session, 'test-modeler.yaml', false);
         if (config.getValue(Config.exportExplicitType)) {

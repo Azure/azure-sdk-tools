@@ -4,8 +4,11 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from typing import NewType
 from apistub.nodes import ClassNode
 from apistubgentest.models import (
+    AliasNewType,
+    AliasUnion,
     FakeTypedDict,
     FakeObject,
     GenericStack,
@@ -195,5 +198,23 @@ class TestClassParsing:
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class GenericStack(Generic[T]):"
+        ]
+        _check_all(actuals, expected, obj)
+
+    def test_new_type_alias(self):
+        obj = AliasNewType
+        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        actuals = _render_lines(_tokenize(class_node))
+        expected = [
+            "class AliasNewType(Dict[str, str]):"
+        ]
+        _check_all(actuals, expected, obj)        
+
+    def test_union_alias(self):
+        obj = AliasUnion
+        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        actuals = _render_lines(_tokenize(class_node))
+        expected = [
+            "class AliasUnion(Union[str, int, bool]):"
         ]
         _check_all(actuals, expected, obj)        

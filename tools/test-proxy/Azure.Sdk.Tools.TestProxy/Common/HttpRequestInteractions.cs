@@ -31,6 +31,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             if(document != null)
             {
+                return GetBodyKey(document, key, allowNulls: allowNulls);
+            }
+            
+            return value;
+        }
+
+        public static string GetBodyKey(JsonDocument document, string key, bool allowNulls = false)
+        {
+            string value = null;
+
+            if (document != null)
+            {
                 var recordingFile = GetProp(key, document.RootElement);
 
                 if (recordingFile.Value.ValueKind != JsonValueKind.Undefined)
@@ -45,7 +57,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     }
                 }
             }
-            
+
             return value;
         }
 

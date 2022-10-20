@@ -32,7 +32,7 @@ export async function generateMgmt(options: {
     logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
     let cmd = '';
     if (!options.skipGeneration) {
-        let cmd = `autorest --version=3.8.4 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
+        cmd = `autorest --version=3.8.4 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
 
         if (options.tag) {
             cmd += ` --tag=${options.tag}`;
@@ -114,6 +114,8 @@ export async function generateMgmt(options: {
                     const breakingChangeItems = changelog.getBreakingChangeItems();
                     if (!!breakingChangeItems && breakingChangeItems.length > 0) {
                         outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
+                    } else {
+                        outputPackageInfo.changelog['breakingChangeItems'] = [];
                     }
                 }
                 

@@ -41,6 +41,6 @@ tenantId:
   dev: ""
 provisionerAppId:
   pg: e3fdf864-b936-4279-b787-55adc0f9984a
-  prod: de76c9fe-bc09-4967-b489-1872385929fa
+  prod: 5d3c637e-07b7-4b29-83d9-87eb050dfdfb
   dev: ""
 

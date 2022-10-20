@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -96,8 +96,13 @@ namespace APIViewWeb.Repositories
             return await _reviewsRepository.GetReviewFirstLevelPropertiesAsync(propertyName);
         }
 
+        public async Task<IEnumerable<ReviewModel>> GetRequestedReviews(string userName)
+        {
+            return await _reviewsRepository.GetRequestedReviews(userName);
+        }
+
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
-            List<string> search, List<string> languages, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
+            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
         {
             var result = await _reviewsRepository.GetReviewsAsync(search, languages, isClosed, filterTypes, isApproved, offset, limit, orderBy);
 
@@ -408,6 +413,7 @@ namespace APIViewWeb.Repositories
             {
                 //Approve revision
                 revision.Approvers.Add(userId);
+                review.ApprovalDate = DateTime.Now;
             }
             await _reviewsRepository.UpsertReviewAsync(review);
         }
@@ -435,8 +441,8 @@ namespace APIViewWeb.Repositories
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            var lastRevisionTextLines = lastRevisionFile.RenderText(showDocumentation: false, skipDiff: true);
-            var fileTextLines = renderedCodeFile.RenderText(showDocumentation: false, skipDiff: true);
+            var lastRevisionTextLines = lastRevisionFile.RenderText(false, skipDiff: true);
+            var fileTextLines = renderedCodeFile.RenderText(false,skipDiff: true);
             return lastRevisionTextLines.SequenceEqual(fileTextLines);
         }
 
@@ -770,6 +776,14 @@ namespace APIViewWeb.Repositories
             await _devopsArtifactRepository.RunPipeline($"tools - generate-{language}-apireview", 
                 reviewParamString, 
                 _originalsRepository.GetContainerUrl());
+        }
+
+        public async Task RequestApproversAsync(ClaimsPrincipal User, string ReviewId, HashSet<string> reviewers)
+        {
+            var review = await GetReviewAsync(User, ReviewId);
+            review.RequestedReviewers = reviewers;
+            review.ApprovalRequestedOn = DateTime.Now;
+            await _reviewsRepository.UpsertReviewAsync(review);
         }
     }
 }

@@ -1,9 +1,9 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-
 
 namespace Azure.Sdk.Tools.TestProxy.Vendored
 {
@@ -21,6 +21,7 @@ namespace Azure.Sdk.Tools.TestProxy.Vendored
     ///
     /// This code is able to decode RSA keys (without any attributes) from well formed PKCS#8 blobs.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal static partial class LightweightPkcs8Decoder
     {
         private static readonly byte[] s_derIntegerZero = { 0x02, 0x01, 0x00 };

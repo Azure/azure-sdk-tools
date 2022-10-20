@@ -14,6 +14,8 @@ public final class MiscUtils {
     public static final String LINEBREAK = "\n"; // or "\r\n";
     private static final Pattern QUOTED_LINEBREAK = Pattern.compile(Pattern.quote(LINEBREAK));
 
+    public static final Pattern URL_MATCH = Pattern.compile("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)");
+
     public static String escapeHTML(final String s) {
         final StringBuilder out = new StringBuilder(Math.max(16, s.length()));
         for (int i = 0; i < s.length(); i++) {

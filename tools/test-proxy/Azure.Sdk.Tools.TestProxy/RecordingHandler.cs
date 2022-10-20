@@ -1,4 +1,4 @@
-﻿using Azure.Core;
+using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
@@ -8,18 +8,14 @@ using Azure.Sdk.Tools.TestProxy.Vendored;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Security;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -138,33 +134,46 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
                 else
                 {
-                    var targetPath = GetRecordingPath(recordingSession.Path);
-
                     // Create directories above file if they don't already exist
-                    var directory = Path.GetDirectoryName(targetPath);
+                    var directory = Path.GetDirectoryName(recordingSession.Path);
                     if (!String.IsNullOrEmpty(directory))
                     {
                         Directory.CreateDirectory(directory);
                     }
 
-                    using var stream = System.IO.File.Create(targetPath);
+                    using var stream = System.IO.File.Create(recordingSession.Path);
                     var options = new JsonWriterOptions { Indented = true };
                     var writer = new Utf8JsonWriter(stream, options);
                     recordingSession.Session.Serialize(writer);
                     writer.Flush();
                     stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
-
                 }
             }
         }
 
-        public void StartRecording(string sessionId, HttpResponse outgoingResponse)
+        /// <summary>
+        /// Entrypoint handling an an optional parameter assets.json. If present, a restore option either MUST run or MAY run depending on if we're running in playback or adding new recordings.
+        /// </summary>
+        /// <param name="assetsJson">The absolute path to the targeted assets.json.</param>
+        /// <param name="forceCheckout">If this is set to true, a restore MUST be run. Otherwise, we just need to ensure that the current assets Tag is selected.</param>
+        /// <returns></returns>
+        private async Task RestoreAssetsJson(string assetsJson = null, bool forceCheckout = false)
+        {
+            if (!string.IsNullOrWhiteSpace(assetsJson))
+            {
+                await this.Store.Restore(assetsJson);
+            }
+        }
+
+        public async Task StartRecordingAsync(string sessionId, HttpResponse outgoingResponse, string assetsJson = null)
         {
             var id = Guid.NewGuid().ToString();
 
+            await RestoreAssetsJson(assetsJson, false);
+
             var session = new ModifiableRecordSession(new RecordSession())
             {
-                Path = sessionId ?? String.Empty,
+                Path = !string.IsNullOrWhiteSpace(sessionId) ? (await GetRecordingPath(sessionId, assetsJson)) : String.Empty,
                 Client = null
             };
 
@@ -187,9 +196,27 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
-            var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
+            var upstreamRequest = CreateUpstreamRequest(incomingRequest, GZipUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
 
             HttpResponseMessage upstreamResponse = null;
+
+            // The experience around Content-Length is a bit weird in .NET. We're using the .NET native HttpClient class to send our requests. This comes with
+            // some automagic.
+            //
+            // If an incoming request...
+            //    ...has a Content-Length 0 header, and no body. We should send along the Content-Length: 0 header with the upstreamrequest.
+            //    ...has no Content-Length header, and no body. We _should not_ send along the Content-Length: 0 header.
+            //    ...has no Content-Length header, a 0 length body, but a TransferEncoding header with value "chunked". We _should_ allow any other Content headers to stick around.
+            //
+            // The .NET http client is a bit weird about attaching the Content-Length header though. If you HAVE the .Content property defined, a Content-Length
+            // header WILL be added. This is due to the fact that on send, the client considers a populated Client property as having a body, even if it's zero length.
+            if (incomingRequest.ContentLength == null)
+            {
+                if(!incomingRequest.Headers["Transfer-Encoding"].ToString().Split(' ').Select(x => x.Trim()).Contains("chunked"))
+                {
+                    upstreamRequest.Content = null;
+                }
+            }
 
             if (HandleRedirects)
             {
@@ -205,7 +232,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // HEAD requests do NOT have a body regardless of the value of the Content-Length header
             if (incomingRequest.Method.ToUpperInvariant() != "HEAD")
             {
-                body = DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+                body = GZipUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
             }
 
             entry.Response.Body = body.Length == 0 ? null : body;
@@ -215,7 +242,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode != EntryRecordMode.DontRecord)
             {
-                session.Session.Entries.Add(entry);
+                lock (session.Session.Entries)
+                {
+                    session.Session.Entries.Add(entry);
+                }
 
                 Interlocked.Increment(ref Startup.RequestsRecorded);
             }
@@ -237,7 +267,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (entry.Response.Body?.Length > 0)
             {
-                var bodyData = CompressBody(entry.Response.Body, entry.Response.Headers);
+                var bodyData = GZipUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
                 outgoingResponse.ContentLength = bodyData.Length;
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
@@ -275,45 +305,6 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             return mode;
-        }
-
-        private byte[] CompressBody(byte[] incomingBody, SortedDictionary<string, string[]> headers)
-        {
-            if (headers.TryGetValue("Content-Encoding", out var values))
-            {
-                if (values.Contains("gzip"))
-                {
-                    using (var uncompressedStream = new MemoryStream(incomingBody))
-                    using (var resultStream = new MemoryStream())
-                    {
-                        using (var compressedStream = new GZipStream(resultStream, CompressionMode.Compress))
-                        {
-                            uncompressedStream.CopyTo(compressedStream);
-                        }
-                        return resultStream.ToArray();
-                    }
-                }
-            }
-
-            return incomingBody;
-        }
-
-        private byte[] DecompressBody(MemoryStream incomingBody, HttpContentHeaders headers)
-        {
-            if (headers.TryGetValues("Content-Encoding", out var values))
-            {
-                if (values.Contains("gzip"))
-                {
-                    using (var uncompressedStream = new GZipStream(incomingBody, CompressionMode.Decompress))
-                    using (var resultStream = new MemoryStream())
-                    {
-                        uncompressedStream.CopyTo(resultStream);
-                        return resultStream.ToArray();
-                    }
-                }
-            }
-
-            return incomingBody.ToArray();
         }
 
         public HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
@@ -361,7 +352,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region playback functionality
-        public async Task StartPlaybackAsync(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted)
+        public async Task StartPlaybackAsync(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted, string assetsPath = null)
         {
             var id = Guid.NewGuid().ToString();
             ModifiableRecordSession session;
@@ -376,7 +367,8 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
-                var path = GetRecordingPath(sessionId);
+                await RestoreAssetsJson(assetsPath, true);
+                var path = await GetRecordingPath(sessionId, assetsPath);
 
                 if (!File.Exists(path))
                 {
@@ -470,7 +462,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (match.Response.Body?.Length > 0)
             {
-                var bodyData = CompressBody(match.Response.Body, match.Response.Headers);
+                var bodyData = GZipUtilities.CompressBody(match.Response.Body, match.Response.Headers);
 
                 outgoingResponse.ContentLength = bodyData.Length;
 
@@ -492,13 +484,38 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            entry.Request.Body = await ReadAllBytes(request.Body).ConfigureAwait(false);
+            byte[] bytes = await ReadAllBytes(request.Body).ConfigureAwait(false);
+
+            entry.Request.Body = GZipUtilities.DecompressBody(bytes, request.Headers);
             return entry;
         }
 
         #endregion
 
         #region SetRecordingOptions and store functionality
+        public static string GetAssetsJsonLocation(string pathToAssetsJson, string contextDirectory)
+        {
+            if (pathToAssetsJson == null)
+            {
+                return null;
+            }
+
+            var path = pathToAssetsJson;
+
+            if (!Path.IsPathFullyQualified(pathToAssetsJson))
+            {
+                path = Path.Join(contextDirectory, pathToAssetsJson.Replace("\\", "/"));
+            }
+
+            return path;
+        }
+
+        public async Task Restore(string pathToAssetsJson)
+        {
+            var resultingPath = await Store.Restore(pathToAssetsJson);
+            ContextDirectory = resultingPath;
+        }
+
         public void SetRecordingOptions(IDictionary<string, object> options = null, string sessionId = null)
         {
             if (options != null)
@@ -892,7 +909,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public string GetRecordingPath(string file)
+        public async Task<string> GetRecordingPath(string file, string assetsPath = null)
         {
             var normalizedFileName = file.Replace('\\', '/');
 
@@ -903,9 +920,20 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var path = file;
 
-            if (!Path.IsPathFullyQualified(file))
+            // if an assets.json is provided, we have a bit of work to do here.
+            if (!string.IsNullOrWhiteSpace(assetsPath))
             {
-                path = Path.Join(ContextDirectory, file);
+                var contextDirectory = await Store.GetPath(assetsPath);
+
+                path = Path.Join(contextDirectory, file);
+            }
+            // otherwise, it's a basic restore like we're used to
+            else
+            {
+                if (!Path.IsPathFullyQualified(file))
+                {
+                    path = Path.Join(ContextDirectory, file);
+                }
             }
 
             return (path + (!path.EndsWith(".json") ? ".json" : String.Empty));

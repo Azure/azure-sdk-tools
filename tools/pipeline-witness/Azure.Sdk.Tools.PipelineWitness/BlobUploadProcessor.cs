@@ -13,15 +13,18 @@ namespace Azure.Sdk.Tools.PipelineWitness
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
+    using Azure.Sdk.Tools.PipelineWitness.Configuration;
     using Azure.Sdk.Tools.PipelineWitness.Services;
     using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
     using Azure.Storage.Blobs;
     using Azure.Storage.Blobs.Models;
     using Azure.Storage.Queues;
+
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using Microsoft.TeamFoundation.Build.WebApi;
     using Microsoft.TeamFoundation.TestManagement.WebApi;
+    using Microsoft.VisualStudio.Services.Common;
     using Microsoft.VisualStudio.Services.TestResults.WebApi;
 
     using Newtonsoft.Json;
@@ -516,7 +519,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
         {
             try
             {
-                var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}.jsonl";
+                long changeTime = ((DateTimeOffset)build.LastChangedDate).ToUnixTimeSeconds();
+                var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{changeTime}.jsonl";
                 var blobClient = this.buildsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())

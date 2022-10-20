@@ -776,23 +776,10 @@ export class ApiView {
     this.namespaceStack.pop();
   }
 
-  private filterDecorators(nodes: readonly DecoratorExpressionNode[]): DecoratorExpressionNode[] {
-    // Show all decorators for now, per stewardship board
-    // const filterOut = ["doc", "summary", "example"];
-    const filtered = Array<DecoratorExpressionNode>();
-    for (const node of nodes) {
-      // if (filterOut.includes((node.target as IdentifierNode).sv)) {
-      //   continue;
-      // }
-      filtered.push(node);
-    }
-    return filtered;
-  }
-
   private tokenizeDecorators(nodes: readonly DecoratorExpressionNode[], inline: boolean) {
-    const filteredNodes = this.filterDecorators(nodes);
+    const docDecorators = ["doc", "summary", "example"]
     // ensure there is no blank line after opening brace for non-inlined decorators
-    if (!inline && filteredNodes.length) {
+    if (!inline && nodes.length) {
       while (this.tokens.length) {
         const item = this.tokens.pop()!;
         if (item.Kind == ApiViewTokenKind.LineIdMarker && item.DefinitionId == "GLOBAL") {
@@ -809,8 +796,14 @@ export class ApiView {
       }
     }
     // render each decorator
-    for (const node of filteredNodes) {
+    for (const node of nodes) {
       this.namespaceStack.push(generateId(node)!);
+      const isDoc = docDecorators.includes((node.target as IdentifierNode).sv)
+      if (isDoc) {
+        this.tokens.push({
+          Kind: ApiViewTokenKind.DocumentRangeStart
+        })
+      }
       this.tokenize(node);
       if (inline) {
         this.whitespace();
@@ -818,6 +811,11 @@ export class ApiView {
       this.namespaceStack.pop();
       if (!inline) {
         this.blankLines(0);
+      }
+      if (isDoc) {
+        this.tokens.push({
+          Kind: ApiViewTokenKind.DocumentRangeEnd
+        })
       }
     }
   }

@@ -1,7 +1,7 @@
 # Release History
 
 ## Version 0.1.2 (Unreleased)
-No longer suppress `@doc`, `@summary`, and `@example` decorators.
+No longer suppress `@doc`, `@summary`, and `@example` decorators. These can be toggled using the APIView UI.
 Support rendering multi-line strings.
 
 ## Version 0.1.1 (10-13-2022)

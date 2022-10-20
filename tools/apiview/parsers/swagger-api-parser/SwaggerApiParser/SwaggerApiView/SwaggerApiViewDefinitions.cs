@@ -42,11 +42,6 @@ public class SwaggerApiViewDefinitions : SortedDictionary<String, Definition>, I
             var tableRet = new List<CodeFileToken>();
             var tableRows = new List<CodeFileToken>();
             
-            // If definition has properties, so remove first model level. 
-            if (tableItems.Count > 1)
-            {
-                tableItems.RemoveAt(0);
-            }
             foreach (var tableItem in tableItems)
             {
                 string[] serializedFields = new[] {"Field", "TypeFormat", "Keywords", "Description"};

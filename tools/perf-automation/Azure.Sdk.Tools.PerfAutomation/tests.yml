@@ -403,6 +403,22 @@ Services:
       JS: StorageDFSUploadTest
       Python: UploadTest
 
+- Service: keyvault-keys
+  Languages:
+    Cpp:
+      Project: azure-security-keyvault-keys-perf
+      PackageVersions:
+      - azure-security-keyvault-keys-cpp: 4.2.0
+      - azure-security-keyvault-keys-cpp: source
+      - azure-identity-cpp: 1.3.0
+      - azure-identity-cpp: source
+  Tests:
+  - Test: GetKey
+    Arguments: 
+    - -r 0
+    TestNames:
+      Cpp: GetKeySR
+
 - Service: keyvault-secrets
   Languages:
     Net:

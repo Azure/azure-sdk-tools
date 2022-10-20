@@ -110,7 +110,6 @@ def filter_children(targeted_ns_list, known_namespaces):
 def filter_toc(toc_dict, namespaces, path_resolver):
     if toc_dict is None:
         return None
-
     # internal node
     if "items" in toc_dict:
         # recurse as mant times as necessary

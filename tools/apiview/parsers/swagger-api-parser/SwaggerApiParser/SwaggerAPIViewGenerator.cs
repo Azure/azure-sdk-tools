@@ -21,7 +21,6 @@ namespace SwaggerApiParser
                     securityDefinitions = swaggerSpec.securityDefinitions,
                     xMsParameterizedHost = swaggerSpec.xMsParameterizedHost,
                     swaggerLink = swaggerLink
-                    
                 },
                 fileName = Path.GetFileName(swaggerFilePath),
                 packageName = packageName
@@ -34,6 +33,18 @@ namespace SwaggerApiParser
                     schemaCache.AddSchema(swaggerFilePath, definition.Key, definition.Value);
                 }
             }
+
+            foreach (var parameter in swaggerSpec.parameters)
+            {
+                if (!schemaCache.ParametersCache.ContainsKey(parameter.Key))
+                {
+                    schemaCache.AddParameter(swaggerFilePath, parameter.Key, parameter.Value);
+                }
+            }
+            
+            ret.SwaggerApiViewGeneral.xMsParameterizedHost.ResolveParameters(schemaCache, swaggerFilePath);
+            
+
 
             foreach (var (currentPath, operations) in swaggerSpec.paths)
             {

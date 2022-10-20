@@ -12,7 +12,7 @@ namespace SwaggerApiParser
         static Task<int> Main(string[] args)
         {
             var swaggers = new Option<IEnumerable<string>>("--swaggers",
-                "The input swaggers file. Can be a single file or multiple files separated by space.");
+                "The input swagger file. Can be a single file or multiple files separated by space.");
 
             var output = new Option<string>(name: "--output", description: "The output file path.",
                 getDefaultValue: () => "swagger.json");

@@ -205,7 +205,7 @@ should only be used in special circumstances and with caution.
 NOTE: The share directory path MUST be created by the test before using it.
 
 After writing debug files to the share, the files can be viewed by navigating to the [file share
-portal](https://aka.ms/azsdk/stress/share),
+portal](https://aka.ms/azsdk/stress/fileshare),
 selecting the `namespace/<pod name>` directory, and clicking the download link for any files in that directory.
 
 See

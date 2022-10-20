@@ -509,6 +509,14 @@ Services:
       PackageVersions:
       - Azure.Messaging.EventHubs: 5.7.2
       - Azure.Messaging.EventHubs: source
+    Python:
+      Project: sdk/eventhub/azure-eventhub
+      PrimaryPackage: azure-eventhub
+      PackageVersions:
+      - azure-core: 1.26.0
+        azure-eventhub: 5.10.1
+      - azure-core: source
+        azure-eventhub: source
   Tests:
   - Test: publish-batches-to-gateway
     Arguments:
@@ -516,6 +524,16 @@ Services:
     - --body-size 1024 --batch-size 100 --parallel 64
     TestNames:
       Net: PublishBatchesToGateway
+  - Test: send-event-batch
+    Arguments: 
+    - --event-size 1024 --batch-size 100 --parallel 64
+    TestNames:
+      Python: SendEventBatchTest
+  - Test: process-events-batch
+    Arguments: 
+    - --event-size 1024 --max-batch-size 100 --preload 1000000
+    TestNames:
+      Python: ProcessEventsBatchTest
 
 - Service: eventhubs-processor
   Languages:

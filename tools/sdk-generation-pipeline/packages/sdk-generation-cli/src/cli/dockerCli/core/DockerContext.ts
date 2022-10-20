@@ -89,7 +89,7 @@ export class DockerContext {
 
     private validateReadmeMdPathOrCadlProjectFolderPath() {
         if (!this.readmeMdPath && !this.cadlProjectFolderPath) {
-            throw new Error(`Get empty readme.md path and cadl project folder path, please input it with --readme or --cadl-project-folder-path`);
+            throw new Error(`Get empty readme.md path and cadl project folder path, please input it with --readme or --cadl-project`);
         }
         if (!!this.readmeMdPath && !fs.existsSync(path.join(this.specRepo, this.readmeMdPath))) {
             throw new Error(`Cannot find file ${this.readmeMdPath}, please input a valid one`);

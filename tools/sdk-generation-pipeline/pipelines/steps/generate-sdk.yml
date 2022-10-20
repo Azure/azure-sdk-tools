@@ -5,6 +5,9 @@ parameters:
   - name: cadlProject
     type: string
 
+  - name: cadlProject
+    type: string
+
   - name: trigger
     type: string
 

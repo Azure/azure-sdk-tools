@@ -193,6 +193,7 @@ Services:
     Cpp:
       Project: azure-storage-blobs-perf
       PackageVersions:
+      - azure-storage-blobs: 12.6.2
       - azure-storage-blobs: source
 
   Tests:

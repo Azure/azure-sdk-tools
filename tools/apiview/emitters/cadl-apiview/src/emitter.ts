@@ -8,6 +8,8 @@ import {
   Program,
   resolvePath,
 } from "@cadl-lang/compiler";
+import path from "path";
+import mkdirp from "mkdirp";
 import { ApiView } from "./apiview.js";
 import { ApiViewEmitterOptions } from "./lib.js";
 
@@ -33,7 +35,7 @@ export function resolveOptions(
 
   return {
     outputFile: resolvePath(
-      resolvedOptions["output-dir"] ?? program.compilerOptions.outputDir!,
+      resolvedOptions["output-dir"] ?? `${program.compilerOptions.outputDir!}/apiview`,
       resolvedOptions["output-file"]
     ),
   };
@@ -59,6 +61,12 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
     apiview.resolveMissingTypeReferences();
 
     if (!program.compilerOptions.noEmit && !program.hasError()) {
+      const outputFolder = path.dirname(options.outputFile);
+      try {
+        await mkdirp(outputFolder);
+      } catch {
+        // mkdirp fails during tests
+      }
       await emitFile(program, {
         path: options.outputFile,
         content: JSON.stringify(apiview.asApiViewDocument()) + "\n"

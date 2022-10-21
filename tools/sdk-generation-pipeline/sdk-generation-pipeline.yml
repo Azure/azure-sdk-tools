@@ -80,6 +80,9 @@ stages:
   - stage: SdkGeneration
     jobs:
       - job: SdkGeneration
+        pool:
+          name: azsdk-pool-mms-ubuntu-1804-general
+          vmImage: MMSUbuntu18.04
         timeoutInMinutes: 180
         displayName: ${{ parameters.sdkToGenerate }}-${{ parameters.serviceType }}-${{ parameters.service }}
         steps:

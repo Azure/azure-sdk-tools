@@ -299,7 +299,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
               ""Tag"": ""INVALID_TAG""
-        }", "error: pathspec 'INVALID_TAG' did not match any file(s) known to git")]
+        }", "Invocation of \"git fetch origin INVALID_TAG\" had a non-zero exit code -1")]
         [Trait("Category", "Integration")]
         public async Task InvalidTagThrows(string inputJson, string httpException)
         {

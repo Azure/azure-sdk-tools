@@ -256,9 +256,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER")) {
                     GitHandler.Run($"config --global --add safe.directory {config.AssetsRepoLocation}", config);
                 }
-                // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
-                // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
-                GitHandler.Run("fetch --tags origin", config);
+
+                if (!string.IsNullOrEmpty(config.Tag))
+                {
+                    // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
+                    // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
+                    GitHandler.Run($"fetch origin {config.Tag}", config);
+                }
+
                 // Set non-cone mode otherwise path filters will not work in git >= 2.37.0
                 // See https://github.blog/2022-06-27-highlights-from-git-2-37/#tidbits
                 GitHandler.Run($"sparse-checkout set --no-cone {checkoutPaths}", config);

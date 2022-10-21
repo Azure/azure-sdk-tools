@@ -325,8 +325,10 @@ export class ApiView {
         continue;
       }
       const nsModel = new NamespaceModel(name, ns);
-      this.tokenizeNamespaceModel(nsModel);
-      this.buildNavigation(nsModel);
+      if (nsModel.shouldEmit()) {
+        this.tokenizeNamespaceModel(nsModel);
+        this.buildNavigation(nsModel);  
+      }
     }
   }
 

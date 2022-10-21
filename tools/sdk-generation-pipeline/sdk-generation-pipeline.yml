@@ -80,6 +80,7 @@ stages:
   - stage: SdkGeneration
     jobs:
       - job: SdkGeneration
+        timeoutInMinutes: 180
         displayName: ${{ parameters.sdkToGenerate }}-${{ parameters.serviceType }}-${{ parameters.service }}
         steps:
           - template: ./pipelines/steps/precheck.yml

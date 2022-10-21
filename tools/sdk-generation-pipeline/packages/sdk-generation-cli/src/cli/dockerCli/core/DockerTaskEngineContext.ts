@@ -73,7 +73,7 @@ export class DockerTaskEngineContext {
             repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl?? (await new GitOperationWrapper(dockerContext.specRepo).getRemote())??
                 `https://github.com/Azure/azure-rest-api-specs`
         };
-        this.serviceType = dockerContext.readmeMdPath.includes('data-plane') && dockerTaskEngineConfigProperties.serviceType ? 'data-plane': 'resource-manager';
+        this.serviceType = (dockerContext.readmeMdPath.includes('data-plane') && dockerTaskEngineConfigProperties.serviceType) || !!dockerContext.cadlProjectFolderPath ? 'data-plane': 'resource-manager';
         this.tag = dockerContext.tag;
         this.sdkRepo = dockerContext.sdkRepo;
         this.resultOutputFolder = dockerContext.resultOutputFolder ?? '/tmp/output';

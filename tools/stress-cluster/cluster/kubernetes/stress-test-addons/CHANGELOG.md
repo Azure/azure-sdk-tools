@@ -1,5 +1,17 @@
 # Release History
 
+## 0.2.0 (2022-10-21)
+
+### Features Added
+
+### Breaking Changes
+
+Switched to scenarios matrix for setting the configuration for stress tests. Users should now use the matrix generation for configuring the test name, image, image build directory, test targets and other custom configuration. Users can can reference those values in the chart files with `{{ .Stress.<value_key> }}`.
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.1.20 (2022-07-25)
 
 ### Features Added

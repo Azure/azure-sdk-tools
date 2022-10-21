@@ -41,7 +41,6 @@ steps:
           -v $(SPEC_REPO):/spec-repo \
           -v $(SDK_REPO):/sdk-repo \
           -v /tmp/output:/tmp/output \
-          -v ~/.m2/repository:/root/.m2/repository \
           $(DOCKER_IMAGE) \
           --cadl-project=${{ parameters.cadlProject }} $(DOCKER_EX_CMD)
       else

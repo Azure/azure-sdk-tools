@@ -111,6 +111,11 @@ function Add-BranchProtectionCheck()
   $ErrorActionPreference = 'Stop'
 
   $rules = Get-BranchProtectionChecks -org $org -repo $repo -branch $branch
+  $dateTag = Get-Date -Format "yyyyMMdd.hhmmss"
+  $backupFile = "$org.$repo.$branch.required-checks.$dateTag.json"
+  Write-Host "Backing up original rules to $backupFile"
+  $rules | ConvertTo-Json -Depth 100 | Out-File -WhatIf:$false $backupFile
+
   $rules.checks = [array]($rules.checks | Where-Object { $_.context -ne $ruleName -and !$_.app_id })
   # Deprecated, but update for parity just in case
   $rules.contexts = [array]($rules.contexts | Where-Object { $_ -ne $ruleName })

@@ -261,7 +261,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
                     // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
-                    GitHandler.Run($"fetch origin {config.Tag}", config);
+                    GitHandler.Run($"fetch origin refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
                 }
 
                 // Set non-cone mode otherwise path filters will not work in git >= 2.37.0

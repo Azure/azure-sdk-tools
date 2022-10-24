@@ -236,14 +236,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
             try
             {
+                await _defaultStore.Restore(jsonFileLocation);
+
                 // manually update our tag to one that doesn't exist it
                 assets.Tag = tempTag;
                 // We also update the assets TagPrefix because that's what we use in InitIntegrationTag.
                 // TODO: Cleanup TagPrefix usage. Covered in Azure/azure-sdk-tools#4497
                 assets.TagPrefix = tempTag;
                 TestHelpers.InitIntegrationTag(assets, tempTag);
-
-                await _defaultStore.Restore(jsonFileLocation);
 
                 TestHelpers.WriteTestFile(JsonSerializer.Serialize(assets), jsonFileLocation);
                 // this is the first time this Gitstore has seen this assets.json. This allows

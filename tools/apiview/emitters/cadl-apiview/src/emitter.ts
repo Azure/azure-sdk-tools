@@ -5,13 +5,14 @@ import {
   getServiceNamespace,
   getServiceTitle,
   getServiceVersion,
+  NoTarget,
   Program,
   resolvePath,
 } from "@cadl-lang/compiler";
 import path from "path";
 import mkdirp from "mkdirp";
 import { ApiView } from "./apiview.js";
-import { ApiViewEmitterOptions } from "./lib.js";
+import { ApiViewEmitterOptions, reportDiagnostic } from "./lib.js";
 
 const defaultOptions = {
   "output-file": "apiview.json",
@@ -19,6 +20,7 @@ const defaultOptions = {
 
 export interface ResolvedApiViewEmitterOptions {
   outputFile: string;
+  serviceNamespace?: string;
 }
 
 export async function $onEmit(program: Program, emitterOptions?: ApiViewEmitterOptions) {
@@ -38,6 +40,7 @@ export function resolveOptions(
       resolvedOptions["output-dir"] ?? `${program.compilerOptions.outputDir!}/apiview`,
       resolvedOptions["output-file"]
     ),
+    serviceNamespace: resolvedOptions["service-namespace"]
   };
 }
 
@@ -47,10 +50,17 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
   async function emitApiView() {
     const serviceNs = getServiceNamespace(program);
     if (!serviceNs) {
-      return;
+      throw new Error("No namespace found");
     }
     const versionString = "TODO";
-    await emitApiViewFromVersion(program.checker.getNamespaceString(serviceNs), versionString);
+    const namespaceString = options.serviceNamespace ?? program.checker.getNamespaceString(serviceNs);
+    if (namespaceString == "") {
+      reportDiagnostic(program, {
+        code: "use-namespace-option",
+        target: NoTarget
+      });
+    }
+    await emitApiViewFromVersion(namespaceString, versionString);
   }
 
   async function emitApiViewFromVersion(namespaceString: string, version?: string) {

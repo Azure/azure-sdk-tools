@@ -86,7 +86,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public IEnumerable<ReviewModel> ReviewsForPackage { get; set; } = new List<ReviewModel>();
 
-        public readonly HashSet<string> approvers = new HashSet<string>();
+        public readonly HashSet<string> PreferredApprovers = new HashSet<string>();
 
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
@@ -156,18 +156,18 @@ namespace APIViewWeb.Pages.Assemblies
                             userCache.ApprovedLanguages = langs;
                             _preferenceCache.UpdateUserPreference(userCache, User);
                         }
-                        if (langs.Contains(Review.Language))
+                        if (langs.Contains(Review.Language) || !langs.Any())
                         {
-                            approvers.Add(username);
+                            PreferredApprovers.Add(username);
                         }
                     }
                     else
                     {
                         UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
                         var langs = user.Languages;
-                        if (langs.Contains(Review.Language))
+                        if (langs.Contains(Review.Language) || !langs.Any())
                         {
-                            approvers.Add(username);
+                            PreferredApprovers.Add(username);
                         }
                     }
                 }

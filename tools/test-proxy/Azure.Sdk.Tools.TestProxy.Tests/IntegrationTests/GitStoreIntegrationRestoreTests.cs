@@ -227,18 +227,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             {
                 GitStoretests.AssetsJson
             };
+            GitStore additionalStore = new GitStore();
 
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
             var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
             var tempTag = string.Format("test_{0}", Guid.NewGuid().ToString());
-            await _defaultStore.Restore(jsonFileLocation);
-            GitStore additionalStore = new GitStore();
 
             try
             {
-                TestHelpers.InitIntegrationTag(assets, tempTag);
+                // manually update our tag to one that doesn't exist it
                 assets.Tag = tempTag;
+                // We also update the assets TagPrefix because that's what we use in InitIntegrationTag.
+                // TODO: Cleanup TagPrefix usage. Covered in Azure/azure-sdk-tools#4497
+                assets.TagPrefix = tempTag;
+                TestHelpers.InitIntegrationTag(assets, tempTag);
+
+                await _defaultStore.Restore(jsonFileLocation);
+
                 TestHelpers.WriteTestFile(JsonSerializer.Serialize(assets), jsonFileLocation);
                 // this is the first time this Gitstore has seen this assets.json. This allows
                 // us to simulate a re-entrant command on an already initialized repo.

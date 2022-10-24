@@ -99,7 +99,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit -m \"Automatic asset update from test-proxy.\"", config);
                     // Get the first 10 digits of the commit SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>
-                    if (GitHandler.TryRun("rev-parse --short=10 HEAD", config, out CommandResult SHAResult))
+                    if (GitHandler.TryRun("rev-parse --short=10 HEAD", config.AssetsRepoLocation, out CommandResult SHAResult))
                     {
                         var newSHA = SHAResult.StdOut.Trim();
                         generatedTagName += $"_{newSHA}";
@@ -221,7 +221,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public string[] DetectPendingChanges(GitAssetsConfiguration config)
         {
-            if (!GitHandler.TryRun("status --porcelain", config, out var diffResult))
+            if (!GitHandler.TryRun("status --porcelain", config.AssetsRepoLocation, out var diffResult))
             {
                 throw GenerateInvokeException(diffResult);
             }
@@ -338,12 +338,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
-                var result = GitHandler.Run("remote -v", repositoryLocation);
+                var remoteRan = GitHandler.TryRun("remote -v", repositoryLocation, out var result);
                 var repoRemote = result.StdOut.Split(Environment.NewLine).First();
-                if (!String.IsNullOrEmpty(repoRemote) && repoRemote.Contains("git@"))
+                if (remoteRan && !String.IsNullOrEmpty(repoRemote) && repoRemote.Contains("git@"))
                 {
                     return sshUrl;
                 }
+
+                // we want this to work when a targeted directory isn't a git repo yet.
+                // If that is the case, we will get an exit code 128. In this case only return the standard httpurl.
+                if(result.ExitCode > 0 && result.ExitCode != 128)
+                {
+                    throw new GitProcessException(result);
+                }
+
                 return httpUrl;
             }
             catch

@@ -440,10 +440,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 // Push the contents of the TagPrefix into the adjustedAssetsRepoBranch
                 GitHandler.Run($"push origin {adjustedAssetsRepoBranch}", tmpPath);
             }
-            catch(Exception e)
-            {
-
-            }
             finally
             {
                 // After creating the test branch, there's nothing that needs to remain around.

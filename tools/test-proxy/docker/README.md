@@ -37,9 +37,9 @@ docker cp <containerid>:/srv/testproxy/ <target local path local path>
 
 ### Certificates
 
-All necessary components for dev-certificate usage are present within the `eng/common/testproxy` directory. Reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to learn how to add and trust with the toolchain of your choice.
+All necessary components for dev-certificate usage are present within the `eng/common/testproxy` directory. Reference [trusting-cert-per-language.md](../documentation/test-proxy/trusting-cert-per-language.md) to learn how to add and trust with the toolchain of your choice.
 
-Please note that each language + its SSL stack will provide different mechanisms for validating SSL certificates. Again, reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to understand the process beyond the most general case.
+Please note that each language + its SSL stack will provide different mechanisms for validating SSL certificates. Again, reference [trusting-cert-per-language.md](../documentation/test-proxy/trusting-cert-per-language.md) to understand the process beyond the most general case.
 
 ### Confirm Success
 

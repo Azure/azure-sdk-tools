@@ -9,6 +9,7 @@ import {
   Program,
   resolvePath,
 } from "@cadl-lang/compiler";
+import { buildVersionProjections } from "@cadl-lang/versioning";
 import path from "path";
 import mkdirp from "mkdirp";
 import { ApiView } from "./apiview.js";
@@ -52,7 +53,12 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
     if (!serviceNs) {
       throw new Error("No namespace found");
     }
-    const versionString = "TODO";
+    // TODO: Supply `version` option to select specific version
+    let versionString = getServiceVersion(program);
+    // TODO: Fix this wonky workaround when getServiceVersion is fixed.
+    if (versionString == "0000-00-00") {
+      versionString = undefined;
+    }
     const namespaceString = options.serviceNamespace ?? program.checker.getNamespaceString(serviceNs);
     if (namespaceString == "") {
       reportDiagnostic(program, {
@@ -60,13 +66,17 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         target: NoTarget
       });
     }
-    await emitApiViewFromVersion(namespaceString, versionString);
-  }
-
-  async function emitApiViewFromVersion(namespaceString: string, version?: string) {
-    const serviceTitle = getServiceTitle(program);
-    const serviceVersion = version ?? getServiceVersion(program);
-    const apiview = new ApiView(serviceTitle, namespaceString, serviceVersion);
+    const versions = buildVersionProjections(program, serviceNs);
+    if (versions.length) {
+      // TODO: Add heuristic to choose "latest" if not otherwise supplied
+      // TODO: Validate that if version is supplied, it is found in the versioning list. Otherwise error.
+    }
+    // FIXME: Remove this weird workaround when this call is fixed.
+    let serviceTitle = getServiceTitle(program);
+    if (serviceTitle == "(title)") {
+      serviceTitle = namespaceString;
+    }
+    const apiview = new ApiView(serviceTitle, namespaceString, versionString);
     apiview.emit(program);
     apiview.resolveMissingTypeReferences();
 

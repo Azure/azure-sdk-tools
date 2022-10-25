@@ -532,11 +532,41 @@ Services:
     - --event-size 1024 --batch-size 100 --parallel 64
     TestNames:
       Python: SendEventBatchTest
+  - Test: send-event-batch-uamqp
+    Arguments: 
+    - --event-size 1024 --batch-size 100 --parallel 64 --uamqp-transport
+    TestNames:
+      Python: SendEventBatchUamqpTest
+  - Test: send-event-batch-websocket
+    Arguments: 
+    - --event-size 1024 --batch-size 100 --parallel 64 --transport-type 1
+    TestNames:
+      Python: SendEventBatchWebsocketTest
+  - Test: send-event-batch-websocket-uamqp
+    Arguments: 
+    - --event-size 1024 --batch-size 100 --parallel 64 --transport-type 1 --uamqp-transport
+    TestNames:
+      Python: SendEventBatchWebsocketUamqpTest
   - Test: process-events-batch
     Arguments: 
     - --event-size 1024 --max-batch-size 100 --preload 1000000
     TestNames:
       Python: ProcessEventsBatchTest
+  - Test: process-events-batch-uamqp
+    Arguments: 
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --uamqp-transport
+    TestNames:
+      Python: ProcessEventsBatchUamqpTest
+  - Test: process-events-batch-websocket
+    Arguments: 
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1
+    TestNames:
+      Python: ProcessEventsBatchWebsocketTest
+  - Test: process-events-batch-websocket-uamqp
+    Arguments: 
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --uamqp-transport
+    TestNames:
+      Python: ProcessEventsBatchWebsocketUamqpTest
 
 - Service: eventhubs-processor
   Languages:

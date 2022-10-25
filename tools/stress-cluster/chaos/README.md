@@ -264,7 +264,7 @@ pre-defines a lot of the kubernetes config boilerplate needed to configure stres
 
 #### Customize Docker Build
 
-To customize the docker build behavior, update the following fields in `scenarios-matrix.yaml`:
+To customize the docker build behavior, update the following fields in [`scenarios-matrix.yaml`](#scenarios-and-scenarios-matrixyaml):
 
 - `dockerbuilddir` - docker build can only reference files within its build directory context. To run the docker build from a higher level context, e.g. to include file dependencies in other locations, set this value.
 - `dockerfile` - If a stress test directory has multiple dockerfiles that need to be used for different purposes or if the stress test directory does not have a file named Dockerfile, you can customize which one to build with this field.
@@ -444,6 +444,27 @@ matrix:
 ```
 
 The [`deploy-stress-tests.ps1`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1) script will generate a generatedValues.yaml file which contains the scenarios matrix that lists out all the custom configuration for each test instance.
+The generatedValues.yaml for the example above would look like this where image tag will depend on your stress test registry name, namespace, release name, repo base name, docker file name and deploy id:
+```
+scenarios:
+- testTarget: scenarioLongRunning
+  Scenario: DockerfilesDockerfileLR-LongRunning
+  image: Dockerfiles/DockerfileLR
+  imageTag: <...azurecr.io...>
+- testTarget: scenarioPeekMessages
+  Scenario: DockerfilesDockerfilePM-PeekMessages
+  image: Dockerfiles/DockerfilePM
+  imageTag: <...azurecr.io...>
+- testTarget: scenarioBatchReceive
+  Scenario: DockerfilesDockerfileBR-BatchReceive
+  image: Dockerfiles/DockerfileBR
+  imageTag: <...azurecr.io...>
+```
+
+To test this out, you can also run the [generate-scenario-matrix script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/generate-scenario-matrix.ps1)
+```
+generate-scenario-matrix.ps1 -matrixFilePath <path-to>/scenarios-matrix.yaml -Selection "sparse"
+```
 
 Stress test owners can also reference the custom config values they put in the scenarios matrix as shown below:
 ```

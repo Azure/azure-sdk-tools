@@ -84,6 +84,7 @@ class FunctionNode(NodeEntityBase):
         # Update namespace ID to reflect async status. Otherwise ID will conflict between sync and async methods
         if self.is_async:
             self.namespace_id += ":async"
+            self.full_name = self.namespace_id
         
         # Turn any decorators into annotation
         if self.node and self.node.decorators:

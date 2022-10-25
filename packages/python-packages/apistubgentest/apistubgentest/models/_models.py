@@ -192,6 +192,33 @@ class SomethingWithOverloads:
         return str(id)
 
 
+class SomethingAsyncWithOverloads:
+
+    @overload
+    async def double(self, input: int = 1, *, test: bool = False, **kwargs) -> int:
+        ...
+
+    @overload
+    async def double(self, input: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]:
+        ...
+
+    async def double(self, input: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]:
+        if isinstance(input, Sequence):
+            return [i * 2 for i in input]
+        return input * 2
+
+    @overload
+    async def something(self, id: str, *args, **kwargs) -> str:
+        ...
+
+    @overload
+    async def something(self, id: int, *args, **kwargs) -> str:
+        ...
+
+    async def something(self, id: int | str, *args, **kwargs) -> str:
+        return str(id)
+
+
 class SomethingWithInheritedOverloads(MixinWithOverloads):
     pass
 

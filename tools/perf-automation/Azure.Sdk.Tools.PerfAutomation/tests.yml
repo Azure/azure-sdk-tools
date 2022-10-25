@@ -192,8 +192,12 @@ Services:
         azure-storage-blob: source
     Cpp:
       Project: azure-storage-blobs-perf
+      PrimaryPackage: azure-storage-blobs-cpp
       PackageVersions:
-      - azure-storage-blobs: source
+      - azure-storage-blobs-cpp: 12.6.2
+        azure-core-cpp: 1.7.2
+      - azure-storage-blobs-cpp: source
+        azure-core-cpp: source
 
   Tests:
   - Test: download

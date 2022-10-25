@@ -420,7 +420,7 @@ The pod command in the job manifest could be configured to run a variable file n
 command: ["node", "app/{{ .Stress.testTarget }}.js"]
 ```
 
-While the [stress test deploy script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1) translates and uploads the dockerimage with an image tag that could be referenced in the job manifest:
+While the [stress test deploy script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1) translates and uploads the docker image with an image tag that could be referenced in the job manifest:
 
 ```
 image:  {{ .Stress.imageTag }}

@@ -36,7 +36,8 @@ steps:
     condition: ne('${{ parameters.triggerType }}', 'release')
     
   - bash: |
-      if [ !  -z "${{ parameters.cadlProject }}" ]; then
+      cadlProjectLen=`echo ${{ parameters.cadlProject }} | wc -L`
+      if [ 2 -lt ${cadlProjectLen} ]; then
         docker run --privileged \
           -v $(SPEC_REPO):/spec-repo \
           -v $(SDK_REPO):/sdk-repo \

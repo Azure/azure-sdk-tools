@@ -27,11 +27,11 @@ parameters:
 
   - name: relativeReadmeFilePath
     type: string
-    default: ""
+    default: "''"
 
   - name: relativeCadlProjectPath
     type: string
-    default: ""
+    default: "''"
 
   - name: tag
     type: string

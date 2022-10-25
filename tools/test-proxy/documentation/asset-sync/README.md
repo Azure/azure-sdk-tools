@@ -122,7 +122,7 @@ Test-Proxy maintains a _separate clone_ for each assets.json. This means that fo
 
 As you run tests in `recording` or `playback` mode, the `test-proxy` automatically checks out the appropriate tag in each local assets repo. After running docs in `record` mode, the newly updated recordings will be sitting within the appropriate assets repository.
 
-To view the changes before pushing, use one of the one-liners defined below [below.](#attempt-to-manually-resolve).
+To view the changes before pushing, use one of the one-liners defined below [below](#attempt-to-manually-resolve).
 
 ### My tests don't use the test-proxy at all currently, how do I externalize my recordings?
 

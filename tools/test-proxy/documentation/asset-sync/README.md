@@ -250,4 +250,4 @@ A **new tag** is pushed with each `test-proxy push` invocation. There should be 
 
 Once there, use standard `git` operations to resolve your issue.
 
-For help with this external to Microsoft, file an issue against this repo with `question` label. Within Microsoft, please ping the [test-proxy teams channel](https://teams.microsoft.com/l/channel/19%3ab7c3eda7e0864d059721517174502bdb%40thread.skype/Test-Proxy%2520-%2520Questions%252C%2520Help%252C%2520and%2520Discussion?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) for additional context and assistance.
+For help with this external to Microsoft, file an issue against this repo with the `question` label. Within Microsoft, please ping the [test-proxy teams channel](https://teams.microsoft.com/l/channel/19%3ab7c3eda7e0864d059721517174502bdb%40thread.skype/Test-Proxy%2520-%2520Questions%252C%2520Help%252C%2520and%2520Discussion?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) for additional context and assistance.

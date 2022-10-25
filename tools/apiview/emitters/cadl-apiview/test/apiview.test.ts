@@ -91,7 +91,7 @@ describe("apiview: tests", () => {
 
   it("describes model", async () => {
     const input = `
-    @Cadl.service( { title: "Test" } )
+    @Cadl.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Animal {
         species: string;
@@ -115,11 +115,6 @@ describe("apiview: tests", () => {
     }
     `;
     const expect = `
-    @Cadl.service(
-      {
-        title: "Test";
-      }
-    )
     namespace Azure.Test {
       model Animal {
         species: string;
@@ -144,13 +139,13 @@ describe("apiview: tests", () => {
     `;
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 3);
+    compare(expect, actual, 9);
     validateDefinitionIds(apiview);
   });
 
   it("describes templated model", async () => {
     const input = `
-    @Cadl.service( { title: "Test" } )
+    @Cadl.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Thing<T> {
         property: T;
@@ -181,11 +176,6 @@ describe("apiview: tests", () => {
     }
     `;
     const expect = `
-    @Cadl.service(
-      {
-        title: "Test";
-      }
-    )
     namespace Azure.Test {
       model ConstrainedComplex<X extends
         {
@@ -221,13 +211,13 @@ describe("apiview: tests", () => {
     `;
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 3);
+    compare(expect, actual, 9);
     validateDefinitionIds(apiview);
   });
 
   it("describes enum", async () => {
     const input = `
-    @Cadl.service( { title: "Test" } )
+    @Cadl.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
 
       enum SomeEnum {
@@ -246,11 +236,6 @@ describe("apiview: tests", () => {
       }
     }`;
     const expect = `
-    @Cadl.service(
-      {
-        title: "Test";
-      }
-    )
     namespace Azure.Test {
       enum SomeEnum {
         Plain,
@@ -269,13 +254,13 @@ describe("apiview: tests", () => {
     }`;
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 3);
+    compare(expect, actual, 9);
     validateDefinitionIds(apiview);
   });
 
   it("describes union", async () =>{
     const input = `
-    @Cadl.service( { title: "Test" } )
+    @Cadl.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       union MyUnion {
         cat: Cat,
@@ -297,11 +282,6 @@ describe("apiview: tests", () => {
       }
     }`;
     const expect = `
-    @Cadl.service(
-      {
-        title: "Test";
-      }
-    )
     namespace Azure.Test {
       model Cat {
         name: string;
@@ -325,13 +305,13 @@ describe("apiview: tests", () => {
     `;
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 3);
+    compare(expect, actual, 9);
     validateDefinitionIds(apiview);
   });
 
   it("describes template operation", async () =>{
     const input = `
-    @Cadl.service( { title: "Test" } )
+    @Cadl.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model FooParams {
         a: string;
@@ -357,11 +337,6 @@ describe("apiview: tests", () => {
       >;
     }`;
     const expect = `
-    @Cadl.service(
-      {
-        title: "Test";
-      }
-    )
     namespace Azure.Test {
       op GetFoo is ResourceRead<
         {
@@ -392,13 +367,13 @@ describe("apiview: tests", () => {
     }`;
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
-    compare(expect, lines, 3);
+    compare(expect, lines, 9);
     validateDefinitionIds(apiview);
   });
 
   it("describes operation with anonymous models", async () =>{
     const input = `
-    @Cadl.service( { title: "Test" } )
+    @Cadl.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       op SomeOp(
         param1: {
@@ -410,11 +385,6 @@ describe("apiview: tests", () => {
       ): string;
     }`;
     const expect = `
-    @Cadl.service(
-      {
-        title: "Test";
-      }
-    )
     namespace Azure.Test {
       op SomeOp(
         param1:
@@ -429,13 +399,13 @@ describe("apiview: tests", () => {
     }`;
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
-    compare(expect, lines, 3);
+    compare(expect, lines, 9);
     validateDefinitionIds(apiview);
   });
 
   it("describes interface", async () => {
     const input = `
-    @Cadl.service( { title: "Test" } )
+    @Cadl.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       interface Foo {
         @get 
@@ -450,11 +420,6 @@ describe("apiview: tests", () => {
     }
     `;
     const expect = `
-    @Cadl.service(
-      {
-        title: "Test";
-      }
-    )
     namespace Azure.Test {
       interface Foo {
         @get
@@ -471,13 +436,13 @@ describe("apiview: tests", () => {
     `;
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
-    compare(expect, lines, 3);
+    compare(expect, lines, 9);
     validateDefinitionIds(apiview);
   });
 
   it("describes string literals", async () => {
     const input = `
-    @Cadl.service( { title: "Test" } )
+    @Cadl.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       @doc("Short string")
       model Foo {};
@@ -491,11 +456,6 @@ describe("apiview: tests", () => {
     }
     `;
     const expect = `
-    @Cadl.service(
-      {
-        title: "Test";
-      }
-    )
     namespace Azure.Test {
       @doc("""
       A long string,
@@ -509,7 +469,7 @@ describe("apiview: tests", () => {
     `;
     const apiview = await apiViewFor(input, {});
     const lines = apiViewText(apiview);
-    compare(expect, lines, 3);
+    compare(expect, lines, 9);
     validateDefinitionIds(apiview);
   });
 });

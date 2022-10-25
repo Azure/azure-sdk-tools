@@ -807,7 +807,7 @@ export class ApiView {
       }
       this.tokenize(node);
       if (inline) {
-        this.whitespace();
+        this.space();
       }
       this.namespaceStack.pop();
       if (!inline) {
@@ -884,7 +884,7 @@ export class ApiView {
         this.tokenize(param);
         if (x != nodes.length - 1) {
           this.renderPunctuation(",");
-          this.whitespace();
+          this.space();
         }
       }
       this.punctuation(">");

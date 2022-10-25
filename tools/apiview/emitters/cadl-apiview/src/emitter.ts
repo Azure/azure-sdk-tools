@@ -12,7 +12,7 @@ import {
   projectProgram,
   resolvePath,
 } from "@cadl-lang/compiler";
-import { buildVersionProjections, getVersion, getVersionsForEnum, VersionMap } from "@cadl-lang/versioning";
+import { buildVersionProjections, getVersion } from "@cadl-lang/versioning";
 import path from "path";
 import mkdirp from "mkdirp";
 import { ApiView } from "./apiview.js";
@@ -83,8 +83,12 @@ function resolveAllowedVersions(program: Program, namespace: Namespace): string[
 }
 
 function resolveVersionValue(program: Program, namespace: Namespace, version: string): string {
-  const versions = getVersion(program, namespace)!.getVersions();
-  return versions.filter((item) => item.name == version).map((item) => item.value)[0];
+  try {
+    const versions = getVersion(program, namespace)!.getVersions();
+    return versions.filter((item) => item.name == version).map((item) => item.value)[0];
+  } catch {
+    return version;
+  }
 }
 
 function resolveProgramForVersion(program: Program, namespace: Namespace, versionKey: string): Program {

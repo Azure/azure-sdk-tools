@@ -431,9 +431,9 @@ In order to accomplish this, add the configuration to `scenarios-matrix.yaml`
 ```
 matrix:
   image:
-    - DockerfileLR
-    - DockerfilePM
-    - DockerfileBR
+    - Dockerfiles/DockerfileLR
+    - Dockerfiles/DockerfilePM
+    - Dockerfiles/DockerfileBR
   scenarios:
     LongRunning:
       testTarget: scenarioLongRunning

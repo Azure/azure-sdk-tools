@@ -18,7 +18,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Job Manifest](#job-manifest)
         * [Built-In Labels](#built-in-labels)
      * [Chaos Manifest](#chaos-manifest)
-     * [Scenarios and values.yaml](#scenarios-and-valuesyaml)
+     * [Scenarios and scenarios-matrix.yaml](#scenarios-and-scenarios-matrixyaml)
      * [Node Size Requirements](#node-size-requirements)
   * [Configuring faults](#configuring-faults)
      * [Faults via Dashboard](#faults-via-dashboard)
@@ -139,12 +139,12 @@ The basic layout for a stress test is the following (see [`examples/stress_deplo
     stress-test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
 
     Chart.yaml                          # A YAML file containing information about the helm chart and its dependencies
+    scenarios-matrix.yaml               # A YAML file containing configuration and custom values for stress test(s)
     templates/                          # A directory of helm templates that will generate Kubernetes manifest files.
                                         # Most commonly this will contain a Job/Pod spec snippet and a chaos mesh manifest.
 
     # Optional files/directories
 
-    values.yaml                  # Any default helm template values for this chart, e.g. a `scenarios` list
     <misc scripts/configs>       # Any language specific files for building/running/deploying the test
     <source dirs, e.g. src/>     # Directories containing code for stress tests
     <bicep modules>              # Any additional bicep module files/directories referenced by stress-test-resources.bicep
@@ -252,13 +252,10 @@ appVersion: v0.1
 annotations:
   stressTest: 'true'  # enable auto-discovery of this test via `find-all-stress-packages.ps1`
   namespace: <your stress test namespace, e.g. python>
-  dockerbuilddir: <OPTIONAL: custom docker build directory when dependencies are located in a parent directory>
-  dockerfile: <OPTIONAL: custom dockerfile path when file is not named Dockerfile>
-  <optional key/value annotations for filtering>
 
 dependencies:
 - name: stress-test-addons
-  version: 0.1.16
+  version: 0.2.0
   repository: https://stresstestcharts.blob.core.windows.net/helm/
 ```
 
@@ -267,10 +264,10 @@ pre-defines a lot of the kubernetes config boilerplate needed to configure stres
 
 #### Customize Docker Build
 
-To customize the docker build behavior, update the following fields in `Chart.yaml`:
+To customize the docker build behavior, update the following fields in [`scenarios-matrix.yaml`](#scenarios-and-scenarios-matrixyaml):
 
-- `annotations.dockerbuilddir` - docker build can only reference files within its build directory context. To run the docker build from a higher level context, e.g. to include file dependencies in other locations, set this value.
-- `annotations.dockerfile` - If a stress test directory has multiple dockerfiles that need to be used for different purposes, you can customize which one to build with this field.
+- `dockerbuilddir` - docker build can only reference files within its build directory context. To run the docker build from a higher level context, e.g. to include file dependencies in other locations, set this value.
+- `dockerfile` - If a stress test directory has multiple dockerfiles that need to be used for different purposes or if the stress test directory does not have a file named Dockerfile, you can customize which one to build with this field.
 
 ### Manifest Special Fields
 
@@ -281,7 +278,7 @@ are made available in the template context.
 - `{{ .Values.image }}`
   - The docker image published by the stress test deploy script
 - `{{ .Stress.Scenario }}`
-  - If using [Scenarios](#scenarios-and-valuesyaml), this value maps to the individual scenario for which a
+  - If using [Scenarios](#scenarios-and-scenarios-matrixyaml), this value maps to the individual scenario for which a
     template is being generated.
 - `{{ .Stress.ResourceGroupName }}`
   - If deploying live resources for a test job, the name of the resource group.
@@ -396,13 +393,12 @@ For more detailed examples, see:
 - `./examples/network_stress_example/templates/network_loss.yaml` for an example network loss manifest within a helm chart
 - The [Faults via Dashboard section](#faults-via-dashboard) for generating the configs from the UI
 
-### Scenarios and values.yaml
+### Scenarios and scenarios-matrix.yaml
 
-In order to run multiple tests but re-use the same job yaml, a special config key called `scenarios` can be used. Under
-the hood, the stress test tools will duplicate the job yaml for each scenario. A common pattern is to represent each
-test case with a file and/or argument passed to the stress program via the container command.
+In order to run multiple tests with different custom values (e.g. docker image, image build directory, test target ...) but re-use the same job yaml, a special config matrix called `scenarios` can be used. 
+Under the hood, the stress test tools will duplicate the job yaml for each scenario.
 
-For example, given a stress test package with multiple tests represented as separate files:
+For example, given a stress test package with multiple tests represented as separate files each running on a different docker image:
 
 ```
 values.yaml
@@ -411,25 +407,73 @@ src/
   scenarioLongRunning.js
   scenarioPeekMessages.js
   scenarioBatchReceive.js
+Dockerfiles/
+  DockerfileLR
+  DockerFilePM
+  DockerfileBR
 ...
 ```
 
 The pod command in the job manifest could be configured to run a variable file name:
 
 ```
-command: ["node", "app/{{ .Stress.Scenario }}.js"]
+command: ["node", "app/{{ .Stress.testTarget }}.js"]
 ```
 
-In order to accomplish this, add the scenarios list to `values.yaml`
+While the [stress test deploy script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1) translates and uploads the docker image with an image tag that could be referenced in the job manifest:
 
+```
+image:  {{ .Stress.imageTag }}
+```
+
+In order to accomplish this, add the configuration to `scenarios-matrix.yaml`
+
+```
+matrix:
+  image:
+    - Dockerfiles/DockerfileLR
+    - Dockerfiles/DockerfilePM
+    - Dockerfiles/DockerfileBR
+  scenarios:
+    LongRunning:
+      testTarget: scenarioLongRunning
+    PeekMessages:
+      testTarget: scenarioPeekMessages
+    BatchReceive:
+      testTarget: scenarioBatchReceive
+```
+
+The [`deploy-stress-tests.ps1`](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1) script will generate a generatedValues.yaml file which contains the scenarios matrix that lists out all the custom configuration for each test instance.
+The generatedValues.yaml for the example above would look like this where image tag will depend on your stress test registry name, namespace, release name, repo base name, docker file name and deploy id:
 ```
 scenarios:
-  - scenarioLongRunning
-  - scenarioPeekMessages
-  - scenarioBatchReceive
+- testTarget: scenarioLongRunning
+  Scenario: DockerfilesDockerfileLR-LongRunning
+  image: Dockerfiles/DockerfileLR
+  imageTag: <...azurecr.io...>
+- testTarget: scenarioPeekMessages
+  Scenario: DockerfilesDockerfilePM-PeekMessages
+  image: Dockerfiles/DockerfilePM
+  imageTag: <...azurecr.io...>
+- testTarget: scenarioBatchReceive
+  Scenario: DockerfilesDockerfileBR-BatchReceive
+  image: Dockerfiles/DockerfileBR
+  imageTag: <...azurecr.io...>
 ```
 
-The underlying `stress-test-addons` helm library will handle a scenarios list automatically, and deploy multiple instances of the stress test job, one for each scenario.
+To test the matrix generation locally, you can also run the [generate-scenario-matrix script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/generate-scenario-matrix.ps1)
+```
+generate-scenario-matrix.ps1 -matrixFilePath <path-to>/scenarios-matrix.yaml -Selection "sparse"
+```
+
+Stress test owners can also reference the custom config values they put in the scenarios matrix as shown below:
+```
+{{ .Stress.<custom_config_key> }}
+```
+
+A more detailed information on the logic behind the matrix generation can be found in the [README for job-matrix](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/job-matrix/README.md).
+
+The `stress-test-addons` helm library will handle a scenarios matrix automatically, and deploy multiple instances of the stress test job, one for each scenario with customized values.
 
 ### Node Size Requirements
 

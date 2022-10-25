@@ -139,7 +139,7 @@ The basic layout for a stress test is the following (see [`examples/stress_deplo
     stress-test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
 
     Chart.yaml                          # A YAML file containing information about the helm chart and its dependencies
-    scenarios-matrix.yaml               # A YAML file containing configuration and custome values for stress test(s)
+    scenarios-matrix.yaml               # A YAML file containing configuration and custom values for stress test(s)
     templates/                          # A directory of helm templates that will generate Kubernetes manifest files.
                                         # Most commonly this will contain a Job/Pod spec snippet and a chaos mesh manifest.
 

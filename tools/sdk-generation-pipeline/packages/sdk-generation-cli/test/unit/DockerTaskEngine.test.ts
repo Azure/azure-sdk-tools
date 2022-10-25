@@ -12,6 +12,7 @@ describe('task engine', async () => {
         const tmpFolder = path.join(path.resolve('.'), 'test', 'unit', 'tmp');
         dockerContext.initialize({
             readmeMdPath: 'specification/agrifood/resource-manager/readme.md',
+            cadlProjectFolderPath: '',
             tag: '',
             sdkList: '',
             specRepo: path.join(tmpFolder, 'spec-repo'),

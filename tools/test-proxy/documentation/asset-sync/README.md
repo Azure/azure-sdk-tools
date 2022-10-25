@@ -210,7 +210,7 @@ After running tests in `record` mode.
 Example Docker Push Call
 
 ```powershell
-run --rm -v "<repo-root>:/srv/testproxy"  -e "GIT_TOKEN=<git token>" -e "GIT_COMMIT_OWNER=<git commit owner>" -e  "GIT_COMMIT_EMAIL=<git commit email>" azsdkengsys.azurecr.io/engsys/test-proxy:latest test-proxy <proxy-args>
+docker run --rm -v "<repo-root>:/srv/testproxy" -e "GIT_TOKEN=<git token>" -e "GIT_COMMIT_OWNER=<git commit owner>" -e "GIT_COMMIT_EMAIL=<git commit email>" azsdkengsys.azurecr.io/engsys/test-proxy:latest test-proxy <proxy-args>
 ```
 
 Please note that any proxy arguments that include _paths_ will need to be **relative** when calling the docker container to do the work for you. This is due to the fact that the running container stores its files under an **internal** path representation. The repo root will be mounted under the default context-directory of `/srv/testproxy/` _always_ for the running container, so all paths must be expressed relatively from that root to actually resolve.

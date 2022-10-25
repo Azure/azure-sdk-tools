@@ -919,11 +919,6 @@ export class ApiView {
     }
   }
 
-  /** Will collect the return type tokens and return them as a string */
-  private getReturnTypeString(offset: number): string {
-    return "";
-  }
-
   private renderPunctuation(punc: string) {
     const last = this.tokens.pop()!;
     if (last?.Kind == ApiViewTokenKind.Whitespace) {
@@ -932,7 +927,7 @@ export class ApiView {
     } else {
       this.tokens.push(last);
     }
-    this.punctuation(punc, false, false);
+    this.punctuation(punc, false, true);
   }
 
   resolveMissingTypeReferences() {

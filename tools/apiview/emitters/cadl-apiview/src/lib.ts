@@ -1,9 +1,10 @@
-import { createCadlLibrary, JSONSchemaType } from "@cadl-lang/compiler";
+import { createCadlLibrary, JSONSchemaType, paramMessage } from "@cadl-lang/compiler";
 
 export interface ApiViewEmitterOptions {
   "output-dir"?: string;
   "output-file"?: string;
-  "service-namespace"?: string;
+  "namespace"?: string;
+  "version"?: string;
 }
 
 const ApiViewEmitterOptionsSchema: JSONSchemaType<ApiViewEmitterOptions> = {
@@ -12,7 +13,8 @@ const ApiViewEmitterOptionsSchema: JSONSchemaType<ApiViewEmitterOptions> = {
   properties: {
     "output-dir": { type: "string", nullable: true },
     "output-file": { type: "string", nullable: true },
-    "service-namespace": { type: "string", nullable: true },
+    "namespace": { type: "string", nullable: true },
+    "version": {type: "string", nullable: true },
   },
   required: [],
 };
@@ -23,7 +25,13 @@ export const libDef = {
     "use-namespace-option": {
       severity: "error",
       messages: {
-        default: "Unable to resolve namespace. Please supply `--option \"@azure-tools/cadl-apiview.service-namespace={value}\"`.",
+        default: "Unable to resolve namespace. Please supply `--option \"@azure-tools/cadl-apiview.namespace={value}\"`.",
+      }
+    },
+    "version-not-found": {
+      severity: "error",
+      messages: {
+        default: paramMessage`Version "${"version"}" not found. Allowed values: ${"allowed"}.`,
       }
     },
   },

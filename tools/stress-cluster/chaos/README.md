@@ -468,7 +468,7 @@ generate-scenario-matrix.ps1 -matrixFilePath <path-to>/scenarios-matrix.yaml -Se
 
 Stress test owners can also reference the custom config values they put in the scenarios matrix as shown below:
 ```
-{{ .Stress.<custome_config_key> }}
+{{ .Stress.<custom_config_key> }}
 ```
 
 A more detailed information on the logic behind the matrix generation can be found in the [README for job-matrix](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/job-matrix/README.md).

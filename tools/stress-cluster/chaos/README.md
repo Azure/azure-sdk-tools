@@ -461,7 +461,7 @@ scenarios:
   imageTag: <...azurecr.io...>
 ```
 
-To test this out, you can also run the [generate-scenario-matrix script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/generate-scenario-matrix.ps1)
+To test the matrix generation locally, you can also run the [generate-scenario-matrix script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/generate-scenario-matrix.ps1)
 ```
 generate-scenario-matrix.ps1 -matrixFilePath <path-to>/scenarios-matrix.yaml -Selection "sparse"
 ```

@@ -48,19 +48,7 @@ parameters:
   default: 'main'
 - name: CppServiceDirectory
   type: string
-  default: 'core'
-- name: CppServices
-  type: string
-  default: '^core$'
-- name: CppPackageVersions
-  type: string
-  default: '1|source'
-- name: CppTests
-  type: string
-  default: '^(extendedOptions)$'
-- name: CppArguments
-  type: string
-  default: '(-e 1)'
+  default: 'storage'
 - name: Services
   type: string
   default: '^storage-blob$'
@@ -250,10 +238,10 @@ stages:
           parameters:
             RepoOwner: Microsoft
         ServiceDirectory: ${{ parameters.CppServiceDirectory }}
-        Services: ${{ parameters.CppServices }}
-        PackageVersions: ${{ parameters.CppPackageVersions }}
-        Tests: ${{ parameters.CppTests }}
-        Arguments: ${{ parameters.CppArguments }}
+        Services: ${{ parameters.Services }}
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
 
 - stage: Print_Results

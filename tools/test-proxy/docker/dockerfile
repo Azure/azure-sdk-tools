@@ -21,7 +21,8 @@ ENV \
     Logging__LogLevel__Default=Information \
     Logging__LogLevel__Microsoft=Information \
     TEST_PROXY_FOLDER="/srv/testproxy/" \
-    PATH="/proxyserver:${PATH}"
+    PATH="/proxyserver:${PATH}" \
+    TEST_PROXY_CONTAINER=true
 
 # dotnet-dev-certs tool is not included in aspnet image, so manually copy from sdk image
 COPY --from=build /usr/share/dotnet/sdk/6.0.102/DotnetTools/dotnet-dev-certs/6.0.2-servicing.22064.12/tools/net6.0/any/ /dotnet-dev-certs
@@ -31,7 +32,7 @@ COPY docker_build/$CERT_IMPORT_SH docker_build/dotnet-devcert.pfx docker_build/d
 ADD run_proxy.sh /proxyserver/test-proxy
 
 RUN \
-    apk add --no-cache bash nss-tools git \
+    apk add --no-cache bash nss-tools openssh git \
     # Fix line endings
     && sed -i -e 's/\r$//' $CERT_FOLDER/$CERT_IMPORT_SH \
     && sed -i -e 's/\r$//' /proxyserver/test-proxy \

@@ -2,7 +2,7 @@
 
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
-![image](https://user-images.githubusercontent.com/45376673/180101415-cf864d95-8a8b-4d43-bb05-42604e9f7622.png)
+![image](../_images/asset_sync_block_diagram.png)
 
 In the context of a `monorepo`, this means that we store FAR less data per feature. To update recordings, the only change alongside the source code is to update the targeted tag.
 
@@ -25,7 +25,7 @@ An `assets.json` takes the form:
   "AssetsRepo": "Azure/azure-sdk-assets-integration",
   "AssetsRepoPrefixPath": "python",
   "TagPrefix": "python/core",
-  "Tag": "python/core<10-character-commit-SHA>"
+  "Tag": "python/core_<10-character-commit-SHA>"
 }
 ```
 

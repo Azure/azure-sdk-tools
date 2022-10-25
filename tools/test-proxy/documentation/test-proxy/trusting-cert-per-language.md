@@ -45,6 +45,8 @@ Also note that taken to trust this cert will _also apply to installing the dotne
 
 On a Mac(OS X), If port 5000 is the problem, you need to check the 'AirPlay' sharing feature in settings or kill port process. [see here](https://github.com/Azure/azure-sdk-tools/pull/3739#issuecomment-1207217025)
 
+Double-check your proxy settings like HTTP_PROXY, HTTPS_PROXY or any other settings may have network impact in .bashrc or .zshrc file, improper proxy settings may result in tests hanging forever when trying to connect to local proxy.
+
 ## Go
 
 [Reference This Document](https://forfuncsake.github.io/post/2017/08/trust-extra-ca-cert-in-go-app/) for a walkthrough on how to add the certificate to the `trusted pool`.

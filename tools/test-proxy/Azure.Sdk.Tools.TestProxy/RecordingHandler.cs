@@ -504,7 +504,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (!Path.IsPathFullyQualified(pathToAssetsJson))
             {
-                path = Path.Join(contextDirectory, pathToAssetsJson);
+                path = Path.Join(contextDirectory, pathToAssetsJson.Replace("\\", "/"));
             }
 
             return path;

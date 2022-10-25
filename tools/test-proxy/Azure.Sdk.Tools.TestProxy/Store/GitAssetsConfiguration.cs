@@ -44,6 +44,22 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         { 
             get { return ResolveAssetRepoLocation(); }
         }
+        
+        /// <summary>
+        /// Used to access the hash that each assets repo will be stored under within the assets store.
+        /// </summary>
+        public string AssetRepoShortHash
+        {
+            get
+            {
+                // Combine the AssetsRepo and AssetsJsonRelativeLocation and grab the hash of that.
+                // AssetsRepo will be something like Azure/azure-sdk-assets-integration and
+                // AssetsJsonRelativeLocation will be something like sdk/<service>/assets.json
+                string assetsRepoPlusJsonRelPathLoc = AssetsRepo + AssetsJsonRelativeLocation;
+
+                return ShortHashGenerator.GenerateShortHash(assetsRepoPlusJsonRelPathLoc);
+            }
+        }
 
         /// <summary>
         /// Used to resolve the location of the "assets" store location. This is the folder CONTAINING other cloned repos. No git data will be restored or staged directly within this folder.
@@ -68,14 +84,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var assetsStore = ResolveAssetsStoreLocation();
 
-            // Combine the AssetsRepo and AssetsJsonRelativeLocation and grab the hash of that.
-            // AssetsRepo will be something like Azure/azure-sdk-assets-integration and
-            // AssetsJsonRelativeLocation will be something like sdk/<service>/assets.json
-            string assetsRepoPlusJsonRelPathLoc = AssetsRepo + AssetsJsonRelativeLocation;
-
-            string shortHashString = ShortHashGenerator.GenerateShortHash(assetsRepoPlusJsonRelPathLoc);
-
-            var location = Path.Join(assetsStore, shortHashString);
+            var location = Path.Join(assetsStore, AssetRepoShortHash);
             if (!Directory.Exists(location))
             {
                 Directory.CreateDirectory(location);

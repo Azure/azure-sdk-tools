@@ -12,6 +12,6 @@ spec:
     - name: network-example
       command: ["bash", "poll.sh"]
       imagePullPolicy: Always
-      image: {{ .Values.image }}
+      image: {{ .Stress.image }}
       {{- include "stress-test-addons.container-env" . | nindent 6 }}
 {{- end -}}

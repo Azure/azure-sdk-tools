@@ -24,10 +24,10 @@ namespace APIViewWeb.Controllers
             UserPreferenceModel preference = await _userPreferenceCache.GetUserPreferences(User);
 
             preference.Theme = theme;
-
-            HashSet<string> Languages = new HashSet<string>(languages);
-            preference.Language = Languages;
             
+            HashSet<string> Languages = new HashSet<string>(languages);
+            preference.ApprovedLanguages = Languages;
+
             if(profile.UserName == null)
             {
                 await _userProfileManager.createUserProfileAsync(User, email, Languages, preference);

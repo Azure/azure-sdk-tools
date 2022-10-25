@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -92,6 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {
@@ -157,6 +158,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
 
             }
             finally
@@ -232,6 +234,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
 
             }
             finally
@@ -306,6 +309,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
 
             }
             finally
@@ -394,6 +398,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -94,6 +94,11 @@ namespace APIViewWeb.Repositories
         public async Task<IEnumerable<string>> GetReviewPropertiesAsync(string propertyName)
         {
             return await _reviewsRepository.GetReviewFirstLevelPropertiesAsync(propertyName);
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetRequestedReviews(string userName)
+        {
+            return await _reviewsRepository.GetRequestedReviews(userName);
         }
 
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(

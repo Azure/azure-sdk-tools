@@ -42,7 +42,9 @@ namespace APIViewWeb
 
             TaggableUsers = new HashSet<GithubUser>();
 
-            LoadTaggableUsers();
+            //Disable this to avoid exception when loading reviews for now.
+            // Fetch users as a background task and populate it in cache.
+            //LoadTaggableUsers();
         }
 
         public async void LoadTaggableUsers()

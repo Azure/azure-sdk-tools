@@ -64,6 +64,9 @@ parameters:
 - name: Iterations
   type: number
   default: 1
+- name: OperatingSystems
+  type: string
+  default: 'Linux'
   # Use general pools instead of perf pools for faster startup due to more warm agents
 - name: LinuxPool
   type: string
@@ -123,6 +126,7 @@ stages:
         ToolsRepoCommitish: $(ToolsRepoCommitish)
         Variables:
         - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
+        OperatingSystems: ${{ parameters.OperatingSystems }}
         InstallLanguageSteps:
         - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
           parameters:
@@ -148,6 +152,7 @@ stages:
         ToolsRepoCommitish: $(ToolsRepoCommitish)
         Variables:
         - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-java
+        OperatingSystems: ${{ parameters.OperatingSystems }}
         InstallLanguageSteps:
         - task: JavaToolInstaller@0
           inputs:
@@ -180,6 +185,7 @@ stages:
         ToolsRepoCommitish: $(ToolsRepoCommitish)
         Variables:
         - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-js
+        OperatingSystems: ${{ parameters.OperatingSystems }}
         InstallLanguageSteps:
         - template: /eng/pipelines/templates/steps/use-node-version.yml@azure-sdk-for-js
           parameters:
@@ -207,6 +213,7 @@ stages:
         - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-python
         - name: PythonVersion
           value: '3.7'
+        OperatingSystems: ${{ parameters.OperatingSystems }}
         InstallLanguageSteps:
         - task: UsePythonVersion@0
           displayName: "Use Python $(PythonVersion)"
@@ -233,6 +240,7 @@ stages:
         ToolsRepoCommitish: $(ToolsRepoCommitish)
         Variables:
         - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-cpp
+        OperatingSystems: ${{ parameters.OperatingSystems }}
         InstallLanguageSteps:
         - template: /eng/pipelines/templates/steps/vcpkg-clone.yml@azure-sdk-for-cpp
           parameters:

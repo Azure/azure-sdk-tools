@@ -18,7 +18,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Job Manifest](#job-manifest)
         * [Built-In Labels](#built-in-labels)
      * [Chaos Manifest](#chaos-manifest)
-     * [Scenarios and scenarios-matrix.yaml](#scenariosmatrixyaml)
+     * [Scenarios and scenarios-matrix.yaml](#scenarios-and-scenarios-matrixyaml)
      * [Node Size Requirements](#node-size-requirements)
   * [Configuring faults](#configuring-faults)
      * [Faults via Dashboard](#faults-via-dashboard)
@@ -278,7 +278,7 @@ are made available in the template context.
 - `{{ .Values.image }}`
   - The docker image published by the stress test deploy script
 - `{{ .Stress.Scenario }}`
-  - If using [Scenarios](#scenariosmatrixyaml), this value maps to the individual scenario for which a
+  - If using [Scenarios](#scenarios-and-scenarios-matrixyaml), this value maps to the individual scenario for which a
     template is being generated.
 - `{{ .Stress.ResourceGroupName }}`
   - If deploying live resources for a test job, the name of the resource group.

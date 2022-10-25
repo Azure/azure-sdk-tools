@@ -85,7 +85,7 @@ test-proxy reset --assets-json-path <assetsJsonPath>
 After assets have been restored and then modified (re-recorded etc.) a push will update the assets in the AssetsRepo. After the push completes, the `Tag` within the targeted assets.json will be updated with the new Tag. The updated asset.json will need to be committed into the language repository along with the code changes.
 
 ```bash
-test-proxy restore --assets-json-path <assetsJsonPath>
+test-proxy push --assets-json-path <assetsJsonPath>
 ```
 
 ## Using `asset-sync` for azure sdk development

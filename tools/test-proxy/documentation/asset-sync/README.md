@@ -50,7 +50,7 @@ Interactions with the external assets repository are accessible when the proxy i
 |---|---|
 | `/Playback/Restore` | Retrieve files from external git repo as targeted in the Tag from assets.json |
 | `/Playback/Reset` | Discard pending changes and reset to the original Tag from targeted assets.json. |
-| `/Record/Push` | Push pending changes to a new tag as targeted ny assets.json. After the operation, the new recordings will be pushed and the target `assets.json` will be automatically updated with the new target tag. |
+| `/Record/Push` | Push pending changes to a new tag as targeted by `assets.json`. After the operation, the new recordings will be pushed and the target `assets.json` will be automatically updated with the new target tag. |
 
 Each of these CLI Commands takes an `assets.json` argument that provides the _context_ that should be pushed to the external repository.
 

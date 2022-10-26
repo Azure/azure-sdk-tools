@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.1.2 (Unreleased)
+## Version 0.2.0 (10-26-2022)
 Support `namespace` emitter option to filter the appropriate namespace when it cannot be automatically resolved.
   This is primarily intended for creating APIViews for libraries.
 Support `version` emitter option to choose which version of a multi-versioned spec to emit. Specs with a single

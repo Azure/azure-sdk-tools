@@ -1,4 +1,5 @@
 import {
+  AliasStatementNode,
   Namespace,
   ModelStatementNode,
   OperationStatementNode,
@@ -29,6 +30,7 @@ export class NamespaceModel {
   operations = new Map<string, OperationStatementNode | InterfaceStatementNode>();
   resources = new Map<
     string,
+    | AliasStatementNode
     | ModelStatementNode
     | ModelExpressionNode
     | IntersectionExpressionNode
@@ -39,6 +41,7 @@ export class NamespaceModel {
   >();
   models = new Map<
     string,
+    | AliasStatementNode
     | ModelStatementNode
     | ModelExpressionNode
     | IntersectionExpressionNode
@@ -59,6 +62,8 @@ export class NamespaceModel {
     for (const [intName, int] of ns.interfaces) {
       this.operations.set(intName, int.node);
     }
+
+    const aliases = findStatementsIn(ns, SyntaxKind.AliasStatement);
 
     // Gather models and resources
     for (const [modelName, model] of ns.models) {

@@ -1,4 +1,5 @@
 import {
+  AliasStatementNode,
   EnumStatementNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
@@ -21,6 +22,7 @@ export class ApiViewNavigation {
 
   constructor(
     objNode:
+      | AliasStatementNode
       | NamespaceModel
       | ModelStatementNode
       | OperationStatementNode

@@ -2,7 +2,7 @@
 
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
-![image](../_images/asset_sync_block_diagram.png)
+![asset sync block diagram](../_images/asset_sync_block_diagram.png)
 
 In the context of a `monorepo`, this means that we store FAR less data per feature. To update recordings, the only change alongside the source code is to update the targeted tag.
 
@@ -32,7 +32,7 @@ An `assets.json` takes the form:
 | Property | Description |
 |---|---|
 | AssetsRepo | The full name of the external github repo storing the data. EG: `Azure/azure-sdk-assets` |
-| AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. The default is the language that the assets belong to. EG: `python`, `net`, `java` etc. |
+| AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. The default should be the language that the assets belong to. EG: `python`, `net`, `java` etc. |
 | TagPrefix | `<Language>/<ServiceDirectory>` or `<Language>/<ServiceDirectory>/<Library>` or deeper if things are nested in such a manner. |
 | Tag | Initially empty until after the first push at which point the tag will be the `<TagPrefix><10-character-commit-SHA>` |
 
@@ -50,7 +50,9 @@ Interactions with the external assets repository are accessible when the proxy i
 |---|---|
 | `/Playback/Restore` | Retrieve files from external git repo as targeted in the Tag from assets.json |
 | `/Playback/Reset` | Discard pending changes and reset to the original Tag from targeted assets.json. |
-| `/Record/Push` | Push changes if they are pending for files described by targeted assets.json. Updates the Tag in assets.json to match the new tag generated from the push operation. |
+| `/Record/Push` | Push pending changes to a new tag as targeted by `assets.json`. After the operation, the new recordings will be pushed and the target `assets.json` will be automatically updated with the new target tag. |
+
+Each of these CLI Commands takes an `assets.json` argument that provides the _context_ that should be pushed to the external repository.
 
 ## test-proxy CLI commands
 
@@ -63,7 +65,7 @@ The test-proxy also offers interactions with the external assets repository as a
 A restore operation is merely a test-proxy-encapsulated `clone or pull` operation. A given `asets.json` provides the target `Tag` and `AssetsRepo`.
 
 ```bash
-> test-proxy restore --assets-json-path <assetsJsonPath>
+test-proxy restore --assets-json-path <assetsJsonPath>
 ```
 
 #### Reset
@@ -75,7 +77,7 @@ Reset discards local changes to a targeted assets.json files and resets the loca
 - Selecting `Y` will discard pending changes and reset the locally cloned assets to the Tag within the targeted `assets.json`.
 
 ```bash
-> test-proxy reset --assets-json-path <assetsJsonPath>
+test-proxy reset --assets-json-path <assetsJsonPath>
 ```
 
 #### Push
@@ -83,5 +85,169 @@ Reset discards local changes to a targeted assets.json files and resets the loca
 After assets have been restored and then modified (re-recorded etc.) a push will update the assets in the AssetsRepo. After the push completes, the `Tag` within the targeted assets.json will be updated with the new Tag. The updated asset.json will need to be committed into the language repository along with the code changes.
 
 ```bash
-> test-proxy restore --assets-json-path <assetsJsonPath>
+test-proxy push --assets-json-path <assetsJsonPath>
 ```
+
+## Using `asset-sync` for azure sdk development
+
+### Where are my files?
+
+Test-Proxy maintains a _separate clone_ for each assets.json. This means that for _every_ assets.json that the test-proxy has interacted with. By default, this will be located _just_ under your repo root under the `.assets` folder.
+
+```text
++-------------------------------+
+|  azure-sdk-for-python/        |
+|    sdk/                       |
+|      storage/                 |
+| +------assets.json            |
+| |    appconfiguration/        |
+| | +----assets.json            |
+| | |  keyvault/                |
+| | |    azure-keyvault-secrets |
+| | |      assets.json-------+  |
+| | |    azure-keyvault-keys |  |
+| | |      assets.json---+   |  |
+| | |                    |   |  |
+| | |.assets/            |   |  |
+| | +--AuN9me8zrT/       |   |  |
+| |      <sparse clone>  |   |  |
+| +----5hgHKwvMaN/       |   |  |
+|        <sparse clone>  |   |  |
+|      AuN9me8zrT--------+   |  |
+|        <sparse clone>      |  |
+|      BSdGcyN2XL------------+  |
+|        <sparse clone>         |
++-------------------------------+
+```
+
+As you run tests in `recording` or `playback` mode, the `test-proxy` automatically checks out the appropriate tag in each local assets repo. After running docs in `record` mode, the newly updated recordings will be sitting within the appropriate assets repository.
+
+To view the changes before pushing, use one of the one-liners defined below [below](#attempt-to-manually-resolve).
+
+### My tests don't use the test-proxy at all currently, how do I externalize my recordings?
+
+You don't. Your first step is to integrate your test framework with the `test-proxy`.
+
+Refer to:
+
+- [Test-Proxy Readme](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/Azure.Sdk.Tools.TestProxy/README.md)
+- [Test-Proxy Sample Recording Clients](https://github.com/Azure/azure-sdk-tools/tree/main/tools/test-proxy/sample-clients)
+
+### I'm a dev who uses the test-proxy currently, how do I externalize my recordings?
+
+First, ensure that your language-specific "shim" supports the automatic addition of the `x-recording-assets-file` key to the test-proxy `Record|Playback/Start/` endpoints.
+
+- [PR Enabling in .NET](https://github.com/Azure/azure-sdk-for-net/pull/31157)
+- [PR Enabling in Python](https://github.com/Azure/azure-sdk-for-python/pull/26078)
+- [PR Enabling in JS](https://github.com/Azure/azure-sdk-for-js/pull/23405)
+- [PR Enabling in Go](https://github.com/Azure/azure-sdk-for-go/pull/19322)
+
+Use [the transition script](../../scripts/transition-scripts/generate-assets-json.ps1) and follow the [readme](../../scripts/transition-scripts/README.md)!
+
+### What does this look like in practice?
+
+#### Layout within a language repo
+
+Once a package or service has an assets.json and a targeted tag, each language-repo test framework will automatically provide this assets.json alongside the recording file path. This will allow the test-proxy to automatically restore recordings as necessary.
+
+Here is the result of running tests in `playback`-mode for a couple packages within the python repo:
+
+![assets store](../_images/example_assets_store.png)
+
+One can see the automatically restored assets repos within the `.assets` folder. Each of the top-level folders within the `.assets` folder contains a single slice of the assets repo.
+
+The below diagram illustrates how an individual assets.json, language repo, and assets repo relate to each other. Text that appears as a specific color can be traced to its source in the assets.json.
+
+![assets diagram](../_images/organization_of_assets.png)
+
+> Side note: the `.breadcrumb` file is created/updated as an artifact of the test-proxy restore/push/reset operations. Don't look for one if you haven't restored at least one assets.json first!
+
+One can use visual inspection of the `.breadcrumb` file to _find_ which folder contains the files for your assets.json. Or, they can simply use one of the one-liners above to change directory into their assets.
+
+Powershell one-liner:
+
+```powershell
+# From root of repo. Substitute your target assets.json path in the StartsWith clause.
+cd ".assets/$((Get-Content ".assets/.breadcrumb" | Where-Object { $_.StartsWith("sdk/tables/assets.json") }).Split(";")[1])"
+```
+
+Bash one-liner:
+
+```bash
+# From root of repo. Substitute your target assets.json path in the initial grep
+A=$(grep "sdk/tables/assets.json" .assets/.breadcrumb | awk '{split($0,a,";"); print a[2];}'); cd .assets/$A
+```
+
+#### A few details about context directory
+
+The `test-proxy` starts in a "storage context". EG, where it starts looking for recordings or assets.json files. Any recording/assets.json paths that be relative in a way that makes sense for the arguments being sent.
+
+```text
+C:/repo/sdk-for-python/>test-proxy push -a sdk/tables/assets.json
+```
+
+`test-proxy` was not given a "context" argument. It'll use `CWD` as the "context" directory. When passed a relative path to an assets.json, it attempts to find that assets.json by joining the current context-directory with the relative path. CI implementations simply pass the additional argument of `--storage-location=<repo root>` to ensure that current directory doesn't matter.
+
+So with the above invocation, the _actual_ location of the assets.json would be: `C:/repo/sdk-for-python/sdk/tables/assets.json`.
+
+When calling the tool (not `docker` unfortunately , due to `mount` constraints), _absolute_ paths are also supported. In that case, context directory does not matter at all.
+
+```text
+test-proxy push -a C:/repo/sdk-for-python/sdk/tables/assets.json
+```
+
+Fortunately, the `test-proxy` takes care of `restore` operations automatically (both record and playback mode). This means that users only really need to understand the storage context when `push`-ing new recordings.
+
+#### Pushing new recordings
+
+After running tests in `record` mode.
+
+1. Confirm lack of secrets (as always with recordings).
+2. `test-proxy push <path-to-assets-json>`
+
+> **Important Note** When using `docker` mode with test-proxy push, one will need to invoke the docker container with a couple additional environment variable settings.
+
+Example Docker Push Call
+
+```powershell
+docker run --rm -v "<repo-root>:/srv/testproxy" -e "GIT_TOKEN=<git token>" -e "GIT_COMMIT_OWNER=<git commit owner>" -e "GIT_COMMIT_EMAIL=<git commit email>" azsdkengsys.azurecr.io/engsys/test-proxy:latest test-proxy <proxy-args>
+```
+
+Please note that any proxy arguments that include _paths_ will need to be **relative** when calling the docker container to do the work for you. This is due to the fact that the running container stores its files under an **internal** path representation. The repo root will be mounted under the default context-directory of `/srv/testproxy/` _always_ for the running container, so all paths must be expressed relatively from that root to actually resolve.
+
+```powershell
+# absolute path to assets json
+C:/repo/sdk-for-python/sdk/tables/assets.json
+
+# docker container is run, mounting repo root C:/repo/sdk-for-python/ to /srv/testproxy/. The whole path will no longer align
+# but the relative path from the root of the repo WILL.
+/srv/testproxy/sdk/tables/assets.json
+```
+
+So to make a push work for the above scenario, all one must do is only include the path from the root of the repo.
+
+```powershell
+docker run --rm -v "C:/repo/sdk-for-python:/srv/testproxy"  -e "GIT_TOKEN=myveryrealtoken" -e "GIT_COMMIT_OWNER=scbedd" -e  "GIT_COMMIT_EMAIL=scbedd@microsoft.com" azsdkengsys.azurecr.io/engsys/test-proxy:latest test-proxy push -a sdk/tables/assets.json
+```
+
+### I am getting weird errors out of my test-proxy operations
+
+If you think that the `test-proxy` has somehow gotten itself into a weird "in-between" state that it can't automatically dig itself out of, you have a couple options.
+
+#### Reset it
+
+The first, most foolproof, and most destructive of options.
+
+```powershell
+test-proxy reset --assets-json-path <assetsJsonPath>
+```
+
+This will _force_ the locally cloned assets to align with the assets.json that has been targeted.
+
+#### Attempt to manually resolve
+
+A **new tag** is pushed with each `test-proxy push` invocation. There should be _no such thing_ as `merge conflicts` when automatically pushing up a new tag. However, if you wish to manually resolve instead of discarding current state, `cd` into the assets repo using one of the one-liners above.
+
+Once there, use standard `git` operations to resolve your issue.
+
+For help with this external to Microsoft, file an issue against this repo with the `question` label. Within Microsoft, please ping the [test-proxy teams channel](https://teams.microsoft.com/l/channel/19%3ab7c3eda7e0864d059721517174502bdb%40thread.skype/Test-Proxy%2520-%2520Questions%252C%2520Help%252C%2520and%2520Discussion?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) for additional context and assistance.

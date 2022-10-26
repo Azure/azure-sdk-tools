@@ -19,7 +19,8 @@ const ApiViewEmitterOptionsSchema: JSONSchemaType<ApiViewEmitterOptions> = {
   required: [],
 };
 
-export const libDef = {
+
+export const $lib = createCadlLibrary({
   name: "@azure-tools/cadl-apiview",
   diagnostics: {
     "use-namespace-option": {
@@ -38,7 +39,5 @@ export const libDef = {
   emitter: {
     options: ApiViewEmitterOptionsSchema,
   },
-} as const;
-
-export const $lib = createCadlLibrary(libDef);
+});
 export const { reportDiagnostic } = $lib;

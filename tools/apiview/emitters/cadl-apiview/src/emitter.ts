@@ -14,7 +14,6 @@ import {
 } from "@cadl-lang/compiler";
 import { buildVersionProjections, getVersion } from "@cadl-lang/versioning";
 import path from "path";
-import mkdirp from "mkdirp";
 import { ApiView } from "./apiview.js";
 import { ApiViewEmitterOptions, reportDiagnostic } from "./lib.js";
 
@@ -155,11 +154,7 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
 
     if (!program.compilerOptions.noEmit && !program.hasError()) {
       const outputFolder = path.dirname(options.outputPath);
-      try {
-        await mkdirp(outputFolder);
-      } catch {
-        // mkdirp fails during tests
-      }
+      await program.host.mkdirp(outputFolder);
       await emitFile(program, {
         path: options.outputPath,
         content: JSON.stringify(apiview.asApiViewDocument()) + "\n"

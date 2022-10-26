@@ -4,7 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from typing import NewType
+from apistub import TokenKind
 from apistub.nodes import ClassNode
 from apistubgentest.models import (
     AliasNewType,
@@ -17,13 +17,16 @@ from apistubgentest.models import (
     RequiredKwargObject,
     SomeAwesomelyNamedObject,
     SomeImplementationClass,
+    SomethingAsyncWithOverloads,
     SomethingWithDecorators,
     SomethingWithInheritedOverloads,
     SomethingWithOverloads,
-    SomethingWithProperties
+    SomethingWithProperties,
 )
 
-from ._test_util import _check, _tokenize, _merge_lines, _render_lines, _render_string
+from pytest import fail
+
+from ._test_util import _check, _tokenize, _merge_lines, _render_lines
 
 
 def _check_all(actual, expect, obj):
@@ -155,6 +158,47 @@ class TestClassParsing:
         actual4 = lines[11]
         expected4 = 'def do_thing(val: str | int | bool) -> str | int | bool'
         _check(actual4, expected4, SomethingWithInheritedOverloads)
+
+    
+    def test_overload_definition_ids(self):
+        obj = SomethingWithOverloads
+        obj2 = SomethingAsyncWithOverloads
+        sync_class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        async_class_node = ClassNode(name=obj2.__name__, namespace=obj2.__name__, parent_node=None, obj=obj2, pkg_root_namespace=self.pkg_namespace)
+        tokens1 = _tokenize(sync_class_node)
+        tokens2 = _tokenize(async_class_node)
+        self._validate_definition_ids(tokens1 + tokens2)
+
+    def test_async_definition_ids(self):
+        obj = SomethingAsyncWithOverloads
+        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        tokens = _tokenize(class_node)
+        definition_ids = [x.definition_id for x in tokens if x.definition_id][1:]
+        for def_id in definition_ids:
+            assert ":async" in def_id
+
+    # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
+    def _validate_definition_ids(self, tokens):
+        definition_ids = set()
+        def_ids_per_line = [[]]
+        index = 0
+        for token in tokens:
+            # ensure that there are no repeated definition IDs.
+            if token.definition_id:
+                if token.definition_id in definition_ids:
+                    fail(f"Duplicate defintion ID {token.definition_id}.")
+                definition_ids.add(token.definition_id)
+            # Collect the definition IDs that exist on each line
+            if token.definition_id:
+                def_ids_per_line[index].append(token.definition_id)
+            if token.kind == TokenKind.Newline:
+                index += 1
+                def_ids_per_line.append([])
+        # ensure that each line has either 0 or 1 definition ID.
+        failures = [row for row in def_ids_per_line if len(row) > 1]
+        if failures:
+            fail(f"Some lines have more than one definition ID. {failures}")
+
 
 
     def test_decorators(self):

@@ -530,11 +530,25 @@ Services:
   - Test: send-event-batch
     Arguments: 
     - --event-size 1024 --batch-size 100 --parallel 64
+    - --event-size 1024 --batch-size 100 --parallel 64 --uamqp-transport
+    - --event-size 1024 --batch-size 100 --parallel 64 --transport-type 1
+    - --event-size 1024 --batch-size 100 --parallel 64 --transport-type 1 --uamqp-transport
+    - --event-size 1024 --batch-size 100 --parallel 64 --sync
+    - --event-size 1024 --batch-size 100 --parallel 64 --uamqp-transport --sync
+    - --event-size 1024 --batch-size 100 --parallel 64 --transport-type 1 --sync
+    - --event-size 1024 --batch-size 100 --parallel 64 --transport-type 1 --uamqp-transport --sync
     TestNames:
       Python: SendEventBatchTest
   - Test: process-events-batch
     Arguments: 
     - --event-size 1024 --max-batch-size 100 --preload 1000000
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --uamqp-transport
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --uamqp-transport
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --sync
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --uamqp-transport --sync
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --sync
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --uamqp-transport --sync
     TestNames:
       Python: ProcessEventsBatchTest
 

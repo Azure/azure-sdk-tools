@@ -91,10 +91,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
+                    string branchGuid = Guid.NewGuid().ToString().Substring(0, 8);
                     string gitUserName = GetGitOwnerName(config);
                     string gitUserEmail = GetGitOwnerEmail(config);
-                    GitHandler.Run($"branch {config.TagPrefix}", config);
-                    GitHandler.Run($"checkout {config.TagPrefix}", config);
+                    GitHandler.Run($"branch {branchGuid}", config);
+                    GitHandler.Run($"checkout {branchGuid}", config);
                     GitHandler.Run($"add -A .", config);
                     GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit -m \"Automatic asset update from test-proxy.\"", config);
                     // Get the first 10 digits of the commit SHA. The generatedTagName will be the

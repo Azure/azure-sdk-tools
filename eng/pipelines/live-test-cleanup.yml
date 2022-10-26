@@ -32,10 +32,9 @@ parameters:
           - $(sub-config-azure-cloud-playground)
         # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
         # AdditionalParameters: "-DeleteNonCompliantGroups"
-      # TODO: Re-Enable after internal server errors on listing subscriptions is resolved
-      # - DisplayName: Dogfood Translation - Resource Cleanup
-      #   SubscriptionConfigurations:
-      #     - $(sub-config-translation-int-test-resources)
+      - DisplayName: Dogfood Translation - Resource Cleanup
+        SubscriptionConfigurations:
+          - $(sub-config-translation-int-test-resources)
       - DisplayName: Dogfood ACS - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-communication-int-test-resources-common)

@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         }
 
-        public override bool TryRun(string arguments, GitAssetsConfiguration config, out CommandResult result)
+        public override bool TryRun(string arguments, string workingDirectory, out CommandResult result)
         {
             result = new CommandResult()
             {

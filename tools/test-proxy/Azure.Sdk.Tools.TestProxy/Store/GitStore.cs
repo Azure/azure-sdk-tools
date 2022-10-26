@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit -m \"Automatic asset update from test-proxy.\"", config);
                     // Get the first 10 digits of the commit SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>
-                    if (GitHandler.TryRun("rev-parse --short=10 HEAD", config, out CommandResult SHAResult))
+                    if (GitHandler.TryRun("rev-parse --short=10 HEAD", config.AssetsRepoLocation, out CommandResult SHAResult))
                     {
                         var newSHA = SHAResult.StdOut.Trim();
                         generatedTagName += $"_{newSHA}";
@@ -222,7 +222,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public string[] DetectPendingChanges(GitAssetsConfiguration config)
         {
-            if (!GitHandler.TryRun("status --porcelain", config, out var diffResult))
+            if (!GitHandler.TryRun("status --porcelain", config.AssetsRepoLocation, out var diffResult))
             {
                 throw GenerateInvokeException(diffResult);
             }
@@ -257,9 +257,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER")) {
                     GitHandler.Run($"config --global --add safe.directory {config.AssetsRepoLocation}", config);
                 }
-                // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
-                // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
-                GitHandler.Run("fetch --tags origin", config);
+
+                if (!string.IsNullOrEmpty(config.Tag))
+                {
+                    // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
+                    // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
+                    GitHandler.Run($"fetch origin refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
+                }
+
                 // Set non-cone mode otherwise path filters will not work in git >= 2.37.0
                 // See https://github.blog/2022-06-27-highlights-from-git-2-37/#tidbits
                 GitHandler.Run($"sparse-checkout set --no-cone {checkoutPaths}", config);
@@ -334,12 +339,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
-                var result = GitHandler.Run("remote -v", repositoryLocation);
+                var remoteRan = GitHandler.TryRun("remote -v", repositoryLocation, out var result);
                 var repoRemote = result.StdOut.Split(Environment.NewLine).First();
-                if (!String.IsNullOrEmpty(repoRemote) && repoRemote.Contains("git@"))
+                if (remoteRan && !String.IsNullOrEmpty(repoRemote) && repoRemote.Contains("git@"))
                 {
                     return sshUrl;
                 }
+
+                // we want this to work when a targeted directory isn't a git repo yet.
+                // If that is the case, we will get an exit code 128. In this case only return the standard httpurl.
+                if(result.ExitCode > 0 && result.ExitCode != 128)
+                {
+                    throw new GitProcessException(result);
+                }
+
                 return httpUrl;
             }
             catch

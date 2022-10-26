@@ -6,7 +6,6 @@ import {
   EnumMemberNode,
   EnumSpreadMemberNode,
   EnumStatementNode,
-  Expression,
   IdentifierNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
@@ -35,7 +34,6 @@ import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
 import { ApiViewNavigation } from "./navigation.js";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
-import { type } from "os";
 
 const WHITESPACE = " ";
 
@@ -276,10 +274,21 @@ export class ApiView {
   }
 
   stringLiteral(value: string) {
-    this.tokens.push({
-      Kind: ApiViewTokenKind.StringLiteral,
-      Value: `\u0022${value}\u0022`,
-    });
+    const lines = value.split("\n");
+    if (lines.length == 1) {
+      this.tokens.push({
+        Kind: ApiViewTokenKind.StringLiteral,
+        Value: `\u0022${value}\u0022`,
+      });  
+    } else {
+      this.punctuation(`"""`);
+      this.newline();
+      for (const line of lines) {
+        this.literal(line);
+        this.newline();
+      }
+      this.punctuation(`"""`);
+    }
   }
 
   literal(value: string) {
@@ -315,8 +324,10 @@ export class ApiView {
         continue;
       }
       const nsModel = new NamespaceModel(name, ns);
-      this.tokenizeNamespaceModel(nsModel);
-      this.buildNavigation(nsModel);
+      if (nsModel.shouldEmit()) {
+        this.tokenizeNamespaceModel(nsModel);
+        this.buildNavigation(nsModel);  
+      }
     }
   }
 
@@ -354,7 +365,7 @@ export class ApiView {
       case SyntaxKind.DecoratorExpression:
         obj = node as DecoratorExpressionNode;
         this.punctuation("@", false, false);
-        this.tokenizeIdentifier(obj.target, "member");
+        this.tokenizeIdentifier(obj.target, "keyword");
         this.lineMarker();
         if (obj.arguments.length) {
           const last = obj.arguments.length - 1;
@@ -422,7 +433,7 @@ export class ApiView {
         this.tokenizeIdentifier(node as MemberExpressionNode, "reference");
         break;
       case SyntaxKind.ModelExpression:
-        this.tokenizeModelExpression(node as ModelExpressionNode, true, false);
+        this.tokenizeModelExpression(node as ModelExpressionNode, false, false);
         break;
       case SyntaxKind.ModelProperty:
         this.tokenizeModelProperty(node as ModelPropertyNode, false);
@@ -454,7 +465,7 @@ export class ApiView {
         this.punctuation("(", false, false);
         // TODO: heuristic for whether operation signature should be inlined or not.
         const inline = false;
-        this.tokenizeModelExpression(obj.parameters, false, inline);
+        this.tokenizeModelExpression(obj.parameters, true, inline);
         this.punctuation("):", false, true);
         this.tokenizeReturnType(obj, inline);
         break;
@@ -488,7 +499,7 @@ export class ApiView {
           const val = obj.values[x];
           this.tokenize(val);
           if (x != obj.values.length - 1) {
-            this.renderComma();
+            this.renderPunctuation(",");
           }
         }
         this.punctuation("]", true, false);
@@ -502,7 +513,7 @@ export class ApiView {
             const arg = obj.arguments[x];
             this.tokenize(arg);
             if (x != obj.arguments.length - 1) {
-              this.renderComma();
+              this.renderPunctuation(",");
             }
           }
           this.punctuation(">");
@@ -644,9 +655,9 @@ export class ApiView {
     }
   }
 
-  private tokenizeModelExpressionInline(node: ModelExpressionNode, displayBrackets: boolean) {
+  private tokenizeModelExpressionInline(node: ModelExpressionNode, isOperationSignature: boolean) {
     if (node.properties.length) {
-      if (displayBrackets) {
+      if (!isOperationSignature) {
         this.punctuation("{", true, true);
       }
       for (let x = 0; x < node.properties.length; x++) {
@@ -659,21 +670,25 @@ export class ApiView {
             this.tokenize(prop);
             break;
         }
-        if (x != node.properties.length - 1) {
-          this.punctuation(",", false, true);
+        if (isOperationSignature) {
+          if (x != node.properties.length - 1) {
+            this.punctuation(",", false, true);
+          }  
+        } else {
+          this.punctuation(";");
         }
       }
-      if (displayBrackets) {
+      if (!isOperationSignature) {
         this.punctuation("}", true, true);
       }
     }
   }
 
-  private tokenizeModelExpressionExpanded(node: ModelExpressionNode, displayBrackets: boolean) {
+  private tokenizeModelExpressionExpanded(node: ModelExpressionNode, isOperationSignature: boolean) {
     if (node.properties.length) {
       this.blankLines(0);
       this.indent();
-      if (displayBrackets) {
+      if (!isOperationSignature) {
         this.punctuation("{", false, false);
         this.blankLines(0);
         this.indent();  
@@ -691,34 +706,38 @@ export class ApiView {
             this.tokenize(prop);
         }
         this.namespaceStack.pop();
-        if (x != node.properties.length - 1) {
-          this.renderComma();          
+        if (isOperationSignature) {
+          if (x != node.properties.length - 1) {
+            this.renderPunctuation(",");
+          }  
+        } else {
+          this.renderPunctuation(";");
         }
         this.blankLines(0);
       }
       this.namespaceStack.pop();
       this.blankLines(0);
-      if (displayBrackets) {
+      if (!isOperationSignature) {
         this.deindent();
         this.punctuation("}", false, false);
         this.blankLines(0);  
       }
       this.trim();
       this.deindent();
-    } else if (displayBrackets) {
+    } else if (!isOperationSignature) {
       this.punctuation("{}", true, false);
     }
   }
 
   private tokenizeModelExpression(
     node: ModelExpressionNode,
-    displayBrackets: boolean,
+    isOperationSignature: boolean,
     inline: boolean
   ) {
     if (inline) {
-      this.tokenizeModelExpressionInline(node, displayBrackets)
+      this.tokenizeModelExpressionInline(node, isOperationSignature)
     } else {
-      this.tokenizeModelExpressionExpanded(node, displayBrackets)
+      this.tokenizeModelExpressionExpanded(node, isOperationSignature)
     }
   }
 
@@ -758,22 +777,10 @@ export class ApiView {
     this.namespaceStack.pop();
   }
 
-  private filterDecorators(nodes: readonly DecoratorExpressionNode[]): DecoratorExpressionNode[] {
-    const filterOut = ["doc", "summary", "example"];
-    const filtered = Array<DecoratorExpressionNode>();
-    for (const node of nodes) {
-      if (filterOut.includes((node.target as IdentifierNode).sv)) {
-        continue;
-      }
-      filtered.push(node);
-    }
-    return filtered;
-  }
-
   private tokenizeDecorators(nodes: readonly DecoratorExpressionNode[], inline: boolean) {
-    const filteredNodes = this.filterDecorators(nodes);
+    const docDecorators = ["doc", "summary", "example"]
     // ensure there is no blank line after opening brace for non-inlined decorators
-    if (!inline && filteredNodes.length) {
+    if (!inline && nodes.length) {
       while (this.tokens.length) {
         const item = this.tokens.pop()!;
         if (item.Kind == ApiViewTokenKind.LineIdMarker && item.DefinitionId == "GLOBAL") {
@@ -782,22 +789,34 @@ export class ApiView {
           break;
         } else if (item.Kind == ApiViewTokenKind.Punctuation) {
           this.tokens.push(item);
-          const lineCount = ["{", "("].includes(item.Value!) ? 0 : 1;
+          // for now, render with no newlines, per stewardship board request
+          const lineCount = ["{", "("].includes(item.Value!) ? 0 : 0;
           this.blankLines(lineCount);
           break;
         }
       }
     }
     // render each decorator
-    for (const node of filteredNodes) {
+    for (const node of nodes) {
       this.namespaceStack.push(generateId(node)!);
+      const isDoc = docDecorators.includes((node.target as IdentifierNode).sv)
+      if (isDoc) {
+        this.tokens.push({
+          Kind: ApiViewTokenKind.DocumentRangeStart
+        })
+      }
       this.tokenize(node);
       if (inline) {
-        this.whitespace();
+        this.space();
       }
       this.namespaceStack.pop();
       if (!inline) {
         this.blankLines(0);
+      }
+      if (isDoc) {
+        this.tokens.push({
+          Kind: ApiViewTokenKind.DocumentRangeEnd
+        })
       }
     }
   }
@@ -813,7 +832,7 @@ export class ApiView {
 
   private tokenizeIdentifier(
     node: IdentifierNode | MemberExpressionNode | StringLiteralNode,
-    style: "declaration" | "reference" | "member"
+    style: "declaration" | "reference" | "member" | "keyword"
   ) {
     switch (node.kind) {
       case SyntaxKind.MemberExpression:
@@ -824,6 +843,9 @@ export class ApiView {
             break;
           case "member":
             this.member(defId);
+            break;
+          case "keyword":
+            this.keyword(defId);
             break;
           case "declaration":
             throw new Error(`MemberExpression cannot be a "declaration".`);
@@ -847,6 +869,9 @@ export class ApiView {
           case "member":
             this.member(node.sv);
             break;
+          case "keyword":
+            this.keyword(node.sv)
+            break;
         }
     }
   }
@@ -858,8 +883,8 @@ export class ApiView {
         const param = nodes[x];
         this.tokenize(param);
         if (x != nodes.length - 1) {
-          this.renderComma();
-          this.whitespace();
+          this.renderPunctuation(",");
+          this.space();
         }
       }
       this.punctuation(">");
@@ -894,12 +919,7 @@ export class ApiView {
     }
   }
 
-  /** Will collect the return type tokens and return them as a string */
-  private getReturnTypeString(offset: number): string {
-    return "";
-  }
-
-  private renderComma() {
+  private renderPunctuation(punc: string) {
     const last = this.tokens.pop()!;
     if (last?.Kind == ApiViewTokenKind.Whitespace) {
       // hacky workaround to ensure comma is after trailing bracket for expanded anonymous models
@@ -907,7 +927,7 @@ export class ApiView {
     } else {
       this.tokens.push(last);
     }
-    this.punctuation(",", false, false);
+    this.punctuation(punc, false, true);
   }
 
   resolveMissingTypeReferences() {

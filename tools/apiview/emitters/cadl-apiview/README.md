@@ -56,7 +56,24 @@ or via the command line with
 
 ### `output-file`
 
-Configure the name of the output JSON token file relative to the compiler `output-path`.
+Configure the name of the output JSON token file relative to the `output-dir`.
+
+### `output-dir`
+
+Configure the name of the output directory. Default is `cadl-output/cadl-apiview`.
+
+### `namespace`
+
+For Cadl specs, the namespace should be automatically resolved as the service namespace. If
+that doesn't work, or for libraries (which have no service namespace) this option should be
+specified to filter the global namespace. Any subnamespaces of the provided namespace will
+also be emitted.
+
+### `version`
+
+For multi-versioned Cadl specs, this parameter is used to control which version to emit. This
+is not required for single-version specs. For multi-versioned specs that have a "latest" value,
+this will be the default if this option is omitted.
 
 ## See also
 

@@ -115,7 +115,6 @@ namespace Stress.Watcher
         {
             if (!ShouldDeleteResources(job))
             {
-                Logger.Debug($"Skipping resource deletion.");
                 return;
             }
 
@@ -145,17 +144,20 @@ namespace Stress.Watcher
         {
             if (!string.IsNullOrEmpty(Namespace) && Namespace != job.Namespace())
             {
+                Logger.Debug($"Namespace filter mismatch {Namespace} != {job.Namespace()}, skipping resource deletion.");
                 return false;
             }
 
             var initContainers = job.Spec?.Template?.Spec?.InitContainers;
             if (initContainers == null || initContainers.Count() == 0) {
+                Logger.Debug($"No deploy init container found, skipping resource deletion.");
                 return false;
             }
 
             var deployContainers = initContainers.Where(c => c.Name == "init-azure-deployer");
             if (deployContainers.Count() == 0)
             {
+                Logger.Debug($"No deploy init container found, skipping resource deletion.");
                 return false;
             }
 
@@ -196,20 +198,21 @@ namespace Stress.Watcher
             var isCompleted = job.Status?.Conditions?.Any(c => c.Status == "True");
             if (isCompleted != true)
             {
-                Logger.Information($"Job is not completed, skipping resource deletion.");
+                Logger.Debug($"Job is not completed, skipping resource deletion.");
+                return false;
             }
 
             // NOTE: this will not handle labels added to a pod after deployment
             job.Metadata.Labels.TryGetValue("Skip.RemoveTestResources", out var skipJobRemove);
             job.Spec.Template.Metadata.Labels.TryGetValue("Skip.RemoveTestResources", out var skipPodRemove);
 
-            if (isCompleted == true && skipJobRemove == "true" || skipPodRemove == "true")
+            if (skipJobRemove == "true" || skipPodRemove == "true")
             {
                 Logger.Information($"Resource has Skip.RemoveTestResources=true label, skipping resource deletion.");
                 return false;
             }
 
-            return isCompleted == true;
+            return true;
         }
 
         public string GetResourceGroupName(V1Job job)

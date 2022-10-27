@@ -2,7 +2,7 @@ name: Add/Remove needs-triage
 
 on:
   issues:
-    types: [opened, edited, reopened, transferred]
+    types: [opened, labeled, unlabeled]
 
 permissions: {}
 
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Check if label maps to project
+      - name: Check if needs-triage needs to be added/removed from an issue
         run: |
           echo "$($env:GITHUB_PAYLOAD)"
         shell: pwsh

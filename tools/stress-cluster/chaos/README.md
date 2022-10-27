@@ -275,8 +275,9 @@ For kubernetes manifests in the stress test helm chart `templates` directory tha
 `stress-test-addons` (see [examples](#job-manifest)[below](#chaos-manifest)) templates, several special helper fields
 are made available in the template context.
 
-- `{{ .Values.image }}`
-  - The docker image published by the stress test deploy script
+- `{{ .Stress.imageTag }}`
+  - The docker image published by the stress test deploy script.
+  - The docker image is referenced from the [scenarios-matrix.yaml](#scenarios-and-scenarios-matrixyaml).
 - `{{ .Stress.Scenario }}`
   - If using [Scenarios](#scenarios-and-scenarios-matrixyaml), this value maps to the individual scenario for which a
     template is being generated.
@@ -401,7 +402,6 @@ Under the hood, the stress test tools will duplicate the job yaml for each scena
 For example, given a stress test package with multiple tests represented as separate files each running on a different docker image:
 
 ```
-values.yaml
 templates/
 src/
   scenarioLongRunning.js

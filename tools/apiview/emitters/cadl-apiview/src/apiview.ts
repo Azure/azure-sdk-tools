@@ -88,10 +88,10 @@ export class ApiView {
   namespaceStack = new NamespaceStack();
   typeDeclarations = new Set<string>();
 
-  constructor(name: string, packageName: string, versionString: string) {
+  constructor(name: string, packageName: string, versionString?: string) {
     this.name = name;
     this.packageName = packageName;
-    this.versionString = versionString;
+    this.versionString = versionString ?? "";
 
     this.emitHeader();
   }

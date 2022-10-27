@@ -90,7 +90,10 @@ function resolveVersionValue(program: Program, namespace: Namespace, version: st
   }
 }
 
-function resolveProgramForVersion(program: Program, namespace: Namespace, versionKey: string): Program {
+function resolveProgramForVersion(program: Program, namespace: Namespace, versionKey?: string): Program {
+  if (!versionKey) {
+    return program;
+  }
   const version = resolveVersionValue(program, namespace, versionKey);
   const projections = buildVersionProjections(program, namespace).filter((item) => item.version == version);
   if (projections.length == 0) {
@@ -121,7 +124,7 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
     if (!serviceNs) {
       throw new Error("No namespace found");
     }
-    const versionString: string = options.version ?? resolveServiceVersion(program) ?? "latest";
+    const versionString = options.version ?? resolveServiceVersion(program);
     const namespaceString = options.namespace ?? resolveNamespaceString(program, serviceNs);
     if (namespaceString == undefined) {
       reportDiagnostic(program, {
@@ -131,16 +134,18 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
       return;
     }
     const allowedVersions = resolveAllowedVersions(program, serviceNs);
-    if (allowedVersions.filter((version) => version == versionString).length == 0) {
-      reportDiagnostic(program, {
-        code: "version-not-found",
-        target: NoTarget,
-        format: {
-          version: versionString,
-          allowed: allowedVersions.join(" | "),
-        },
-      })
-      return;
+    if (versionString) {
+      if (allowedVersions.filter((version) => version == versionString).length == 0) {
+        reportDiagnostic(program, {
+          code: "version-not-found",
+          target: NoTarget,
+          format: {
+            version: versionString,
+            allowed: allowedVersions.join(" | "),
+          },
+        })
+        return;
+      }  
     }
     // FIXME: Fix this wonky workaround when getServiceTitle is fixed.
     let serviceTitle = getServiceTitle(program);

@@ -72,8 +72,8 @@ also be emitted.
 ### `version`
 
 For multi-versioned Cadl specs, this parameter is used to control which version to emit. This
-is not required for single-version specs. For multi-versioned specs that have a "latest" value,
-this will be the default if this option is omitted.
+is not required for single-version specs. For multi-versioned specs, the unprojected Cadl will
+be rendered if this is not supplied.
 
 ## See also
 

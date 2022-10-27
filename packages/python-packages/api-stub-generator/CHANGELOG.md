@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.6 (2022-10-27)
+Suppressed unwanted base class methods in DPG libraries.
+
 ## Version 0.3.5 (2022-10-26)
 Fixed issue where properties could be inadvertently rendered as TypedDict keys.
 Fixed issue where some sync and async functions could not be distinguished from eachother in APIView, leading to improper comment placement.

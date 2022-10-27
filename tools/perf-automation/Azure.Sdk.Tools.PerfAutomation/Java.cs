@@ -37,9 +37,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var result = await Util.RunAsync(
                 "mvn",
-                "clean install -T1C -am" +
-                " -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true -Dcodesnippet.skip=true " +
-                " -Dspotbugs.skip=true -Dcheckstyle.skip=true -Drevapi.skip=true" +
+                "clean install -T 2C -am" +
+                " -Denforcer.skip=true -DskipTests=true -Dmaven.test.skip = true -Dmaven.javadoc.skip=true " +
+                " -Dcodesnippet.skip=true -Dspotbugs.skip=true -Dcheckstyle.skip=true -Drevapi.skip=true" +
                 $" --no-transfer-progress --pl {project}",
                 WorkingDirectory,
                 environmentVariables: _buildEnvironment

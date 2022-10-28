@@ -517,6 +517,10 @@ Services:
       PrimaryPackage: azure-eventhub
       PackageVersions:
       - azure-core: 1.26.0
+        azure-eventhub: 5.9.0
+      - azure-core: 1.26.0
+        azure-eventhub: 5.10.0
+      - azure-core: 1.26.0
         azure-eventhub: 5.10.1
       - azure-core: source
         azure-eventhub: source
@@ -545,10 +549,10 @@ Services:
     - --event-size 1024 --max-batch-size 100 --preload 1000000 --uamqp-transport
     - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1
     - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --uamqp-transport
-    - --event-size 1024 --max-batch-size 100 --preload 1000000 --sync
-    - --event-size 1024 --max-batch-size 100 --preload 1000000 --uamqp-transport --sync
-    - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --sync
-    - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --uamqp-transport --sync
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --sync --warmup 30
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --uamqp-transport --sync --warmup 30
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --sync --warmup 30
+    - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --uamqp-transport --sync --warmup 30
     TestNames:
       Python: ProcessEventsBatchTest
 

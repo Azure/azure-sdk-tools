@@ -138,7 +138,7 @@ class TooManyRedirectsError(HttpResponseError):
 An error thrown if you try to access the stream of `azure.core.rest.HttpResponse` or `azure.core.rest.AsyncHttpResponse` once
 the response stream has been consumed.
 
-<!-- SNIPPET: test_example_async.trio -->
+<!-- SNIPPET: example_async.trio -->
 ```python
 from azure.core.pipeline.transport import TrioRequestsTransport
 async with AsyncPipeline(TrioRequestsTransport(), policies=policies) as pipeline:

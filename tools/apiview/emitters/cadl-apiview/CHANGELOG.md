@@ -1,5 +1,10 @@
 # Release History
 
+## Version 0.2.1 (10-27-2022)
+Change behavior of `version` emitter option so that if it is not supplied, APIView will be generated for the
+  un-projected Cadl, rendering all versioning decorators. Supplying `version` allows the user to project a
+  specific version.
+
 ## Version 0.2.0 (10-26-2022)
 Support `namespace` emitter option to filter the appropriate namespace when it cannot be automatically resolved.
   This is primarily intended for creating APIViews for libraries.

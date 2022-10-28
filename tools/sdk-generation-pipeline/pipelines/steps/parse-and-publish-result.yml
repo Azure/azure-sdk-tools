@@ -111,6 +111,7 @@ steps:
         git reset HEAD~
       #done
     workingDirectory: $(SDK_REPO)
+    condition: always()
     displayName: Submit Pull Request
 
   - bash: |

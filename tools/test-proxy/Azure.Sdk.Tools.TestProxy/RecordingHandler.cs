@@ -963,21 +963,27 @@ namespace Azure.Sdk.Tools.TestProxy
             var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
             var hostValue = GetHeader(request, "x-recording-upstream-base-uri");
 
-            // There is an ongoing issue where some libraries send a URL with two leading // after the hostname.
-            // This will just handle the error explicitly rather than letting it slip through and cause random issues during record/playback sessions.
-            if (rawTarget.StartsWith("//"))
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, $"The URI being passed has two leading '/' in the Target, which will break URI combine with the hostname. Visible URI target: {rawTarget}.");
-            }
-
             // it is easy to forget the x-recording-upstream-base-uri value
             if (string.IsNullOrWhiteSpace(hostValue))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"The value present in header 'x-recording-upstream-base-uri' is not a valid hostname: {hostValue}.");
             }
 
-            var host = new Uri(hostValue);
-            return new Uri(host, rawTarget);
+            // if there are multiple starting /, we cannot use a standard URI create with the relative path
+            // This is because creating a new URI from something like (//path/request) confuses the parsing of the "relative" part of the path
+            // This means that if it _did_ combine successfully, the "//path/request" would end up treating that leading // as a HOSTLESS ROOT.
+            // To prevent this, we do simple URI concatenation if we know we're in this weird situation.
+            if (rawTarget.StartsWith("//"))
+            {
+                var input = hostValue.TrimEnd('/') + rawTarget;
+
+                return new Uri(input);
+            }
+            else
+            {
+                var host = new Uri(hostValue);
+                return new Uri(host, rawTarget);
+            }
         }
 
         private static bool IncludeHeader(string header)

@@ -11,6 +11,7 @@ while true;
     # Azure AKS default outbound rules do not allow ICMP,
     # so use wget in place of ping for deployment simplicity
     echo "SCENARIO_NAME: $SCENARIO_NAME"
-    do wget -T1 -t1 --spider http://$SCENARIO_NAME.bing.com
+    echo "SUBDOMAIN TARGET: $1"
+    do wget -T1 -t1 --spider http://$1.bing.com
     sleep 5
 done

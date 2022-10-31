@@ -969,21 +969,24 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"The value present in header 'x-recording-upstream-base-uri' is not a valid hostname: {hostValue}.");
             }
 
-            // if there are multiple starting /, we cannot use a standard URI create with the relative path
-            // This is because creating a new URI from something like (//path/request) confuses the parsing of the "relative" part of the path
-            // This means that if it _did_ combine successfully, the "//path/request" would end up treating that leading // as a HOSTLESS ROOT.
-            // To prevent this, we do simple URI concatenation if we know we're in this weird situation.
-            if (rawTarget.StartsWith("//"))
-            {
-                var input = hostValue.TrimEnd('/') + rawTarget;
-
-                return new Uri(input);
-            }
-            else
-            {
-                var host = new Uri(hostValue);
-                return new Uri(host, rawTarget);
-            }
+            // The host value from the header should include scheme and port. EG:
+            //    https://portal.azure.com/
+            //    http://localhost:8080
+            //    http://user:pass@localhost:8080/ <-- this should be EXTREMELY rare given it's extremely insecure
+            // 
+            // The value from rawTarget is the _exact_ "rest of the URI" WITHOUT auto-decoding (as specified above) and could look like:
+            //    ///request
+            //    /hello/world?query=blah
+            //    ""
+            //    //hello/world
+            //
+            // We cannot use a URIBuilder to combine the hostValue and the rawTarget, as doing so results in auto-decoding of escaped 
+            // characters that will BREAK the request that we actually wish to make.
+            //
+            // Given these limitations, and safe in the knowledge of both sides of this operation. We trim the trailing / off of the host,
+            // and string concatenate them together.
+            var rawUri = hostValue.TrimEnd('/') + rawTarget;
+            return new Uri(rawUri);
         }
 
         private static bool IncludeHeader(string header)

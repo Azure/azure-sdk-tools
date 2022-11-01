@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="config"></param>
         public BreadcrumbLine(GitAssetsConfiguration config)
         {
-            PathToAssetsJson = config.AssetsJsonRelativeLocation;
+            PathToAssetsJson = config.AssetsJsonRelativeLocation.ToString();
             ShortHash = config.AssetRepoShortHash;
             Tag = config.Tag;
         }
@@ -77,8 +77,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task Update(GitAssetsConfiguration configuration)
         {
-            var breadcrumbFile = Path.Join(configuration.ResolveAssetsStoreLocation(), ".breadcrumb");
-            var targetKey = configuration.AssetsJsonRelativeLocation.Replace("\\", "/");
+            var breadcrumbFile = Path.Join(configuration.ResolveAssetsStoreLocation().ToString(), ".breadcrumb");
+            var targetKey = configuration.AssetsJsonRelativeLocation.ToString();
 
             await BreadCrumbWorker.EnqueueAsync(async () =>
             {

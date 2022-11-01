@@ -8,6 +8,7 @@ using Xunit;
 using System.Text.Json;
 using System.Linq;
 using System.ComponentModel;
+using Azure.Sdk.tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -341,11 +342,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, folderStructure);
             try
             {
-                var jsonFileLocation = Path.Join(testFolder, targetRelPath, AssetsJson);
+                var jsonFileLocation = new NormalizedString(Path.Join(testFolder, targetRelPath, AssetsJson));
 
                 var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
-                Assert.Equal(Path.Join(targetRelPath, AssetsJson), parsedConfiguration.AssetsJsonRelativeLocation);
-                Assert.Equal(jsonFileLocation, parsedConfiguration.AssetsJsonLocation);
+                Assert.Equal(new NormalizedString(Path.Join(targetRelPath, AssetsJson)), parsedConfiguration.AssetsJsonRelativeLocation.ToString());
+                Assert.Equal(jsonFileLocation, parsedConfiguration.AssetsJsonLocation.ToString());
             }
             finally
             {
@@ -450,15 +451,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, expectedPaths);
             try
             {
-                string configLocation;
+                NormalizedString configLocation;
 
                 if (assetsJsonPath == "assets.json")
                 {
-                    configLocation = testFolder;
+                    configLocation = new NormalizedString(testFolder);
                 }
                 else
                 {
-                    configLocation = Path.Join(testFolder, assetsJsonPath);
+                    configLocation = new NormalizedString(Path.Join(testFolder, assetsJsonPath));
                 }
 
                 var configuration = await _defaultStore.ParseConfigurationFile(configLocation);
@@ -610,7 +611,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             try
             {
                 var assetStore = (await _defaultStore.ParseConfigurationFile(Path.Join(testFolder, target1))).ResolveAssetsStoreLocation();
-                var breadCrumbFile = Path.Join(assetStore, ".breadcrumb");
+                var breadCrumbFile = Path.Join(assetStore.ToString(), ".breadcrumb");
 
                 // run 3 restore operations
                 foreach (var assetsJson in folderStructure)

@@ -14,6 +14,7 @@ using Azure.Sdk.Tools.TestProxy.Console;
 using System.Collections.Concurrent;
 using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
+using Azure.Sdk.tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -69,12 +70,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
 
-            if (!string.IsNullOrWhiteSpace(config.AssetsRepoPrefixPath))
+            if (!string.IsNullOrWhiteSpace(config.AssetsRepoPrefixPath.ToString()))
             {
-                return Path.Combine(config.AssetsRepoLocation, config.AssetsRepoPrefixPath);
+                return Path.Combine(config.AssetsRepoLocation.ToString(), config.AssetsRepoPrefixPath.ToString());
             }
 
-            return config.AssetsRepoLocation;
+            return config.AssetsRepoLocation.ToString();
         }
 
         /// <summary>
@@ -100,7 +101,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit -m \"Automatic asset update from test-proxy.\"", config);
                     // Get the first 10 digits of the commit SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>
-                    if (GitHandler.TryRun("rev-parse --short=10 HEAD", config.AssetsRepoLocation, out CommandResult SHAResult))
+                    if (GitHandler.TryRun("rev-parse --short=10 HEAD", config.AssetsRepoLocation.ToString(), out CommandResult SHAResult))
                     {
                         var newSHA = SHAResult.StdOut.Trim();
                         generatedTagName += $"_{newSHA}";
@@ -137,7 +138,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             CheckoutRepoAtConfig(config);
             await BreadCrumb.Update(config);
 
-            return config.AssetsRepoLocation;
+            return config.AssetsRepoLocation.ToString();
         }
 
         /// <summary>
@@ -222,7 +223,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public string[] DetectPendingChanges(GitAssetsConfiguration config)
         {
-            if (!GitHandler.TryRun("status --porcelain", config.AssetsRepoLocation, out var diffResult))
+            if (!GitHandler.TryRun("status --porcelain", config.AssetsRepoLocation.ToString(), out var diffResult))
             {
                 throw GenerateInvokeException(diffResult);
             }
@@ -244,7 +245,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="config"></param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
         {
-            if (Assets.TryGetValue(config.AssetsJsonRelativeLocation, out var value) && value == config.Tag)
+            if (Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag)
             {
                 return;
             }
@@ -276,7 +277,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 // the second argument, the value, is the value we want to set the json elative location to
                 // the third argument is a function argument that resolves what to do in the "update" case. If the key already exists
                 // update the tag to what we just checked out.
-                Assets.AddOrUpdate(config.AssetsJsonRelativeLocation, config.Tag, (key, oldValue) => config.Tag);
+                Assets.AddOrUpdate(config.AssetsJsonRelativeLocation.ToString(), config.Tag, (key, oldValue) => config.Tag);
             }
             catch(GitProcessException e)
             {
@@ -364,7 +365,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public bool IsAssetsRepoInitialized(GitAssetsConfiguration config)
         {
-            if (Assets.ContainsKey(config.AssetsJsonRelativeLocation))
+            if (Assets.ContainsKey(config.AssetsJsonRelativeLocation.ToString()))
             {
                 return true;
             }
@@ -386,8 +387,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (forceInit)
             {
-                DirectoryHelper.DeleteGitDirectory(assetRepo);
-                Directory.CreateDirectory(assetRepo);
+                DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
+                Directory.CreateDirectory(assetRepo.ToString());
                 initialized = false;
             }
 
@@ -396,7 +397,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
+                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot.ToString());
                     GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
                     GitHandler.Run($"sparse-checkout init", config);
                 }
@@ -420,7 +421,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <exception cref="NotImplementedException"></exception>
         public string ResolveCheckoutPaths(GitAssetsConfiguration config)
         {
-            var combinedPath = Path.Join(config.AssetsRepoPrefixPath ?? String.Empty, config.AssetsJsonRelativeLocation).Replace("\\", "/");
+            var combinedPath = new NormalizedString(Path.Join(config.AssetsRepoPrefixPath ?? String.Empty, config.AssetsJsonRelativeLocation)).ToString();
 
             if (combinedPath.ToLower() == AssetsJsonFileName)
             {
@@ -466,9 +467,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 var repoRoot = AscendToRepoRoot(pathToAssets);
 
-                assetConfig.AssetsJsonLocation = pathToAssets;
-                assetConfig.AssetsJsonRelativeLocation = Path.GetRelativePath(repoRoot, pathToAssets);
-                assetConfig.RepoRoot = repoRoot;
+                assetConfig.AssetsJsonLocation = new NormalizedString(pathToAssets);
+                assetConfig.AssetsJsonRelativeLocation = new NormalizedString(Path.GetRelativePath(repoRoot, pathToAssets));
+                assetConfig.RepoRoot = new NormalizedString(repoRoot);
                 assetConfig.AssetsFileName = AssetsJsonFileName;
 
                 return assetConfig;
@@ -612,8 +613,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 // any comments left in the assets.json though maintaining attribute ordering is also nice. To do this, we read all the file content, then
                 // simply replace the existing Tag value with the new one, then write the content back to the json file.
 
-                var currentSHA = (await ParseConfigurationFile(config.AssetsJsonLocation)).Tag;
-                var content = await File.ReadAllTextAsync(config.AssetsJsonLocation);
+                var currentSHA = (await ParseConfigurationFile(config.AssetsJsonLocation.ToString())).Tag;
+                var content = await File.ReadAllTextAsync(config.AssetsJsonLocation.ToString());
                 if (String.IsNullOrWhiteSpace(currentSHA))
                 {
                     string pattern = @"""Tag"":\s*""\s*""";
@@ -623,7 +624,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     content = content.Replace(currentSHA, newSha);
                 }
-                File.WriteAllText(config.AssetsJsonLocation, content);
+                File.WriteAllText(config.AssetsJsonLocation.ToString(), content);
             }
         }
         #endregion

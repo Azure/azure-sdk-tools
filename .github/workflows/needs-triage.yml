@@ -3,6 +3,12 @@ name: Add/Remove needs-triage
 on:
   issues:
     types: [opened, labeled, unlabeled]
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [opened, edited, labeled, unlabeled, review_requested]
+  pull_request_target:
+    types: [labeled, unlabeled]
 
 permissions: {}
 

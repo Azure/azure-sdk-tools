@@ -13,6 +13,16 @@ namespace Azure.Sdk.tools.TestProxy.Common {
             }
         }
 
+        public static implicit operator string(NormalizedString s)
+        {
+            return s.ToString();
+        }
+
+        public static explicit operator NormalizedString(string s)
+        {
+            return new NormalizedString(s);
+        }
+
         public override string ToString(){
             return value;
         }

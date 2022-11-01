@@ -34,18 +34,5 @@ namespace APIViewWeb.Controllers
             await HttpContext.SignOutAsync();
             return RedirectToPage("/Login");
         }
-
-        [HttpPut]
-        [Authorize("RequireOrganization")]
-        public ActionResult UpdateSettings(bool? hideLineNumbers = null, bool? hideLeftNavigation = null, string theme = "light-theme")
-        {
-            _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
-            {
-                HideLeftNavigation = hideLeftNavigation,
-                HideLineNumbers = hideLineNumbers,
-                Theme = theme
-            }, User);
-            return Ok();
-        }
     }
 }

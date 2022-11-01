@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
 
@@ -14,9 +14,6 @@ namespace APIViewWeb.Models
         internal bool? _hideLineNumbers;
         internal bool? _hideLeftNavigation;
         internal string _theme;
-
-        [JsonProperty("id")]
-        public string PreferenceId { get; set; } = IdHelper.GenerateId();
 
         public string UserName { get; set; }
 

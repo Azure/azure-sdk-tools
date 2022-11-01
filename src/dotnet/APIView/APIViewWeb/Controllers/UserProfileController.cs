@@ -17,6 +17,17 @@ namespace APIViewWeb.Controllers
             _userPreferenceCache = userPreferenceCache;
         }
 
+        [HttpPut]
+        public ActionResult UpdateReviewPageSettings(bool? hideLineNumbers = null, bool? hideLeftNavigation = null)
+        {
+            _userPreferenceCache.UpdateUserPreference(new UserPreferenceModel()
+            {
+                HideLeftNavigation = hideLeftNavigation,
+                HideLineNumbers = hideLineNumbers,
+            }, User);
+            return Ok();
+        }
+
         [HttpPost]
         public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme")
         {

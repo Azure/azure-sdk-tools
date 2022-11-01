@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 var breadcrumbLine = new BreadcrumbLine(parsedConfig);
 
                 Assert.Equal(parsedConfig.Tag, breadcrumbLine.Tag);
-                Assert.Equal(parsedConfig.AssetsJsonRelativeLocation.ToString(), breadcrumbLine.PathToAssetsJson);
+                Assert.Equal(parsedConfig.AssetsJsonRelativeLocation, breadcrumbLine.PathToAssetsJson);
                 Assert.Equal(parsedConfig.AssetRepoShortHash, breadcrumbLine.ShortHash);
 
                 // now tostring the line, then reparse it.

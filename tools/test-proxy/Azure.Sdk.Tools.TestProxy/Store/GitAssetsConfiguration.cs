@@ -1,13 +1,35 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Azure.Sdk.tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
+
+    public class NormalizedStringConverter : JsonConverter<NormalizedString>
+    {
+        public override NormalizedString Read(
+            ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            using (var jsonDoc = JsonDocument.ParseValue(ref reader))
+            {
+                return new NormalizedString(reader.GetString());
+            }
+        }
+
+        public override void Write(
+            Utf8JsonWriter writer, NormalizedString value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value);
+        }
+    }
+
     /// <summary>
     /// This class is used to represent any assets.json configuration. An assets.json configuration contains all the necessary configuration needed to restore an asset to the local storage directory of the test-proxy.
     /// </summary>
@@ -31,6 +53,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <summary>
         /// Within the assets repo, is there a prefix that should be inserted prior to writing out files?
         /// </summary>
+
+        [JsonConverter(typeof(NormalizedStringConverter))]
         public NormalizedString AssetsRepoPrefixPath { get; set; }
 
         /// <summary>

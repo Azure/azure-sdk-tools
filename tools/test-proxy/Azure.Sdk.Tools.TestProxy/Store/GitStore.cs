@@ -421,7 +421,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <exception cref="NotImplementedException"></exception>
         public string ResolveCheckoutPaths(GitAssetsConfiguration config)
         {
-            var combinedPath = Path.Join(config.AssetsRepoPrefixPath.ToString() ?? String.Empty, config.AssetsJsonRelativeLocation.ToString()).Replace("\\", "/");
+            var combinedPath = new NormalizedString(Path.Join(config.AssetsRepoPrefixPath ?? String.Empty, config.AssetsJsonRelativeLocation)).ToString();
 
             if (combinedPath.ToLower() == AssetsJsonFileName)
             {

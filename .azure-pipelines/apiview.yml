@@ -170,7 +170,7 @@ stages:
           - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
             - task: Powershell@2
               inputs:
-                filePath: $(Build.SourcesDirectory)/eng/scripts/Start-DotNetApp.ps1
+                filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
                 arguments: >
                   -ArgumentList "run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj"
                   -Port "5000"
@@ -182,6 +182,7 @@ stages:
                 APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
                 APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
                 APIVIEW_AUTHENTICATIONSCHEME: "Test"
+                APIVIEW_SENDGRID__KEY: "Test"
 
             - task: DotNetCoreCLI@2
               displayName: 'Build & Test'

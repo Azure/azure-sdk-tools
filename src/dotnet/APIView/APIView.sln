@@ -5,7 +5,7 @@ VisualStudioVersion = 17.2.32602.215
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIView", "APIView\APIView.csproj", "{F3B9015F-4C33-4861-A3D6-E6AAE4C7772A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewUnitTests", "APIViewTest\APIViewUnitTests.csproj", "{6CFB86FC-D34B-4408-8FB8-649EC2880DB3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewUnitTests", "APIViewUnitTests\APIViewUnitTests.csproj", "{6CFB86FC-D34B-4408-8FB8-649EC2880DB3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewWeb", "APIViewWeb\APIViewWeb.csproj", "{F604E06C-B8E7-49EF-960C-F2CF87E2C1A5}"
 EndProject
@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.ClientSdk.Analyzers.T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewIntegrationTests", "APIViewIntegrationTests\APIViewIntegrationTests.csproj", "{8C53BC0C-DEEC-4810-A0D8-A232A25BA4B7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIViewUITests", "APIViewUITests\APIViewUITests.csproj", "{7246F62A-99BF-4C4F-B9AD-1996166E767E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewUITests", "APIViewUITests\APIViewUITests.csproj", "{7246F62A-99BF-4C4F-B9AD-1996166E767E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

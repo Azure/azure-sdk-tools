@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIView;
@@ -21,11 +21,11 @@ namespace ApiView
             return new RenderResult(codeLines.ToArray(), sections);
         }
 
-        public CodeLine[] Render(CodeFileToken[] tokens)
+        public CodeLine[] Render(CodeFileToken[] tokens, bool showDocumentation = false, bool enableSkipDiff = false)
         {
             var codeLines = new List<CodeLine>();
             var sections = new Dictionary<int, TreeNode<CodeLine>>();
-            Render(codeLines, tokens, false, false, sections);
+            Render(codeLines, tokens, showDocumentation, enableSkipDiff, sections);
             return codeLines.ToArray();
         }
 
@@ -163,18 +163,24 @@ namespace ApiView
                         if (tableColumnCount.Curr == 0)
                         {
                             stringBuilder.Append($"<thead><tr>");
-                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">{token.Value}</th>");
+                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
+                            RenderToken(token, stringBuilder, isDeprecatedToken);
+                            stringBuilder.Append("</th>");
                             tableColumnCount.Curr++;
                         }
                         else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
                         {
-                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">{token.Value}</th>");
+                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
+                            RenderToken(token, stringBuilder, isDeprecatedToken);
+                            stringBuilder.Append("</th>");
                             stringBuilder.Append("</tr></thead><tbody>");
                             tableColumnCount.Curr = 0;
                         }
                         else
                         {
-                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">{token.Value}</th>");
+                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
+                            RenderToken(token, stringBuilder, isDeprecatedToken);
+                            stringBuilder.Append("</th>");
                             tableColumnCount.Curr++;
                         }
                         break;

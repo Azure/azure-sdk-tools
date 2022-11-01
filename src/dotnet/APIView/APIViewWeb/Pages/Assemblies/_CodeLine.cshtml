@@ -1,4 +1,4 @@
-﻿@using ApiView
+@using ApiView
 @using APIView.Model
 @using APIView.DIff
 @using System.Text.RegularExpressions
@@ -23,15 +23,33 @@
 
     bool isSectionHeading = false;
     bool isSubSectionHeading = false;
+    bool isHeadingWithDelta = false;
     string headingClass = String.Empty;
     string documentationRow = String.Empty;
     string codeLineDisplay = String.Empty;
     string codeLineClass = (!String.IsNullOrWhiteSpace(Model.CodeLine.LineClass)) ? Model.CodeLine.LineClass.Trim() : String.Empty;
+    int? sectionKey = Model.DiffSectionId ?? Model.CodeLine.SectionKey;
 
-    if (Model.CodeLine.SectionKey != null )
+    if (sectionKey != null)
     {
         isSectionHeading = true;
-        headingClass = $"code-line-section-heading-{Model.CodeLine.SectionKey}";
+        headingClass = $"code-line-section-heading-{sectionKey}";
+        if (Model.IsDiffView)
+        {
+            switch (Model.Kind)
+            {
+                case DiffLineKind.Added:
+                    headingClass += $" rev-a-heading-{Model.CodeLine.SectionKey}";
+                    break;
+                case DiffLineKind.Removed:
+                    headingClass += $" rev-b-heading-{Model.CodeLine.SectionKey}";
+                    break;
+                case DiffLineKind.Unchanged:
+                    headingClass += $" rev-a-heading-{Model.CodeLine.SectionKey}";
+                    headingClass += $" rev-b-heading-{Model.OtherLineSectionKey}";
+                    break;
+            }
+        }
     }
 
     if(Model.CodeLine.IsDocumentation)
@@ -44,23 +62,28 @@
     {
         isSubSectionHeading = true;
     }
+
+    if (Model.Kind == DiffLineKind.Unchanged && 
+        ((isSubSectionHeading && Model.IsSubHeadingWithDiffInSection) || (isSectionHeading && Model.HeadingsOfSectionsWithDiff.Contains(Model.LineNumber))))
+    {
+        lineClass += " code-delta";
+        isHeadingWithDelta = true;
+    }
     var userPreference = TempData["UserPreference"] as UserPreferenceModel ?? new UserPreferenceModel();
     var rowClass = RemoveMultipleSpaces($"code-line {headingClass} {codeLineClass} {lineClass} {codeLineDisplay} {documentationRow}");
-    var lineDetailsClass = RemoveMultipleSpaces($"line-details-button-cell {lineClass}");
-    var codeClass = RemoveMultipleSpaces($"code {lineClass}");
     var cellContent = String.Empty;
     for (int i = 0; i < Model.CodeLine.Indent; i++)
     {
         if ((isSectionHeading || isSubSectionHeading) && (i == Model.CodeLine.Indent - 1))
         {
             cellContent += @"<svg height='23' width='23'>
-                                <line x1='0' y1='50%' x2='90%' y2='50%' style='stroke:rgb(217,217,214);stroke-width:1' />
-                                <line x1='0' y1='0' x2='0' y2='100%' style='stroke:rgb(217,217,214);stroke-width:1.5' />
+                                <line x1='0' y1='50%' x2='90%' y2='50%' style='stroke-width:1' />
+                                <line x1='0' y1='0' x2='0' y2='100%' style='stroke-width:1.5' />
                             </svg>";
         }else
         {
             cellContent += @"<svg height='23' width='23'>
-                                <line x1='0' y1='0' x2='0' y2='100%' style='stroke:rgb(217,217,214);stroke-width:1.5' />
+                                <line x1='0' y1='0' x2='0' y2='100%' style='stroke-width:1.5' />
                             </svg>";
         }
     }
@@ -68,27 +91,49 @@
 }
 
 <tr class="@rowClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
-    <td class="line-details">
+    <td class="line-details @lineClass">
         <table>
             <tr>
                 @if(userPreference.HideLineNumbers == true)
                 {
-                    var lineNumberClass = RemoveMultipleSpaces($"line-number d-none {lineClass}");
+                    var lineNumberClass = RemoveMultipleSpaces($"line-number d-none");
                     <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
                 }
                 else
                 {
-                    var lineNumberClass = RemoveMultipleSpaces($"line-number {lineClass}");
+                    var lineNumberClass = RemoveMultipleSpaces($"line-number");
                     if (Model.CodeLine.IsDocumentation)
                     {
-                        <td class="@lineNumberClass invisible"><span></span></td>
+                        <td class="@lineNumberClass"><span class="invisible"></span></td>
                     }
                     else
                     {
-                        <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
+                        if (Model.IsDiffView)
+                        {
+                            var paddValue = new string('0', Model.LineNumber.ToString().Length);
+                            if (Model.Kind == DiffLineKind.Added)
+                            {
+                                <td class="@lineNumberClass"><span class="invisible">@paddValue</span></td>
+                                <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
+                            }
+                            else if (Model.Kind == DiffLineKind.Removed)
+                                {
+                                <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
+                                <td class="@lineNumberClass"><span class="invisible">@paddValue</span></td>
+                            }
+                            else
+                            {
+                                <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
+                                <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
+                            }
+                        }
+                        else
+                        {
+                            <td class="@lineNumberClass"><span>@Model.LineNumber</span></td>
+                        }
                     }
                 }
-                <td class="@lineDetailsClass comment-icon-cell">
+                <td class="line-details-button-cell comment-icon-cell">
                     @if (!isRemoved && Model.CodeLine.ElementId != null)
                     {
                         <a class="line-comment-button">+</a>
@@ -98,12 +143,12 @@
                         <a class="line-comment-button invisible">+</a>// Added for visual consistency
                     }
                 </td>
-                <td class="@lineDetailsClass">
+                <td class="line-details-button-cell">
                     @if(Model.DocumentedByLines?.Length  > 0)
                     {
                         <span class="line-toggle-documentation-button" data-documented-by="[@String.Join(",",Model.DocumentedByLines)]">
                             <svg height='23' width='23' class="invisible">
-                                <line x1='52%' y1='0' x2='52%' y2='30%' style='stroke:rgb(255,140,0);stroke-width:1.2' />
+                                <line x1='52%' y1='0' x2='52%' y2='30%' style='stroke-width:1.2' />
                             </svg>
                             <i class="fa-regular fa-square-plus"></i>
                         </span>
@@ -112,12 +157,12 @@
                     {
                         <span>
                             <svg height='23' width='23'>
-                                <line x1='52%' y1='0' x2='52%' y2='100%' style='stroke:rgb(255,140,0);stroke-width:1.2' />
+                                <line x1='52%' y1='0' x2='52%' y2='100%' style='stroke-width:1.2' />
                             </svg>
                         </span>
                     }
                 </td>
-                <td class="@lineDetailsClass">
+                <td class="line-details-button-cell">
                     @if (isSectionHeading || isSubSectionHeading)
                     {
                         <span class="row-fold-caret"><i class="fa-solid fa-angle-right"></i></span>
@@ -126,34 +171,44 @@
             </tr>
         </table>
     </td>
-    <td class="@codeClass">
+    <td class="code">
         @{
             string collapseMenu = (isSectionHeading || isSubSectionHeading) ? "<span class='row-fold-elipsis'><i class='fa-solid fa-ellipsis'></i></span>" : "";
         }
         @if (Model.Kind == DiffLineKind.Removed)
         {
             var codeRemovedSign = @"<svg height='23' width='23'>
-                                    <text x='40%' y='70%'>-</text>
-                                </svg>";
-            <div class="code-inner">@Html.Raw(codeRemovedSign)@Html.Raw(cellContent)</div>
+                                        <text x='20%' y='70%'>&#45;</text>
+                                    </svg>";
+            <div class="code-inner">@Html.Raw(codeRemovedSign)@Html.Raw(cellContent)@Html.Raw(collapseMenu)</div>
         }
         else if(Model.Kind == DiffLineKind.Added)
         {
             var codeAddedSign = @"<svg height='23' width='23'>
-                                        <text x='40%' y='70%'>+</text>
+                                        <text x='20%' y='70%'>&#43;</text>
                                     </svg>";
-            <div class="code-inner">@Html.Raw(codeAddedSign)@Html.Raw(cellContent)</div>
+            <div class="code-inner">@Html.Raw(codeAddedSign)@Html.Raw(cellContent)@Html.Raw(collapseMenu)</div>
         }
         else 
         {
-            var initialIndent = "<svg height='23' width='23'></svg>";
-            <div class="code-inner">@Html.Raw(initialIndent)@Html.Raw(cellContent)@Html.Raw(collapseMenu)</div> 
+            var indentOrDelta = String.Empty;
+            if (isHeadingWithDelta)
+            {
+                indentOrDelta = @"<svg height='23' width='23'>
+                                        <text x='20%' y='70%'>&#177;</text>
+                                    </svg>";
+            }
+            else
+            {
+                indentOrDelta = "<svg height='23' width='23'></svg>";
+            }
+            <div class="code-inner">@Html.Raw(indentOrDelta)@Html.Raw(cellContent)@Html.Raw(collapseMenu)</div>
         }
     </td>
 </tr>
 @if (isSectionHeading)
 {
-    <partial name="_CodeLinePartial" model="@Model.CodeLine.SectionKey" />
+    <partial name="_CodeLinePartial" model="@sectionKey" />
 }
 @if (Model.Diagnostics.Any())
 {

@@ -36,7 +36,7 @@ namespace APIViewWeb.Repositories
         private readonly IConfiguration _configuration;
         private readonly CosmosReviewRepository _reviewsRepository;
         private readonly BlobCodeFileRepository _codeFileRepository;
-        private readonly DevopsArtifactRepository _devopsArtifactRepository;
+        private readonly IDevopsArtifactRepository _devopsArtifactRepository;
         private readonly IAuthorizationService _authorizationService;
         private readonly int _pullRequestCleanupDays;
         private HashSet<string> _allowedListBotAccounts;
@@ -48,7 +48,7 @@ namespace APIViewWeb.Repositories
             CosmosReviewRepository reviewsRepository,
             CosmosPullRequestsRepository pullRequestsRepository,
             BlobCodeFileRepository codeFileRepository,
-            DevopsArtifactRepository devopsArtifactRepository,
+            IDevopsArtifactRepository devopsArtifactRepository,
             IConfiguration configuration
             )
         {

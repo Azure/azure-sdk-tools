@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,7 +20,7 @@ namespace APIViewUnitTests
         {
             // Arrange
             CodeFile codeFile = new CodeFile();
-            var filePath = Path.Combine("SampleTestFiles", "SampleCodeFileWithSections.json");
+            var filePath = Path.Combine("SampleTestFiles", "TokenFileWithSectionsRevision2.json");
             FileInfo fileInfo = new FileInfo(filePath);
             FileStream fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
 

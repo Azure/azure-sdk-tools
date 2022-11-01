@@ -1,4 +1,4 @@
-﻿@using ApiView
+@using ApiView
 @using System.Collections
 @using System.Text
 @using APIViewWeb.Models
@@ -40,9 +40,7 @@
             var codeLine = codeLineModel.CodeLine;
             var lineClass = (codeLine.LineClass == null) ? contentClass : $"{contentClass} section-loaded {codeLine.LineClass.Trim()}";
             var updatedCodeLine = new CodeLine(codeLine, lineClass: lineClass, indent: codeLine.Indent);
-            var updatedCodeLineModel = new CodeLineModel(
-                codeLineModel.Kind, updatedCodeLine, codeLineModel.CommentThread,
-                codeLineModel.Diagnostics, codeLineModel.LineNumber);
+            var updatedCodeLineModel = new CodeLineModel(codeLineModel : codeLineModel, codeLine : updatedCodeLine);
 
             <partial name="_CodeLine" model="@updatedCodeLineModel" />
         }

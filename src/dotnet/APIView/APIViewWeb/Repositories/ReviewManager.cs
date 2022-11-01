@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -11,12 +12,15 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
+using APIView;
 using APIView.DIff;
+using APIView.Model;
 using APIViewWeb.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Repositories
@@ -38,7 +42,7 @@ namespace APIViewWeb.Repositories
 
         private readonly NotificationManager _notificationManager;
 
-        private readonly DevopsArtifactRepository _devopsArtifactRepository;
+        private readonly IDevopsArtifactRepository _devopsArtifactRepository;
 
         private readonly PackageNameManager _packageNameManager;
 
@@ -52,9 +56,8 @@ namespace APIViewWeb.Repositories
             CosmosCommentsRepository commentsRepository,
             IEnumerable<LanguageService> languageServices,
             NotificationManager notificationManager,
-            DevopsArtifactRepository devopsClient,
-            PackageNameManager packageNameManager,
-            IConfiguration configuration)
+            IDevopsArtifactRepository devopsClient,
+            PackageNameManager packageNameManager)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -67,7 +70,7 @@ namespace APIViewWeb.Repositories
             _packageNameManager = packageNameManager;
         }
 
-        public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
+        public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis, bool awaitComputeDiff = false)
         {
             ReviewModel review = new ReviewModel
             {
@@ -77,7 +80,7 @@ namespace APIViewWeb.Repositories
                 Name = originalName,
                 FilterType = ReviewType.Manual
             };
-            await AddRevisionAsync(user, review, originalName, label, fileStream);
+            await AddRevisionAsync(user, review, originalName, label, fileStream, awaitComputeDiff);
             return review;
         }
 
@@ -228,11 +231,11 @@ namespace APIViewWeb.Repositories
             string reviewId,
             string name,
             string label,
-            Stream fileStream)
+            Stream fileStream, bool awaitComputeDiff = false)
         {
             var review = await GetReviewAsync(user, reviewId);
             await AssertAutomaticReviewModifier(user, review);
-            await AddRevisionAsync(user, review, name, label, fileStream);
+            await AddRevisionAsync(user, review, name, label, fileStream, awaitComputeDiff);
         }
 
         private async Task AddRevisionAsync(
@@ -240,7 +243,8 @@ namespace APIViewWeb.Repositories
             ReviewModel review,
             string name,
             string label,
-            Stream fileStream)
+            Stream fileStream,
+            bool awaitComputeDiff = false)
         {
             var revision = new ReviewRevisionModel();
 
@@ -275,6 +279,14 @@ namespace APIViewWeb.Repositories
             await _notificationManager.SubscribeAsync(review, user);
             await _reviewsRepository.UpsertReviewAsync(review);
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(revision, user);
+            if (awaitComputeDiff)
+            {
+                await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
+            }
+            else
+            {
+                _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision));
+            }
         }
 
         private async Task<ReviewCodeFileModel> CreateFileAsync(
@@ -784,6 +796,128 @@ namespace APIViewWeb.Repositories
             review.RequestedReviewers = reviewers;
             review.ApprovalRequestedOn = DateTime.Now;
             await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        /// <summary>
+        /// Get the LineNumbers of the Heading that have diff changes in their sections
+        /// </summary>
+        private async Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, ReviewRevisionModel revision)
+        {
+            try
+            {
+                var review = await _reviewsRepository.GetReviewAsync(reviewId);
+                var latestRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
+                var latestRevisionHtmlLines = latestRevisionCodeFile.Render(false);
+                var latestRevisionTextLines = latestRevisionCodeFile.RenderText(false);
+                ReviewRevisionModelList updatedRevisions = new ReviewRevisionModelList(review);
+
+                foreach (var rev in review.Revisions)
+                {
+                    if (rev.RevisionId !=  revision.RevisionId)
+                    {
+                        HashSet<int> lineNumbersForHeadingOfSectionWithDiff = new HashSet<int>();
+                        var earlierRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, false);
+                        var earlierRevisionHtmlLines = earlierRevisionCodeFile.RenderReadOnly(false);
+                        var earlierRevisionTextLines = earlierRevisionCodeFile.RenderText(false);
+
+                        var diffLines = InlineDiff.Compute(earlierRevisionTextLines, latestRevisionTextLines, earlierRevisionHtmlLines, latestRevisionHtmlLines);
+
+                        foreach (var diffLine in diffLines)
+                        {
+                            if (diffLine.Kind == DiffLineKind.Unchanged && (diffLine.Line.SectionKey != null && diffLine.OtherLine.SectionKey != null))
+                            {
+                                var latestRevisionRootNode = latestRevisionCodeFile.GetCodeLineSectionRoot((int)diffLine.Line.SectionKey);
+                                var earlierRevisionRootNode = earlierRevisionCodeFile.GetCodeLineSectionRoot((int)diffLine.OtherLine.SectionKey);
+                                var diffSectionRoot = ComputeSectionDiff(earlierRevisionRootNode, latestRevisionRootNode, earlierRevisionCodeFile, latestRevisionCodeFile);
+                                if (latestRevisionCodeFile.ChildNodeHasDiff(diffSectionRoot))
+                                    lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
+                            }
+                        }
+                        rev.HeadingsOfSectionsWithDiff.Add(revision.RevisionId, lineNumbersForHeadingOfSectionWithDiff);
+                        updatedRevisions.Add(rev);
+                    }
+                }
+                updatedRevisions.Add(revision);
+                review.Revisions = updatedRevisions;
+                await _reviewsRepository.UpsertReviewAsync(review);
+            }
+            catch (Exception e) 
+            {
+                _telemetryClient.TrackTrace($"Error while computing Diff Between Sections {e}");
+            }
+        }
+
+        /// <summary>
+        /// Computes diff for each level of the tree hierachy of a section
+        /// </summary>
+        public TreeNode<InlineDiffLine<CodeLine>> ComputeSectionDiff(TreeNode<CodeLine> before, TreeNode<CodeLine> after, RenderedCodeFile beforeFile, RenderedCodeFile afterFile)
+        {
+            InlineDiffLine<CodeLine> rootDiff = new InlineDiffLine<CodeLine>(before.Data, after.Data, DiffLineKind.Unchanged);
+            TreeNode<InlineDiffLine<CodeLine>> resultRoot = new TreeNode<InlineDiffLine<CodeLine>>(rootDiff);
+
+            Queue<(TreeNode<CodeLine> before, TreeNode<CodeLine> after, TreeNode<InlineDiffLine<CodeLine>> current)>
+                queue = new Queue<(TreeNode<CodeLine> before, TreeNode<CodeLine> after, TreeNode<InlineDiffLine<CodeLine>> current)>();
+
+            queue.Enqueue((before, after, resultRoot));
+
+            while (queue.Count > 0)
+            {
+                var nodesInProcess = queue.Dequeue();
+                var (beforeHTMLLines, beforeTextLines) = GetCodeLinesForDiff(nodesInProcess.before, nodesInProcess.current, beforeFile);
+                var (afterHTMLLines, afterTextLines) = GetCodeLinesForDiff(nodesInProcess.after, nodesInProcess.current, afterFile);
+
+                var diffResult = InlineDiff.Compute(beforeTextLines, afterTextLines, beforeHTMLLines, afterHTMLLines);
+
+                if (diffResult.Count() == 2 && 
+                    (diffResult[0]!.Line.NodeRef != null && diffResult[1]!.Line.NodeRef != null) &&
+                    (diffResult[0]!.Line.NodeRef.IsLeaf && diffResult[1]!.Line.NodeRef.IsLeaf)) // Detached Leaf Parents which are Eventually Discarded
+                {
+                    var inlineDiffLine = new InlineDiffLine<CodeLine>(diffResult[1].Line, diffResult[0].Line, DiffLineKind.Unchanged);
+                    diffResult = new InlineDiffLine<CodeLine>[] { inlineDiffLine };
+                }
+
+                foreach (var diff in diffResult)
+                {
+                    TreeNode<InlineDiffLine<CodeLine>> addedChild = nodesInProcess.current.AddChild(diff);
+
+                    switch (diff.Kind)
+                    {
+                        case DiffLineKind.Removed:
+                            queue.Enqueue((diff.Line.NodeRef, null, addedChild));
+                            break;
+                        case DiffLineKind.Added:
+                            queue.Enqueue((null, diff.Line.NodeRef, addedChild));
+                            break;
+                        case DiffLineKind.Unchanged:
+                            queue.Enqueue((diff.OtherLine.NodeRef, diff.Line.NodeRef, addedChild));
+                            break;
+                    }
+                }
+            }
+            return resultRoot;
+        }
+
+        private (CodeLine[] htmlLines, CodeLine[] textLines) GetCodeLinesForDiff(TreeNode<CodeLine> node, TreeNode<InlineDiffLine<CodeLine>> curr, RenderedCodeFile codeFile)
+        {
+            (CodeLine[] htmlLines, CodeLine[] textLines) result = (new CodeLine[] { }, new CodeLine[] { });
+            if (node != null)
+            {
+                if (node.IsLeaf)
+                {
+                    result.htmlLines = codeFile.GetDetachedLeafSectionLines(node);
+                    result.textLines = codeFile.GetDetachedLeafSectionLines(node, renderType: RenderType.Text, skipDiff: true);
+
+                    if (result.htmlLines.Count() > 0)
+                    {
+                        curr.WasDetachedLeafParent = true;
+                    }
+                }
+                else
+                {
+                    result.htmlLines = result.textLines = node.Children.Select(x => new CodeLine(x.Data, nodeRef: x)).ToArray();
+                }
+            }
+            return result;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using APIView.Model;
 
 namespace ApiView
 {
@@ -11,8 +12,9 @@ namespace ApiView
         public int? SectionKey { get; }
         public int Indent { get; }
         public bool IsDocumentation { get; }
+        public TreeNode<CodeLine> NodeRef { get; }
 
-        public CodeLine(string html, string id, string lineClass, int? lineNumber = null, int? sectionKey = null, int indent = 0, bool isDocumentation = false)
+        public CodeLine(string html, string id, string lineClass, int? lineNumber = null, int? sectionKey = null, int indent = 0, bool isDocumentation = false, TreeNode<CodeLine> nodeRef = null)
         {
             this.DisplayString = html;
             this.ElementId = id;
@@ -21,17 +23,19 @@ namespace ApiView
             this.SectionKey = sectionKey;
             this.Indent = indent;
             this.IsDocumentation = isDocumentation;
+            this.NodeRef = nodeRef;
         }
 
-        public CodeLine(CodeLine codeLine, string html = null, string id = null, string lineClass = null, int? lineNumber = null, int? sectionKey = null, int indent = 0, bool isDocumentation = false)
+        public CodeLine(CodeLine codeLine, string html = null, string id = null, string lineClass = null, int? lineNumber = null, int? sectionKey = null, int indent = 0, bool isDocumentation = false, TreeNode<CodeLine> nodeRef = null)
         {
             this.DisplayString = html ?? codeLine.DisplayString;
             this.ElementId = id ?? codeLine.ElementId;
             this.LineClass = lineClass ?? codeLine.LineClass;
             this.LineNumber = lineNumber ?? codeLine.LineNumber;
             this.SectionKey = sectionKey ?? codeLine.SectionKey;
-            this.Indent = indent;
-            this.IsDocumentation = isDocumentation;
+            this.Indent = (indent != 0)? indent : codeLine.Indent;
+            this.IsDocumentation = (isDocumentation != false)? isDocumentation : codeLine.IsDocumentation;
+            this.NodeRef = nodeRef ?? codeLine.NodeRef;
         }
 
         public override string ToString()

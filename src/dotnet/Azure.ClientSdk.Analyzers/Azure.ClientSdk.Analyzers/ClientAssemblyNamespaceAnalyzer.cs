@@ -18,17 +18,18 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Core.Expressions",
             "Azure.Data",
             "Azure.DigitalTwins",
+            "Azure.Identity",
             "Azure.IoT",
             "Azure.Learn",
-            "Azure.Media",
             "Azure.Management",
+            "Azure.Media",
             "Azure.Messaging",
-            "Azure.ResourceManager",   
+            "Azure.Monitor",
+            "Azure.ResourceManager",
             "Azure.Search",
             "Azure.Security",
             "Azure.Storage",
             "Azure.Template",
-            "Azure.Identity",
             "Microsoft.Extensions.Azure"
         };
 

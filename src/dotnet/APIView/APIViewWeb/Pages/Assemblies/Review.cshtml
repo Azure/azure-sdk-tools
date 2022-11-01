@@ -14,10 +14,25 @@
     <div class="row mx-1 px-0 py-2 border-bottom">
         <div class="col-lg-12 d-flex px-0">
             <partial name="Shared/_ReviewBadge" model=" Model.Review" />
-            <div class="dropdown d-inline-block my-1">
-                <a class="btn btn-light btn-sm border shadow-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                    <i class="fa-solid fa-flag"></i>&nbsp;&nbsp;Request Approval
-                </a>
+            <div class="btn-group btn-group-sm my-1">
+                @if (Model.Revision.Approvers.Count > 0)
+                {
+                    var approvers = String.Join(", ", Model.Revision.Approvers);
+                    <button type="button" class="btn border btn-sm shadow-sm btn-light" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-title="Approvers" data-content="@approvers">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <span class="badge badge-light">@Model.Revision.Approvers.Count</span>
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn border btn-sm shadow-sm btn-light">
+                        <i class="fa-solid fa-circle-minus"></i>
+                    </button>
+                }
+                <button class="btn btn-light btn-sm border shadow-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                    Approval
+                </button>
+                
                 <div class="dropdown-menu dropdown-menu-right">
                     <span class="dropdown-header">
                         Select users to request for review
@@ -32,7 +47,7 @@
                             <div style="max-height:400px;width:max-content;overflow-y:auto">
                                 @foreach (var approver in Model.PreferredApprovers)
                                 {
-                                    <span class="checkbox dropdown-item-text">
+                                    <span class="checkbox dropdown-item">
                                         <label>
                                             @if (Model.Review.RequestedReviewers != null && Model.Review.RequestedReviewers.Contains(approver))
                                             {
@@ -64,22 +79,6 @@
                     </span>
                 </div>
             </div>
-            <div class="my-1">
-                @if (Model.Revision.Approvers.Count > 0)
-                {
-                    var approvers = String.Join(", ", Model.Revision.Approvers);
-                    <button type="button" class="btn btn-sm shadow-sm btn-success" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-title="Approvers" data-content="@approvers">
-                        <i class="fas fa-check-circle"></i> APPROVED
-                        <span class="badge badge-light">@Model.Revision.Approvers.Count</span>
-                    </button>
-                }
-                else
-                {
-                    <button type="button" class="btn btn-light btn-sm shadow-sm">
-                        PENDING
-                    </button>
-                }
-            </div>
             <div class="my-1 ml-2">
                 @{
                     var popOverContent = $"<b>{Model.ActiveConversations}</b> active revision threads.<br><b>{Model.UsageSampleConversations}</b> active usage sample threads.<br><b>{Model.TotalActiveConversations}</b> total active threads.<br>"
@@ -88,11 +87,11 @@
                     {
                         popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
                     }
-                        <div class="btn-group btn-group-sm shadow-sm" aria-label="Page Information">
-                            <button type="button" class="btn btn-info" id="jump-to-first-comment">
+                        <div class="btn-group btn-group-sm" aria-label="Page Information">
+                            <button type="button" class="btn btn-info shadow-sm" id="jump-to-first-comment">
                                 <i class="far fa-comment-alt"></i>
                             </button>
-                            <button type="button" class="btn btn-info" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
+                            <button type="button" class="btn btn-info shadow-sm" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
                                 <span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
                             </button>
                         </div>
@@ -402,8 +401,10 @@
                 reviewLeftDisplay = "d-none";
                 reviewRightSize = "12";
             }
+
+            var reviewApprovedClass = (Model.Revision.Approvers.Count > 0) ? "review-approved" : "border rounded-1";
         }
-        <div id="review-left" class="col-2 sticky-top border rounded-1 @reviewLeftDisplay">
+        <div id="review-left" class="col-2 sticky-top @reviewApprovedClass @reviewLeftDisplay">
             <div>
                 <div class="namespace-view">
                     @if (Model.CodeFile != null)
@@ -414,7 +415,7 @@
             </div>
         </div>
 
-        <div id="review-right" class="col-@reviewRightSize rounded-1 border">
+        <div id="review-right" class="col-@reviewRightSize @reviewApprovedClass">
             <table class="code-window">
                 <tbody>
                     @foreach (var line in Model.Lines)

@@ -172,6 +172,7 @@ stages:
               inputs:
                 filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
                 arguments: >
+                  -Process "dotnet"
                   -ArgumentList "run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj"
                   -Port "5000"
                 pwsh: true

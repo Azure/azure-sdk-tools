@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIView;
@@ -62,6 +62,10 @@ namespace ApiView
             var codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(
                 stream,
                 JsonSerializerOptions);
+
+            // This should be changed to language service specific property instead of hardcod ing
+            if (!hasSections && codeFile.Language == "Swagger")
+                hasSections = true;
 
             // Spliting out the 'leafSections' of the codeFile is done so as not to have to render large codeFiles at once
             // Rendering sections in part helps to improve page load time

@@ -806,8 +806,6 @@ namespace APIViewWeb.Repositories
         /// </summary>
         private async Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, ReviewRevisionModel revision)
         {
-            try
-            {
                 var review = await _reviewsRepository.GetReviewAsync(reviewId);
                 var latestRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
                 var latestRevisionHtmlLines = latestRevisionCodeFile.Render(false);
@@ -840,11 +838,6 @@ namespace APIViewWeb.Repositories
                     }
                 }
                 await _reviewsRepository.UpsertReviewAsync(review);
-            }
-            catch (Exception e) 
-            {
-                _telemetryClient.TrackTrace($"Error while computing Diff Between Sections {e}");
-            }
         }
 
         /// <summary>

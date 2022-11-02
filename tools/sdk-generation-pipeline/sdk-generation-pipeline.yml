@@ -35,7 +35,7 @@ parameters:
 
   - name: tag
     type: string
-    default: ""
+    default: "''"
 
   - name: serviceType
     type: string

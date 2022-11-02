@@ -52,6 +52,7 @@ parameters:
       "branch": "main"
       "commit": ""
       "pullRequest": ""
+      "title": ""
 
   - name: clientAgent
     type: string
@@ -119,3 +120,4 @@ stages:
               sdkGenerationName: ${{ parameters.sdkGenerationName }}
               triggerType: ${{ parameters.triggerType }}
               sdkPR: ${{ parameters.sdkPR }}
+              swagger: ${{ parameters.swagger }}

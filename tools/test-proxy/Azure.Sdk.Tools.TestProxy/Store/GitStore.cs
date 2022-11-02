@@ -242,7 +242,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new string[] {};
         }
 
-        private void SetOrigin(GitAssetConfiguration config)
+        private void SetOrigin(GitAssetsConfiguration config)
         {
             var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
             GitHandler.Run($"remote set-url origin {cloneUrl}", config);

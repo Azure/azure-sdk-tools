@@ -21,7 +21,7 @@ namespace ApiView
 
         private string _versionString;
 
-        private static HashSet<string> _languageNames = new HashSet<string>(new string[] { "Swagger" });
+        private static HashSet<string> _collapsibleLanguages = new HashSet<string>(new string[] { "Swagger" });
 
         [Obsolete("This is only for back compat, VersionString should be used")]
         public int Version { get; set; }
@@ -59,7 +59,7 @@ namespace ApiView
             return new CodeFileRenderer().Render(this).CodeLines.ToString();
         }
         
-        public static bool IsCollapsibleSectionSSupported(string language) => _languageNames.Contains(language);
+        public static bool IsCollapsibleSectionSSupported(string language) => _collapsibleLanguages.Contains(language);
 
         public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)
         {

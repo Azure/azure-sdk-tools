@@ -1,6 +1,6 @@
 import {RunningEnvironment} from "./runningEnvironment";
 
-export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | undefined, readmeMd?: string) {
+export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | undefined, readmeMd: string | undefined, cadlProject: string | undefined) {
     let outputPackageInfo: any;
     if (runningEnvironment === RunningEnvironment.SwaggerSdkAutomation) {
         outputPackageInfo = {
@@ -9,9 +9,6 @@ export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | un
                 'rush.json',
                 'common/config/rush/pnpm-lock.yaml'
             ],
-            "readmeMd": [
-                readmeMd
-            ],
             "changelog": {
                 "content": "",
                 "hasBreakingChange": false
@@ -19,6 +16,11 @@ export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | un
             "artifacts": [],
             "result": "succeeded"
         };
+        if (cadlProject) {
+            outputPackageInfo['cadlProject'] = [cadlProject];
+        } else {
+            outputPackageInfo['readmeMd'] = [readmeMd];
+        }
     } else if (runningEnvironment === RunningEnvironment.SdkGeneration) {
         outputPackageInfo = {
             "packageName": "",

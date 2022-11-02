@@ -109,8 +109,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     {
                         throw GenerateInvokeException(SHAResult);
                     }
+                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
                     GitHandler.Run($"tag {generatedTagName}", config);
-                    GitHandler.Run($"push origin {generatedTagName}", config);
+                    GitHandler.Run($"push {cloneUrl} {generatedTagName}", config);
                 }
                 catch(GitProcessException e)
                 {
@@ -261,9 +262,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 if (!string.IsNullOrEmpty(config.Tag))
                 {
+                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
                     // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
                     // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
-                    GitHandler.Run($"fetch origin refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
+                    GitHandler.Run($"fetch {cloneUrl} refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
                 }
 
                 // Set non-cone mode otherwise path filters will not work in git >= 2.37.0
@@ -396,10 +398,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
+                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
                     // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot.ToString());
                     GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
                     GitHandler.Run($"sparse-checkout init", config);
+                    GitHandler.Run($"remote remove origin", config);
                 }
                 catch(GitProcessException e)
                 {

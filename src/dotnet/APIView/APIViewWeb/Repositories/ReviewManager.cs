@@ -746,7 +746,7 @@ namespace APIViewWeb.Repositories
             RunReviewGenPipeline(paramList, languageService.Name);
         }
 
-        public async Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project, string language)
+        public async Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project)
         {
             var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
             var archive = new ZipArchive(stream);
@@ -760,8 +760,7 @@ namespace APIViewWeb.Repositories
 
                 var reviewId = reviewDetails[1];
                 var revisionId = reviewDetails[2];
-                bool hasSection = string.IsNullOrEmpty(language)? false : LanguageService.IsCollapsibleSectionSSupported(language);
-                var codeFile = await CodeFile.DeserializeAsync(entry.Open(), hasSection);
+                var codeFile = await CodeFile.DeserializeAsync(entry.Open());
 
                 // Update code file with one downloaded from pipeline
                 var review = await _reviewsRepository.GetReviewAsync(reviewId);

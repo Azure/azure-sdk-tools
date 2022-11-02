@@ -27,9 +27,9 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId, string project = "internal", string language = "")
+        public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId, string project = "internal")
         {
-            await _reviewManager.UpdateReviewCodeFiles(repoName, buildId, artifactPath, project, language);
+            await _reviewManager.UpdateReviewCodeFiles(repoName, buildId, artifactPath, project);
             return Ok();
         }
     }

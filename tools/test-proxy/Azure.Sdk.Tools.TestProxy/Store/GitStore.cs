@@ -110,8 +110,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         throw GenerateInvokeException(SHAResult);
                     }
                     var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
+                    GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+
                     GitHandler.Run($"tag {generatedTagName}", config);
-                    GitHandler.Run($"push {cloneUrl} {generatedTagName}", config);
+                    GitHandler.Run($"push origin {generatedTagName}", config);
+                    HideOrigin(config);
                 }
                 catch(GitProcessException e)
                 {
@@ -240,6 +243,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new string[] {};
         }
 
+        private void HideOrigin(GitAssetsConfiguration config)
+        {
+            var publicOrigin = GetCloneUrl(config.AssetsRepo, config.RepoRoot, honorToken: false);
+            GitHandler.Run($"remote set-url origin {publicOrigin}", config);
+        }
+
         /// <summary>
         /// Given a configuration, set the sparse-checkout directory for the config, then attempt checkout of the targeted Tag.
         /// </summary>
@@ -263,9 +272,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 if (!string.IsNullOrEmpty(config.Tag))
                 {
                     var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
+                    GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+
                     // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
                     // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).
-                    GitHandler.Run($"fetch {cloneUrl} refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
+                    GitHandler.Run($"fetch origin refs/tags/{config.Tag}:refs/tags/{config.Tag}", config);
                 }
 
                 // Set non-cone mode otherwise path filters will not work in git >= 2.37.0
@@ -274,6 +285,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 // The -c advice.detachedHead=false removes the verbose detatched head state
                 // warning that happens when syncing sparse-checkout to a particular Tag
                 GitHandler.Run($"-c advice.detachedHead=false checkout {config.Tag}", config);
+                HideOrigin(config);
 
                 // the first argument, the key, is the path to the assets json relative location
                 // the second argument, the value, is the value we want to set the json elative location to
@@ -321,17 +333,21 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return ownerEmail.Trim();
         }
 
-        public static string GetCloneUrl(string assetsRepo, string repositoryLocation)
+        public static string GetCloneUrl(string assetsRepo, string repositoryLocation, bool honorToken = true)
         {
             var GitHandler = new GitProcessHandler();
             var consoleWrapper = new ConsoleWrapper();
 
             var sshUrl = $"git@github.com:{assetsRepo}.git";
             var httpUrl = $"https://github.com/{assetsRepo}";
-            var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
-            if (!string.IsNullOrWhiteSpace(gitToken))
+
+            if (honorToken)
             {
-                httpUrl = $"https://{gitToken}@github.com/{assetsRepo}";
+                var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
+                if (!string.IsNullOrWhiteSpace(gitToken))
+                {
+                    httpUrl = $"https://{gitToken}@github.com/{assetsRepo}";
+                }
             }
 
             if (String.IsNullOrEmpty(repositoryLocation))
@@ -402,7 +418,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
                     GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
                     GitHandler.Run($"sparse-checkout init", config);
-                    GitHandler.Run($"remote remove origin", config);
                 }
                 catch(GitProcessException e)
                 {

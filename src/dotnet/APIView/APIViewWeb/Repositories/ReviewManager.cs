@@ -772,6 +772,9 @@ namespace APIViewWeb.Repositories
                         await _codeFileRepository.UpsertCodeFileAsync(revisionId, revision.SingleFile.ReviewFileId, codeFile);
                         revision.Files.FirstOrDefault().VersionString = codeFile.VersionString;
                         await _reviewsRepository.UpsertReviewAsync(review);
+
+                        // Trigger diff calculation using updated code file from sandboxing pipeline
+                        await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
                     }
                 }
             }
@@ -803,17 +806,15 @@ namespace APIViewWeb.Repositories
         /// </summary>
         private async Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, ReviewRevisionModel revision)
         {
-            try
-            {
                 var review = await _reviewsRepository.GetReviewAsync(reviewId);
                 var latestRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
                 var latestRevisionHtmlLines = latestRevisionCodeFile.Render(false);
                 var latestRevisionTextLines = latestRevisionCodeFile.RenderText(false);
-                ReviewRevisionModelList updatedRevisions = new ReviewRevisionModelList(review);
 
                 foreach (var rev in review.Revisions)
                 {
-                    if (rev.RevisionId !=  revision.RevisionId)
+                    // Calculate diff against previous revisions only. APIView only shows diff against revision lower than current one.
+                    if (rev.RevisionId !=  revision.RevisionId && rev.RevisionNumber < revision.RevisionNumber)
                     {
                         HashSet<int> lineNumbersForHeadingOfSectionWithDiff = new HashSet<int>();
                         var earlierRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, false);
@@ -833,18 +834,14 @@ namespace APIViewWeb.Repositories
                                     lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
                             }
                         }
+                        if(rev.HeadingsOfSectionsWithDiff.ContainsKey(revision.RevisionId))
+                        {
+                            rev.HeadingsOfSectionsWithDiff.Remove(revision.RevisionId);
+                        }
                         rev.HeadingsOfSectionsWithDiff.Add(revision.RevisionId, lineNumbersForHeadingOfSectionWithDiff);
-                        updatedRevisions.Add(rev);
                     }
                 }
-                updatedRevisions.Add(revision);
-                review.Revisions = updatedRevisions;
                 await _reviewsRepository.UpsertReviewAsync(review);
-            }
-            catch (Exception e) 
-            {
-                _telemetryClient.TrackTrace($"Error while computing Diff Between Sections {e}");
-            }
         }
 
         /// <summary>

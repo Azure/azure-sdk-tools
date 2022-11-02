@@ -109,8 +109,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     {
                         throw GenerateInvokeException(SHAResult);
                     }
-                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-                    GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+                    SetOrigin(config);
 
                     GitHandler.Run($"tag {generatedTagName}", config);
                     GitHandler.Run($"push origin {generatedTagName}", config);
@@ -243,6 +242,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new string[] {};
         }
 
+        private void SetOrigin(GitAssetConfiguration config)
+        {
+            var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
+            GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+        }
+
         private void HideOrigin(GitAssetsConfiguration config)
         {
             var publicOrigin = GetCloneUrl(config.AssetsRepo, config.RepoRoot, honorToken: false);
@@ -271,8 +276,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                 if (!string.IsNullOrEmpty(config.Tag))
                 {
-                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-                    GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+                    SetOrigin(config);
 
                     // Always retrieve latest as we don't know when the last time we fetched from origin was. If we're lucky, this is a
                     // no-op. However, we are only paying this price _once_ per startup of the server (as we cache assets.json status remember!).

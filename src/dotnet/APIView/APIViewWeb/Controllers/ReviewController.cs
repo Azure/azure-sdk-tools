@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIViewWeb.Filters;
@@ -27,9 +27,9 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId, string project = "internal")
+        public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId, string project = "internal", string language = "")
         {
-            await _reviewManager.UpdateReviewCodeFiles(repoName, buildId, artifactPath, project);
+            await _reviewManager.UpdateReviewCodeFiles(repoName, buildId, artifactPath, project, language);
             return Ok();
         }
     }

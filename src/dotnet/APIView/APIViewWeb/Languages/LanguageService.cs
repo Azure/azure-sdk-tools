@@ -1,10 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
-using APIViewWeb.Models;
 
 namespace APIViewWeb
 {
@@ -26,5 +25,8 @@ namespace APIViewWeb
             Tokens = new CodeFileToken[] {new CodeFileToken("", CodeFileTokenKind.Newline), ReviewNotReadyCodeFile, new CodeFileToken("", CodeFileTokenKind.Newline) },
             Navigation = new NavigationItem[] { new NavigationItem() { Text = fileName } }
         };
+
+        private static HashSet<string> _languageNames = new HashSet<string>(new string[] { "Swagger", "Json" });
+        public static bool IsCollapsibleSectionSSupported(string language) => _languageNames.Contains(language);
     }
 }

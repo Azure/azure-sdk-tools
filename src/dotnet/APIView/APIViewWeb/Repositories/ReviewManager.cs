@@ -746,7 +746,7 @@ namespace APIViewWeb.Repositories
             RunReviewGenPipeline(paramList, languageService.Name);
         }
 
-        public async Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project)
+        public async Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project, string language)
         {
             var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
             var archive = new ZipArchive(stream);
@@ -760,7 +760,8 @@ namespace APIViewWeb.Repositories
 
                 var reviewId = reviewDetails[1];
                 var revisionId = reviewDetails[2];
-                var codeFile = await CodeFile.DeserializeAsync(entry.Open());
+                bool hasSection = string.IsNullOrEmpty(language)? false : LanguageService.IsCollapsibleSectionSSupported(language);
+                var codeFile = await CodeFile.DeserializeAsync(entry.Open(), hasSection);
 
                 // Update code file with one downloaded from pipeline
                 var review = await _reviewsRepository.GetReviewAsync(reviewId);
@@ -774,7 +775,7 @@ namespace APIViewWeb.Repositories
                         await _reviewsRepository.UpsertReviewAsync(review);
 
                         // Trigger diff calculation using updated code file from sandboxing pipeline
-                        _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision));
+                        await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
                     }
                 }
             }
@@ -833,6 +834,10 @@ namespace APIViewWeb.Repositories
                                 if (latestRevisionCodeFile.ChildNodeHasDiff(diffSectionRoot))
                                     lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
                             }
+                        }
+                        if(rev.HeadingsOfSectionsWithDiff.ContainsKey(revision.RevisionId))
+                        {
+                            rev.HeadingsOfSectionsWithDiff.Remove(revision.RevisionId);
                         }
                         rev.HeadingsOfSectionsWithDiff.Add(revision.RevisionId, lineNumbersForHeadingOfSectionWithDiff);
                     }

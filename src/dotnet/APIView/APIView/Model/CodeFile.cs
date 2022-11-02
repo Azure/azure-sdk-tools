@@ -63,10 +63,6 @@ namespace ApiView
                 stream,
                 JsonSerializerOptions);
 
-            // This should be changed to language service specific property instead of hardcod ing
-            if (!hasSections && codeFile.Language == "Swagger" && codeFile.LeafSections == null)
-                hasSections = true;
-
             // Spliting out the 'leafSections' of the codeFile is done so as not to have to render large codeFiles at once
             // Rendering sections in part helps to improve page load time
             if (hasSections)

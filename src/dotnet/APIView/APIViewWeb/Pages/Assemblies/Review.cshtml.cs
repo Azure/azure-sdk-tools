@@ -243,6 +243,13 @@ namespace APIViewWeb.Pages.Assemblies
             await _manager.ToggleApprovalAsync(User, id, revisionId);
             return RedirectToPage(new { id = id });
         }
+
+        public async Task<IActionResult> OnPostApprovePackageNameAsync(string id)
+        {
+            await _manager.ApprovePackageNameAsync(User, id);
+            return RedirectToPage(new { id = id });
+        }
+
         public async Task<ActionResult> OnPostRequestReviewersAsync(string id, HashSet<string> reviewers)
         {
             await _manager.RequestApproversAsync(User, id, reviewers);

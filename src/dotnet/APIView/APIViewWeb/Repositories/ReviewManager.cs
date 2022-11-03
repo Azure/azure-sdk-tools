@@ -430,6 +430,15 @@ namespace APIViewWeb.Repositories
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
+        public async Task ApprovePackageNameAsync(ClaimsPrincipal user, string id)
+        {
+            ReviewModel review = await GetReviewAsync(user, id);
+            await AssertApprover(user, review.Revisions.Last());
+            review.PackageNameApprovedBy = user.GetGitHubLogin();
+            review.IsPackageNameApproved = true;
+            await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
         private async Task AssertApprover(ClaimsPrincipal user, ReviewRevisionModel revisionModel)
         {
             var result = await _authorizationService.AuthorizeAsync(

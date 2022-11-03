@@ -63,27 +63,47 @@
                                         </label>
                                     </span>
                                 }
-                            </div>
-                            <span class="dropdown-item-text">
-                                @if (anyChecked)
-                                {
-                                    <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" onclick="document.getElementById('submitRequestForReview').click()" disabled>Request Selected</button>
-                                }
-                                else 
-                                {
-                                    <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitRequestForReview').click();">Request All</button>
-                                }                                
-                                <button type="submit" id="submitRequestForReview" hidden></button>
-                            </span>
-                        </form>
-                    </span>
+                                <div style="max-height:400px;width:max-content;overflow-y:auto">
+                                    @foreach (var approver in Model.PreferredApprovers)
+                                    {
+                                        <span class="checkbox dropdown-item-text">
+                                            <label>
+                                                @if (Model.Review.RequestedReviewers != null && Model.Review.RequestedReviewers.Contains(approver))
+                                                {
+                                                    <input type="checkbox" class="selectDropdownForRequest" name="reviewers" value="@approver" checked>
+                                                    anyChecked = true;
+                                                }
+                                                else
+                                                {
+                                                    <input type="checkbox" class="selectDropdownForRequest" name="reviewers" value="@approver">
+                                                }
+                                                &nbsp;&nbsp;<img username="@approver" size="28" class="comment-icon align-self-start mr-2" height="28" width="28" />
+                                                @approver
+                                            </label>
+                                        </span>
+                                    }
+                                </div>
+                                <span class="dropdown-item-text">
+                                    @if (anyChecked)
+                                    {
+                                        <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" onclick="document.getElementById('submitRequestForReview').click()" disabled>Request Selected</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-light shadow-sm" id="submitReviewRequest" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitRequestForReview').click();">Request All</button>
+                                    }
+                                    <button type="submit" id="submitRequestForReview" hidden></button>
+                                </span>
+                            </form>
+                        </span>
+                    </div>
                 </div>
             </div>
             <div class="my-1 ml-2">
                 @{
                     var popOverContent = $"<b>{Model.ActiveConversations}</b> active revision threads.<br><b>{Model.UsageSampleConversations}</b> active usage sample threads.<br><b>{Model.TotalActiveConversations}</b> total active threads.<br>"
                     + $"<b>Current Revision:</b> <em>{@Model.Revision.DisplayName}</em>";
-                        @if (Model.DiffRevisionId != null)
+                            @if (Model.DiffRevisionId != null)
                     {
                         popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
                     }
@@ -142,7 +162,7 @@
                             {
                                 @if (Model.PreferredApprovers.Contains(User.GetGitHubLogin()))
                                 {
-                                    <button type="submit" class="btn btn-sm shadow-sm btn-success ml-2">
+                                    <button type="submit" class="btn btn-sm shadow-sm btn-success ml-2" title="Approve APIs in current review revision">
                                         <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve
                                     </button>
                                 }
@@ -172,6 +192,17 @@
                     }
                 </form>
             </div>
+            @if (!Model.Review.IsPackageNameApproved && Model.Review.FilterType == ReviewType.Automatic)
+            {
+                <div class="my-1">
+                    <form asp-resource="@Model.Review" class="form-inline" asp-page-handler="ApprovePackageName" method="post" asp-requirement="@ApproverRequirement.Instance">
+                        <button type="submit" class="btn btn-sm shadow-sm btn-success ml-2" title="Package name must be approved before first preview release of a new package.">
+                            <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve Package Name
+                        </button>
+                    </form>
+                </div>
+            }
+            
             <div class="dropdown d-inline-block my-1 ml-2">
                 <a class="btn btn-light btn-sm border shadow-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown">
                     <i class="fas fa-sm fa-sliders-h"></i>&nbsp;&nbsp;Options

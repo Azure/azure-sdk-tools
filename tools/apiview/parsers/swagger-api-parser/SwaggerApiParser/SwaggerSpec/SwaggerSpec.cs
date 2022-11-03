@@ -10,6 +10,10 @@ public class SwaggerSpec
 {
     public string swagger { get; set; }
 
+    public string swaggerFilePath;
+
+    public string swaggerLink;
+
     public Info info { get; set; }
     public string host { get; set; }
 

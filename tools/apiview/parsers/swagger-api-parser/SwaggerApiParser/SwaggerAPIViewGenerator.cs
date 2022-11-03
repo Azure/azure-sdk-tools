@@ -27,32 +27,17 @@ namespace SwaggerApiParser
                 packageName = packageName
             };
 
-            if (swaggerSpec.definitions != null)
-            {
-                foreach (var definition in swaggerSpec.definitions)
-                {
-                    if (!schemaCache.Cache.ContainsKey(definition.Key))
-                    {
-                        schemaCache.AddSchema(swaggerFilePath, definition.Key, definition.Value);
-                    }
-                }
-            }
-           
+            AddDefinitionsToCache(swaggerSpec, swaggerFilePath, schemaCache);
 
-            if (swaggerSpec.parameters != null)
-            {
-                foreach (var parameter in swaggerSpec.parameters)
-                {
-                    if (!schemaCache.ParametersCache.ContainsKey(parameter.Key))
-                    {
-                        schemaCache.AddParameter(swaggerFilePath, parameter.Key, parameter.Value);
-                    }
-                }
-            }
-           
-            
+
             ret.SwaggerApiViewGeneral.xMsParameterizedHost?.ResolveParameters(schemaCache, swaggerFilePath);
+
             
+            // If swagger doesn't have any path, it's common definition swagger. 
+            if (swaggerSpec.paths.Count == 0)
+            {
+                return null;
+            }
 
 
             foreach (var (currentPath, operations) in swaggerSpec.paths)
@@ -84,13 +69,14 @@ namespace SwaggerApiParser
                         Responses = new List<SwaggerApiViewResponse>(),
                         xMsLongRunningOperation = value.xMsLongRunningOperaion
                     };
+                    
                     if (value.parameters != null)
                         foreach (var parameter in value.parameters)
                         {
                             var param = parameter;
                             if (parameter.IsRefObject())
                             {
-                                param = (Parameter)swaggerSpec.ResolveRefObj(parameter.Ref);
+                                param = (Parameter)swaggerSpec.ResolveRefObj(parameter.Ref) ?? schemaCache.GetParameterFromCache(parameter.Ref, swaggerFilePath);
                             }
 
                             var currentSwaggerFilePath = swaggerFilePath;
@@ -179,6 +165,32 @@ namespace SwaggerApiParser
 
             ret.Paths.SortByMethod();
             return ret;
+        }
+
+        public static void AddDefinitionsToCache(SwaggerSpec swaggerSpec, string swaggerFilePath, SchemaCache schemaCache)
+        {
+            if (swaggerSpec.definitions != null)
+            {
+                foreach (var definition in swaggerSpec.definitions)
+                {
+                    if (!schemaCache.Cache.ContainsKey(definition.Key))
+                    {
+                        schemaCache.AddSchema(swaggerFilePath, definition.Key, definition.Value);
+                    }
+                }
+            }
+
+
+            if (swaggerSpec.parameters != null)
+            {
+                foreach (var parameter in swaggerSpec.parameters)
+                {
+                    if (!schemaCache.ParametersCache.ContainsKey(parameter.Key))
+                    {
+                        schemaCache.AddParameter(swaggerFilePath, parameter.Key, parameter.Value);
+                    }
+                }
+            }
         }
     }
 }

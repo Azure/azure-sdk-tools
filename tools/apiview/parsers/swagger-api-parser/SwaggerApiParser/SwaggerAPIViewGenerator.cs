@@ -94,6 +94,12 @@ namespace SwaggerApiParser
                             }
 
                             var currentSwaggerFilePath = swaggerFilePath;
+
+                            if (param == null)
+                            {
+                                continue;
+                            }
+                            
                             var swaggerApiViewOperationParameter = new SwaggerApiViewParameter
                             {
                                 description = param.description,

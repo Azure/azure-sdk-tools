@@ -124,10 +124,10 @@ public class SwaggerApiViewTest
     public async Task TestContentModerator()
     {
         const string contentModerator = "./fixtures/ContentModerator.json";
-        var deviceUpdateSwagger = await SwaggerDeserializer.Deserialize(contentModerator);
+        var contentModeratorSwagger = await SwaggerDeserializer.Deserialize(contentModerator);
 
         SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.ContentModerator", "Microsoft.ContentModerator");
-        root.AddSwaggerSpec(deviceUpdateSwagger, Path.GetFullPath(contentModerator), "Microsoft.ContentModerator");
+        root.AddSwaggerSpec(contentModeratorSwagger, Path.GetFullPath(contentModerator), "Microsoft.ContentModerator");
 
         var codeFile = root.GenerateCodeFile();
         var outputFilePath = Path.GetFullPath("./contentModerator_codefile.json");

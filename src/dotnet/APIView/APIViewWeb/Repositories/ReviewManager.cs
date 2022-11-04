@@ -179,7 +179,7 @@ namespace APIViewWeb.Repositories
                 review.ServiceName = p?.ServiceName;
             }
 
-            //If current review doesn't have package name approved status then check if package name is approved for any reviewws for the same package.
+            //If current review doesn't have package name approved status then check if package name is approved for any reviews for the same package.
             if(!review.IsPackageNameApproved)
             {
                 review.IsPackageNameApproved = await IsPackageNameApproved(review.Language, review.PackageName);

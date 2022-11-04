@@ -34,7 +34,7 @@ namespace ApiView
             var stringBuilder = new StringBuilder();
             string currentId = null;
             bool isDocumentationRange = false;
-            bool isHiddenApiRange = false;
+            bool isHiddenApiToken = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
             Stack<SectionType> nodesInProcess = new Stack<SectionType>();
@@ -57,7 +57,7 @@ namespace ApiView
                 {
                     case CodeFileTokenKind.Newline:
                         int ? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count: null;
-                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange, isHiddenApi: isHiddenApiRange);
+                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange, isHiddenApi: isHiddenApiToken);
                         if (leafSectionPlaceHolderNumber != 0)
                         {
                             lineNumber += leafSectionPlaceHolderNumber - 1;
@@ -106,11 +106,11 @@ namespace ApiView
                         break;
 
                     case CodeFileTokenKind.HiddenApiRangeStart:
-                        isHiddenApiRange = true;
+                        isHiddenApiToken = true;
                         break;
 
                     case CodeFileTokenKind.HiddenApiRangeEnd:
-                        isHiddenApiRange = false;
+                        isHiddenApiToken = false;
                         break;
 
                     case CodeFileTokenKind.DeprecatedRangeStart:
@@ -132,7 +132,7 @@ namespace ApiView
                     case CodeFileTokenKind.FoldableSectionHeading:
                         nodesInProcess.Push(SectionType.Heading);
                         currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
-                        RenderToken(token, stringBuilder, isDeprecatedToken);
+                        RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentStart:
@@ -173,14 +173,14 @@ namespace ApiView
                         {
                             stringBuilder.Append($"<thead><tr>");
                             stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
-                            RenderToken(token, stringBuilder, isDeprecatedToken);
+                            RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
                             stringBuilder.Append("</th>");
                             tableColumnCount.Curr++;
                         }
                         else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
                         {
                             stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
-                            RenderToken(token, stringBuilder, isDeprecatedToken);
+                            RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
                             stringBuilder.Append("</th>");
                             stringBuilder.Append("</tr></thead><tbody>");
                             tableColumnCount.Curr = 0;
@@ -188,7 +188,7 @@ namespace ApiView
                         else
                         {
                             stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
-                            RenderToken(token, stringBuilder, isDeprecatedToken);
+                            RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
                             stringBuilder.Append("</th>");
                             tableColumnCount.Curr++;
                         }
@@ -243,13 +243,13 @@ namespace ApiView
 
                     default:
                         currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
-                        RenderToken(token, stringBuilder, isDeprecatedToken);
+                        RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
                         break;
                 }
             }
         }
 
-        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken)
+        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken, bool isHiddenApiToken)
         {
             if (token.Value != null)
             {

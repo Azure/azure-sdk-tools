@@ -9,11 +9,13 @@ public class SchemaCache
 {
     public Dictionary<string, Dictionary<string, BaseSchema>> Cache;
     public Dictionary<string, BaseSchema> ResolvedCache;
+    public Dictionary<string, Dictionary<string, Parameter>> ParametersCache;
 
     public SchemaCache()
     {
         this.Cache = new Dictionary<string, Dictionary<string, BaseSchema>>();
         this.ResolvedCache = new Dictionary<string, BaseSchema>();
+        this.ParametersCache = new Dictionary<string, Dictionary<string, Parameter>>();
     }
 
     public void AddSchema(string swaggerFilePath, string key, BaseSchema value)
@@ -26,6 +28,18 @@ public class SchemaCache
         }
 
         swaggerSchema.TryAdd(key, value);
+    }
+
+    public void AddParameter(string swaggerFilePath, string key, Parameter parameter)
+    {
+        this.ParametersCache.TryGetValue(swaggerFilePath, out var parameterCache);
+        if (parameterCache == null)
+        {
+            parameterCache = new Dictionary<string, Parameter>();
+            this.ParametersCache.TryAdd(swaggerFilePath, parameterCache);
+        }
+
+        parameterCache.TryAdd(key, parameter);
     }
 
     private static string GetReferencedSwaggerFile(string Ref, string currentSwaggerFilePath)
@@ -50,7 +64,7 @@ public class SchemaCache
         return referenceSwaggerFilePath;
     }
 
-    private static string GetRefKey(string Ref)
+    public static string GetRefKey(string Ref)
     {
         var key = Ref.Split("/").Last();
         return key;
@@ -87,6 +101,41 @@ public class SchemaCache
         }
 
         return ret;
+    }
+
+    public Parameter GetParameterFromCache(string Ref, string currentSwaggerFilePath)
+    {
+        // try get from resolved cache.
+
+
+        var referenceSwaggerFilePath = GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
+
+
+        this.ParametersCache.TryGetValue(referenceSwaggerFilePath, out var parameterCache);
+        if (parameterCache == null)
+        {
+            return null;
+        }
+
+        var key = GetRefKey(Ref);
+        parameterCache.TryGetValue(key, out var ret);
+
+        if (ret == null)
+        {
+            throw new Exception($"Reference not found. $ref: {Ref}");
+        }
+
+        return ret;
+    }
+
+    public Parameter GetResolvedParameter(Parameter parameter, string currentSwaggerFilePath)
+    {
+        if (parameter.IsRefObject())
+        {
+            return this.GetParameterFromCache(parameter.Ref, currentSwaggerFilePath);
+        }
+
+        return parameter;
     }
 
     public BaseSchema GetResolvedSchema(BaseSchema root, string currentSwaggerFilePath, LinkedList<string> refChain = null)
@@ -149,6 +198,7 @@ public class SchemaCache
 
         if (root.items != null && root.items.Ref != null && !refChain.Contains(root.items.Ref))
         {
+            refChain.AddLast(root.items.Ref);
             root.items = GetResolvedSchema(root.items, currentSwaggerFilePath, refChain);
         }
 

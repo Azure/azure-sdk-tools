@@ -12,7 +12,7 @@ namespace SwaggerApiParser
         static Task<int> Main(string[] args)
         {
             var swaggers = new Option<IEnumerable<string>>("--swaggers",
-                "The input swaggers file. Can be a single file or multiple files separated by space.");
+                "The input swagger file. Can be a single file or multiple files separated by space.");
 
             var output = new Option<string>(name: "--output", description: "The output file path.",
                 getDefaultValue: () => "swagger.json");
@@ -79,6 +79,10 @@ namespace SwaggerApiParser
             
             
             SwaggerApiViewRoot root = new SwaggerApiViewRoot(packageName, packageName);
+
+
+            List<SwaggerSpec> swaggerSpecs = new List<SwaggerSpec>();
+
             var idx = 0;
             foreach (var swaggerFilePath in swaggerFilePaths)
             {
@@ -93,7 +97,16 @@ namespace SwaggerApiParser
                 var input = Path.GetFullPath(swaggerFilePath);
                 Console.WriteLine("Generating codefile for swagger file: {0}", Path.GetFileName(input));
                 var swaggerSpec = await SwaggerDeserializer.Deserialize(input);
-                root.AddSwaggerSpec(swaggerSpec, Path.GetFullPath(input), packageName, swaggerLink);
+                swaggerSpec.swaggerFilePath = Path.GetFullPath(swaggerFilePath);
+                swaggerSpec.swaggerLink = swaggerLink;
+                swaggerSpecs.Add(swaggerSpec);
+                root.AddDefinitionToCache(swaggerSpec, swaggerSpec.swaggerFilePath);
+                
+            }
+
+            foreach (var swaggerSpec in swaggerSpecs)
+            {
+                root.AddSwaggerSpec(swaggerSpec, swaggerSpec.swaggerFilePath, packageName, swaggerSpec.swaggerLink);
             }
 
             var codeFile = root.GenerateCodeFile();

@@ -1,0 +1,11 @@
+# Release History
+
+## Version 1.0.1 (10-31-2022)
+
++ Fix missing first property for definition
++ Fix wrong "required" property in xMsParameterizedHost parameters by resolving parameter reference
++ Show enum type for definition
++ Support resolve definition files from common types file.
+
+## Version 1.0.0 (10-5-2022)
+Initial release.

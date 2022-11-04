@@ -119,6 +119,22 @@ public class SwaggerApiViewTest
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
     }
+    
+    [Fact]
+    public async Task TestContentModerator()
+    {
+        const string contentModerator = "./fixtures/ContentModerator.json";
+        var contentModeratorSwagger = await SwaggerDeserializer.Deserialize(contentModerator);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.ContentModerator", "Microsoft.ContentModerator");
+        root.AddSwaggerSpec(contentModeratorSwagger, Path.GetFullPath(contentModerator), "Microsoft.ContentModerator");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./contentModerator_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
 
     [Fact]
     public async Task TestMultivariate()

@@ -17,6 +17,9 @@ resource log_analytics 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
       legacy: 0
       enableLogAccessUsingOnlyResourcePermissions: resourcePermissions
     }
+    workspaceCapping: {
+        dailyQuotaGb: 100
+    }
   }
 }
 

@@ -34,6 +34,7 @@ namespace ApiView
             var stringBuilder = new StringBuilder();
             string currentId = null;
             bool isDocumentationRange = false;
+            bool isHiddenApiRange = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
             Stack<SectionType> nodesInProcess = new Stack<SectionType>();
@@ -56,7 +57,7 @@ namespace ApiView
                 {
                     case CodeFileTokenKind.Newline:
                         int ? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count: null;
-                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange);
+                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange, isHiddenApi: isHiddenApiRange);
                         if (leafSectionPlaceHolderNumber != 0)
                         {
                             lineNumber += leafSectionPlaceHolderNumber - 1;
@@ -102,6 +103,14 @@ namespace ApiView
                     case CodeFileTokenKind.DocumentRangeEnd:
                         CloseDocumentationRange(stringBuilder);
                         isDocumentationRange = false;
+                        break;
+
+                    case CodeFileTokenKind.HiddenApiRangeStart:
+                        isHiddenApiRange = true;
+                        break;
+
+                    case CodeFileTokenKind.HiddenApiRangeEnd:
+                        isHiddenApiRange = false;
                         break;
 
                     case CodeFileTokenKind.DeprecatedRangeStart:

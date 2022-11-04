@@ -14,6 +14,10 @@ parameters:
   - name: ParserPath
     type: string
     default: ''
+  - name: StorageSasVariableName
+    type: string
+    default: 'apiview-originals-sas'
+
 
 steps:
 - task: Powershell@2
@@ -28,7 +32,7 @@ steps:
       -WorkingDir "$(Pipeline.Workspace)"
       -StorageBaseUrl "${{ parameters.StorageContainerUrl }}"
       -ApiviewGenScript "${{ parameters.ApiviewGenScript }}"
-      -ContainerSas "$(apiview-originals-sas)"
+      -ContainerSas "$(${{ parameters.StorageSasVariableName }})"
       -ParserPath "${{ parameters.ParserPath }}"
 
 - task: PublishBuildArtifacts@1

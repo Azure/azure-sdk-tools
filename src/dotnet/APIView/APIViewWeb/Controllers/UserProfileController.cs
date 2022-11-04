@@ -18,12 +18,13 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPut]
-        public ActionResult UpdateReviewPageSettings(bool? hideLineNumbers = null, bool? hideLeftNavigation = null)
+        public ActionResult UpdateReviewPageSettings(bool? hideLineNumbers = null, bool? hideLeftNavigation = null, bool? showHiddenApis = null)
         {
             _userPreferenceCache.UpdateUserPreference(new UserPreferenceModel()
             {
                 HideLeftNavigation = hideLeftNavigation,
                 HideLineNumbers = hideLineNumbers,
+                ShowHiddenApis = showHiddenApis
             }, User);
             return Ok();
         }
@@ -35,7 +36,7 @@ namespace APIViewWeb.Controllers
             UserPreferenceModel preference = await _userPreferenceCache.GetUserPreferences(User);
 
             preference.Theme = theme;
-            
+
             HashSet<string> Languages = new HashSet<string>(languages);
             preference.ApprovedLanguages = Languages;
 

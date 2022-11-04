@@ -345,7 +345,9 @@ $(() => {
   });
 
   $(SHOW_HIDDEN_CHECKBOX).on("click", e => {
-    $(SEL_HIDDEN_CLASS).toggleClass("d-none");
+    updatePageSettings(function() {
+      $(SEL_HIDDEN_CLASS).toggleClass("d-none");
+    });
   });
 
   $(SHOW_HIDDEN_HREF).on("click", e => {

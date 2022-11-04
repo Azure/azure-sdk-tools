@@ -59,10 +59,16 @@
         codeLineDisplay = "hidden-row";
     }
 
-    // Hidden APIs are always shown if we are in Diff mode and there are changes.
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel ?? new UserPreferenceModel();
+
+    // Always show hidden APIs if we are in Diff mode and there are changes.
     if (Model.CodeLine.IsHiddenApi && Model.Kind == DiffLineKind.Unchanged)
     {
-        hiddenApiRow += " hidden-api-toggleable d-none";
+        hiddenApiRow += " hidden-api-toggleable";
+        if (userPreference.ShowHiddenApis != true)
+        {
+            hiddenApiRow += " d-none";
+        }
     }
 
     if (Regex.IsMatch(codeLineClass, @".*lvl_[0-9]+_parent.*"))
@@ -76,7 +82,6 @@
         lineClass += " code-delta";
         isHeadingWithDelta = true;
     }
-    var userPreference = TempData["UserPreference"] as UserPreferenceModel ?? new UserPreferenceModel();
     var rowClass = RemoveMultipleSpaces($"code-line {headingClass} {codeLineClass} {lineClass} {codeLineDisplay} {documentationRow} {hiddenApiRow}");
     var cellContent = String.Empty;
     for (int i = 0; i < Model.CodeLine.Indent; i++)

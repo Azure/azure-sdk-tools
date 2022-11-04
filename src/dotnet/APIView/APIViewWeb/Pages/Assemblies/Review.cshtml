@@ -192,17 +192,6 @@
                     }
                 </form>
             </div>
-            @if (!Model.Review.IsPackageNameApproved && Model.Review.FilterType == ReviewType.Automatic)
-            {
-                <div class="my-1">
-                    <form asp-resource="@Model.Review" class="form-inline" asp-page-handler="ApprovePackageName" method="post" asp-requirement="@ApproverRequirement.Instance">
-                        <button type="submit" class="btn btn-sm shadow-sm btn-success ml-2" title="Package name must be approved before first preview release of a new package.">
-                            <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve Package Name
-                        </button>
-                    </form>
-                </div>
-            }
-            
             <div class="dropdown d-inline-block my-1 ml-2">
                 <a class="btn btn-light btn-sm border shadow-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown">
                     <i class="fas fa-sm fa-sliders-h"></i>&nbsp;&nbsp;Options

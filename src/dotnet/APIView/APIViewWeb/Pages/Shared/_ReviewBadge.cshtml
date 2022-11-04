@@ -2,6 +2,11 @@
 @using System
 @using System.Text.RegularExpressions;
 @model ReviewModel;
+@{
+    var packageName = Model.Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName;
+    var approver = Model.PackageNameApprovedBy ?? Model.Revisions.LastOrDefault(r => r.IsApproved)?.Approvers?.FirstOrDefault();
+    var nameApprovalTip = approver != null? "Package name was approved by " + approver : "Package name is in approved status";
+}
 @if (Model.Language != null)
 {
     string iconClassName = "icon-" + Model.GetLanguageCssSafeName();
@@ -11,11 +16,27 @@
     }
     <span role="img" class="mr-2 mt-1 p-1 border rounded icon-language @iconClassName" aria-label="@Model.Language @Model.LanguageVariant"></span>
 }
-<p class="h6 mb-0 mr-auto">
-    @if (Model.ServiceName != null)
+
+<span class="h6 mr-2 mt-auto">
+    @(packageName ?? "")
+</span>
+<span class="mr-auto mt-2">
+    @if (packageName != null)
     {
-        @Model.ServiceName
-    }
-    <br>
-    <small class="text-muted">@Model.PackageDisplayName</small>
-</p>
+        @if (!Model.IsPackageNameApproved)
+        {
+            <form asp-resource="@Model" class="form-inline" asp-controller="Review" asp-action="ApprovePackageName" asp-route-id="@Model.ReviewId" method="post" asp-requirement="@ApproverRequirement.Instance">
+                <button type="submit" class="btn btn-sm shadow-sm btn-success" title="Package name must be approved before first preview release of a new package.">
+                    <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve Package Name
+                </button>
+            </form>
+        }
+        else
+        {
+
+            <i class="text-success" title="@nameApprovalTip">✔</i>
+        }
+    }    
+</span>
+
+

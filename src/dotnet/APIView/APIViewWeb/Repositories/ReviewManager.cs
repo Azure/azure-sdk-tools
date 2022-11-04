@@ -179,6 +179,11 @@ namespace APIViewWeb.Repositories
                 review.ServiceName = p?.ServiceName;
             }
 
+            //If current review doesn't have package name approved status then check if package name is approved for any reviewws for the same package.
+            if(!review.IsPackageNameApproved)
+            {
+                review.IsPackageNameApproved = await IsPackageNameApproved(review.Language, review.PackageName);
+            }            
             return review;
         }
 
@@ -924,6 +929,16 @@ namespace APIViewWeb.Repositories
                 }
             }
             return result;
+        }
+
+        public async Task<bool> IsPackageNameApproved(string language, string packageName)
+        {
+            var reviews = await _reviewsRepository.GetPackageNameApprovedReviews(language, packageName);
+            if (!reviews.Any())
+            {
+                reviews = await _reviewsRepository.GetApprovedReviews(language, packageName);                
+            }
+            return reviews.Any();
         }
     }
 }

@@ -43,4 +43,4 @@ jobs:
       StorageContainerUrl: $(StorageContainerUrl)
       ApiviewGenScript: './Create-Apiview-Token-Swagger.ps1'
       ParserPath: $(SwaggerParserInstallPath)/SwaggerApiParser
-      StorageSasVariableName: $(StorageSasVariableName)
+      StorageSasVariableName: $($(StorageSasVariableName))

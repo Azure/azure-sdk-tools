@@ -32,7 +32,7 @@ steps:
       -WorkingDir "$(Pipeline.Workspace)"
       -StorageBaseUrl "${{ parameters.StorageContainerUrl }}"
       -ApiviewGenScript "${{ parameters.ApiviewGenScript }}"
-      -ContainerSas "$(${{ parameters.StorageSasVariableName }})"
+      -ContainerSas "${{ parameters.StorageSasVariableName }}"
       -ParserPath "${{ parameters.ParserPath }}"
 
 - task: PublishBuildArtifacts@1

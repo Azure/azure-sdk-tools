@@ -189,6 +189,19 @@ export async function generateRLCInPipeline(options: {
             // change configuration to skip build test, sample
             changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
         }
+
+        if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {
+            outputPackageInfo.packageName = packageName;
+            outputPackageInfo['version'] = packageJson.version;
+            outputPackageInfo.path.push(relativePackagePath);
+            for (const file of await getChangedCiYmlFilesInSpecificFolder(path.dirname(relativePackagePath))) {
+                outputPackageInfo.path.push(file);
+            }
+            if (options.runningEnvironment === RunningEnvironment.SdkGeneration) {
+                outputPackageInfo.packageFolder = relativePackagePath;
+            }
+        }
+
         logger.logGreen(`rush update...`);
         execSync('rush update', {stdio: 'inherit'});
         logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
@@ -201,15 +214,6 @@ export async function generateRLCInPipeline(options: {
             await generateChangelog(packagePath);
         }
         if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {
-            outputPackageInfo.packageName = packageName;
-            outputPackageInfo['version'] = packageJson.version;
-            outputPackageInfo.path.push(relativePackagePath);
-            for (const file of await getChangedCiYmlFilesInSpecificFolder(path.dirname(relativePackagePath))) {
-                outputPackageInfo.path.push(file);
-            }
-            if (options.runningEnvironment === RunningEnvironment.SdkGeneration) {
-                outputPackageInfo.packageFolder = relativePackagePath;
-            }
             for (const file of fs.readdirSync(packagePath)) {
                 if (file.startsWith('azure-rest') && file.endsWith('.tgz')) {
                     outputPackageInfo.artifacts.push(path.join(relativePackagePath, file));

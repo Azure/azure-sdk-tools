@@ -90,6 +90,21 @@ export async function generateMgmt(options: {
                 fs.writeFileSync(path.join(packagePath, '_meta.json'), JSON.stringify(metaInfo, null, '  '), {encoding: 'utf-8'});
                 modifyOrGenerateCiYml(options.sdkRepo, changedPackageDirectory, packageName, true);
             }
+
+            // @ts-ignore
+            if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {
+                outputPackageInfo.packageName = packageJson.name;
+
+                if (options.runningEnvironment === RunningEnvironment.SdkGeneration) {
+                    outputPackageInfo.packageFolder = changedPackageDirectory;
+                }
+
+                outputPackageInfo.path.push(changedPackageDirectory);
+                for (const file of await getChangedCiYmlFilesInSpecificFolder(path.dirname(changedPackageDirectory))) {
+                    outputPackageInfo.path.push(file);
+                }
+            }
+
             logger.logGreen(`rush update`);
             execSync('rush update', {stdio: 'inherit'});
             logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
@@ -107,7 +122,6 @@ export async function generateMgmt(options: {
 
             // @ts-ignore
             if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {
-                outputPackageInfo.packageName = packageJson.name;
                 if (changelog) {
                     outputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
                     outputPackageInfo.changelog.content = changelog.displayChangeLog();
@@ -122,15 +136,6 @@ export async function generateMgmt(options: {
                 const newPackageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
                 const newVersion = newPackageJson['version'];
                 outputPackageInfo['version'] = newVersion;
-                
-                if (options.runningEnvironment === RunningEnvironment.SdkGeneration) {
-                    outputPackageInfo.packageFolder = changedPackageDirectory;
-                }
-
-                outputPackageInfo.path.push(changedPackageDirectory);
-                for (const file of await getChangedCiYmlFilesInSpecificFolder(path.dirname(changedPackageDirectory))) {
-                    outputPackageInfo.path.push(file);
-                }
 
                 let artifactName: string | undefined = undefined;
                 for (const file of fs.readdirSync(packagePath)) {

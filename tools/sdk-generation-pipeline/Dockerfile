@@ -22,7 +22,7 @@ RUN tar --extract --file maven.tgz --directory "$MAVEN_HOME" --strip-components 
 RUN rm maven.tgz
 
 # install node
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt -y install nodejs
 
 # install python

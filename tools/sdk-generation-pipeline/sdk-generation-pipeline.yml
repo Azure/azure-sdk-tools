@@ -13,7 +13,7 @@ variables:
     value: github
 
 parameters:
-  - name: sdkToGernerate
+  - name: sdkToGenerate
     type: string
     values:
       - js
@@ -27,6 +27,11 @@ parameters:
 
   - name: relativeReadmeFilePath
     type: string
+    default: "''"
+
+  - name: relativeCadlProjectPath
+    type: string
+    default: "''"
 
   - name: tag
     type: string
@@ -47,6 +52,7 @@ parameters:
       "branch": "main"
       "commit": ""
       "pullRequest": ""
+      "title": ""
 
   - name: clientAgent
     type: string
@@ -65,22 +71,32 @@ parameters:
     type: string
     default: "''"
 
+  - name: sdkPR
+    type: object
+    default:
+      "prLink": "''"
+      "prNumber": "''"
+
 stages:
   - stage: SdkGeneration
     jobs:
       - job: SdkGeneration
-        displayName: ${{ parameters.sdkToGernerate }}-${{ parameters.serviceType }}-${{ parameters.service }}
+        pool:
+          name: azsdk-pool-mms-ubuntu-2004-general
+          vmImage: MMSUbuntu20.04
+        timeoutInMinutes: 180
+        displayName: ${{ parameters.sdkToGenerate }}-${{ parameters.serviceType }}-${{ parameters.service }}
         steps:
           - template: ./pipelines/steps/precheck.yml
             parameters:
               swagger: ${{ parameters.swagger }}
-              sdk: ${{ parameters.sdkToGernerate }}
+              sdk: ${{ parameters.sdkToGenerate }}
               service: ${{ parameters.service }}
               sdkRepoBaseBranch: ${{ variables.sdkRepoBaseBranch }}
 
           - template: ./pipelines/steps/pipeline-setup.yml
             parameters:
-              sdk: ${{ parameters.sdkToGernerate }}
+              sdk: ${{ parameters.sdkToGenerate }}
               trigger: ${{ parameters.clientAgent }}
               swagger: ${{ parameters.swagger }}
               triggerType: ${{ parameters.triggerType }}
@@ -88,17 +104,20 @@ stages:
           - template: ./pipelines/steps/generate-sdk.yml
             parameters:
               readmeFile: ${{ parameters.relativeReadmeFilePath }}
+              cadlProject: ${{ parameters.relativeCadlProjectPath }}
               trigger: ${{ parameters.clientAgent }}
               triggerType: ${{ parameters.triggerType }}
               serviceType: ${{ parameters.serviceType }}
-              sdk: ${{ parameters.sdkToGernerate }}
+              sdk: ${{ parameters.sdkToGenerate }}
               sdkConfig: ${{ parameters.sdkConfig }}
 
           - template: ./pipelines/steps/parse-and-publish-result.yml
             parameters:
-              sdk: ${{ parameters.sdkToGernerate }}
+              sdk: ${{ parameters.sdkToGenerate }}
               service: ${{ parameters.service }}
               serviceType: ${{ parameters.serviceType }}
               trigger: ${{ parameters.clientAgent }}
               sdkGenerationName: ${{ parameters.sdkGenerationName }}
               triggerType: ${{ parameters.triggerType }}
+              sdkPR: ${{ parameters.sdkPR }}
+              swagger: ${{ parameters.swagger }}

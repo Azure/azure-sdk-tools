@@ -30,6 +30,25 @@ public class SwaggerApiViewParameter : ITokenSerializable
         return ret;
     }
 
+    public String GetTypeFormat()
+    {
+        var ret = "";
+        if (this.type != null)
+        {
+            ret = this.type;
+        }else if (this.schema != null)
+        {
+            ret = this.schema.GetTypeFormat();
+        }
+        
+        if (this.format != null)
+        {
+            ret += $"/{this.format}";
+        }
+
+        return ret;
+    }
+
 
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
@@ -130,12 +149,9 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
         foreach (var parameter in this)
         {
             ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(parameter.name, CodeFileTokenKind.MemberName)}));
-            var parameterType = parameter.type;
+            var parameterType = parameter.GetTypeFormat();
 
-            if (parameter.format != null)
-            {
-                parameterType += "/" + parameter.format;
-            }
+           
 
             ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(parameterType, CodeFileTokenKind.Keyword)}));
             ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(String.Join(",", parameter.GetKeywords()), CodeFileTokenKind.Literal)}));

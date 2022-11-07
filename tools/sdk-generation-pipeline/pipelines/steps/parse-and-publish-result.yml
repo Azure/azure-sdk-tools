@@ -90,7 +90,7 @@ steps:
             -u "$(REPO_OWNER)":"$(azuresdk-github-pat)" \
             -H "Accept: application/vnd.github.v3+json" \
             -X POST \
-            -d '{"title":"[AutoPR-${{ parameters.service }}]${{ parameters.swagger.title }}","body":"Create to sync ${{ parameters.swagger.path }}/pull/${{ parameters.swagger.pullRequest }}","base":"'$(sdkMainBranch)'", "head":"$(SDK_PUSH_OWNER):'${branchName}'"}' \
+            -d '{"title":"[AutoPR-${{ parameters.service }}]${{ parameters.swagger.title }}","draft":true,"body":"Create to sync ${{ parameters.swagger.path }}/pull/${{ parameters.swagger.pullRequest }}","base":"'$(sdkMainBranch)'", "head":"$(SDK_PUSH_OWNER):'${branchName}'"}' \
             ${sdkRepoPullsApi})
           echo "creat pr finished:$?"
 

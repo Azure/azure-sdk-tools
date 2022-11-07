@@ -53,4 +53,3 @@ jobs:
       APIViewURL: ${{ parameters.APIViewURL }}
       StorageContainerUrl: ${{ parameters.StorageContainerUrl }}
       ApiviewGenScript: './Create-Apiview-Token-Javascript.ps1'
-      StorageSasVariableName: $($(StorageSasVariableName))

@@ -26,7 +26,6 @@ namespace APIViewWeb.Repositories
 
         private readonly string _devopsAccessToken;
         private readonly string _hostUrl;
-        private readonly string _storage_sas_variable_name;
 
         private IMemoryCache _pipelineNameCache;
         public DevopsArtifactRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMemoryCache cache)
@@ -34,7 +33,6 @@ namespace APIViewWeb.Repositories
             _configuration = configuration;
             _devopsAccessToken = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", _configuration["Azure-Devops-PAT"])));
             _hostUrl = _configuration["APIVIew-Host-Url"];
-            _storage_sas_variable_name = _configuration["APIView-storage-sas-variable-name"] ?? "apiview-originals-sas";
             _pipelineNameCache = cache;
         }
 
@@ -94,17 +92,19 @@ namespace APIViewWeb.Repositories
         public async Task RunPipeline(string pipelineName, string reviewDetails, string originalStorageUrl)
         {
             //Create dictionary of all required parametes to run tools - generate-<language>-apireview pipeline in azure devops
-            var reviewDetailsDict = new Dictionary<string, string> { { "Reviews", reviewDetails }, { "APIViewUrl", _hostUrl }, { "StorageContainerUrl", originalStorageUrl }, { "StorageSasVariableName", _storage_sas_variable_name } };
+            var reviewDetailsDict = new Dictionary<string, string> { { "Reviews", reviewDetails }, { "APIViewUrl", _hostUrl }, { "StorageContainerUrl", originalStorageUrl } };
             var devOpsCreds = new VssBasicCredential("nobody", _configuration["Azure-Devops-PAT"]);
             var devOpsConnection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk/"), devOpsCreds);
             string projectName = _configuration["Azure-Devops-internal-project"] ?? "internal";
 
             BuildHttpClient buildClient = await devOpsConnection.GetClientAsync<BuildHttpClient>();
             var projectClient = await devOpsConnection.GetClientAsync<ProjectHttpClient>();
-            int definitionId = await GetPipelineId(pipelineName, buildClient, projectName);
+            string envName = _configuration["apiview-deplyment-environment"];
+            string updatedPipelineName = string.IsNullOrEmpty(envName) ? pipelineName : $"{pipelineName}-{envName}";
+            int definitionId = await GetPipelineId(updatedPipelineName, buildClient, projectName);
             if (definitionId == 0)
             {
-                throw new Exception(string.Format("Azure Devops pipeline is not found with name {0}. Please recheck and ensure pipeline exists with this name", pipelineName));
+                throw new Exception(string.Format("Azure Devops pipeline is not found with name {0}. Please recheck and ensure pipeline exists with this name", updatedPipelineName));
             }
             
             var definition = await buildClient.GetDefinitionAsync(projectName, definitionId);            

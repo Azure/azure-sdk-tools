@@ -99,7 +99,7 @@ namespace APIViewWeb.Repositories
 
             BuildHttpClient buildClient = await devOpsConnection.GetClientAsync<BuildHttpClient>();
             var projectClient = await devOpsConnection.GetClientAsync<ProjectHttpClient>();
-            string envName = _configuration["apiview-deplyment-environment"];
+            string envName = _configuration["apiview-deployment-environment"];
             string updatedPipelineName = string.IsNullOrEmpty(envName) ? pipelineName : $"{pipelineName}-{envName}";
             int definitionId = await GetPipelineId(updatedPipelineName, buildClient, projectName);
             if (definitionId == 0)

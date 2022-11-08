@@ -1,14 +1,23 @@
-﻿@model IEnumerable<APIView.NavigationItem>
+﻿@using APIViewWeb.Models
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using APIViewWeb.Helpers
+@model IEnumerable<APIView.NavigationItem>
 @{
     bool hasSections = ViewBag.HasSections;
     bool isChildNavigation = ViewBag.IsChildNavigation ?? false;
     string navListGroupClass = (hasSections && isChildNavigation) ? "nav-list-group nav-list-collapsed" : "nav-list-group";
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel;
 }
 
 <ul class="nav-list-children">
         @foreach (var item in Model)
         {
-            <li class="@navListGroupClass">
+            var elementNavListClass = navListGroupClass;
+            if (item.IsHiddenApi)
+            {
+                elementNavListClass += PageModelHelpers.GetHiddenApiClass(userPreference);
+            }
+            <li class="@elementNavListClass">
                 <span class="nav-list-toggle @(item.ChildItems.Any() ? "":"invisible")"></span>
 
                 @if (item.Tags != null && item.Tags.ContainsKey("TypeKind"))

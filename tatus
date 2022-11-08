@@ -1,0 +1,64 @@
+[1mdiff --git a/eng/pipelines/apiview-review-gen-python.yml b/eng/pipelines/apiview-review-gen-python.yml[m
+[1mindex 70205938..9fbeab0d 100644[m
+[1m--- a/eng/pipelines/apiview-review-gen-python.yml[m
+[1m+++ b/eng/pipelines/apiview-review-gen-python.yml[m
+[36m@@ -20,7 +20,7 @@[m [mparameters:[m
+ variables:[m
+   PythonIndexUrl: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'[m
+   PythonVersion: '3.10.2'[m
+[31m-  ApiStubVersion: '0.3.1'[m
+[32m+[m[32m  ApiStubVersion: '0.3.5'[m
+ [m
+ jobs:[m
+ - job: CreatePythonReviewCodeFile[m
+[1mdiff --git a/src/dotnet/APIView/APIViewWeb/Languages/LanguageService.cs b/src/dotnet/APIView/APIViewWeb/Languages/LanguageService.cs[m
+[1mindex 7fb53cc2..fa62d988 100644[m
+[1m--- a/src/dotnet/APIView/APIViewWeb/Languages/LanguageService.cs[m
+[1m+++ b/src/dotnet/APIView/APIViewWeb/Languages/LanguageService.cs[m
+[36m@@ -4,6 +4,7 @@[m [musing System.IO;[m
+ using System.Threading.Tasks;[m
+ using ApiView;[m
+ using APIView;[m
+[32m+[m[32musing Microsoft.Extensions.Configuration;[m
+ [m
+ namespace APIViewWeb[m
+ {[m
+[36m@@ -25,5 +26,7 @@[m [mnamespace APIViewWeb[m
+             Tokens = new CodeFileToken[] {new CodeFileToken("", CodeFileTokenKind.Newline), ReviewNotReadyCodeFile, new CodeFileToken("", CodeFileTokenKind.Newline) },[m
+             Navigation = new NavigationItem[] { new NavigationItem() { Text = fileName } }[m
+         };[m
+[32m+[m
+[32m+[m[32m        public IConfiguration _configuration;[m
+     }[m
+ }[m
+[1mdiff --git a/src/dotnet/APIView/APIViewWeb/Languages/PythonLanguageService.cs b/src/dotnet/APIView/APIViewWeb/Languages/PythonLanguageService.cs[m
+[1mindex eb9ddb31..4a3d004d 100644[m
+[1m--- a/src/dotnet/APIView/APIViewWeb/Languages/PythonLanguageService.cs[m
+[1m+++ b/src/dotnet/APIView/APIViewWeb/Languages/PythonLanguageService.cs[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-﻿// Copyright (c) Microsoft Corporation. All rights reserved.[m
+[32m+[m[32m// Copyright (c) Microsoft Corporation. All rights reserved.[m
+ // Licensed under the MIT License.[m
+ [m
+ using System;[m
+[36m@@ -17,7 +17,7 @@[m [mnamespace APIViewWeb[m
+     {[m
+         public override string Name { get; } = "Python";[m
+         public override string Extension { get; } = ".whl";[m
+[31m-        public override string VersionString { get; } = "0.3.3";[m
+[32m+[m[32m        public override string VersionString { get; } = "0.3.5";[m
+ [m
+         private readonly string _pythonExecutablePath;[m
+         public override string ProcessName => _pythonExecutablePath;[m
+[36m@@ -27,6 +27,11 @@[m [mnamespace APIViewWeb[m
+         public PythonLanguageService(IConfiguration configuration)[m
+         {[m
+             _pythonExecutablePath = configuration["PYTHONEXECUTABLEPATH"] ?? "python";[m
+[32m+[m
+[32m+[m[32m            // Check if sandboxing is disabled for python[m
+[32m+[m[32m            bool.TryParse(configuration["ReviewGenByPipelineDisabledForPython"], out bool _isDisabledForPython);[m
+[32m+[m[32m            // Enable sandboxing when it's not disabled for python[m
+[32m+[m[32m            IsReviewGenByPipeline = ! _isDisabledForPython;[m
+         }[m
+         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)[m
+         {[m

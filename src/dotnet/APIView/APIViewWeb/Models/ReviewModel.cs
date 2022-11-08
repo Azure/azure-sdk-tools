@@ -130,6 +130,7 @@ namespace APIViewWeb
 
         public DateTime ApprovalDate;
         public bool IsPackageNameApproved { get; set; }
-        public string PackageNameApprovedBy { get; set; } 
+        public string PackageNameApprovedBy { get; set; }
+        public DateTime PackageNameApprovedOn { get; set; }
     }
 }

@@ -22,6 +22,7 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Configuration;
+using Octokit;
 
 namespace APIViewWeb.Repositories
 {
@@ -180,9 +181,28 @@ namespace APIViewWeb.Repositories
             }
 
             //If current review doesn't have package name approved status then check if package name is approved for any reviews for the same package.
-            if(!review.IsPackageNameApproved)
+            if (!review.IsPackageNameApproved)
             {
-                review.IsPackageNameApproved = await IsPackageNameApproved(review.Language, review.PackageName);
+                var reviews = await _reviewsRepository.GetPackageNameApprovedReviews(review.Language, review.PackageName);
+                if (reviews.Any())
+                {
+                    var nameApprovedReview = reviews.First();
+                    review.PackageNameApprovedBy = nameApprovedReview.PackageNameApprovedBy;
+                    review.ApprovalDate = nameApprovedReview.PackageNameApprovedOn;
+                    review.IsPackageNameApproved = true;
+                }
+                else
+                {
+                    // Mark package name as approved if review is already approved. Copy approval details from review approval.
+                    reviews = await _reviewsRepository.GetApprovedReviews(review.Language, review.PackageName);
+                    if (reviews.Any())
+                    {
+                        var approvedRevision = reviews.First(r => r.Revisions.Any(rev => rev.IsApproved)).Revisions.First(rev => rev.IsApproved);
+                        review.PackageNameApprovedBy = approvedRevision.Approvers.FirstOrDefault();
+                        review.PackageNameApprovedOn = reviews.First().ApprovalDate;
+                        review.IsPackageNameApproved = true;
+                    }
+                }
             }            
             return review;
         }
@@ -440,7 +460,8 @@ namespace APIViewWeb.Repositories
             ReviewModel review = await GetReviewAsync(user, id);
             await AssertApprover(user, review.Revisions.Last());
             review.PackageNameApprovedBy = user.GetGitHubLogin();
-            review.IsPackageNameApproved = true;
+            review.PackageNameApprovedOn = DateTime.Now;
+           review.IsPackageNameApproved = true;
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 

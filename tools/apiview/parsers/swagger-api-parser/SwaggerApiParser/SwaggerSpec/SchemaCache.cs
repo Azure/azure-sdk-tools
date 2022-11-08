@@ -198,7 +198,6 @@ public class SchemaCache
 
         if (root.items != null && root.items.Ref != null && !refChain.Contains(root.items.Ref))
         {
-            refChain.AddLast(root.items.Ref);
             root.items = GetResolvedSchema(root.items, currentSwaggerFilePath, refChain);
         }
 

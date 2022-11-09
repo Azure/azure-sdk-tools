@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/cadl-apiview",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "author": "Microsoft Corporation",
   "description": "Cadl library for emitting APIView token files from Cadl specifications",
   "homepage": "https://github.com/Azure/azure-sdk-tools",

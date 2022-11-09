@@ -1,13 +1,8 @@
-parameters:
-  - name: sdkPR
-    type: object
 steps:
   - bash: |
-      echo ${#{ parameters.sdkPR.prLink }}
-      if [ 2 -lt ${#{ parameters.sdkPR.prLink }} ];then
-        echo "2 -lt ${{ parameters.sdkPR.prLink }}"
-      else
-        echo "2 >= ${{ parameters.sdkPR.prLink }}"
-      if
-    displayName: Check parameters
+      #git clone https://github.com/zzvswxy/TestCreatePrByGithubApi.git
+      echo "##vso[task.setvariable variable=testVariable;]test"
+    displayName: clone test repo
+
+
 

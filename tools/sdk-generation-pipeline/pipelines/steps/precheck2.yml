@@ -1,0 +1,12 @@
+parameters:
+  - name: varStr
+    type: string
+
+steps:
+  - bash: |
+      echo "testVariable is: $(testVariable)"
+      echo "varStr is: ${{ parameters.varStr }}"
+    displayName: show variable
+
+
+

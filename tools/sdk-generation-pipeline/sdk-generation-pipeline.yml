@@ -3,22 +3,6 @@ trigger: none
 variables:
   - template: ../../eng/pipelines/templates/variables/globals.yml
 
-  - name: codegenRepo
-    value: https://github.com/Azure/azure-sdk-tools.git
-
-  - name: sdkRepoBaseBranch
-    value: main
-
-  - name: sdkRepoType
-    value: github
-
-parameters:
-  - name: sdkPR
-    type: object
-    default:
-      "prLink": "''"
-      "prNumber": "''"
-
 stages:
   - stage: SdkGeneration
     jobs:
@@ -26,5 +10,7 @@ stages:
         displayName: test
         steps:
           - template: ./pipelines/steps/precheck.yml
+
+          - template: ./pipelines/steps/precheck2.yml
             parameters:
-              sdkPR: ${{ parameters.sdkPR }}
+              varStr: $(testVariable)

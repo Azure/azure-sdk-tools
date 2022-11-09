@@ -4,6 +4,8 @@
 @using System.Text.RegularExpressions
 @using APIViewWeb.Models;
 @using System.Text
+@using APIViewWeb.Helpers
+@using Microsoft.AspNetCore.Mvc.TagHelpers
 @model APIViewWeb.Models.CodeLineModel
 @functions
 {
@@ -26,6 +28,7 @@
     bool isHeadingWithDelta = false;
     string headingClass = String.Empty;
     string documentationRow = String.Empty;
+    string hiddenApiRow = String.Empty;
     string codeLineDisplay = String.Empty;
     string codeLineClass = (!String.IsNullOrWhiteSpace(Model.CodeLine.LineClass)) ? Model.CodeLine.LineClass.Trim() : String.Empty;
     int? sectionKey = Model.DiffSectionId ?? Model.CodeLine.SectionKey;
@@ -58,6 +61,14 @@
         codeLineDisplay = "hidden-row";
     }
 
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel ?? new UserPreferenceModel();
+
+    // Always show hidden APIs if we are in Diff mode and there are changes.
+    if (Model.CodeLine.IsHiddenApi && Model.Kind == DiffLineKind.Unchanged)
+    {
+        hiddenApiRow += PageModelHelpers.GetHiddenApiClass(userPreference);
+    }
+
     if (Regex.IsMatch(codeLineClass, @".*lvl_[0-9]+_parent.*"))
     {
         isSubSectionHeading = true;
@@ -69,8 +80,7 @@
         lineClass += " code-delta";
         isHeadingWithDelta = true;
     }
-    var userPreference = TempData["UserPreference"] as UserPreferenceModel ?? new UserPreferenceModel();
-    var rowClass = RemoveMultipleSpaces($"code-line {headingClass} {codeLineClass} {lineClass} {codeLineDisplay} {documentationRow}");
+    var rowClass = RemoveMultipleSpaces($"code-line {headingClass} {codeLineClass} {lineClass} {codeLineDisplay} {documentationRow} {hiddenApiRow}");
     var cellContent = String.Empty;
     for (int i = 0; i < Model.CodeLine.Indent; i++)
     {
@@ -215,13 +225,18 @@
     var errorDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Default || d.Level == APIView.CodeDiagnosticLevel.Error);
     var warningDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Warning);
     var infoDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Info);
-    <tr class="code-diagnostics" data-line-id="@Model.CodeLine.ElementId">
+    var diagnosticsClass = "code-diagnostics";
+    if (Model.CodeLine.IsHiddenApi)
+    {
+        diagnosticsClass += PageModelHelpers.GetHiddenApiClass(userPreference);
+    }
+    <tr class="@diagnosticsClass" data-line-id="@Model.CodeLine.ElementId">
         <partial name="_DiagnosticsPartial" model="@errorDiags" />
     </tr>
-    <tr class="code-diagnostics" data-line-id="@Model.CodeLine.ElementId">
+    <tr class="@diagnosticsClass" data-line-id="@Model.CodeLine.ElementId">
         <partial name="_DiagnosticsPartial" model="@warningDiags" />
     </tr>
-    <tr class="code-diagnostics" data-line-id="@Model.CodeLine.ElementId">
+    <tr class="@diagnosticsClass" data-line-id="@Model.CodeLine.ElementId">
         <partial name="_DiagnosticsPartial" model="@infoDiags" />
     </tr>
 }

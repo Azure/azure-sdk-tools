@@ -1,5 +1,9 @@
 # Release History
 
+## Version 1.0.2 (11-8-2022)
++ Add null check when cannot resolve reference from schema cache.
++ Change enum type to JsonElement to support different enum type like, string, boolean, int
+
 ## Version 1.0.1 (10-31-2022)
 
 + Fix missing first property for definition

@@ -33,6 +33,8 @@ namespace APIView
         TableCellEnd = 26,
         LeafSectionPlaceholder = 27,
         ExternalLinkStart = 28,
-        ExternalLinkEnd = 29
+        ExternalLinkEnd = 29,
+        HiddenApiRangeStart = 30,
+        HiddenApiRangeEnd = 31
     }
 }

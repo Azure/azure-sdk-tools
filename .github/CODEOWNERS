@@ -24,7 +24,7 @@
 /tools/perf-automation/          @mikeharder @benbp
 /tools/pipeline-generator/       @weshaggard @benbp
 /tools/pipeline-witness/         @praveenkuttappan @weshaggard
-/tools/sdk-generation-pipeline/  @dw511214992 @chunyu3 @zzvswxy
+/tools/sdk-generation-pipeline/  @dw511214992 @chunyu3 @zzvswxy @weshaggard
 /tools/sdk-testgen/              @changlong-liu @tadelesh
 /tools/stress-cluster/           @benbp @ckairen
 /tools/test-proxy/               @scbedd @mikeharder

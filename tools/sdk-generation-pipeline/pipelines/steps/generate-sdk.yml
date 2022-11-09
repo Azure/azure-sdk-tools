@@ -2,6 +2,9 @@ parameters:
   - name: readmeFile
     type: string
 
+  - name: cadlProject
+    type: string
+
   - name: trigger
     type: string
 
@@ -33,19 +36,16 @@ steps:
     condition: ne('${{ parameters.triggerType }}', 'release')
     
   - bash: |
-      if [ "${{ parameters.serviceType }}" = "resource-manager" ];then
+      cadlProjectLen=`echo ${{ parameters.cadlProject }} | wc -L`
+      if [ 2 -lt ${cadlProjectLen} ]; then
         docker run --privileged \
           -v $(SPEC_REPO):/spec-repo \
           -v $(SDK_REPO):/sdk-repo \
           -v /tmp/output:/tmp/output \
           $(DOCKER_IMAGE) \
-          --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
+          --cadl-project=${{ parameters.cadlProject }} $(DOCKER_EX_CMD)
       else
-        echo '${{ parameters.sdkConfig }}' > /tmp/output/autorest.md
-        configLen=`cat /tmp/output/autorest.md | wc -L`
-        echo "configLen is :${configLen}"
-        #check if config is default ''
-        if [ 2 -ge ${configLen} ];then
+        if [ "${{ parameters.serviceType }}" = "resource-manager" ];then
           docker run --privileged \
             -v $(SPEC_REPO):/spec-repo \
             -v $(SDK_REPO):/sdk-repo \
@@ -53,13 +53,26 @@ steps:
             $(DOCKER_IMAGE) \
             --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
         else
-          docker run --privileged \
-            -v $(SPEC_REPO):/spec-repo \
-            -v $(SDK_REPO):/sdk-repo \
-            -v /tmp/output/autorest.md:/autorest.md \
-            -v /tmp/output:/tmp/output \
-            $(DOCKER_IMAGE) \
-            --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
+          echo '${{ parameters.sdkConfig }}' > /tmp/output/autorest.md
+          configLen=`cat /tmp/output/autorest.md | wc -L`
+          echo "configLen is :${configLen}"
+          #check if config is default ''
+          if [ 2 -ge ${configLen} ];then
+            docker run --privileged \
+              -v $(SPEC_REPO):/spec-repo \
+              -v $(SDK_REPO):/sdk-repo \
+              -v /tmp/output:/tmp/output \
+              $(DOCKER_IMAGE) \
+              --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
+          else
+            docker run --privileged \
+              -v $(SPEC_REPO):/spec-repo \
+              -v $(SDK_REPO):/sdk-repo \
+              -v /tmp/output/autorest.md:/autorest.md \
+              -v /tmp/output:/tmp/output \
+              $(DOCKER_IMAGE) \
+              --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
+          fi
         fi
       fi
     displayName: Generate sdk

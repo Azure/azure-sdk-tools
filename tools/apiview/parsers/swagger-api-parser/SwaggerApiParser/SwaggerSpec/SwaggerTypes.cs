@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using APIView;
 
@@ -75,7 +76,7 @@ namespace SwaggerApiParser
 
         public List<string> required { get; set; }
 
-        [JsonPropertyName("enum")] public List<string> Enum { get; set; }
+        [JsonPropertyName("enum")] public List<JsonElement> Enum { get; set; }
 
         public bool IsPropertyRequired(string propertyName)
         {

@@ -48,7 +48,10 @@ public class XMsParameterizedHost : ITokenSerializable
             ret.Add(TokenSerializer.FoldableContentStart());
             foreach (var parameter in parameters)
             {
-                ret.AddRange(parameter.TokenSerialize(context));
+                if (parameter != null)
+                {
+                    ret.AddRange(parameter.TokenSerialize(context));
+                }
             }
 
             ret.Add(TokenSerializer.FoldableContentEnd());

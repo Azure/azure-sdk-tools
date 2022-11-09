@@ -804,7 +804,7 @@ namespace APIViewWeb.Repositories
         /// <summary>
         /// Get the LineNumbers of the Heading that have diff changes in their sections
         /// </summary>
-        private async Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, ReviewRevisionModel revision)
+        public async Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, ReviewRevisionModel revision)
         {
                 var review = await _reviewsRepository.GetReviewAsync(reviewId);
                 var latestRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);

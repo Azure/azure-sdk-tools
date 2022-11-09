@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
@@ -38,8 +38,11 @@ namespace APIViewWeb.Controllers
 
             foreach(string user in taggedUsers)
             {
-                comment.TaggedUsers.Add(user);
-                await _notificationManager.NotifyUserOnCommentTag(user, comment);
+                if (!string.IsNullOrEmpty(user))
+                {
+                    comment.TaggedUsers.Add(user);
+                    await _notificationManager.NotifyUserOnCommentTag(user, comment);
+                }
             }
 
             await _commentsManager.AddCommentAsync(User, comment);

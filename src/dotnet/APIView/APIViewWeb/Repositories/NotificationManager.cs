@@ -13,6 +13,8 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Common;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb.Repositories
 {
@@ -28,6 +30,8 @@ namespace APIViewWeb.Repositories
         private const string FROM_ADDRESS = "apiview-noreply@microsoft.com";
         private const string REPLY_TO_HEADER = "In-Reply-To";
         private const string REFERENCES_HEADER = "References";
+
+        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
         public NotificationManager(IConfiguration configuration, CosmosReviewRepository reviewRepository,
         CosmosUserProfileRepository userProfileRepository, ISendGridClient sendGridClient = null)
@@ -162,6 +166,7 @@ namespace APIViewWeb.Repositories
                 }
                 else
                 {
+                    _telemetryClient.TrackTrace($"Failed to get email address for user {user.UserName}. Email address needs to be updated on user profile in APIView.");
                     return;
                 }
             }

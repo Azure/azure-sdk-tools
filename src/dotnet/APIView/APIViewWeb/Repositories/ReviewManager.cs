@@ -461,7 +461,7 @@ namespace APIViewWeb.Repositories
             await AssertApprover(user, review.Revisions.Last());
             review.PackageNameApprovedBy = user.GetGitHubLogin();
             review.PackageNameApprovedOn = DateTime.Now;
-           review.IsPackageNameApproved = true;
+            review.IsPackageNameApproved = true;
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 

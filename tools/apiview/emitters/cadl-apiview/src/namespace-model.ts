@@ -21,6 +21,10 @@ import {
   UnionStatementNode,
   UnionExpressionNode,
   UnionVariantNode,
+  AugmentDecoratorStatementNode,
+  Program,
+  Node,
+  visitChildren,
 } from "@cadl-lang/compiler";
 
 export class NamespaceModel {
@@ -50,8 +54,9 @@ export class NamespaceModel {
     | UnionStatementNode
     | UnionExpressionNode
   >();
+  augmentDecorators = new Array<AugmentDecoratorStatementNode>();
 
-  constructor(name: string, ns: Namespace) {
+  constructor(name: string, ns: Namespace, program: Program) {
     this.name = name;
     this.node = ns.node;
 
@@ -62,8 +67,6 @@ export class NamespaceModel {
     for (const [intName, int] of ns.interfaces) {
       this.operations.set(intName, int.node);
     }
-
-    const aliases = findStatementsIn(ns, SyntaxKind.AliasStatement);
 
     // Gather models and resources
     for (const [modelName, model] of ns.models) {
@@ -90,6 +93,14 @@ export class NamespaceModel {
     for (const [unionName, un] of ns.unions) {
       this.models.set(unionName, un.node);
     }
+    for (const alias of findNodes(SyntaxKind.AliasStatement, program, ns)) {
+      this.models.set(alias.id.sv, alias);
+    }
+
+    // collect augment decorators
+    for (const augment of findNodes(SyntaxKind.AugmentDecoratorStatement, program, ns)) {
+      this.augmentDecorators.push(augment);
+    }
 
     // sort operations and models
     this.operations = new Map([...this.operations].sort());
@@ -104,6 +115,34 @@ export class NamespaceModel {
   shouldEmit(): boolean {
     return (this.models.size > 0 || this.operations.size > 0 || this.resources.size > 0);
   }
+}
+
+function findNodes<T extends SyntaxKind>(kind: T, program: Program, namespace: Namespace): (Node & { kind: T })[] {
+  const nodes: Node[] = [];
+  for (const file of program.sourceFiles.values()) {
+    visitChildren(file, function visit(node) {
+      if (node.kind === kind && inNamespace(node, program, namespace)) {
+        nodes.push(node);
+      }
+      visitChildren(node, visit);
+    });
+  }
+  return nodes as any;
+}
+
+function inNamespace(node: Node, program: Program, namespace: Namespace): boolean {
+  for (let n: Node | undefined = node; n; n = n.parent) {
+    switch (n.kind) {
+      case SyntaxKind.NamespaceStatement:
+        return program.checker.getTypeForNode(n) === namespace;
+      case SyntaxKind.CadlScript:
+        if (n.inScopeNamespaces.length > 0 && inNamespace(n.inScopeNamespaces[0], program, namespace)) {
+          return true;
+        }
+        return false;
+    }
+  }
+  return false;
 }
 
 export function generateId(obj: BaseNode | NamespaceModel | undefined): string | undefined {

@@ -102,6 +102,13 @@ export class ApiViewNavigation {
         this.Tags = { TypeKind: ApiViewNavigationKind.Enum };
         this.ChildItems = [];
         break;
+      case SyntaxKind.AliasStatement:
+        obj = objNode as AliasStatementNode;
+        stack.push(obj.id.sv);
+        this.Text = obj.id.sv;
+        this.Tags = { TypeKind: ApiViewNavigationKind.Class };
+        this.ChildItems = [];
+        break;
       case SyntaxKind.ModelExpression:
         throw new Error(`Navigation unsupported for "ModelExpression".`);
       case SyntaxKind.IntersectionExpression:

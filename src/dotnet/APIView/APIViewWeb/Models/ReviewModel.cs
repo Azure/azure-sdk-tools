@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -129,5 +129,8 @@ namespace APIViewWeb
         public DateTime ApprovalRequestedOn;
 
         public DateTime ApprovalDate;
+        public bool IsPackageNameApproved { get; set; }
+        public string PackageNameApprovedBy { get; set; }
+        public DateTime PackageNameApprovedOn { get; set; }
     }
 }

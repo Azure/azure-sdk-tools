@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIViewWeb.Filters;
@@ -62,7 +62,20 @@ namespace APIViewWeb.Controllers
             {
                 _logger.LogInformation("Found review ID " + review.ReviewId + " for package " + packageName);
                 // Return 200 OK for approved review and 201 for review in pending status
-                return review.Revisions.LastOrDefault().IsApproved ? Ok() : StatusCode(statusCode: StatusCodes.Status201Created);
+                if (review.Revisions.LastOrDefault().IsApproved)
+                {
+                    return Ok();
+                }
+                else
+                {
+                    var isPkgNameApproved = await _reviewManager.IsPackageNameApproved(language, packageName);
+                    if (!isPkgNameApproved)
+                    {
+                        // Return 202 to indicate package name is not approved
+                        return StatusCode(statusCode: StatusCodes.Status202Accepted);
+                    }
+                    return StatusCode(statusCode: StatusCodes.Status201Created);
+                }
             }
 
             throw new Exception("Automatic review is not found for package " + packageName);

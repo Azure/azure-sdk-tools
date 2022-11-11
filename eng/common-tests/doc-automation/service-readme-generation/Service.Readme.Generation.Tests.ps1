@@ -61,8 +61,8 @@ Describe "generate-service-level-readme" -Tag "UnitTest" {
             -serviceName $serviceName -moniker $moniker -author "github-alias" -msAuthor "msalias" -msService "ms-service"
         $indexReadme = "$PSScriptRoot/outputs/path-to-readme/$moniker/$normalizedServiceName-index.md"
         $serviceReadme = "$PSScriptRoot/outputs/path-to-readme/$moniker/$normalizedServiceName.md"
-        (Get-Content $indexReadme -Raw) | Should -Be (Get-Content "$PSScriptRoot/inputs/expected/$moniker/$normalizedServiceName-index.md" -Raw)
-        (Get-Content $serviceReadme -Raw) | Should -Be (Get-Content "$PSScriptRoot/inputs/expected/$moniker/$normalizedServiceName.md" -Raw)
+        (Get-Content $indexReadme) | Should -Be (Get-Content "$PSScriptRoot/inputs/expected/$moniker/$normalizedServiceName-index.md")
+        (Get-Content $serviceReadme) | Should -Be (Get-Content "$PSScriptRoot/inputs/expected/$moniker/$normalizedServiceName.md")
     }
     # Failed cases
     It "No packages passed to generate service readme function" -TestCases @(
@@ -92,8 +92,8 @@ Describe "generate-service-level-readme" -Tag "UnitTest" {
         $packageInfos = Get-Content $packageInfoFile -Raw | ConvertFrom-Json
         generate-service-level-readme -docRepoLocation "$PSScriptRoot/inputs/" -readmeBaseName $normalizedServiceName -pathPrefix "actual" -packageInfos $packageInfos `
             -serviceName $serviceName -moniker $moniker -author "github-alias" -msAuthor "msalias" -msService "ms-service"
-        (Get-Content $actualIndexReadme -Raw) | Should -Be (Get-Content $expectedIndexReadme -Raw)
-        (Get-Content $actualServiceReadme -Raw) | Should -Be (Get-Content $expectedServiceReadme -Raw)
+        (Get-Content $actualIndexReadme) | Should -Be (Get-Content $expectedIndexReadme)
+        (Get-Content $actualServiceReadme) | Should -Be (Get-Content $expectedServiceReadme)
         $backupIndexFile = "$PSScriptRoot/backup/temp-$normalizedServiceName-index.md"
         $backupServiceFile = "$PSScriptRoot/backup/temp-$normalizedServiceName.md"
         Reset-File $actualIndexReadme $backupIndexFile

@@ -19,7 +19,6 @@ steps:
    # default test steps
   - ${{ if eq(length(parameters.CustomTestSteps), 0) }}:
     - pwsh: |
-        Get-ChildItem ./
         $tags = "${{ parameters.TargetTags }}" -Split "," | ForEach-Object { return $_.Trim() }
 
         $config = New-PesterConfiguration

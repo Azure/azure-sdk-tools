@@ -5,11 +5,11 @@ on:
     types: [opened, labeled, unlabeled]
   issue_comment:
     types: [created]
-  # Not sure if we actually want pull request or pull_request_target events
+  # Not sure if we actually want pull_request or pull_request_target events
   pull_request:
-    types: [opened, edited, labeled, unlabeled]
+    types: [opened, edited, labeled, synchronize, unlabeled]
   pull_request_target:
-    types: [opened, labeled, unlabeled]
+    types: [opened, labeled, synchronize, unlabeled]
   pull_request_review:
     types: [submitted]
 

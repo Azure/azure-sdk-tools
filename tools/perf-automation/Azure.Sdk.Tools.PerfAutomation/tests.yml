@@ -578,6 +578,11 @@ Services:
     - --body-size 1024 --batch-size 100 --warmup 2
     TestNames:
       JS: SendTest
+  - Test: subscribe
+    Arguments:
+    - --events 100000 --event-size 1024 --partitions 10 --max-batch-size 100 --warmup 2
+    TestNames:
+      JS: SubscribeTest
 
 - Service: eventhubs-processor
   Languages:

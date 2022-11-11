@@ -5,6 +5,7 @@ Invoke-Pester -Output Detailed $PSScriptRoot/Service-Readme-Generation-Tests.ps1
 #>
 
 Import-Module Pester
+Set-StrictMode -Version Latest
 
 BeforeAll {
     . $PSScriptRoot/../../../common/scripts/Service-Level-Readme-Automation-Functions.ps1
@@ -67,16 +68,8 @@ Describe "generate-service-level-readme" -Tag "UnitTest" {
     It "No packages passed to generate service readme function" -TestCases @(
         @{ serviceName = "Not exist"; moniker = "preview"}
     ) {
-        $errorThrown = $false
-        try {
-            generate-service-level-readme -docRepoLocation "$PSScriptRoot/outputs/" -readmeBaseName "not-exist" -pathPrefix "path-to-readme" -packageInfos @() `
-                -serviceName $serviceName -moniker $moniker -author "github-alias" -msAuthor "msalias" -msService "ms-service" -ErrorAction Stop > /dev/null
-        }
-        catch {
-            $errorThrown = $true
-        }
-        $errorThrown | Should -BeTrue
-        
+        generate-service-level-readme -docRepoLocation "$PSScriptRoot/outputs/" -readmeBaseName "not-exist" -pathPrefix "path-to-readme" -packageInfos @() `
+            -serviceName $serviceName -moniker $moniker -author "github-alias" -msAuthor "msalias" -msService "ms-service" 2>$null
         $indexReadme = "$PSScriptRoot/outputs/path-to-readme/preview/$normalizedServiceName-index.md"
         $serviceReadme = "$PSScriptRoot/outputs/path-to-readme/preview/$normalizedServiceName.md"
         (Test-Path $indexReadme) | Should -BeFalse
@@ -116,17 +109,8 @@ Describe "generate-service-level-readme" -Tag "UnitTest" {
         $indexReadme = "$PSScriptRoot/inputs/actual/latest/$normalizedServiceName-index.md"
         Backup-File $serviceReadme "$PSScriptRoot/backup"
         $errorThrown = $false
-        try
-        {
-            generate-service-level-readme -docRepoLocation "$PSScriptRoot/inputs" -readmeBaseName "not-exist" -pathPrefix "actual" -packageInfos @() `
-                -serviceName $serviceName -moniker $moniker -author "github-alias" -msAuthor "msalias" -msService "ms-service" -ErrorAction Stop > /dev/null
-        }
-        catch
-        {
-            $errorThrown = $true
-        }
-        $errorThrown | Should -BeTrue
-        
+        generate-service-level-readme -docRepoLocation "$PSScriptRoot/inputs" -readmeBaseName "not-exist" -pathPrefix "actual" -packageInfos @() `
+            -serviceName $serviceName -moniker $moniker -author "github-alias" -msAuthor "msalias" -msService "ms-service" 2>$null
         
         $expectedServiceName = "$PSScriptRoot/inputs/actual/latest/$normalizedServiceName.md"
         (Test-Path $indexReadme) | Should -BeFalse

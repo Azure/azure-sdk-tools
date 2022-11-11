@@ -1,0 +1,87 @@
+pr: none
+
+trigger: none
+
+pool:
+  name: azsdk-pool-mms-ubuntu-2004-general
+  vmImage: MMSUbuntu20.04
+
+variables:
+  NodeVersion: '16.x'
+
+jobs:
+- job: CreateSwaggerReviewCodeFile
+  displayName: 'Create Swagger API review token file'
+
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: $(NodeVersion)
+    displayName: "Use Node $(NodeVersion)"
+
+  - pwsh: |
+      npm install -g cadl
+      npm install -g @cadl-lang/compiler
+    displayName: "Install cadl compiler"
+
+  - pwsh: |
+      Write-Host "Review Details Json: $(Reviews)"
+      $revs = ConvertFrom-Json $(Reviews)
+      if ($revs)
+      {
+        Write-Host "##vso[task.setvariable variable=ReviewId;]$($revs[0].ReviewId)"
+        Write-Host "##vso[task.setvariable variable=RevisionId;]$($revs[0].RevisionId)"
+        Write-Host "##vso[task.setvariable variable=RepoName;]$($revs[0].SourceRepoName)"
+        Write-Host "##vso[task.setvariable variable=BranchName;]$($revs[0].SourceBranchName)"
+        Write-Host "##vso[task.setvariable variable=PackagePath;]$($revs[0].FileName)"
+      }
+        
+  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+    parameters:
+      SkipCheckoutNone: true
+      Repositories:
+      - Name: $(RepoName)
+        Commitish: $(BranchName)
+        WorkingDirectory: $(System.DefaultWorkingDirectory)/cadlRepo
+      Paths:
+      - $(PackagePath)
+
+  - pwsh: |
+      npm install
+      npm install @azure-tools/cadl-apiview
+    workingDirectory: $(System.DefaultWorkingDirectory)/cadlRepo$(PackagePath)
+    displayName: "Install npm packages"
+
+  - pwsh: |      
+      cadl compile . --emit=@azure-tools/cadl-apiview
+    workingDirectory: $(System.DefaultWorkingDirectory)/cadlRepo$(PackagePath)
+    displayName: "Compile and generate apiview token file"
+
+  - pwsh: |
+      $stagingReviewPath = Join-Path $(Build.ArtifactStagingDirectory) $(ReviewId)
+      $stagingPath = Join-Path $stagingReviewPath $(RevisionId)
+      New-Item $stagingPath -ItemType Directory -Force
+      Write-Host "staging path: $($stagingPath)"
+      Copy-Item -Destination $stagingPath -Path $(System.DefaultWorkingDirectory)/cadlRepo$(PackagePath)/cadl-output/*
+      Write-Host "Verifying file in output path"
+      $cadlRepoStruct = ls $stagingPath
+      Write-Host $($cadlRepoStruct)
+    displayName: 'Copy APIView token file to staging path'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'apiview'
+
+  - task: Powershell@2
+    displayName: 'Send Request to APIView to Update Token files'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: $(Build.SourcesDirectory)/eng/scripts/Apiview-Update-Generated-Review.ps1
+      arguments: >
+        -BuildId $(Build.BuildId)
+        -ApiviewUpdateUrl "$(APIViewURL)/review/UpdateApiReview"

@@ -22,8 +22,6 @@ namespace APIViewWeb
         private readonly string _pythonExecutablePath;
         public override string ProcessName => _pythonExecutablePath;
 
-        static TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
-
         public PythonLanguageService(IConfiguration configuration)
         {
             _pythonExecutablePath = configuration["PYTHONEXECUTABLEPATH"] ?? "python";

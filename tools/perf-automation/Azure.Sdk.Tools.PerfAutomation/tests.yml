@@ -583,10 +583,28 @@ Services:
   - Test: upload
     Arguments:
     - --parallel 1
+    - --parallel 2
+    - --parallel 4
+    - --parallel 8
+    - --parallel 16
+    - --parallel 32
+    - --parallel 64
+    - --parallel 128
+    - --parallel 256
+    - --parallel 512
     TestNames:
       Net: SingleUpload
   - Test: upload-batch
     Arguments:
     - --parallel 1
+    - --parallel 2
+    - --parallel 4
+    - --parallel 8
+    - --parallel 16
+    - --parallel 32
+    - --parallel 64
+    - --parallel 128
+    - --parallel 256
+    - --parallel 512
     TestNames:
       Net: BatchUpload

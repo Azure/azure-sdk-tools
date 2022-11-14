@@ -27,7 +27,7 @@
         {
             <form asp-resource="@Model" class="form-inline" asp-controller="Review" asp-action="ApprovePackageName" asp-route-id="@Model.ReviewId" method="post" asp-requirement="@ApproverRequirement.Instance">
                 <button type="submit" class="btn btn-sm shadow-sm btn-success" title="Package name must be approved before first preview release of a new package.">
-                    <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve Package Name
+                    <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve package for first release
                 </button>
             </form>
         }
@@ -36,7 +36,7 @@
 
             <i class="text-success" title="@nameApprovalTip">✔</i>
         }
-    }    
+    }
 </span>
 
 

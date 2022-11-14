@@ -111,6 +111,14 @@ steps:
           -CancelPreviousBuilds $True
           -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
 
+  - pwsh: |
+      Write-Host "1."
+      $env:QueuedPipelines | Write-Host 
+      Write-Host "2."
+      $env:QUEUEDPIPELINES | Write-Host 
+      Write-Host "3."
+      $(QueuedPipelines) | Write-Host 
+    displayName: Check the link
   - task: PowerShell@2
     displayName: Write Queued Pipeline Information to Tools PR
     condition: and(succeeded(), and(ne(variables['QueuedPipelines'], ''), eq(variables['Build.Reason'], 'PullRequest')))

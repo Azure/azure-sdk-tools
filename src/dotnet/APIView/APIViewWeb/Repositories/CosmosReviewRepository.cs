@@ -296,9 +296,9 @@ namespace APIViewWeb
             return result.ToString();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetPackageNameApprovedReviews(string language, string packageName)
+        public async Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName)
         {
-            var query = $"SELECT * FROM Reviews r WHERE r.IsClosed = false AND IS_DEFINED(r.IsPackageNameApproved) AND r.IsPackageNameApproved = true AND " +
+            var query = $"SELECT * FROM Reviews r WHERE r.IsClosed = false AND IS_DEFINED(r.IsApprovedForFirstRelease) AND r.IsApprovedForFirstRelease = true AND " +
                         $"EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition(query).WithParameter("@packageName", packageName).WithParameter("@language", language);

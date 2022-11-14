@@ -8,7 +8,7 @@ Import-Module Pester
 Set-StrictMode -Version Latest
 
 BeforeAll {
-    . $PSScriptRoot/../../../common/scripts/Service-Level-Readme-Automation-Functions.ps1
+    . $PSScriptRoot/../../../common/scripts/Helpers/Service-Level-Readme-Automation-Helpers.ps1
     . $PSScriptRoot/../../../common/scripts/Helpers/Metadata-Helpers.ps1
     . $PSScriptRoot/../../../common/scripts/common.ps1
     . $PSScriptRoot/Service.Readme.Generation.Helpers.ps1

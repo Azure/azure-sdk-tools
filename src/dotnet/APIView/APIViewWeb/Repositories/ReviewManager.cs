@@ -805,7 +805,9 @@ namespace APIViewWeb.Repositories
                     if (revision != null)
                     {
                         await _codeFileRepository.UpsertCodeFileAsync(revisionId, revision.SingleFile.ReviewFileId, codeFile);
-                        revision.Files.FirstOrDefault().VersionString = codeFile.VersionString;
+                        var file = revision.Files.FirstOrDefault();
+                        file.VersionString = codeFile.VersionString;
+                        file.PackageName = codeFile.PackageName;
                         await _reviewsRepository.UpsertReviewAsync(review);
 
                         // Trigger diff calculation using updated code file from sandboxing pipeline

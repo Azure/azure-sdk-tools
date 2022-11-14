@@ -180,27 +180,27 @@ namespace APIViewWeb.Repositories
                 review.ServiceName = p?.ServiceName;
             }
 
-            //If current review doesn't have package name approved status then check if package name is approved for any reviews for the same package.
-            if (!review.IsPackageNameApproved)
+            //If current review doesn't have package approved for first release status then check if package is approved for any reviews for the same package.
+            if (!review.IsApprovedForFirstRelease)
             {
-                var reviews = await _reviewsRepository.GetPackageNameApprovedReviews(review.Language, review.PackageName);
+                var reviews = await _reviewsRepository.GetApprovedForFirstReleaseReviews(review.Language, review.PackageName);
                 if (reviews.Any())
                 {
                     var nameApprovedReview = reviews.First();
-                    review.PackageNameApprovedBy = nameApprovedReview.PackageNameApprovedBy;
-                    review.ApprovalDate = nameApprovedReview.PackageNameApprovedOn;
-                    review.IsPackageNameApproved = true;
+                    review.ApprovedForFirstReleaseBy = nameApprovedReview.ApprovedForFirstReleaseBy;
+                    review.ApprovalDate = nameApprovedReview.ApprovedForFirstReleaseOn;
+                    review.IsApprovedForFirstRelease = true;
                 }
                 else
                 {
-                    // Mark package name as approved if review is already approved. Copy approval details from review approval.
+                    // Mark package as approved if review is already approved. Copy approval details from review approval.
                     reviews = await _reviewsRepository.GetApprovedReviews(review.Language, review.PackageName);
                     if (reviews.Any())
                     {
                         var approvedRevision = reviews.First(r => r.Revisions.Any(rev => rev.IsApproved)).Revisions.First(rev => rev.IsApproved);
-                        review.PackageNameApprovedBy = approvedRevision.Approvers.FirstOrDefault();
-                        review.PackageNameApprovedOn = reviews.First().ApprovalDate;
-                        review.IsPackageNameApproved = true;
+                        review.ApprovedForFirstReleaseBy = approvedRevision.Approvers.FirstOrDefault();
+                        review.ApprovedForFirstReleaseOn = reviews.First().ApprovalDate;
+                        review.IsApprovedForFirstRelease = true;
                     }
                 }
             }            
@@ -459,9 +459,9 @@ namespace APIViewWeb.Repositories
         {
             ReviewModel review = await GetReviewAsync(user, id);
             await AssertApprover(user, review.Revisions.Last());
-            review.PackageNameApprovedBy = user.GetGitHubLogin();
-            review.PackageNameApprovedOn = DateTime.Now;
-            review.IsPackageNameApproved = true;
+            review.ApprovedForFirstReleaseBy = user.GetGitHubLogin();
+            review.ApprovedForFirstReleaseOn = DateTime.Now;
+            review.IsApprovedForFirstRelease = true;
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
@@ -954,9 +954,9 @@ namespace APIViewWeb.Repositories
             return result;
         }
 
-        public async Task<bool> IsPackageNameApproved(string language, string packageName)
+        public async Task<bool> IsApprovedForFirstRelease(string language, string packageName)
         {
-            var reviews = await _reviewsRepository.GetPackageNameApprovedReviews(language, packageName);
+            var reviews = await _reviewsRepository.GetApprovedForFirstReleaseReviews(language, packageName);
             if (!reviews.Any())
             {
                 reviews = await _reviewsRepository.GetApprovedReviews(language, packageName);                

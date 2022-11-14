@@ -68,7 +68,7 @@ namespace APIViewWeb.Controllers
                 }
                 else
                 {
-                    var isPkgNameApproved = await _reviewManager.IsPackageNameApproved(language, packageName);
+                    var isPkgNameApproved = await _reviewManager.IsApprovedForFirstRelease(language, packageName);
                     if (!isPkgNameApproved)
                     {
                         // Return 202 to indicate package name is not approved

@@ -16,7 +16,7 @@ export async function getChangedPackageDirectory(throwErrorWhenFindingUnexpected
             if (packageDirectory) {
                 changedPackageDirectories.add(packageDirectory[0]);
             }
-        } else if (throwErrorWhenFindingUnexpectedFile) {
+        } else if (throwErrorWhenFindingUnexpectedFile && filePath.endsWith('.ts')) {
             throw new Error(`Find unexpected generated file: ${filePath}. Please confirm whether the output-folder is correct.`);
         }
     }

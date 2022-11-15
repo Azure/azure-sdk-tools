@@ -24,11 +24,11 @@ namespace A {
         [IteratorStateMachine(typeof(Class))]
         [PrivateAttribute]
         [AsyncStateMachine(typeof(Class))]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         /*-*/[Public(1)]
         [Public("s")]
         [Public("s", Property = "a")]
         [Public(null, Property = null)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
         [Array(new[] {1, 2, 3})]
         public void M1()/*-*/{/*-*/;/*-*/}/*-*/
     }

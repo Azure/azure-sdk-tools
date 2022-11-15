@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <exception cref="GitProcessException">Throws GitProcessException on returnCode != 0 OR if an unexpected exception is thrown during invocation.</exception>
         public virtual CommandResult Run(string arguments, GitAssetsConfiguration config)
         {
-            return Run(arguments, config.AssetsRepoLocation);
+            return Run(arguments, config.AssetsRepoLocation.ToString());
         }
 
         /// <summary>

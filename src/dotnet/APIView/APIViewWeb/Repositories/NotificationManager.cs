@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using APIView.Identity;
 using APIViewWeb.Models;
-using Markdig;
 using Microsoft.Extensions.Configuration;
 using SendGrid;
 using SendGrid.Helpers.Mail;
@@ -19,9 +19,9 @@ namespace APIViewWeb.Repositories
     public class NotificationManager
     {
         private readonly string _endpoint;
-        private readonly string _sendGridKey;
         private readonly CosmosReviewRepository _reviewRepository;
         private readonly CosmosUserProfileRepository _userProfileRepository;
+        private readonly ISendGridClient _sendGridClient;
 
         private const string ENDPOINT_SETTING = "Endpoint";
         private const string SENDGRID_KEY_SETTING = "SendGrid:Key";
@@ -30,9 +30,9 @@ namespace APIViewWeb.Repositories
         private const string REFERENCES_HEADER = "References";
 
         public NotificationManager(IConfiguration configuration, CosmosReviewRepository reviewRepository,
-            CosmosUserProfileRepository userProfileRepository)
+        CosmosUserProfileRepository userProfileRepository, ISendGridClient sendGridClient = null)
         {
-            _sendGridKey = configuration[SENDGRID_KEY_SETTING];
+            _sendGridClient = sendGridClient ?? new SendGridClient(configuration[SENDGRID_KEY_SETTING]);
             _endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
             _reviewRepository = reviewRepository;
             _userProfileRepository = userProfileRepository;
@@ -165,7 +165,6 @@ namespace APIViewWeb.Repositories
                     return;
                 }
             }
-            var client = new SendGridClient(_sendGridKey);
             var from = new EmailAddress(FROM_ADDRESS);
             SendGridMessage msg = MailHelper.CreateSingleEmail(
                 from,
@@ -176,7 +175,7 @@ namespace APIViewWeb.Repositories
             var threadHeader = $"<{review.ReviewId}{FROM_ADDRESS}>";
             msg.AddHeader(REPLY_TO_HEADER, threadHeader); 
             msg.AddHeader(REFERENCES_HEADER, threadHeader);
-            await client.SendEmailAsync(msg);
+            await _sendGridClient.SendEmailAsync(msg);
         }
         private async Task SendEmailsAsync(ReviewModel review, ClaimsPrincipal user, string plainTextContent, string htmlContent)
         {
@@ -190,7 +189,6 @@ namespace APIViewWeb.Repositories
                 return;
             }
 
-            var client = new SendGridClient(_sendGridKey);
             var from = new EmailAddress(FROM_ADDRESS, GetUserName(user));
             SendGridMessage msg = MailHelper.CreateMultipleEmailsToMultipleRecipients(
                 from,
@@ -202,7 +200,7 @@ namespace APIViewWeb.Repositories
             var threadHeader = $"<{review.ReviewId}{FROM_ADDRESS}>";
             msg.AddHeader(REPLY_TO_HEADER, threadHeader); 
             msg.AddHeader(REFERENCES_HEADER, threadHeader);
-            await client.SendEmailAsync(msg);
+            await _sendGridClient.SendEmailAsync(msg);
         }
 
         public async Task ToggleSubscribedAsync(ClaimsPrincipal user, string reviewId)

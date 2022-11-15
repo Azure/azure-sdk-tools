@@ -76,7 +76,7 @@ steps:
   - bash: |
       git clone ${{ parameters.swagger.path }}
       downloadSdkRepoUrl=$(echo $(sdkRepoUrl) | sed "s#https://#https://$(REPO_OWNER):$(azuresdk-github-pat)@#")
-      git clone --branch $(sdkMainBranch) ${downloadSdkRepoUrl}
+      git clone --depth 1 --branch $(sdkMainBranch) ${downloadSdkRepoUrl}
       cd $(SPEC_REPO)
       export GITHUB_TOKEN=$(azuresdk-github-pat)
       if [ -n "${{ parameters.swagger.branch }}" ];then

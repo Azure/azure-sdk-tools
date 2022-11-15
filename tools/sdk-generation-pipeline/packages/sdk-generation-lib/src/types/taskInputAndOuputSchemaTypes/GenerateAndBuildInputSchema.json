@@ -23,6 +23,10 @@
       // Related readme.md files that pending generation.
       "type": "string"
     },
+    "relatedCadlProjectFolder": {
+      // Related cadl project folder that pending generation.
+      "type": "string"
+    },
     "serviceType": {
       // The type of related swagger: resource-manager or data-plane
       "type": "string",
@@ -37,5 +41,5 @@
       "type": "boolean"
     }
   },
-  "required": ["specFolder", "headSha", "headRef", "repoHttpsUrl", "relatedReadmeMdFile"]
+  "required": ["specFolder", "headSha", "headRef", "repoHttpsUrl"]
 }

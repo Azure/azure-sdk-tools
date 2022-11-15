@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIView;
@@ -20,6 +20,8 @@ namespace ApiView
         };
 
         private string _versionString;
+
+        private static HashSet<string> _collapsibleLanguages = new HashSet<string>(new string[] { "Swagger" });
 
         [Obsolete("This is only for back compat, VersionString should be used")]
         public int Version { get; set; }
@@ -56,12 +58,17 @@ namespace ApiView
         {
             return new CodeFileRenderer().Render(this).CodeLines.ToString();
         }
+        
+        public static bool IsCollapsibleSectionSSupported(string language) => _collapsibleLanguages.Contains(language);
 
         public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)
         {
             var codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(
                 stream,
                 JsonSerializerOptions);
+
+            if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language))
+                hasSections = true;
 
             // Spliting out the 'leafSections' of the codeFile is done so as not to have to render large codeFiles at once
             // Rendering sections in part helps to improve page load time

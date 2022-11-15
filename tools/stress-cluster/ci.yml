@@ -5,6 +5,7 @@ trigger:
   paths:
     include:
       - tools/stress-cluster
+      - eng/common/scripts/stress-testing
 
 pr:
   branches:
@@ -13,6 +14,7 @@ pr:
   paths:
     include:
       - tools/stress-cluster
+      - eng/common/scripts/stress-testing
 
 jobs:
   - job: Analyze

@@ -72,8 +72,6 @@ namespace APIViewWeb.Repositories
                     if (reason == EvictionReason.TokenExpired || reason == EvictionReason.Expired || reason == EvictionReason.Capacity)
                     {
                         UserPreferenceModel newPreference = (UserPreferenceModel)value;
-                        UserPreferenceModel existingPreference = (await _userProfileManager.tryGetUserProfileAsync(User)).Preferences;
-                        newPreference.PreferenceId = existingPreference.PreferenceId;
                         newPreference.UserName = User.GetGitHubLogin();
                         await _userProfileManager.updateUserPreferences(User, newPreference);
                     }

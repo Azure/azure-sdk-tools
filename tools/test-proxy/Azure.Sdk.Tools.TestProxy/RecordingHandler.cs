@@ -196,7 +196,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
-            var upstreamRequest = CreateUpstreamRequest(incomingRequest, GZipUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
+            var upstreamRequest = CreateUpstreamRequest(incomingRequest, CompressionUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
 
             HttpResponseMessage upstreamResponse = null;
 
@@ -232,7 +232,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // HEAD requests do NOT have a body regardless of the value of the Content-Length header
             if (incomingRequest.Method.ToUpperInvariant() != "HEAD")
             {
-                body = GZipUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+                body = CompressionUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
             }
 
             entry.Response.Body = body.Length == 0 ? null : body;
@@ -267,7 +267,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (entry.Response.Body?.Length > 0)
             {
-                var bodyData = GZipUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
+                var bodyData = CompressionUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
                 outgoingResponse.ContentLength = bodyData.Length;
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
@@ -462,7 +462,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (match.Response.Body?.Length > 0)
             {
-                var bodyData = GZipUtilities.CompressBody(match.Response.Body, match.Response.Headers);
+                var bodyData = CompressionUtilities.CompressBody(match.Response.Body, match.Response.Headers);
 
                 outgoingResponse.ContentLength = bodyData.Length;
 
@@ -486,7 +486,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             byte[] bytes = await ReadAllBytes(request.Body).ConfigureAwait(false);
 
-            entry.Request.Body = GZipUtilities.DecompressBody(bytes, request.Headers);
+            entry.Request.Body = CompressionUtilities.DecompressBody(bytes, request.Headers);
             return entry;
         }
 
@@ -963,21 +963,30 @@ namespace Azure.Sdk.Tools.TestProxy
             var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
             var hostValue = GetHeader(request, "x-recording-upstream-base-uri");
 
-            // There is an ongoing issue where some libraries send a URL with two leading // after the hostname.
-            // This will just handle the error explicitly rather than letting it slip through and cause random issues during record/playback sessions.
-            if (rawTarget.StartsWith("//"))
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, $"The URI being passed has two leading '/' in the Target, which will break URI combine with the hostname. Visible URI target: {rawTarget}.");
-            }
-
             // it is easy to forget the x-recording-upstream-base-uri value
             if (string.IsNullOrWhiteSpace(hostValue))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"The value present in header 'x-recording-upstream-base-uri' is not a valid hostname: {hostValue}.");
             }
 
-            var host = new Uri(hostValue);
-            return new Uri(host, rawTarget);
+            // The host value from the header should include scheme and port. EG:
+            //    https://portal.azure.com/
+            //    http://localhost:8080
+            //    http://user:pass@localhost:8080/ <-- this should be EXTREMELY rare given it's extremely insecure
+            // 
+            // The value from rawTarget is the _exact_ "rest of the URI" WITHOUT auto-decoding (as specified above) and could look like:
+            //    ///request
+            //    /hello/world?query=blah
+            //    ""
+            //    //hello/world
+            //
+            // We cannot use a URIBuilder to combine the hostValue and the rawTarget, as doing so results in auto-decoding of escaped 
+            // characters that will BREAK the request that we actually wish to make.
+            //
+            // Given these limitations, and safe in the knowledge of both sides of this operation. We trim the trailing / off of the host,
+            // and string concatenate them together.
+            var rawUri = hostValue.TrimEnd('/') + rawTarget;
+            return new Uri(rawUri);
         }
 
         private static bool IncludeHeader(string header)

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace APIViewWeb.Repositories
 {
-    public class DevopsArtifactRepository
+    public class DevopsArtifactRepository : IDevopsArtifactRepository
     {
         static readonly HttpClient _devopsClient = new();
         private readonly IConfiguration _configuration;
@@ -99,10 +99,12 @@ namespace APIViewWeb.Repositories
 
             BuildHttpClient buildClient = await devOpsConnection.GetClientAsync<BuildHttpClient>();
             var projectClient = await devOpsConnection.GetClientAsync<ProjectHttpClient>();
-            int definitionId = await GetPipelineId(pipelineName, buildClient, projectName);
+            string envName = _configuration["apiview-deployment-environment"];
+            string updatedPipelineName = string.IsNullOrEmpty(envName) ? pipelineName : $"{pipelineName}-{envName}";
+            int definitionId = await GetPipelineId(updatedPipelineName, buildClient, projectName);
             if (definitionId == 0)
             {
-                throw new Exception(string.Format("Azure Devops pipeline is not found with name {0}. Please recheck and ensure pipeline exists with this name", pipelineName));
+                throw new Exception(string.Format("Azure Devops pipeline is not found with name {0}. Please recheck and ensure pipeline exists with this name", updatedPipelineName));
             }
             
             var definition = await buildClient.GetDefinitionAsync(projectName, definitionId);            

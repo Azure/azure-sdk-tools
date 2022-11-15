@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using APIView;
 
@@ -65,6 +66,8 @@ namespace SwaggerApiParser
 
         [JsonPropertyName("x-ms-nullable")] public bool xMsNullable { get; set; }
 
+        [JsonPropertyName("x-ms-enum")] public XMSEnum xmsEnum { get; set; }
+
         public Dictionary<string, BaseSchema> properties { get; set; }
         public Dictionary<string, BaseSchema> allOfProperities { get; set; }
 
@@ -73,7 +76,7 @@ namespace SwaggerApiParser
 
         public List<string> required { get; set; }
 
-        [JsonPropertyName("enum")] public List<string> Enum { get; set; }
+        [JsonPropertyName("enum")] public List<JsonElement> Enum { get; set; }
 
         public bool IsPropertyRequired(string propertyName)
         {
@@ -110,8 +113,14 @@ namespace SwaggerApiParser
 
             if (this.Enum != null && this.Enum.Count > 0)
             {
-                keywords.Add($"enum: {string.Join(",", this.Enum)}");
+                keywords.Add($"enum: [{string.Join(",", this.Enum)}]");
             }
+
+            if (this.xmsEnum != null)
+            {
+                keywords.Add(this.xmsEnum.ToKeywords());
+            }
+
 
             return keywords;
         }
@@ -141,7 +150,6 @@ namespace SwaggerApiParser
             List<CodeFileToken> ret = new List<CodeFileToken>();
             if (serializeRef)
             {
-                // ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken(Utils.GetDefinitionType(schema.originalRef), CodeFileTokenKind.TypeName));
                 flattenedTableItems.Add(new SchemaTableItem() {Model = Utils.GetDefinitionType(schema.originalRef), TypeFormat = schema.type, Description = schema.description});
                 ret.Add(TokenSerializer.NewLine());
@@ -164,7 +172,6 @@ namespace SwaggerApiParser
                 {
                     if (allOfSchema != null)
                     {
-                        // ret.Add(TokenSerializer.Intent(context.intent + 1));
                         ret.Add(new CodeFileToken(Utils.GetDefinitionType(allOfSchema.Ref), CodeFileTokenKind.TypeName));
                         ret.Add(TokenSerializer.NewLine());
                     }
@@ -175,13 +182,27 @@ namespace SwaggerApiParser
 
             if (schema.type == "array")
             {
-                // ret.Add(TokenSerializer.Intent(context.intent));
-
                 SchemaTableItem arrayItem = new SchemaTableItem {Description = schema.description};
                 var arrayType = schema.items.type != null ? $"array<{schema.items.type}>" : $"array<{Utils.GetDefinitionType(schema.items.originalRef)}>";
                 arrayItem.TypeFormat = arrayType;
                 flattenedTableItems.Add(arrayItem);
                 TokenSerializeArray(context, ret, schema, ref flattenedTableItems, serializeRef);
+            }
+
+            if (schema.type == "string")
+            {
+                if (schema.Enum != null)
+                {
+                    SchemaTableItem enumItem = new SchemaTableItem {Description = schema.description};
+                    const string enumType = "enum<string>";
+                    enumItem.TypeFormat = enumType;
+                    if (schema.xmsEnum != null)
+                    {
+                        enumItem.Keywords = string.Join(",", schema.GetKeywords());
+                    }
+
+                    flattenedTableItems.Add(enumItem);
+                }
             }
 
             return ret.ToArray();

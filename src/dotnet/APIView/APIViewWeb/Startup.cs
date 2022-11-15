@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using APIViewWeb.HostedServices;
 using APIViewWeb.Filters;
 using APIViewWeb.Account;
+using APIView.Identity;
 
 namespace APIViewWeb
 {
@@ -80,7 +81,7 @@ namespace APIViewWeb
             services.AddSingleton<CosmosReviewRepository>();
             services.AddSingleton<CosmosCommentsRepository>();
             services.AddSingleton<CosmosPullRequestsRepository>();
-            services.AddSingleton<DevopsArtifactRepository>();
+            services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
             services.AddSingleton<CosmosUsageSampleRepository>();
             services.AddSingleton<BlobUsageSampleRepository>();
             services.AddSingleton<CosmosUserProfileRepository>();
@@ -107,7 +108,7 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, SwiftLanguageService>();
             services.AddSingleton<LanguageService, XmlLanguageService>();
 
-            if (Environment.IsDevelopment() && Configuration["AuthenticationScheme"] == "Test") 
+            if (Environment.IsDevelopment() && Configuration["AuthenticationScheme"] == "Test")
             {
                 services.AddAuthentication("Test")
                     .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });

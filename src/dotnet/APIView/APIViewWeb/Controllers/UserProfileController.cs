@@ -17,6 +17,18 @@ namespace APIViewWeb.Controllers
             _userPreferenceCache = userPreferenceCache;
         }
 
+        [HttpPut]
+        public ActionResult UpdateReviewPageSettings(bool? hideLineNumbers = null, bool? hideLeftNavigation = null, bool? showHiddenApis = null)
+        {
+            _userPreferenceCache.UpdateUserPreference(new UserPreferenceModel()
+            {
+                HideLeftNavigation = hideLeftNavigation,
+                HideLineNumbers = hideLineNumbers,
+                ShowHiddenApis = showHiddenApis
+            }, User);
+            return Ok();
+        }
+
         [HttpPost]
         public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme")
         {
@@ -24,7 +36,7 @@ namespace APIViewWeb.Controllers
             UserPreferenceModel preference = await _userPreferenceCache.GetUserPreferences(User);
 
             preference.Theme = theme;
-            
+
             HashSet<string> Languages = new HashSet<string>(languages);
             preference.ApprovedLanguages = Languages;
 

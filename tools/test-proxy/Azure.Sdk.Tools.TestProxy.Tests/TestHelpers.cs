@@ -125,9 +125,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 context.Request.Headers[header.Key] = header.Value;
             }
 
-            context.Request.Headers["x-recording-upstream-base-uri"] = entry.RequestUri;
-
             var uri = new Uri(entry.RequestUri);
+
+            context.Request.Headers["x-recording-upstream-base-uri"] = new UriBuilder(uri.Scheme, uri.Host, uri.Port).Uri.ToString();
             context.Request.Host = new HostString(uri.Authority);
             context.Request.QueryString = new QueryString(uri.Query);
             context.Request.Path = uri.AbsolutePath;
@@ -355,8 +355,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static void CheckBreadcrumbAgainstAssetsConfig(GitAssetsConfiguration configuration)
         {
             var assetsStorePath = configuration.ResolveAssetsStoreLocation();
-            var breadCrumbFile = Path.Join(assetsStorePath, ".breadcrumb");
-            var targetKey = configuration.AssetsJsonRelativeLocation.Replace("\\", "/");
+            var breadCrumbFile = Path.Join(assetsStorePath.ToString(), ".breadcrumb");
+            var targetKey = configuration.AssetsJsonRelativeLocation.ToString();
 
             Assert.True(File.Exists(breadCrumbFile));
 

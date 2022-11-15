@@ -15,11 +15,14 @@ namespace APIViewIntegrationTests
     {
         private readonly CosmosClient _cosmosClient;
         private CosmosReviewRepository _cosmosReviewRepository;
-        private readonly string _cosmosEmulatorConnectionString = "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
 
         public CosmosReviewRepositoryTests()
         {
-            _cosmosClient = new CosmosClient(_cosmosEmulatorConnectionString);
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("config.json")
+                .Build();
+
+            _cosmosClient = new CosmosClient(config["CosmosEmulatorConnectionString"]);
             _cosmosReviewRepository = new CosmosReviewRepository(null, _cosmosClient);
         }
 

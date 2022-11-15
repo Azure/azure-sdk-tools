@@ -10,6 +10,10 @@ public class SwaggerSpec
 {
     public string swagger { get; set; }
 
+    public string swaggerFilePath;
+
+    public string swaggerLink;
+
     public Info info { get; set; }
     public string host { get; set; }
 
@@ -40,6 +44,10 @@ public class SwaggerSpec
         if (Ref.Contains("parameters"))
         {
             var key = Ref.Split("/").Last();
+            if (this.parameters == null)
+            {
+                return null;
+            }
             this.parameters.TryGetValue(key, out var ret);
             return ret;
         }

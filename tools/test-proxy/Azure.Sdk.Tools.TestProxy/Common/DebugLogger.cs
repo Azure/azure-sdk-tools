@@ -7,6 +7,8 @@ using System;
 using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -34,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static void ConfigureLogger(ILoggerFactory factory)
         {
-            if (logger == null)
+            if (logger == null && factory != null)
             {
                 logger = factory.CreateLogger("DebugLogging");
             }
@@ -83,13 +85,38 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="details">The content which should be logged.</param>
         public static void LogDebug(string details)
         {
-            if (null != logger)
+            if (logger != null)
             {
                 logger.LogDebug(details);
             }
             else
             {
-                System.Console.WriteLine(details);
+                // Honor the following environment variable settings:
+                //
+                // LOGGING__LOGLEVEL
+                // LOGGING__LOGLEVEL__DEFAULT
+                // LOGGING__LOGLEVEL__MICROSOFT
+                //
+                // We do this because when invoking against CLI commands, we don't have access to the same logging provider
+                // that is provided by the ASP.NET hostbuilder. Given that, we want to get as close as possible.
+                Enum.TryParse(typeof(LogLevel),
+                    Environment.GetEnvironmentVariable("LOGGING__LOGLEVEL") ?? string.Empty,
+                    ignoreCase: true, out var loglevel);
+
+                Enum.TryParse(typeof(LogLevel),
+                    Environment.GetEnvironmentVariable("LOGGING__LOGLEVEL__DEFAULT") ?? string.Empty,
+                    ignoreCase: true, out var loglevel_default);
+
+                Enum.TryParse(typeof(LogLevel),
+                    Environment.GetEnvironmentVariable("LOGGING__LOGLEVEL__MICROSOFT") ?? string.Empty,
+                    ignoreCase: true, out var loglevel_microsoft);
+
+                if ((loglevel != null && (int)loglevel <= 1)
+                    || (loglevel_default != null && (int)loglevel_default <= 1)
+                    || (loglevel_microsoft != null && (int)loglevel_microsoft <= 1))
+                {
+                    System.Console.WriteLine(details);
+                }
             }
         }
 

@@ -91,6 +91,14 @@ export class NamespaceModel {
     this.resources = new Map([...this.resources].sort());
     this.models = new Map([...this.models].sort());
   }
+
+  /**
+   * Don't emit an empty namespace
+   * @returns true if there are models, resources or operations
+   */
+  shouldEmit(): boolean {
+    return (this.models.size > 0 || this.operations.size > 0 || this.resources.size > 0);
+  }
 }
 
 export function generateId(obj: BaseNode | NamespaceModel | undefined): string | undefined {

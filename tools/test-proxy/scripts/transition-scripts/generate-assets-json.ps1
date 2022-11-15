@@ -348,10 +348,11 @@ if ($InitialPush) {
 
   if ($TestProxyExe -eq "test-proxy") {
     Test-TestProxyVersion -TestProxyExe $TestProxyExe
-    if (!$LangRecordingDirs.ContainsKey($language)) {
-      Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
-      exit 1
-    }
+  }
+
+  if (!$LangRecordingDirs.ContainsKey($language)) {
+    Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
+    exit 1
   }
 }
 

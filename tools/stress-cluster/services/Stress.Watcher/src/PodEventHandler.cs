@@ -133,13 +133,6 @@ namespace Stress.Watcher
                         Logger.Error(t.Exception, "Error handling pod event.");
                     }
                 });
-                DeleteResources(pod).ContinueWith(t =>
-                {
-                    if (t.Exception != null)
-                    {
-                        Logger.Error(t.Exception, "Error deleting resources.");
-                    }
-                });
             }
         }
 
@@ -232,87 +225,6 @@ namespace Stress.Watcher
             }
 
             return true;
-        }
-
-        public async Task DeleteResources(V1Pod pod)
-        {
-            if (!ShouldDeleteResources(pod))
-            {
-                Logger.Debug($"Skipping resource deletion.");
-                return;
-            }
-
-            var rgName = GetResourceGroupName(pod);
-
-            if (string.IsNullOrEmpty(rgName))
-            {
-                return;
-            }
-
-            Subscription subscription = ARMClient.DefaultSubscription;
-
-            ResourceGroup resourceGroup;
-            try {
-                resourceGroup = await subscription.GetResourceGroups().GetAsync(rgName);
-            } catch (Exception e){
-                Logger.Error($"Failed to get resource group '{rgName}' using subsription id '{subscription.Id}'");
-                throw e;
-            }
-
-            await resourceGroup.DeleteAsync();
-            Logger.Information($"Deleted resources {rgName}");
-        }
-
-        public bool ShouldDeleteResources(V1Pod pod)
-        {
-            if (!string.IsNullOrEmpty(Namespace) && Namespace != pod.Namespace())
-            {
-                return false;
-            }
-
-            var initContainers = pod.Spec?.InitContainers;
-            if (initContainers == null || initContainers.Count() == 0) {
-                return false;
-            }
-
-            var deployContainers = initContainers.Where(c => c.Name == "init-azure-deployer");
-            if (deployContainers.Count() == 0)
-            {
-                return false;
-            }
-
-            bool isCompleted = (pod.Status.Phase == "Succeeded" || pod.Status.Phase == "Failed");
-            if (isCompleted &&
-                pod.Metadata.Labels.TryGetValue("Skip.RemoveTestResources", out var skipRemove) &&
-                skipRemove == "true")
-            {
-                Logger.Information($"Resource has Skip.RemoveTestResources=true label, skipping resource deletion.");
-                return false;
-            }
-
-            return isCompleted;
-        }
-
-        public string GetResourceGroupName(V1Pod pod)
-        {
-            var deployContainers = pod.Spec.InitContainers?.Where(c => c.Name == "init-azure-deployer");
-            var envVars = deployContainers?.First().Env;
-            if (envVars == null) {
-                return "";
-            }
-
-            var rgName = envVars.Where(e => e.Name == "RESOURCE_GROUP_NAME").Select(e => e.Value);
-            if (rgName.Count() == 0)
-            {
-                Logger.Error("Cannot find the env variable 'RESOURCE_GROUP_NAME' on the init container 'init-azure-deployer' spec.");
-                return "";
-            }
-            if (rgName.First() == null) {
-                Logger.Error("Env variable RESOURCE_GROUP_NAME does not have a value.");
-                return "";
-            }
-
-            return rgName.First().ToString();
         }
     }
 }

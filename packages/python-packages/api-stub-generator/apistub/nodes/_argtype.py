@@ -43,7 +43,7 @@ class ArgType:
         # Add arg name
         self.id = function_id
         if add_line_marker:
-            self.id = f"{function_id}.param({self.argname}"
+            self.id = f"{function_id}.param({self.argname})"
             apiview.add_line_marker(self.id)
 
         apiview.add_text(f"{prefix}{self.argname}")

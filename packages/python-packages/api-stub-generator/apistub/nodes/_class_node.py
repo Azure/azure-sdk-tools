@@ -106,7 +106,8 @@ class ClassNode(NodeEntityBase):
             return False
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
-            return function_module and function_module.startswith(self.pkg_root_namespace)
+            # TODO: Remove the "_model_base" workaround when this stuff is moved into azure-core.
+            return function_module and function_module.startswith(self.pkg_root_namespace) and not function_module.endswith("_model_base")
         return False
 
     def _handle_class_variable(self, child_obj, name, *, type_string=None, value=None):
@@ -205,7 +206,7 @@ class ClassNode(NodeEntityBase):
                 for (item_name, item_type) in child_obj.items():
                     if item_name.startswith("_"):
                         continue
-                    if is_typeddict and inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing":
+                    if is_typeddict and (inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing"):
                         self.child_nodes.append(
                             KeyNode(self.namespace, self, item_name, item_type)
                         )

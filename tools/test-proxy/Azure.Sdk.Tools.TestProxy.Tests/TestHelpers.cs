@@ -416,21 +416,23 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 Directory.CreateDirectory(tmpPath);
                 GitProcessHandler GitHandler = new GitProcessHandler();
-                string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
+                var gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, tmpPath);
+
                 // Clone the original assets repo
                 GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
-                // Check to see if there's already a branch
-                CommandResult commandResult = GitHandler.Run($"ls-remote --heads {gitCloneUrl} {assets.TagPrefix}", tmpPath);
-                // If the commandResult response is empty, there's nothing to do and we can return
-                if (String.IsNullOrWhiteSpace(commandResult.StdOut))
-                {
-                    return;
-                }
 
-                // If the commandResult response is not empty, the command result will have something
-                // similar to the following:
-                // e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7	refs/heads/scenario_clean_push
-                GitHandler.Run($"checkout {assets.TagPrefix}", tmpPath);
+                // Check to see if there's already a branch
+                CommandResult commandResult = GitHandler.Run($"ls-remote --tags {gitCloneUrl} {assets.TagPrefix}", tmpPath);
+
+                // If the commandResult response is empty, there's nothing to do and we can return
+                if (!String.IsNullOrWhiteSpace(commandResult.StdOut))
+                {
+                    // If the commandResult response is not empty, the command result will have something
+                    // similar to the following:
+                    // e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7	refs/heads/scenario_clean_push
+                    GitHandler.Run($"checkout {assets.TagPrefix}", tmpPath);
+
+                }
 
                 // Create the adjustedAssetsRepoBranch from the original branch. The reason being is that pushing
                 // to a branch of a branch is automatic

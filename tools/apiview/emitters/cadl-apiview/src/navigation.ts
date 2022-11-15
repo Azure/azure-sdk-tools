@@ -51,11 +51,16 @@ export class ApiViewNavigation {
         for (const node of objNode.models.values()) {
           modelItems.push(new ApiViewNavigation(node, stack));
         }
-        this.ChildItems = [
-          { Text: "Operations", ChildItems: operationItems, Tags: { TypeKind: ApiViewNavigationKind.Method }, NavigationId: "" },
-          { Text: "Resources", ChildItems: resourceItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" },
-          { Text: "Models", ChildItems: modelItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" },
-        ];
+        this.ChildItems = [];
+        if (operationItems.length) {
+          this.ChildItems.push({ Text: "Operations", ChildItems: operationItems, Tags: { TypeKind: ApiViewNavigationKind.Method }, NavigationId: "" });
+        }
+        if (resourceItems.length) {
+          this.ChildItems.push({ Text: "Resources", ChildItems: resourceItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" });
+        }
+        if (modelItems.length) {
+          this.ChildItems.push({ Text: "Models", ChildItems: modelItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" });
+        }
         break;
       case SyntaxKind.ModelStatement:
         obj = objNode as ModelStatementNode;

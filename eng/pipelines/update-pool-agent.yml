@@ -1,0 +1,62 @@
+parameters:
+- name: Repos
+  type: object
+  default:
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-android
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-c
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-cpp
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-go
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-ios
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-java
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-js
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-net
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-python
+- name: Migrate-From
+  type: string
+  default: 'not-specified'
+- name: Migrate-To
+  type: string
+  default: 'not-specified'
+
+trigger: none
+pr: none
+
+jobs:
+  - job: Migration
+    pool:
+      name: azsdk-pool-mms-ubuntu-2004-general
+    variables:
+      - template: ./templates/variables/globals.yml
+    steps:
+      - ${{ each repo in parameters.Repos }}:
+        - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+          parameters:
+            Repositories:
+              - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
+        - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
+        - pwsh: |
+            $files = git ls-tree $(DefaultBranch) --name-only -r
+            # Scan all Files
+            foreach ($file in $files) {
+              $content = Get-Content $file -Raw
+              $content = $content -replace ${{parameters.Migrate-From}}, ${{parameters.Migrate-To}}
+              Set-Content -Path $file.FullName -Value $content
+            }
+        - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+          parameters:
+            BaseBranchName: $(DefaultBranch)
+            PRBranchName: migrate-pool
+            CommitMsg: "Migrate from ${{ parameters.Migrate-From }} to ${{ parameters.Migrate-To }}"
+            RepoOwner: ${{ repo.RepoOwner }}
+            RepoName: ${{ repo.RepoName }}
+            OpenAsDraft: true
+          

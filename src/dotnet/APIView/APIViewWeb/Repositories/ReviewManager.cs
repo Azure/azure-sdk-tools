@@ -251,7 +251,7 @@ namespace APIViewWeb.Repositories
                 {
                     foreach (var file in revision.Files)
                     {
-                        if (!file.HasOriginal || !languageService.IsSupportedFile(file.FileName) || !languageService.CanUpdate(file.VersionString))
+                        if (!file.HasOriginal || !languageService.CanUpdate(file.VersionString))
                         {
                             continue;
                         }

@@ -151,6 +151,21 @@ stages:
             parameters:
               StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
 
+          - script: |
+              npm install -g azurite
+            displayName: 'Install Azurite'
+          
+          - task: Powershell@2
+            inputs:
+              workingDirectory: $(Agent.TempDirectory)
+              filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
+              arguments: >
+                -Process "azurite.cmd"
+                -ArgumentList "--silent"
+                -Port "10000"
+              pwsh: true
+            displayName: 'Start Azurite'
+
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk 3.1.x'
             inputs:

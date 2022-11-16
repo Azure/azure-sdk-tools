@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using System.Threading.Tasks;
+using APIViewWeb.Managers;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -23,11 +24,11 @@ namespace APIViewWeb.Pages.Assemblies
             UserProfileModel profile;
             if(UserName == null || User.GetGitHubLogin().Equals(UserName))
             {
-                profile = await this._manager.tryGetUserProfileAsync(User);
+                profile = await this._manager.TryGetUserProfileAsync(User);
             }
             else
             {
-                profile = await this._manager.tryGetUserProfileByNameAsync(UserName);
+                profile = await this._manager.TryGetUserProfileByNameAsync(UserName);
             }
 
             userProfile = profile;

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.IO;
@@ -11,10 +11,11 @@ using Microsoft.AspNetCore.Authorization;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using APIViewWeb.Repositories;
 
-namespace APIViewWeb.Repositories
+namespace APIViewWeb.Managers
 {
-    public class UsageSampleManager
+    public class UsageSampleManager : IUsageSampleManager
     {
         private readonly IAuthorizationService _authorizationService;
         private readonly CosmosUsageSampleRepository _samplesRepository;
@@ -22,7 +23,7 @@ namespace APIViewWeb.Repositories
         private readonly CosmosCommentsRepository _commentsRepository;
 
         public UsageSampleManager(
-            IAuthorizationService authorizationService, 
+            IAuthorizationService authorizationService,
             CosmosUsageSampleRepository samplesRepository,
             BlobUsageSampleRepository sampleFilesRepository,
             CosmosCommentsRepository commentsRepository)
@@ -42,10 +43,10 @@ namespace APIViewWeb.Repositories
         {
             var file = await _sampleFilesRepository.GetUsageSampleAsync(fileId);
 
-            if(file == null) return null;
+            if (file == null) return null;
 
-            StreamReader reader = new StreamReader(file);
-            string htmlString = reader.ReadToEnd();
+            var reader = new StreamReader(file);
+            var htmlString = reader.ReadToEnd();
 
             return htmlString;
         }
@@ -53,19 +54,19 @@ namespace APIViewWeb.Repositories
         public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, string sample, int revisionNum, string revisionTitle, string FileName = null)
         {
             // markdig parser with syntax highlighting
-            MarkdownPipeline pipeline = new MarkdownPipelineBuilder()
+            var pipeline = new MarkdownPipelineBuilder()
                 .UseAdvancedExtensions()
                 .UseSyntaxHighlighting()
                 .Build();
 
-            string htmlSample = Markdown.ToHtml(sample, pipeline);
+            var htmlSample = Markdown.ToHtml(sample, pipeline);
 
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(htmlSample));
             var originalStream = new MemoryStream(Encoding.UTF8.GetBytes(sample));
-            UsageSampleModel SampleModel = (await _samplesRepository.GetUsageSampleAsync(reviewId)).FirstOrDefault() ?? new UsageSampleModel(reviewId);
+            var SampleModel = (await _samplesRepository.GetUsageSampleAsync(reviewId)).FirstOrDefault() ?? new UsageSampleModel(reviewId);
 
             // Create new file and upsert the updated model
-            UsageSampleRevisionModel SampleRevision = new UsageSampleRevisionModel(user, revisionNum);
+            var SampleRevision = new UsageSampleRevisionModel(user, revisionNum);
             if (revisionTitle == null && FileName != null)
             {
                 SampleRevision.RevisionTitle = FileName;
@@ -74,7 +75,7 @@ namespace APIViewWeb.Repositories
             {
                 SampleRevision.RevisionTitle = revisionTitle;
             }
-            if(SampleModel.Revisions == null)
+            if (SampleModel.Revisions == null)
             {
                 SampleModel.Revisions = new List<UsageSampleRevisionModel>();
             }
@@ -89,12 +90,12 @@ namespace APIViewWeb.Repositories
         public async Task<UsageSampleModel> UpsertReviewUsageSampleAsync(ClaimsPrincipal user, string reviewId, Stream fileStream, int revisionNum, string revisionTitle, string FileName)
         {
             // For file upload. Read stream then continue.
-            StreamReader reader = new StreamReader(fileStream);
+            var reader = new StreamReader(fileStream);
             var sample = reader.ReadToEnd();
             return await UpsertReviewUsageSampleAsync(user, reviewId, sample, revisionNum, revisionTitle, FileName);
         }
 
-        public async Task DeleteUsageSampleAsync(ClaimsPrincipal user, string reviewId, string FileId, string sampleId) 
+        public async Task DeleteUsageSampleAsync(ClaimsPrincipal user, string reviewId, string FileId, string sampleId)
         {
             var sampleModels = (await _samplesRepository.GetUsageSampleAsync(reviewId)).Find(e => e.SampleId == sampleId);
             var sampleModel = sampleModels.Revisions.Find(e => e.FileId == FileId);
@@ -103,12 +104,12 @@ namespace APIViewWeb.Repositories
 
             sampleModels.Revisions.Remove(sampleModel);
 
-            int i = 0;
+            var i = 0;
             foreach (var revision in sampleModels.Revisions)
             {
                 if (revision.RevisionIsDeleted)
                 {
-                    continue; 
+                    continue;
                 }
                 i++;
                 revision.RevisionNumber = i;
@@ -117,7 +118,7 @@ namespace APIViewWeb.Repositories
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
             foreach (var comment in comments)
             {
-                string commentSampleId = comment.ElementId.Split("-")[0]; // sample id is stored as first part of ElementId
+                var commentSampleId = comment.ElementId.Split("-")[0]; // sample id is stored as first part of ElementId
                 if (comment.IsUsageSampleComment && commentSampleId == FileId)  // remove all comments from server 
                 {
                     await _commentsRepository.DeleteCommentAsync(comment);

@@ -15,6 +15,7 @@ using Octokit;
 using System.Threading;
 using Microsoft.Extensions.Primitives;
 using System.Security.Claims;
+using APIViewWeb.Managers;
 
 namespace APIViewWeb.Repositories
 {
@@ -47,7 +48,7 @@ namespace APIViewWeb.Repositories
             }
             else
             {
-                var preference = (await _userProfileManager.tryGetUserProfileAsync(User)).Preferences;
+                var preference = (await _userProfileManager.TryGetUserProfileAsync(User)).Preferences;
                 UpdateCache(preference, User);
                 return preference;
             }
@@ -73,7 +74,7 @@ namespace APIViewWeb.Repositories
                     {
                         UserPreferenceModel newPreference = (UserPreferenceModel)value;
                         newPreference.UserName = User.GetGitHubLogin();
-                        await _userProfileManager.updateUserPreferences(User, newPreference);
+                        await _userProfileManager.UpdateUserPreferences(User, newPreference);
                     }
                 });
             _cache.Set(userName, preference, memoryCacheEntryOptions);

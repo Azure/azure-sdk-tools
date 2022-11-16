@@ -326,7 +326,7 @@ namespace APIViewWeb.Repositories
             if (languageService != null && languageService.IsReviewGenByPipeline)
             {
                 // Run offline review gen for review and reviewCodeFileModel
-                GenerateReviewOffline(review, revision.RevisionId, codeFile.ReviewFileId, name);
+                await GenerateReviewOffline(review, revision.RevisionId, codeFile.ReviewFileId, name);
             }
 
             // auto subscribe revision creation user
@@ -795,7 +795,7 @@ namespace APIViewWeb.Repositories
                 }
             }
         }
-        private void GenerateReviewOffline(ReviewModel review, string revisionId, string fileId, string fileName)
+        private async Task GenerateReviewOffline(ReviewModel review, string revisionId, string fileId, string fileName)
         {
             var param = new ReviewGenPipelineParamModel()
             {
@@ -807,7 +807,7 @@ namespace APIViewWeb.Repositories
             var paramList = new List<ReviewGenPipelineParamModel>();
             paramList.Add(param);
             var languageService = _languageServices.Single(s => s.Name == review.Language);
-            RunReviewGenPipeline(paramList, languageService.Name);
+            await RunReviewGenPipeline(paramList, languageService.Name);
         }
 
         public async Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project)

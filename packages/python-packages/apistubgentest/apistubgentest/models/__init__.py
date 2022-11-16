@@ -8,6 +8,8 @@
 
 # pylint: disable=wrong-import-position
 from ._models import (
+    AliasNewType,
+    AliasUnion,
     DocstringClass,
     FakeError,
     FakeObject,
@@ -20,6 +22,7 @@ from ._models import (
     RequiredKwargObject,
     SomeAwesomelyNamedObject,
     SomeImplementationClass,
+    SomethingAsyncWithOverloads,
     SomethingWithDecorators,
     SomethingWithInheritedOverloads,
     SomethingWithOverloads,
@@ -34,6 +37,8 @@ from ._dataclasses import (
 )
 
 __all__ = (
+    "AliasNewType",
+    "AliasUnion",
     "DataClassSimple",
     "DataClassWithFields",
     "DataClassDynamic",
@@ -51,6 +56,7 @@ __all__ = (
     "RequiredKwargObject",
     "SomeAwesomelyNamedObject",
     "SomeImplementationClass",
+    "SomethingAsyncWithOverloads",
     "SomethingWithDecorators",
     "SomethingWithInheritedOverloads",
     "SomethingWithOverloads",

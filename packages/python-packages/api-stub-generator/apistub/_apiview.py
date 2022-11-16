@@ -42,7 +42,7 @@ class ApiView:
     def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None):
         self.name = pkg_name
         self.version = 0
-        self.version_string = ""
+        self.version_string = VERSION
         self.language = "Python"
         self.tokens = []
         self.navigation = []
@@ -54,6 +54,7 @@ class ApiView:
         self.metadata_map = metadata_map or MetadataMap("")
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)
+        self.add_line_marker("GLOBAL")
         if source_url:
             self.set_blank_lines(1)
             self.add_literal(f"# Source URL: {source_url}")

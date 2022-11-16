@@ -23,6 +23,9 @@ public class APIListing {
     @JsonProperty("Language")
     private String language;
 
+    @JsonProperty("LanguageVariant")
+    private LanguageVariant languageVariant;
+
     @JsonProperty("PackageName")
     private String packageName;
 
@@ -89,6 +92,14 @@ public class APIListing {
 
     public void setLanguage(final String language) {
         this.language = language;
+    }
+
+    public LanguageVariant getLanguageVariant() {
+        return languageVariant;
+    }
+
+    public void setLanguageVariant(final LanguageVariant variant) {
+        this.languageVariant = variant;
     }
 
     public String getPackageName() {

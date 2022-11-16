@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
@@ -13,9 +13,9 @@ namespace APIViewWeb
     {
         private readonly Container _commentsContainer;
 
-        public CosmosCommentsRepository(IConfiguration configuration)
+        public CosmosCommentsRepository(IConfiguration configuration, CosmosClient cosmosClient = null)
         {
-            var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
+            var client = cosmosClient ?? new CosmosClient(configuration["Cosmos:ConnectionString"]);
             _commentsContainer = client.GetContainer("APIView", "Comments");
         }
 

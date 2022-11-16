@@ -35,21 +35,11 @@ If you _don't_ provide a volume bound to `/srv/testproxy/`, it's not actually th
 docker cp <containerid>:/srv/testproxy/ <target local path local path>
 ```
 
-### Windows Container
-
-Actions images do not support swapping between `Linux` and `Windows` containers. This lack of support means that the azure-sdk engsys must also provide a test-proxy container for windows containers.
-
-To build _that_, use the following command.
-
-```docker
-docker build . -f dockerfile-win -t test-proxy
-```
-
 ### Certificates
 
-All necessary components for dev-certificate usage are present within the `eng/common/testproxy` directory. Reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to learn how to add and trust with the toolchain of your choice.
+All necessary components for dev-certificate usage are present within the `eng/common/testproxy` directory. Reference [trusting-cert-per-language.md](../documentation/test-proxy/trusting-cert-per-language.md) to learn how to add and trust with the toolchain of your choice.
 
-Please note that each language + its SSL stack will provide different mechanisms for validating SSL certificates. Again, reference [trusting-cert-per-language.md](../documentation/trusting-cert-per-language.md) to understand the process beyond the most general case.
+Please note that each language + its SSL stack will provide different mechanisms for validating SSL certificates. Again, reference [trusting-cert-per-language.md](../documentation/test-proxy/trusting-cert-per-language.md) to understand the process beyond the most general case.
 
 ### Confirm Success
 
@@ -114,8 +104,7 @@ Create a manifest list
 docker manifest create azsdkengsys.azurecr.io/engsys/testproxy:1.0.0-dev.20220407.1 `
                                              #[    repo      ] [     tag           ]
   azsdkengsys.azurecr.io/engsys/testproxy-lin-arm64:1.0.0-dev.20220407.1 `
-  azsdkengsys.azurecr.io/engsys/testproxy-lin:1.0.0-dev.20220407.1 `
-  azsdkengsys.azurecr.io/engsys/testproxy-win:1.0.0-dev.20220407.1
+  azsdkengsys.azurecr.io/engsys/testproxy-lin:1.0.0-dev.20220407.1
 ```
 
 Push it

@@ -69,11 +69,11 @@ class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
         case let .initializerList(initializerList):
             initializers = initializerList.compactMap { InitializerItemModel(from: $0) }
         case let .codeBlock(ident, typeAnno, _):
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil)]
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil, hasGetter: true)]
         case let .getterSetterKeywordBlock(ident, typeAnno, _):
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil)]
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil, hasGetter: true, hasSetter: true)]
         case let .getterSetterBlock(ident, typeAnno, _):
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil)]
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil, hasGetter: true, hasSetter: true)]
         case let .willSetDidSetBlock(ident, typeAnno, expression, _):
             // the willSetDidSet block is irrelevant from an API perspective
             // so we ignore it.

@@ -21,6 +21,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 using APIViewWeb.HostedServices;
+using APIViewWeb.Filters;
+using APIViewWeb.Account;
+using APIView.Identity;
 
 namespace APIViewWeb
 {
@@ -37,17 +40,20 @@ namespace APIViewWeb
             VersionHash = indexOfPlus == -1 ? "dev" : version.Substring(indexOfPlus + 1);
         }
 
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             Configuration = configuration;
+            Environment = environment;
         }
 
         public IConfiguration Configuration { get; }
+        public IWebHostEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddApplicationInsightsTelemetry();
+            services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -75,7 +81,10 @@ namespace APIViewWeb
             services.AddSingleton<CosmosReviewRepository>();
             services.AddSingleton<CosmosCommentsRepository>();
             services.AddSingleton<CosmosPullRequestsRepository>();
-            services.AddSingleton<DevopsArtifactRepository>();
+            services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
+            services.AddSingleton<CosmosUsageSampleRepository>();
+            services.AddSingleton<BlobUsageSampleRepository>();
+            services.AddSingleton<CosmosUserProfileRepository>();
 
             services.AddSingleton<ReviewManager>();
             services.AddSingleton<CommentsManager>();
@@ -83,6 +92,8 @@ namespace APIViewWeb
             services.AddSingleton<PullRequestManager>();
             services.AddSingleton<PackageNameManager>();
             services.AddSingleton<UserPreferenceCache>();
+            services.AddSingleton<UsageSampleManager>();
+            services.AddSingleton<UserProfileManager>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();
@@ -97,7 +108,14 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, SwiftLanguageService>();
             services.AddSingleton<LanguageService, XmlLanguageService>();
 
-            services.AddAuthentication(options =>
+            if (Environment.IsDevelopment() && Configuration["AuthenticationScheme"] == "Test")
+            {
+                services.AddAuthentication("Test")
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });
+            }
+            else
+            {
+                services.AddAuthentication(options =>
                 {
                     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -179,6 +197,7 @@ namespace APIViewWeb
                         }
                     };
                 });
+            }
 
             services.AddAuthorization();
             services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
@@ -188,10 +207,13 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, PullRequestPermissionRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, UsageSampleOwnerRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)

@@ -22,7 +22,7 @@ RUN tar --extract --file maven.tgz --directory "$MAVEN_HOME" --strip-components 
 RUN rm maven.tgz
 
 # install node
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt -y install nodejs
 
 # install python
@@ -46,7 +46,6 @@ RUN apt-get install -y dotnet-sdk-6.0
 # install git
 RUN add-apt-repository ppa:git-core/ppa -y && apt update && apt upgrade -y && apt install git -y
 RUN git config --global credential.helper store && git config --global core.fileMode false
-
 # install depended packages
 RUN pip3 install --upgrade wheel PyYAML requests
 RUN npm install -g typescript

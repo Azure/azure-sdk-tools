@@ -15,7 +15,7 @@ namespace APIViewWeb.Controllers
         private readonly PullRequestManager _pullRequestManager;
         private readonly ILogger _logger;
 
-        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nupkg", "-sources.jar" };
+        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nupkg", "-sources.jar", ".gosource" };
 
         public PullRequestController(PullRequestManager pullRequestManager, ILogger<AutoReviewController> logger)
         {
@@ -34,14 +34,25 @@ namespace APIViewWeb.Controllers
             int pullRequestNumber = 0,
             string codeFile = null,
             string baselineCodeFile = null,
-            bool commentOnPR = true)
+            bool commentOnPR = true,
+            string language = null)
         {
             if (!ValidateInputParams())
             {
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
-            var reviewUrl = await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: codeFile, baselineCodeFileName: baselineCodeFile, commentOnPR: commentOnPR);
-            return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
+
+            //Handle only authorization exception and send 401 as status code.
+            //All other exception should not be handled so we will have required info in app insights.
+            try
+            {
+                var reviewUrl = await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: codeFile, baselineCodeFileName: baselineCodeFile, commentOnPR: commentOnPR, language: language);
+                return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
+            }
+            catch (AuthorizationFailedException)
+            {
+                return StatusCode(StatusCodes.Status401Unauthorized);
+            }
         }
 
         private bool ValidateInputParams()

@@ -4,8 +4,11 @@ using System.Threading.Tasks;
 using System.Text;
 using System.IO;
 using System;
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -15,12 +18,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     /// set methodology to get access to the same logging stack as the controllers. This static class allows class libraries 
     /// that are not part of the ASP.NET server stack directly to still log useful information.
     /// 
-    ///  and ConfigureLogger(loggerFactory) should definitely be called in Startup.cs Configure() function.
+    /// To utilize this, ensure that ConfigureLogger(loggerFactory) is called in Startup.cs Configure() function.
     /// 
     /// Yes, we could instantiate a new RecordingHandler for each recording as it comes in, but that is 
     ///  A) Not the most fun to debug issues with
     ///  B) Just slower than re-using the same instance
     ///  C) There is no real reason (other than to get access to DI-ed parameters) to switch the existing method.
+    ///  
+    /// In the case of running CLI commands, the DebugLogger will not be initialized as Startup's Configure has not
+    /// and will not be executed. In this case, the non-async functions, LogInformation and LogDebug, will use
+    /// Console.WriteLine and Debug.Writeline if the logger is null. The async functions are only called when running
+    /// in a server.
     /// </summary>
     public static class DebugLogger
     {
@@ -28,11 +36,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static void ConfigureLogger(ILoggerFactory factory)
         {
-            if (logger == null)
+            if (logger == null && factory != null)
             {
-                logger = factory.CreateLogger<HttpRequestInteractions>();
+                logger = factory.CreateLogger("DebugLogging");
             }
-
         }
 
         /// <summary>
@@ -61,7 +68,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="details">The content which should be logged.</param>
         public static void LogInformation(string details)
         {
-            logger.LogInformation(details);
+            if (null != logger)
+            {
+                logger.LogInformation(details);
+            }
+            else
+            {
+                System.Console.WriteLine(details);
+            }
         }
 
 
@@ -71,7 +85,39 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="details">The content which should be logged.</param>
         public static void LogDebug(string details)
         {
-            logger.LogDebug(details);
+            if (logger != null)
+            {
+                logger.LogDebug(details);
+            }
+            else
+            {
+                // Honor the following environment variable settings:
+                //
+                // LOGGING__LOGLEVEL
+                // LOGGING__LOGLEVEL__DEFAULT
+                // LOGGING__LOGLEVEL__MICROSOFT
+                //
+                // We do this because when invoking against CLI commands, we don't have access to the same logging provider
+                // that is provided by the ASP.NET hostbuilder. Given that, we want to get as close as possible.
+                Enum.TryParse(typeof(LogLevel),
+                    Environment.GetEnvironmentVariable("LOGGING__LOGLEVEL") ?? string.Empty,
+                    ignoreCase: true, out var loglevel);
+
+                Enum.TryParse(typeof(LogLevel),
+                    Environment.GetEnvironmentVariable("LOGGING__LOGLEVEL__DEFAULT") ?? string.Empty,
+                    ignoreCase: true, out var loglevel_default);
+
+                Enum.TryParse(typeof(LogLevel),
+                    Environment.GetEnvironmentVariable("LOGGING__LOGLEVEL__MICROSOFT") ?? string.Empty,
+                    ignoreCase: true, out var loglevel_microsoft);
+
+                if ((loglevel != null && (int)loglevel <= 1)
+                    || (loglevel_default != null && (int)loglevel_default <= 1)
+                    || (loglevel_microsoft != null && (int)loglevel_microsoft <= 1))
+                {
+                    System.Console.WriteLine(details);
+                }
+            }
         }
 
         /// <summary>

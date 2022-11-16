@@ -28,7 +28,7 @@ import Foundation
 
 public class PropertiesTestStruct {
 
-    var totalSteps: Int = 0 {
+    public var totalSteps: Int = 0 {
         willSet(newTotalSteps) {
             print("About to set totalSteps to \(newTotalSteps)")
 
@@ -38,6 +38,21 @@ public class PropertiesTestStruct {
                 print("Added \(totalSteps - oldValue) steps")
 
             }
+        }
+    }
+
+    public var someReadOnly: String {
+        return "test"
+    }
+
+    private var _secretValue: String = ""
+    public var someReadWrite: String {
+        get {
+            return "test"
+        }
+
+        set {
+            self._secretValue = newValue
         }
     }
 }

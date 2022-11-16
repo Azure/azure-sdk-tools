@@ -13,6 +13,8 @@ namespace APIView
 
         public Dictionary<string, string> Tags { get; set; } = new Dictionary<string, string>(0);
 
+        public bool IsHiddenApi { get; set; }
+
         public override string ToString() => Text;
     }
 }

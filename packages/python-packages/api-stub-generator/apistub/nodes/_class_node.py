@@ -106,7 +106,8 @@ class ClassNode(NodeEntityBase):
             return False
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
-            return function_module and function_module.startswith(self.pkg_root_namespace)
+            # TODO: Remove the "_model_base" workaround when this stuff is moved into azure-core.
+            return function_module and function_module.startswith(self.pkg_root_namespace) and not function_module.endswith("_model_base")
         return False
 
     def _handle_class_variable(self, child_obj, name, *, type_string=None, value=None):
@@ -148,8 +149,11 @@ class ClassNode(NodeEntityBase):
     def _parse_overloads(self) -> List[FunctionNode]:
         overload_nodes = []
         functions = self._parse_functions_from_class(self.obj)
-        for base_class in inspect.getmro(self.obj)[1:-1]:
-            functions += self._parse_functions_from_class(base_class)
+        try:
+            for base_class in inspect.getmro(self.obj)[1:-1]:
+                functions += self._parse_functions_from_class(base_class)
+        except AttributeError:
+            pass
         for func in functions:
             if not func.decorators:
                 continue
@@ -169,7 +173,7 @@ class ClassNode(NodeEntityBase):
         # get base classes
         self.base_class_names = self._get_base_classes()
         # Check if Enum is in Base class hierarchy
-        self.is_enum = Enum in self.obj.__mro__
+        self.is_enum = Enum in getattr(self.obj, "__mro__", [])
         # Find any ivar from docstring
         self._parse_ivars()
 
@@ -202,7 +206,7 @@ class ClassNode(NodeEntityBase):
                 for (item_name, item_type) in child_obj.items():
                     if item_name.startswith("_"):
                         continue
-                    if is_typeddict and inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing":
+                    if is_typeddict and (inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing"):
                         self.child_nodes.append(
                             KeyNode(self.namespace, self, item_name, item_type)
                         )
@@ -276,8 +280,14 @@ class ClassNode(NodeEntityBase):
     def _get_base_classes(self):
         # Find base classes
         base_classes = []
-        bases = getattr(self.obj, "__orig_bases__", None) or getattr(self.obj, "__bases__", None) or []
-        for cl in [c for c in bases if c is not object]:
+        bases = getattr(self.obj, "__orig_bases__", [])
+        if not bases:
+            bases = getattr(self.obj, "__bases__", [])
+        if not bases:
+            supertype = getattr(self.obj, "__supertype__", None)
+            if supertype:
+                bases = [supertype]
+        for cl in [c for c in bases or [] if c is not object]:
             base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes
 

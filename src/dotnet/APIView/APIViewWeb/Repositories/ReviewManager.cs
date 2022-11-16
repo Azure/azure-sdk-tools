@@ -1,8 +1,9 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -11,12 +12,17 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
+using APIView;
 using APIView.DIff;
+using APIView.Model;
 using APIViewWeb.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Configuration;
+using Octokit;
 
 namespace APIViewWeb.Repositories
 {
@@ -37,7 +43,7 @@ namespace APIViewWeb.Repositories
 
         private readonly NotificationManager _notificationManager;
 
-        private readonly DevopsArtifactRepository _devopsArtifactRepository;
+        private readonly IDevopsArtifactRepository _devopsArtifactRepository;
 
         private readonly PackageNameManager _packageNameManager;
 
@@ -51,7 +57,7 @@ namespace APIViewWeb.Repositories
             CosmosCommentsRepository commentsRepository,
             IEnumerable<LanguageService> languageServices,
             NotificationManager notificationManager,
-            DevopsArtifactRepository devopsArtifactRepository,
+            IDevopsArtifactRepository devopsClient,
             PackageNameManager packageNameManager)
         {
             _authorizationService = authorizationService;
@@ -61,11 +67,11 @@ namespace APIViewWeb.Repositories
             _commentsRepository = commentsRepository;
             _languageServices = languageServices;
             _notificationManager = notificationManager;
-            _devopsArtifactRepository = devopsArtifactRepository;
+            _devopsArtifactRepository = devopsClient;
             _packageNameManager = packageNameManager;
         }
 
-        public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
+        public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis, bool awaitComputeDiff = false)
         {
             ReviewModel review = new ReviewModel
             {
@@ -75,7 +81,7 @@ namespace APIViewWeb.Repositories
                 Name = originalName,
                 FilterType = ReviewType.Manual
             };
-            await AddRevisionAsync(user, review, originalName, label, fileStream);
+            await AddRevisionAsync(user, review, originalName, label, fileStream, awaitComputeDiff);
             return review;
         }
 
@@ -89,13 +95,18 @@ namespace APIViewWeb.Repositories
             return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterTypes);
         }
 
-        public async Task<IEnumerable<string>> GetReviewProprtiesAsync(string propertyName)
+        public async Task<IEnumerable<string>> GetReviewPropertiesAsync(string propertyName)
         {
-            return await _reviewsRepository.GetReviewFirstLevelProprtiesAsync(propertyName);
+            return await _reviewsRepository.GetReviewFirstLevelPropertiesAsync(propertyName);
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetRequestedReviews(string userName)
+        {
+            return await _reviewsRepository.GetRequestedReviews(userName);
         }
 
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
-            List<string> search, List<string> languages, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
+            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
         {
             var result = await _reviewsRepository.GetReviewsAsync(search, languages, isClosed, filterTypes, isApproved, offset, limit, orderBy);
 
@@ -169,6 +180,30 @@ namespace APIViewWeb.Repositories
                 review.ServiceName = p?.ServiceName;
             }
 
+            //If current review doesn't have package approved for first release status then check if package is approved for any reviews for the same package.
+            if (!review.IsApprovedForFirstRelease)
+            {
+                var reviews = await _reviewsRepository.GetApprovedForFirstReleaseReviews(review.Language, review.PackageName);
+                if (reviews.Any())
+                {
+                    var nameApprovedReview = reviews.First();
+                    review.ApprovedForFirstReleaseBy = nameApprovedReview.ApprovedForFirstReleaseBy;
+                    review.ApprovalDate = nameApprovedReview.ApprovedForFirstReleaseOn;
+                    review.IsApprovedForFirstRelease = true;
+                }
+                else
+                {
+                    // Mark package as approved if review is already approved. Copy approval details from review approval.
+                    reviews = await _reviewsRepository.GetApprovedReviews(review.Language, review.PackageName);
+                    if (reviews.Any())
+                    {
+                        var approvedRevision = reviews.First(r => r.Revisions.Any(rev => rev.IsApproved)).Revisions.First(rev => rev.IsApproved);
+                        review.ApprovedForFirstReleaseBy = approvedRevision.Approvers.FirstOrDefault();
+                        review.ApprovedForFirstReleaseOn = reviews.First().ApprovalDate;
+                        review.IsApprovedForFirstRelease = true;
+                    }
+                }
+            }            
             return review;
         }
 
@@ -195,24 +230,25 @@ namespace APIViewWeb.Repositories
                         // We have added a new property FileName which is only set for new reviews
                         // All older reviews needs to be handled by checking review name field
                         var fileName = file.FileName ?? (Path.HasExtension(review.Name) ? review.Name : file.Name);
-                        var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
-                        await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
-                        // update only version string
-                        file.VersionString = codeFile.VersionString;
+                        if (languageService.IsReviewGenByPipeline)
+                        {
+                            GenerateReviewOffline(review, revision.RevisionId, file.ReviewFileId, fileName);
+                        }
+                        else
+                        {
+                            var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
+                            await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
+                            // update only version string
+                            file.VersionString = codeFile.VersionString;
+                            await _reviewsRepository.UpsertReviewAsync(review);
+                        }                        
                     }
                     catch (Exception ex) {
                         _telemetryClient.TrackTrace("Failed to update review " + review.ReviewId);
                         _telemetryClient.TrackException(ex);
                     }                    
                 }
-            }
-            await _reviewsRepository.UpsertReviewAsync(review);
-        }
-
-        internal async Task UpdateReviewAsync(ClaimsPrincipal user, string id)
-        {
-            var review = await GetReviewAsync(user, id);
-            await UpdateReviewAsync(review);
+            }            
         }
 
         public async Task AddRevisionAsync(
@@ -220,11 +256,11 @@ namespace APIViewWeb.Repositories
             string reviewId,
             string name,
             string label,
-            Stream fileStream)
+            Stream fileStream, bool awaitComputeDiff = false)
         {
             var review = await GetReviewAsync(user, reviewId);
             await AssertAutomaticReviewModifier(user, review);
-            await AddRevisionAsync(user, review, name, label, fileStream);
+            await AddRevisionAsync(user, review, name, label, fileStream, awaitComputeDiff);
         }
 
         private async Task AddRevisionAsync(
@@ -232,7 +268,8 @@ namespace APIViewWeb.Repositories
             ReviewModel review,
             string name,
             string label,
-            Stream fileStream)
+            Stream fileStream,
+            bool awaitComputeDiff = false)
         {
             var revision = new ReviewRevisionModel();
 
@@ -255,11 +292,26 @@ namespace APIViewWeb.Repositories
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
             }
 
+            var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
+            //Run pipeline to generateteh review if sandbox is enabled
+            if (languageService != null && languageService.IsReviewGenByPipeline)
+            {
+                // Run offline review gen for review and reviewCodeFileModel
+                GenerateReviewOffline(review, revision.RevisionId, codeFile.ReviewFileId, name);
+            }
+
             // auto subscribe revision creation user
             await _notificationManager.SubscribeAsync(review, user);
-
             await _reviewsRepository.UpsertReviewAsync(review);
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(revision, user);
+            if (awaitComputeDiff)
+            {
+                await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
+            }
+            else
+            {
+                _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision));
+            }
         }
 
         private async Task<ReviewCodeFileModel> CreateFileAsync(
@@ -271,7 +323,7 @@ namespace APIViewWeb.Repositories
             using var memoryStream = new MemoryStream();
             var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
             var reviewCodeFileModel = await CreateReviewCodeFileModel(revisionId, memoryStream, codeFile);
-            reviewCodeFileModel.FileName = originalName;
+            reviewCodeFileModel.FileName = originalName;            
             return reviewCodeFileModel;
         }
 
@@ -284,12 +336,18 @@ namespace APIViewWeb.Repositories
             var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(originalName));
             await fileStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
-
-            CodeFile codeFile = await languageService.GetCodeFileAsync(
+            CodeFile codeFile = null;
+            if (languageService.IsReviewGenByPipeline)
+            {
+                codeFile = languageService.GetReviewGenPendingCodeFile(originalName);
+            }
+            else
+            {
+                codeFile = await languageService.GetCodeFileAsync(
                 originalName,
                 memoryStream,
                 runAnalysis);
-
+            }
             return codeFile;
         }
 
@@ -345,6 +403,7 @@ namespace APIViewWeb.Repositories
         private void InitializeFromCodeFile(ReviewCodeFileModel file, CodeFile codeFile)
         {
             file.Language = codeFile.Language;
+            file.LanguageVariant = codeFile.LanguageVariant;
             file.VersionString = codeFile.VersionString;
             file.Name = codeFile.Name;
             file.PackageName = codeFile.PackageName;
@@ -391,7 +450,18 @@ namespace APIViewWeb.Repositories
             {
                 //Approve revision
                 revision.Approvers.Add(userId);
+                review.ApprovalDate = DateTime.Now;
             }
+            await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        public async Task ApprovePackageNameAsync(ClaimsPrincipal user, string id)
+        {
+            ReviewModel review = await GetReviewAsync(user, id);
+            await AssertApprover(user, review.Revisions.Last());
+            review.ApprovedForFirstReleaseBy = user.GetGitHubLogin();
+            review.ApprovedForFirstReleaseOn = DateTime.Now;
+            review.IsApprovedForFirstRelease = true;
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
@@ -418,8 +488,8 @@ namespace APIViewWeb.Repositories
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            var lastRevisionTextLines = lastRevisionFile.RenderText(showDocumentation: false, skipDiff: true);
-            var fileTextLines = renderedCodeFile.RenderText(showDocumentation: false, skipDiff: true);
+            var lastRevisionTextLines = lastRevisionFile.RenderText(false, skipDiff: true);
+            var fileTextLines = renderedCodeFile.RenderText(false,skipDiff: true);
             return lastRevisionTextLines.SequenceEqual(fileTextLines);
         }
 
@@ -557,7 +627,7 @@ namespace APIViewWeb.Repositories
 
         public async Task UpdateReviewBackground()
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", fetchAllPages: true);
             foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
@@ -586,7 +656,8 @@ namespace APIViewWeb.Repositories
             string codeFileName,
             MemoryStream originalFileStream,
             string baselineCodeFileName = "",
-            MemoryStream baselineStream = null
+            MemoryStream baselineStream = null,
+            string project = "public"
             )
         {
             Stream stream = null;
@@ -594,12 +665,12 @@ namespace APIViewWeb.Repositories
             if (string.IsNullOrEmpty(codeFileName))
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
-                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, "file");
+                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, format: "file", project: project);
                 codeFile = await CreateCodeFile(Path.GetFileName(originalFileName), stream, false, originalFileStream);
             }
             else
             {
-                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, "zip");
+                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, format: "zip", project: project);
                 var archive = new ZipArchive(stream);
                 foreach (var entry in archive.Entries)
                 {
@@ -632,11 +703,12 @@ namespace APIViewWeb.Repositories
             string repoName,
             string packageName,
             string codeFileName,
-            bool compareAllRevisions
+            bool compareAllRevisions,
+            string project
             )
         {
             using var memoryStream = new MemoryStream();
-            var codeFile = await GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream);
+            var codeFile = await GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream, project: project);
             return await CreateMasterReviewAsync(user, codeFile, originalFileName, label, memoryStream, compareAllRevisions);
         }
 
@@ -671,7 +743,7 @@ namespace APIViewWeb.Repositories
 
         public async Task AutoArchiveReviews(int archiveAfterMonths)
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual);
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual, fetchAllPages: true);
             // Find all inactive reviews
             reviews = reviews.Where(r => r.LastUpdated.AddMonths(archiveAfterMonths) < DateTime.Now);
             foreach (var review in reviews)
@@ -693,6 +765,203 @@ namespace APIViewWeb.Repositories
                     _telemetryClient.StopOperation(operation);
                 }
             }
+        }
+        private void GenerateReviewOffline(ReviewModel review, string revisionId, string fileId, string fileName)
+        {
+            var param = new ReviewGenPipelineParamModel()
+            {
+                FileID = fileId,
+                ReviewID = review.ReviewId,
+                RevisionID = revisionId,
+                FileName = fileName
+            };
+            var paramList = new List<ReviewGenPipelineParamModel>();
+            paramList.Add(param);
+            var languageService = _languageServices.Single(s => s.Name == review.Language);
+            RunReviewGenPipeline(paramList, languageService.Name);
+        }
+
+        public async Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project)
+        {
+            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
+            var archive = new ZipArchive(stream);
+            foreach (var entry in archive.Entries)
+            {
+                var reviewFilePath = entry.FullName;
+                var reviewDetails = reviewFilePath.Split("/");
+
+                if (reviewDetails.Length < 4 || !reviewFilePath.EndsWith(".json"))
+                    continue;
+
+                var reviewId = reviewDetails[1];
+                var revisionId = reviewDetails[2];
+                var codeFile = await CodeFile.DeserializeAsync(entry.Open());
+
+                // Update code file with one downloaded from pipeline
+                var review = await _reviewsRepository.GetReviewAsync(reviewId);
+                if (review != null)
+                {
+                    var revision = review.Revisions.SingleOrDefault(review => review.RevisionId == revisionId);
+                    if (revision != null)
+                    {
+                        await _codeFileRepository.UpsertCodeFileAsync(revisionId, revision.SingleFile.ReviewFileId, codeFile);
+                        var file = revision.Files.FirstOrDefault();
+                        file.VersionString = codeFile.VersionString;
+                        file.PackageName = codeFile.PackageName;
+                        await _reviewsRepository.UpsertReviewAsync(review);
+
+                        // Trigger diff calculation using updated code file from sandboxing pipeline
+                        await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
+                    }
+                }
+            }
+        }
+        private async void RunReviewGenPipeline(List<ReviewGenPipelineParamModel> reviewGenParams, string language)
+        {
+            var jsonSerializerOptions = new JsonSerializerOptions()
+            {
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip
+            };
+            var reviewParamString = JsonSerializer.Serialize(reviewGenParams, jsonSerializerOptions);
+            reviewParamString = reviewParamString.Replace("\"", "'");
+            await _devopsArtifactRepository.RunPipeline($"tools - generate-{language}-apireview", 
+                reviewParamString, 
+                _originalsRepository.GetContainerUrl());
+        }
+
+        public async Task RequestApproversAsync(ClaimsPrincipal User, string ReviewId, HashSet<string> reviewers)
+        {
+            var review = await GetReviewAsync(User, ReviewId);
+            review.RequestedReviewers = reviewers;
+            review.ApprovalRequestedOn = DateTime.Now;
+            await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        /// <summary>
+        /// Get the LineNumbers of the Heading that have diff changes in their sections
+        /// </summary>
+        public async Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, ReviewRevisionModel revision)
+        {
+                var review = await _reviewsRepository.GetReviewAsync(reviewId);
+                var latestRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
+                var latestRevisionHtmlLines = latestRevisionCodeFile.Render(false);
+                var latestRevisionTextLines = latestRevisionCodeFile.RenderText(false);
+
+                foreach (var rev in review.Revisions)
+                {
+                    // Calculate diff against previous revisions only. APIView only shows diff against revision lower than current one.
+                    if (rev.RevisionId !=  revision.RevisionId && rev.RevisionNumber < revision.RevisionNumber)
+                    {
+                        HashSet<int> lineNumbersForHeadingOfSectionWithDiff = new HashSet<int>();
+                        var earlierRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, false);
+                        var earlierRevisionHtmlLines = earlierRevisionCodeFile.RenderReadOnly(false);
+                        var earlierRevisionTextLines = earlierRevisionCodeFile.RenderText(false);
+
+                        var diffLines = InlineDiff.Compute(earlierRevisionTextLines, latestRevisionTextLines, earlierRevisionHtmlLines, latestRevisionHtmlLines);
+
+                        foreach (var diffLine in diffLines)
+                        {
+                            if (diffLine.Kind == DiffLineKind.Unchanged && (diffLine.Line.SectionKey != null && diffLine.OtherLine.SectionKey != null))
+                            {
+                                var latestRevisionRootNode = latestRevisionCodeFile.GetCodeLineSectionRoot((int)diffLine.Line.SectionKey);
+                                var earlierRevisionRootNode = earlierRevisionCodeFile.GetCodeLineSectionRoot((int)diffLine.OtherLine.SectionKey);
+                                var diffSectionRoot = ComputeSectionDiff(earlierRevisionRootNode, latestRevisionRootNode, earlierRevisionCodeFile, latestRevisionCodeFile);
+                                if (latestRevisionCodeFile.ChildNodeHasDiff(diffSectionRoot))
+                                    lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
+                            }
+                        }
+                        if(rev.HeadingsOfSectionsWithDiff.ContainsKey(revision.RevisionId))
+                        {
+                            rev.HeadingsOfSectionsWithDiff.Remove(revision.RevisionId);
+                        }
+                        rev.HeadingsOfSectionsWithDiff.Add(revision.RevisionId, lineNumbersForHeadingOfSectionWithDiff);
+                    }
+                }
+                await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        /// <summary>
+        /// Computes diff for each level of the tree hierachy of a section
+        /// </summary>
+        public TreeNode<InlineDiffLine<CodeLine>> ComputeSectionDiff(TreeNode<CodeLine> before, TreeNode<CodeLine> after, RenderedCodeFile beforeFile, RenderedCodeFile afterFile)
+        {
+            InlineDiffLine<CodeLine> rootDiff = new InlineDiffLine<CodeLine>(before.Data, after.Data, DiffLineKind.Unchanged);
+            TreeNode<InlineDiffLine<CodeLine>> resultRoot = new TreeNode<InlineDiffLine<CodeLine>>(rootDiff);
+
+            Queue<(TreeNode<CodeLine> before, TreeNode<CodeLine> after, TreeNode<InlineDiffLine<CodeLine>> current)>
+                queue = new Queue<(TreeNode<CodeLine> before, TreeNode<CodeLine> after, TreeNode<InlineDiffLine<CodeLine>> current)>();
+
+            queue.Enqueue((before, after, resultRoot));
+
+            while (queue.Count > 0)
+            {
+                var nodesInProcess = queue.Dequeue();
+                var (beforeHTMLLines, beforeTextLines) = GetCodeLinesForDiff(nodesInProcess.before, nodesInProcess.current, beforeFile);
+                var (afterHTMLLines, afterTextLines) = GetCodeLinesForDiff(nodesInProcess.after, nodesInProcess.current, afterFile);
+
+                var diffResult = InlineDiff.Compute(beforeTextLines, afterTextLines, beforeHTMLLines, afterHTMLLines);
+
+                if (diffResult.Count() == 2 && 
+                    (diffResult[0]!.Line.NodeRef != null && diffResult[1]!.Line.NodeRef != null) &&
+                    (diffResult[0]!.Line.NodeRef.IsLeaf && diffResult[1]!.Line.NodeRef.IsLeaf)) // Detached Leaf Parents which are Eventually Discarded
+                {
+                    var inlineDiffLine = new InlineDiffLine<CodeLine>(diffResult[1].Line, diffResult[0].Line, DiffLineKind.Unchanged);
+                    diffResult = new InlineDiffLine<CodeLine>[] { inlineDiffLine };
+                }
+
+                foreach (var diff in diffResult)
+                {
+                    TreeNode<InlineDiffLine<CodeLine>> addedChild = nodesInProcess.current.AddChild(diff);
+
+                    switch (diff.Kind)
+                    {
+                        case DiffLineKind.Removed:
+                            queue.Enqueue((diff.Line.NodeRef, null, addedChild));
+                            break;
+                        case DiffLineKind.Added:
+                            queue.Enqueue((null, diff.Line.NodeRef, addedChild));
+                            break;
+                        case DiffLineKind.Unchanged:
+                            queue.Enqueue((diff.OtherLine.NodeRef, diff.Line.NodeRef, addedChild));
+                            break;
+                    }
+                }
+            }
+            return resultRoot;
+        }
+
+        private (CodeLine[] htmlLines, CodeLine[] textLines) GetCodeLinesForDiff(TreeNode<CodeLine> node, TreeNode<InlineDiffLine<CodeLine>> curr, RenderedCodeFile codeFile)
+        {
+            (CodeLine[] htmlLines, CodeLine[] textLines) result = (new CodeLine[] { }, new CodeLine[] { });
+            if (node != null)
+            {
+                if (node.IsLeaf)
+                {
+                    result.htmlLines = codeFile.GetDetachedLeafSectionLines(node);
+                    result.textLines = codeFile.GetDetachedLeafSectionLines(node, renderType: RenderType.Text, skipDiff: true);
+
+                    if (result.htmlLines.Count() > 0)
+                    {
+                        curr.WasDetachedLeafParent = true;
+                    }
+                }
+                else
+                {
+                    result.htmlLines = result.textLines = node.Children.Select(x => new CodeLine(x.Data, nodeRef: x)).ToArray();
+                }
+            }
+            return result;
+        }
+
+        public async Task<bool> IsApprovedForFirstRelease(string language, string packageName)
+        {
+            var reviews = await _reviewsRepository.GetApprovedForFirstReleaseReviews(language, packageName);
+            if (!reviews.Any())
+            {
+                reviews = await _reviewsRepository.GetApprovedReviews(language, packageName);                
+            }
+            return reviews.Any();
         }
     }
 }

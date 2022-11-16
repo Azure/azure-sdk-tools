@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 import winston from 'winston';
 
@@ -18,15 +17,13 @@ export function extractAutorestConfigs(autorestConfigFilePath: string, sdkRepo: 
             if (autorestConfigs.length > 1) {
                 logger.warn(`Docker is running in pipeline, but get autorest config for more than 1 language of sdk. So only get the first autorest config`);
             }
-            return `azure-sdk-for-${autorestConfigs[0]}`;
+            return `# azure-sdk-for-${autorestConfigs[0]}`.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
         }
         for (const autorestConfig of autorestConfigs) {
             let autorestFullConfig = `# azure-sdk-for-${autorestConfig}`;
             if (autorestFullConfig.startsWith(`# ${path.basename(sdkRepo)}`)) {
                 logger.info(`Find autorest config for ${path.basename(sdkRepo)} in ${autorestConfigFilePath}: \n${autorestFullConfig}`);
-                if (os.EOL == '\n') {
-                    autorestFullConfig = autorestFullConfig.replace(/\n/g, '\r\n');
-                }
+                autorestFullConfig = autorestFullConfig.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
                 return autorestFullConfig;
             }
         }

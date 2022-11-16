@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -59,6 +59,20 @@ namespace APIViewWeb
         public string GetUserEmail(ClaimsPrincipal user) =>
             NotificationManager.GetUserEmail(user);
 
+        // gets CSS safe language name - such that css classes based on language name would not need any escaped characters
+        public string GetLanguageCssSafeName()
+        {
+            switch (Language.ToLower())
+            {
+                case "c#":
+                    return "csharp";
+                case "c++":
+                    return "cplusplus";
+                default:
+                    return Language.ToLower();
+            }
+        }
+
         [JsonIgnore]
         public string DisplayName
         {
@@ -77,6 +91,9 @@ namespace APIViewWeb
 
         [JsonIgnore]
         public string Language => Revisions.LastOrDefault()?.Files.LastOrDefault()?.Language;
+
+        [JsonIgnore]
+        public string LanguageVariant => Revisions.LastOrDefault()?.Files.LastOrDefault()?.LanguageVariant;
 
         [JsonIgnore]
         public string PackageName {
@@ -105,5 +122,15 @@ namespace APIViewWeb
         public string ServiceName { get; set; }
 
         public string PackageDisplayName { get; set; }
+
+        // Approvers requested for review and when (for hiding older reviews)
+        public HashSet<string> RequestedReviewers { get; set; } = null;
+
+        public DateTime ApprovalRequestedOn;
+
+        public DateTime ApprovalDate;
+        public bool IsApprovedForFirstRelease { get; set; }
+        public string ApprovedForFirstReleaseBy { get; set; }
+        public DateTime ApprovedForFirstReleaseOn { get; set; }
     }
 }

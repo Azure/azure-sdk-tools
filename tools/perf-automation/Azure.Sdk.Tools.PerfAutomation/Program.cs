@@ -1,11 +1,8 @@
 using Azure.Sdk.Tools.PerfAutomation.Models;
 using CommandLine;
 using CommandLine.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Encodings.Web;
@@ -33,7 +30,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             { Language.Cpp, new Cpp() }
         };
 
-        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+        public static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
             Converters =
             {
@@ -41,11 +38,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             },
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             WriteIndented = true,
-        };
-
-        private static readonly CsvConfiguration CsvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            Delimiter = ", ",
         };
 
         [Verb("run", HelpText = "Run perf tests and collect results")]
@@ -210,7 +202,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
             }
 
-            var outputFiles = Util.GetUniquePaths(options.OutputFilePrefix, ".json", ".csv");
+            var outputFiles = Util.GetUniquePaths(options.OutputFilePrefix, ".json", ".csv", ".txt", ".md");
 
             // Create output file early so user sees it immediately
             foreach (var outputFile in outputFiles)
@@ -221,6 +213,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var outputJson = outputFiles[0];
             var outputCsv = outputFiles[1];
+            var outputTxt = outputFiles[2];
+            var outputMd = outputFiles[3];
 
             var results = new List<Result>();
 
@@ -238,7 +232,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                         foreach (var packageVersions in serviceLanugageInfo.PackageVersions)
                         {
-                            await RunPackageVersion(options, outputJson, outputCsv, results, service,
+                            await RunPackageVersion(options, outputJson, outputCsv, outputTxt, outputMd, results, service,
                                 language, serviceLanugageInfo, languageVersion, packageVersions);
                         }
                     }
@@ -246,8 +240,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static async Task RunPackageVersion(RunOptions options, string outputJson, string outputCsv, List<Result> results, ServiceInfo service,
-            Language language, ServiceLanguageInfo serviceLanguageInfo, string languageVersion, IDictionary<string, string> packageVersions)
+        private static async Task RunPackageVersion(RunOptions options, string outputJson, string outputCsv, string outputTxt,
+            string outputMd, List<Result> results, ServiceInfo service, Language language, ServiceLanguageInfo serviceLanguageInfo,
+            string languageVersion, IDictionary<string, string> packageVersions)
         {
             try
             {
@@ -257,13 +252,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 string setupOutput = null;
                 string setupError = null;
-                string context = null;
+                object context = null;
                 string setupException = null;
 
                 try
                 {
                     (setupOutput, setupError, context) = await _languages[language].SetupAsync(
-                        serviceLanguageInfo.Project, languageVersion, packageVersions);
+                        serviceLanguageInfo.Project, languageVersion, serviceLanguageInfo.PrimaryPackage, packageVersions);
                 }
                 catch (Exception e)
                 {
@@ -344,7 +339,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                         results.Add(result);
 
-                        await WriteResults(outputJson, outputCsv, results);
+                        await WriteResults(outputJson, outputCsv, outputTxt, outputMd, results);
                         if (setupException == null)
                         {
                             for (var i = 0; i < options.Iterations; i++)
@@ -359,6 +354,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                     iterationResult = await _languages[language].RunAsync(
                                         serviceLanguageInfo.Project,
                                         languageVersion,
+                                        serviceLanguageInfo.PrimaryPackage,
                                         packageVersions,
                                         test.TestNames[language],
                                         allArguments,
@@ -386,7 +382,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                                 result.Iterations.Add(iterationResult);
 
-                                await WriteResults(outputJson, outputCsv, results);
+                                await WriteResults(outputJson, outputCsv, outputTxt, outputMd, results);
                             }
                         }
 
@@ -414,16 +410,40 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static async Task WriteResults(string outputJson, string outputCsv, List<Result> results)
+        private static async Task WriteResults(string outputJson, string outputCsv, string outputTxt, string outputMd, List<Result> results)
         {
             using (var stream = File.OpenWrite(outputJson))
             {
                 await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
             }
 
+            using (var streamWriter = new StreamWriter(outputCsv))
+            {
+                await WriteResultsSummary(streamWriter, results, OutputFormat.Csv);
+            }
+
+            using (var streamWriter = new StreamWriter(outputTxt))
+            {
+                await WriteResultsSummary(streamWriter, results, OutputFormat.Txt);
+            }
+
+            using (var streamWriter = new StreamWriter(outputMd))
+            {
+                await WriteResultsSummary(streamWriter, results, OutputFormat.Md);
+            }
+        }
+
+        public static async Task WriteResultsSummary(StreamWriter streamWriter, IEnumerable<Result> results, OutputFormat outputFormat)
+        {
             var groups = results.GroupBy(r => (r.Language, r.LanguageVersion, r.Service, r.Test, r.Arguments));
+
             var resultSummaries = groups.Select(g =>
             {
+                var requestedPackageVersions = g.Select(r => r.PackageVersions).Distinct(new DictionaryEqualityComparer<string, string>());
+
+                var runtimePackageVersions = requestedPackageVersions.Select(req =>
+                    g.Where(r => r.PackageVersions == req).First().Iterations.FirstOrDefault()?.PackageVersions);
+
                 var resultSummary = new ResultSummary()
                 {
                     Language = g.Key.Language,
@@ -431,31 +451,142 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     Service = g.Key.Service,
                     Test = g.Key.Test,
                     Arguments = g.Key.Arguments,
+                    PrimaryPackage = g.First().PrimaryPackage,
+                    RequestedPackageVersions = requestedPackageVersions,
+                    RuntimePackageVersions = runtimePackageVersions,
                 };
+
+                var operationsPerSecondMax = new List<(string version, double operationsPerSecond)>();
+                var operationsPerSecondMean = new List<(string version, double operationsPerSecond)>();
 
                 foreach (var result in g)
                 {
-                    var primaryPackage = result.PrimaryPackage;
-                    var primaryPackageVersion = result.PackageVersions[primaryPackage];
-                    if (primaryPackageVersion == "source")
-                    {
-                        resultSummary.Source = result.OperationsPerSecondMax;
-                    }
-                    else
-                    {
-                        resultSummary.LastVersion = primaryPackageVersion;
-                        resultSummary.Last = result.OperationsPerSecondMax;
-                    }
+                    var primaryPackageVersion = result.PackageVersions?[resultSummary.PrimaryPackage];
+                    operationsPerSecondMax.Add((primaryPackageVersion, result.OperationsPerSecondMax));
+                    operationsPerSecondMean.Add((primaryPackageVersion, result.OperationsPerSecondMean));
                 }
+
+                resultSummary.OperationsPerSecondMax = operationsPerSecondMax;
+                resultSummary.OperationsPerSecondMean = operationsPerSecondMean;
 
                 return resultSummary;
             });
 
-            using (var streamWriter = new StreamWriter(outputCsv))
-            using (var csvWriter = new CsvWriter(streamWriter, CsvConfiguration))
+            var languageServiceGroups = resultSummaries.GroupBy(r => (r.Language, r.LanguageVersion, r.Service));
+            foreach (var group in languageServiceGroups)
             {
-                await csvWriter.WriteRecordsAsync(resultSummaries);
+                await WriteResultsSummaryThroughput(streamWriter, group, "Max", r => r.OperationsPerSecondMax,
+                    r => r.OperationsPerSecondMaxDifferences, outputFormat);
+
+                await WriteResultsSummaryThroughput(streamWriter, group, "Mean", r => r.OperationsPerSecondMean,
+                    r => r.OperationsPerSecondMeanDifferences, outputFormat);
+
+                await WriteHeader(streamWriter, "Package Versions", outputFormat);
+
+                var versionHeaders = new string[] { "Name", "Requested", "Runtime" };
+                var versionTable = new List<IList<IList<string>>>();
+
+                var primaryPackage = group.First().PrimaryPackage;
+
+                var runtimePackageVersions = group.First().RuntimePackageVersions
+                    .Select(p => _languages[group.Key.Language].FilterRuntimePackageVersions(p));
+
+                var packageVersions = group.First().RequestedPackageVersions.Zip(runtimePackageVersions);
+
+                foreach (var (requested, runtime) in packageVersions)
+                {
+                    // requested is guaranteed to be non-null, runtime may be null
+
+                    var versionRows = new List<IList<string>>();
+
+                    // Primary package first, azure core second, remaining sorted alphabetically
+                    var packageNames = requested.Keys.Concat(runtime?.Keys ?? Enumerable.Empty<string>())
+                        .Distinct()
+                        .OrderBy(n => (n == primaryPackage) ? $"__{n}" :
+                            ((n.Contains("core", StringComparison.OrdinalIgnoreCase) &&
+                              n.Contains("azure", StringComparison.OrdinalIgnoreCase)) ? $"_{n}" : n));
+
+                    foreach (var packageName in packageNames)
+                    {
+                        requested.TryGetValue(packageName, out var requestedPackageVersion);
+
+                        string runtimePackageVersion = null;
+                        runtime?.TryGetValue(packageName, out runtimePackageVersion);
+
+                        versionRows.Add(new List<string>
+                        {
+                            packageName,
+                            requestedPackageVersion ?? "none",
+                            runtimePackageVersion ?? "unknown"
+                        });
+                    }
+
+                    versionTable.Add(versionRows);
+                }
+
+                await streamWriter.WriteLineAsync(TableGenerator.Generate(versionHeaders, versionTable, outputFormat));
+
+                await WriteHeader(streamWriter, "Metadata", outputFormat);
+                var metadataHeaders = new string[] { "Name", "Value" };
+                var metadataTable = new List<IList<IList<string>>>();
+                var metadataRowSets = new List<IList<string>>();
+                metadataRowSets.Add(new List<string>(new string[] { "Language", $"{group.Key.Language} ({group.Key.LanguageVersion})" }));
+                metadataRowSets.Add(new List<string>(new string[] { "Service", $"{group.Key.Service}" }));
+                metadataTable.Add(metadataRowSets);
+
+                await streamWriter.WriteLineAsync(TableGenerator.Generate(metadataHeaders, metadataTable, outputFormat));
             }
+        }
+
+        private static async Task WriteHeader(StreamWriter streamWriter, string header, OutputFormat outputFormat)
+        {
+            await streamWriter.WriteLineAsync($"## {header}");
+        }
+
+        private static async Task WriteResultsSummaryThroughput(
+            StreamWriter streamWriter,
+            IEnumerable<ResultSummary> resultSummaries,
+            string aggregateType,
+            Func<ResultSummary, IEnumerable<(string version, double operationsPerSecond)>> operationsPerSecond,
+            Func<ResultSummary, IEnumerable<double>> operationsPerSecondDifferences,
+            OutputFormat outputFormat)
+        {
+            var versions = operationsPerSecond(resultSummaries.First()).Select(o => o.version);
+            var headers = versions.Take(1).Concat(versions.Skip(1).Zip(Enumerable.Repeat("%Change", versions.Count() - 1),
+                (f, s) => new[] { f, s }).SelectMany(f => f));
+
+            var testGroups = resultSummaries.GroupBy(g => g.Test);
+
+            await WriteHeader(streamWriter, $"{aggregateType} throughput (ops/sec)", outputFormat);
+
+            headers = headers.Prepend("Arguments").Prepend("Test");
+
+            var table = new List<IList<IList<string>>>();
+
+            foreach (var testGroup in testGroups)
+            {
+                var rowSet = new List<IList<string>>();
+                foreach (var resultSummary in testGroup)
+                {
+                    var row = new List<string>();
+                    row.Add(resultSummary.Test);
+                    row.Add(resultSummary.Arguments);
+
+                    var operationsPerSecondStrings = operationsPerSecond(resultSummary)
+                        .Select(o => $"{NumberFormatter.Format(o.operationsPerSecond, 4, groupSeparator: outputFormat != OutputFormat.Csv)}");
+                    var operationsPerSecondDifferencesStrings = operationsPerSecondDifferences(resultSummary).Select(o => $"{o * 100:N1}%");
+
+                    var values = operationsPerSecondStrings.Take(1).Concat(operationsPerSecondStrings.Skip(1)
+                        .Zip(operationsPerSecondDifferencesStrings, (f, s) => new[] { f, s }).SelectMany(f => f));
+
+                    row.AddRange(values);
+
+                    rowSet.Add(row);
+                }
+                table.Add(rowSet);
+            }
+
+            await streamWriter.WriteLineAsync(TableGenerator.Generate(headers.ToList(), table, outputFormat));
         }
 
         private static T DeserializeYaml<T>(string path)

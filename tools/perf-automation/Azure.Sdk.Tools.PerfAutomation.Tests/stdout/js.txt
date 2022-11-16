@@ -1,0 +1,229 @@
+﻿@azure-tests/perf-storage-blob@1.0.0 /home/user/js/common/deploy/sdk/storage/perf-tests/storage-blob
+├─┬ @azure/core-http@2.2.8 -> ./../../../core/core-http
+│ ├─┬ @azure/abort-controller@1.1.1 -> ./../../../core/abort-controller
+│ │ ├── UNMET DEPENDENCY @azure/dev-tool@^1.0.0
+│ │ ├── @types/node@14.18.32 deduped invalid: "^12.0.0" from ../../../../common/temp/node_modules/.pnpm/@azure+core-http@2.2.7/node_modules/@azure/core-http, "^12.0.0" from ../../../../common/temp/node_modules/.pnpm/@azure+core-rest-pipeline@1.9.2/node_modules/@azure/core-rest-pipeline, "^12.0.0" from ../../../../common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob, "^12.0.0" from ../../../../common/temp/node_modules/.pnpm/@azure+abort-controller@1.1.0/node_modules/@azure/abort-controller -> ./../../../../common/temp/node_modules/.pnpm/@types+node@14.18.32/node_modules/@types/node
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/core-auth@1.4.1 -> ./../../../core/core-auth
+│ │ ├─┬ @azure/abort-controller@1.1.1 -> ./../../../core/abort-controller
+│ │ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├─┬ @azure/core-util@1.1.1 -> ./../../../core/core-util
+│ │ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/core-tracing@1.0.0-preview.13 -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-tracing@1.0.0-preview.13/node_modules/@azure/core-tracing
+│ │ ├─┬ @azure/core-auth@1.4.0 -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-auth@1.4.0/node_modules/@azure/core-auth
+│ │ │ ├─┬ @azure/abort-controller@1.1.0 -> ./../../../../common/temp/node_modules/.pnpm/@azure+abort-controller@1.1.0/node_modules/@azure/abort-controller
+│ │ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├─┬ @opentelemetry/api@1.2.0 -> ./../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/core-util@1.1.1 -> ./../../../core/core-util
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/logger@1.0.4 -> ./../../../core/logger
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @types/node-fetch@2.6.2 -> ./../../../../common/temp/node_modules/.pnpm/@types+node-fetch@2.6.2/node_modules/@types/node-fetch
+│ │ ├── @types/node@18.7.15 -> ./../../../../common/temp/node_modules/.pnpm/@types+node@18.7.15/node_modules/@types/node
+│ │ └─┬ form-data@3.0.1 -> ./../../../../common/temp/node_modules/.pnpm/form-data@3.0.1/node_modules/form-data
+│ │   ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │   ├─┬ asynckit@0.4.0 -> ./../../../../common/temp/node_modules/.pnpm/asynckit@0.4.0/node_modules/asynckit
+│ │   ├─┬ combined-stream@1.0.8 -> ./../../../../common/temp/node_modules/.pnpm/combined-stream@1.0.8/node_modules/combined-stream
+│ │   │ ├── delayed-stream@1.0.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/delayed-stream@1.0.0/node_modules/delayed-stream
+│ │   ├─┬ mime-types@2.1.35 -> ./../../../../common/temp/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-types
+│ │   │ ├── mime-db@1.52.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/mime-db@1.52.0/node_modules/mime-db
+│ ├─┬ @types/tunnel@0.0.3 -> ./../../../../common/temp/node_modules/.pnpm/@types+tunnel@0.0.3/node_modules/@types/tunnel
+│ │ └── @types/node@18.7.15 -> ./../../../../common/temp/node_modules/.pnpm/@types+node@18.7.15/node_modules/@types/node
+│ ├─┬ form-data@4.0.0 -> ./../../../../common/temp/node_modules/.pnpm/form-data@4.0.0/node_modules/form-data
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├─┬ asynckit@0.4.0 -> ./../../../../common/temp/node_modules/.pnpm/asynckit@0.4.0/node_modules/asynckit
+│ │ ├─┬ combined-stream@1.0.8 -> ./../../../../common/temp/node_modules/.pnpm/combined-stream@1.0.8/node_modules/combined-stream
+│ │ │ ├─┬ delayed-stream@1.0.0 -> ./../../../../common/temp/node_modules/.pnpm/delayed-stream@1.0.0/node_modules/delayed-stream
+│ │ ├─┬ mime-types@2.1.35 -> ./../../../../common/temp/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-types
+│ │ │ ├─┬ mime-db@1.52.0 -> ./../../../../common/temp/node_modules/.pnpm/mime-db@1.52.0/node_modules/mime-db
+│ ├─┬ node-fetch@2.6.7 -> ./../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch
+│ │ ├── UNMET OPTIONAL DEPENDENCY encoding@^0.1.0
+│ │ ├─┬ form-data@4.0.0 invalid: "^2.3.3" from ../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch, "^2.3.3" from ../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch -> ./../../../../common/temp/node_modules/.pnpm/form-data@4.0.0/node_modules/form-data
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── asynckit@0.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/asynckit@0.4.0/node_modules/asynckit
+│ │ │ ├── combined-stream@1.0.8 deduped -> ./../../../../common/temp/node_modules/.pnpm/combined-stream@1.0.8/node_modules/combined-stream
+│ │ │ ├── mime-types@2.1.35 deduped -> ./../../../../common/temp/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-types
+│ │ └─┬ whatwg-url@5.0.0 -> ./../../../../common/temp/node_modules/.pnpm/whatwg-url@5.0.0/node_modules/whatwg-url
+│ │   ├─┬ tr46@0.0.3 -> ./../../../../common/temp/node_modules/.pnpm/tr46@0.0.3/node_modules/tr46
+│ │   ├─┬ webidl-conversions@3.0.1 -> ./../../../../common/temp/node_modules/.pnpm/webidl-conversions@3.0.1/node_modules/webidl-conversions
+│ ├─┬ process@0.11.10 -> ./../../../../common/temp/node_modules/.pnpm/process@0.11.10/node_modules/process
+│ ├─┬ tough-cookie@4.1.2 -> ./../../../../common/temp/node_modules/.pnpm/tough-cookie@4.1.2/node_modules/tough-cookie
+│ │ ├─┬ psl@1.9.0 -> ./../../../../common/temp/node_modules/.pnpm/psl@1.9.0/node_modules/psl
+│ │ ├─┬ punycode@2.1.1 -> ./../../../../common/temp/node_modules/.pnpm/punycode@2.1.1/node_modules/punycode
+│ │ ├─┬ universalify@0.2.0 -> ./../../../../common/temp/node_modules/.pnpm/universalify@0.2.0/node_modules/universalify
+│ │ ├─┬ url-parse@1.5.10 -> ./../../../../common/temp/node_modules/.pnpm/url-parse@1.5.10/node_modules/url-parse
+│ │ │ ├─┬ querystringify@2.2.0 -> ./../../../../common/temp/node_modules/.pnpm/querystringify@2.2.0/node_modules/querystringify
+│ │ │ ├─┬ requires-port@1.0.0 -> ./../../../../common/temp/node_modules/.pnpm/requires-port@1.0.0/node_modules/requires-port
+│ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ tunnel@0.0.6 -> ./../../../../common/temp/node_modules/.pnpm/tunnel@0.0.6/node_modules/tunnel
+│ ├─┬ uuid@8.3.2 -> ./../../../../common/temp/node_modules/.pnpm/uuid@8.3.2/node_modules/uuid
+│ └─┬ xml2js@0.4.23 -> ./../../../../common/temp/node_modules/.pnpm/xml2js@0.4.23/node_modules/xml2js
+│   ├─┬ sax@1.2.4 -> ./../../../../common/temp/node_modules/.pnpm/sax@1.2.4/node_modules/sax
+│   ├─┬ xmlbuilder@11.0.1 -> ./../../../../common/temp/node_modules/.pnpm/xmlbuilder@11.0.1/node_modules/xmlbuilder
+├─┬ @azure/core-rest-pipeline@1.9.3 -> ./../../../core/core-rest-pipeline
+│ ├─┬ @azure/abort-controller@1.1.1 -> ./../../../core/abort-controller
+│ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/core-auth@1.4.1 -> ./../../../core/core-auth
+│ │ ├── @azure/abort-controller@1.1.1 deduped -> ./../../../core/abort-controller
+│ │ ├── @azure/core-util@1.1.1 deduped -> ./../../../core/core-util
+│ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/core-tracing@1.0.2 -> ./../../../core/core-tracing
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/core-util@1.1.1 -> ./../../../core/core-util
+│ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/logger@1.0.4 -> ./../../../core/logger
+│ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ form-data@4.0.0 -> ./../../../../common/temp/node_modules/.pnpm/form-data@4.0.0/node_modules/form-data
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├── asynckit@0.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/asynckit@0.4.0/node_modules/asynckit
+│ │ ├── combined-stream@1.0.8 deduped -> ./../../../../common/temp/node_modules/.pnpm/combined-stream@1.0.8/node_modules/combined-stream
+│ │ ├── mime-types@2.1.35 deduped -> ./../../../../common/temp/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-types
+│ ├─┬ http-proxy-agent@5.0.0 -> ./../../../../common/temp/node_modules/.pnpm/http-proxy-agent@5.0.0/node_modules/http-proxy-agent
+│ │ ├─┬ @tootallnate/once@2.0.0 -> ./../../../../common/temp/node_modules/.pnpm/@tootallnate+once@2.0.0/node_modules/@tootallnate/once
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├─┬ agent-base@6.0.2 -> ./../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├─┬ debug@4.3.4 -> ./../../../../common/temp/node_modules/.pnpm/debug@4.3.4/node_modules/debug
+│ │ │ │ ├── ms@2.1.2 deduped -> ./../../../../common/temp/node_modules/.pnpm/ms@2.1.2/node_modules/ms
+│ │ ├─┬ debug@4.3.4 -> ./../../../../common/temp/node_modules/.pnpm/debug@4.3.4/node_modules/debug
+│ │ │ ├─┬ ms@2.1.2 -> ./../../../../common/temp/node_modules/.pnpm/ms@2.1.2/node_modules/ms
+│ ├─┬ https-proxy-agent@5.0.1 -> ./../../../../common/temp/node_modules/.pnpm/https-proxy-agent@5.0.1/node_modules/https-proxy-agent
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├─┬ agent-base@6.0.2 -> ./../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── debug@4.3.4 deduped -> ./../../../../common/temp/node_modules/.pnpm/debug@4.3.4/node_modules/debug
+│ │ ├─┬ debug@4.3.4 -> ./../../../../common/temp/node_modules/.pnpm/debug@4.3.4/node_modules/debug
+│ │ │ ├── ms@2.1.2 deduped -> ./../../../../common/temp/node_modules/.pnpm/ms@2.1.2/node_modules/ms
+│ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ └─┬ uuid@8.3.2 -> ./../../../../common/temp/node_modules/.pnpm/uuid@8.3.2/node_modules/uuid
+├─┬ @azure/storage-blob@12.11.0 -> ./../../../../common/temp/node_modules/.pnpm/@azure+storage-blob@12.11.0/node_modules/@azure/storage-blob
+│ ├─┬ @azure/abort-controller@1.1.0 -> ./../../../../common/temp/node_modules/.pnpm/@azure+abort-controller@1.1.0/node_modules/@azure/abort-controller
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/core-http@2.2.7 -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-http@2.2.7/node_modules/@azure/core-http
+│ │ ├─┬ @azure/abort-controller@1.1.0 -> ./../../../../common/temp/node_modules/.pnpm/@azure+abort-controller@1.1.0/node_modules/@azure/abort-controller
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├─┬ @azure/core-auth@1.4.0 -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-auth@1.4.0/node_modules/@azure/core-auth
+│ │ │ ├── @azure/abort-controller@1.1.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/@azure+abort-controller@1.1.0/node_modules/@azure/abort-controller
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├─┬ @azure/core-tracing@1.0.0-preview.13 -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-tracing@1.0.0-preview.13/node_modules/@azure/core-tracing
+│ │ │ ├── @azure/core-auth@1.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-auth@1.4.0/node_modules/@azure/core-auth
+│ │ │ ├── @opentelemetry/api@1.2.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├─┬ @azure/core-util@1.1.0 -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-util@1.1.0/node_modules/@azure/core-util
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├─┬ @azure/logger@1.0.3 -> ./../../../../common/temp/node_modules/.pnpm/@azure+logger@1.0.3/node_modules/@azure/logger
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── dotenv@8.6.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/dotenv@8.6.0/node_modules/dotenv
+│ │ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├─┬ @opentelemetry/api@1.2.0 -> ./../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├─┬ @types/node-fetch@2.6.2 -> ./../../../../common/temp/node_modules/.pnpm/@types+node-fetch@2.6.2/node_modules/@types/node-fetch
+│ │ │ ├── @types/node@18.7.15 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@18.7.15/node_modules/@types/node
+│ │ │ └── form-data@3.0.1 deduped -> ./../../../../common/temp/node_modules/.pnpm/form-data@3.0.1/node_modules/form-data
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├─┬ @types/tunnel@0.0.3 -> ./../../../../common/temp/node_modules/.pnpm/@types+tunnel@0.0.3/node_modules/@types/tunnel
+│ │ │ └── @types/node@18.7.15 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@18.7.15/node_modules/@types/node
+│ │ ├─┬ form-data@4.0.0 -> ./../../../../common/temp/node_modules/.pnpm/form-data@4.0.0/node_modules/form-data
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── asynckit@0.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/asynckit@0.4.0/node_modules/asynckit
+│ │ │ ├── combined-stream@1.0.8 deduped -> ./../../../../common/temp/node_modules/.pnpm/combined-stream@1.0.8/node_modules/combined-stream
+│ │ │ ├── mime-types@2.1.35 deduped -> ./../../../../common/temp/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-types
+│ │ ├─┬ node-fetch@2.6.7 -> ./../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch
+│ │ │ ├── UNMET OPTIONAL DEPENDENCY encoding@^0.1.0
+│ │ │ ├── form-data@4.0.0 deduped invalid: "^2.3.3" from ../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch, "^2.3.3" from ../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch, "^2.3.3" from ../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch -> ./../../../../common/temp/node_modules/.pnpm/form-data@4.0.0/node_modules/form-data
+│ │ │ └── whatwg-url@5.0.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/whatwg-url@5.0.0/node_modules/whatwg-url
+│ │ ├─┬ process@0.11.10 -> ./../../../../common/temp/node_modules/.pnpm/process@0.11.10/node_modules/process
+│ │ ├─┬ tough-cookie@4.1.2 -> ./../../../../common/temp/node_modules/.pnpm/tough-cookie@4.1.2/node_modules/tough-cookie
+│ │ │ ├── psl@1.9.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/psl@1.9.0/node_modules/psl
+│ │ │ ├── punycode@2.1.1 deduped -> ./../../../../common/temp/node_modules/.pnpm/punycode@2.1.1/node_modules/punycode
+│ │ │ ├── universalify@0.2.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/universalify@0.2.0/node_modules/universalify
+│ │ │ ├── url-parse@1.5.10 deduped -> ./../../../../common/temp/node_modules/.pnpm/url-parse@1.5.10/node_modules/url-parse
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├─┬ tunnel@0.0.6 -> ./../../../../common/temp/node_modules/.pnpm/tunnel@0.0.6/node_modules/tunnel
+│ │ ├─┬ uuid@8.3.2 -> ./../../../../common/temp/node_modules/.pnpm/uuid@8.3.2/node_modules/uuid
+│ │ └─┬ xml2js@0.4.23 -> ./../../../../common/temp/node_modules/.pnpm/xml2js@0.4.23/node_modules/xml2js
+│ │   ├── sax@1.2.4 deduped -> ./../../../../common/temp/node_modules/.pnpm/sax@1.2.4/node_modules/sax
+│ │   ├── xmlbuilder@11.0.1 deduped -> ./../../../../common/temp/node_modules/.pnpm/xmlbuilder@11.0.1/node_modules/xmlbuilder
+│ ├─┬ @azure/core-lro@2.3.0 -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-lro@2.3.0/node_modules/@azure/core-lro
+│ │ ├─┬ @azure/abort-controller@1.1.0 -> ./../../../../common/temp/node_modules/.pnpm/@azure+abort-controller@1.1.0/node_modules/@azure/abort-controller
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├─┬ @azure/logger@1.0.3 -> ./../../../../common/temp/node_modules/.pnpm/@azure+logger@1.0.3/node_modules/@azure/logger
+│ │ │ ├── @types/node@12.20.55 deduped invalid: "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "^14.0.20" from ../../../../common/temp/node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base, "14.17.4" from ../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ │ ├── dotenv@8.6.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/dotenv@8.6.0/node_modules/dotenv
+│ │ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/core-paging@1.3.0 -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-paging@1.3.0/node_modules/@azure/core-paging
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/core-tracing@1.0.0-preview.13 -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-tracing@1.0.0-preview.13/node_modules/@azure/core-tracing
+│ │ ├── @azure/core-auth@1.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-auth@1.4.0/node_modules/@azure/core-auth
+│ │ ├── @opentelemetry/api@1.2.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/@opentelemetry+api@1.2.0/node_modules/@opentelemetry/api
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/logger@1.0.3 -> ./../../../../common/temp/node_modules/.pnpm/@azure+logger@1.0.3/node_modules/@azure/logger
+│ │ ├── @types/node@12.20.55 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ │ ├── dotenv@8.6.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/dotenv@8.6.0/node_modules/dotenv
+│ │ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @types/node-fetch@2.6.2 -> ./../../../../common/temp/node_modules/.pnpm/@types+node-fetch@2.6.2/node_modules/@types/node-fetch
+│ │ ├── @types/node@18.7.15 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node@18.7.15/node_modules/@types/node
+│ │ └── form-data@3.0.1 deduped -> ./../../../../common/temp/node_modules/.pnpm/form-data@3.0.1/node_modules/form-data
+│ ├── @types/node@12.20.55 -> ./../../../../common/temp/node_modules/.pnpm/@types+node@12.20.55/node_modules/@types/node
+│ ├─┬ dotenv@8.6.0 -> ./../../../../common/temp/node_modules/.pnpm/dotenv@8.6.0/node_modules/dotenv
+│ ├─┬ events@3.3.0 -> ./../../../../common/temp/node_modules/.pnpm/events@3.3.0/node_modules/events
+│ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+├─┬ @azure/test-utils-perf@1.0.0 -> ./../../../test-utils/perf
+│ ├─┬ @azure/abort-controller@1.1.1 -> ./../../../core/abort-controller
+│ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├─┬ @azure/core-http@2.2.8 -> ./../../../core/core-http
+│ │ ├── @azure/abort-controller@1.1.1 deduped -> ./../../../core/abort-controller
+│ │ ├── @azure/core-auth@1.4.1 deduped -> ./../../../core/core-auth
+│ │ ├── @azure/core-tracing@1.0.0-preview.13 deduped -> ./../../../../common/temp/node_modules/.pnpm/@azure+core-tracing@1.0.0-preview.13/node_modules/@azure/core-tracing
+│ │ ├── @azure/core-util@1.1.1 deduped -> ./../../../core/core-util
+│ │ ├── @azure/logger@1.0.4 deduped -> ./../../../core/logger
+│ │ ├── @types/node-fetch@2.6.2 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+node-fetch@2.6.2/node_modules/@types/node-fetch
+│ │ ├── @types/tunnel@0.0.3 deduped -> ./../../../../common/temp/node_modules/.pnpm/@types+tunnel@0.0.3/node_modules/@types/tunnel
+│ │ ├── form-data@4.0.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/form-data@4.0.0/node_modules/form-data
+│ │ ├── node-fetch@2.6.7 deduped -> ./../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch
+│ │ ├── process@0.11.10 deduped -> ./../../../../common/temp/node_modules/.pnpm/process@0.11.10/node_modules/process
+│ │ ├── tough-cookie@4.1.2 deduped -> ./../../../../common/temp/node_modules/.pnpm/tough-cookie@4.1.2/node_modules/tough-cookie
+│ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ ├── tunnel@0.0.6 deduped -> ./../../../../common/temp/node_modules/.pnpm/tunnel@0.0.6/node_modules/tunnel
+│ │ ├── uuid@8.3.2 deduped -> ./../../../../common/temp/node_modules/.pnpm/uuid@8.3.2/node_modules/uuid
+│ │ └── xml2js@0.4.23 deduped -> ./../../../../common/temp/node_modules/.pnpm/xml2js@0.4.23/node_modules/xml2js
+│ ├─┬ @azure/core-rest-pipeline@1.9.3 -> ./../../../core/core-rest-pipeline
+│ │ ├── @azure/abort-controller@1.1.1 deduped -> ./../../../core/abort-controller
+│ │ ├── @azure/core-auth@1.4.1 deduped -> ./../../../core/core-auth
+│ │ ├── @azure/core-tracing@1.0.2 deduped -> ./../../../core/core-tracing
+│ │ ├── @azure/core-util@1.1.1 deduped -> ./../../../core/core-util
+│ │ ├── @azure/logger@1.0.4 deduped -> ./../../../core/logger
+│ │ ├── form-data@4.0.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/form-data@4.0.0/node_modules/form-data
+│ │ ├── http-proxy-agent@5.0.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/http-proxy-agent@5.0.0/node_modules/http-proxy-agent
+│ │ ├── https-proxy-agent@5.0.1 deduped -> ./../../../../common/temp/node_modules/.pnpm/https-proxy-agent@5.0.1/node_modules/https-proxy-agent
+│ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ │ └── uuid@8.3.2 deduped -> ./../../../../common/temp/node_modules/.pnpm/uuid@8.3.2/node_modules/uuid
+│ ├─┬ @azure/core-util@1.1.1 -> ./../../../core/core-util
+│ │ ├── tslib@2.4.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+│ ├── @types/minimist@1.2.2 -> ./../../../../common/temp/node_modules/.pnpm/@types+minimist@1.2.2/node_modules/@types/minimist
+│ ├─┬ minimist@1.2.6 -> ./../../../../common/temp/node_modules/.pnpm/minimist@1.2.6/node_modules/minimist
+│ ├─┬ node-fetch@2.6.7 -> ./../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch
+│ │ ├── UNMET OPTIONAL DEPENDENCY encoding@^0.1.0
+│ │ ├── form-data@4.0.0 deduped invalid: "^2.3.3" from ../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch, "^2.3.3" from ../../../../common/temp/node_modules/.pnpm/node-fetch@2.6.7/node_modules/node-fetch -> ./../../../../common/temp/node_modules/.pnpm/form-data@4.0.0/node_modules/form-data
+│ │ └── whatwg-url@5.0.0 deduped -> ./../../../../common/temp/node_modules/.pnpm/whatwg-url@5.0.0/node_modules/whatwg-url
+│ ├── tslib@2.4.0 -> ./../../../../common/temp/node_modules/.pnpm/tslib@2.4.0/node_modules/tslib
+├─┬ dotenv@8.6.0 -> ./../../../../common/temp/node_modules/.pnpm/dotenv@8.6.0/node_modules/dotenv
+└─┬ uuid@8.3.2 -> ./../../../../common/temp/node_modules/.pnpm/uuid@8.3.2/node_modules/uuid

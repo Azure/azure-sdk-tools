@@ -1,0 +1,30 @@
+parameters:
+  - name: swagger
+    type: object
+
+  - name: sdk
+    type: string
+    values:
+      - js
+      - java
+      - go
+      - net
+      - python
+
+  - name: service
+    type: string
+
+  - name: sdkRepoBaseBranch
+    type: string
+steps:
+  - bash: |
+      if [ -z ${{ parameters.swagger.path }} ];then
+        echo "swagger.path is empty"
+        exit 1
+      fi
+    displayName: Check parameters
+
+  - bash: |
+      echo "##vso[task.setvariable variable=sdkRepoUrl;]https://github.com/$(SDK_OWNER)/azure-sdk-for-${{parameters.sdk}}.git"
+      echo "##vso[task.setvariable variable=sdkMainBranch;]$(sdkRepoBaseBranch)"
+    displayName: Set sdk repo

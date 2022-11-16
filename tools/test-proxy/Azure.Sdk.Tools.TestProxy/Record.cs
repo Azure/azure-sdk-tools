@@ -2,9 +2,11 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -27,9 +29,15 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Start()
         {
-            string file = await HttpRequestInteractions.GetBodyKey(Request, "x-recording-file", allowNulls: true);
+            var body = await HttpRequestInteractions.GetBody(Request);
 
-            _recordingHandler.StartRecording(file, Response);
+            string file = HttpRequestInteractions.GetBodyKey(body, "x-recording-file", allowNulls: true);
+
+            var assetsJson = RecordingHandler.GetAssetsJsonLocation(
+                HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
+                _recordingHandler.ContextDirectory);
+
+            await _recordingHandler.StartRecordingAsync(file, Response, assetsJson);
         }
 
 
@@ -37,8 +45,10 @@ namespace Azure.Sdk.Tools.TestProxy
         public async Task Push([FromBody()] IDictionary<string, object> options = null)
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
-            var pathToAssets = StoreResolver.ParseAssetsJsonBody(options);
-            _recordingHandler.Store.Push(pathToAssets, _recordingHandler.ContextDirectory);
+
+            var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
+
+            await _recordingHandler.Store.Push(pathToAssets);
         }
 
         [HttpPost]

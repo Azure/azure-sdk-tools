@@ -5,6 +5,7 @@ trigger:
   paths:
     include:
       - tools/stress-cluster
+      - eng/common/scripts/stress-testing
 
 pr:
   branches:
@@ -13,8 +14,22 @@ pr:
   paths:
     include:
       - tools/stress-cluster
+      - eng/common/scripts/stress-testing
 
 jobs:
+  - job: Analyze
+    pool:
+      name: 'azsdk-pool-mms-ubuntu-2004-general'
+      vmImage: 'MMSUbuntu20.04'
+    steps:
+      - template: /eng/common/pipelines/templates/steps/verify-links.yml
+        parameters:
+          Directory: tools/stress-cluster
+      - template: /eng/common/pipelines/templates/steps/verify-links.yml
+        parameters:
+          Directory: eng/common/scripts/stress-testing
+
+
   - template: /eng/pipelines/templates/jobs/stress-test-release.yml
     parameters:
       Environment: pg

@@ -1,6 +1,7 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
@@ -12,10 +13,11 @@ namespace APIViewWeb
     {
         private BlobContainerClient _container;
 
-        public BlobOriginalsRepository(IConfiguration configuration)
+        public string GetContainerUrl() => _container.Uri.ToString();
+
+        public BlobOriginalsRepository(IConfiguration configuration, BlobContainerClient blobContainerClient = null)
         {
-            var connectionString = configuration["Blob:ConnectionString"];
-            _container = new BlobContainerClient(connectionString, "originals");
+            _container = blobContainerClient ?? new BlobContainerClient(configuration["Blob:ConnectionString"], "originals");
         }
 
         public async Task<Stream> GetOriginalAsync(string codeFileId)

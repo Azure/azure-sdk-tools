@@ -1,6 +1,8 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -14,8 +16,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         protected override Language Language => Language.Python;
 
-        public override async Task<(string output, string error, string context)> SetupAsync(
-            string project, string languageVersion, IDictionary<string, string> packageVersions)
+        public override async Task<(string output, string error, object context)> SetupAsync(
+            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var env = Path.Combine(projectDirectory, _env);
@@ -40,7 +42,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // Install dev reqs
             await Util.RunAsync(pip, "install -r dev_requirements.txt", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
-            // TODO: Support multiple packages if possible.  Maybe by force installing?
             foreach (var v in packageVersions)
             {
                 var packageName = v.Key;
@@ -48,7 +49,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion == Program.PackageVersionSource)
                 {
-                    await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                    if (packageName == primaryPackage)
+                    {
+                        await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                    }
+                    // TODO: Consider installing source versions of non-primary packages.  Would require finding package in source tree.
+                    //       So far, this seems unnecessary, since dev-requirements.txt usually includes core.
                 }
                 else
                 {
@@ -60,7 +66,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            IDictionary<string, string> packageVersions, string testName, string arguments, string context)
+            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
@@ -71,15 +77,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var pip = Path.Combine(env, _envBin, "pip");
             var perfstress = Path.Combine(env, _envBin, "perfstress");
 
-            var runtimePackageVersions = new Dictionary<string, string>(packageVersions.Count);
-            var freezeResult = await Util.RunAsync(pip, "freeze", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
-            foreach (var package in packageVersions.Keys)
-            {
-                // Package: azure-core==1.12.0
-                // Source: -e git+https://github.com/Azure/azure-sdk-for-python@895ce54e1ad45ae15a0cd0cff89a29026a8a5cd2#egg=azure_storage_blob&subdirectory=sdk\storage\azure-storage-blob
-                var versionMatch = Regex.Match(freezeResult.StandardOutput, @$"^.*{package}.*$", RegexOptions.Multiline);
-                runtimePackageVersions[package] = versionMatch.Value.Trim();
-            }
+            var pipListResult = await Util.RunAsync(pip, "list", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            var runtimePackageVersions = GetRuntimePackageVersions(pipListResult.StandardOutput);
 
             var processResult = await Util.RunAsync(
                 perfstress,
@@ -105,6 +104,56 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 StandardOutput = outputBuilder.ToString(),
                 StandardError = errorBuilder.ToString()
             };
+        }
+
+        // Package              Version   Editable project location
+        // -------------------- --------- -----------------------------------------------
+        // azure-common         1.1.28
+        // azure-core           1.25.0
+        // azure-devtools       1.2.1     /mnt/vss/_work/1/s/tools/azure-devtools/src
+        // azure-identity       1.10.0
+        // azure-mgmt-core      1.3.1
+        // azure-mgmt-keyvault  10.0.0
+        // azure-mgmt-resource  21.1.0
+        // azure-mgmt-storage   20.0.0    /mnt/vss/_work/1/s/sdk/storage/azure-mgmt-storage
+        // azure-sdk-tools      0.0.0     /mnt/vss/_work/1/s/tools/azure-sdk-tools
+        // azure-storage-blob   12.14.0b1 /mnt/vss/_work/1/s/sdk/storage/azure-storage-blob
+        // azure-storage-common 1.4.0
+        public static Dictionary<string, string> GetRuntimePackageVersions(string standardOutput)
+        {
+            var runtimePackageVersions = new Dictionary<string, string>();
+
+            foreach (var line in standardOutput.ToLines())
+            {
+                var match = Regex.Match(line, @"^(azure\S*)\s+(\S+)\s*(\S*)$");
+
+                if (match.Success)
+                {
+                    var name = match.Groups[1].Value;
+                    var version = match.Groups[2].Value;
+                    var location = match.Groups[3].Value;
+
+                    if (!string.IsNullOrEmpty(location))
+                    {
+                        version = version + " -> " + location;
+                    }
+
+                    runtimePackageVersions.Add(name, version);
+                }
+            }
+
+            return runtimePackageVersions;
+        }
+
+        public override IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions)
+        {
+            return runtimePackageVersions?
+                .Where(kvp => !kvp.Key.Equals("azure-devtools", StringComparison.OrdinalIgnoreCase) &&
+                              !kvp.Key.Equals("azure-sdk-tools", StringComparison.OrdinalIgnoreCase) &&
+                              !kvp.Key.Equals("azure-common", StringComparison.OrdinalIgnoreCase) &&
+                              !kvp.Key.Equals("azure-storage-common", StringComparison.OrdinalIgnoreCase) &&
+                              !kvp.Key.StartsWith("azure-mgmt", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public override Task CleanupAsync(string project)

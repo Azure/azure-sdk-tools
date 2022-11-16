@@ -120,3 +120,22 @@ jobs:
               docker manifest push ${{ parameters.ContainerRegistry }}.azurecr.io/${{ deployment.dockerRepo }}:${{ parameters.ImageTag }}
             displayName: Upload Manifest
 
+          - ${{ if deployment.stableTags }}:
+            - ${{ each stableTag in deployment.stableTags }}:
+              - pwsh: |
+                  $configurations = '${{ convertToJson(parameters.DockerDeployments) }}' -replace '\\', '/'
+                  $assembledDependentTags = $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/get-docker-manifest-input.ps1 `
+                    -DockerDeploymentJson $configurations `
+                    -ContainerRegistry "${{ parameters.ContainerRegistry }}" `
+                    -ImageTag "${{ stableTag }}" `
+
+                  Write-Host "##vso[task.setvariable variable=ManifestVariable]$assembledDependentTags"
+                displayName: Generate Manifest Variable
+
+              - pwsh: |
+                  docker manifest create ${{ parameters.ContainerRegistry }}.azurecr.io/${{ deployment.dockerRepo }}:${{ stableTag }} $(ManifestVariable)
+                displayName: Generate Manifest
+
+              - pwsh: |
+                  docker manifest push ${{ parameters.ContainerRegistry }}.azurecr.io/${{ deployment.dockerRepo }}:${{ stableTag }}
+                displayName: Upload Manifest

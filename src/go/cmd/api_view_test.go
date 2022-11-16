@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,7 +22,7 @@ func TestFuncDecl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := ioutil.ReadFile("./output/testfuncdecl.json")
+	file, err := os.ReadFile("./output/testfuncdecl.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +50,7 @@ func TestInterface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := ioutil.ReadFile("./output/testinterface.json")
+	file, err := os.ReadFile("./output/testinterface.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +78,7 @@ func TestStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := ioutil.ReadFile("./output/teststruct.json")
+	file, err := os.ReadFile("./output/teststruct.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +106,7 @@ func TestConst(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := ioutil.ReadFile("./output/testconst.json")
+	file, err := os.ReadFile("./output/testconst.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -263,5 +262,36 @@ func TestRecursiveAliasDefinitions(t *testing.T) {
 			}
 			t.Fatal("review doesn't contain the aliased struct's definition")
 		})
+	}
+}
+
+func TestAliasDiagnostics(t *testing.T) {
+	review, err := createReview(filepath.Clean("testdata/test_alias_diagnostics"))
+	require.NoError(t, err)
+	require.Equal(t, "Go", review.Language)
+	require.Equal(t, "test_alias_diagnostics", review.Name)
+	require.Equal(t, 6, len(review.Diagnostics))
+	for _, diagnostic := range review.Diagnostics {
+		if diagnostic.TargetID == "test_alias_diagnostics.WidgetValue" {
+			require.Equal(t, DiagnosticLevelInfo, diagnostic.Level)
+			require.Equal(t, aliasFor+"internal.WidgetValue", diagnostic.Text)
+		} else {
+			require.Equal(t, "test_alias_diagnostics.Widget", diagnostic.TargetID)
+			switch diagnostic.Level {
+			case DiagnosticLevelInfo:
+				require.Equal(t, aliasFor+"internal.Widget", diagnostic.Text)
+			case DiagnosticLevelError:
+				switch txt := diagnostic.Text; txt {
+				case missingAliasFor + "WidgetProperties":
+				case missingAliasFor + "WidgetPropertiesP":
+				case missingAliasFor + "WidgetThings":
+				case missingAliasFor + "WidgetThingsP":
+				default:
+					t.Fatalf("unexpected diagnostic text %s", txt)
+				}
+			default:
+				t.Fatalf("unexpected diagnostic level %d", diagnostic.Level)
+			}
+		}
 	}
 }

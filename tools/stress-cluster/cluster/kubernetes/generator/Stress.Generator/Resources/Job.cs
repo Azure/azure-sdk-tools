@@ -71,7 +71,7 @@ spec:
 
         private string BicepContents = @"
 // Add Bicep file contents here.
-// [Overview] https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview
+// [Overview] https://docs.microsoft.com/azure/azure-resource-manager/bicep/overview
 // [Examples] https://github.com/Azure/bicep/tree/main/docs/examples
 ";
 

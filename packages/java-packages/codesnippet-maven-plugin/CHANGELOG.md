@@ -1,5 +1,15 @@
 # Release History
 
+## 1.0.0-beta.8 (2022-08-18)
+
+### Features Added
+
+- Added verbose exception indicating mismatch BEGIN and END codesnippet aliases to aid in troubleshooting snippet injection failures.
+
+### Other Changes
+
+- General performance improvements.
+
 ## 1.0.0-beta.7 (2022-04-13)
 
 ### Bugs Fixed

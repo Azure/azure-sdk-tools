@@ -12,6 +12,7 @@ describe('task engine', async () => {
         const tmpFolder = path.join(path.resolve('.'), 'test', 'unit', 'tmp');
         dockerContext.initialize({
             readmeMdPath: 'specification/agrifood/resource-manager/readme.md',
+            cadlProjectFolderPath: '',
             tag: '',
             sdkList: '',
             specRepo: path.join(tmpFolder, 'spec-repo'),
@@ -19,7 +20,11 @@ describe('task engine', async () => {
             sdkRepo: path.join(tmpFolder, 'sdk-repo'),
             resultOutputFolder: path.join(tmpFolder, 'output'),
             dockerLogger: 'docker.log',
-            autorestConfigFilePath: path.join(path.resolve('.'), 'test', 'unit', 'utils', 'autorest-single-config.md')
+            autorestConfigFilePath: path.join(path.resolve('.'), 'test', 'unit', 'utils', 'autorest-single-config.md'),
+            specLink: '',
+            sdkWorkBranchLink: '',
+            skipGeneration: false,
+            isPublicRepo: false
         });
         const dockerTaskEngineContext = new DockerTaskEngineContext();
         await dockerTaskEngineContext.initialize(dockerContext);
@@ -73,6 +78,7 @@ describe('task engine', async () => {
             repoHttpsUrl: 'https://github.com/Azure/azure-rest-api-specs'
         };
         dockerTaskEngineContext.changeOwner = false;
+        dockerTaskEngineContext.skipGeneration = false;
 
         await dockerTaskEngineContext.runTaskEngine();
         expect(existsSync(dockerTaskEngineContext.initTaskLog)).toBe(true);

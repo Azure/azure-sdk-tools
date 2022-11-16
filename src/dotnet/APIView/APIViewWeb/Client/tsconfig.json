@@ -14,7 +14,8 @@
     "noImplicitAny": false,
     "types": [
       "webpack-env",
-      "jquery"
+      "jquery",
+      "jqueryui"
     ],
     "paths": {
       "@/*": [
@@ -31,8 +32,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue"
+    "src/**/*.tsx"
   ],
   "exclude": [
     "node_modules"

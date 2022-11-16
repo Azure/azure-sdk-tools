@@ -1,16 +1,15 @@
-using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.Matchers;
-using Azure.Sdk.Tools.TestProxy.Sanitizers;
-using Azure.Sdk.Tools.TestProxy.Transforms;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Xunit;
+using System.Text.Json;
+using Azure.Sdk.Tools.TestProxy.Store;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -220,6 +219,128 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             response = new DefaultHttpContext().Response;
             await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
             Assert.False(response.Headers.ContainsKey("Retry-After"));
+        }
+
+        [Fact]
+        public async Task TestPlaybackWithGZippedContentPlayback()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var body = "{\"x-recording-file\":\"Test.RecordEntries/request_response_with_gzipped_content.json\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+            Assert.NotNull(recordingId);
+            Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(recordingId));
+            var entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[0];
+            HttpRequest request = TestHelpers.CreateRequestFromEntry(entry);
+
+            // compress the body to simulate what the request coming from the library will look like
+            request.Body = new MemoryStream(CompressionUtilities.CompressBody(BinaryData.FromStream(request.Body).ToArray(), request.Headers));
+            HttpResponse response = new DefaultHttpContext().Response;
+            await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
+        }
+
+
+        [Theory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets"",
+              ""AssetsRepoPrefixPath"": """",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": ""python/tables_0f2a2fa5""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task TestPlaybackWithRelativeAssetsJsonPath(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                Path.Join("sdk", "tables", GitStoretests.AssetsJson)
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+
+            try
+            {
+                RecordingHandler testRecordingHandler = new RecordingHandler(testFolder, new GitStore());
+                var httpContext = new DefaultHttpContext();
+                var recordingPath = "sdk/tables/azure-data-tables/tests/recordings/test_challenge_auth.pyTestTableChallengeAuthtest_challenge_auth_supported_version.json";
+                var body = "{\"x-recording-file\":\"" + recordingPath + "\", \"x-recording-assets-file\": \"sdk/tables/assets.json\"}";
+                httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+                httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+                var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
+                {
+                    ControllerContext = new ControllerContext()
+                    {
+                        HttpContext = httpContext
+                    }
+                };
+                await controller.Start();
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [Theory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets"",
+              ""AssetsRepoPrefixPath"": """",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": ""python/tables_0f2a2fa5""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task TestPlaybackWithAbsoluteAssetsJsonPath(string inputJson)
+        {
+            var assetsJsonRelativePath = Path.Join("sdk", "tables", GitStoretests.AssetsJson);
+
+            var folderStructure = new string[]
+            {
+                assetsJsonRelativePath
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+            var pathToAssetsJson = Path.Join(testFolder, assetsJsonRelativePath).Replace("\\", "/");
+
+            try
+            {
+                RecordingHandler testRecordingHandler = new RecordingHandler(testFolder, new GitStore());
+                var httpContext = new DefaultHttpContext();
+                var recordingPath = "sdk/tables/azure-data-tables/tests/recordings/test_challenge_auth.pyTestTableChallengeAuthtest_challenge_auth_supported_version.json";
+                var body = "{\"x-recording-file\":\"" + recordingPath + "\", \"x-recording-assets-file\": \"" + pathToAssetsJson + "\"}";
+                httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+                httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+                var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
+                {
+                    ControllerContext = new ControllerContext()
+                    {
+                        HttpContext = httpContext
+                    }
+                };
+                await controller.Start();
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
         }
     }
 }

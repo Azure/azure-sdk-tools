@@ -27,6 +27,7 @@ export class DockerTaskEngineContext {
     generateAndBuildTaskLog: string;
     mockTestTaskLog: string;
     readmeMdPath: string;
+    cadlProjectFolderPath: string;
     specRepo: {
         repoPath: string;
         headSha: string;
@@ -45,6 +46,7 @@ export class DockerTaskEngineContext {
     changeOwner: boolean;
     mode: DockerRunningModel;
     autorestConfig: string | undefined;
+    skipGeneration: boolean;
 
     public async initialize(dockerContext: DockerContext) {
         // before execute task engine, safe spec repos and sdk repos because they may be owned by others
@@ -62,14 +64,17 @@ export class DockerTaskEngineContext {
         this.generateAndBuildTaskLog = path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.generateAndBuildTaskLog);
         this.mockTestTaskLog = path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.mockTestTaskLog);
         this.readmeMdPath = dockerContext.readmeMdPath;
+        this.cadlProjectFolderPath = dockerContext.cadlProjectFolderPath;
         this.specRepo = {
             repoPath: dockerContext.specRepo,
-            headSha: dockerTaskEngineConfigProperties.headSha ?? dockerContext.mode === DockerRunningModel.Pipeline?
-                await new GitOperationWrapper(dockerContext.specRepo).getHeadSha() : '{commit_id}',
+            headSha: dockerTaskEngineConfigProperties.headSha ?? dockerContext.isPublicRepo?
+                await new GitOperationWrapper(dockerContext.specRepo).getHeadSha() : '',
             headRef: dockerTaskEngineConfigProperties.headRef ?? await new GitOperationWrapper(dockerContext.specRepo).getHeadRef(),
-            repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl
+            repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl?? (await new GitOperationWrapper(dockerContext.specRepo).getRemote())??
+                `https://github.com/Azure/azure-rest-api-specs`
         };
-        this.serviceType = dockerContext.readmeMdPath.includes('data-plane') && dockerTaskEngineConfigProperties.serviceType ? 'data-plane': 'resource-manager';
+        this.serviceType = (dockerContext.readmeMdPath.includes('data-plane') && dockerTaskEngineConfigProperties.serviceType) ||
+        !!dockerContext.cadlProjectFolderPath ? 'data-plane': 'resource-manager';
         this.tag = dockerContext.tag;
         this.sdkRepo = dockerContext.sdkRepo;
         this.resultOutputFolder = dockerContext.resultOutputFolder ?? '/tmp/output';
@@ -78,11 +83,15 @@ export class DockerTaskEngineContext {
         this.changeOwner = dockerTaskEngineConfigProperties.changeOwner;
         this.mode = dockerContext.mode;
         this.autorestConfig = extractAutorestConfigs(dockerContext.autorestConfigFilePath, dockerContext.sdkRepo, dockerContext.logger);
+        this.skipGeneration = dockerContext.skipGeneration;
     }
 
     public async beforeRunTaskEngine() {
         if (!!this.resultOutputFolder && !fs.existsSync(this.resultOutputFolder)) {
             fs.mkdirSync(this.resultOutputFolder, { recursive: true });
+        }
+        if (!!this.sdkRepo && fs.existsSync(this.sdkRepo)) {
+            await new GitOperationWrapper(this.sdkRepo).disableFileMode();
         }
         this.logger.info(`Start to run task engine in ${path.basename(this.sdkRepo)}`);
     }

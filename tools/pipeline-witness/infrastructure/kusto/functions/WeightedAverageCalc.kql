@@ -1,0 +1,25 @@
+.create-or-alter function WeightedAverageCalc(startTimeFrame:datetime, endTimeFrame:datetime, platformFilter:dynamic=dynamic(null), serviceFilter:dynamic=dynamic(null), buildTypeFilter:dynamic=dynamic(null))
+{
+    let ['language']=dynamic(null);
+    let buildCountScorePercent = 25;
+    let currentOwners = PipelineOwner | summarize arg_max(Timestamp, Owners) by BuildDefinitionId;
+    let perOwner = materialize(
+    Build
+    | extend BuildDefinitionId = (DefinitionId)
+    | join kind = inner currentOwners on BuildDefinitionId
+    | join kind = inner ManagedDefinition on ProjectId, BuildDefinitionId
+    | extend Platform = tostring(Platform), Service = tostring(Feature), Category = tostring(Category)
+    | where isnull(platformFilter) or Platform in (platformFilter)
+    | where isnull(serviceFilter) or Service in (serviceFilter)
+    | where isnull(buildTypeFilter) or Category in (buildTypeFilter)
+    | where FinishTime between (startTimeFrame .. endTimeFrame)
+    | where SourceBranch == "refs/heads/main"
+    | mv-expand Owner = Owners to typeof(string)
+    | summarize Count = count(), Succeeded = countif(Result != "failed") by DefinitionName,DefinitionId,Owner
+    | extend SuccessRate = todouble(Succeeded)/Count);
+    let maxCount = toscalar (perOwner | summarize max(Count));
+        perOwner
+    | extend 
+        SuccessRatePoints = SuccessRate * (100 - buildCountScorePercent),
+        BuildCountPoints = todouble(Count)/maxCount * buildCountScorePercent
+}

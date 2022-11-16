@@ -10,6 +10,7 @@ import { DockerRunningModel } from './DockerRunningModel';
 export class DockerContext {
     mode: DockerRunningModel;
     readmeMdPath?: string;
+    cadlProjectFolderPath?: string;
     tag?: string;
     sdkList: string[];
     specRepo?: string;
@@ -17,6 +18,10 @@ export class DockerContext {
     sdkRepo?: string;
     resultOutputFolder?: string;
     autorestConfigFilePath?: string;
+    specLink?: string;
+    sdkWorkBranchLink?: string;
+    skipGeneration: boolean;
+    isPublicRepo: boolean;
     logger: Logger;
 
     /*
@@ -27,6 +32,7 @@ export class DockerContext {
     * */
     public initialize(inputParams: DockerCliInput) {
         this.readmeMdPath = inputParams.readmeMdPath;
+        this.cadlProjectFolderPath = inputParams.cadlProjectFolderPath;
         this.tag = inputParams.tag;
         this.sdkList = inputParams.sdkList?.split(',').map((e) => e.trim()).filter((e) => e.length > 0);
         this.specRepo = inputParams.specRepo;
@@ -34,25 +40,43 @@ export class DockerContext {
         this.sdkRepo = inputParams.sdkRepo;
         this.resultOutputFolder = inputParams.resultOutputFolder;
         this.autorestConfigFilePath = inputParams.autorestConfigFilePath;
+        this.specLink = inputParams.specLink;
+        this.sdkWorkBranchLink = inputParams.sdkWorkBranchLink;
+        this.skipGeneration = inputParams.skipGeneration;
         this.logger = initializeLogger(path.join(inputParams.resultOutputFolder, inputParams.dockerLogger), 'docker');
 
         if (this.sdkList?.length === 0 && fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to do grow up development');
             this.mode = DockerRunningModel.GrowUp;
-            this.validateSpecRepo();
+            this.isPublicRepo = false;
+            if (!this.specLink) {
+                try {
+                    this.validateSpecRepo();
+                } catch (e) {
+                    throw new Error(`Cannot get spec repo link by parameter --spec-link, or get mounted swagger repo.`);
+                }
+            } else {
+                this.validateSpecLink();
+            }
+
             this.validateWorkDir();
+            if (!!this.sdkWorkBranchLink) {
+                this.validateWorkBranchLink();
+            }
         } else if (fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to generate codes and do grow up development in local');
             this.mode = DockerRunningModel.CodeGenAndGrowUp;
+            this.isPublicRepo = false;
             this.validateSpecRepo();
-            this.validateReadmeMdPath();
+            this.validateReadmeMdPathOrCadlProjectFolderPath();
             this.validateSdk();
         } else {
             this.logger.info('Preparing environment to generate codes in pipeline');
             this.mode = DockerRunningModel.Pipeline;
+            this.isPublicRepo = inputParams.isPublicRepo;
             this.validateSdkRepo();
             this.validateSpecRepo();
-            this.validateReadmeMdPath();
+            this.validateReadmeMdPathOrCadlProjectFolderPath();
             this.validateOutputFolder();
         }
     }
@@ -63,12 +87,15 @@ export class DockerContext {
         }
     }
 
-    private validateReadmeMdPath() {
-        if (!this.readmeMdPath) {
-            throw new Error(`Get empty readme.md path, please input it with --readme`);
+    private validateReadmeMdPathOrCadlProjectFolderPath() {
+        if (!this.readmeMdPath && !this.cadlProjectFolderPath) {
+            throw new Error(`Get empty readme.md path and cadl project folder path, please input it with --readme or --cadl-project`);
         }
-        if (!fs.existsSync(path.join(this.specRepo, this.readmeMdPath))) {
+        if (!!this.readmeMdPath && !fs.existsSync(path.join(this.specRepo, this.readmeMdPath))) {
             throw new Error(`Cannot find file ${this.readmeMdPath}, please input a valid one`);
+        }
+        if (!!this.cadlProjectFolderPath && !fs.existsSync(path.join(this.specRepo, this.cadlProjectFolderPath))) {
+            throw new Error(`Cannot find file ${this.cadlProjectFolderPath}, please input a valid one`);
         }
     }
 
@@ -100,6 +127,20 @@ export class DockerContext {
     private validateOutputFolder() {
         if (!fs.existsSync(this.resultOutputFolder)) {
             throw new Error(`Cannot find ${this.resultOutputFolder}, please mount it to docker container`);
+        }
+    }
+
+    private validateWorkBranchLink() {
+        const match = this.sdkWorkBranchLink.match(/(https.*\/([^\/]*))\/tree\/(.*)/);
+        if (match?.length !== 4) {
+            throw new Error(`Get invalid sdk work branch link: ${this.sdkWorkBranchLink}`);
+        }
+    }
+
+    private validateSpecLink() {
+        const match = this.specLink.match(/http.*/);
+        if (!match) {
+            throw new Error(`Get invalid sdk work branch link: ${this.specLink}`);
         }
     }
 }

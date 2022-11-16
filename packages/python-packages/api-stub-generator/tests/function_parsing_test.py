@@ -4,13 +4,13 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from apistub.nodes import FunctionNode, PropertyNode
+from apistub.nodes import FunctionNode, ClassNode
 from apistubgentest import (
     Python2TypeHintClient,
     Python3TypeHintClient,
     DocstringTypeHintClient,
     DefaultValuesClient,
-    SpecialArgsClient
+    SpecialArgsClient,
 )
 
 from ._test_util import _render_string, _check, _tokenize

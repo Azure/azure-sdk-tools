@@ -13,15 +13,12 @@
     "acorn": "^8.0.0",
     "core-js": "^3.3.2",
     "jquery": "3.6.0",
-    "split.js": "^1.5.11",
-    "underscore": "^1.13.4",
-    "vue": "^2.6.10",
-    "vue-class-component": "^7.0.2",
-    "vue-property-decorator": "^8.3.0",
-    "vuex": "^3.0.1"
+    "jquery-ui": "1.13.2",
+    "underscore": "^1.13.4"
   },
   "devDependencies": {
     "@types/jquery": "3.3.31",
+    "@types/jqueryui": "1.12.16",
     "@types/split.js": "^1.4.0",
     "@types/webpack-env": "^1.14.1",
     "@typescript-eslint/parser": "5.16.0",
@@ -33,9 +30,6 @@
     "sass-loader": "^8.0.0",
     "ts-loader": "^6.2.0",
     "typescript": "^3.5.3",
-    "vue-loader": "^15.7.1",
-    "vue-style-loader": "^4.1.2",
-    "vue-template-compiler": "^2.6.10",
     "webpack": "^5.70.0",
     "webpack-cli": "^4.9.2"
   },
@@ -44,11 +38,6 @@
     "env": {
       "node": true
     },
-    "extends": [
-      "plugin:vue/essential",
-      "@vue/standard",
-      "@vue/typescript"
-    ],
     "rules": {},
     "parserOptions": {
       "parser": "@typescript-eslint/parser"

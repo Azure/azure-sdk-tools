@@ -11,7 +11,7 @@ trigger:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
       - src/swift
-      - src/ts/ts-genapi
+      - tools/apiview/parsers/js-api-parser
 
 pr:
   branches:
@@ -26,18 +26,16 @@ pr:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
       - src/swift
-      - src/ts/ts-genapi
+      - tools/apiview/parsers/js-api-parser
 
 variables:
-  DotNetCoreVersion: '5.x'
   DotNetRuntimeVersion: '3.1.x'
-  PythonVersion: '3.10.2'
+  PythonVersion: '3.10.5'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
-  TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
   NodeVersion: '12.x'
   BuildConfiguration: 'Release'
-  TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
+  TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parser'
   GoParserPackagePath: 'src/go'
   GoVersion: '1.18'
   NugetSecurityAnalysisWarningLevel: 'none'
@@ -149,17 +147,55 @@ stages:
           vmImage: MMS2019
 
         steps:
+          - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
+            parameters:
+              StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
 
           - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
+            displayName: 'Use .NET Core sdk 3.1.x'
             inputs:
-              version: '$(DotNetCoreVersion)'
+              version: '3.1.x'
+          
+          - task: DotNetCoreInstaller@2
+            displayName: 'Use .NET Core sdk 5.x'
+            inputs:
+              version: '5.x'
 
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core $(DotNetRuntimeVersion)'
             inputs:
               packageType: runtime
               version: '$(DotNetRuntimeVersion)'
+
+          - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+            - task: Powershell@2
+              inputs:
+                filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
+                arguments: >
+                  -Process "dotnet"
+                  -ArgumentList "run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj"
+                  -Port "5000"
+                pwsh: true
+              displayName: 'Start APIView Application'
+              env:
+                APIVIEW_BLOB__CONNECTIONSTRING: $(apiview-blob-connectionstring)
+                APIVIEW_COSMOS__CONNECTIONSTRING: $(apiview-cosmos-connectionstring)
+                APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
+                APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
+                APIVIEW_AUTHENTICATIONSCHEME: "Test"
+                APIVIEW_SENDGRID__KEY: "Test"
+
+            - task: DotNetCoreCLI@2
+              displayName: 'Build & Test'
+              env:
+                DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+                DOTNET_CLI_TELEMETRY_OPTOUT: 1
+                DOTNET_MULTILEVEL_LOOKUP: 0
+              inputs:
+                command: test
+                projects: src/dotnet/APIView/**/APIViewUITests.csproj
+                arguments: --logger trx
+                publishTestResults: false
 
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
@@ -169,7 +205,9 @@ stages:
               DOTNET_MULTILEVEL_LOOKUP: 0
             inputs:
               command: test
-              projects: '$(TestProjectPath)'
+              projects: |
+                src/dotnet/APIView/**/APIViewUnitTests.csproj
+                src/dotnet/APIView/**/APIViewIntegrationTests.csproj
               arguments: --logger trx
               publishTestResults: false
 
@@ -177,6 +215,6 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
+              testRunTitle: 'Windows DotNet $(DotNetRuntimeVersion)'
               testResultsFormat: 'VSTest'
               mergeTestResults: true

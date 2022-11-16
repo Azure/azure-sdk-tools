@@ -9,7 +9,6 @@ using Serilog;
 using Serilog.Context;
 using Serilog.Sinks.SystemConsole.Themes;
 using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
 
 namespace Stress.Watcher
 {
@@ -78,7 +77,9 @@ namespace Stress.Watcher
             {
                 try
                 {
-                    var listTask = Client.ListPodForAllNamespacesWithHttpMessagesAsync(
+                    Logger.Information("Starting pod watch");
+
+                    var listTask = Client.CoreV1.ListPodForAllNamespacesWithHttpMessagesAsync(
                         allowWatchBookmarks: true,
                         watch: true,
                         resourceVersion: resourceVersion,
@@ -164,7 +165,8 @@ namespace Stress.Watcher
                                     break;
                                 }
                             }
-                            await Client.PatchNamespacedCustomObjectWithHttpMessagesAsync(
+
+                            await Client.PatchNamespacedCustomObjectAsync(
                                     PodChaosResumePatchBody, ChaosClient.Group, ChaosClient.Version,
                                     pod.Namespace(), plural, cr.Metadata.Name);
                             using (LogContext.PushProperty("chaosResource", $"{cr.Kind}/{cr.Metadata.Name}"))
@@ -205,7 +207,7 @@ namespace Stress.Watcher
                 return false;
             }
 
-            if (!pod.Metadata.Labels.TryGetValue("chaos", out var chaos) || chaos != "true")
+            if (pod.Metadata.Labels?.TryGetValue("chaos", out var chaos) != true || chaos != "true")
             {
                 return false;
             }

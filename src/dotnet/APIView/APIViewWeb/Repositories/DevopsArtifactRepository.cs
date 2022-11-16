@@ -1,3 +1,5 @@
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -28,6 +30,7 @@ namespace APIViewWeb.Repositories
         private readonly string _hostUrl;
 
         private IMemoryCache _pipelineNameCache;
+        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
         public DevopsArtifactRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMemoryCache cache)
         {
             _configuration = configuration;
@@ -64,7 +67,8 @@ namespace APIViewWeb.Repositories
             int count = 0;
             while (downloadResp.StatusCode == HttpStatusCode.TooManyRequests && count < 5)
             {
-                var retryAfter = downloadResp.Headers.RetryAfter?.ToString() ?? "60";
+                var retryAfter = downloadResp.Headers.RetryAfter.ToString();
+                _telemetryClient.TrackTrace($"Download request from devops artifact is throttled. Retry After: {retryAfter}, Retry count: {count}");
                 await Task.Delay(int.Parse(retryAfter) * 1000);
                 downloadResp = await _devopsClient.GetAsync(request);
                 count++;

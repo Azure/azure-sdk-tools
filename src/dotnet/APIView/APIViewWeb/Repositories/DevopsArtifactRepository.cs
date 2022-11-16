@@ -11,9 +11,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -50,12 +50,26 @@ namespace APIViewWeb.Repositories
                     downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=" + filePath;
                 }
                 
-                SetDevopsClientHeaders();
-                var downloadResp = await _devopsClient.GetAsync(downloadUrl);
+                var downloadResp = await GetFromDevopsAsync(downloadUrl);
                 downloadResp.EnsureSuccessStatusCode();
                 return await downloadResp.Content.ReadAsStreamAsync();
             }
             return null;
+        }
+
+        private async Task<HttpResponseMessage> GetFromDevopsAsync(string request)
+        {
+            SetDevopsClientHeaders();
+            var downloadResp = await _devopsClient.GetAsync(request);
+            int count = 0;
+            while (downloadResp.StatusCode == HttpStatusCode.TooManyRequests && count < 5)
+            {
+                var retryAfter = downloadResp.Headers.GetValues("Retry-After").FirstOrDefault() ?? "60";
+                await Task.Delay(int.Parse(retryAfter) * 1000);
+                downloadResp = await _devopsClient.GetAsync(request);
+                count++;
+            }
+            return downloadResp;
         }
 
         private void SetDevopsClientHeaders()
@@ -68,8 +82,7 @@ namespace APIViewWeb.Repositories
         private async Task<string> GetDownloadArtifactUrl(string repoName, string buildId, string artifactName, string project)
         {
             var artifactGetReq = GetArtifactRestAPIForRepo(repoName).Replace("{buildId}", buildId).Replace("{artifactName}", artifactName).Replace("{project}", project);
-            SetDevopsClientHeaders();
-            var response = await _devopsClient.GetAsync(artifactGetReq);
+            var response = await GetFromDevopsAsync(artifactGetReq);
             response.EnsureSuccessStatusCode();
             var buildResource = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             if (buildResource == null)

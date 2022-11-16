@@ -46,12 +46,12 @@ func NewModule(dir string) (*Module, error) {
 	packageName := ""
 	if before, after, found := strings.Cut(dir, fmt.Sprintf("%s%c", sdkDirName, filepath.Separator)); found {
 		sdkRoot = filepath.Join(before, sdkDirName)
-		fmt.Printf("Package path: %s\n", after)
 		if filepath.Base(after) == "internal" {
 			packageName = after
 		} else {
 			packageName = filepath.Base(after)
-		}		
+		}
+		fmt.Printf("Package Name: %s\n", packageName)
 	}
 	m := Module{Name: filepath.Base(dir), PackageName: packageName, packages: map[string]*Pkg{}}
 

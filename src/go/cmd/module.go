@@ -28,6 +28,7 @@ var sdkDirName = "sdk"
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
 	Name string
+	PackageName string
 
 	// packages maps import paths to packages
 	packages map[string]*Pkg
@@ -42,10 +43,17 @@ func NewModule(dir string) (*Module, error) {
 	// sdkRoot is the path on disk to the sdk folder e.g. /home/user/me/azure-sdk-for-go/sdk.
 	// Used to find definitions of types imported from other Azure SDK modules.
 	sdkRoot := ""
-	if before, _, found := strings.Cut(dir, fmt.Sprintf("%s%c", sdkDirName, filepath.Separator)); found {
+	packageName := ""
+	if before, after, found := strings.Cut(dir, fmt.Sprintf("%s%c", sdkDirName, filepath.Separator)); found {
 		sdkRoot = filepath.Join(before, sdkDirName)
+		fmt.Printf("Package path: %s\n", after)
+		if filepath.Base(after) == "internal" {
+			packageName = after
+		} else {
+			packageName = filepath.Base(after)
+		}		
 	}
-	m := Module{Name: filepath.Base(dir), packages: map[string]*Pkg{}}
+	m := Module{Name: filepath.Base(dir), PackageName: packageName, packages: map[string]*Pkg{}}
 
 	baseImportPath := path.Dir(mf.Module.Mod.Path) + "/"
 	if baseImportPath == "./" {

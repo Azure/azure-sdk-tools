@@ -64,7 +64,7 @@ namespace APIViewWeb.Repositories
             int count = 0;
             while (downloadResp.StatusCode == HttpStatusCode.TooManyRequests && count < 5)
             {
-                var retryAfter = downloadResp.Headers.GetValues("Retry-After").FirstOrDefault() ?? "60";
+                var retryAfter = downloadResp.Headers.RetryAfter?.ToString() ?? "60";
                 await Task.Delay(int.Parse(retryAfter) * 1000);
                 downloadResp = await _devopsClient.GetAsync(request);
                 count++;

@@ -27,7 +27,7 @@ namespace SwaggerApiParser
                 packageName = packageName
             };
 
-
+            AddDefinitionsToCache(swaggerSpec, swaggerFilePath, schemaCache);
             ret.SwaggerApiViewGeneral.xMsParameterizedHost?.ResolveParameters(schemaCache, swaggerFilePath);
 
             
@@ -121,6 +121,7 @@ namespace SwaggerApiParser
                         var currentSwaggerFilePath = swaggerFilePath;
 
                         //Resolve ref obj for response schema.
+                        
                         if (response.schema != null)
                         {
                             schema = schemaCache.GetResolvedSchema(schema, currentSwaggerFilePath);

@@ -182,36 +182,6 @@ stages:
               packageType: runtime
               version: '$(DotNetRuntimeVersion)'
 
-          - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-            - task: Powershell@2
-              inputs:
-                filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
-                arguments: >
-                  -Process "dotnet"
-                  -ArgumentList "run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj"
-                  -Port "5000"
-                pwsh: true
-              displayName: 'Start APIView Application'
-              env:
-                APIVIEW_BLOB__CONNECTIONSTRING: $(apiview-blob-connectionstring)
-                APIVIEW_COSMOS__CONNECTIONSTRING: $(apiview-cosmos-connectionstring)
-                APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
-                APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
-                APIVIEW_AUTHENTICATIONSCHEME: "Test"
-                APIVIEW_SENDGRID__KEY: "Test"
-
-            - task: DotNetCoreCLI@2
-              displayName: 'Build & Test'
-              env:
-                DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-                DOTNET_CLI_TELEMETRY_OPTOUT: 1
-                DOTNET_MULTILEVEL_LOOKUP: 0
-              inputs:
-                command: test
-                projects: src/dotnet/APIView/**/APIViewUITests.csproj
-                arguments: --logger trx
-                publishTestResults: false
-
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
             env:

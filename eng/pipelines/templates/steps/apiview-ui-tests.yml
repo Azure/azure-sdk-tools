@@ -1,0 +1,58 @@
+steps:
+- template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
+  parameters:
+    StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
+
+- script: |
+    npm install -g azurite
+  displayName: 'Install Azurite'
+
+- task: Powershell@2
+  inputs:
+    workingDirectory: $(Agent.TempDirectory)
+    filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
+    arguments: >
+      -Process "azurite.cmd"
+      -ArgumentList "--silent"
+      -Port "10000"
+    pwsh: true
+  displayName: 'Start Azurite'
+
+- task: DotNetCoreInstaller@2
+  displayName: 'Use .NET Core sdk 3.1.x'
+  inputs:
+    version: '3.1.x'
+
+- task: DotNetCoreInstaller@2
+  displayName: 'Use .NET Core sdk 5.x'
+  inputs:
+    version: '5.x'
+
+- task: Powershell@2
+  inputs:
+    filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
+    arguments: >
+      -Process "dotnet"
+      -ArgumentList "run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj"
+      -Port "5000"
+    pwsh: true
+  displayName: 'Start APIView Application'
+  env:
+    APIVIEW_BLOB__CONNECTIONSTRING: $(apiview-blob-connectionstring)
+    APIVIEW_COSMOS__CONNECTIONSTRING: $(apiview-cosmos-connectionstring)
+    APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
+    APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
+    APIVIEW_AUTHENTICATIONSCHEME: "Test"
+    APIVIEW_SENDGRID__KEY: "Test"
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build & Test'
+  env:
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+    DOTNET_CLI_TELEMETRY_OPTOUT: 1
+    DOTNET_MULTILEVEL_LOOKUP: 0
+  inputs:
+    command: test
+    projects: src/dotnet/APIView/**/APIViewUITests.csproj
+    arguments: --logger trx
+    publishTestResults: false

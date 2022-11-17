@@ -6,11 +6,83 @@ using System.Collections.Generic;
 using SeleniumExtras.WaitHelpers;
 using System.Linq;
 using System;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Azure.Cosmos;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 
 namespace APIViewUITests
 {
-    public class SmokeTests
+    public class SmokeTestsFixture : IDisposable
     {
+        private readonly CosmosClient _cosmosClient;
+        private readonly BlobContainerClient _blobCodeFileContainerClient;
+        private readonly BlobContainerClient _blobOriginalContainerClient;
+        private readonly BlobContainerClient _blobUsageSampleRepository;
+        private readonly BlobContainerClient _blobCommentsRepository;
+
+        public SmokeTestsFixture()
+        {
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("config.json")
+                .Build();
+
+            _cosmosClient = new CosmosClient(config["Cosmos:ConnectionString"]);
+            var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync("APIView").Result;
+            _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id");
+            _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId");
+            _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id");
+            _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("PullRequests", "/PullRequestNumber");
+            _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("UsageSamples", "/ReviewId");
+            _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("UserPreference", "/ReviewId");
+
+            _blobCodeFileContainerClient = new BlobContainerClient(config["Blob:ConnectionString"], "codefiles");
+            _blobOriginalContainerClient = new BlobContainerClient(config["Blob:ConnectionString"], "originals");
+            _blobUsageSampleRepository = new BlobContainerClient(config["Blob:ConnectionString"], "usagesamples");
+            _blobCommentsRepository = new BlobContainerClient(config["Blob:ConnectionString"], "comments");
+            _ = _blobCodeFileContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
+            _ = _blobOriginalContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
+            _ = _blobUsageSampleRepository.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
+            _ = _blobCommentsRepository.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
+        }
+
+        public void Dispose()
+        {
+            _cosmosClient.GetDatabase("APIView").DeleteAsync().Wait();
+            _cosmosClient.Dispose();
+
+            _blobCodeFileContainerClient.DeleteIfExists();
+            _blobOriginalContainerClient.DeleteIfExists();
+            _blobUsageSampleRepository.DeleteIfExists();
+            _blobCommentsRepository.DeleteIfExists();
+        }
+    }
+    public class SmokeTests : IClassFixture<SmokeTestsFixture>
+    {
+        const int MaxWaitTime = 30;
+        const int MinWaitTime = 10;
+
+        [Fact]
+        public void SmokeTest_CSharp()
+        {
+            using (IWebDriver driver = new ChromeDriver())
+            {
+                driver.Manage().Window.Maximize();
+                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(MinWaitTime);
+                driver.Navigate().GoToUrl("http://localhost:5000");
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(MaxWaitTime);
+
+                var createReviewBtn = driver.FindElement(By.XPath("//button[@data-target='#uploadModel']"));
+                createReviewBtn.Click();
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(MaxWaitTime);
+                var fileSelector = driver.FindElement(By.Id("Upload_Files"));
+                fileSelector.SendKeys("C:\\Users\\chononiw\\Downloads\\azure.identity.1.9.0-beta.1.nupkg");
+                var uploadBtn = driver.FindElement(By.XPath("//div[@class='modal-footer']/button[@type='submit']"));
+                uploadBtn.Click();
+                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(MaxWaitTime);
+            }
+        }
+
         [Fact(Skip = "Test is too Flaky")]
         public void MostUsedPagesLoadsWithouErrors()
         {

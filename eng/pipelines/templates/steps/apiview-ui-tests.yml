@@ -15,16 +15,11 @@ parameters:
     type: string
     default: ''
   
-
 steps:
 - task: NodeTool@0
   inputs:
     versionSpec: '${{ parameters.NodeVersion }}'
   displayName: 'Use NodeJS ${{ parameters.NodeVersion }}'
-
-- script: |
-    npm install -g npm@6.14.6
-  displayName: "Install npm 6.14.6"
 
 - script: |
     npm install
@@ -69,6 +64,12 @@ steps:
   displayName: 'Copy from Test Files From Blob'
   env:
     AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
+    APIVIEW_BLOB__CONNECTIONSTRING: $(apiview-blob-connectionstring)
+    APIVIEW_COSMOS__CONNECTIONSTRING: $(apiview-cosmos-connectionstring)
+    APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
+    APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
+    APIVIEW_AUTHENTICATIONSCHEME: "Test"
+    APIVIEW_SENDGRID__KEY: "Test"
 
 - task: DotNetCoreCLI@2
   displayName: 'Build & Test (UI)'

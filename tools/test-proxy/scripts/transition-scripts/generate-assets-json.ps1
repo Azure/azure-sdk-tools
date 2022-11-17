@@ -269,7 +269,7 @@ Function Invoke-ProxyCommand {
 
     if(-not $token -or -not $committer -or -not $email){
       Write-Error ("When running this transition script in `"docker`" or `"podman`" mode, " `
-        + "the environment variables GIT_TOKEN, GIT_COMMIT_OWNER, GIT_COMMIT_EMAIL must be set to reflect the appropriate user. ")
+        + "the environment variables GIT_TOKEN, GIT_COMMIT_OWNER, and GIT_COMMIT_EMAIL must be set to reflect the appropriate user. ")
         exit(1)
     }
 

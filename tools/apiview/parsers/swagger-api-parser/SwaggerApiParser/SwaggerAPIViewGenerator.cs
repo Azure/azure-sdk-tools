@@ -47,7 +47,7 @@ namespace SwaggerApiParser
                     continue;
                 }
 
-                foreach (var (key, value) in operations)
+                foreach (var (key, value) in operations.operations)
                 {
                     SwaggerApiViewOperation op = new SwaggerApiViewOperation
                     {

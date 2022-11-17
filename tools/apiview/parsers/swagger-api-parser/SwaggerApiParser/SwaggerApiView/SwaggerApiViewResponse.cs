@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using APIView;
 
@@ -18,15 +19,9 @@ public class SwaggerApiViewResponse : ITokenSerializable
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
 
-        // ret.AddRange(TokenSerializer.TokenSerialize(this, context.intent + 1, new string[] {"description"}));
         ret.AddRange(TokenSerializer.KeyValueTokens("description", this.description, true, context.IteratorPath.CurrentNextPath("description")));
         if (this.schema != null)
         {
-            // ret.Add(TokenSerializer.Intent(context.intent + 1));
-            // ret.Add(new CodeFileToken("Schema", CodeFileTokenKind.Keyword));
-            // ret.Add(TokenSerializer.Colon());
-            // ret.Add(TokenSerializer.NewLine());
-            
             ret.AddRange(this.schema.TokenSerialize(new SerializeContext(context.intent + 2, context.IteratorPath)));
         }
 

@@ -27,8 +27,6 @@ namespace SwaggerApiParser
                 packageName = packageName
             };
 
-            AddDefinitionsToCache(swaggerSpec, swaggerFilePath, schemaCache);
-
 
             ret.SwaggerApiViewGeneral.xMsParameterizedHost?.ResolveParameters(schemaCache, swaggerFilePath);
 

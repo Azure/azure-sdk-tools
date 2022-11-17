@@ -6,6 +6,10 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Text;
+using System.Text.Json;
+using System.Collections.Generic;
 
 namespace Azure.Sdk.Tools.TestProxy.TestExample
 {
@@ -17,7 +21,7 @@ namespace Azure.Sdk.Tools.TestProxy.TestExample
     /// </summary>
     public class SampleTestBaseClass
     {
-        private const string RECORD_MODE = "record";
+        private const string RECORD_MODE = "playback";
         private const int PROXY_PORT = 5001;
         private const string PROXY_HOST = "localhost";
 
@@ -86,15 +90,19 @@ namespace Azure.Sdk.Tools.TestProxy.TestExample
         public async Task Start()
         {
             var message = new HttpRequestMessage(HttpMethod.Post, $"https://{PROXY_HOST}:{PROXY_PORT}/{CurrentPlaybackMode}/start");
-            message.Headers.Add("x-recording-file", CurrentRecordingPath);
+
+            message.Content = new StringContent(JsonSerializer.Serialize(new Dictionary<string, string>()
+            {
+                { "x-recording-file", CurrentRecordingPath }
+            }), Encoding.UTF8, "application/json");
 
             var response = await _httpClient.SendAsync(message);
-            var recordingId = response.Headers.GetValues("x-recording-id").Single();
+            RecordingId = response.Headers.GetValues("x-recording-id").Single();
 
             // override our transport for current test, always ensuring we inject the correct recording id
             RequestPipeline = HttpPipelineBuilder.Build(new TestClientOptions()
             {
-                Transport = new TestProxyTransport(new HttpClientTransport(_httpClient), PROXY_HOST, PROXY_PORT, recordingId, CurrentPlaybackMode),
+                Transport = new TestProxyTransport(new HttpClientTransport(_httpClient), PROXY_HOST, PROXY_PORT, RecordingId, CurrentPlaybackMode),
             });
         }
 

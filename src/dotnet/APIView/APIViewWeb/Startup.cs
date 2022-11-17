@@ -25,6 +25,7 @@ using APIViewWeb.Filters;
 using APIViewWeb.Account;
 using APIView.Identity;
 using APIViewWeb.Managers;
+using APIViewWeb.StartUpFilters;
 
 namespace APIViewWeb
 {

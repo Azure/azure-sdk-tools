@@ -23,10 +23,6 @@ steps:
   displayName: 'Use NodeJS ${{ parameters.NodeVersion }}'
 
 - script: |
-    npm install -g npm@6.14.6
-  displayName: "Install npm 6.14.6"
-
-- script: |
     npm install
   workingDirectory: '${{ parameters.WebClientProjectDirectory }}'
   displayName: "Install npm packages"

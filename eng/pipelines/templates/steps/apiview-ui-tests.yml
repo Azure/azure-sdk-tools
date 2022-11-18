@@ -15,6 +15,10 @@ parameters:
     type: string
     default: ''
   
+<<<<<<< HEAD
+=======
+
+>>>>>>> f170fba6 (Add update UI tests)
 steps:
 - task: NodeTool@0
   inputs:
@@ -22,11 +26,23 @@ steps:
   displayName: 'Use NodeJS ${{ parameters.NodeVersion }}'
 
 - script: |
+<<<<<<< HEAD
     npm install
   workingDirectory: '${{ parameters.WebClientProjectDirectory }}'
   displayName: "Install npm packages"
 
 - script: |
+=======
+    npm install -g npm@6.14.6
+  displayName: "Install npm 6.14.6"
+
+- script: |
+    npm install
+  workingDirectory: '${{ parameters.WebClientProjectDirectory }}'
+  displayName: "Install npm packages"
+
+- script: |
+>>>>>>> f170fba6 (Add update UI tests)
     npm run-script build
   workingDirectory: '${{ parameters.WebClientProjectDirectory }}'
   displayName: "Build client assets"
@@ -43,6 +59,7 @@ steps:
   env:
     APIVIEW_BLOB__CONNECTIONSTRING: '${{ parameters.AzuriteConnectionString }}'
     APIVIEW_COSMOS__CONNECTIONSTRING: '${{ parameters.CosmosEmulatorConnectionString }}'
+<<<<<<< HEAD
     APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
     APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientsecret)
     APIVIEW_AUTHENTICATIONSCHEME: "Test"
@@ -66,10 +83,25 @@ steps:
     AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
     APIVIEW_BLOB__CONNECTIONSTRING: $(apiview-blob-connectionstring)
     APIVIEW_COSMOS__CONNECTIONSTRING: $(apiview-cosmos-connectionstring)
+=======
+>>>>>>> f170fba6 (Add update UI tests)
     APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
-    APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
+    APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientsecret)
     APIVIEW_AUTHENTICATIONSCHEME: "Test"
     APIVIEW_SENDGRID__KEY: "Test"
+    APIVIEW_APIKEY: "$(azuresdk-apiview-apikey)"
+
+- task: Powershell@2
+  inputs:
+    filePath: $(Build.SourcesDirectory)/eng/common/scripts/copy-from-blobstorage.ps1
+    arguments: >
+      -SourceBlobPath '${{ parameters.TestingDataContainer }}'
+      -ApplicationId $(apiviewstorageaccess-application-id)
+      -DestinationDirectory $(Build.BinariesDirectory)
+    pwsh: true
+  displayName: 'Copy from Test Files From Blob'
+  env:
+    AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
 
 - task: DotNetCoreCLI@2
   displayName: 'Build & Test (UI)'

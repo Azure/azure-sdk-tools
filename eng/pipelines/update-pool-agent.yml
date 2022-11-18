@@ -20,10 +20,10 @@ parameters:
       RepoName: azure-sdk-for-net
     - RepoOwner: Azure
       RepoName: azure-sdk-for-python
-- name: Migrate-From
+- name: MigrateFrom
   type: string
   default: 'not-specified'
-- name: Migrate-To
+- name: MigrateTo
   type: string
   default: 'not-specified'
 
@@ -49,15 +49,15 @@ jobs:
             foreach ($file in $files) {
               Write-Host $file
               $content = Get-Content $file -Raw
-              $content = $content -replace "${{ parameters.Migrate-From }}", "${{ parameters.Migrate-To }}"
+              $content = $content -replace "${{ parameters.MigrateFrom }}", "${{ parameters.MigrateTo }}"
               Set-Content -Path $file.FullName -Value $content
             }
-          displayName: Update pool version from ${{ parameters.Migrate-From }} to ${{ parameters.Migrate-To }}
+          displayName: Update pool version from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}
         - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
           parameters:
             BaseBranchName: $(DefaultBranch)
             PRBranchName: migrate-pool
-            CommitMsg: "Migrate from ${{ parameters.Migrate-From }} to ${{ parameters.Migrate-To }}"
+            CommitMsg: "Migrate from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}"
             RepoOwner: ${{ repo.RepoOwner }}
             RepoName: ${{ repo.RepoName }}
             OpenAsDraft: true

@@ -1,32 +1,40 @@
+parameters:
+  - name: TestingDataContainer
+    type: string
+    default: 'https://apiviewuitest.blob.core.windows.net/testingdata'
+  - name: NodeVersion
+    type: string
+    default: ''
+  - name: WebClientProjectDirectory
+    type: string
+    default: ''
+  - name: AzuriteConnectionString
+    type: string
+    default: ''
+  - name: CosmosEmulatorConnectionString
+    type: string
+    default: ''
+  
+
 steps:
-- template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
-  parameters:
-    StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
+- task: NodeTool@0
+  inputs:
+    versionSpec: '${{ parameters.NodeVersion }}'
+  displayName: 'Use NodeJS ${{ parameters.NodeVersion }}'
 
 - script: |
-    npm install -g azurite
-  displayName: 'Install Azurite'
+    npm install -g npm@6.14.6
+  displayName: "Install npm 6.14.6"
 
-- task: Powershell@2
-  inputs:
-    workingDirectory: $(Agent.TempDirectory)
-    filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
-    arguments: >
-      -Process "azurite.cmd"
-      -ArgumentList "--silent"
-      -Port "10000"
-    pwsh: true
-  displayName: 'Start Azurite'
+- script: |
+    npm install
+  workingDirectory: '${{ parameters.WebClientProjectDirectory }}'
+  displayName: "Install npm packages"
 
-- task: DotNetCoreInstaller@2
-  displayName: 'Use .NET Core sdk 3.1.x'
-  inputs:
-    version: '3.1.x'
-
-- task: DotNetCoreInstaller@2
-  displayName: 'Use .NET Core sdk 5.x'
-  inputs:
-    version: '5.x'
+- script: |
+    npm run-script build
+  workingDirectory: '${{ parameters.WebClientProjectDirectory }}'
+  displayName: "Build client assets"
 
 - task: Powershell@2
   inputs:
@@ -38,12 +46,25 @@ steps:
     pwsh: true
   displayName: 'Start APIView Application'
   env:
-    APIVIEW_BLOB__CONNECTIONSTRING: $(apiview-blob-connectionstring)
-    APIVIEW_COSMOS__CONNECTIONSTRING: $(apiview-cosmos-connectionstring)
+    APIVIEW_BLOB__CONNECTIONSTRING: '${{ parameters.AzuriteConnectionString }}'
+    APIVIEW_COSMOS__CONNECTIONSTRING: '${{ parameters.CosmosEmulatorConnectionString }}'
     APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
-    APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
+    APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientsecret)
     APIVIEW_AUTHENTICATIONSCHEME: "Test"
     APIVIEW_SENDGRID__KEY: "Test"
+    APIVIEW_APIKEY: "$(azuresdk-apiview-apikey)"
+
+- task: Powershell@2
+  inputs:
+    filePath: $(Build.SourcesDirectory)/eng/common/scripts/copy-from-blobstorage.ps1
+    arguments: >
+      -SourceBlobPath '${{ parameters.TestingDataContainer }}'
+      -ApplicationId $(apiviewstorageaccess-application-id)
+      -DestinationDirectory $(Build.BinariesDirectory)
+    pwsh: true
+  displayName: 'Copy from Test Files From Blob'
+  env:
+    AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
 
 - task: DotNetCoreCLI@2
   displayName: 'Build & Test'
@@ -51,6 +72,12 @@ steps:
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
     DOTNET_CLI_TELEMETRY_OPTOUT: 1
     DOTNET_MULTILEVEL_LOOKUP: 0
+    APIVIEW_APIKEY: "$(azuresdk-apiview-apikey)"
+    APIVIEW_URI: "http://localhost:5000/AutoReview/UploadAutoReview"
+    APIVIEW_TESTPKGPATH: "$(Build.BinariesDirectory)"
+    APIVIEW_ENDPOINT: "http://localhost:5000"
+    APIVIEW_BLOB__CONNECTIONSTRING: '${{ parameters.AzuriteConnectionString }}'
+    APIVIEW_COSMOS__CONNECTIONSTRING: '${{ parameters.CosmosEmulatorConnectionString }}'
   inputs:
     command: test
     projects: src/dotnet/APIView/**/APIViewUITests.csproj

@@ -10,11 +10,19 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.Cosmos;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using System.Net.Http;
+using System.IO;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
 
 namespace APIViewUITests
 {
     public class SmokeTestsFixture : IDisposable
     {
+        internal readonly HttpClient _httpClient;
+        internal readonly string _uri;
+        internal readonly string _testPkgsPath;
+        internal readonly string _endpoint;
         private readonly CosmosClient _cosmosClient;
         private readonly BlobContainerClient _blobCodeFileContainerClient;
         private readonly BlobContainerClient _blobOriginalContainerClient;
@@ -24,8 +32,16 @@ namespace APIViewUITests
         public SmokeTestsFixture()
         {
             var config = new ConfigurationBuilder()
-                .AddJsonFile("config.json")
+                .AddEnvironmentVariables(prefix: "APIVIEW_")
+                .AddUserSecrets(typeof(SmokeTestsFixture).Assembly)
                 .Build();
+
+            _uri = config["Uri"];
+            _testPkgsPath = config["TestPkgPath"];
+            _endpoint = config["EndPoint"];
+            _httpClient = new HttpClient();
+            _httpClient.DefaultRequestHeaders.Add("ApiKey", config["ApiKey"]);
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("multipart/form-data"));
 
             _cosmosClient = new CosmosClient(config["Cosmos:ConnectionString"]);
             var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync("APIView").Result;
@@ -59,106 +75,94 @@ namespace APIViewUITests
     }
     public class SmokeTests : IClassFixture<SmokeTestsFixture>
     {
-        const int MaxWaitTime = 30;
-        const int MinWaitTime = 10;
+        SmokeTestsFixture _fixture;
+        const int WaitTime = 60;
+
+        public SmokeTests(SmokeTestsFixture fixture)
+        {
+            this._fixture = fixture;
+        }
 
         [Fact]
-        public void SmokeTest_CSharp()
+        public async Task SmokeTest_CSharp()
         {
+            var pkgName = "azure.identity";
+            var fileAName = $"{pkgName}.1.8.0.nupkg";
+            var fileAPath = Path.Combine(_fixture._testPkgsPath, fileAName);
+            var fileBName = $"{pkgName}.1.9.0-beta.1.nupkg";
+            var fileBPath = Path.Combine(_fixture._testPkgsPath, fileBName);
+
+            // Test Manual Upload
             using (IWebDriver driver = new ChromeDriver())
             {
                 driver.Manage().Window.Maximize();
-                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(MinWaitTime);
-                driver.Navigate().GoToUrl("http://localhost:5000");
-                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(MaxWaitTime);
-
+                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(WaitTime);
+                driver.Navigate().GoToUrl(_fixture._endpoint);
+               
                 var createReviewBtn = driver.FindElement(By.XPath("//button[@data-target='#uploadModel']"));
                 createReviewBtn.Click();
-                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(MaxWaitTime);
                 var fileSelector = driver.FindElement(By.Id("Upload_Files"));
-                fileSelector.SendKeys("C:\\Users\\chononiw\\Downloads\\azure.identity.1.9.0-beta.1.nupkg");
+                fileSelector.SendKeys(fileAPath);
                 var uploadBtn = driver.FindElement(By.XPath("//div[@class='modal-footer']/button[@type='submit']"));
                 uploadBtn.Click();
-                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(MaxWaitTime);
+                PageErrorAssertion(driver);
+            }
+
+            // Test Auto Upload
+            await SubmitAPIReview(fileBName, fileBPath, _fixture._uri, "Auto Review - Test");
+            using (IWebDriver driver = new ChromeDriver())
+            {
+                driver.Manage().Window.Maximize();
+                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(WaitTime);
+                driver.Navigate().GoToUrl(_fixture._endpoint);
+                Assert.Equal("Reviews - apiview.dev", driver.Title);
+
+                // Select C# language
+                var languageSelector = driver.FindElement(By.Id("language-filter-bootstraps-select"));
+                var languageSelectElement = new SelectElement(languageSelector);
+                languageSelectElement.SelectByText("C#");
+                var reviewNames = driver.FindElements(By.ClassName("review-name"));
+                Assert.Equal("Reviews - apiview.dev", driver.Title);
+                Assert.Equal(2, reviewNames.Count);
+
+                reviewNames[0].Click();
+                PageErrorAssertion(driver);
+
+                var conversiationPage = driver.FindElements(By.ClassName("nav-link")).Single(l => (l.Text.Equals("Conversations")));
+                conversiationPage.Click();
+                PageErrorAssertion(driver);
+
+                var revisionsPage = driver.FindElements(By.ClassName("nav-link")).Single(l => (l.Text.Equals("Revisions")));
+                revisionsPage.Click();
+                PageErrorAssertion(driver);
+
+                var usageSamplesPage = driver.FindElements(By.ClassName("nav-link")).Single(l => (l.Text.Equals("Usage Samples")));
+                usageSamplesPage.Click();
+                PageErrorAssertion(driver);
             }
         }
 
-        [Fact(Skip = "Test is too Flaky")]
-        public void MostUsedPagesLoadsWithouErrors()
+        private void PageErrorAssertion(IWebDriver driver)
         {
-            using (IWebDriver driver = new ChromeDriver())
+            Assert.NotEqual("Error - apiview.dev", driver.Title);
+            Assert.NotEqual("Internal Server Error", driver.Title);
+        }
+
+        private async Task SubmitAPIReview(string packageName, string filePath, string uri, string apiLabel)
+        {
+            using (var multiPartFormData = new MultipartFormDataContent())
             {
-                driver.Manage().Window.Maximize();
-                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(50));
-                // Index Page Loads Without Error
-                driver.Navigate().GoToUrl("http://localhost:5000/");
-                Assert.Equal("Reviews - apiview.dev", driver.Title);
+                var fileInfo = new FileInfo(filePath);
+                var fileStreamContent = new StreamContent(File.OpenRead(filePath));
+                fileStreamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                multiPartFormData.Add(fileStreamContent, name: "file", fileName: packageName);
+                var stringContent = new StringContent(apiLabel);
+                multiPartFormData.Add(stringContent, name: "label");
 
-                // Site Theme Changes Without Error
-                var themeSelector = driver.FindElement(By.Id("theme-selector"));
-                var themeSelectElement = new SelectElement(themeSelector);
-                foreach (IWebElement option in themeSelectElement.Options)
-                {
-                    themeSelectElement.SelectByText(option.Text);
-                    Assert.NotEqual("Error - apiview.dev", driver.Title);
-                    Assert.NotEqual("Internal Server Error", driver.Title);
-                }
-
-                // Review Page Loads without Error
-                var reviewNames = driver.FindElements(By.ClassName("review-name"));
-                if (reviewNames.Any())
-                {
-                    wait.Until(ExpectedConditions.ElementToBeClickable(By.ClassName("review-name")));
-                    reviewNames[0].Click();
-                    Assert.NotEqual("Error - apiview.dev", driver.Title);
-                    Assert.NotEqual("Internal Server Error", driver.Title);
-                }
-
-                // Conversiation and Revision Pages Loads without error
-                var navLinks = driver.FindElements(By.ClassName("nav-link")).Select(c => c.Text).ToList();
-                foreach (var navLink in navLinks)
-                {
-                    if (navLink.Equals("Conversations") || navLink.Equals("Revisions") || navLink.Equals("Usage Samples"))
-                    {
-                        var link = driver.FindElements(By.ClassName("nav-link")).Single(l => (l.Text.Equals(navLink)));
-                        wait.Until(ExpectedConditions.ElementToBeClickable(By.ClassName("nav-link")));
-                        link.Click();
-                        Assert.NotEqual("Error - apiview.dev", driver.Title);
-                        Assert.NotEqual("Internal Server Error", driver.Title);
-                        driver.Navigate().Back();
-                    }
-                }
-
-                // Review Options Changes without Errors
-                driver.FindElement(By.CssSelector(".btn.btn-light.btn-sm.border.shadow-sm.dropdown-toggle")).Click();
-                driver.FindElement(By.Id("show-comments-checkbox")).Click();
-                Assert.NotEqual("Error - apiview.dev", driver.Title);
-                Assert.NotEqual("Internal Server Error", driver.Title);
-
-                driver.FindElement(By.Id("show-system-comments-checkbox")).Click();
-                Assert.NotEqual("Error - apiview.dev", driver.Title);
-                Assert.NotEqual("Internal Server Error", driver.Title);
-
-                driver.FindElement(By.Id("hide-line-numbers")).Click();
-                Assert.NotEqual("Error - apiview.dev", driver.Title);
-                Assert.NotEqual("Internal Server Error", driver.Title);
-
-                driver.FindElement(By.Id("hide-left-navigation")).Click();
-                Assert.NotEqual("Error - apiview.dev", driver.Title);
-                Assert.NotEqual("Internal Server Error", driver.Title);
-
-                // Change Reviews and Revisions Withous Errors
-                var revisionSelector = driver.FindElement(By.Id("revisions-bootstraps-select"));
-                var revisionSelectElement = new SelectElement(revisionSelector);
-                if (revisionSelectElement.Options.Count > 1)
-                {
-                    revisionSelectElement.SelectByText(revisionSelectElement.Options[1].Text);
-                    Assert.NotEqual("Error - apiview.dev", driver.Title);
-                    Assert.NotEqual("Internal Server Error", driver.Title);
-                    driver.Navigate().Back();
-                    Assert.NotEqual("Error - apiview.dev", driver.Title);
-                    Assert.NotEqual("Internal Server Error", driver.Title);
-                }
+                var response = await _fixture._httpClient.PostAsync(uri, multiPartFormData);
+                response.EnsureSuccessStatusCode();
             }
         }
 

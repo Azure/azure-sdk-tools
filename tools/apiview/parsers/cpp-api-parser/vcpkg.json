@@ -1,0 +1,13 @@
+{
+  "name": "azure-sdk-for-cpp",
+  "version": "1.5.0",
+  "dependencies": [
+    {
+      "name": "llvm"
+    },
+    {
+      "name": "nlohmann-json"
+    },
+    { "name": "gtest" }
+  ]
+}

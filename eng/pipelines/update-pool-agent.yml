@@ -49,7 +49,7 @@ jobs:
             foreach ($file in $files) {
               Write-Host $file
               $content = Get-Content $file -Raw
-              $content = $content -replace ${{parameters.Migrate-From}}, ${{parameters.Migrate-To}}
+              $content = $content -replace "${{ parameters.Migrate-From }}", "${{ parameters.Migrate-To }}"
               Set-Content -Path $file.FullName -Value $content
             }
           displayName: Update pool version from ${{ parameters.Migrate-From }} to ${{ parameters.Migrate-To }}

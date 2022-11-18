@@ -43,10 +43,11 @@ jobs:
             SkipCheckoutNone: true
             Repositories:
               - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
+                WorkingDirectory: $(Build.SourcesDirectory)/docs
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             Write-Host "checking $(DefaultBranch)"
-            $files = git ls-tree -r --name-only "$(DefaultBranch)"
+            git ls-tree -r --name-only main
             Write-Host "getting all files"
             # Scan all Files
             foreach ($file in $files) {
@@ -56,6 +57,7 @@ jobs:
               Set-Content -Path $file.FullName -Value $content
             }
           displayName: Update pool version from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}
+          workingDirectory: $(Build.SourcesDirectory)/docs
         - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
           parameters:
             BaseBranchName: $(DefaultBranch)
@@ -64,4 +66,5 @@ jobs:
             RepoOwner: ${{ repo.RepoOwner }}
             RepoName: ${{ repo.RepoName }}
             OpenAsDraft: true
+            WorkingDirectory: $(Build.SourcesDirectory)/docs
           

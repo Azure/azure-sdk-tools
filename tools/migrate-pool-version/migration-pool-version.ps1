@@ -1,7 +1,7 @@
 [CmdletBinding()]
 Param (
   [Parameter(Mandatory=$True)]
-  [array] $ArtifactList,
+  [array] $Migrate,
   [Parameter(Mandatory=$True)]
   [string] $ArtifactPath,
   [Parameter(Mandatory=$True)]

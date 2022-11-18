@@ -16,7 +16,7 @@ parameters:
 steps:
   - ${{ each target in parameters.BuildMatrix }}:
     - script: |
-        dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn)
+        dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained $(Warn) --output ${{ parameters.TargetDirectory }}/{{ target.rid }}
       displayName: 'Produce Executable for ${{ target.rid }}'
       workingDirectory: "${{ parameters.TargetDirectory }}"
       env:

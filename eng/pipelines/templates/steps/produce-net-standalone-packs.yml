@@ -1,0 +1,27 @@
+parameters:
+  - name: TargetDirectory
+    type: string
+  - name: StagingDirectory
+    type: string
+    default: $(Build.ArtifactStagingDirectory)
+  - name: BuildMatrix
+    type: object
+    default: []
+
+# A `BuildMatrix` is merely a list of possible targeted platforms. .NET 6 can build for any target from any other target.
+# - rid: win-x64
+#   rid: linux-x64
+#   rid: osx-x64
+
+steps:
+  - ${{ each target in parameters.BuildMatrix }}:
+    - script: |
+        dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release
+      displayName: 'Produce Executable for ${{ target.rid }}'
+      workingDirectory: "${{ parameters.TargetDirectory }}"
+      env:
+        DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+        DOTNET_CLI_TELEMETRY_OPTOUT: 1
+        DOTNET_MULTILEVEL_LOOKUP: 0
+
+

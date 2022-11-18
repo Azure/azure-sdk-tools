@@ -44,6 +44,8 @@ jobs:
             Repositories:
               - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
                 WorkingDirectory: $(Build.SourcesDirectory)/docs
+            Paths:
+              - /
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             Write-Host "checking $(DefaultBranch)"

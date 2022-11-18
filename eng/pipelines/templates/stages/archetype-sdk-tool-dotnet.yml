@@ -51,6 +51,7 @@ stages:
 
     jobs:
       - job: BuildAndPackage
+        displayName: Build and Package
 
         steps:
           - task: UseDotNet@2

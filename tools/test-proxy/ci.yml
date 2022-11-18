@@ -53,7 +53,7 @@ extends:
     StandaloneExeMatrix:
     - rid: win-x64
       framework: net6.0
-    # - rid: linux-x64
-    #   framework: net6.0
-    # - rid: osx-x64
-    #   framework: net6.0
+    - rid: linux-x64
+      framework: net6.0
+    - rid: osx-x64
+      framework: net6.0

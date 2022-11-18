@@ -1,6 +1,8 @@
 parameters:
   - name: TargetDirectory
     type: string
+  - name: ToolName
+    type: string
   - name: StagingDirectory
     type: string
     default: $(Build.ArtifactStagingDirectory)
@@ -9,14 +11,28 @@ parameters:
     default: []
 
 # A `BuildMatrix` is merely a list of possible targeted platforms. .NET 6 can build for any target from any other target.
-# - rid: win-x64
-#   rid: linux-x64
-#   rid: osx-x64
+  # - rid: win-x64
+  #   framework: net6.0
+  # - rid: linux-x64
+  #   framework: net6.0
+  # - rid: osx-x64
+  #   framework: net6.0
 
 steps:
   - ${{ each target in parameters.BuildMatrix }}:
-    - script: |
+    - pwsh: |
         dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained $(Warn) --output ${{ parameters.TargetDirectory }}/{{ target.rid }}
+
+        # windows? produce a zip, otherwise tar.gz
+        if ("${{ target.rid }}".StartsWith("win")){
+          Compress-Archive -Path ${{ parameters.TargetDirectory }}/{{ target.rid }}/* -DestinationPath "${{ parameters.TargetDirectory }}/{{ target.rid }}.zip"
+        }
+        else {
+          tar -cvzf "${{ parameters.TargetDirectory }}/{{ target.rid }}.tar.gz" "${{ parameters.TargetDirectory }}/{{ target.rid }}"
+        }
+
+        # clean up the uncompressed artifact directory
+        Remove-Item "${{ parameters.TargetDirectory }}/{{ target.rid }}"
       displayName: 'Produce Executable for ${{ target.rid }}'
       workingDirectory: "${{ parameters.TargetDirectory }}"
       env:

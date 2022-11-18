@@ -53,8 +53,12 @@ jobs:
             foreach ($file in $files) {
               Write-Host $file
               $content = Get-Content $file -Raw
-              $content = $content -replace "${{ parameters.MigrateFrom }}", "${{ parameters.MigrateTo }}"
-              Set-Content -Path $file.FullName -Value $content
+              $newcontent = ""
+              if ($content -match "${{ parameters.MigrateFrom }}") {
+                Write-Host $file
+                $newcontent = $content -replace "${{ parameters.MigrateFrom }}", "${{ parameters.MigrateTo }}"
+                Set-Content -Path $file -Value $newcontent
+              }
             }
           displayName: Update pool version from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}
           workingDirectory: $(Build.SourcesDirectory)/docs

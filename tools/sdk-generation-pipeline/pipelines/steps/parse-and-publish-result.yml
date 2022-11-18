@@ -102,7 +102,7 @@ steps:
               -H "Accept: application/vnd.github.v3+json" \
               -X GET \
               ${sdkRepoPullsApi}?state=open&head=$(SDK_PUSH_OWNER):${branchName}&base=$(sdkMainBranch))
-            if [[ `cat a.json | jq -r '. | length'` -gt 0 ]]; then
+            if [[ `echo ${RESULT} | jq -r '. | length'` -gt 0 ]]; then
               prNumber=`echo ${RESULT} | jq -r '.[0].number'`
               prLink=`echo ${RESULT} | jq -r '.[0].html_url'`
             fi

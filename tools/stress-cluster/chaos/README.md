@@ -478,7 +478,7 @@ ARG <custom_config_key>
 ```
 then referencing the args with a dollar sign and curly braces
 ```
-${custom_config_key}
+${<custom_config_key>}
 ```
 
 A more detailed information on the logic behind the matrix generation can be found in the [README for job-matrix](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/job-matrix/README.md).

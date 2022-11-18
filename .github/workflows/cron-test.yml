@@ -1,0 +1,31 @@
+name: cron-test
+
+on:
+  schedule:
+    # runs every 2 minutes
+    - cron: '*/2 * * * *'
+permissions: {}
+
+jobs:
+  event-handler:
+    permissions:
+      issues: write # to set status (azure/azure-sdk-actions)
+      pull-requests: write # Might not need this, look at what project_card in FabricBot maps to in GitHubActions
+    name: Handle ${{ github.event_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cron test to get the github payload
+        run: |
+          echo "$($env:GITHUB_PAYLOAD)"
+        shell: pwsh
+        # The with is only necessary if you're calling an external action from a different repo
+        # for example - uses: azure/azure-sdk-actions@main would require a with
+#        with:
+          # This GITHUB_TOKEN is produced and handed to us by GitHub. It's best to use
+          # this token instead of the azure github token because this particular one won't
+          # be subject to throttling.
+#          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_PAYLOAD: ${{ toJson(github.event) }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -45,7 +45,9 @@ jobs:
               - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
-            $files = git ls-tree $(DefaultBranch) --name-only -r
+            Write-Host "checking $(DefaultBranch)"
+            $files = git ls-tree -r --name-only "$(DefaultBranch)"
+            Write-Host "getting all files"
             # Scan all Files
             foreach ($file in $files) {
               Write-Host $file

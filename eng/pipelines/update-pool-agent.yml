@@ -47,10 +47,12 @@ jobs:
             $files = git ls-tree $(DefaultBranch) --name-only -r
             # Scan all Files
             foreach ($file in $files) {
+              Write-Host $file
               $content = Get-Content $file -Raw
               $content = $content -replace ${{parameters.Migrate-From}}, ${{parameters.Migrate-To}}
               Set-Content -Path $file.FullName -Value $content
             }
+          displayName: Update pool version from ${{ parameters.Migrate-From }} to ${{ parameters.Migrate-To }}
         - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
           parameters:
             BaseBranchName: $(DefaultBranch)

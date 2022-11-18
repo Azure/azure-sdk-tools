@@ -47,11 +47,10 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             Write-Host "checking $(DefaultBranch)"
-            git ls-tree -r --name-only main
+            $files = git ls-tree -r --name-only main
             Write-Host "getting all files"
             # Scan all Files
             foreach ($file in $files) {
-              Write-Host $file
               $content = Get-Content $file -Raw
               $newcontent = ""
               if ($content -match "${{ parameters.MigrateFrom }}") {

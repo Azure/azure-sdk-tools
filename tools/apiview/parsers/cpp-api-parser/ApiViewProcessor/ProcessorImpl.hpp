@@ -19,9 +19,13 @@
 class ApiViewProcessorImpl {
   std::unique_ptr<AzureClassesDatabase> m_classDatabase;
   std::vector<std::filesystem::path> m_filesToCompile;
+  std::vector<std::filesystem::path> m_filesToIgnore;
   std::vector<std::filesystem::path> m_additionalIncludeDirectories;
   std::vector<std::string> m_additionalCompilerArguments;
   std::filesystem::path m_currentSourceRoot;
+  std::string m_reviewName;
+  std::string m_serviceName;
+  std::string m_packageName;
 
   bool m_includeInternal{false};
   bool m_includeDetail{false};
@@ -199,5 +203,8 @@ public:
   bool IncludeInternal() { return m_includeInternal; }
   bool IncludeDetail() { return m_includeDetail; }
   bool IncludePrivate() { return m_includePrivate; }
+  std::string_view const ReviewName() { return m_reviewName; };
+  std::string_view const ServiceName() { return m_serviceName; };
+  std::string_view const PackageName() { return m_packageName; };
   std::string_view const FilterNamespace() { return m_filterNamespace; }
 };

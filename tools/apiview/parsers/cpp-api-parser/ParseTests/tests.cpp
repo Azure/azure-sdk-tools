@@ -298,6 +298,15 @@ TEST_F(TestParser, AzureCore1)
   auto& db = processor.GetClassesDatabase();
   EXPECT_TRUE(SyntaxCheckClassDb(db, "Core1.cpp", true));
 }
+TEST_F(TestParser, AzureCore2)
+{
+  ApiViewProcessor processor(R"(tests\\core\azure-core)");
+
+  processor.ProcessApiView();
+
+  auto& db = processor.GetClassesDatabase();
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "Core2.cpp", true));
+}
 
 TEST_F(TestParser, AzureAttestation)
 {

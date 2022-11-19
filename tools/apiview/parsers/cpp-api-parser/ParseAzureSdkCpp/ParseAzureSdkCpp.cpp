@@ -3,89 +3,73 @@
 
 // ParseAzureSdkCpp.cpp : Defines the entry point for the application.
 //
+// This file primarily parses the command line (using TCLAP
+// (https://tclap.sourceforge.net/manual.html) for command line parsing).
+//
+// It then feeds those inputs into the ApiViewProcessor and dumps an output JSON file whose name is
+// provided on the command line.
+//
 
 #include "ParseAzureSdkCpp.h"
 #include "ApiViewProcessor.hpp"
-#include "AstNode.hpp"
 #include "JsonDumper.hpp"
 #include "TextDumper.hpp"
 #include <filesystem>
 #include <fstream>
-#include <map>
-#include <optional>
+#include <iostream>
 #include <ostream>
+#include <tclap/CmdLine.h>
 #include <vector>
-
-inline std::string_view stringFromU8string(std::u8string const& str)
-{
-  return std::string_view(reinterpret_cast<const char*>(str.data()), str.size());
-}
-#define BUILD_AZURE_CORE 1
 
 int main(int argc, char** argv)
 {
-
-  // clang-tidy command line:
-  // clang-tidy -p .\out\build\x64-DebugWithTestsWinHttp\ --extra-arg-before=-Qunused-arguments
-  // -checks=cppcoreguidelines* -header-filter='.*.hpp'   .\sdk\core\azure-core\inc\azure\core.hpp
-
-  ApiViewProcessorOptions options
+  try
   {
-    .IncludeInternal = true,
-#if BUILD_AZURE_CORE
-    .FilterNamespace = "Azure::"
-#else
-    .FilterNamespace = "Azure::Security::Attestation"
-#endif
-  };
-  ApiViewProcessor apiViewProcessor(options);
+    TCLAP::CmdLine commandLine("C++ ApiView Parser", ' ');
 
-#if BUILD_AZURE_CORE
-  int rv = apiViewProcessor.ProcessApiView(
-      R"(..\ParseTests\Tests\core\azure-core\inc)",
-      {},
-      {
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\extendable_enumeration.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\contract.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\environment.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\unique_handle.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\tracing\service_tracing.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\tracing\tracing_impl.hpp)",
-          // R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\json\json.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\http\http_sanitizer.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\http\pipeline.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\http\user_agent.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\diagnostics\log.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\diagnostics\global_exception.hpp)",
-          R"(..\ParseTests\Tests\core\azure-core\inc\azure\core\internal\cryptography\sha_hash.hpp)",
-      });
-#else
+    TCLAP::UnlabeledValueArg<std::string> inputDirectory(
+        "input", "Input Directory", true, ".", "string", commandLine);
+    TCLAP::ValueArg<std::string> outputFileArg(
+        "o", "output", "Output filename", true, "ApiReview.json", "string", commandLine);
+    TCLAP::ValueArg<std::string> reviewName(
+        "r", "review", "Review Name", false, "", "string", commandLine);
+    TCLAP::ValueArg<std::string> packageVersion(
+        "", "packageVersion", "Package Version", false, "", "string", commandLine);
 
-  std::filesystem::path sourcePath(R"(..\ParseTests\Tests\core\azure-core\inc)");
-  auto coreIncludeDirectory = std::filesystem::absolute(sourcePath);
+    commandLine.parse(argc, argv);
+    std::filesystem::path outputFileName{std::filesystem::absolute(outputFileArg.getValue())};
 
-  int rv = apiViewProcessor.ProcessApiView(
-      R"(..\ParseTests\Tests\attestation\azure-security-attestation\inc)",
-      {R"(-I)" + std::string(stringFromU8string(coreIncludeDirectory.u8string()))},
-      {R"(..\ParseTests\Tests\attestation\azure-security-attestation\inc\azure\attestation.hpp)"});
-#endif
-
-  if (rv == 0)
-  {
-    // Dump to text file
+    std::string directoryToParse{inputDirectory.getValue()};
+    if (directoryToParse.back() == '\\')
     {
-      TextDumper dumper(std::cout);
-      apiViewProcessor.GetClassesDatabase()->DumpClassDatabase(&dumper);
+      directoryToParse.erase(directoryToParse.size() - 1);
     }
+    ApiViewProcessor apiViewProcessor(directoryToParse);
 
+    int rv = apiViewProcessor.ProcessApiView();
+    if (rv == 0)
     {
-      JsonDumper jsonDumper("My First Review", "Azure Core", "Azure.Core");
+      JsonDumper jsonDumper(
+          reviewName.getValue().empty() ? apiViewProcessor.ReviewName() : reviewName.getValue(),
+          apiViewProcessor.ServiceName(),
+          apiViewProcessor.PackageName(),
+          packageVersion.getValue());
       apiViewProcessor.GetClassesDatabase()->DumpClassDatabase(&jsonDumper);
-      std::ofstream outfile{"MyFirstReview.json"};
+
+      std::cout << "Writing API Review JSON file to: " << outputFileName.string() << std::endl;
+      std::ofstream outfile{outputFileName};
       jsonDumper.DumpToFile(outfile);
     }
+    return rv;
   }
-
-  return rv;
+  catch (std::exception& ex)
+  {
+    std::cerr << "Error: Exception thrown: " << ex.what() << std::endl;
+  }
+  return -1;
 }
+
+// Note for future:
+// clang-tidy command line:
+// clang-tidy -p .\out\build\x64-DebugWithTestsWinHttp\ --extra-arg-before=-Qunused-arguments
+// -checks=cppcoreguidelines* -header-filter='.*.hpp'   .\sdk\core\azure-core\inc\azure\core.hpp

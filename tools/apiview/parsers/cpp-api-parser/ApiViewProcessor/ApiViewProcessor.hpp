@@ -135,4 +135,7 @@ public:
       std::vector<std::string_view> const& filesToProcess);
 
   std::unique_ptr<AzureClassesDatabase> const& GetClassesDatabase();
+  std::string_view const ReviewName();
+  std::string_view const ServiceName();
+  std::string_view const PackageName();
 };

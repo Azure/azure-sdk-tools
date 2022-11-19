@@ -2139,8 +2139,8 @@ AstClassLike::AstClassLike(
             break;
           }
           case Decl::Kind::StaticAssert: {
-            llvm::outs() << "Static assert: \n";
-            child->dump(llvm::outs());
+            // static_assert nodes are generated after the preprocessor and they don't really add
+            // any value to the ApiView.
             break;
           }
           default: {

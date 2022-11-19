@@ -40,6 +40,25 @@ std::vector<std::filesystem::path> GatherSubdirectories(std::filesystem::path co
   }
   return subdirectories;
 }
+std::string replaceAll(
+    std::string_view const& source,
+    std::string_view const& oldValue,
+    std::string_view const& newValue)
+{
+  std::string newString;
+  newString.reserve(source.size());
+  size_t findPos{};
+  size_t lastPos{};
+
+  while (std::string::npos != (findPos = source.find(oldValue, lastPos)))
+  {
+    newString.append(source, lastPos, findPos - lastPos);
+    newString += newValue;
+    lastPos = findPos + oldValue.length();
+  }
+  newString += source.substr(lastPos);
+  return newString;
+}
 
 const nlohmann::json JsonFromConfigurationPath(
     std::string_view configurationRoot,
@@ -70,9 +89,11 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
 ApiViewProcessorImpl::ApiViewProcessorImpl(
     std::string_view directoryToProcess,
     nlohmann::json const& configurationJson)
-    : m_currentSourceRoot{std::filesystem::absolute(directoryToProcess)}, m_classDatabase{
-                                                   std::make_unique<AzureClassesDatabase>(this)}
+    : m_currentSourceRoot{std::filesystem::absolute(directoryToProcess)},
+      m_classDatabase{std::make_unique<AzureClassesDatabase>(this)}
 {
+    // CHDIR to the directory to process so relative paths in the configuration are properly resolved.
+  std::filesystem::current_path(directoryToProcess);
   if (configurationJson.contains("includeInternal"))
   {
     m_includeInternal = configurationJson["includeInternal"];
@@ -100,7 +121,26 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
       && configurationJson["additionalIncludeDirectories"].is_array())
   {
     m_additionalIncludeDirectories = configurationJson["additionalIncludeDirectories"];
+    for (const auto& dir : configurationJson["additionalIncludeDirectories"])
+    {
+      auto includeDirectory{m_currentSourceRoot};
+      includeDirectory /= std::filesystem::canonical(dir);
+      m_additionalIncludeDirectories.push_back(std::filesystem::absolute(includeDirectory));
+    }
   }
+  if (configurationJson.contains("reviewName") && !configurationJson["reviewName"].is_null())
+  {
+    m_reviewName = configurationJson["reviewName"].get<std::string>();
+  }
+  if (configurationJson.contains("serviceName") && !configurationJson["serviceName"].is_null())
+  {
+    m_serviceName = configurationJson["serviceName"].get<std::string>();
+  }
+  if (configurationJson.contains("packageName") && !configurationJson["packageName"].is_null())
+  {
+    m_packageName = configurationJson["packageName"].get<std::string>();
+  }
+
   if (configurationJson.contains("sourceFilesToProcess")
       && configurationJson["sourceFilesToProcess"].is_array()
       && configurationJson["sourceFilesToProcess"].size() != 0)
@@ -114,8 +154,22 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
   }
   else
   {
+    // The caller didn't specify any files to process. We'll process all files in the directory.
+    // Note that if the caller didn't specify files to process, they MAY have specified files to
+    // *skip*, so respect that.
+    if (configurationJson.contains("sourceFilesToSkip")
+        && configurationJson["sourceFilesToSkip"].is_array()
+        && configurationJson["sourceFilesToSkip"].size() != 0)
+    {
+      for (const auto& file : configurationJson["sourceFilesToSkip"])
+      {
+        auto fileToSkip{m_currentSourceRoot};
+        fileToSkip /= file;
+        m_filesToIgnore.push_back(std::filesystem::absolute(fileToSkip));
+      }
+    }
     llvm::outs() << llvm::raw_ostream::Colors::CYAN << "No source files specified"
-                 << llvm::raw_ostream::Colors::RESET << "collecting all files under "
+                 << llvm::raw_ostream::Colors::RESET << " collecting all files under "
                  << stringFromU8string(m_currentSourceRoot.u8string()) << "\n";
     auto subdirectories = GatherSubdirectories(directoryToProcess);
     for (auto& subdirectory : subdirectories)
@@ -125,9 +179,21 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
         if (entry.is_regular_file())
         {
           auto extension = entry.path().extension();
+          auto filename = entry.path().filename();
           if (extension == ".hpp" || extension == ".h")
           {
-            m_filesToCompile.push_back(entry.path().string());
+            auto absoluteEntry = std::filesystem::absolute(entry.path());
+            if (std::find(m_filesToIgnore.begin(), m_filesToIgnore.end(), absoluteEntry)
+                == m_filesToIgnore.end())
+            {
+              m_filesToCompile.push_back(absoluteEntry);
+            }
+            else
+            {
+              llvm::outs() << llvm::raw_ostream::Colors::GREEN << "Skipping file "
+                           << stringFromU8string(absoluteEntry.u8string())
+                           << llvm::raw_ostream::Colors::RESET << "\n";
+            }
           }
         }
       }
@@ -292,10 +358,10 @@ public:
         // Add any additional include directories (as absolute paths).
         for (auto const& arg : m_additionalIncludePaths)
         {
-          commandLine.push_back(
-              "-I"
-              + static_cast<std::string>(
-                  stringFromU8string(std::filesystem::absolute(arg).u8string())));
+          std::string includePath{static_cast<std::string>(
+              stringFromU8string(std::filesystem::absolute(arg).u8string()))};
+          commandLine.push_back("-I" + includePath);
+          llvm::outs() << "Adding include directory: " << includePath << "\n";
         }
         // And finally, include any additional command line arguments.
         for (auto const& arg : m_additionalArguments)
@@ -317,31 +383,13 @@ public:
   }
 };
 
-std::string replaceAll(
-    std::string_view const& source,
-    std::string_view const& oldValue,
-    std::string_view const& newValue)
-{
-  std::string newString;
-  newString.reserve(source.size());
-  size_t findPos{};
-  size_t lastPos{};
-
-  while (std::string::npos != (findPos = source.find(oldValue, lastPos)))
-  {
-    newString.append(source, lastPos, findPos - lastPos);
-    newString += newValue;
-    lastPos = findPos + oldValue.length();
-  }
-  newString += source.substr(lastPos);
-  return newString;
-}
-
 int ApiViewProcessorImpl::ProcessApiView()
 {
   // clang really likes all input paths to be absolute paths, so use the fiilesystem to canonicalize
   // the input filename and source location.
-  std::filesystem::path tempFile("TempSourceFile.cpp");
+
+  std::filesystem::path tempFile = std::filesystem::temp_directory_path();
+  tempFile /= "TempSourceFile.cpp";
   if (m_filesToCompile.size() == 1)
   {
     tempFile = m_filesToCompile.front();

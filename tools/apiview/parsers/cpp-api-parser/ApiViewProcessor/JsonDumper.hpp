@@ -17,13 +17,18 @@ public:
   JsonDumper(
       std::string_view reviewName,
       std::string_view serviceName,
-      std::string_view packageName)
+      std::string_view packageName,
+      std::string_view packageVersion = "")
       : AstDumper()
   {
     m_json["Name"] = reviewName;
     m_json["Language"] = "C++";
     m_json["ServiceName"] = serviceName;
     m_json["PackageName"] = packageName;
+    if (!packageVersion.empty())
+    {
+      m_json["PackageVersion"] = packageVersion;
+    }
     m_json["Tokens"] = nlohmann::json::array();
   }
 
@@ -135,7 +140,8 @@ public:
         {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", nullptr}, {"Kind", 18}});
   }
 
-  nlohmann::json DoDumpTypeHierarchyNode(std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node)
+  nlohmann::json DoDumpTypeHierarchyNode(
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node)
   {
     nlohmann::json newNode;
     newNode["Text"] = node->NodeName;
@@ -170,10 +176,9 @@ public:
     }
     return newNode;
   }
-  
-  virtual void DumpTypeHierarchyNode(
-          std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node){
-    m_json["Navigation"].push_back(DoDumpTypeHierarchyNode(node));
 
+  virtual void DumpTypeHierarchyNode(std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node)
+  {
+    m_json["Navigation"].push_back(DoDumpTypeHierarchyNode(node));
   };
 };

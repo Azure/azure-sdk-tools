@@ -45,3 +45,6 @@ std::unique_ptr<AzureClassesDatabase> const& ApiViewProcessor::GetClassesDatabas
 {
   return m_processorImpl->GetClassesDatabase();
 }
+std::string_view const ApiViewProcessor::ReviewName() { return m_processorImpl->ReviewName(); };
+std::string_view const ApiViewProcessor::ServiceName() { return m_processorImpl->ServiceName(); };
+std::string_view const ApiViewProcessor::PackageName() { return m_processorImpl->PackageName(); };

@@ -23,7 +23,7 @@ steps:
         $destinationPathSegment = "${{ parameters.TargetDirectory }}/$toolName-{{ target.rid }}"
         $sourcePath = "${{ parameters.TargetDirectory }}/{{ target.rid }}"
 
-        dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained $(Warn) --output ${{ parameters.TargetDirectory }}/{{ target.rid }}
+        dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained --output ${{ parameters.TargetDirectory }}/{{ target.rid }}
 
         # windows? produce a zip, otherwise tar.gz
         if ("${{ target.rid }}".StartsWith("win")){

@@ -24,7 +24,7 @@ steps:
       displayName: Calculate artifact name from target directory
 
     - pwsh: |
-        $destinationPathSegment = "${{ parameters.TargetDirectory }}/$(TOOL_NAME)-{{ target.rid }}"
+        $destinationPathSegment = "${{ parameters.TargetDirectory }}/$(PUBLISHING_TOOL_NAME)-{{ target.rid }}"
         $sourcePath = "${{ parameters.TargetDirectory }}/{{ target.rid }}"
         dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained $(Warn) --output ${{ parameters.TargetDirectory }}/{{ target.rid }}
 
@@ -37,7 +37,7 @@ steps:
         }
 
         # clean up the uncompressed artifact directory
-        Remove-Item "${{ parameters.TargetDirectory }}/{{ target.rid }}"
+        Remove-Item "$(sourcePath)"
       displayName: 'Produce Executable for ${{ target.rid }}'
       workingDirectory: "${{ parameters.TargetDirectory }}"
       env:

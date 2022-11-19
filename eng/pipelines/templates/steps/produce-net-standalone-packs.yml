@@ -34,8 +34,6 @@ steps:
 
         # clean up the uncompressed artifact directory
         Remove-Item -Recurse -Force -Path $sourcePath
-
-        Get-ChildItem -Recurse -Path $(Build.ArtifactStagingDirectory)
       displayName: 'Produce Executable for ${{ target.rid }}'
       workingDirectory: "${{ parameters.TargetDirectory }}"
       env:

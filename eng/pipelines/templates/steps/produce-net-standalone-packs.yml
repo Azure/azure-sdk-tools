@@ -33,7 +33,7 @@ steps:
         }
 
         # clean up the uncompressed artifact directory
-        Remove-Item "$($sourcePath)"
+        Remove-Item -Recurse -Force "$($sourcePath)" -Confirm
       displayName: 'Produce Executable for ${{ target.rid }}'
       workingDirectory: "${{ parameters.TargetDirectory }}"
       env:

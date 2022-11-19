@@ -26,10 +26,10 @@ steps:
 
         # windows? produce a zip, otherwise tar.gz
         if ("${{ target.rid }}".StartsWith("win")){
-          Compress-Archive -Path "$(sourcePath)/*" -DestinationPath "$(destinationPathSegment).zip"
+          Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$(destinationPathSegment).zip"
         }
         else {
-          tar -cvzf "$(destinationPathSegment).tar.gz" "$(sourcePath)"
+          tar -cvzf "$(destinationPathSegment).tar.gz" "$sourcePath"
         }
 
         # clean up the uncompressed artifact directory

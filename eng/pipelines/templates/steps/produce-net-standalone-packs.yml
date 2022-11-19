@@ -20,7 +20,7 @@ steps:
   - ${{ each target in parameters.BuildMatrix }}:
     - pwsh: |
         $toolName = Split-Path -Leaf "${{ parameters.TargetDirectory }}"
-        $destinationPathSegment = "${{ parameters.TargetDirectory }}/$(toolName)-{{ target.rid }}"
+        $destinationPathSegment = "${{ parameters.TargetDirectory }}/$toolName-{{ target.rid }}"
         $sourcePath = "${{ parameters.TargetDirectory }}/{{ target.rid }}"
 
         dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained $(Warn) --output ${{ parameters.TargetDirectory }}/{{ target.rid }}

@@ -19,10 +19,10 @@ parameters:
 steps:
   - ${{ each target in parameters.BuildMatrix }}:
     - pwsh: |
-        $destinationPathSegment = "${{ parameters.TargetDirectory }}/$((Split-Path -Leaf "${{ parameters.TargetDirectory }}"))-{{ target.rid }}"
-        $sourcePath = "${{ parameters.TargetDirectory }}/{{ target.rid }}"
+        $destinationPathSegment = "${{ parameters.TargetDirectory }}/$((Split-Path -Leaf "${{ parameters.TargetDirectory }}"))-${{ target.rid }}"
+        $sourcePath = "${{ parameters.TargetDirectory }}/${{ target.rid }}"
 
-        dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained --output ${{ parameters.TargetDirectory }}/{{ target.rid }}
+        dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}
 
         # windows? produce a zip, otherwise tar.gz
         if ("${{ target.rid }}".StartsWith("win")){

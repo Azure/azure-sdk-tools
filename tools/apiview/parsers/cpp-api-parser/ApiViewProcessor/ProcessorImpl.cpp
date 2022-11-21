@@ -92,7 +92,7 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
     : m_currentSourceRoot{std::filesystem::absolute(directoryToProcess)},
       m_classDatabase{std::make_unique<AzureClassesDatabase>(this)}
 {
-    // CHDIR to the directory to process so relative paths in the configuration are properly resolved.
+  // CHDIR to the directory to process so relative paths in the configuration are properly resolved.
   std::filesystem::current_path(directoryToProcess);
   if (configurationJson.contains("includeInternal"))
   {
@@ -120,7 +120,7 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
   if (configurationJson.contains("additionalIncludeDirectories")
       && configurationJson["additionalIncludeDirectories"].is_array())
   {
-    m_additionalIncludeDirectories = configurationJson["additionalIncludeDirectories"];
+    //    m_additionalIncludeDirectories = configurationJson["additionalIncludeDirectories"];
     for (const auto& dir : configurationJson["additionalIncludeDirectories"])
     {
       auto includeDirectory{m_currentSourceRoot};
@@ -305,46 +305,8 @@ public:
       m_additionalArguments.push_back(std::string(arg));
     }
   }
-  std::vector<std::string> defaultCommandLine{
-      "cl.exe",
-      "--driver-mode=cl",
-      "/nologo",
-      //      "/TP",
-      "-DAZ_RTTI",
-      "-DBUILD_CURL_HTTP_TRANSPORT_ADAPTER",
-      "-DBUILD_TRANSPORT_WINHTTP_ADAPTER",
-      "-DCURL_STATICLIB",
-      //"-DTESTING_BUILD",
-      //      "-IG:\\Az\\LarryO\\azure-sdk-for-cpp\\sdk\\core\\azure-core\\inc"
-      //      "-external:IG:\\Az\\LarryO\\azure-sdk-for-cpp\\out\\build\\x64-DebugWithTests\\vcpkg_installed\\x64-windows-static\\include",
-      //      "-external:W0",
-      "/DWIN32",
-      "/D_WINDOWS",
-      "/W4",
-      "/GR",
-      "/EHsc",
-      "/Zi",
-      "/Ob0",
-      "/Od",
-      "/RTC1",
-      "/MTd",
-      "/permissive-",
-      "/W4",
-      "/WX",
-      "/wd5031",
-      "/wd4668",
-      "/wd4820",
-      "/wd4255",
-      "/wd4710",
-      "-std:c++14",
-      "/FdTARGET_COMPILE_PDB",
-      "/FS",
-      "-c",
-      "/std:c++14",
-      //      "-IG:\\Az\\LarryO\\azure-sdk-for-cpp\\sdk\\core\\azure-core\\inc",
-      //"--",
-      //      "<Source file>"
-  };
+  std::vector<std::string>
+      defaultCommandLine{"clang++.exe", "-DAZ_RTTI", "-fcxx-exceptions", "-c", "-std=c++14"};
   // Inherited via CompilationDatabase
   virtual std::vector<CompileCommand> getCompileCommands(StringRef FilePath) const override
   {
@@ -415,7 +377,7 @@ int ApiViewProcessorImpl::ProcessApiView()
   auto absTemp = m_currentSourceRoot;
   //  absTemp /= tempFile;
   ApiViewCompilationDatabase compileDb(
-      /* m_filesToCompile*/ {std::filesystem::absolute(tempFile)},
+      {std::filesystem::absolute(tempFile)},
       m_currentSourceRoot,
       m_additionalIncludeDirectories,
       m_additionalCompilerArguments);

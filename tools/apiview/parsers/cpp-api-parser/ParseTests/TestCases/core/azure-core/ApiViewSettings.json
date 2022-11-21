@@ -1,0 +1,22 @@
+{
+  "sourceFilesToProcess": null,
+  "sourceFilesToSkip": [
+    "inc/azure/core/internal/json/json.hpp",
+    "inc/azure/core/internal/json/json_optional.hpp"
+  ],
+  "additionalIncludeDirectories": [
+    "inc"
+  ],
+  "additionalCompilerSwitches": [
+    "-DBUILD_CURL_HTTP_TRANSPORT_ADAPTER",
+    "-DBUILD_TRANSPORT_WINHTTP_ADAPTER",
+    "-DCURL_STATICLIB"
+  ],
+  "includeInternal": true,
+  "includeDetail": false,
+  "includePrivate": false,
+  "filterNamespace": "Azure::",
+  "reviewName": "My first Review",
+  "serviceName": null,
+  "packageName": "azure.core"
+}

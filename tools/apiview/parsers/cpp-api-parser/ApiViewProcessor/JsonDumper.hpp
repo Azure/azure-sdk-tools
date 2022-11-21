@@ -13,6 +13,30 @@ using namespace nlohmann::literals;
 class JsonDumper : public AstDumper {
   nlohmann::json m_json;
 
+  enum class TokenKinds
+  {
+    Text = 0,
+    Newline = 1,
+    Whitespace = 2,
+    Punctuation = 3,
+    Keyword = 4,
+    LineIdMarker = 5, // use this if there are no visible tokens with ID on the line but you still
+                      // want to be able to leave a comment for it
+    TypeName = 6,
+    MemberName = 7,
+    StringLiteral = 8,
+    Literal = 9,
+    Comment = 10,
+    DocumentRangeStart = 11,
+    DocumentRangeEnd = 12,
+    DeprecatedRangeStart = 13,
+    DeprecatedRangeEnd = 14,
+    SkipDiffRangeStart = 15,
+    SkipDiffRangeEnd = 16,
+    InheritanceInfoStart = 17,
+    InheritanceInfoEnd = 18
+  };
+
 public:
   JsonDumper(
       std::string_view reviewName,
@@ -35,26 +59,45 @@ public:
   void DumpToFile(std::ostream& outfile) { outfile << m_json; }
   nlohmann::json const& GetJson() { return m_json; }
 
+  // Each ApiView node has 4 mandatory members:
+  //
+  // DefinitionId: ID used in the Navigation pane for type navigation.
+  // NavigateToId: ???
+  // Value: Value to display in ApiView (mandatory)
+  // Kind: Type of node, used for color coding output.
+
   virtual void InsertWhitespace(int count) override
   {
     std::string whiteSpace(count, ' ');
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", whiteSpace}, {"Kind", 4}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", whiteSpace},
+         {"Kind", TokenKinds::Whitespace}});
   }
   virtual void InsertNewline() override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", nullptr}, {"Kind", 1}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", nullptr},
+         {"Kind", TokenKinds::Newline}});
   }
   virtual void InsertKeyword(std::string_view const& keyword) override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", keyword}, {"Kind", 4}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", keyword},
+         {"Kind", TokenKinds::Keyword}});
   }
   virtual void InsertText(std::string_view const& text) override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", text}, {"Kind", 0}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", text},
+         {"Kind", TokenKinds::Text}});
   }
   virtual void InsertPunctuation(const char punctuation) override
   {
@@ -63,7 +106,7 @@ public:
         {{"DefinitionId", nullptr},
          {"NavigateToId", nullptr},
          {"Value", punctuationString},
-         {"Kind", 3}});
+         {"Kind", TokenKinds::Punctuation}});
   }
   virtual void InsertLineIdMarker() override
   {
@@ -71,73 +114,112 @@ public:
         {{"DefinitionId", nullptr},
          {"NavigateToId", nullptr},
          {"Value", nullptr},
-         {"Kind", 5}}); // Not clear if this is used at all.
+         {"Kind", TokenKinds::LineIdMarker}}); // Not clear if this is used at all.
   }
   virtual void InsertTypeName(std::string_view const& type, std::string_view const& navigationId)
       override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", type}, {"NavigateToId", navigationId}, {"Value", type}, {"Kind", 6}});
+        {{"DefinitionId", navigationId},
+         {"NavigateToId", navigationId},
+         {"Value", type},
+         {"Kind", TokenKinds::TypeName}});
   }
   virtual void InsertMemberName(std::string_view const& member) override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", member}, {"NavigateToId", nullptr}, {"Value", member}, {"Kind", 7}});
+        {{"DefinitionId", member},
+         {"NavigateToId", nullptr},
+         {"Value", member},
+         {"Kind", TokenKinds::MemberName}});
   }
   virtual void InsertStringLiteral(std::string_view const& str) override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", str}, {"Kind", 8}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", str},
+         {"Kind", TokenKinds::StringLiteral}});
   }
   virtual void InsertLiteral(std::string_view const& str) override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", str}, {"Kind", 9}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", str},
+         {"Kind", TokenKinds::Literal}});
   }
   virtual void InsertComment(std::string_view const& comment) override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", comment}, {"Kind", 10}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", comment},
+         {"Kind", TokenKinds::Comment}});
   }
   virtual void AddDocumentRangeStart() override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", nullptr}, {"Kind", 11}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", nullptr},
+         {"Kind", TokenKinds::DocumentRangeStart}});
   }
   virtual void AddDocumentRangeEnd() override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", nullptr}, {"Kind", 12}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", nullptr},
+         {"Kind", TokenKinds::DocumentRangeEnd}});
   }
   virtual void AddDeprecatedRangeStart() override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", nullptr}, {"Kind", 13}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", nullptr},
+         {"Kind", TokenKinds::DeprecatedRangeStart}});
   }
   virtual void AddDeprecatedRangeEnd() override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", nullptr}, {"Kind", 14}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", nullptr},
+         {"Kind", TokenKinds::DeprecatedRangeEnd}});
   }
   virtual void AddDiffRangeStart() override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", nullptr}, {"Kind", 15}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", nullptr},
+         {"Kind", TokenKinds::SkipDiffRangeStart}});
   }
   virtual void AddDiffRangeEnd() override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", nullptr}, {"Kind", 16}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", nullptr},
+         {"Kind", TokenKinds::SkipDiffRangeEnd}});
   }
   virtual void AddInheritanceInfoStart() override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", nullptr}, {"Kind", 17}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", nullptr},
+         {"Kind", TokenKinds::InheritanceInfoStart}});
   }
   virtual void AddInheritanceInfoEnd() override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr}, {"NavigateToId", nullptr}, {"Value", nullptr}, {"Kind", 18}});
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", nullptr},
+         {"Kind", TokenKinds::InheritanceInfoEnd}});
   }
 
   nlohmann::json DoDumpTypeHierarchyNode(

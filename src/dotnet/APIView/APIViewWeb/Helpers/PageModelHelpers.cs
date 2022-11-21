@@ -10,5 +10,15 @@ namespace APIViewWeb.Helpers
         {
             return preferenceCache.GetUserPreferences(User).Result;
         }
+
+        public static string GetHiddenApiClass(UserPreferenceModel userPreference)
+        {
+            var hiddenApiClass = " hidden-api hidden-api-toggleable";
+            if (userPreference.ShowHiddenApis != true)
+            {
+                hiddenApiClass += " d-none";
+            }
+            return hiddenApiClass;
+        }
     }
 }

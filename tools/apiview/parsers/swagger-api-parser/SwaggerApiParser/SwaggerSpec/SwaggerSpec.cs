@@ -44,6 +44,10 @@ public class SwaggerSpec
         if (Ref.Contains("parameters"))
         {
             var key = Ref.Split("/").Last();
+            if (this.parameters == null)
+            {
+                return null;
+            }
             this.parameters.TryGetValue(key, out var ret);
             return ret;
         }

@@ -196,7 +196,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
-            var upstreamRequest = CreateUpstreamRequest(incomingRequest, GZipUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
+            var upstreamRequest = CreateUpstreamRequest(incomingRequest, CompressionUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
 
             HttpResponseMessage upstreamResponse = null;
 
@@ -232,7 +232,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // HEAD requests do NOT have a body regardless of the value of the Content-Length header
             if (incomingRequest.Method.ToUpperInvariant() != "HEAD")
             {
-                body = GZipUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+                body = CompressionUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
             }
 
             entry.Response.Body = body.Length == 0 ? null : body;
@@ -267,7 +267,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (entry.Response.Body?.Length > 0)
             {
-                var bodyData = GZipUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
+                var bodyData = CompressionUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
                 outgoingResponse.ContentLength = bodyData.Length;
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
@@ -462,7 +462,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (match.Response.Body?.Length > 0)
             {
-                var bodyData = GZipUtilities.CompressBody(match.Response.Body, match.Response.Headers);
+                var bodyData = CompressionUtilities.CompressBody(match.Response.Body, match.Response.Headers);
 
                 outgoingResponse.ContentLength = bodyData.Length;
 
@@ -486,7 +486,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             byte[] bytes = await ReadAllBytes(request.Body).ConfigureAwait(false);
 
-            entry.Request.Body = GZipUtilities.DecompressBody(bytes, request.Headers);
+            entry.Request.Body = CompressionUtilities.DecompressBody(bytes, request.Headers);
             return entry;
         }
 

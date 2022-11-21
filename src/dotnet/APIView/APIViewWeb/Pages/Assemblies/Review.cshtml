@@ -195,6 +195,19 @@
                             <label>&nbsp;Show Documentation</label>
                         </a>
                     </span>
+                    <span class="dropdown-item checkbox" id="show-hidden-api-component">
+                        <label>
+                            @if (userPreference.ShowHiddenApis == true)
+                            {
+                                <input type="checkbox" id="show-hidden-api-checkbox" checked>
+                            }
+                            else
+                            {
+                                <input type="checkbox" id="show-hidden-api-checkbox" >
+                            }
+                            &nbsp;Show Hidden APIs
+                        </label>
+                    </span>
                     <span class="dropdown-item checkbox">
                         <label>
                             @if (userPreference.HideLineNumbers == true)

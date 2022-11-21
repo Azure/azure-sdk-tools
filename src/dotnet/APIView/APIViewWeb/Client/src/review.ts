@@ -9,14 +9,21 @@ $(() => {
   const SHOW_DIFFONLY_CHECKBOX = ".show-diffonly-checkbox";
   const SHOW_DIFFONLY_HREF = ".show-diffonly";
   const TOGGLE_DOCUMENTATION = ".line-toggle-documentation-button";
+  const SEL_HIDDEN_CLASS = ".hidden-api-toggleable";
+  const SHOW_HIDDEN_CHECK_COMPONENT = "#show-hidden-api-component";
+  const SHOW_HIDDEN_CHECKBOX = "#show-hidden-api-checkbox";
+  const SHOW_HIDDEN_HREF = ".show-hidden-api";
 
-  hideCheckboxIfNoDocs();
+  hideCheckboxesIfNotApplicable();
 
   /* FUNCTIONS
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  function hideCheckboxIfNoDocs() {
+  function hideCheckboxesIfNotApplicable() {
     if ($(SEL_DOC_CLASS).length == 0) {
       $(SHOW_DOC_CHECK_COMPONENT).hide();
+    }
+    if ($(SEL_HIDDEN_CLASS).length == 0) {
+      $(SHOW_HIDDEN_CHECK_COMPONENT).hide();
     }
   }
 
@@ -337,6 +344,16 @@ $(() => {
     $(SHOW_DOC_CHECKBOX)[0].click();
   });
 
+  $(SHOW_HIDDEN_CHECKBOX).on("click", e => {
+    updatePageSettings(function() {
+      $(SEL_HIDDEN_CLASS).toggleClass("d-none");
+    });
+  });
+
+  $(SHOW_HIDDEN_HREF).on("click", e => {
+      $(SHOW_HIDDEN_CHECKBOX)[0].click();
+  });
+  
   $(SHOW_DIFFONLY_CHECKBOX).on("click", e => {
     $(SHOW_DIFFONLY_HREF)[0].click();
   });

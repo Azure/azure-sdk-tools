@@ -143,6 +143,58 @@ describe("apiview: tests", () => {
     validateDefinitionIds(apiview);
   });
 
+  it("describes alias", async () => {
+    const input = `
+    @Cadl.service( { title: "Test", version: "1" } )
+    namespace Azure.Test {
+      model Animal {
+        species: string;
+      }
+
+      alias Creature = Animal;
+    }
+    `;
+    const expect = `
+    namespace Azure.Test {
+      model Animal {
+        species: string;
+      }
+
+      alias Creature = Animal
+    `;
+    const apiview = await apiViewFor(input, {});
+    const actual = apiViewText(apiview);
+    compare(expect, actual, 9);
+    validateDefinitionIds(apiview);
+  });
+
+  it("describes augment decorator", async () => {
+    const input = `
+    @Cadl.service( { title: "Test", version: "1" } )
+    namespace Azure.Test {
+      model Animal {
+        species: string;
+      }
+
+      @@doc(Animal, "My doc")
+    }
+    `;
+    const expect = `
+    namespace Azure.Test {
+      @@doc(Animal, "My doc")
+
+      model Animal {
+        species: string;
+      }
+    }
+    `;
+    const apiview = await apiViewFor(input, {});
+    const actual = apiViewText(apiview);
+    compare(expect, actual, 9);
+    validateDefinitionIds(apiview);
+  });
+
+
   it("describes templated model", async () => {
     const input = `
     @Cadl.service( { title: "Test", version: "1" } )

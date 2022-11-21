@@ -198,7 +198,6 @@ public class SchemaCache
 
         if (root.items != null && root.items.Ref != null && !refChain.Contains(root.items.Ref))
         {
-            refChain.AddLast(root.items.Ref);
             root.items = GetResolvedSchema(root.items, currentSwaggerFilePath, refChain);
         }
 
@@ -206,6 +205,10 @@ public class SchemaCache
         {
             foreach (var rootProperty in root.properties)
             {
+                if (rootProperty.Value == null)
+                {
+                    continue;
+                }
                 if (!refChain.Contains(rootProperty.Value.Ref) && !refChain.Contains(rootProperty.Value.Ref) && !refChain.Contains(rootProperty.Value.items?.Ref))
                 {
                     root.properties[rootProperty.Key] = this.GetResolvedSchema(rootProperty.Value, currentSwaggerFilePath, refChain);

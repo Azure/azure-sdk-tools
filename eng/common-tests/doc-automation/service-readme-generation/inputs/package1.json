@@ -1,0 +1,26 @@
+[
+    {
+        "Package": "azure-mgmt-authorization",
+        "VersionGA": "3.0.0",
+        "VersionPreview": "",
+        "DisplayName": "Resource Management - Authorization",
+        "ServiceName": "Authorization",
+        "RepoPath": "authorization",
+        "MSDocs": "auth",
+        "GHDocs": "",
+        "Type": "mgmt",
+        "New": "true",
+        "PlannedVersions": "",
+        "LatestGADate": "10/11/2022",
+        "FirstGADate": "11/24/2020",
+        "Support": "active",
+        "EOLDate": "",
+        "Hide": "",
+        "Replace": "",
+        "ReplaceGuide": "",
+        "MSDocService": "",
+        "ServiceId": "",
+        "Notes": "",
+        "DirectoryPath": "sdk/authorization/azure-mgmt-authorization"
+    }
+]

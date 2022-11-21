@@ -1,0 +1,32 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - eng/common/scripts/Service-Level-Readme-Automation.ps1
+      - eng/common/scripts/Service-Level-Readme-Automation-Functions.ps1
+      - eng/common/scripts/Helpers/Metadata-Helpers.ps1
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - eng/common/scripts/Service-Level-Readme-Automation.ps1
+      - eng/common/scripts/Service-Level-Readme-Automation-Functions.ps1
+      - eng/common/scripts/Helpers/Metadata-Helpers.ps1
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
+  parameters:
+    TargetDirectory: eng/common-tests/doc-automation/service-readme-generation
+    TargetTags: 'UnitTest'

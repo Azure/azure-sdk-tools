@@ -24,6 +24,9 @@ If flag InitialPush is set, recordings will be automatically pushed to the asset
 .PARAMETER TestProxyExe
 The executable used during the "InitialPush" action. Defaults to the dotnet tool test-proxy, but also supports "docker" or "podman".
 
+If the user provides their own value that doesn't match options "test-proxy", "docker", or "podman", the script will use this input as the test-proxy exe
+when invoking commands. EG "$TestProxyExe push -a sdk/keyvault/azure-keyvault-keys/assets.json."
+
 .PARAMETER InitialPush
 Pass this flag to automagically move all recordings found UNDER your assets.json to an assets repo.
 
@@ -43,7 +46,6 @@ repo are identical to the default assets repo.
 
 #>
 param(
-  [ValidateSet("test-proxy", "docker", "podman", IgnoreCase = $true)]
   [Parameter(Mandatory = $false)]
   [string] $TestProxyExe = "test-proxy",
   [switch] $InitialPush,

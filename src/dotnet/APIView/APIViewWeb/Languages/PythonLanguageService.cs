@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -17,7 +17,7 @@ namespace APIViewWeb
     {
         public override string Name { get; } = "Python";
         public override string Extension { get; } = ".whl";
-        public override string VersionString { get; } = "0.3.3";
+        public override string VersionString { get; } = "0.3.5";
 
         private readonly string _pythonExecutablePath;
         public override string ProcessName => _pythonExecutablePath;
@@ -27,6 +27,11 @@ namespace APIViewWeb
         public PythonLanguageService(IConfiguration configuration)
         {
             _pythonExecutablePath = configuration["PYTHONEXECUTABLEPATH"] ?? "python";
+
+            // Check if sandboxing is disabled for python
+            bool.TryParse(configuration["ReviewGenByPipelineDisabledForPython"], out bool _isDisabledForPython);
+            // Enable sandboxing when it's not disabled for python
+            IsReviewGenByPipeline = ! _isDisabledForPython;
         }
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {

@@ -310,6 +310,7 @@ namespace APIViewWeb.Repositories
             pullRequestModel.ReviewId = review.ReviewId;
             review.FilterType = ReviewType.PullRequest;
             await _reviewsRepository.UpsertReviewAsync(review);
+            await _reviewManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, newRevision);
             await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
         }
 

@@ -756,6 +756,10 @@ code {
 .deprecated {
     text-decoration: line-through;
 }
+.hidden-api {
+  color: var(--text-color-muted) !important;
+  font-style: italic;
+}
 
 .file-code-icon {
     filter: var(--icon-color-filter);

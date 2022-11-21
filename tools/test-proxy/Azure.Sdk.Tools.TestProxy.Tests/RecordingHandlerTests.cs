@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
@@ -723,7 +723,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers["x-recording-upstream-base-uri"] = "http://example.org";
             httpContext.Request.Method = "GET";
-            httpContext.Request.Body = new MemoryStream(GZipUtilities.CompressBody(bodyBytes, httpContext.Request.Headers));
+            httpContext.Request.Body = new MemoryStream(CompressionUtilities.CompressBody(bodyBytes, httpContext.Request.Headers));
 
             await recordingHandler.HandleRecordRequestAsync(recordingId, httpContext.Request, httpContext.Response);
             recordingHandler.StopRecording(recordingId);
@@ -1084,7 +1084,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             // we need to set the content before the content headers as otherwise they will be cleared out after setting content.
             if (_contentEncoding == "gzip")
             {
-                response.Content = new ByteArrayContent(GZipUtilities.CompressBodyCore(_responseContent));
+                response.Content = new ByteArrayContent(CompressionUtilities.CompressBodyCore(_responseContent, _contentEncoding));
             }
             else
             {

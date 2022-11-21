@@ -571,3 +571,40 @@ Services:
     - --parallel 1 --checkpoint-interval 100
     TestNames:
       Net: ProcessEvent
+
+- Service: monitor-ingestion
+  Languages:
+    Net:
+      Project: sdk/monitor/Azure.Monitor.Ingestion/perf/Azure.Monitor.Ingestion.Perf.csproj
+      PackageVersions:
+        - Azure.Monitor.Ingestion: 1.0.0-beta.4
+        - Azure.Monitor.Ingestion: source
+  Tests:
+  - Test: upload
+    Arguments:
+    - --parallel 1
+    - --parallel 2
+    - --parallel 4
+    - --parallel 8
+    - --parallel 16
+    - --parallel 32
+    - --parallel 64
+    - --parallel 128
+    - --parallel 256
+    - --parallel 512
+    TestNames:
+      Net: SingleUpload
+  - Test: upload-batch
+    Arguments:
+    - --parallel 1
+    - --parallel 2
+    - --parallel 4
+    - --parallel 8
+    - --parallel 16
+    - --parallel 32
+    - --parallel 64
+    - --parallel 128
+    - --parallel 256
+    - --parallel 512
+    TestNames:
+      Net: BatchUpload

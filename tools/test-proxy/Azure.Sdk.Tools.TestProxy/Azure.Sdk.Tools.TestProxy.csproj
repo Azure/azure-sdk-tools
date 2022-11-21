@@ -8,6 +8,7 @@
     <ToolCommandName>test-proxy</ToolCommandName>
     <LangVersion>preview</LangVersion>
     <InformationalVersion>$(OfficialBuildId)</InformationalVersion>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)'=='net5.0'">

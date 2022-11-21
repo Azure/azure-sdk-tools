@@ -219,6 +219,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new HttpException(HttpStatusCode.InternalServerError, message);
         }
 
+        private void SetSafeDirectory(GitAssetsConfiguration config)
+        {
+            // Workaround for git directory ownership checks that may fail when running in a container as a different user.
+            if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER"))
+            {
+                GitHandler.Run($"config --global --add safe.directory {config.AssetsRepoLocation}", config);
+            }
+        }
+
         /// <summary>
         /// Checks an asset repository for pending changes. Equivalent of "git status --porcelain".
         /// </summary>
@@ -226,6 +235,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public string[] DetectPendingChanges(GitAssetsConfiguration config)
         {
+            SetSafeDirectory(config);
+
             if (!GitHandler.TryRun("status --porcelain", config.AssetsRepoLocation.ToString(), out var diffResult))
             {
                 throw GenerateInvokeException(diffResult);
@@ -269,10 +280,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
-                // Workaround for git directory ownership checks that may fail when running in a container as a different user.
-                if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER")) {
-                    GitHandler.Run($"config --global --add safe.directory {config.AssetsRepoLocation}", config);
-                }
+                SetSafeDirectory(config);
 
                 if (!string.IsNullOrEmpty(config.Tag))
                 {

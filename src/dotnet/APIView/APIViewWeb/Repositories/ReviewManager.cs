@@ -22,6 +22,7 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Configuration;
+using Octokit;
 
 namespace APIViewWeb.Repositories
 {
@@ -179,51 +180,104 @@ namespace APIViewWeb.Repositories
                 review.ServiceName = p?.ServiceName;
             }
 
+            //If current review doesn't have package approved for first release status then check if package is approved for any reviews for the same package.
+            if (!review.IsApprovedForFirstRelease)
+            {
+                var reviews = await _reviewsRepository.GetApprovedForFirstReleaseReviews(review.Language, review.PackageName);
+                if (reviews.Any())
+                {
+                    var nameApprovedReview = reviews.First();
+                    review.ApprovedForFirstReleaseBy = nameApprovedReview.ApprovedForFirstReleaseBy;
+                    review.ApprovalDate = nameApprovedReview.ApprovedForFirstReleaseOn;
+                    review.IsApprovedForFirstRelease = true;
+                }
+                else
+                {
+                    // Mark package as approved if review is already approved. Copy approval details from review approval.
+                    reviews = await _reviewsRepository.GetApprovedReviews(review.Language, review.PackageName);
+                    if (reviews.Any())
+                    {
+                        var approvedRevision = reviews.First(r => r.Revisions.Any(rev => rev.IsApproved)).Revisions.First(rev => rev.IsApproved);
+                        review.ApprovedForFirstReleaseBy = approvedRevision.Approvers.FirstOrDefault();
+                        review.ApprovedForFirstReleaseOn = reviews.First().ApprovalDate;
+                        review.IsApprovedForFirstRelease = true;
+                    }
+                }
+            }            
             return review;
         }
 
-        private async Task UpdateReviewAsync(ReviewModel review)
+        private async Task UpdateReviewOffline(ReviewModel review)
         {
+            var paramList = new List<ReviewGenPipelineParamModel>();
+            var languageService = GetLanguageService(review.Language);
             foreach (var revision in review.Revisions.Reverse())
             {
                 foreach (var file in revision.Files)
                 {
-                    if (!file.HasOriginal)
+                    //Don't include current revision if file is not required to be updated.
+                    // E.g. json token file is uploaded for a language, specific revision was already upgraded.
+                    if (!file.HasOriginal || file.FileName == null || !languageService.IsSupportedFile(file.FileName) || !languageService.CanUpdate(file.VersionString))
                     {
                         continue;
                     }
-
-                    try
+                    paramList.Add(new ReviewGenPipelineParamModel()
                     {
-                        var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
-                        var languageService = GetLanguageService(file.Language);
-                        if (languageService == null)
-                            continue;
+                        FileID = file.ReviewFileId,
+                        ReviewID = review.ReviewId,
+                        RevisionID = revision.RevisionId,
+                        FileName = Path.GetFileName(file.FileName)
+                    });
+                }
+            }
+            await RunReviewGenPipeline(paramList, languageService.Name);
+        }
 
-                        // file.Name property has been repurposed to store package name and version string
-                        // This is causing issue when updating review using latest parser since it expects Name field as file name
-                        // We have added a new property FileName which is only set for new reviews
-                        // All older reviews needs to be handled by checking review name field
-                        var fileName = file.FileName ?? (Path.HasExtension(review.Name) ? review.Name : file.Name);
-                        if (languageService.IsReviewGenByPipeline)
+        private async Task UpdateReviewAsync(ReviewModel review)
+        {
+            var languageService = GetLanguageService(review.Language);
+            if (languageService == null)
+                return;
+
+            if (languageService.IsReviewGenByPipeline)
+            {
+                // Wait 30 seconds before running next review gen using pipeline to reduce queueing pipeline jobs
+                await Task.Delay(30000);
+                await UpdateReviewOffline(review);
+            }
+            else
+            {
+                foreach (var revision in review.Revisions.Reverse())
+                {
+                    foreach (var file in revision.Files)
+                    {
+                        if (!file.HasOriginal || !languageService.CanUpdate(file.VersionString))
                         {
-                            GenerateReviewOffline(review, revision.RevisionId, file.ReviewFileId, fileName);
+                            continue;
                         }
-                        else
+
+                        try
                         {
+                            var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
+                            // file.Name property has been repurposed to store package name and version string
+                            // This is causing issue when updating review using latest parser since it expects Name field as file name
+                            // We have added a new property FileName which is only set for new reviews
+                            // All older reviews needs to be handled by checking review name field
+                            var fileName = file.FileName ?? (Path.HasExtension(review.Name) ? review.Name : file.Name);
                             var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
                             await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
                             // update only version string
                             file.VersionString = codeFile.VersionString;
                             await _reviewsRepository.UpsertReviewAsync(review);
-                        }                        
+                        }
+                        catch (Exception ex)
+                        {
+                            _telemetryClient.TrackTrace("Failed to update review " + review.ReviewId);
+                            _telemetryClient.TrackException(ex);
+                        }
                     }
-                    catch (Exception ex) {
-                        _telemetryClient.TrackTrace("Failed to update review " + review.ReviewId);
-                        _telemetryClient.TrackException(ex);
-                    }                    
                 }
-            }            
+            }
         }
 
         public async Task AddRevisionAsync(
@@ -272,7 +326,7 @@ namespace APIViewWeb.Repositories
             if (languageService != null && languageService.IsReviewGenByPipeline)
             {
                 // Run offline review gen for review and reviewCodeFileModel
-                GenerateReviewOffline(review, revision.RevisionId, codeFile.ReviewFileId, name);
+                await GenerateReviewOffline(review, revision.RevisionId, codeFile.ReviewFileId, name);
             }
 
             // auto subscribe revision creation user
@@ -427,6 +481,16 @@ namespace APIViewWeb.Repositories
                 revision.Approvers.Add(userId);
                 review.ApprovalDate = DateTime.Now;
             }
+            await _reviewsRepository.UpsertReviewAsync(review);
+        }
+
+        public async Task ApprovePackageNameAsync(ClaimsPrincipal user, string id)
+        {
+            ReviewModel review = await GetReviewAsync(user, id);
+            await AssertApprover(user, review.Revisions.Last());
+            review.ApprovedForFirstReleaseBy = user.GetGitHubLogin();
+            review.ApprovedForFirstReleaseOn = DateTime.Now;
+            review.IsApprovedForFirstRelease = true;
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
@@ -731,7 +795,7 @@ namespace APIViewWeb.Repositories
                 }
             }
         }
-        private void GenerateReviewOffline(ReviewModel review, string revisionId, string fileId, string fileName)
+        private async Task GenerateReviewOffline(ReviewModel review, string revisionId, string fileId, string fileName)
         {
             var param = new ReviewGenPipelineParamModel()
             {
@@ -743,7 +807,7 @@ namespace APIViewWeb.Repositories
             var paramList = new List<ReviewGenPipelineParamModel>();
             paramList.Add(param);
             var languageService = _languageServices.Single(s => s.Name == review.Language);
-            RunReviewGenPipeline(paramList, languageService.Name);
+            await RunReviewGenPipeline(paramList, languageService.Name);
         }
 
         public async Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project)
@@ -770,7 +834,9 @@ namespace APIViewWeb.Repositories
                     if (revision != null)
                     {
                         await _codeFileRepository.UpsertCodeFileAsync(revisionId, revision.SingleFile.ReviewFileId, codeFile);
-                        revision.Files.FirstOrDefault().VersionString = codeFile.VersionString;
+                        var file = revision.Files.FirstOrDefault();
+                        file.VersionString = codeFile.VersionString;
+                        file.PackageName = codeFile.PackageName;
                         await _reviewsRepository.UpsertReviewAsync(review);
 
                         // Trigger diff calculation using updated code file from sandboxing pipeline
@@ -779,7 +845,7 @@ namespace APIViewWeb.Repositories
                 }
             }
         }
-        private async void RunReviewGenPipeline(List<ReviewGenPipelineParamModel> reviewGenParams, string language)
+        private async Task RunReviewGenPipeline(List<ReviewGenPipelineParamModel> reviewGenParams, string language)
         {
             var jsonSerializerOptions = new JsonSerializerOptions()
             {
@@ -804,7 +870,7 @@ namespace APIViewWeb.Repositories
         /// <summary>
         /// Get the LineNumbers of the Heading that have diff changes in their sections
         /// </summary>
-        private async Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, ReviewRevisionModel revision)
+        public async Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, ReviewRevisionModel revision)
         {
                 var review = await _reviewsRepository.GetReviewAsync(reviewId);
                 var latestRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
@@ -915,6 +981,16 @@ namespace APIViewWeb.Repositories
                 }
             }
             return result;
+        }
+
+        public async Task<bool> IsApprovedForFirstRelease(string language, string packageName)
+        {
+            var reviews = await _reviewsRepository.GetApprovedForFirstReleaseReviews(language, packageName);
+            if (!reviews.Any())
+            {
+                reviews = await _reviewsRepository.GetApprovedReviews(language, packageName);                
+            }
+            return reviews.Any();
         }
     }
 }

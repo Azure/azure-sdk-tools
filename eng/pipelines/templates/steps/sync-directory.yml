@@ -91,7 +91,7 @@ steps:
           -Project "internal"
           -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -DefinitionId "$(${{repo}}-template-definition-id)"
-          -VsoQueuedPipelines "QueuedPipelines"
+          -VsoQueuedPipelines "QUEUEDPIPELINES"
           -CancelPreviousBuilds $True
           -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
 
@@ -107,13 +107,13 @@ steps:
           -Project "internal"
           -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -DefinitionId "$(${{repo}}-template-tests-definition-id)"
-          -VsoQueuedPipelines "QueuedPipelines"
+          -VsoQueuedPipelines "QUEUEDPIPELINES"
           -CancelPreviousBuilds $True
           -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
 
   - task: PowerShell@2
     displayName: Write Queued Pipeline Information to Tools PR
-    condition: and(succeeded(), and(ne(variables['QueuedPipelines'], ''), eq(variables['Build.Reason'], 'PullRequest')))
+    condition: and(succeeded(), and(ne(variables['QUEUEDPIPELINES'], ''), eq(variables['Build.Reason'], 'PullRequest')))
     inputs:
       pwsh: true
       workingDirectory: ${{ parameters.WorkingDirectory }}
@@ -122,7 +122,7 @@ steps:
         -RepoOwner "Azure"
         -RepoName "azure-sdk-tools"
         -IssueNumber "$(System.PullRequest.PullRequestNumber)"
-        -Comment "The following pipelines have been queued for testing:<br>$env:QueuedPipelines`
+        -Comment "The following pipelines have been queued for testing:<br>$env:QUEUEDPIPELINES`
         <br>You can sign off on the approval gate to test the release stage of each pipeline.`
         <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
         -AuthToken "$(azuresdk-github-pat)"

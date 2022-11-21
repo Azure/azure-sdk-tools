@@ -20,7 +20,7 @@ parameters:
 variables:
   PythonIndexUrl: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
   PythonVersion: '3.10.2'
-  ApiStubVersion: '0.3.1'
+  ApiStubVersion: '0.3.5'
 
 jobs:
 - job: CreatePythonReviewCodeFile
@@ -41,7 +41,7 @@ jobs:
 
   - template: /eng/pipelines/templates/steps/apiview-review-gen.yml
     parameters:
-      Reviews: ${{ parameters.Reviews }}
-      APIViewURL: ${{ parameters.APIViewURL }}
-      StorageContainerUrl: ${{ parameters.StorageContainerUrl }}
+      Reviews: $(Reviews)
+      APIViewURL: $(APIViewURL)
+      StorageContainerUrl: $(StorageContainerUrl)
       ApiviewGenScript: './Create-Apiview-Token-Python.ps1'

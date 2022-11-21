@@ -54,7 +54,8 @@ namespace Stress.Watcher
             {
                 try
                 {
-                    var listTask = Client.ListJobForAllNamespacesWithHttpMessagesAsync(
+                    Logger.Information("Starting job watch");
+                    var listTask = Client.BatchV1.ListJobForAllNamespacesWithHttpMessagesAsync(
                         allowWatchBookmarks: true,
                         watch: true,
                         resourceVersion: resourceVersion,
@@ -62,9 +63,9 @@ namespace Stress.Watcher
                     );
                     var tcs = new TaskCompletionSource();
                     using var watcher = listTask.Watch<V1Job, V1JobList>(
-                        (type, pod) => {
-                            resourceVersion = pod.ResourceVersion();
-                            HandleJobEvent(type, pod);
+                        (type, job) => {
+                            resourceVersion = job.ResourceVersion();
+                            HandleJobEvent(type, job);
                         },
                         (err) =>
                         {

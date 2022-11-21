@@ -55,6 +55,8 @@ extends:
       framework: net6.0
     - rid: linux-x64
       framework: net6.0
+    - rid: linux-arm64
+      framework: net6.0
     - rid: osx-x64
       framework: net6.0
     - rid: osx.12-arm64

@@ -59,6 +59,6 @@ extends:
       framework: net6.0
     - rid: osx-x64
       framework: net6.0
-    - rid: osx.12-arm64
+    - rid: osx-arm64
       framework: net6.0
       

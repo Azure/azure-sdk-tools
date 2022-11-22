@@ -22,7 +22,13 @@ steps:
         $destinationPathSegment = "$(Build.ArtifactStagingDirectory)/$((Split-Path -Leaf "${{ parameters.TargetDirectory }}"))-standalone-${{ target.rid }}"
         $sourcePath = "${{ parameters.TargetDirectory }}/${{ target.rid }}"
 
+        Write-Host "dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}"
         dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "dotnet publish failed with exit code $LASTEXITCODE."
+          exit $LASTEXITCODE
+        }
 
         # windows? produce a zip, otherwise tar.gz
         if ("${{ target.rid }}".StartsWith("win")){

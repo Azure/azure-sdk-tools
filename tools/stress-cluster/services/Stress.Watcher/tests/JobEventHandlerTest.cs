@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using FluentAssertions;
-using Stress.Watcher.Extensions;
 using k8s;
 using k8s.Models;
 
@@ -56,7 +55,7 @@ namespace Stress.Watcher.Tests
             var handler = new JobEventHandler(null, null, null);
             var job = CreateJob("testns");
 
-            handler.ShouldDeleteResources(job).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
 
             job.Status.Conditions = new List<V1JobCondition> { new V1JobCondition("True", "Complete") };
 
@@ -64,14 +63,16 @@ namespace Stress.Watcher.Tests
             {
                 CreateContainer("non-matching-container-name")
             };
-            handler.ShouldDeleteResources(job).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Deleted).Should().BeFalse();
 
             job.Spec.Template.Spec.InitContainers = new List<V1Container>()
             {
                 CreateContainer("non-matching-container-name"),
                 CreateContainer("init-azure-deployer")
             };
-            handler.ShouldDeleteResources(job).Should().BeTrue();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeTrue();
+            handler.ShouldDeleteResources(job, WatchEventType.Deleted).Should().BeTrue();
 
             var env = new List<V1EnvVar> {
                 new V1EnvVar()
@@ -80,7 +81,7 @@ namespace Stress.Watcher.Tests
             {
                 CreateContainer("init-azure-deployer", env)
             };
-            handler.ShouldDeleteResources(job).Should().BeTrue();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeTrue();
 
             env = new List<V1EnvVar> {
                 new V1EnvVar("RESOURCE_GROUP_NAME","")
@@ -90,7 +91,7 @@ namespace Stress.Watcher.Tests
                 CreateContainer("other-init-container"),
                 CreateContainer("init-azure-deployer", env)
             };
-            handler.ShouldDeleteResources(job).Should().BeTrue();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeTrue();
 
             env = new List<V1EnvVar> {
                 new V1EnvVar("RESOURCE_GROUP_NAME")
@@ -100,7 +101,7 @@ namespace Stress.Watcher.Tests
                 CreateContainer("other-init-container"),
                 CreateContainer("init-azure-deployer", env)
             };
-            handler.ShouldDeleteResources(job).Should().BeTrue();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeTrue();
 
             env = new List<V1EnvVar> {
                 new V1EnvVar("RESOURCE_GROUP_NAME", "testrg")
@@ -110,7 +111,7 @@ namespace Stress.Watcher.Tests
                 CreateContainer("other-init-container"),
                 CreateContainer("init-azure-deployer", env)
             };
-            handler.ShouldDeleteResources(job).Should().BeTrue();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeTrue();
         }
 
 
@@ -120,20 +121,23 @@ namespace Stress.Watcher.Tests
             var handler = new JobEventHandler(null, null, null);
             var job = CreateJob("testns");
 
-            handler.ShouldDeleteResources(job).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
             var env = new List<V1EnvVar> { new V1EnvVar("RESOURCE_GROUP_NAME", "testrg") };
             job.Spec.Template.Spec.InitContainers = new List<V1Container>() { CreateContainer("init-azure-deployer", env) };
 
             job.Status.Conditions = new List<V1JobCondition> { };
-            handler.ShouldDeleteResources(job).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Deleted).Should().BeTrue();
+            job.Status.Conditions = new List<V1JobCondition> { new V1JobCondition(null, null) };
+            handler.ShouldDeleteResources(job, WatchEventType.Deleted).Should().BeTrue();
             job.Status.Conditions = new List<V1JobCondition> { new V1JobCondition("False", "Failed") };
-            handler.ShouldDeleteResources(job).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
             job.Status.Conditions = new List<V1JobCondition> { new V1JobCondition("Unknown", "") };
-            handler.ShouldDeleteResources(job).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
             job.Status.Conditions = new List<V1JobCondition> { new V1JobCondition("False", "Complete") };
-            handler.ShouldDeleteResources(job).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
             job.Status.Conditions = new List<V1JobCondition> { new V1JobCondition("True", "Complete") };
-            handler.ShouldDeleteResources(job).Should().BeTrue();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeTrue();
         }
 
         [Fact]
@@ -142,14 +146,14 @@ namespace Stress.Watcher.Tests
             var handler = new JobEventHandler(null, null, null);
             var job = CreateJob("testns");
 
-            handler.ShouldDeleteResources(job).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
 
             job.Status.Conditions = new List<V1JobCondition> { new V1JobCondition("True", "Failed") };
             job.Metadata.Labels.Add("Skip.RemoveTestResources", "true");
-            handler.ShouldDeleteResources(job).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
             job.Metadata.Labels.Remove("Skip.RemoveTestResources");
             job.Spec.Template.Metadata.Labels.Add("Skip.RemoveTestResources", "true");
-            handler.ShouldDeleteResources(job).Should().BeFalse();
+            handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
         }
 
 

@@ -36,7 +36,8 @@ namespace APIViewIntegrationTests
         public TestsBaseFixture()
         {
             var config = new ConfigurationBuilder()
-               .AddJsonFile("config.json")
+               .AddEnvironmentVariables(prefix: "APIVIEW_")
+               .AddUserSecrets(typeof(TestsBaseFixture).Assembly)
                .Build();
 
             var services = new ServiceCollection();

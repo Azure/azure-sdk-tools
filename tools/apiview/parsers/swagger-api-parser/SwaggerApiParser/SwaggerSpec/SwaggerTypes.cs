@@ -308,6 +308,11 @@ namespace SwaggerApiParser
                 ret.Add(new CodeFileToken(refName.Split("/").Last(), CodeFileTokenKind.TypeName));
                 ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
                 ret.Add(TokenSerializer.NewLine());
+                // circular reference
+                if (arraySchema.items.Ref != null)
+                {
+                    return;
+                }
                 ret.AddRange(arraySchema.items.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), arraySchema.items, ref flattenedTableItems, serializeRef));
             }
         }

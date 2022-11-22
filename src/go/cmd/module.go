@@ -28,6 +28,7 @@ var sdkDirName = "sdk"
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
 	Name string
+	// PackageName is the name of the APIView review for this module
 	PackageName string
 
 	// packages maps import paths to packages

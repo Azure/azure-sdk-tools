@@ -13,14 +13,15 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Common;
+using APIViewWeb.Repositories;
 
 namespace APIViewWeb.Managers
 {
     public class NotificationManager : INotificationManager
     {
         private readonly string _endpoint;
-        private readonly CosmosReviewRepository _reviewRepository;
-        private readonly CosmosUserProfileRepository _userProfileRepository;
+        private readonly ICosmosReviewRepository _reviewRepository;
+        private readonly ICosmosUserProfileRepository _userProfileRepository;
         private readonly ISendGridClient _sendGridClient;
 
         private const string ENDPOINT_SETTING = "Endpoint";
@@ -29,8 +30,8 @@ namespace APIViewWeb.Managers
         private const string REPLY_TO_HEADER = "In-Reply-To";
         private const string REFERENCES_HEADER = "References";
 
-        public NotificationManager(IConfiguration configuration, CosmosReviewRepository reviewRepository,
-        CosmosUserProfileRepository userProfileRepository, ISendGridClient sendGridClient = null)
+        public NotificationManager(IConfiguration configuration, ICosmosReviewRepository reviewRepository,
+        ICosmosUserProfileRepository userProfileRepository, ISendGridClient sendGridClient = null)
         {
             _sendGridClient = sendGridClient ?? new SendGridClient(configuration[SENDGRID_KEY_SETTING]);
             _endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);

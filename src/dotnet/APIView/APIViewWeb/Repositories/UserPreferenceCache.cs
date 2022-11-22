@@ -23,9 +23,9 @@ namespace APIViewWeb.Repositories
     {
         private readonly IMemoryCache _cache;
         private readonly IMapper _mapper;
-        private readonly UserProfileManager _userProfileManager;
+        private readonly IUserProfileManager _userProfileManager;
 
-        public UserPreferenceCache(IMemoryCache cache, IMapper mapper, UserProfileManager profileManager)
+        public UserPreferenceCache(IMemoryCache cache, IMapper mapper, IUserProfileManager profileManager)
         {
             _cache = cache;
             _mapper = mapper;

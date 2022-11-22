@@ -14,9 +14,9 @@ namespace APIViewWeb.Managers
 {
     public class UserProfileManager : IUserProfileManager
     {
-        private CosmosUserProfileRepository _UserProfileRepository;
+        private ICosmosUserProfileRepository _UserProfileRepository;
 
-        public UserProfileManager(CosmosUserProfileRepository UserProfileRepository)
+        public UserProfileManager(ICosmosUserProfileRepository UserProfileRepository)
         {
             _UserProfileRepository = UserProfileRepository;
         }

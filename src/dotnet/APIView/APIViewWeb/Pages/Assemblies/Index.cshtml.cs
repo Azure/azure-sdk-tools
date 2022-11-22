@@ -15,13 +15,13 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class IndexPageModel : PageModel
     {
-        private readonly ReviewManager _manager;
+        private readonly IReviewManager _manager;
         public readonly UserPreferenceCache _preferenceCache;
-        public readonly UserProfileManager _userProfileManager;
+        public readonly IUserProfileManager _userProfileManager;
         public const int _defaultPageSize = 50;
         public const string _defaultSortField = "LastUpdated";
 
-        public IndexPageModel(ReviewManager manager, UserProfileManager userProfileManager, UserPreferenceCache preferenceCache)
+        public IndexPageModel(IReviewManager manager, IUserProfileManager userProfileManager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _preferenceCache = preferenceCache;

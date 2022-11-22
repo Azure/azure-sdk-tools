@@ -9,11 +9,11 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class ProfileModel : PageModel
     {
-        private readonly UserProfileManager _manager;
+        private readonly IUserProfileManager _manager;
         public readonly UserPreferenceCache _preferenceCache;
 
         public UserProfileModel userProfile;
-        public ProfileModel(UserProfileManager manager, UserPreferenceCache preferenceCache)
+        public ProfileModel(IUserProfileManager manager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _preferenceCache = preferenceCache;

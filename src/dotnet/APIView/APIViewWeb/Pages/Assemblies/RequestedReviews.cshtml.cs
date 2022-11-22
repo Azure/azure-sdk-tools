@@ -15,12 +15,12 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class RequestedReviews: PageModel
     {
-        private readonly ReviewManager _manager;
+        private readonly IReviewManager _manager;
         public readonly UserPreferenceCache _preferenceCache;
         public IEnumerable<ReviewModel> ActiveReviews { get; set; } = new List<ReviewModel>();
         public IEnumerable<ReviewModel> ApprovedReviews { get; set; } = new List<ReviewModel>();
 
-        public RequestedReviews(ReviewManager manager, UserPreferenceCache cache)
+        public RequestedReviews(IReviewManager manager, UserPreferenceCache cache)
         {
             _manager = manager;
             _preferenceCache = cache;

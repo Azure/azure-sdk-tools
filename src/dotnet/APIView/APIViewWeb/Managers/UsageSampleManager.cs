@@ -18,15 +18,15 @@ namespace APIViewWeb.Managers
     public class UsageSampleManager : IUsageSampleManager
     {
         private readonly IAuthorizationService _authorizationService;
-        private readonly CosmosUsageSampleRepository _samplesRepository;
-        private readonly BlobUsageSampleRepository _sampleFilesRepository;
-        private readonly CosmosCommentsRepository _commentsRepository;
+        private readonly ICosmosUsageSampleRepository _samplesRepository;
+        private readonly IBlobUsageSampleRepository _sampleFilesRepository;
+        private readonly ICosmosCommentsRepository _commentsRepository;
 
         public UsageSampleManager(
             IAuthorizationService authorizationService,
-            CosmosUsageSampleRepository samplesRepository,
-            BlobUsageSampleRepository sampleFilesRepository,
-            CosmosCommentsRepository commentsRepository)
+            ICosmosUsageSampleRepository samplesRepository,
+            IBlobUsageSampleRepository sampleFilesRepository,
+            ICosmosCommentsRepository commentsRepository)
         {
             _authorizationService = authorizationService;
             _samplesRepository = samplesRepository;

@@ -16,10 +16,10 @@ namespace APIViewWeb.Controllers
     [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
     public class AutoReviewController : Controller
     {
-        private readonly ReviewManager _reviewManager;
+        private readonly IReviewManager _reviewManager;
         private readonly ILogger _logger;
 
-        public AutoReviewController(ReviewManager reviewManager, ILogger<AutoReviewController> logger)
+        public AutoReviewController(IReviewManager reviewManager, ILogger<AutoReviewController> logger)
         {
             _reviewManager = reviewManager;
             _logger = logger;

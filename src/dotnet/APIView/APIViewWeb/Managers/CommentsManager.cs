@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Options;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace APIViewWeb.Managers
 {
@@ -21,9 +22,9 @@ namespace APIViewWeb.Managers
     {
         private readonly IAuthorizationService _authorizationService;
 
-        private readonly CosmosCommentsRepository _commentsRepository;
+        private readonly ICosmosCommentsRepository _commentsRepository;
 
-        private readonly NotificationManager _notificationManager;
+        private readonly INotificationManager _notificationManager;
 
         private readonly OrganizationOptions _Options;
 
@@ -31,8 +32,8 @@ namespace APIViewWeb.Managers
 
         public CommentsManager(
             IAuthorizationService authorizationService,
-            CosmosCommentsRepository commentsRepository,
-            NotificationManager notificationManager,
+            ICosmosCommentsRepository commentsRepository,
+            INotificationManager notificationManager,
             IOptions<OrganizationOptions> options)
         {
             _authorizationService = authorizationService;
@@ -160,6 +161,8 @@ namespace APIViewWeb.Managers
 
             await _commentsRepository.UpsertCommentAsync(comment);
         }
+
+        public HashSet<GithubUser> GetTaggableUsers() => TaggableUsers;
         private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentModel commentModel)
         {
             var result = await _authorizationService.AuthorizeAsync(user, commentModel, new[] { CommentOwnerRequirement.Instance });

@@ -17,10 +17,10 @@ namespace APIViewWeb.Controllers
 {
     public class ReviewController : Controller
     {
-        private readonly ReviewManager _reviewManager;
+        private readonly IReviewManager _reviewManager;
         private readonly ILogger _logger;
 
-        public ReviewController(ReviewManager reviewManager, ILogger<ReviewController> logger)
+        public ReviewController(IReviewManager reviewManager, ILogger<ReviewController> logger)
         {
             _reviewManager = reviewManager;
             _logger = logger;

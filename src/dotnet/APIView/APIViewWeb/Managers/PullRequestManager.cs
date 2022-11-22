@@ -3,10 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
-using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using ApiView;
@@ -31,11 +28,11 @@ namespace APIViewWeb.Managers
         static readonly GitHubClient _githubClient = new GitHubClient(new ProductHeaderValue("apiview"));
         readonly TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
 
-        private readonly ReviewManager _reviewManager;
-        private readonly CosmosPullRequestsRepository _pullRequestsRepository;
+        private readonly IReviewManager _reviewManager;
+        private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
         private readonly IConfiguration _configuration;
-        private readonly CosmosReviewRepository _reviewsRepository;
-        private readonly BlobCodeFileRepository _codeFileRepository;
+        private readonly ICosmosReviewRepository _reviewsRepository;
+        private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
         private readonly IAuthorizationService _authorizationService;
         private readonly int _pullRequestCleanupDays;
@@ -44,10 +41,10 @@ namespace APIViewWeb.Managers
 
         public PullRequestManager(
             IAuthorizationService authorizationService,
-            ReviewManager reviewManager,
-            CosmosReviewRepository reviewsRepository,
-            CosmosPullRequestsRepository pullRequestsRepository,
-            BlobCodeFileRepository codeFileRepository,
+            IReviewManager reviewManager,
+            ICosmosReviewRepository reviewsRepository,
+            ICosmosPullRequestsRepository pullRequestsRepository,
+            IBlobCodeFileRepository codeFileRepository,
             IDevopsArtifactRepository devopsArtifactRepository,
             IConfiguration configuration
             )

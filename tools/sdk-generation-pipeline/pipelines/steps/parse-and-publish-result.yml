@@ -91,9 +91,9 @@ steps:
             -AuthToken "$(azuresdk-github-pat)" \
             -PRTitle "[AutoPR-${{ parameters.service }}]${{ parameters.swagger.title }}" \
             -PRBody "Create to sync ${{ parameters.swagger.path }}/pull/${{ parameters.swagger.pullRequest }}" \
-            -OpenAsDraft:$true
+            -OpenAsDraft $true
           
-          prNumber="${Submitted.PullRequest.Number}"
+          prNumber="$(Submitted.PullRequest.Number)"
           prLink="https://github.com/$(SDK_PUSH_OWNER)/$(sdkRepoName)/pull/$(prNumber)"
         fi
 

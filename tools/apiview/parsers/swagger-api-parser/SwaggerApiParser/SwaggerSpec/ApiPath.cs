@@ -13,6 +13,8 @@ public class ApiPath
     public Operation head { get; set; }
     public Operation patch { get; set; }
     
+    private static readonly List<string> operationMethods = new List<string>() { "get", "put", "post", "delete", "options", "head", "patch" };
+    
    
     public object this[string propertyName]
     {
@@ -28,7 +30,6 @@ public class ApiPath
         {
             
             var ret = new Dictionary<string, Operation>();
-            var operationMethods = new List<string> { "get", "put", "post", "delete", "options", "head", "patch" };
             foreach (var method in operationMethods)
             {
                 if (this[method] is Operation operation)

@@ -35,6 +35,7 @@ int main(int argc, char** argv)
         "r", "review", "Review Name", false, "", "string", commandLine);
     TCLAP::ValueArg<std::string> packageVersion(
         "", "packageVersion", "Package Version", false, "", "string", commandLine);
+    TCLAP::SwitchArg consoleOutput("c", "console", "Dump output to console (diagnostic)", commandLine);
 
     commandLine.parse(argc, argv);
     std::filesystem::path outputFileName{std::filesystem::absolute(outputFileArg.getValue())};
@@ -49,16 +50,24 @@ int main(int argc, char** argv)
     int rv = apiViewProcessor.ProcessApiView();
     if (rv == 0)
     {
-      JsonDumper jsonDumper(
-          reviewName.getValue().empty() ? apiViewProcessor.ReviewName() : reviewName.getValue(),
-          apiViewProcessor.ServiceName(),
-          apiViewProcessor.PackageName(),
-          packageVersion.getValue());
-      apiViewProcessor.GetClassesDatabase()->DumpClassDatabase(&jsonDumper);
+      if (consoleOutput)
+      {
+        TextDumper textDumper(std::cout);
+        apiViewProcessor.GetClassesDatabase()->DumpClassDatabase(&textDumper);
+      }
 
-      std::cout << "Writing API Review JSON file to: " << outputFileName.string() << std::endl;
-      std::ofstream outfile{outputFileName};
-      jsonDumper.DumpToFile(outfile);
+      {
+        JsonDumper jsonDumper(
+            reviewName.getValue().empty() ? apiViewProcessor.ReviewName() : reviewName.getValue(),
+            apiViewProcessor.ServiceName(),
+            apiViewProcessor.PackageName(),
+            packageVersion.getValue());
+        apiViewProcessor.GetClassesDatabase()->DumpClassDatabase(&jsonDumper);
+
+        std::cout << "Writing API Review JSON file to: " << outputFileName.string() << std::endl;
+        std::ofstream outfile{outputFileName};
+        jsonDumper.DumpToFile(outfile);
+      }
     }
     return rv;
   }

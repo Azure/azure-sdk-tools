@@ -42,7 +42,7 @@ private:
   void OutputClassDbToFile(
       std::unique_ptr<AzureClassesDatabase> const& classDb,
       std::string_view const& fileToDump,
-      bool isAzureCore)
+      bool isAzureTest=false, bool isAzureCore=false)
   {
     std::ofstream outFile(static_cast<std::string>(fileToDump), std::ios::out);
     outFile << R"(#include <memory>)" << std::endl;
@@ -55,7 +55,7 @@ private:
     outFile << R"(#include <vector>)" << std::endl;
     outFile << R"(#include <exception>)" << std::endl;
     outFile << R"(#include <stdexcept>)" << std::endl;
-    if (!isAzureCore)
+    if (!isAzureCore && isAzureTest)
     {
       outFile << R"(#include <azure/core/nullable.hpp>)" << std::endl;
       outFile << R"(#include <azure/core/datetime.hpp>)" << std::endl;
@@ -78,7 +78,8 @@ protected:
   bool SyntaxCheckClassDb(
       std::unique_ptr<AzureClassesDatabase> const& classDb,
       std::string const& baseFileName,
-      bool isAzureCore)
+      bool isAzureTest=false,
+      bool isAzureCore=false)
   {
     std::filesystem::path tempFileName{std::filesystem::temp_directory_path()};
     tempFileName.append(baseFileName);
@@ -86,7 +87,7 @@ protected:
     {
       std::filesystem::remove(tempFileName);
     }
-    OutputClassDbToFile(classDb, stringFromU8string(tempFileName.u8string()), isAzureCore);
+    OutputClassDbToFile(classDb, stringFromU8string(tempFileName.u8string()), isAzureTest, isAzureCore);
     auto currentTestName{::testing::UnitTest::GetInstance()->current_test_info()->name()};
 
     std::string testCategory{"Test Tool"};
@@ -151,7 +152,7 @@ TEST_F(TestParser, CompileSimple)
     auto& db = processor.GetClassesDatabase();
     EXPECT_EQ(8ul, db->GetAstNodeMap().size());
 
-    EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated.cpp", false));
+    EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated.cpp"));
   }
 }
 
@@ -173,7 +174,7 @@ TEST_F(TestParser, NamespaceFilter1)
   processor.ProcessApiView();
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(4ul, db->GetAstNodeMap().size());
-  EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated1.cpp", false));
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated1.cpp"));
 }
 TEST_F(TestParser, NamespaceFilter2)
 {
@@ -193,7 +194,7 @@ TEST_F(TestParser, NamespaceFilter2)
   processor.ProcessApiView();
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(2ul, db->GetAstNodeMap().size());
-  EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated2.cpp", false));
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated2.cpp"));
 }
 TEST_F(TestParser, NamespaceFilter3)
 {
@@ -213,7 +214,7 @@ TEST_F(TestParser, NamespaceFilter3)
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(1ul, db->GetAstNodeMap().size());
-  EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated3.cpp", false));
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated3.cpp"));
 }
 
 TEST_F(TestParser, Class1)
@@ -234,7 +235,7 @@ TEST_F(TestParser, Class1)
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(8ul, db->GetAstNodeMap().size());
-  EXPECT_TRUE(SyntaxCheckClassDb(db, "Classes1.cpp", false));
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "Classes1.cpp"));
 }
 TEST_F(TestParser, Class2)
 {
@@ -254,7 +255,7 @@ TEST_F(TestParser, Class2)
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(14ul, db->GetAstNodeMap().size());
-  EXPECT_TRUE(SyntaxCheckClassDb(db, "Classes1B.cpp", false));
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "Classes1B.cpp"));
 }
 
 TEST_F(TestParser, Expressions)
@@ -275,7 +276,7 @@ TEST_F(TestParser, Expressions)
   processor.ProcessApiView();
 
   auto& db = processor.GetClassesDatabase();
-  EXPECT_TRUE(SyntaxCheckClassDb(db, "Expression1.cpp", false));
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "Expression1.cpp"));
 }
 
 TEST_F(TestParser, AzureCore1)
@@ -296,7 +297,7 @@ TEST_F(TestParser, AzureCore1)
   processor.ProcessApiView();
 
   auto& db = processor.GetClassesDatabase();
-  EXPECT_TRUE(SyntaxCheckClassDb(db, "Core1.cpp", true));
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "Core1.cpp", true, true));
 }
 TEST_F(TestParser, AzureCore2)
 {

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #pragma once
+#include "ApiViewDiagnostic.hpp"
 #include "AstDumper.hpp"
 #include <iostream>
 
@@ -36,5 +37,32 @@ public:
   virtual void DumpTypeHierarchyNode(std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node)
   {
     InsertNewline();
+  }
+  virtual void DumpDiagnosticNode(std::unique_ptr<ApiViewDiagnostic> const& diagnostic) override
+  {
+    m_stream << "/* ** DIAGNOSTIC START ** */" << std::endl;
+    m_stream << "Type: " << diagnostic->DiagnosticId << std::endl;
+    m_stream << "NodeId" << diagnostic->TargetId << std::endl;
+    if (!diagnostic->HelpLinkUri.empty())
+    {
+      m_stream << "HelpUri" << diagnostic->HelpLinkUri;
+    }
+    if (diagnostic->Level != ApiViewDiagnostic::DiagnosticLevel::None)
+    {
+      switch (diagnostic->Level)
+      {
+        case ApiViewDiagnostic::DiagnosticLevel::Error:
+          m_stream << "Error";
+          break;
+        case ApiViewDiagnostic::DiagnosticLevel::Warning:
+          m_stream << "Warning" << std::endl;
+          break;
+        case ApiViewDiagnostic::DiagnosticLevel::Info:
+          m_stream << "Info";
+          break;
+      }
+      m_stream << std::endl;
+    }
+    m_stream << "/* ** DIAGNOSTIC END ** */" << std::endl;
   }
 };

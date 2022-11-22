@@ -263,4 +263,17 @@ public:
   {
     m_json["Navigation"].push_back(DoDumpTypeHierarchyNode(node));
   };
+
+  // Schema for diagnostic nodes (which live under the "Diagnostics" root node:
+  //  DiagnosticId:<Unique ID>.
+  //  Text: <Diagnostic message>,
+  //  HelpLinkUri: <Any URL to be listed on diagnostic.> OPTIONAL.
+  //  TargetId: <Definition ID of the token where you want to show the diagnostic>
+  //  Level: 1 - Info, 2 - Warning, 3 - Error OPTIONAL.
+  //
+  // The Diagnostic ID name is specific to the diagnostic being generated. Python and Java creates
+  // ID using a counter in format AZ_PY_<Countrervalue> by python
+  // parser and AZ_JAVA_<CountrerValue> by Java parser>,
+
+  virtual void DumpDiagnosticNode(std::unique_ptr<ApiViewDiagnostic> const&) {}
 };

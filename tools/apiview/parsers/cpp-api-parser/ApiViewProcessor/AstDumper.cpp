@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: MIT
 
 #include "AstDumper.hpp"
+#include <iostream>
 #include <list>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
+
+constexpr int namespaceIndent = 2;
 
 std::vector<std::string> SplitNamespace(std::string_view const& namespaceName)
 {
@@ -44,7 +47,6 @@ void AstDumper::OpenNamespaces(
   for (; current != namespaceComponents.end(); current++)
   {
     OpenNamespace(*current);
-    m_namespaceDepth -= 1;
   }
 }
 
@@ -56,32 +58,28 @@ void AstDumper::OpenNamespace(std::string_view const& namespaceName)
   InsertMemberName(namespaceName);
   InsertWhitespace();
   InsertPunctuation('{');
-  AdjustIndent(2);
+  AdjustIndent(namespaceIndent);
   Newline();
 }
 void AstDumper::CloseNamespaces(
     std::vector<std::string> const& namespaceComponents,
     std::vector<std::string>::iterator& current)
 {
-  std::list<std::string_view> reversedNamespaces;
+  // Back out the depth of the namespaces we're closing.
+  std::list<std::string_view> namespacesToClose;
   for (; current != namespaceComponents.end(); current++)
   {
-    reversedNamespaces.push_front(*current);
-    AdjustIndent(-2);
+    namespacesToClose.push_back(*current);
+    AdjustIndent(-namespaceIndent);
   }
-
   LeftAlign();
-  for (auto it = reversedNamespaces.begin(); it != reversedNamespaces.end(); ++it)
-  {
-    InsertPunctuation('}');
-  }
-  InsertWhitespace();
   std::stringstream ss;
-  ss << "// ";
+  ss << "// namespace ";
 
   bool firstNs = true;
-  for (auto const& nsToClose : reversedNamespaces)
+  for (auto const& nsToClose : namespacesToClose)
   {
+    InsertPunctuation('}');
     if (!firstNs)
     {
       ss << "::";
@@ -89,20 +87,17 @@ void AstDumper::CloseNamespaces(
     firstNs = false;
     ss << nsToClose;
   }
+  InsertWhitespace();
+
   InsertComment(ss.str());
   Newline();
   Newline();
 
-  // for (auto const& nsToClose : reversedNamespaces)
-  //{
-  //   CloseNamespace(nsToClose);
-  //   m_namespaceDepth -= 1;
-  // }
 }
 
 void AstDumper::CloseNamespace(std::string_view const& namespaceName)
 {
-  AdjustIndent(-2);
+  AdjustIndent(-namespaceIndent);
   LeftAlign();
   InsertPunctuation('}');
   InsertWhitespace();

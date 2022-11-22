@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #pragma once
+#include "ApiViewDiagnostic.hpp"
 #include "ApiViewProcessor.hpp"
 #include "AstNode.hpp"
 #include <clang/AST/ASTConsumer.h>
@@ -65,14 +66,6 @@ class ApiViewProcessorImpl {
       }
       return true;
     }
-    bool VisitClassTemplateDecl(clang::ClassTemplateDecl* templateDecl)
-    {
-      if (ShouldCollectNamedDecl(templateDecl))
-      {
-        m_processorImpl->m_classDatabase->CreateAstNode(templateDecl);
-      }
-      return true;
-    }
     bool VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl* templateDecl)
     {
       if (ShouldCollectNamedDecl(templateDecl))
@@ -81,16 +74,13 @@ class ApiViewProcessorImpl {
       }
       return true;
     }
-    bool VisitFunctionTemplateDecl(clang::FunctionTemplateDecl* functionTemplateDecl)
+    bool VisitTemplateDecl(clang::TemplateDecl* templateDecl)
     {
       // We're only interested in global functions, otherwise this sweeps up all function
       // declarations.
-      if (ShouldCollectNamedDecl(functionTemplateDecl))
+      if (ShouldCollectNamedDecl(templateDecl))
       {
-        if (!functionTemplateDecl->isCXXClassMember())
-        {
-          m_processorImpl->m_classDatabase->CreateAstNode(functionTemplateDecl);
-        }
+          m_processorImpl->m_classDatabase->CreateAstNode(templateDecl);
       }
       return true;
     }

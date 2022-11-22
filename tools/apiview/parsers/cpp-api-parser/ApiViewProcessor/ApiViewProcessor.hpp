@@ -20,7 +20,7 @@ namespace clang {
 class Decl;
 class CXXRecordDecl;
 class FunctionDecl;
-class FunctionTemplateDecl;
+//class FunctionTemplateDecl;
 class TemplateDecl;
 class TypeAliasDecl;
 class NamedDecl;
@@ -84,11 +84,15 @@ private:
 };
 
 class ApiViewProcessorImpl;
+struct ApiViewDiagnostic;
 
 class AzureClassesDatabase {
   std::vector<std::unique_ptr<AstNode>> m_typeList;
+  std::vector<std::unique_ptr<ApiViewDiagnostic>> m_diagnostics;
   TypeHierarchy m_typeHierarchy;
   ApiViewProcessorImpl* m_processor;
+
+  bool IsMemberOfObject(clang::NamedDecl const* decl);
 
 public:
   AzureClassesDatabase(ApiViewProcessorImpl* processor);
@@ -101,7 +105,6 @@ public:
   void CreateAstNode(clang::FunctionDecl* functionDecl);
   void CreateAstNode(clang::TemplateDecl* templateDecl);
   void CreateAstNode(clang::ClassTemplateSpecializationDecl* templateDecl);
-  void CreateAstNode(clang::FunctionTemplateDecl* functionTemplateDecl);
   void CreateAstNode(clang::VarDecl* variableDecl);
   void CreateAstNode(clang::EnumDecl* variableDecl);
   void CreateAstNode(clang::NamedDecl* namedNode);
@@ -111,6 +114,7 @@ public:
   void DumpClassDatabase(AstDumper* dumper) const;
   const std::vector<std::unique_ptr<AstNode>>& GetAstNodeMap() const { return m_typeList; }
 };
+
 
 // Isolation class to isolate clang implemetnation and headers from consumers of the
 // ApiViewProcessor. Forwards all methods to ApiViewProcessorImpl class.

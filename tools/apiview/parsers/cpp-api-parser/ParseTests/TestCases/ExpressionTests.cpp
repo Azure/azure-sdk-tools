@@ -120,4 +120,14 @@ struct BlobItem final
    * Size in bytes.
    */
   int64_t BlobSize = int64_t();
+
+  float MyMethod1(
+      int param1 = 378,
+      std::string param2 = "foo",
+      bool param3 = true,
+      int param4 = -17,
+      float param5 = 3.1415f)
+  {
+    return param1 + param3 + param4 + param5;
+  }
 };

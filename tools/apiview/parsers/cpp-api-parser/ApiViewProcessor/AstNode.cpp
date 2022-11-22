@@ -830,6 +830,47 @@ public:
   };
 };
 
+class AstUnaryOperatorExpr : public AstExpr {
+  std::unique_ptr<AstExpr> m_subExpr;
+  bool m_isPrefix;
+  bool m_isPostfix;
+  std::string m_opcode;
+
+public:
+  AstUnaryOperatorExpr(UnaryOperator const* expression, ASTContext& context)
+      : AstExpr(expression, context), m_subExpr{AstExpr::Create(expression->getSubExpr(), context)},
+        m_opcode(expression->getOpcodeStr(expression->getOpcode())),
+        m_isPrefix(expression->isPrefix()), m_isPostfix(expression->isPostfix())
+  {
+  }
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  {
+    if (m_isPrefix)
+    {
+      if (m_opcode.size() == 1)
+      {
+        dumper->InsertPunctuation(m_opcode[0]);
+      }
+      else
+      {
+        dumper->InsertKeyword(m_opcode);
+      }
+    }
+    m_subExpr->Dump(dumper, dumpOptions);
+    if (m_isPostfix)
+    {
+      if (m_opcode.size() == 1)
+      {
+        dumper->InsertPunctuation(m_opcode[0]);
+      }
+      else
+      {
+        dumper->InsertKeyword(m_opcode);
+      }
+    }
+  };
+};
+
 class AstScalarValueInit : public AstExpr {
   AstType m_underlyingType;
 
@@ -917,6 +958,10 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
       {
         return std::make_unique<AstInitializerList>(cast<InitListExpr>(actualExpr), context);
       }
+      else if (isa<UnaryOperator>(actualExpr))
+      {
+        return std::make_unique<AstUnaryOperatorExpr>(cast<UnaryOperator>(actualExpr), context);
+      }
       else if (isa<BinaryOperator>(actualExpr))
       {
         return std::make_unique<AstBinaryOperatorExpr>(cast<BinaryOperator>(actualExpr), context);
@@ -994,6 +1039,89 @@ void AstBaseClass::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   m_baseClass.Dump(dumper, dumpOptions);
 }
 
+class AstParamVariable : public AstNamedNode {
+  std::string m_typeAsString;
+  AstType m_type;
+  bool m_isStatic{};
+  bool m_isArray{};
+  std::string m_variableInitializer;
+  std::unique_ptr<AstExpr> m_defaultExpression;
+
+public:
+  AstParamVariable(
+      ParmVarDecl const* var,
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
+      : AstNamedNode(var, parentNode), m_type{var->getType(), var->getASTContext()},
+        m_isStatic(var->isStaticDataMember())
+
+  {
+    clang::PrintingPolicy pp{LangOptions{}};
+    pp.adjustForCPlusPlus();
+
+    m_typeAsString = QualType::getAsString(var->getType().split(), pp);
+
+    if (var->getType().getTypePtr()->isArrayType())
+    {
+      m_isArray = true;
+      m_typeAsString = QualType::getAsString(
+          QualType{var->getType().getTypePtr()->getArrayElementTypeNoTypeQual(), 0}.split(), pp);
+    }
+
+    auto value = var->getEvaluatedValue();
+    if (value)
+    {
+      llvm::raw_string_ostream os{m_variableInitializer};
+      value->printPretty(os, var->getASTContext(), var->getType());
+    }
+    if (var->getDefaultArg())
+    {
+      m_defaultExpression = AstExpr::Create(var->getDefaultArg(), var->getASTContext());
+    }
+  }
+  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+  {
+    if (dumpOptions.NeedsLeftAlign)
+    {
+      dumper->LeftAlign();
+    }
+    if (m_isStatic)
+    {
+      dumper->InsertKeyword("static");
+      dumper->InsertWhitespace();
+    }
+    dumper->InsertLiteral(m_typeAsString);
+    dumper->InsertWhitespace();
+    dumper->InsertMemberName(m_name);
+    if (m_isArray)
+    {
+      dumper->InsertPunctuation('[');
+      dumper->InsertPunctuation(']');
+    }
+    if (m_defaultExpression || !m_variableInitializer.empty())
+    {
+      dumper->InsertWhitespace();
+      dumper->InsertPunctuation('=');
+      dumper->InsertWhitespace();
+      if (m_defaultExpression)
+      {
+        m_defaultExpression->Dump(dumper, dumpOptions);
+      }
+      else
+      {
+        dumper->InsertLiteral(m_variableInitializer);
+      }
+    }
+    if (dumpOptions.NeedsTrailingSemi)
+    {
+      dumper->InsertPunctuation(';');
+    }
+    if (dumpOptions.NeedsTrailingNewline)
+    {
+      dumper->Newline();
+    }
+  }
+};
+
 class AstVariable : public AstNamedNode {
   std::string m_typeAsString;
   AstType m_type;
@@ -1003,10 +1131,8 @@ class AstVariable : public AstNamedNode {
 
 public:
   AstVariable(VarDecl const* var, std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(var, parentNode),
-
-        m_type{var->getType(), var->getASTContext()}, m_isStatic(var->isStaticDataMember())
-
+      : AstNamedNode(var, parentNode), m_type{var->getType(), var->getASTContext()},
+        m_isStatic(var->isStaticDataMember())
   {
     clang::PrintingPolicy pp{LangOptions{}};
     pp.adjustForCPlusPlus();
@@ -1052,8 +1178,14 @@ public:
       dumper->InsertWhitespace();
       dumper->InsertLiteral(m_variableInitializer);
     }
-    dumper->InsertPunctuation(';');
-    dumper->Newline();
+    if (dumpOptions.NeedsTrailingSemi)
+    {
+      dumper->InsertPunctuation(';');
+    }
+    if (dumpOptions.NeedsTrailingNewline)
+    {
+      dumper->Newline();
+    }
   }
 };
 
@@ -1296,7 +1428,7 @@ public:
     //    llvm::outs() << "Function: " << Name << "\n";
     for (auto param : func->parameters())
     {
-      m_parameters.push_back(std::make_unique<AstParameter>(param, parentNode));
+      m_parameters.push_back(AstNode::Create(param, parentNode));
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
@@ -1355,7 +1487,14 @@ public:
         dumper->InsertWhitespace();
       }
       firstParam = false;
-      param->DumpNode(dumper, dumpOptions);
+      {
+        DumpNodeOptions innerOptions{dumpOptions};
+
+        innerOptions.NeedsLeftAlign = false;
+        innerOptions.NeedsTrailingNewline = false;
+        innerOptions.NeedsTrailingSemi = false;
+        param->DumpNode(dumper, innerOptions);
+      }
     }
     dumper->InsertPunctuation(')');
     if (!m_isMemberOfClass)
@@ -1641,12 +1780,12 @@ public:
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override;
 };
 
-class AstTemplate : public AstNamedNode {
+class AstClassTemplate : public AstNamedNode {
   std::vector<std::unique_ptr<AstNode>> m_parameters;
   std::unique_ptr<AstNode> m_templateBody;
 
 public:
-  AstTemplate(
+  AstClassTemplate(
       TemplateDecl const* templateDecl,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(templateDecl, parentNode)
@@ -1697,14 +1836,14 @@ public:
 
 class AstFunctionTemplate : public AstNamedNode {
   std::vector<std::unique_ptr<AstNode>> m_parameters;
-  std::unique_ptr<AstNode> m_functionDecl;
+  std::unique_ptr<AstNode> m_functionNode;
 
 public:
   AstFunctionTemplate(
       FunctionTemplateDecl const* functionTemplate,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(functionTemplate, parentNode),
-        m_functionDecl{AstNode::Create(functionTemplate->getTemplatedDecl(), parentNode)}
+        m_functionNode{AstNode::Create(functionTemplate->getTemplatedDecl(), parentNode)}
   {
     for (auto param : functionTemplate->getTemplateParameters()->asArray())
     {
@@ -1741,14 +1880,64 @@ public:
     }
     dumper->InsertPunctuation('>');
     dumper->Newline();
-    m_functionDecl->DumpNode(dumper, dumpOptions);
+    m_functionNode->DumpNode(dumper, dumpOptions);
+  }
+};
+
+class AstTypeAliasTemplate : public AstNamedNode {
+  std::vector<std::unique_ptr<AstNode>> m_parameters;
+  std::unique_ptr<AstNode> m_typeAliasNode;
+
+public:
+  AstTypeAliasTemplate(
+      TypeAliasTemplateDecl const* typeAliasTemplate,
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
+      : AstNamedNode(typeAliasTemplate, parentNode),
+        m_typeAliasNode{AstNode::Create(typeAliasTemplate->getTemplatedDecl(), parentNode)}
+  {
+    for (auto param : typeAliasTemplate->getTemplateParameters()->asArray())
+    {
+      m_parameters.push_back(AstNode::Create(param, parentNode));
+    }
+  }
+  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  {
+    if (!m_namespace.empty())
+    {
+      if (dumpOptions.NeedsNamespaceAdjustment)
+      {
+        dumper->SetNamespace(m_namespace);
+      }
+    }
+
+    if (dumpOptions.NeedsLeftAlign)
+    {
+      dumper->LeftAlign();
+    }
+    dumper->InsertKeyword("template");
+    dumper->InsertWhitespace();
+    dumper->InsertPunctuation('<');
+    bool isFirstParam = true;
+    for (const auto& param : m_parameters)
+    {
+      if (!isFirstParam)
+      {
+        dumper->InsertPunctuation(',');
+        dumper->InsertWhitespace();
+      }
+      isFirstParam = false;
+      param->DumpNode(dumper, dumpOptions);
+    }
+    dumper->InsertPunctuation('>');
+    dumper->Newline();
+    m_typeAliasNode->DumpNode(dumper, dumpOptions);
   }
 };
 
 class AstClassTemplateSpecialization : public AstClassLike {
   std::vector<std::unique_ptr<AstType>> m_arguments;
 
-  virtual void DumpTemplateSpecializationArguments(AstDumper* dumper, DumpNodeOptions dumpOptions)
+  virtual void DumpTemplateSpecializationArguments(AstDumper* dumper, DumpNodeOptions dumpOptions) override
   {
     dumper->InsertPunctuation('<');
     for (auto const& arg : m_arguments)
@@ -2111,7 +2300,7 @@ AstClassLike::AstClassLike(
             break;
           }
           case Decl::Kind::Field: {
-            m_children.push_back(std::make_unique<AstField>(cast<FieldDecl>(child), parentNode));
+            m_children.push_back(AstNode::Create(child, parentNode));
             break;
           }
           case Decl::Kind::AccessSpec: {
@@ -2454,120 +2643,84 @@ std::unique_ptr<AstNode> AstNode::Create(
     clang::Decl const* decl,
     std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
 {
-  // NOTE: The order of the <isa> clauses in this is important. That's because of the inheritance
-  // hierarchy in the clang classes. For instance, a CXXConstructorDecl is also a CXXMethodDecl and
-  // a FunctionDecl. So it is important to order these in dependency order to ensure that the
-  // correct Ast type is chosen.
-  //
-  if (isa<CXXConstructorDecl>(decl))
+  switch (decl->getKind())
   {
-    return std::make_unique<AstConstructor>(cast<CXXConstructorDecl>(decl), parentNode);
-  }
-  else if (isa<CXXDestructorDecl>(decl))
-  {
-    return std::make_unique<AstDestructor>(cast<CXXDestructorDecl>(decl), parentNode);
-  }
-  else if (isa<CXXConversionDecl>(decl))
-  {
-    return std::make_unique<AstConversion>(cast<CXXConversionDecl>(decl), parentNode);
-  }
-  else if (clang::isa<CXXMethodDecl>(decl))
-  {
-    return std::make_unique<AstMethod>(cast<CXXMethodDecl>(decl), parentNode);
-  }
-  else if (isa<FunctionDecl>(decl))
-  {
-    return std::make_unique<AstFunction>(cast<FunctionDecl>(decl), parentNode);
-  }
-  else if (isa<VarDecl>(decl))
-  {
-    return std::make_unique<AstVariable>(cast<VarDecl>(decl), parentNode);
-  }
-  // ClassTemplateSpecializationDecl is a specialization of CXXRecordDecl so it must appear before
-  // CXXRecordDecl.
-  else if (isa<ClassTemplateSpecializationDecl>(decl))
-  {
-    return std::make_unique<AstClassTemplateSpecialization>(
-        cast<ClassTemplateSpecializationDecl>(decl), parentNode);
-  }
-  else if (isa<EnumDecl>(decl))
-  {
-    return std::make_unique<AstEnum>(cast<EnumDecl>(decl), parentNode);
-  }
-  else if (isa<EnumConstantDecl>(decl))
-  {
-    return std::make_unique<AstEnumerator>(cast<EnumConstantDecl>(decl), parentNode);
-  }
-  else if (isa<FieldDecl>(decl))
-  {
-    return std::make_unique<AstField>(cast<FieldDecl>(decl), parentNode);
-  }
-  else if (isa<FunctionTemplateDecl>(decl))
-  {
-    return std::make_unique<AstFunctionTemplate>(cast<FunctionTemplateDecl>(decl), parentNode);
-  }
-  else if (isa<TemplateDecl>(decl))
-  {
-    return std::make_unique<AstTemplate>(cast<TemplateDecl>(decl), parentNode);
-  }
-  else if (isa<TemplateTypeParmDecl>(decl))
-  {
-    return std::make_unique<AstTemplateParameter>(cast<TemplateTypeParmDecl>(decl), parentNode);
-  }
-  else if (isa<NonTypeTemplateParmDecl>(decl))
-  {
-    return std::make_unique<AstNonTypeTemplateParam>(
-        cast<NonTypeTemplateParmDecl>(decl), parentNode);
-  }
-  else if (isa<TypeAliasDecl>(decl))
-  {
-    return std::make_unique<AstTypeAlias>(cast<TypeAliasDecl>(decl), parentNode);
-  }
-  else if (isa<CXXRecordDecl>(decl))
-  {
-    return std::make_unique<AstClassLike>(cast<CXXRecordDecl>(decl), parentNode);
-  }
-  else if (isa<AccessSpecDecl>(decl))
-  {
-    return std::make_unique<AstAccessSpec>(cast<AccessSpecDecl>(decl));
-  }
-  else if (isa<FriendDecl>(decl))
-  {
-    return std::make_unique<AstFriend>(cast<FriendDecl>(decl), parentNode);
-  }
-  // else if (clang::isa<UsingDirectiveDecl>(decl))
-  //{
-  //   return std::make_unique<AstUsingDirective>(cast<UsingDirectiveDecl>(decl));
-  // }
+    case Decl::Kind::CXXConstructor:
+      return std::make_unique<AstConstructor>(cast<CXXConstructorDecl>(decl), parentNode);
 
-  // else if (clang::isa<UsingDecl>(decl))
-  //{
-  //   return std::make_unique<AstUsing>(cast<UsingDecl>(decl));
-  // }
+    case Decl::Kind::CXXDestructor:
+      return std::make_unique<AstDestructor>(cast<CXXDestructorDecl>(decl), parentNode);
+    case Decl::Kind::CXXConversion:
+      return std::make_unique<AstConversion>(cast<CXXConversionDecl>(decl), parentNode);
 
-  //  else if (clang::isa<NamespaceDecl>(decl))
-  //  {
-  //    return std::make_unique<AstNamespace>(cast<NamespaceDecl>(decl));
-  //  }
+    case Decl::Kind::CXXMethod:
+      return std::make_unique<AstMethod>(cast<CXXMethodDecl>(decl), parentNode);
 
-  //  else if (clang::isa<NamespaceAliasDecl>(decl))
-  //  {
-  //    return std::make_unique<AstNamespaceAlias>(cast<NamespaceAliasDecl>(decl));
-  //  }
+    case Decl::Kind::Function:
+      return std::make_unique<AstFunction>(cast<FunctionDecl>(decl), parentNode);
 
-  //  else if (clang::isa<UsingShadowDecl>(decl))
-  //  {
-  //    return std::make_unique<AstUsingShadow>(cast<UsingShadowDecl>(decl));
-  //  }
-  else if (isa<NamespaceDecl>(decl))
-  {
-    return nullptr;
-  }
-  else
-  {
-    llvm::outs() << "Unknown DECL node " << cast<NamedDecl>(decl)->getNameAsString()
-                 << " type : " << decl->getDeclKindName() << "\n ";
-    return nullptr;
+    case Decl::Kind::ParmVar: {
+      return std::make_unique<AstParamVariable>(cast<ParmVarDecl>(decl), parentNode);
+    }
+    case Decl::Kind::Var:
+      return std::make_unique<AstVariable>(cast<VarDecl>(decl), parentNode);
+
+    case Decl::Kind::ClassTemplateSpecialization:
+      return std::make_unique<AstClassTemplateSpecialization>(
+          cast<ClassTemplateSpecializationDecl>(decl), parentNode);
+
+    case Decl::Kind::Enum:
+      return std::make_unique<AstEnum>(cast<EnumDecl>(decl), parentNode);
+
+    case Decl::Kind::EnumConstant:
+      return std::make_unique<AstEnumerator>(cast<EnumConstantDecl>(decl), parentNode);
+
+    case Decl::Kind::Field:
+      return std::make_unique<AstField>(cast<FieldDecl>(decl), parentNode);
+
+    case Decl::Kind::FunctionTemplate:
+      return std::make_unique<AstFunctionTemplate>(cast<FunctionTemplateDecl>(decl), parentNode);
+
+    case Decl::Kind::ClassTemplate:
+      return std::make_unique<AstClassTemplate>(cast<TemplateDecl>(decl), parentNode);
+
+    case Decl::Kind::TemplateTypeParm:
+      return std::make_unique<AstTemplateParameter>(cast<TemplateTypeParmDecl>(decl), parentNode);
+
+    case Decl::Kind::NonTypeTemplateParm:
+      return std::make_unique<AstNonTypeTemplateParam>(
+          cast<NonTypeTemplateParmDecl>(decl), parentNode);
+
+    case Decl::Kind::TypeAliasTemplate:
+      return std::make_unique<AstTypeAliasTemplate>(cast<TypeAliasTemplateDecl>(decl), parentNode);
+
+    case Decl::Kind::TypeAlias:
+      return std::make_unique<AstTypeAlias>(cast<TypeAliasDecl>(decl), parentNode);
+
+    case Decl::Kind::CXXRecord:
+      return std::make_unique<AstClassLike>(cast<CXXRecordDecl>(decl), parentNode);
+
+    case Decl::Kind::AccessSpec:
+      return std::make_unique<AstAccessSpec>(cast<AccessSpecDecl>(decl));
+
+    case Decl::Kind::Friend:
+      return std::make_unique<AstFriend>(cast<FriendDecl>(decl), parentNode);
+
+    case Decl::Kind::NamespaceAlias:
+      return nullptr;
+      //    return std::make_unique<AstNamespaceAlias>(cast<NamespaceAliasDecl>(decl));
+
+    case Decl::Kind::Namespace:
+      return nullptr;
+      //    return std::make_unique<AstNamespace>(cast<NamespaceDecl>(decl));
+    case Decl::Kind::Using:
+      return nullptr;
+      //   return std::make_unique<AstUsing>(cast<UsingDecl>(decl));
+    default: {
+      llvm::outs() << "Unknown DECL node " << cast<NamedDecl>(decl)->getNameAsString()
+                   << " type : " << decl->getDeclKindName() << "\n ";
+      return nullptr;
+    }
   }
 }
 
@@ -2583,6 +2736,36 @@ std::string AstNode::GetNamespaceForDecl(Decl const* decl)
 
 // Classes database implementation.
 
+bool AzureClassesDatabase::IsMemberOfObject(NamedDecl const* decl)
+{
+  if (decl->isCXXClassMember())
+  {
+    return true;
+  }
+
+  // If this object is the target of a friend declaration, then there is a friend declaration that
+  // actually defines the object.
+  if (decl->getFriendObjectKind() != clang::Decl::FOK_None)
+  {
+    return true;
+  }
+
+  // Not strictly true, but if this decl has a describing template, then it's covered by another
+  // node type.
+  if (decl->getDescribedTemplate() != nullptr)
+  {
+    return true;
+  }
+
+  // Method or function parameters are by definition members of an object.
+  if (decl->getKind() == clang::Decl::ParmVar)
+  {
+    return true;
+  }
+
+  return false;
+}
+
 void AzureClassesDatabase::CreateAstNode()
 {
   // Create a terminal node to force closing of all outstanding namespaces.
@@ -2595,8 +2778,7 @@ void AzureClassesDatabase::CreateAstNode(CXXRecordDecl* cxxDecl)
   if (m_processor->IncludePrivate() || cxxDecl->getAccess() != AS_private)
   {
     // Skip over this class if it's a template declaration.
-    if (!cxxDecl->isEmbeddedInDeclarator() && (cxxDecl->getDescribedClassTemplate() == nullptr)
-        && !isa<ClassTemplateSpecializationDecl>(cxxDecl) && !cxxDecl->isCXXClassMember())
+    if (!cxxDecl->isEmbeddedInDeclarator() && !IsMemberOfObject(cxxDecl) && cxxDecl->getKind() != Decl::Kind::ClassTemplateSpecialization)
     {
       m_typeList.push_back(AstNode::Create(
           cxxDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(cxxDecl))));
@@ -2608,9 +2790,7 @@ void AzureClassesDatabase::CreateAstNode(clang::FunctionDecl* functionDecl)
 {
   if (m_processor->IncludePrivate() || functionDecl->getAccess() != AS_private)
   {
-    if (functionDecl->isGlobal() && !functionDecl->isCXXClassMember()
-        && (functionDecl->getFriendObjectKind() == clang::FunctionDecl::FOK_None)
-        && (functionDecl->getDescribedFunctionTemplate() == nullptr))
+    if (functionDecl->isGlobal() && !IsMemberOfObject(functionDecl))
     {
       m_typeList.push_back(AstNode::Create(
           functionDecl,
@@ -2618,32 +2798,29 @@ void AzureClassesDatabase::CreateAstNode(clang::FunctionDecl* functionDecl)
     }
   }
 }
-void AzureClassesDatabase::CreateAstNode(clang::FunctionTemplateDecl* templateDecl)
-{
-  if (m_processor->IncludePrivate() || templateDecl->getAccess() != AS_private)
-  {
-    m_typeList.push_back(AstNode::Create(
-        templateDecl,
-        m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
-  }
-}
 
 void AzureClassesDatabase::CreateAstNode(clang::TemplateDecl* templateDecl)
 {
   if (m_processor->IncludePrivate() || templateDecl->getAccess() != AS_private)
   {
-    m_typeList.push_back(AstNode::Create(
-        templateDecl,
-        m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
+    if (!IsMemberOfObject(templateDecl))
+    {
+      m_typeList.push_back(AstNode::Create(
+          templateDecl,
+          m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
+    }
   }
 }
 void AzureClassesDatabase::CreateAstNode(clang::VarDecl* variableDecl)
 {
   if (m_processor->IncludePrivate() || variableDecl->getAccess() != AS_private)
   {
-    m_typeList.push_back(AstNode::Create(
-        variableDecl,
-        m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(variableDecl))));
+    if (!IsMemberOfObject(variableDecl))
+    {
+      m_typeList.push_back(AstNode::Create(
+          variableDecl,
+          m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(variableDecl))));
+    }
   }
 }
 
@@ -2651,8 +2828,11 @@ void AzureClassesDatabase::CreateAstNode(clang::EnumDecl* enumDecl)
 {
   if (m_processor->IncludePrivate() || enumDecl->getAccess() != AS_private)
   {
-    m_typeList.push_back(AstNode::Create(
-        enumDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(enumDecl))));
+    if (!IsMemberOfObject(enumDecl))
+    {
+      m_typeList.push_back(AstNode::Create(
+          enumDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(enumDecl))));
+    }
   }
 }
 
@@ -2660,9 +2840,16 @@ void AzureClassesDatabase::CreateAstNode(clang::ClassTemplateSpecializationDecl*
 {
   if (m_processor->IncludePrivate() || templateDecl->getAccess() != AS_private)
   {
-    m_typeList.push_back(AstNode::Create(
-        templateDecl,
-        m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
+    if (templateDecl->getName() == "UniqueHandleHelper")
+    {
+      templateDecl->dump(llvm::outs());
+    }
+    if (!IsMemberOfObject(templateDecl))
+    {
+      m_typeList.push_back(AstNode::Create(
+          templateDecl,
+          m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
+    }
   }
 }
 
@@ -2670,8 +2857,11 @@ void AzureClassesDatabase::CreateAstNode(clang::TypeAliasDecl* aliasDecl)
 {
   if (m_processor->IncludePrivate() || aliasDecl->getAccess() != AS_private)
   {
-    m_typeList.push_back(AstNode::Create(
-        aliasDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(aliasDecl))));
+    if (!IsMemberOfObject(aliasDecl))
+    {
+      m_typeList.push_back(AstNode::Create(
+          aliasDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(aliasDecl))));
+    }
   }
 }
 

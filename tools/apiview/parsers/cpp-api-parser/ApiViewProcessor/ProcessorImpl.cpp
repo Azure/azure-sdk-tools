@@ -222,49 +222,29 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
     clang::NamedDecl* namedDecl)
 {
   bool shouldCollect = false;
-  if (m_processorImpl->FilterNamespace().empty())
+
+  // By default, we consider any types within desired set of input files.
+  auto fileId = namedDecl->getASTContext().getSourceManager().getFileID(namedDecl->getLocation());
+  auto fileEntry = namedDecl->getASTContext().getSourceManager().getFileEntryForID(fileId);
+  if (fileEntry)
   {
-    // Figure out the source file for this type.
-    auto fileId = namedDecl->getASTContext().getSourceManager().getFileID(namedDecl->getLocation());
-    auto fileEntry = namedDecl->getASTContext().getSourceManager().getFileEntryForID(fileId);
-    if (fileEntry && !fileEntry->getName().startswith("C:\\Program"))
+    for (auto const& fileToProcess : m_processorImpl->GetFilesToCompile())
     {
-      for (auto const& fileToProcess : m_processorImpl->GetFilesToCompile())
+      if (fileToProcess.compare(std::string(fileEntry->getName())) == 0)
       {
-        if (fileToProcess.compare(std::string(fileEntry->getName())) == 0)
-        {
-          shouldCollect = true;
-          // There's no type name filter, so we're going by a source file filter. But we still
-          // want to do the type name exclusions.
-          std::string typeName{namedDecl->getQualifiedNameAsString()};
-          // However if the type is in the _internal namespace, then we want to exclude it if
-          // we're excluding internal types.
-          if ((typeName.find("::_internal") != std::string::npos)
-              && !m_processorImpl->IncludeInternal())
-          {
-            shouldCollect = false;
-          }
-          // However if the type is in the _detail namespace, then we want to exclude it if we're
-          // excluding detail types.
-          if ((typeName.find("::_detail") != std::string::npos)
-              && !m_processorImpl->IncludeDetail())
-          {
-            shouldCollect = false;
-          }
-        }
+        // Figure out the source file for this type.
+        shouldCollect = true;
       }
     }
   }
-  else
+  if (shouldCollect)
   {
-    std::string typeName{namedDecl->getQualifiedNameAsString()};
-    if (typeName.find(m_processorImpl->FilterNamespace()) == 0)
+    // If we don't have a filter namespace, include all the types.
+    if (m_processorImpl->FilterNamespace().empty())
     {
-      // Assume we're going to process this type.
-      shouldCollect = true;
-
-      // However if the type is in the _internal namespace, then we want to exclude it if we're
-      // excluding internal types.
+      std::string typeName{namedDecl->getQualifiedNameAsString()};
+      // However if the type is in the _internal namespace, then we want to exclude it if
+      // we're excluding internal types.
       if ((typeName.find("::_internal") != std::string::npos)
           && !m_processorImpl->IncludeInternal())
       {
@@ -274,10 +254,53 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
       // excluding detail types.
       if ((typeName.find("::_detail") != std::string::npos) && !m_processorImpl->IncludeDetail())
       {
-        // There is an exception for Azure::_detail::Clock to the "exclude _detail" rule.
-        if (typeName.find("Azure::_detail::Clock") != 0)
+        shouldCollect = false;
+      }
+    }
+    else
+    {
+      // We have a namespace filter set. Look at all types whose names start with the filter
+      // namespace name.
+      std::string typeName{namedDecl->getQualifiedNameAsString()};
+      if (typeName.find(m_processorImpl->FilterNamespace()) == 0)
+      {
+        // Assume we're going to process this type.
+        shouldCollect = true;
+
+        // However if the type is in the _internal namespace, then we want to exclude it if we're
+        // excluding internal types.
+        if ((typeName.find("::_internal") != std::string::npos)
+            && !m_processorImpl->IncludeInternal())
         {
           shouldCollect = false;
+        }
+        // However if the type is in the _detail namespace, then we want to exclude it if we're
+        // excluding detail types.
+        if ((typeName.find("::_detail") != std::string::npos) && !m_processorImpl->IncludeDetail())
+        {
+          // There is an exception for Azure::_detail::Clock to the "exclude _detail" rule.
+          if (typeName.find("Azure::_detail::Clock") != 0)
+          {
+            shouldCollect = false;
+          }
+        }
+      }
+      else
+      {
+        // We want to include any free types within the set of headers because they will result in a
+        // diagnostic.
+        PrintingPolicy pp{LangOptions{}};
+        pp.adjustForCPlusPlus();
+
+        std::string namespaceName;
+        llvm::raw_string_ostream osNamespace(namespaceName);
+        namedDecl->printQualifiedName(osNamespace, pp);
+        std::string typeName;
+        llvm::raw_string_ostream osType(typeName);
+        namedDecl->printName(osNamespace);
+        if (typeName == namespaceName)
+        {
+          shouldCollect = true;
         }
       }
     }
@@ -347,8 +370,8 @@ public:
 
 int ApiViewProcessorImpl::ProcessApiView()
 {
-  // clang really likes all input paths to be absolute paths, so use the fiilesystem to canonicalize
-  // the input filename and source location.
+  // clang really likes all input paths to be absolute paths, so use the fiilesystem to
+  // canonicalize the input filename and source location.
 
   std::filesystem::path tempFile = std::filesystem::temp_directory_path();
   tempFile /= "TempSourceFile.cpp";
@@ -391,8 +414,8 @@ int ApiViewProcessorImpl::ProcessApiView()
   auto frontEndActionFactory{std::make_unique<AstVisitorActionFactory>(this)};
   auto rv = tool.run(frontEndActionFactory.get());
 
-  // Insert a terminal node into the classes database, which ensures that all opened namespaces are
-  // closed.
+  // Insert a terminal node into the classes database, which ensures that all opened namespaces
+  // are closed.
   m_classDatabase->CreateAstNode();
   return rv;
 }
@@ -402,8 +425,8 @@ int ApiViewProcessorImpl::ProcessApiView(
     std::vector<std::string> const& additionalCompilerArguments,
     std::vector<std::string_view> const& filesToProcess)
 {
-  // clang really likes all input paths to be absolute paths, so use the fiilesystem to canonicalize
-  // the input filename and source location.
+  // clang really likes all input paths to be absolute paths, so use the fiilesystem to
+  // canonicalize the input filename and source location.
   for (const auto file : filesToProcess)
   {
     std::filesystem::path sourcePath(file);
@@ -450,8 +473,8 @@ int ApiViewProcessorImpl::ProcessApiView(
   auto frontEndActionFactory{std::make_unique<AstVisitorActionFactory>(this)};
   auto rv = tool.run(frontEndActionFactory.get());
 
-  // Insert a terminal node into the classes database, which ensures that all opened namespaces are
-  // closed.
+  // Insert a terminal node into the classes database, which ensures that all opened namespaces
+  // are closed.
   m_classDatabase->CreateAstNode();
   return rv;
 }

@@ -9,7 +9,6 @@
 #include <vector>
 
 class AstDumper {
-  int m_namespaceDepth{};
   std::string m_currentNamespace;
   std::vector<std::string> m_namespaceComponents;
   int m_indentationLevel{};
@@ -58,4 +57,5 @@ public:
 
   virtual void DumpTypeHierarchyNode(std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node)
       = 0;
+  virtual void DumpDiagnosticNode(std::unique_ptr<ApiViewDiagnostic> const&) = 0;
 };

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Azure;
 using System.Security.Claims;
+using APIViewWeb.Managers;
 
 namespace APIViewWeb.Pages.Assemblies
 {

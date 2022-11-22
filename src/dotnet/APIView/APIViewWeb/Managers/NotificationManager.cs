@@ -14,9 +14,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Common;
 
-namespace APIViewWeb.Repositories
+namespace APIViewWeb.Managers
 {
-    public class NotificationManager
+    public class NotificationManager : INotificationManager
     {
         private readonly string _endpoint;
         private readonly CosmosReviewRepository _reviewRepository;
@@ -40,30 +40,78 @@ namespace APIViewWeb.Repositories
 
         public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentModel comment)
         {
-            ReviewModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
+            var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
             await SendEmailsAsync(review, user, GetPlainTextContent(comment), GetHtmlContent(comment, review));
         }
-        
+
         public async Task NotifyUserOnCommentTag(string username, CommentModel comment)
         {
-            ReviewModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
-            UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+            var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
+            var user = await _userProfileRepository.TryGetUserProfileAsync(username);
             await SendUserEmailsAsync(review, user, GetCommentTagPlainTextContent(comment), GetCommentTagHtmlContent(comment, review));
         }
-        
-        public async Task NotifyApproversOfReview(ClaimsPrincipal user, string reviewId, HashSet<String> reviewers)
+
+        public async Task NotifyApproversOfReview(ClaimsPrincipal user, string reviewId, HashSet<string> reviewers)
         {
-            UserProfileModel userProfile = await _userProfileRepository.tryGetUserProfileAsync(user.GetGitHubLogin());
-            ReviewModel review = await _reviewRepository.GetReviewAsync(reviewId);
-            foreach (string reviewer in reviewers)
+            var userProfile = await _userProfileRepository.TryGetUserProfileAsync(user.GetGitHubLogin());
+            var review = await _reviewRepository.GetReviewAsync(reviewId);
+            foreach (var reviewer in reviewers)
             {
-                UserProfileModel reviewerProfile = await _userProfileRepository.tryGetUserProfileAsync(reviewer);
-                await SendUserEmailsAsync(review, reviewerProfile, 
-                    GetApproverReviewContentHeading(userProfile,false), 
+                var reviewerProfile = await _userProfileRepository.TryGetUserProfileAsync(reviewer);
+                await SendUserEmailsAsync(review, reviewerProfile,
+                    GetApproverReviewContentHeading(userProfile, false),
                     GetApproverReviewHtmlContent(userProfile, review));
             }
         }
-        
+
+        public async Task NotifySubscribersOnNewRevisionAsync(ReviewRevisionModel revision, ClaimsPrincipal user)
+        {
+            var review = revision.Review;
+            var uri = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}");
+            var plainTextContent = $"A new revision, {revision.DisplayName}," +
+                $" was uploaded by {revision.Author}.";
+            var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{revision.DisplayName}</a>," +
+                $" was uploaded by <b>{revision.Author}</b>.";
+            await SendEmailsAsync(review, user, plainTextContent, htmlContent);
+        }
+
+        public async Task ToggleSubscribedAsync(ClaimsPrincipal user, string reviewId)
+        {
+            var review = await _reviewRepository.GetReviewAsync(reviewId);
+            if (review.IsUserSubscribed(user))
+            {
+                await UnsubscribeAsync(review, user);
+            }
+            else
+            {
+                await SubscribeAsync(review, user);
+            }
+        }
+
+        public async Task SubscribeAsync(ReviewModel review, ClaimsPrincipal user)
+        {
+            var email = GetUserEmail(user);
+
+            if (email != null && !review.Subscribers.Contains(email))
+            {
+                review.Subscribers.Add(email);
+                await _reviewRepository.UpsertReviewAsync(review);
+            }
+        }
+
+        public async Task UnsubscribeAsync(ReviewModel review, ClaimsPrincipal user)
+        {
+            var email = GetUserEmail(user);
+            if (email != null && review.Subscribers.Contains(email))
+            {
+                review.Subscribers.Remove(email);
+                await _reviewRepository.UpsertReviewAsync(review);
+            }
+        }
+
+        public static string GetUserEmail(ClaimsPrincipal user) =>
+            user.FindFirstValue(ClaimConstants.Email);
+
         private string GetApproverReviewHtmlContent(UserProfileModel user, ReviewModel review)
         {
             var reviewName = review.Name;
@@ -96,7 +144,7 @@ namespace APIViewWeb.Repositories
             sb.Append("</i>");
             return sb.ToString();
         }
-        
+
         private string GetHtmlContent(CommentModel comment, ReviewModel review)
         {
             var uri = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}#{Uri.EscapeUriString(comment.ElementId)}");
@@ -108,7 +156,7 @@ namespace APIViewWeb.Repositories
             sb.Append(CommentMarkdownExtensions.MarkdownAsHtml(comment.Comment));
             return sb.ToString();
         }
-        
+
         private static string GetCommentTagPlainTextContent(CommentModel comment)
         {
             var sb = new StringBuilder();
@@ -124,36 +172,25 @@ namespace APIViewWeb.Repositories
             sb.Append(CommentMarkdownExtensions.MarkdownAsPlainText(comment.Comment));
             return sb.ToString();
         }
-        
+
         private static string GetApproverReviewContentHeading(UserProfileModel user, bool includeHtml) =>
             $"{(includeHtml ? $"<b>{user.UserName}</b>" : $"{user.UserName}")} requested you to review API.";
-        
+
         private static string GetCommentTagContentHeading(CommentModel comment, bool includeHtml) =>
             $"{(includeHtml ? $"<b>{comment.Username}</b>" : $"{comment.Username}")} tagged you in a comment.";
 
         private static string GetContentHeading(CommentModel comment, bool includeHtml) =>
             $"{(includeHtml ? $"<b>{comment.Username}</b>" : $"{comment.Username}")} commented on this review.";
 
-        public async Task NotifySubscribersOnNewRevisionAsync(ReviewRevisionModel revision, ClaimsPrincipal user)
-        {
-            var review = revision.Review;
-            var uri = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}");
-            var plainTextContent = $"A new revision, {revision.DisplayName}," +
-                $" was uploaded by {revision.Author}.";
-            var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{revision.DisplayName}</a>," +
-                $" was uploaded by <b>{revision.Author}</b>.";
-            await SendEmailsAsync(review, user, plainTextContent, htmlContent);
-        }
-        
         private async Task SendUserEmailsAsync(ReviewModel review, UserProfileModel user, string plainTextContent, string htmlContent)
         {
-            ClaimsPrincipal userBackup = new ClaimsPrincipal();
+            var userBackup = new ClaimsPrincipal();
             EmailAddress e;
             if (!user.Email.IsNullOrEmpty())
             {
                 e = new EmailAddress(user.Email, user.UserName);
-            } 
-            else 
+            }
+            else
             {
                 var backupEmail = GetUserEmail(userBackup);
                 if (!backupEmail.IsNullOrEmpty())
@@ -166,20 +203,20 @@ namespace APIViewWeb.Repositories
                 }
             }
             var from = new EmailAddress(FROM_ADDRESS);
-            SendGridMessage msg = MailHelper.CreateSingleEmail(
+            var msg = MailHelper.CreateSingleEmail(
                 from,
                 e,
                 user.UserName,
                 plainTextContent,
                 htmlContent);
             var threadHeader = $"<{review.ReviewId}{FROM_ADDRESS}>";
-            msg.AddHeader(REPLY_TO_HEADER, threadHeader); 
+            msg.AddHeader(REPLY_TO_HEADER, threadHeader);
             msg.AddHeader(REFERENCES_HEADER, threadHeader);
             await _sendGridClient.SendEmailAsync(msg);
         }
         private async Task SendEmailsAsync(ReviewModel review, ClaimsPrincipal user, string plainTextContent, string htmlContent)
         {
-            string initiatingUserEmail = GetUserEmail(user);
+            var initiatingUserEmail = GetUserEmail(user);
             var subscribers = review.Subscribers.ToList()
                     .Where(e => e != initiatingUserEmail) // don't include the initiating user in the email
                     .Select(e => new EmailAddress(e))
@@ -190,7 +227,7 @@ namespace APIViewWeb.Repositories
             }
 
             var from = new EmailAddress(FROM_ADDRESS, GetUserName(user));
-            SendGridMessage msg = MailHelper.CreateMultipleEmailsToMultipleRecipients(
+            var msg = MailHelper.CreateMultipleEmailsToMultipleRecipients(
                 from,
                 subscribers,
                 Enumerable.Repeat(review.DisplayName, review.Subscribers.Count).ToList(),
@@ -198,51 +235,14 @@ namespace APIViewWeb.Repositories
                 htmlContent,
                 Enumerable.Repeat(new Dictionary<string, string>(), review.Subscribers.Count).ToList());
             var threadHeader = $"<{review.ReviewId}{FROM_ADDRESS}>";
-            msg.AddHeader(REPLY_TO_HEADER, threadHeader); 
+            msg.AddHeader(REPLY_TO_HEADER, threadHeader);
             msg.AddHeader(REFERENCES_HEADER, threadHeader);
             await _sendGridClient.SendEmailAsync(msg);
         }
 
-        public async Task ToggleSubscribedAsync(ClaimsPrincipal user, string reviewId)
-        {
-            ReviewModel review = await _reviewRepository.GetReviewAsync(reviewId);
-            if (review.IsUserSubscribed(user))
-            {
-                await UnsubscribeAsync(review, user);
-            }
-            else
-            {
-                await SubscribeAsync(review, user);
-            }
-        }
-
-        public async Task SubscribeAsync(ReviewModel review, ClaimsPrincipal user)
-        {
-            string email = GetUserEmail(user);
-
-            if (email != null && !review.Subscribers.Contains(email))
-            {
-                review.Subscribers.Add(email);
-                await _reviewRepository.UpsertReviewAsync(review);
-            }
-        }
-
-        public async Task UnsubscribeAsync(ReviewModel review, ClaimsPrincipal user)
-        {
-            string email = GetUserEmail(user);
-            if (email != null && review.Subscribers.Contains(email))
-            {
-                review.Subscribers.Remove(email);
-                await _reviewRepository.UpsertReviewAsync(review);
-            }
-        }
-
-        public static string GetUserEmail(ClaimsPrincipal user) =>
-            user.FindFirstValue(ClaimConstants.Email);
-
         private static string GetUserName(ClaimsPrincipal user)
         {
-            string name = user.FindFirstValue(ClaimConstants.Name);
+            var name = user.FindFirstValue(ClaimConstants.Name);
             return string.IsNullOrEmpty(name) ? user.FindFirstValue(ClaimConstants.Login) : name;
         }
     }

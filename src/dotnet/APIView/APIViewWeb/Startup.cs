@@ -24,6 +24,7 @@ using APIViewWeb.HostedServices;
 using APIViewWeb.Filters;
 using APIViewWeb.Account;
 using APIView.Identity;
+using APIViewWeb.Managers;
 
 namespace APIViewWeb
 {
@@ -76,24 +77,24 @@ namespace APIViewWeb
                 options.Conventions.AddPageRoute("/Assemblies/Index", "");
             });
 
-            services.AddSingleton<BlobCodeFileRepository>();
-            services.AddSingleton<BlobOriginalsRepository>();
-            services.AddSingleton<CosmosReviewRepository>();
-            services.AddSingleton<CosmosCommentsRepository>();
-            services.AddSingleton<CosmosPullRequestsRepository>();
+            services.AddSingleton<IBlobCodeFileRepository, BlobCodeFileRepository>();
+            services.AddSingleton<IBlobOriginalsRepository, BlobOriginalsRepository>();
+            services.AddSingleton<IBlobUsageSampleRepository, BlobUsageSampleRepository>();
+            services.AddSingleton<ICosmosReviewRepository,CosmosReviewRepository>();
+            services.AddSingleton<ICosmosCommentsRepository, CosmosCommentsRepository>();
+            services.AddSingleton<ICosmosPullRequestsRepository, CosmosPullRequestsRepository>();
+            services.AddSingleton<ICosmosUsageSampleRepository, CosmosUsageSampleRepository>();
+            services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
-            services.AddSingleton<CosmosUsageSampleRepository>();
-            services.AddSingleton<BlobUsageSampleRepository>();
-            services.AddSingleton<CosmosUserProfileRepository>();
 
-            services.AddSingleton<ReviewManager>();
-            services.AddSingleton<CommentsManager>();
-            services.AddSingleton<NotificationManager>();
-            services.AddSingleton<PullRequestManager>();
-            services.AddSingleton<PackageNameManager>();
+            services.AddSingleton<IReviewManager, ReviewManager>();
+            services.AddSingleton<ICommentsManager, CommentsManager>();
+            services.AddSingleton<INotificationManager, NotificationManager>();
+            services.AddSingleton<IPullRequestManager, PullRequestManager>();
+            services.AddSingleton<IPackageNameManager, PackageNameManager>();
+            services.AddSingleton<IUsageSampleManager, UsageSampleManager>();
+            services.AddSingleton<IUserProfileManager, UserProfileManager>();
             services.AddSingleton<UserPreferenceCache>();
-            services.AddSingleton<UsageSampleManager>();
-            services.AddSingleton<UserProfileManager>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();

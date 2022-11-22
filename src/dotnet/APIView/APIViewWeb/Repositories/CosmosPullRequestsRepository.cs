@@ -1,16 +1,17 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
-    public class CosmosPullRequestsRepository
+    public class CosmosPullRequestsRepository : ICosmosPullRequestsRepository
     {
         private readonly Container _pullRequestsContainer;
         private CosmosReviewRepository _reviewsRepository;
@@ -45,6 +46,12 @@ namespace APIViewWeb
             return await GetPullRequestFromQueryAsync(query);
         }
 
+        public async Task<List<PullRequestModel>> GetPullRequestsAsync(int pullRequestNumber, string repoName)
+        {
+            var query = $"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}'";
+            return await GetPullRequestFromQueryAsync(query);
+        }
+
         private async Task<List<PullRequestModel>> GetPullRequestFromQueryAsync(string query)
         {
             var allRequests = new List<PullRequestModel>();
@@ -70,12 +77,6 @@ namespace APIViewWeb
         {
             var review = await _reviewsRepository.GetReviewAsync(reviewId);
             return review?.IsClosed ?? true;
-        }
-
-        public async Task<List<PullRequestModel>> GetPullRequestsAsync(int pullRequestNumber, string repoName)
-        {
-            var query = $"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}'";
-            return await GetPullRequestFromQueryAsync(query);
         }
     }
 }

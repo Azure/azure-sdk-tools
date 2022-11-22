@@ -8,6 +8,7 @@ using APIView;
 using APIView.DIff;
 using APIView.Model;
 using APIViewWeb.Helpers;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -143,7 +144,7 @@ namespace APIViewWeb.Pages.Assemblies
                         var langs = userCache.ApprovedLanguages.ToHashSet();
                         if (!langs.Any())
                         {
-                            UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                            UserProfileModel user = await _userProfileRepository.TryGetUserProfileAsync(username);
                             langs = user.Languages;
                             userCache.ApprovedLanguages = langs;
                             _preferenceCache.UpdateUserPreference(userCache, User);
@@ -155,7 +156,7 @@ namespace APIViewWeb.Pages.Assemblies
                     }
                     else
                     {
-                        UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                        UserProfileModel user = await _userProfileRepository.TryGetUserProfileAsync(username);
                         var langs = user.Languages;
                         if (langs.Contains(Review.Language) || !langs.Any())
                         {

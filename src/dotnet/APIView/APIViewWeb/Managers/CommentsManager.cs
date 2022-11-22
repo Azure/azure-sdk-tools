@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -15,9 +15,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Options;
 
-namespace APIViewWeb
+namespace APIViewWeb.Managers
 {
-    public class CommentsManager
+    public class CommentsManager : ICommentsManager
     {
         private readonly IAuthorizationService _authorizationService;
 
@@ -49,20 +49,20 @@ namespace APIViewWeb
 
         public async void LoadTaggableUsers()
         {
-            HttpClient c = new HttpClient();
+            var c = new HttpClient();
 
             // UserAgent is required
-            ProductInfoHeaderValue userAgent = new ProductInfoHeaderValue("APIView", Startup.VersionHash);
+            var userAgent = new ProductInfoHeaderValue("APIView", Startup.VersionHash);
 
-            foreach (string requiredOrg in _Options.RequiredOrganization)
+            foreach (var requiredOrg in _Options.RequiredOrganization)
             {
-                HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, string.Format("https://api.github.com/orgs/{0}/public_members?page={1}&per_page=100", requiredOrg, 1));
+                var req = new HttpRequestMessage(HttpMethod.Get, string.Format("https://api.github.com/orgs/{0}/public_members?page={1}&per_page=100", requiredOrg, 1));
                 req.Headers.UserAgent.Add(userAgent);
 
-                HttpResponseMessage res = await c.SendAsync(req);
-                string body = await res.Content.ReadAsStringAsync();
-                GithubUser[] users = JsonConvert.DeserializeObject<GithubUser[]>(body);
-                foreach (GithubUser user in users)
+                var res = await c.SendAsync(req);
+                var body = await res.Content.ReadAsStringAsync();
+                var users = JsonConvert.DeserializeObject<GithubUser[]>(body);
+                foreach (var user in users)
                 {
                     TaggableUsers.Add(user);
                 }
@@ -104,10 +104,10 @@ namespace APIViewWeb
             comment.Comment = commentText;
             comment.Username = user.GetGitHubLogin();
 
-            HashSet<string> newTaggedUsers = new HashSet<string>();
-            foreach(string taggedUser in taggedUsers)
+            var newTaggedUsers = new HashSet<string>();
+            foreach (var taggedUser in taggedUsers)
             {
-                if(!comment.TaggedUsers.Contains(taggedUser))
+                if (!comment.TaggedUsers.Contains(taggedUser))
                 {
                     await _notificationManager.NotifyUserOnCommentTag(taggedUser, comment);
                 }

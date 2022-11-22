@@ -4,18 +4,19 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
-    public class CosmosCommentsRepository
+    public class CosmosCommentsRepository : ICosmosCommentsRepository
     {
         private readonly Container _commentsContainer;
 
-        public CosmosCommentsRepository(IConfiguration configuration, CosmosClient cosmosClient = null)
+        public CosmosCommentsRepository(IConfiguration configuration)
         {
-            var client = cosmosClient ?? new CosmosClient(configuration["Cosmos:ConnectionString"]);
+            var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
             _commentsContainer = client.GetContainer("APIView", "Comments");
         }
 

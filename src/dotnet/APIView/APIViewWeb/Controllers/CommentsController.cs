@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
-using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

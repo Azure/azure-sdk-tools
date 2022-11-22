@@ -1937,7 +1937,8 @@ public:
 class AstClassTemplateSpecialization : public AstClassLike {
   std::vector<std::unique_ptr<AstType>> m_arguments;
 
-  virtual void DumpTemplateSpecializationArguments(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  virtual void DumpTemplateSpecializationArguments(AstDumper* dumper, DumpNodeOptions dumpOptions)
+      override
   {
     dumper->InsertPunctuation('<');
     for (auto const& arg : m_arguments)
@@ -2757,12 +2758,20 @@ bool AzureClassesDatabase::IsMemberOfObject(NamedDecl const* decl)
     return true;
   }
 
-  // Method or function parameters are by definition members of an object.
-  if (decl->getKind() == clang::Decl::ParmVar)
+  // Method or template parameters or enumerators are by definition members of an object.
+  if (decl->getKind() == Decl::ParmVar || decl->getKind() == Decl::EnumConstant
+      || decl->getKind() == Decl::TemplateTypeParm || decl->getKind() == Decl::NonTypeTemplateParm)
   {
     return true;
   }
-
+  // Local variables are obviously members of objects.
+  if (decl->getKind() == Decl::Var)
+  {
+    if (cast<VarDecl>(decl)->isLocalVarDecl())
+    {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -2777,12 +2786,13 @@ void AzureClassesDatabase::CreateAstNode(CXXRecordDecl* cxxDecl)
   // Include private elements if we're allowed to include private elements.
   if (m_processor->IncludePrivate() || cxxDecl->getAccess() != AS_private)
   {
-    // Skip over this class if it's a template declaration.
-    if (!cxxDecl->isEmbeddedInDeclarator() && !IsMemberOfObject(cxxDecl) && cxxDecl->getKind() != Decl::Kind::ClassTemplateSpecialization)
-    {
-      m_typeList.push_back(AstNode::Create(
-          cxxDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(cxxDecl))));
-    }
+    //// Skip over this class if it's a template declaration.
+    // if (!cxxDecl->isEmbeddedInDeclarator() && !IsMemberOfObject(cxxDecl) && cxxDecl->getKind() !=
+    // Decl::Kind::ClassTemplateSpecialization)
+    //{
+    //   m_typeList.push_back(AstNode::Create(
+    //       cxxDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(cxxDecl))));
+    // }
   }
 }
 
@@ -2790,12 +2800,12 @@ void AzureClassesDatabase::CreateAstNode(clang::FunctionDecl* functionDecl)
 {
   if (m_processor->IncludePrivate() || functionDecl->getAccess() != AS_private)
   {
-    if (functionDecl->isGlobal() && !IsMemberOfObject(functionDecl))
-    {
-      m_typeList.push_back(AstNode::Create(
-          functionDecl,
-          m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(functionDecl))));
-    }
+    // if (functionDecl->isGlobal() && !IsMemberOfObject(functionDecl))
+    //{
+    //   m_typeList.push_back(AstNode::Create(
+    //       functionDecl,
+    //       m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(functionDecl))));
+    // }
   }
 }
 
@@ -2803,24 +2813,24 @@ void AzureClassesDatabase::CreateAstNode(clang::TemplateDecl* templateDecl)
 {
   if (m_processor->IncludePrivate() || templateDecl->getAccess() != AS_private)
   {
-    if (!IsMemberOfObject(templateDecl))
-    {
-      m_typeList.push_back(AstNode::Create(
-          templateDecl,
-          m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
-    }
+    // if (!IsMemberOfObject(templateDecl))
+    //{
+    //   m_typeList.push_back(AstNode::Create(
+    //       templateDecl,
+    //       m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
+    // }
   }
 }
 void AzureClassesDatabase::CreateAstNode(clang::VarDecl* variableDecl)
 {
   if (m_processor->IncludePrivate() || variableDecl->getAccess() != AS_private)
   {
-    if (!IsMemberOfObject(variableDecl))
-    {
-      m_typeList.push_back(AstNode::Create(
-          variableDecl,
-          m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(variableDecl))));
-    }
+    // if (!IsMemberOfObject(variableDecl))
+    //{
+    //   m_typeList.push_back(AstNode::Create(
+    //       variableDecl,
+    //       m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(variableDecl))));
+    // }
   }
 }
 
@@ -2828,11 +2838,11 @@ void AzureClassesDatabase::CreateAstNode(clang::EnumDecl* enumDecl)
 {
   if (m_processor->IncludePrivate() || enumDecl->getAccess() != AS_private)
   {
-    if (!IsMemberOfObject(enumDecl))
-    {
-      m_typeList.push_back(AstNode::Create(
-          enumDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(enumDecl))));
-    }
+    // if (!IsMemberOfObject(enumDecl))
+    //{
+    //   m_typeList.push_back(AstNode::Create(
+    //       enumDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(enumDecl))));
+    // }
   }
 }
 
@@ -2840,16 +2850,12 @@ void AzureClassesDatabase::CreateAstNode(clang::ClassTemplateSpecializationDecl*
 {
   if (m_processor->IncludePrivate() || templateDecl->getAccess() != AS_private)
   {
-    if (templateDecl->getName() == "UniqueHandleHelper")
-    {
-      templateDecl->dump(llvm::outs());
-    }
-    if (!IsMemberOfObject(templateDecl))
-    {
-      m_typeList.push_back(AstNode::Create(
-          templateDecl,
-          m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
-    }
+    // if (!IsMemberOfObject(templateDecl))
+    //{
+    //   m_typeList.push_back(AstNode::Create(
+    //       templateDecl,
+    //       m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
+    // }
   }
 }
 
@@ -2857,11 +2863,11 @@ void AzureClassesDatabase::CreateAstNode(clang::TypeAliasDecl* aliasDecl)
 {
   if (m_processor->IncludePrivate() || aliasDecl->getAccess() != AS_private)
   {
-    if (!IsMemberOfObject(aliasDecl))
-    {
-      m_typeList.push_back(AstNode::Create(
-          aliasDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(aliasDecl))));
-    }
+    // if (!IsMemberOfObject(aliasDecl))
+    //{
+    //   m_typeList.push_back(AstNode::Create(
+    //       aliasDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(aliasDecl))));
+    // }
   }
 }
 
@@ -2869,7 +2875,14 @@ void AzureClassesDatabase::CreateAstNode(clang::NamedDecl* namedDecl)
 {
   if (m_processor->IncludePrivate() || namedDecl->getAccess() != AS_private)
   {
-    auto node = AstNode::Create(namedDecl, nullptr);
-    node;
+    if (!IsMemberOfObject(namedDecl))
+    {
+      auto node = AstNode::Create(
+          namedDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(namedDecl)));
+      if (node)
+      {
+        m_typeList.push_back(std::move(node));
+      }
+    }
   }
 }

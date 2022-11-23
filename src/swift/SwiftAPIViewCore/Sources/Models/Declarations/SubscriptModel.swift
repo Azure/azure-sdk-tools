@@ -25,7 +25,7 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
 
 
 /// Grammar Summary:
@@ -34,46 +34,50 @@ import AST
 ///     subscript-declaration → subscript-head subscript-result generic-where-clause opt getter-setter-keyword-block
 ///     subscript-head → attributes opt declaration-modifiers opt subscript generic-parameter-clause opt parameter-clause
 ///     subscript-result → -> attributes opt type
-class SubscriptModel: Tokenizable, Commentable, AccessLevelProtocol {
+class SubscriptModel: Tokenizable {//, Commentable, AccessLevelProtocol {
 
-    var lineId: String?
-    var attributes: AttributesModel
-    var modifiers: DeclarationModifiersModel
-    var accessLevel: AccessLevelModifier
-    var genericParamClause: GenericParameterModel?
-    var genericWhereClause: GenericWhereModel?
-    var signature: SignatureModel
+    // FIXME: Restore
+//    var lineId: String?
+//    var attributes: AttributesModel
+//    var modifiers: DeclarationModifiersModel
+//    var accessLevel: AccessLevelModifier
+//    var genericParamClause: GenericParameterModel?
+//    var genericWhereClause: GenericWhereModel?
+//    var signature: SignatureModel
 
-    init(from decl: SubscriptDeclaration, parent: Linkable) {
-        lineId = identifier(forName: "subscript", withPrefix: parent.definitionId)
-        accessLevel = decl.accessLevel ?? .internal
-        attributes = AttributesModel(from: decl.attributes)
-        modifiers = DeclarationModifiersModel(from: decl.modifiers)
-        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
-        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
-        signature = SignatureModel(params: decl.parameterList, result: decl.resultType, resultAttributes: decl.resultAttributes, throwsKind: nil)
+    init(from decl: SubscriptDeclSyntax) {//}, parent: Linkable) {
+        // FIXME: Restore
+//        lineId = identifier(forName: "subscript", withPrefix: parent.definitionId)
+//        accessLevel = decl.accessLevel ?? .internal
+//        attributes = AttributesModel(from: decl.attributes)
+//        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+//        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
+//        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
+//        signature = SignatureModel(params: decl.parameterList, result: decl.resultType, resultAttributes: decl.resultAttributes, throwsKind: nil)
     }
 
-    init(from decl: ProtocolDeclaration.SubscriptMember, parent: ProtocolModel) {
-        lineId = identifier(forName: "subscript", withPrefix: parent.definitionId)
-        attributes = AttributesModel(from: decl.attributes)
-        modifiers = DeclarationModifiersModel(from: decl.modifiers)
-        accessLevel = modifiers.accessLevel ?? .internal
-        genericParamClause = GenericParameterModel(from: decl.genericParameter)
-        genericWhereClause = GenericWhereModel(from: decl.genericWhere)
-        signature = SignatureModel(params: decl.parameterList, result: decl.resultType, resultAttributes: decl.resultAttributes, throwsKind: nil)
-    }
+    // FIXME: Restore
+//    init(from decl: ProtocolDeclaration.SubscriptMember, parent: ProtocolModel) {
+//        lineId = identifier(forName: "subscript", withPrefix: parent.definitionId)
+//        attributes = AttributesModel(from: decl.attributes)
+//        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+//        accessLevel = modifiers.accessLevel ?? .internal
+//        genericParamClause = GenericParameterModel(from: decl.genericParameter)
+//        genericWhereClause = GenericWhereModel(from: decl.genericWhere)
+//        signature = SignatureModel(params: decl.parameterList, result: decl.resultType, resultAttributes: decl.resultAttributes, throwsKind: nil)
+//    }
 
     func tokenize(apiview a: APIViewModel) {
-        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
-        a.lineIdMarker(definitionId: lineId)
-        attributes.tokenize(apiview: a)
-        modifiers.tokenize(apiview: a)
-        a.keyword("subscript")
-        genericParamClause?.tokenize(apiview: a)
-        signature.tokenize(apiview: a)
-        genericWhereClause?.tokenize(apiview: a)
-        a.newline()
-        a.blankLines(set: 1)
+        // FIXME: Restore
+//        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+//        a.lineIdMarker(definitionId: lineId)
+//        attributes.tokenize(apiview: a)
+//        modifiers.tokenize(apiview: a)
+//        a.keyword("subscript")
+//        genericParamClause?.tokenize(apiview: a)
+//        signature.tokenize(apiview: a)
+//        genericWhereClause?.tokenize(apiview: a)
+//        a.newline()
+//        a.blankLines(set: 1)
     }
 }

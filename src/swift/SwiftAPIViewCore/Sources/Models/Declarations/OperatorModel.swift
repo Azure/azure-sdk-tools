@@ -25,7 +25,7 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
 
 
 /// Grammar Summary:
@@ -34,38 +34,41 @@ import AST
 ///     postfix-operator-declaration → postfix operator operator
 ///     infix-operator-declaration → infix operator operator infix-operator-group opt
 ///     infix-operator-group → : precedence-group-name
-class OperatorModel: Tokenizable, Commentable {
+class OperatorModel: Tokenizable {//, Commentable {
 
-    var lineId: String?
-    var keyword: String
-    var name: String?
-    var opName: String
+    // FIXME: Restore
+//    var lineId: String?
+//    var keyword: String
+//    var name: String?
+//    var opName: String
 
-    init(from decl: OperatorDeclaration, parent: Linkable) {
-        switch decl.kind {
-        case let .infix(op, ident):
-            self.keyword = "infix"
-            self.opName = op
-            self.name = ident?.textDescription
-        case let .prefix(op):
-            self.keyword = "prefix"
-            self.opName = op
-        case let .postfix(op):
-            self.keyword = "postfix"
-            self.opName = op
-        }
-        self.lineId = identifier(forName: opName, withPrefix: parent.definitionId)
+    init(from decl: OperatorDeclSyntax) {//, parent: Linkable) {
+        // FIXME: Restore
+//        switch decl.kind {
+//        case let .infix(op, ident):
+//            self.keyword = "infix"
+//            self.opName = op
+//            self.name = ident?.textDescription
+//        case let .prefix(op):
+//            self.keyword = "prefix"
+//            self.opName = op
+//        case let .postfix(op):
+//            self.keyword = "postfix"
+//            self.opName = op
+//        }
+//        self.lineId = identifier(forName: opName, withPrefix: parent.definitionId)
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.keyword(keyword, postfixSpace: true)
-        a.keyword("operator", postfixSpace: true)
-        a.text(opName, definitionId: lineId)
-        if let name = name {
-            a.punctuation(":", postfixSpace: true)
-            a.typeReference(name: name)
-        }
-        a.newline()
-        a.blankLines(set: 1)
+        // FIXME: Restore
+//        a.keyword(keyword, postfixSpace: true)
+//        a.keyword("operator", postfixSpace: true)
+//        a.text(opName, definitionId: lineId)
+//        if let name = name {
+//            a.punctuation(":", postfixSpace: true)
+//            a.typeReference(name: name)
+//        }
+//        a.newline()
+//        a.blankLines(set: 1)
     }
 }

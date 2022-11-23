@@ -25,7 +25,8 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
+
 
 /// Grammar Summary:
 /// struct-declaration → attributes opt access-level-modifier opt struct struct-name generic-parameter-clause opt type-inheritance-clause opt generic-where-clause opt struct-body
@@ -33,79 +34,83 @@ import AST
 /// struct-body → { struct-members opt }
 /// struct-members → struct-member struct-members opt
 /// struct-member → declaration | compiler-control-statement
-class StructModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProtocol {
+class StructModel: Tokenizable {//, Linkable, Commentable, Extensible, AccessLevelProtocol {
 
-    var definitionId: String?
-    var lineId: String?
-    var parent: Linkable?
-    var attributes: AttributesModel
-    var accessLevel: AccessLevelModifier
-    var name: String
-    var genericParamClause: GenericParameterModel?
-    var typeInheritanceClause: TypeInheritanceModel?
-    var genericWhereClause: GenericWhereModel?
-    var members: [Tokenizable]
-    var extensions: [ExtensionModel]
+    // FIXME: Restore
+//    var definitionId: String?
+//    var lineId: String?
+//    var parent: Linkable?
+//    var attributes: AttributesModel
+//    var accessLevel: AccessLevelModifier
+//    var name: String
+//    var genericParamClause: GenericParameterModel?
+//    var typeInheritanceClause: TypeInheritanceModel?
+//    var genericWhereClause: GenericWhereModel?
+//    var members: [Tokenizable]
+//    var extensions: [ExtensionModel]
 
-    init(from decl: StructDeclaration, parent: Linkable) {
-        self.parent = parent
-        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
-        lineId = nil
-        attributes = AttributesModel(from: decl.attributes)
-        accessLevel = decl.accessLevel ?? .internal
-        name = decl.name.textDescription
-        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
-        typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
-        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
-        extensions = [ExtensionModel]()
-        members = [Tokenizable]()
-        decl.members.forEach { member in
-            switch member {
-            case let .declaration(decl):
-                if let model = decl.toTokenizable(withParent: self) {
-                    if let model = model as? ExtensionModel {
-                        // TODO: Place the extension in the appropriate location
-                        extensions.append(model)
-                    } else {
-                        members.append(model)
-                    }
-                }
-            case let .compilerControl(statement):
-                SharedLogger.warn("Unsupported compiler control statement: \(statement)")
-            }
-        }
+    init(from decl: StructDeclSyntax) {//}, parent: Linkable) {
+        // FIXME: Restore
+//        self.parent = parent
+//        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
+//        lineId = nil
+//        attributes = AttributesModel(from: decl.attributes)
+//        accessLevel = decl.accessLevel ?? .internal
+//        name = decl.name.textDescription
+//        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
+//        typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
+//        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
+//        extensions = [ExtensionModel]()
+//        members = [Tokenizable]()
+//        decl.members.forEach { member in
+//            switch member {
+//            case let .declaration(decl):
+//                if let model = decl.toTokenizable(withParent: self) {
+//                    if let model = model as? ExtensionModel {
+//                        // TODO: Place the extension in the appropriate location
+//                        extensions.append(model)
+//                    } else {
+//                        members.append(model)
+//                    }
+//                }
+//            case let .compilerControl(statement):
+//                SharedLogger.warn("Unsupported compiler control statement: \(statement)")
+//            }
+//        }
     }
 
     func tokenize(apiview a: APIViewModel) {
-        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
-        attributes.tokenize(apiview: a)
-        a.keyword(accessLevel.textDescription, postfixSpace: true)
-        a.keyword("struct", postfixSpace: true)
-        a.typeDeclaration(name: name, definitionId: definitionId)
-        genericParamClause?.tokenize(apiview: a)
-        typeInheritanceClause?.tokenize(apiview: a)
-        genericWhereClause?.tokenize(apiview: a)
-        a.punctuation("{", prefixSpace: true)
-        a.newline()
-        a.indent {
-            members.forEach { member in
-                member.tokenize(apiview: a)
-            }
-            extensions.forEach { ext in
-                ext.tokenize(apiview: a)
-            }
-        }
-        a.punctuation("}")
-        a.newline()
-        a.blankLines(set: 1)
+        // FIXME: Restore
+//        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+//        attributes.tokenize(apiview: a)
+//        a.keyword(accessLevel.textDescription, postfixSpace: true)
+//        a.keyword("struct", postfixSpace: true)
+//        a.typeDeclaration(name: name, definitionId: definitionId)
+//        genericParamClause?.tokenize(apiview: a)
+//        typeInheritanceClause?.tokenize(apiview: a)
+//        genericWhereClause?.tokenize(apiview: a)
+//        a.punctuation("{", prefixSpace: true)
+//        a.newline()
+//        a.indent {
+//            members.forEach { member in
+//                member.tokenize(apiview: a)
+//            }
+//            extensions.forEach { ext in
+//                ext.tokenize(apiview: a)
+//            }
+//        }
+//        a.punctuation("}")
+//        a.newline()
+//        a.blankLines(set: 1)
     }
 
     func navigationTokenize(apiview a: APIViewModel) {
-        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
-        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .struct))
-        for member in members {
-            guard let member = member as? Linkable else { continue }
-            member.navigationTokenize(apiview: a)
-        }
+        // FIXME: Restore
+//        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+//        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .struct))
+//        for member in members {
+//            guard let member = member as? Linkable else { continue }
+//            member.navigationTokenize(apiview: a)
+//        }
     }
 }

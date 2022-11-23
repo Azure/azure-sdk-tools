@@ -25,49 +25,53 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
 
 
 /// Grammar Summary:
 ///     typealias-declaration → attributes opt access-level-modifier opt typealias typealias-name generic-parameter-clause opt typealias-assignment
 ///     typealias-name → identifier
 ///     typealias-assignment → = type
-class TypealiasModel: Tokenizable, Linkable, Commentable, AccessLevelProtocol {
+class TypealiasModel: Tokenizable {//, Linkable, Commentable, AccessLevelProtocol {
 
-    var definitionId: String?
-    var lineId: String?
-    var parent: Linkable?
-    var attributes: AttributesModel
-    var accessLevel: AccessLevelModifier
-    var name: String
-    var genericParamClause: GenericParameterModel?
-    var assignment: TypeModel
+    // FIXME: Restore
+//    var definitionId: String?
+//    var lineId: String?
+//    var parent: Linkable?
+//    var attributes: AttributesModel
+//    var accessLevel: AccessLevelModifier
+//    var name: String
+//    var genericParamClause: GenericParameterModel?
+//    var assignment: TypeModel
 
-    init(from decl: TypealiasDeclaration, parent: Linkable) {
-        self.parent = parent
-        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
-        lineId = nil
-        attributes = AttributesModel(from: decl.attributes)
-        accessLevel = decl.accessLevel ?? .internal
-        name = decl.name.textDescription
-        genericParamClause = GenericParameterModel(from: decl.generic)
-        assignment = decl.assignment.toTokenizable()!
+    init(from decl: TypealiasDeclSyntax) {//}, parent: Linkable) {
+        // FIXME: Restore
+//        self.parent = parent
+//        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
+//        lineId = nil
+//        attributes = AttributesModel(from: decl.attributes)
+//        accessLevel = decl.accessLevel ?? .internal
+//        name = decl.name.textDescription
+//        genericParamClause = GenericParameterModel(from: decl.generic)
+//        assignment = decl.assignment.toTokenizable()!
     }
 
     func tokenize(apiview a: APIViewModel) {
-        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
-        attributes.tokenize(apiview: a)
-        a.keyword(accessLevel.textDescription, postfixSpace: true)
-        a.keyword("typealias", postfixSpace: true)
-        a.typeDeclaration(name: name, definitionId: definitionId)
-        genericParamClause?.tokenize(apiview: a)
-        a.punctuation("=", prefixSpace: true, postfixSpace: true)
-        assignment.tokenize(apiview: a)
-        a.newline()
-        a.blankLines(set: 1)
+        // FIXME: Restore
+//        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+//        attributes.tokenize(apiview: a)
+//        a.keyword(accessLevel.textDescription, postfixSpace: true)
+//        a.keyword("typealias", postfixSpace: true)
+//        a.typeDeclaration(name: name, definitionId: definitionId)
+//        genericParamClause?.tokenize(apiview: a)
+//        a.punctuation("=", prefixSpace: true, postfixSpace: true)
+//        assignment.tokenize(apiview: a)
+//        a.newline()
+//        a.blankLines(set: 1)
     }
 
     func navigationTokenize(apiview a: APIViewModel) {
-        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .class))
+        // FIXME: Restore
+//        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .class))
     }
 }

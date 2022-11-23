@@ -25,7 +25,7 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
 
 
 /// Grammar Summary
@@ -51,66 +51,70 @@ import AST
 ///     willSet-didSet-block → { didSet-clause willSet-clause opt }
 ///     willSet-clause → attributes opt willSet setter-name opt code-block
 ///     didSet-clause → attributes opt didSet setter-name opt code-block
-class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
+class VariableModel: Tokenizable {//, Commentable, AccessLevelProtocol {
 
-    var lineId: String?
-    var attributes: AttributesModel
-    var modifiers: DeclarationModifiersModel
-    var accessLevel: AccessLevelModifier
-    var initializers: [InitializerItemModel]
-    var getterSetterBlock: GetterSetterModel?
+    // FIXME: Restore
+//    var lineId: String?
+//    var attributes: AttributesModel
+//    var modifiers: DeclarationModifiersModel
+//    var accessLevel: AccessLevelModifier
+//    var initializers: [InitializerItemModel]
+//    var getterSetterBlock: GetterSetterModel?
 
-    init(from decl: VariableDeclaration, parent: Linkable) {
-        attributes = AttributesModel(from: decl.attributes)
-        modifiers = DeclarationModifiersModel(from: decl.modifiers)
-        accessLevel = decl.accessLevel ?? .internal
-        getterSetterBlock = nil
-        switch decl.body {
-        case let .initializerList(initializerList):
-            initializers = initializerList.compactMap { InitializerItemModel(from: $0) }
-        case let .codeBlock(ident, typeAnno, _):
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil, hasGetter: true)]
-        case let .getterSetterKeywordBlock(ident, typeAnno, _):
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil, hasGetter: true, hasSetter: true)]
-        case let .getterSetterBlock(ident, typeAnno, _):
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil, hasGetter: true, hasSetter: true)]
-        case let .willSetDidSetBlock(ident, typeAnno, expression, _):
-            // the willSetDidSet block is irrelevant from an API perspective
-            // so we ignore it.
-            var defaultValue: String? = nil
-            if let literalExpression = expression as? LiteralExpression {
-                defaultValue = literalExpression.textDescription
-            }
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: defaultValue)]
-        }
-        // Since we preserve these on a single line, base the line ID on the first name
-        lineId = identifier(forName: initializers.first!.name, withPrefix: parent.definitionId)
+    init(from decl: VariableDeclSyntax) {//}, parent: Linkable) {
+        // FIXME: Restore
+//        attributes = AttributesModel(from: decl.attributes)
+//        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+//        accessLevel = decl.accessLevel ?? .internal
+//        getterSetterBlock = nil
+//        switch decl.body {
+//        case let .initializerList(initializerList):
+//            initializers = initializerList.compactMap { InitializerItemModel(from: $0) }
+//        case let .codeBlock(ident, typeAnno, _):
+//            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil, hasGetter: true)]
+//        case let .getterSetterKeywordBlock(ident, typeAnno, _):
+//            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil, hasGetter: true, hasSetter: true)]
+//        case let .getterSetterBlock(ident, typeAnno, _):
+//            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil, hasGetter: true, hasSetter: true)]
+//        case let .willSetDidSetBlock(ident, typeAnno, expression, _):
+//            // the willSetDidSet block is irrelevant from an API perspective
+//            // so we ignore it.
+//            var defaultValue: String? = nil
+//            if let literalExpression = expression as? LiteralExpression {
+//                defaultValue = literalExpression.textDescription
+//            }
+//            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: defaultValue)]
+//        }
+//        // Since we preserve these on a single line, base the line ID on the first name
+//        lineId = identifier(forName: initializers.first!.name, withPrefix: parent.definitionId)
     }
 
-    init(from decl: ProtocolDeclaration.PropertyMember, parent: ProtocolModel) {
-        let name = decl.name.textDescription
-        initializers = [InitializerItemModel(name: name, typeModel: TypeAnnotationModel(from: decl.typeAnnotation), defaultValue: nil)]
-        lineId = identifier(forName: name, withPrefix: parent.definitionId)
-        attributes = AttributesModel(from: decl.attributes)
-        modifiers = DeclarationModifiersModel(from: decl.modifiers)
-        accessLevel = modifiers.accessLevel ?? .internal
-        getterSetterBlock = GetterSetterModel(from: decl.getterSetterKeywordBlock)
-    }
+    // FIXME: Restore
+//    init(from decl: ProtocolDeclaration.PropertyMember, parent: ProtocolModel) {
+//        let name = decl.name.textDescription
+//        initializers = [InitializerItemModel(name: name, typeModel: TypeAnnotationModel(from: decl.typeAnnotation), defaultValue: nil)]
+//        lineId = identifier(forName: name, withPrefix: parent.definitionId)
+//        attributes = AttributesModel(from: decl.attributes)
+//        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+//        accessLevel = modifiers.accessLevel ?? .internal
+//        getterSetterBlock = GetterSetterModel(from: decl.getterSetterKeywordBlock)
+//    }
 
     func tokenize(apiview a: APIViewModel) {
-        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
-        a.lineIdMarker(definitionId: lineId)
-        attributes.tokenize(apiview: a)
-        modifiers.tokenize(apiview: a)
-        a.keyword("var", postfixSpace: true)
-        let stopIdx = initializers.count - 1
-        for (idx, item) in initializers.enumerated() {
-            item.tokenize(apiview: a)
-            if idx != stopIdx {
-                a.punctuation(",", postfixSpace: true)
-            }
-        }
-        getterSetterBlock?.tokenize(apiview: a)
-        a.newline()
+        // FIXME: Restore
+//        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+//        a.lineIdMarker(definitionId: lineId)
+//        attributes.tokenize(apiview: a)
+//        modifiers.tokenize(apiview: a)
+//        a.keyword("var", postfixSpace: true)
+//        let stopIdx = initializers.count - 1
+//        for (idx, item) in initializers.enumerated() {
+//            item.tokenize(apiview: a)
+//            if idx != stopIdx {
+//                a.punctuation(",", postfixSpace: true)
+//            }
+//        }
+//        getterSetterBlock?.tokenize(apiview: a)
+//        a.newline()
     }
 }

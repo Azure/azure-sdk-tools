@@ -25,7 +25,7 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
 
 
 /// Grammar Summary:
@@ -42,120 +42,127 @@ import AST
 ///     precedence-group-associativity → associativity : none
 ///     precedence-group-names → precedence-group-name | precedence-group-name , precedence-group-names
 ///     precedence-group-name → identifier
-class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
+class PrecedenceGroupModel: Tokenizable {//, Commentable, Linkable {
 
-    var lineId: String?
-    var definitionId: String?
-    var parent: Linkable?
-    var name: String
-    var members: [Tokenizable]
+    // FIXME: Restore
+//    var lineId: String?
+//    var definitionId: String?
+//    var parent: Linkable?
+//    var name: String
+//    var members: [Tokenizable]
 
-    struct AssociativityMember: Tokenizable, Commentable {
+    // FIXME: Restore
+//    struct AssociativityMember: Tokenizable, Commentable {
+//
+//        var lineId: String?
+//        var value: String
+//
+//        init(value: String, parent: PrecedenceGroupModel) {
+//            self.lineId = identifier(forName: "associativity", withPrefix: parent.definitionId)
+//            self.value = value
+//        }
+//
+//        func tokenize(apiview a: APIViewModel) {
+//            a.lineIdMarker(definitionId: lineId)
+//            a.keyword("associativity")
+//            a.punctuation(":", postfixSpace: true)
+//            a.keyword(value)
+//        }
+//    }
 
-        var lineId: String?
-        var value: String
+    // FIXME: Restore
+//    struct ComparisonMember: Tokenizable, Commentable {
+//
+//        var lineId: String?
+//        var keyword: String
+//        var groups: [TypeModel]
+//
+//        init(keyword: String, with identifiers: IdentifierList, parent: PrecedenceGroupModel) {
+//            self.lineId = identifier(forName: keyword, withPrefix: parent.definitionId)
+//            self.keyword = keyword
+//            self.groups = [TypeModel]()
+//            identifiers.forEach { item in
+//                self.groups.append(TypeIdentifierModel(name: item.textDescription))
+//            }
+//        }
+//
+//        func tokenize(apiview a: APIViewModel) {
+//            a.lineIdMarker(definitionId: lineId)
+//            a.keyword(keyword)
+//            a.punctuation(":", postfixSpace: true)
+//            let stopIdx = groups.count - 1
+//            for (idx, group) in groups.enumerated() {
+//                group.tokenize(apiview: a)
+//                if idx != stopIdx {
+//                    a.punctuation(",", postfixSpace: true)
+//                }
+//            }
+//        }
+//    }
 
-        init(value: String, parent: PrecedenceGroupModel) {
-            self.lineId = identifier(forName: "associativity", withPrefix: parent.definitionId)
-            self.value = value
-        }
+    // FIXME: Restore
+//    struct AssignmentMember: Tokenizable, Commentable {
+//
+//        var lineId: String?
+//        var value: Bool
+//
+//        init(value: Bool, parent: PrecedenceGroupModel) {
+//            self.lineId = identifier(forName: "assignment", withPrefix: parent.definitionId)
+//            self.value = value
+//        }
+//
+//        func tokenize(apiview a: APIViewModel) {
+//            a.lineIdMarker(definitionId: lineId)
+//            a.keyword("assignment")
+//            a.punctuation(":", postfixSpace: true)
+//            a.literal(String(value))
+//        }
+//    }
 
-        func tokenize(apiview a: APIViewModel) {
-            a.lineIdMarker(definitionId: lineId)
-            a.keyword("associativity")
-            a.punctuation(":", postfixSpace: true)
-            a.keyword(value)
-        }
-    }
-
-    struct ComparisonMember: Tokenizable, Commentable {
-
-        var lineId: String?
-        var keyword: String
-        var groups: [TypeModel]
-
-        init(keyword: String, with identifiers: IdentifierList, parent: PrecedenceGroupModel) {
-            self.lineId = identifier(forName: keyword, withPrefix: parent.definitionId)
-            self.keyword = keyword
-            self.groups = [TypeModel]()
-            identifiers.forEach { item in
-                self.groups.append(TypeIdentifierModel(name: item.textDescription))
-            }
-        }
-
-        func tokenize(apiview a: APIViewModel) {
-            a.lineIdMarker(definitionId: lineId)
-            a.keyword(keyword)
-            a.punctuation(":", postfixSpace: true)
-            let stopIdx = groups.count - 1
-            for (idx, group) in groups.enumerated() {
-                group.tokenize(apiview: a)
-                if idx != stopIdx {
-                    a.punctuation(",", postfixSpace: true)
-                }
-            }
-        }
-    }
-
-    struct AssignmentMember: Tokenizable, Commentable {
-
-        var lineId: String?
-        var value: Bool
-
-        init(value: Bool, parent: PrecedenceGroupModel) {
-            self.lineId = identifier(forName: "assignment", withPrefix: parent.definitionId)
-            self.value = value
-        }
-
-        func tokenize(apiview a: APIViewModel) {
-            a.lineIdMarker(definitionId: lineId)
-            a.keyword("assignment")
-            a.punctuation(":", postfixSpace: true)
-            a.literal(String(value))
-        }
-    }
-
-    init(from decl: PrecedenceGroupDeclaration, parent: Linkable) {
-        self.parent = parent
-        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
-        lineId = nil
-        name = decl.name.textDescription
-        members = [Tokenizable]()
-        decl.attributes.forEach { item in
-            switch item {
-            case let .assignment(val):
-                members.append(AssignmentMember(value: val, parent: self))
-            case .associativityLeft:
-                members.append(AssociativityMember(value: "left", parent: self))
-            case .associativityNone:
-                members.append(AssociativityMember(value: "none", parent: self))
-            case .associativityRight:
-                members.append(AssociativityMember(value: "right", parent: self))
-            case let .higherThan(val):
-                members.append(ComparisonMember(keyword: "higherThan", with: val, parent: self))
-            case  let .lowerThan(val):
-                members.append(ComparisonMember(keyword: "lowerThan", with: val, parent: self))
-            }
-        }
+    init(from decl: PrecedenceGroupDeclSyntax) {//}, parent: Linkable) {
+        // FIXME: Restore
+//        self.parent = parent
+//        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
+//        lineId = nil
+//        name = decl.name.textDescription
+//        members = [Tokenizable]()
+//        decl.attributes.forEach { item in
+//            switch item {
+//            case let .assignment(val):
+//                members.append(AssignmentMember(value: val, parent: self))
+//            case .associativityLeft:
+//                members.append(AssociativityMember(value: "left", parent: self))
+//            case .associativityNone:
+//                members.append(AssociativityMember(value: "none", parent: self))
+//            case .associativityRight:
+//                members.append(AssociativityMember(value: "right", parent: self))
+//            case let .higherThan(val):
+//                members.append(ComparisonMember(keyword: "higherThan", with: val, parent: self))
+//            case  let .lowerThan(val):
+//                members.append(ComparisonMember(keyword: "lowerThan", with: val, parent: self))
+//            }
+//        }
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.keyword("precedencegroup", postfixSpace: true)
-        a.typeDeclaration(name: name, definitionId: definitionId)
-        a.punctuation("{", prefixSpace: true)
-        a.newline()
-        a.indent {
-            members.forEach { member in
-                member.tokenize(apiview: a)
-                a.newline()
-            }
-        }
-        a.punctuation("}")
-        a.newline()
-        a.blankLines(set: 1)
+        // FIXME: Restore
+//        a.keyword("precedencegroup", postfixSpace: true)
+//        a.typeDeclaration(name: name, definitionId: definitionId)
+//        a.punctuation("{", prefixSpace: true)
+//        a.newline()
+//        a.indent {
+//            members.forEach { member in
+//                member.tokenize(apiview: a)
+//                a.newline()
+//            }
+//        }
+//        a.punctuation("}")
+//        a.newline()
+//        a.blankLines(set: 1)
     }
 
     func navigationTokenize(apiview a: APIViewModel) {
-        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .unknown))
+        // FIXME: Restore
+//        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .unknown))
     }
 }

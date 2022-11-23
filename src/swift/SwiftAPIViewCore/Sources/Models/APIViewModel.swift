@@ -25,7 +25,8 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
+
 
 class APIViewModel: Tokenizable, Encodable {
 
@@ -60,7 +61,8 @@ class APIViewModel: Tokenizable, Encodable {
     let indentSpaces = 4
 
     /// Access modifier to expose via APIView
-    static let publicModifiers: [AccessLevelModifier] = [.public, .open]
+    // FIXME: Fix this!
+    // static let publicModifiers: [AccessLevelModifierSyntax] = [.public, .open]
 
     /// Tracks assigned definition IDs so they can be linked
     private var definitionIds = Set<String>()
@@ -72,7 +74,7 @@ class APIViewModel: Tokenizable, Encodable {
     
     // MARK: Initializers
 
-    init(name: String, packageName: String, versionString: String, statements: [Statement]) {
+    init(name: String, packageName: String, versionString: String, statements: [CodeBlockItemSyntax.Item]) {
         self.name = name
         self.versionString = versionString
         self.packageName = packageName
@@ -304,7 +306,7 @@ class APIViewModel: Tokenizable, Encodable {
             SharedLogger.fail("Definition ID should not contain whitespace: \(defId)")
         }
         if self.definitionIds.contains(defId) {
-            // FIXME: Change back to fail
+            // FIXME: Change back to fail when extensions are fixed
             SharedLogger.warn("Duplicate definition ID: \(defId). Will result in duplicate comments.")
         }
         definitionIds.insert(defId)

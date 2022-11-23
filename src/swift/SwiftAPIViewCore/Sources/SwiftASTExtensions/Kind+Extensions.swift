@@ -24,20 +24,21 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
 
-extension DeclarationModifiers {
-
-    var accessLevel: AccessLevelModifier? {
-        for modifier in self {
-            switch modifier {
-            case let .accessLevel(value):
-                return value
-            default:
-                continue
-            }
+extension LiteralExpression.Kind: ASTTextRepresentable {
+    public var textDescription: String {
+        switch self {
+        case .boolean:
+            return "Bool"
+        case .floatingPoint:
+            return "Float"
+        case .integer:
+            return "Int"
+        case .staticString, .interpolatedString:
+            return "String"
+        default:
+            SharedLogger.fail("Unsupported literal kind: \(self)")
         }
-        return nil
     }
 }

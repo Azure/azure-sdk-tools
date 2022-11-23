@@ -25,7 +25,7 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
 
 
 /// Grammar Summary:
@@ -35,67 +35,70 @@ import AST
 ///     initializer-head → attributes opt declaration-modifiers opt init ?
 ///     initializer-head → attributes opt declaration-modifiers opt init !
 ///     initializer-body → code-block
-class InitializerModel: Tokenizable, Commentable, AccessLevelProtocol {
+class InitializerModel: Tokenizable {//, Commentable, AccessLevelProtocol {
 
-    var lineId: String?
-    var attributes: AttributesModel
-    var modifiers: DeclarationModifiersModel
-    var accessLevel: AccessLevelModifier
-    var kind: String
-    var name: String
-    var genericParamClause: GenericParameterModel?
-    var genericWhereClause: GenericWhereModel?
-    var signature: SignatureModel
+    // FIXME: Restore
+//    var lineId: String?
+//    var attributes: AttributesModel
+//    var modifiers: DeclarationModifiersModel
+//    var accessLevel: AccessLevelModifier
+//    var kind: String
+//    var name: String
+//    var genericParamClause: GenericParameterModel?
+//    var genericWhereClause: GenericWhereModel?
+//    var signature: SignatureModel
 
-    init(from decl: InitializerDeclaration, parent: Linkable) {
-        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
-        attributes = AttributesModel(from: decl.attributes)
-        modifiers = DeclarationModifiersModel(from: decl.modifiers)
-        accessLevel = decl.accessLevel ?? .internal
-        name = "init"
-        switch decl.kind {
-        case .implicitlyUnwrappedFailable:
-            kind = "!"
-        case .optionalFailable:
-            kind = "?"
-        case .nonfailable:
-            kind = ""
-        }
-        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
-        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
-        signature = SignatureModel(params: decl.parameterList, result: nil, resultAttributes: nil, throwsKind: decl.throwsKind)
+    init(from decl: InitializerDeclSyntax) {//}, parent: Linkable) {
+        // FIXME: Restore
+//        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
+//        attributes = AttributesModel(from: decl.attributes)
+//        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+//        accessLevel = decl.accessLevel ?? .internal
+//        name = "init"
+//        switch decl.kind {
+//        case .implicitlyUnwrappedFailable:
+//            kind = "!"
+//        case .optionalFailable:
+//            kind = "?"
+//        case .nonfailable:
+//            kind = ""
+//        }
+//        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
+//        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
+//        signature = SignatureModel(params: decl.parameterList, result: nil, resultAttributes: nil, throwsKind: decl.throwsKind)
     }
 
-    init(from decl: ProtocolDeclaration.InitializerMember, parent: ProtocolModel) {
-        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
-        attributes = AttributesModel(from: decl.attributes)
-        modifiers = DeclarationModifiersModel(from: decl.modifiers)
-        accessLevel = modifiers.accessLevel ?? .internal
-        name = "init"
-        switch decl.kind {
-        case .implicitlyUnwrappedFailable:
-            kind = "!"
-        case .optionalFailable:
-            kind = "?"
-        case .nonfailable:
-            kind = ""
-        }
-        genericParamClause = GenericParameterModel(from: decl.genericParameter)
-        genericWhereClause = GenericWhereModel(from: decl.genericWhere)
-        signature = SignatureModel(params: decl.parameterList, result: nil, resultAttributes: nil, throwsKind: decl.throwsKind)
-    }
+//    init(from decl: ProtocolDeclaration.InitializerMember, parent: ProtocolModel) {
+//        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
+//        attributes = AttributesModel(from: decl.attributes)
+//        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+//        accessLevel = modifiers.accessLevel ?? .internal
+//        name = "init"
+//        switch decl.kind {
+//        case .implicitlyUnwrappedFailable:
+//            kind = "!"
+//        case .optionalFailable:
+//            kind = "?"
+//        case .nonfailable:
+//            kind = ""
+//        }
+//        genericParamClause = GenericParameterModel(from: decl.genericParameter)
+//        genericWhereClause = GenericWhereModel(from: decl.genericWhere)
+//        signature = SignatureModel(params: decl.parameterList, result: nil, resultAttributes: nil, throwsKind: decl.throwsKind)
+//    }
 
     func tokenize(apiview a: APIViewModel) {
-        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
-        attributes.tokenize(apiview: a)
-        modifiers.tokenize(apiview: a)
-        a.lineIdMarker(definitionId: lineId)
-        a.keyword(name)
-        a.punctuation(kind)
-        genericParamClause?.tokenize(apiview: a)
-        signature.tokenize(apiview: a)
-        genericWhereClause?.tokenize(apiview: a)
-        a.newline()
-        a.blankLines(set: 1)
+        // FIXME: Restore
+//        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+//        attributes.tokenize(apiview: a)
+//        modifiers.tokenize(apiview: a)
+//        a.lineIdMarker(definitionId: lineId)
+//        a.keyword(name)
+//        a.punctuation(kind)
+//        genericParamClause?.tokenize(apiview: a)
+//        signature.tokenize(apiview: a)
+//        genericWhereClause?.tokenize(apiview: a)
+//        a.newline()
+//        a.blankLines(set: 1)
     }
 }

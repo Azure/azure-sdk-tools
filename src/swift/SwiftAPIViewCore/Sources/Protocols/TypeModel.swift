@@ -25,7 +25,6 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
 
 enum OptionalKind: Tokenizable {
     case optional

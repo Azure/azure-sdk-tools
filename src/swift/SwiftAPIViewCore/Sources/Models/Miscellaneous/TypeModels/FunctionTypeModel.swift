@@ -24,7 +24,6 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
 
 struct FunctionTypeModel: TypeModel {

@@ -25,7 +25,6 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
 
 /// Conforming objects can be serialized into APIView tokens.
 protocol Tokenizable {

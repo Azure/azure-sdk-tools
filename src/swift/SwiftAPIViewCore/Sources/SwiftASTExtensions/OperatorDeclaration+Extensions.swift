@@ -24,22 +24,17 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
 
-extension LiteralExpression.Kind: ASTTextRepresentable {
-    public var textDescription: String {
-        switch self {
-        case .boolean:
-            return "Bool"
-        case .floatingPoint:
-            return "Float"
-        case .integer:
-            return "Int"
-        case .staticString, .interpolatedString:
-            return "String"
-        default:
-            SharedLogger.fail("Unsupported literal kind: \(self)")
+extension OperatorDeclaration {
+    var `operator`: String {
+        switch self.kind {
+        case let .infix(opName, _):
+            return opName
+        case let .postfix(opName):
+            return opName
+        case let .prefix(opName):
+            return opName
         }
     }
 }

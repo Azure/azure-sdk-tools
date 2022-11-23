@@ -28,37 +28,52 @@ import Foundation
 import SwiftSyntax
 
 
-class ExtensionModel: Tokenizable {//, Commentable {
-
+/// Grammar Summary:
+///     actor-declaration → attributes opt access-level-modifier opt actor actor-name generic-parameter-clause opt type-inheritance-clause opt generic-where-clause opt actor-body
+///     actor-name → identifier
+///     actor-body → { actor-members opt }
+///     actor-members → actor-member actor-members opt
+///     actor-member → declaration | compiler-control-statement
+class ActorModel: Tokenizable {//, Linkable, Commentable, Extensible, AccessLevelProtocol {
     // FIXME: Restore
+//    var definitionId: String?
 //    var lineId: String?
+//    var parent: Linkable?
 //    var attributes: AttributesModel
-//    var accessLevel: AccessLevelModifier?
-//    var typeModel: TypeModel
+//    var accessLevel: AccessLevelModifier
+//    var isFinal: Bool
+//    var name: String
+//    var genericParamClause: GenericParameterModel?
 //    var typeInheritanceClause: TypeInheritanceModel?
 //    var genericWhereClause: GenericWhereModel?
-//    var members: [AccessLevelProtocol]
+//    var members: [Tokenizable]
+//    var extensions: [ExtensionModel]
 
-    init(from decl: ExtensionDeclSyntax) {//}, parent: Linkable) {
+    init(from decl: ActorDeclSyntax) {//, parent: Linkable) {
         // FIXME: Restore
-//        lineId = identifier(forName: decl.type.textDescription, withPrefix: parent.definitionId)
+//        self.parent = parent
+//        let name = decl.name.textDescription
+//        definitionId = identifier(forName: name, withPrefix: parent.definitionId)
+//        lineId = nil
 //        attributes = AttributesModel(from: decl.attributes)
-//        accessLevel = decl.accessLevel
-//        self.typeModel = decl.type.toTokenizable()!
+//        accessLevel = decl.accessLevel ?? .internal
+//        self.name = name
+//        isFinal = decl.isFinal
+//        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
 //        typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
 //        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
-//        members = [AccessLevelProtocol]()
+//        extensions = [ExtensionModel]()
+//        members = [Tokenizable]()
 //        decl.members.forEach { member in
 //            switch member {
 //            case let .declaration(decl):
-//                // TODO: We need to push these into the relevant object definitions.
-//                // We should not just use the Extension's parent
-//                if var model = decl.toTokenizable(withParent: parent) as? AccessLevelProtocol {
-//                    // a public extension implicitly makes all its members public as well
-//                    if let overrideAccess = accessLevel {
-//                        model.accessLevel = overrideAccess
+//                if let model = decl.toTokenizable(withParent: self) {
+//                    if let model = model as? ExtensionModel {
+//                        // TODO: Place the extension in the appropriate location
+//                        extensions.append(model)
+//                    } else {
+//                        members.append(model)
 //                    }
-//                    self.members.append(model)
 //                }
 //            case let .compilerControl(statement):
 //                SharedLogger.warn("Unsupported compiler control statement: \(statement)")
@@ -66,31 +81,17 @@ class ExtensionModel: Tokenizable {//, Commentable {
 //        }
     }
 
-//    var isPublic: Bool {
-//        guard let accessLevel = accessLevel else { return false }
-//        return APIViewModel.publicModifiers.contains(accessLevel)
-//    }
-//
-//    var hasPublicMembers: Bool {
-//        for member in members {
-//            if APIViewModel.publicModifiers.contains(member.accessLevel) {
-//                return true
-//            }
-//        }
-//        return false
-//    }
-
     func tokenize(apiview a: APIViewModel) {
         // FIXME: Restore
-//        let shouldDisplay = isPublic || hasPublicMembers
-//        guard shouldDisplay == true else { return }
-//        a.lineIdMarker(definitionId: lineId)
+//        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
 //        attributes.tokenize(apiview: a)
-//        if let access = accessLevel {
-//            a.keyword(access.textDescription, postfixSpace: true)
+//        a.keyword(accessLevel.textDescription, postfixSpace: true)
+//        if isFinal {
+//            a.keyword("final", postfixSpace: true)
 //        }
-//        a.keyword("extension", postfixSpace: true)
-//        typeModel.tokenize(apiview: a)
+//        a.keyword("class", postfixSpace: true)
+//        a.typeDeclaration(name: name, definitionId: definitionId)
+//        genericParamClause?.tokenize(apiview: a)
 //        typeInheritanceClause?.tokenize(apiview: a)
 //        genericWhereClause?.tokenize(apiview: a)
 //        a.punctuation("{", prefixSpace: true)
@@ -99,9 +100,22 @@ class ExtensionModel: Tokenizable {//, Commentable {
 //            members.forEach { member in
 //                member.tokenize(apiview: a)
 //            }
+//            extensions.forEach { ext in
+//                ext.tokenize(apiview: a)
+//            }
 //        }
 //        a.punctuation("}")
 //        a.newline()
 //        a.blankLines(set: 1)
+    }
+
+    func navigationTokenize(apiview a: APIViewModel) {
+        // FIXME: Restore
+//        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+//        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .class))
+//        for member in members {
+//            guard let member = member as? Linkable else { continue }
+//            member.navigationTokenize(apiview: a)
+//        }
     }
 }

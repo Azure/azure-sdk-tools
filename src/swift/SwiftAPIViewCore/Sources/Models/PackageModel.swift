@@ -24,8 +24,8 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
+import SwiftSyntax
 
 
 class PackageModel: Tokenizable, Linkable {
@@ -35,7 +35,7 @@ class PackageModel: Tokenizable, Linkable {
     var parent: Linkable?
     var members: [Tokenizable]
 
-    init(name: String, statements: [Statement]) {
+    init(name: String, statements: [CodeBlockItemSyntax.Item]) {
         self.name = name
         self.definitionId = name
         self.parent = nil
@@ -43,22 +43,63 @@ class PackageModel: Tokenizable, Linkable {
         self.process(statements: statements)
     }
 
-    private func process(statements: [Statement]) {
+    private func process(statements: [CodeBlockItemSyntax.Item]) {
         for statement in statements {
             switch statement {
-            case let decl as Declaration:
-                if let model = decl.toTokenizable(withParent: self) {
-                    if let model = model as? ExtensionModel {
-                        // TODO: Place the extension in the appropriate location
-                        self.members.append(model)
-                    } else {
-                        self.members.append(model)
-                    }
+            case let .decl(decl):
+                switch decl.kind {
+                case .actorDecl:
+                    self.members.append(ActorModel(from: ActorDeclSyntax(decl)!))
+                    break
+                case .classDecl:
+                    self.members.append(ClassModel(from: ClassDeclSyntax(decl)!))
+                    break
+                case .deinitializerDecl:
+                    self.members.append(DeinitializerModel(from: DeinitializerDeclSyntax(decl)!))
+                    break
+                case .enumDecl:
+                    self.members.append(EnumModel(from: EnumDeclSyntax(decl)!))
+                    break
+                case .extensionDecl:
+                    // TODO: Fix how extensions are handled
+                    self.members.append(ExtensionModel(from: ExtensionDeclSyntax(decl)!))
+                    break
+                case .functionDecl:
+                    self.members.append(FunctionModel(from: FunctionDeclSyntax(decl)!))
+                    break
+                case .initializerDecl:
+                    self.members.append(InitializerModel(from: InitializerDeclSyntax(decl)!))
+                    break
+                case .operatorDecl:
+                    self.members.append(OperatorModel(from: OperatorDeclSyntax(decl)!))
+                    break
+                case .precedenceGroupDecl:
+                    self.members.append(PrecedenceGroupModel(from: PrecedenceGroupDeclSyntax(decl)!))
+                    break
+                case .protocolDecl:
+                    self.members.append(ProtocolModel(from: ProtocolDeclSyntax(decl)!))
+                    break
+                case .structDecl:
+                    self.members.append(StructModel(from: StructDeclSyntax(decl)!))
+                    break
+                case .subscriptDecl:
+                    self.members.append(SubscriptModel(from: SubscriptDeclSyntax(decl)!))
+                    break
+                case .typealiasDecl:
+                    self.members.append(TypealiasModel(from: TypealiasDeclSyntax(decl)!))
+                    break
+                case .variableDecl:
+                    self.members.append(VariableModel(from: VariableDeclSyntax(decl)!))
+                    break
+                case .importDecl:
+                    // purposely ignore import declarations
+                    break
+                default:
+                    SharedLogger.warn("Unsupported declaration type: \(decl.kind)")
                 }
-            case _ as CompilerControlStatement:
                 break
             default:
-                SharedLogger.fail("Unsupported statement type: \(statement)")
+                SharedLogger.warn("Unsupported statement type: \(statement.kind)")
             }
         }
     }

@@ -25,7 +25,8 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
+
 
 /// Grammar Summary:
 ///     function-declaration → function-head function-name generic-parameter-clause opt function-signature generic-where-clause opt function-body opt
@@ -43,49 +44,52 @@ import AST
 ///     external-parameter-name → identifier
 ///     local-parameter-name → identifier
 ///     default-argument-clause → = expression
-class FunctionModel: Tokenizable, Commentable, AccessLevelProtocol {
+class FunctionModel: Tokenizable { //, Commentable, AccessLevelProtocol {
 
-    var lineId: String?
-    var attributes: AttributesModel
-    var modifiers: DeclarationModifiersModel
-    var accessLevel: AccessLevelModifier
-    var name: String
-    var genericParamClause: GenericParameterModel?
-    var genericWhereClause: GenericWhereModel?
-    var signature: SignatureModel
+    // FIXME: Restore
+//    var lineId: String?
+//    var attributes: AttributesModel
+//    var modifiers: DeclarationModifiersModel
+//    var accessLevel: AccessLevelModifier
+//    var name: String
+//    var genericParamClause: GenericParameterModel?
+//    var genericWhereClause: GenericWhereModel?
+//    var signature: SignatureModel
 
-    init(from decl: FunctionDeclaration, parent: Linkable) {
-        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
-        attributes = AttributesModel(from: decl.attributes)
-        modifiers = DeclarationModifiersModel(from: decl.modifiers)
-        accessLevel = decl.accessLevel ?? .internal
-        name = decl.name.textDescription
-        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
-        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
-        signature = SignatureModel(from: decl.signature)
+    init(from decl: FunctionDeclSyntax) {//}, parent: Linkable) {
+        // FIXME: Restore
+//        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
+//        attributes = AttributesModel(from: decl.attributes)
+//        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+//        accessLevel = decl.accessLevel ?? .internal
+//        name = decl.name.textDescription
+//        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
+//        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
+//        signature = SignatureModel(from: decl.signature)
     }
 
-    init(from decl: ProtocolDeclaration.MethodMember, parent: ProtocolModel) {
-        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
-        attributes = AttributesModel(from: decl.attributes)
-        modifiers = DeclarationModifiersModel(from: decl.modifiers)
-        accessLevel = modifiers.accessLevel ?? .internal
-        name = decl.name.textDescription
-        genericParamClause = GenericParameterModel(from: decl.genericParameter)
-        genericWhereClause = GenericWhereModel(from: decl.genericWhere)
-        signature = SignatureModel(from: decl.signature)
-    }
+//    init(from decl: ProtocolDeclaration.MethodMember, parent: ProtocolModel) {
+//        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
+//        attributes = AttributesModel(from: decl.attributes)
+//        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+//        accessLevel = modifiers.accessLevel ?? .internal
+//        name = decl.name.textDescription
+//        genericParamClause = GenericParameterModel(from: decl.genericParameter)
+//        genericWhereClause = GenericWhereModel(from: decl.genericWhere)
+//        signature = SignatureModel(from: decl.signature)
+//    }
 
     func tokenize(apiview a: APIViewModel) {
-        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
-        attributes.tokenize(apiview: a)
-        modifiers.tokenize(apiview: a)
-        a.keyword("func", postfixSpace: true)
-        a.member(name: name, definitionId: lineId)
-        genericParamClause?.tokenize(apiview: a)
-        signature.tokenize(apiview: a)
-        genericWhereClause?.tokenize(apiview: a)
-        a.newline()
-        a.blankLines(set: 1)
+        // FIXME: Restore
+//        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+//        attributes.tokenize(apiview: a)
+//        modifiers.tokenize(apiview: a)
+//        a.keyword("func", postfixSpace: true)
+//        a.member(name: name, definitionId: lineId)
+//        genericParamClause?.tokenize(apiview: a)
+//        signature.tokenize(apiview: a)
+//        genericWhereClause?.tokenize(apiview: a)
+//        a.newline()
+//        a.blankLines(set: 1)
     }
 }

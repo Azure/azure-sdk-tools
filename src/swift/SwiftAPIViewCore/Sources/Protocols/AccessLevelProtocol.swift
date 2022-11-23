@@ -25,8 +25,8 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
 
 protocol AccessLevelProtocol: Tokenizable {
-    var accessLevel: AccessLevelModifier { get set }
+    var accessLevel: AccessLevelModifierSyntax { get set }
 }

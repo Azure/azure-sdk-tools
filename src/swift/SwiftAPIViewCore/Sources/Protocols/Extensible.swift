@@ -25,7 +25,6 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
 
 protocol Extensible {
     var extensions: [ExtensionModel] { get set }

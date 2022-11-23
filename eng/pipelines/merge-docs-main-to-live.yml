@@ -6,6 +6,9 @@ parameters:
 - name: DocsRepos
   type: object
   default:
+    - RepoName: azure-docs-sdk-dotnet
+      RepoOwner: Azure
+      AllowlistPath: docsms-allowlist/dotnet-allowlist.txt
     - RepoName: azure-docs-sdk-java
       RepoOwner: Azure
       AllowlistPath: docsms-allowlist/java-allowlist.txt

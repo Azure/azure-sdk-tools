@@ -42,7 +42,6 @@ public class SwaggerApiViewSpec : INavigable, ITokenSerializable
 
 
         // Token serialize "Paths" section.
-        // ret.Add(TokenSerializer.Intent(context.intent));
         context.IteratorPath.Add("Paths");
         ret.Add(TokenSerializer.NavigableToken("Paths", CodeFileTokenKind.FoldableSectionHeading, context.IteratorPath.CurrentPath()));
         ret.Add(TokenSerializer.Colon());

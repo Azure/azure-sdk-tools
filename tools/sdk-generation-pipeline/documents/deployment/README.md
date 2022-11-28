@@ -16,5 +16,5 @@ This is the deployment config of the SDK Release App should update.
 
 This is the requirement for testing in PPE environment.
 
-1. colose release request issues in Azure org
+1. close release request issues in Azure org
 issues link <https://github.com/Azure/sdk-release-request/issues?q=is%3Aissue+label%3APowerApps+is%3Aopen>

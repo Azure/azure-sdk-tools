@@ -317,7 +317,7 @@ namespace SwaggerApiParser
 
                 if (serializeRef)
                 {
-                    ret.AddRange(arraySchema.items.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), arraySchema.items, ref flattenedTableItems, true));
+                    ret.AddRange(arraySchema.items.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), arraySchema.items, ref flattenedTableItems, serializeRef));
                 }
             }
         }

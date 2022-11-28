@@ -118,7 +118,7 @@ steps:
 
   - pwsh: |
       $PRNum = "$(Submitted.PullRequest.Number)"
-      LogDebug "PR number is $PRNum"
+      Write-Host "PR number is $PRNum"
     condition: always()
 
   - bash: |

@@ -603,7 +603,7 @@ namespace SwaggerApiParser
             /// <param name="scopeEnd"></param>
             private void VisitObject(JsonElement obj, SwaggerTree nav, string navigationIdPrefix, string scopeStart = "{", string scopeEnd = "}")
             {
-                bool multiLine = !FitsOnOneLine(obj);
+                bool multiLine = FitsOnOneLine(obj);
 
                 using (_writer.Scope(scopeStart, scopeEnd, multiLine))
                 {

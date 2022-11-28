@@ -116,6 +116,11 @@ steps:
     condition: always()
     displayName: Submit Pull Request
 
+  - pwsh: |
+      $PRNum = "$(Submitted.PullRequest.Number)"
+      LogDebug "PR number is $PRNum"
+    condition: always()
+
   - bash: |
       cp /tmp/output/docker.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-full.log
       cp /tmp/output/init-task.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-init.log

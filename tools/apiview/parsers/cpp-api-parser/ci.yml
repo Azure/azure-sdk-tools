@@ -28,9 +28,9 @@ variables:
   FeedRegistry: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-cpp/'
 
 stages:
-  - stage: 'Build'
+  - stage: 'Prepare BUild'
     jobs:
-      - job: 'Build Prerequisites vcpkg'
+      - job: 'vcpkg'
         pool:
           name: azsdk-pool-mms-win-2019-general
           vmImage: MMS2019
@@ -52,7 +52,7 @@ stages:
               Write-Host "Set VCPKG_ROOT: $vcpkgRoot"
               Write-Host "##vso[task.setvariable variable=VCPKG_ROOT]$vcpkgRoot"
             displayName: Set VCPKG_ROOT
-      - job: 'Build Prerequisites cmake'
+      - job: 'cmake'
         pool:
           name: azsdk-pool-mms-win-2019-general
           vmImage: MMS2019
@@ -60,7 +60,21 @@ stages:
           - pwsh: |
               cmake.exe -G "Ninja" -DCMAKE_C_COMPILER:STRING="cl.exe" -DCMAKE_CXX_COMPILER:STRING="cl.exe" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE:STRING="Release" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static" -DCMAKE_INSTALL_PREFIX:PATH="$(Build.SourcesDirectory)/build" $(Build.SourcesDirectory)
             displayName: CMAKE GEnerate.
+  - stage: 'Build'
+    jobs:
+      - job: 'Build'
+        pool:
+          name: azsdk-pool-mms-win-2019-general
+          vmImage: MMS2019
 
+        steps:
+          - pwsh: |
+              cmake.exe --build $(Build.SourcesDirectory)/build --config Release --target cpp-api-parser
+            displayName: Build ApiView Parser.
+          - pwsh: |
+                $cppApiParser = Resolve-Path "${Build.SourcesDirectory}/build/bin/Release/cpp-api-parser.exe"
+                Write-Host "Set CPP_API_PARSER: $cppApiParser"
+                Write-Host "##vso[task.setvariable variable=CPP_API_PARSER]$cppApiParser"
   #- stage: 'Publish'
   #  jobs:
   #    - job: 'Build Prerequisites - cmake'

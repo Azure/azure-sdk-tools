@@ -4,7 +4,7 @@ parameters:
   default:
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
-      RecordSession: ''
+      RecordSession: 'resources/session-records'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-c
       RecordSession: ''
@@ -58,7 +58,7 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             Write-Host "checking ${{ repo.RecordSession }}"
-            $files = Get-ChildItem "$(Build.SourcesDirectory)" -Recurse -File
+            $files = Get-ChildItem ./ -Recurse -File
             if("${{ repo.RecordSession }}") {
               $files = $files | Where-Object {$_.FullName -NotMatch "${{ repo.RecordSession }}"}
             }

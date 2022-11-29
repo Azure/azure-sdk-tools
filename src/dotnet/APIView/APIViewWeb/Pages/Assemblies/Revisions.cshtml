@@ -14,11 +14,13 @@
                 <partial name="Shared/_ReviewBadge" model=" Model.Review" />
             </div>
         </div>
-        <div class="row" asp-resource="@Model.Review" asp-requirement="@AutoReviewModifierRequirement.Instance">
-            <div class="bottom-right-floating">
-                <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>ADD</small></br><i class="fas fa-sm fa-plus"></i></br><small>REVISION</small></button>
-            </div>
-        </div>
+        @if (!Model.Review.FilterType.Equals(ReviewType.Automatic))
+        {
+            <div class="row" asp-resource="@Model.Review" asp-requirement="@AutoReviewModifierRequirement.Instance">
+                <div class="bottom-right-floating">
+                    <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>REVISION</small></button>
+                </div>
+            </div>        }
 
         <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
@@ -42,7 +44,8 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>llar
+
                             <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
                         </div>
                     </form>

@@ -52,7 +52,7 @@ jobs:
             SkipCheckoutNone: true
             Repositories:
               - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
-                WorkingDirectory: $(Build.SourcesDirectory)/docs
+                WorkingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
             Paths:
               - /*
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
@@ -75,7 +75,7 @@ jobs:
               }
             }
           displayName: Update pool version from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}
-          workingDirectory: $(Build.SourcesDirectory)/docs
+          workingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
         - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
           parameters:
             BaseBranchName: $(DefaultBranch)
@@ -85,5 +85,5 @@ jobs:
             RepoName: ${{ repo.RepoName }}
             PRTitle: Migrate to new pool
             OpenAsDraft: true
-            WorkingDirectory: $(Build.SourcesDirectory)/docs
+            WorkingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
           

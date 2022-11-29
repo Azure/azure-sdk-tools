@@ -295,10 +295,11 @@ protected:
 public:
   virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override;
   static std::unique_ptr<AstExpr> Create(Stmt const* expression, ASTContext& context);
+  virtual bool IsEmptyExpression() const { return false; }
 };
 
 class AstIntExpr : public AstExpr {
-  int m_intValue;
+  int m_intValue{};
 
 public:
   AstIntExpr(Expr const* expression, ASTContext& context) : AstExpr(expression, context)
@@ -334,8 +335,8 @@ public:
 };
 
 class AstFloatExpr : public AstExpr {
-  double m_doubleValue;
-  bool m_isFloat;
+  double m_doubleValue{};
+  bool m_isFloat{};
 
 public:
   AstFloatExpr(FloatingLiteral const* expression, ASTContext& context)
@@ -358,7 +359,7 @@ public:
 };
 
 class AstBoolExpr : public AstExpr {
-  bool m_boolValue;
+  bool m_boolValue{};
 
 public:
   AstBoolExpr(CXXBoolLiteralExpr const* expression, ASTContext& context)
@@ -466,6 +467,17 @@ public:
       argn += 1;
     }
   }
+  bool IsEmptyExpression() const override
+  {
+    for (const auto& initializer : m_args)
+    {
+      if (!initializer->IsEmptyExpression())
+      {
+        return false;
+      }
+    }
+    return true;
+  }
 
 public:
   virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
@@ -569,6 +581,19 @@ public:
 class AstInitializerList : public AstExpr {
   std::vector<std::unique_ptr<AstExpr>> m_initializerValues;
 
+protected:
+  bool IsEmptyExpression() const override
+  {
+    for (const auto& initializer : m_initializerValues)
+    {
+      if (!initializer->IsEmptyExpression())
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
 public:
   AstInitializerList(InitListExpr const* expression, ASTContext& context)
       : AstExpr(expression, context)
@@ -641,191 +666,24 @@ class AstBinaryOperatorExpr : public AstExpr {
   std::unique_ptr<AstExpr> m_leftOperator;
   std::unique_ptr<AstExpr> m_rightOperator;
   BinaryOperator::Opcode m_opcode;
+  std::string m_opcodeString;
 
 public:
   AstBinaryOperatorExpr(BinaryOperator const* expression, ASTContext& context)
       : AstExpr(expression, context),
         m_leftOperator{AstExpr::Create(expression->getLHS(), context)},
         m_rightOperator{AstExpr::Create(expression->getRHS(), context)},
-        m_opcode(expression->getOpcode())
+        m_opcode(expression->getOpcode()), m_opcodeString(expression->getOpcodeStr())
   {
   }
   virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
   {
     m_leftOperator->Dump(dumper, dumpOptions);
-    switch (m_opcode)
+    for (const auto ch : m_opcodeString)
     {
-
-      case BO_PtrMemD:
-        dumper->InsertPunctuation('.');
-        dumper->InsertPunctuation('*');
-        break;
-
-      case BO_PtrMemI:
-        dumper->InsertPunctuation('-');
-        dumper->InsertPunctuation('>');
-        dumper->InsertPunctuation('*');
-        break;
-
-      // [C99 6.5.5] Multiplicative operators.
-      case BO_Mul:
-        dumper->InsertPunctuation('*');
-        break;
-
-      case BO_Div:
-        dumper->InsertPunctuation('/');
-        break;
-
-      case BO_Rem:
-        dumper->InsertPunctuation('%');
-        break;
-
-      // [C99 6.5.6] Additive operators.
-      case BO_Add:
-        dumper->InsertPunctuation('+');
-        break;
-
-      case BO_Sub:
-        dumper->InsertPunctuation('-');
-        break;
-
-      // [C99 6.5.7] Bitwise shift operators.
-      case BO_Shl:
-        dumper->InsertPunctuation('<');
-        dumper->InsertPunctuation('<');
-        break;
-
-      case BO_Shr:
-        dumper->InsertPunctuation('>');
-        dumper->InsertPunctuation('>');
-        break;
-
-      // C++20 [expr.spaceship] Three-way comparison operator.
-      case BO_Cmp:
-        dumper->InsertPunctuation('<');
-        dumper->InsertPunctuation('=');
-        dumper->InsertPunctuation('>');
-        break;
-
-      // [C99 6.5.8] Relational operators.
-      case BO_LT:
-        dumper->InsertPunctuation('<');
-        break;
-
-      case BO_GT:
-        dumper->InsertPunctuation('>');
-        break;
-
-      case BO_LE:
-        dumper->InsertPunctuation('<');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_GE:
-        dumper->InsertPunctuation('>');
-        dumper->InsertPunctuation('=');
-        break;
-
-      // [C99 6.5.9] Equality operators.
-      case BO_EQ:
-        dumper->InsertPunctuation('=');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_NE:
-        dumper->InsertPunctuation('!');
-        dumper->InsertPunctuation('=');
-        break;
-
-      // [C99 6.5.10] Bitwise AND operator.
-      case BO_And:
-        dumper->InsertPunctuation('&');
-        break;
-
-      // [C99 6.5.11] Bitwise XOR operator.
-      case BO_Xor:
-        dumper->InsertPunctuation('^');
-        break;
-
-      // [C99 6.5.12] Bitwise OR operator.
-      case BO_Or:
-        dumper->InsertPunctuation('|');
-        break;
-
-      // [C99 6.5.13] Logical AND operator.
-      case BO_LAnd:
-        dumper->InsertPunctuation('&');
-        dumper->InsertPunctuation('&');
-        break;
-
-      // [C99 6.5.14] Logical OR operator.
-      case BO_LOr:
-        dumper->InsertPunctuation('|');
-        dumper->InsertPunctuation('|');
-        break;
-
-      // [C99 6.5.16] Assignment operators.
-      case BO_Assign:
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_MulAssign:
-        dumper->InsertPunctuation('*');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_DivAssign:
-        dumper->InsertPunctuation('/');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_RemAssign:
-        dumper->InsertPunctuation('%');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_AddAssign:
-        dumper->InsertPunctuation('+');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_SubAssign:
-        dumper->InsertPunctuation('-');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_ShlAssign:
-        dumper->InsertPunctuation('<');
-        dumper->InsertPunctuation('<');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_ShrAssign:
-        dumper->InsertPunctuation('>');
-        dumper->InsertPunctuation('>');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_AndAssign:
-        dumper->InsertPunctuation('&');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_XorAssign:
-        dumper->InsertPunctuation('^');
-        dumper->InsertPunctuation('=');
-        break;
-
-      case BO_OrAssign:
-        dumper->InsertPunctuation('|');
-        dumper->InsertPunctuation('=');
-        break;
-
-      // [C99 6.5.17] Comma operator.
-      case BO_Comma:
-        dumper->InsertPunctuation(',');
-        break;
+      dumper->InsertPunctuation(ch);
     }
+
     m_rightOperator->Dump(dumper, dumpOptions);
   };
 };
@@ -888,6 +746,38 @@ public:
   }
 };
 
+class AstDefaultInitExpr : public AstExpr {
+
+  bool IsEmptyExpression() const override { return true; }
+
+public:
+  AstDefaultInitExpr(CXXDefaultInitExpr const* expression, ASTContext& context)
+      : AstExpr(expression, context)
+  {
+  }
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  {
+//    dumper->InsertPunctuation('{');
+//    dumper->InsertPunctuation('}');
+  }
+};
+
+class AstDefaultArgExpr : public AstExpr {
+
+  bool IsEmptyExpression() const override { return true; }
+
+public:
+  AstDefaultArgExpr(CXXDefaultArgExpr const* expression, ASTContext& context)
+      : AstExpr(expression, context)
+  {
+  }
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  {
+//    dumper->InsertPunctuation('{');
+//    dumper->InsertPunctuation('}');
+  }
+};
+
 std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& context)
 {
   if (statement)
@@ -896,106 +786,85 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
     {
       auto expression = cast<Expr>(statement);
       const Expr* actualExpr = expression->IgnoreUnlessSpelledInSource();
-      if (isa<IntegerLiteral>(actualExpr))
+      switch (actualExpr->getStmtClass())
       {
-        return std::make_unique<AstIntExpr>(actualExpr, context);
-      }
-      else if (isa<StringLiteral>(actualExpr))
-      {
-        return std::make_unique<AstStringExpr>(cast<StringLiteral>(actualExpr), context);
-      }
-      else if (isa<FloatingLiteral>(actualExpr))
-      {
-        return std::make_unique<AstFloatExpr>(cast<FloatingLiteral>(actualExpr), context);
-      }
-      else if (isa<CXXBoolLiteralExpr>(actualExpr))
-      {
-        return std::make_unique<AstBoolExpr>(cast<CXXBoolLiteralExpr>(actualExpr), context);
-      }
-      else if (isa<CXXNamedCastExpr>(actualExpr))
-      {
-        return std::make_unique<AstNamedCastExpr>(cast<CXXNamedCastExpr>(actualExpr), context);
-      }
-      else if (isa<ImplicitCastExpr>(actualExpr))
-      {
-        return std::make_unique<AstImplicitCastExpr>(cast<ImplicitCastExpr>(actualExpr), context);
-      }
-      else if (isa<CastExpr>(actualExpr))
-      {
-        return std::make_unique<AstCastExpr>(cast<CastExpr>(actualExpr), context);
-      }
-      else if (isa<CXXConstructExpr>(actualExpr))
-      {
-        return std::make_unique<AstCtorExpr>(cast<CXXConstructExpr>(actualExpr), context);
-      }
-      else if (isa<DependentScopeDeclRefExpr>(actualExpr))
-      {
-        return std::make_unique<AstDependentDeclRefExpr>(
-            cast<DependentScopeDeclRefExpr>(actualExpr), context);
-      }
-      else if (isa<DeclRefExpr>(actualExpr))
-      {
-        return std::make_unique<AstDeclRefExpr>(cast<DeclRefExpr>(actualExpr), context);
-      }
-      else if (isa<CXXNullPtrLiteralExpr>(actualExpr))
-      {
-        return std::make_unique<AstNullptrRefExpr>(
-            cast<CXXNullPtrLiteralExpr>(actualExpr), context);
-      }
-      else if (isa<MemberExpr>(actualExpr))
-      {
-        return std::make_unique<AstMemberExpr>(cast<MemberExpr>(actualExpr), context);
-      }
-      else if (isa<CXXMemberCallExpr>(actualExpr))
-      {
-        return std::make_unique<AstMethodCallExpr>(cast<CXXMemberCallExpr>(actualExpr), context);
-      }
-      else if (isa<CallExpr>(actualExpr))
-      {
-        return std::make_unique<AstCallExpr>(cast<CallExpr>(actualExpr), context);
-      }
-      else if (isa<InitListExpr>(actualExpr))
-      {
-        return std::make_unique<AstInitializerList>(cast<InitListExpr>(actualExpr), context);
-      }
-      else if (isa<UnaryOperator>(actualExpr))
-      {
-        return std::make_unique<AstUnaryOperatorExpr>(cast<UnaryOperator>(actualExpr), context);
-      }
-      else if (isa<BinaryOperator>(actualExpr))
-      {
-        return std::make_unique<AstBinaryOperatorExpr>(cast<BinaryOperator>(actualExpr), context);
-      }
-      else if (isa<CXXScalarValueInitExpr>(actualExpr))
-      {
-        return std::make_unique<AstScalarValueInit>(
-            cast<CXXScalarValueInitExpr>(actualExpr), context);
-      }
-      else if (isa<ExprWithCleanups>(actualExpr))
-      {
-        // Assert that there is a single child of the ExprWithCleanupsClass.
-        assert(++actualExpr->child_begin() == actualExpr->child_end());
-        return Create(*actualExpr->child_begin(), context);
-      }
-      else if (isa<MaterializeTemporaryExpr>(actualExpr))
-      {
-        // Assert that there is a single child of the MaterializeTemporaryExpr object.
-        assert(++actualExpr->child_begin() == actualExpr->child_end());
-        return Create(*actualExpr->child_begin(), context);
-      }
+        case Stmt::IntegerLiteralClass:
+          return std::make_unique<AstIntExpr>(cast<IntegerLiteral>(actualExpr), context);
+        case Stmt::StringLiteralClass:
+          return std::make_unique<AstStringExpr>(cast<StringLiteral>(actualExpr), context);
+        case Stmt::FloatingLiteralClass:
+          return std::make_unique<AstFloatExpr>(cast<FloatingLiteral>(actualExpr), context);
+        case Stmt::CXXBoolLiteralExprClass:
+          return std::make_unique<AstBoolExpr>(cast<CXXBoolLiteralExpr>(actualExpr), context);
+        case Stmt::ImplicitCastExprClass:
+          return std::make_unique<AstImplicitCastExpr>(cast<ImplicitCastExpr>(actualExpr), context);
+        case Stmt::CXXDefaultInitExprClass:
+          return std::make_unique<AstDefaultInitExpr>(
+              cast<CXXDefaultInitExpr>(actualExpr), context);
+        case Stmt::CXXDefaultArgExprClass:
+          return std::make_unique<AstDefaultArgExpr>(cast<CXXDefaultArgExpr>(actualExpr), context);
+        case Stmt::CXXConstructExprClass:
+          return std::make_unique<AstCtorExpr>(cast<CXXConstructExpr>(actualExpr), context);
+        case Stmt::DependentScopeDeclRefExprClass:
+          return std::make_unique<AstDependentDeclRefExpr>(
+              cast<DependentScopeDeclRefExpr>(actualExpr), context);
+        case Stmt::DeclRefExprClass:
+          return std::make_unique<AstDeclRefExpr>(cast<DeclRefExpr>(actualExpr), context);
+        case Stmt::CXXNullPtrLiteralExprClass:
+          return std::make_unique<AstNullptrRefExpr>(
+              cast<CXXNullPtrLiteralExpr>(actualExpr), context);
+        case Stmt::MemberExprClass:
+          return std::make_unique<AstMemberExpr>(cast<MemberExpr>(actualExpr), context);
+        case Stmt::CXXMemberCallExprClass:
+          return std::make_unique<AstMethodCallExpr>(cast<CXXMemberCallExpr>(actualExpr), context);
+        case Stmt::InitListExprClass:
+          return std::make_unique<AstInitializerList>(cast<InitListExpr>(actualExpr), context);
+        case Stmt::UnaryOperatorClass:
+          return std::make_unique<AstUnaryOperatorExpr>(cast<UnaryOperator>(actualExpr), context);
+        case Stmt::BinaryOperatorClass:
+          return std::make_unique<AstBinaryOperatorExpr>(cast<BinaryOperator>(actualExpr), context);
+        case Stmt::CXXScalarValueInitExprClass:
+          return std::make_unique<AstScalarValueInit>(
+              cast<CXXScalarValueInitExpr>(actualExpr), context);
+        case Stmt::MaterializeTemporaryExprClass:
+          // Assert that there is a single child of the MaterializeTemporaryExpr object.
+          assert(++actualExpr->child_begin() == actualExpr->child_end());
+          return Create(*actualExpr->child_begin(), context);
 
-      else if (isa<CXXStdInitializerListExpr>(actualExpr))
-      {
-        // Assert that there is a single child of the CxxStdInitializerListExpr object.
-        assert(++actualExpr->child_begin() == actualExpr->child_end());
-        return Create(*actualExpr->child_begin(), context);
+        case Stmt::CXXTemporaryObjectExprClass:
+          return std::make_unique<AstCtorExpr>(cast<CXXConstructExpr>(actualExpr), context);
+
+        case Stmt::CXXFunctionalCastExprClass:
+          return std::make_unique<AstCastExpr>(cast<CastExpr>(actualExpr), context);
+
+        case Stmt::CXXStdInitializerListExprClass:
+          // Assert that there is a single child of the CxxStdInitializerListExpr object.
+          assert(++actualExpr->child_begin() == actualExpr->child_end());
+          return Create(*actualExpr->child_begin(), context);
+
+        default:
+          llvm::outs() << "Unknown expression type : " << actualExpr->getStmtClassName() << "\n ";
+          actualExpr->dump(llvm::outs(), context);
+          return nullptr;
       }
-      else
-      {
-        llvm::outs() << "Unknown expression type : " << actualExpr->getStmtClassName() << "\n ";
-        actualExpr->dump(llvm::outs(), context);
-        return nullptr;
-      }
+      // else if (isa<CXXNamedCastExpr>(actualExpr))
+      //{
+      //   return std::make_unique<AstNamedCastExpr>(cast<CXXNamedCastExpr>(actualExpr), context);
+      // }
+      // else if (isa<CastExpr>(actualExpr))
+      //{
+      //   return std::make_unique<AstCastExpr>(cast<CastExpr>(actualExpr), context);
+      // }
+      // else if (isa<CallExpr>(actualExpr))
+      //{
+      //   return std::make_unique<AstCallExpr>(cast<CallExpr>(actualExpr), context);
+      // }
+      // else if (isa<ExprWithCleanups>(actualExpr))
+      //{
+      //   // Assert that there is a single child of the ExprWithCleanupsClass.
+      //   assert(++actualExpr->child_begin() == actualExpr->child_end());
+      //   return Create(*actualExpr->child_begin(), context);
+      // }
     }
     else
     {
@@ -1009,6 +878,132 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
   {
     return nullptr;
   }
+
+  // if (isa<Expr>(statement))
+  //{
+  //   auto expression = cast<Expr>(statement);
+  //   const Expr* actualExpr = expression->IgnoreUnlessSpelledInSource();
+  //   if (isa<IntegerLiteral>(actualExpr))
+  //   {
+  //     return std::make_unique<AstIntExpr>(actualExpr, context);
+  //   }
+  //   else if (isa<StringLiteral>(actualExpr))
+  //   {
+  //     return std::make_unique<AstStringExpr>(cast<StringLiteral>(actualExpr), context);
+  //   }
+  //   else if (isa<FloatingLiteral>(actualExpr))
+  //   {
+  //     return std::make_unique<AstFloatExpr>(cast<FloatingLiteral>(actualExpr), context);
+  //   }
+  //   else if (isa<CXXBoolLiteralExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstBoolExpr>(cast<CXXBoolLiteralExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<CXXNamedCastExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstNamedCastExpr>(cast<CXXNamedCastExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<ImplicitCastExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstImplicitCastExpr>(cast<ImplicitCastExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<CastExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstCastExpr>(cast<CastExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<CXXDefaultInitExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstDefaultInitExpr>(cast<CXXDefaultInitExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<CXXDefaultArgExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstDefaultArgExpr>(cast<CXXDefaultArgExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<CXXConstructExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstCtorExpr>(cast<CXXConstructExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<DependentScopeDeclRefExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstDependentDeclRefExpr>(
+  //         cast<DependentScopeDeclRefExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<DeclRefExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstDeclRefExpr>(cast<DeclRefExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<CXXNullPtrLiteralExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstNullptrRefExpr>(
+  //         cast<CXXNullPtrLiteralExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<MemberExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstMemberExpr>(cast<MemberExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<CXXMemberCallExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstMethodCallExpr>(cast<CXXMemberCallExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<CallExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstCallExpr>(cast<CallExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<InitListExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstInitializerList>(cast<InitListExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<UnaryOperator>(actualExpr))
+  //   {
+  //     return std::make_unique<AstUnaryOperatorExpr>(cast<UnaryOperator>(actualExpr), context);
+  //   }
+  //   else if (isa<BinaryOperator>(actualExpr))
+  //   {
+  //     return std::make_unique<AstBinaryOperatorExpr>(cast<BinaryOperator>(actualExpr), context);
+  //   }
+  //   else if (isa<CXXScalarValueInitExpr>(actualExpr))
+  //   {
+  //     return std::make_unique<AstScalarValueInit>(
+  //         cast<CXXScalarValueInitExpr>(actualExpr), context);
+  //   }
+  //   else if (isa<ExprWithCleanups>(actualExpr))
+  //   {
+  //     // Assert that there is a single child of the ExprWithCleanupsClass.
+  //     assert(++actualExpr->child_begin() == actualExpr->child_end());
+  //     return Create(*actualExpr->child_begin(), context);
+  //   }
+  //   else if (isa<MaterializeTemporaryExpr>(actualExpr))
+  //   {
+  //     // Assert that there is a single child of the MaterializeTemporaryExpr object.
+  //     assert(++actualExpr->child_begin() == actualExpr->child_end());
+  //     return Create(*actualExpr->child_begin(), context);
+  //   }
+
+  //  else if (isa<CXXStdInitializerListExpr>(actualExpr))
+  //  {
+  //    // Assert that there is a single child of the CxxStdInitializerListExpr object.
+  //    assert(++actualExpr->child_begin() == actualExpr->child_end());
+  //    return Create(*actualExpr->child_begin(), context);
+  //  }
+  //  else
+  //  {
+  //    llvm::outs() << "Unknown expression type : " << actualExpr->getStmtClassName() << "\n ";
+  //    actualExpr->dump(llvm::outs(), context);
+  //    return nullptr;
+  //  }
+  //}
+  // else
+  //{
+  //  assert(isa<Stmt>(statement));
+  //  llvm::outs() << "Unknown statement type : " << statement->getStmtClassName() << "\n ";
+  //  statement->dump(llvm::outs(), context);
+  //  return nullptr;
+  //}
+  //}
+  // else
+  //{
+  //  return nullptr;
+  //}
 }
 
 AstNamedNode::AstNamedNode(
@@ -1126,13 +1121,14 @@ class AstVariable : public AstNamedNode {
   std::string m_typeAsString;
   AstType m_type;
   bool m_isStatic{};
+  bool m_isConstexpr{};
   bool m_isArray{};
   std::string m_variableInitializer;
 
 public:
   AstVariable(VarDecl const* var, std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(var, parentNode), m_type{var->getType(), var->getASTContext()},
-        m_isStatic(var->isStaticDataMember())
+        m_isStatic(var->isStaticDataMember()), m_isConstexpr(var->isConstexpr())
   {
     clang::PrintingPolicy pp{LangOptions{}};
     pp.adjustForCPlusPlus();
@@ -1163,6 +1159,11 @@ public:
       dumper->InsertKeyword("static");
       dumper->InsertWhitespace();
     }
+    if (m_isConstexpr)
+    {
+      dumper->InsertKeyword("constexpr");
+      dumper->InsertWhitespace();
+    }
     dumper->InsertLiteral(m_typeAsString);
     dumper->InsertWhitespace();
     dumper->InsertMemberName(m_name);
@@ -1189,22 +1190,6 @@ public:
   }
 };
 
-class AstParameter : public AstNamedNode {
-  AstType m_type;
-  std::string m_typeAsString;
-
-public:
-  AstParameter(ParmVarDecl* param, std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(param, parentNode), m_type{param->getType(), param->getASTContext()},
-        m_typeAsString{QualType::getAsString(param->getType().split(), LangOptions())}
-  {
-    for (auto attr : param->attrs())
-    {
-      llvm::outs() << "Attribute: " << attr->getSpelling() << "\n";
-    }
-  }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override;
-};
 class AstTemplateParameter : public AstNamedNode {
   bool m_wasDeclaredWithTypename{};
   bool m_isParameterPack{};
@@ -1287,8 +1272,8 @@ public:
 // using rep = int64_t becomes:
 //
 // TypeAliasDecl 0x122e6738270
-// <G:\Az\LarryO\azure-sdk-for-cpp\sdk\core\azure-core\inc\azure/core/datetime.hpp:22:5, col:17>
-// col:11 referenced rep 'int64_t':'long long'
+// <G:\Az\LarryO\azure-sdk-for-cpp\sdk\core\azure-core\inc\azure/core/datetime.hpp:22:5,
+// col:17> col:11 referenced rep 'int64_t':'long long'
 //`- TypedefType 0x122e5ed47f0 'int64_t' sugar
 //    | -Typedef 0x122e505f3e0 'int64_t'
 //  `
@@ -1715,8 +1700,8 @@ public:
 
 void AstAccessSpec::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
 {
-  // We want to left-indent the "public:", "private:" and "protected" items so they stick out from
-  // the fields in the class.
+  // We want to left-indent the "public:", "private:" and "protected" items so they stick
+  // out from the fields in the class.
   dumper->AdjustIndent(-2);
   if (dumpOptions.NeedsLeftAlign)
   {
@@ -1786,7 +1771,7 @@ class AstClassTemplate : public AstNamedNode {
 
 public:
   AstClassTemplate(
-      TemplateDecl const* templateDecl,
+      ClassTemplateDecl const* templateDecl,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(templateDecl, parentNode)
   {
@@ -2192,8 +2177,9 @@ AstClassLike::AstClassLike(
     parentNode = parentNode->InsertChildNode(m_name, m_navigationId, classType);
   }
 
-  // We want to special case anonymous structures which are embedded in another type. It's possible
-  // that the following declaration is a field declaration referencing the anonymous structure:
+  // We want to special case anonymous structures which are embedded in another type. It's
+  // possible that the following declaration is a field declaration referencing the
+  // anonymous structure:
   //
   // struct Foo {
   //   int Field1;
@@ -2202,8 +2188,8 @@ AstClassLike::AstClassLike(
   //   } InnerStruct
   // };
   //
-  // This is parsed as an anonymous struct containing a single field named "InnerField1" followed by
-  // a field declaration referencing the anonymous struct.
+  // This is parsed as an anonymous struct containing a single field named "InnerField1"
+  // followed by a field declaration referencing the anonymous struct.
   if (m_name.empty() && decl->isEmbeddedInDeclarator()
       && decl->getNextDeclInContext()->getKind() == Decl::Kind::Field)
   {
@@ -2218,7 +2204,8 @@ AstClassLike::AstClassLike(
       case attr::Final:
         m_isFinal = true;
         break;
-        // This is an implicit attribute that won't ever appear explicitly, so we can ignore it.
+        // This is an implicit attribute that won't ever appear explicitly, so we can
+        // ignore it.
       case attr::MaxFieldAlignment:
         break;
       default:
@@ -2239,8 +2226,8 @@ AstClassLike::AstClassLike(
     bool shouldSkipNextChild = false;
     for (auto child : decl->decls())
     {
-      // We want to ignore any and all auto-generated types - we only care about explictly mentioned
-      // types.
+      // We want to ignore any and all auto-generated types - we only care about explictly
+      // mentioned types.
       bool shouldIncludeChild = !child->isImplicit();
       // If the child is private and we're not including private types, don't include it.
       if (shouldIncludeChild)
@@ -2278,8 +2265,8 @@ AstClassLike::AstClassLike(
           case Decl::Kind::CXXRecord: {
             m_children.push_back(
                 std::make_unique<AstClassLike>(cast<CXXRecordDecl>(child), parentNode));
-            // For an anonymous named structure, we want to skip the next field because it's been
-            // embedded in the anonymous struct definition.
+            // For an anonymous named structure, we want to skip the next field because
+            // it's been embedded in the anonymous struct definition.
             if (static_cast<AstClassLike*>(m_children.back().get())->m_isAnonymousNamedStruct)
             {
               assert(child->getNextDeclInContext()->getKind() == Decl::Kind::Field);
@@ -2329,8 +2316,8 @@ AstClassLike::AstClassLike(
             break;
           }
           case Decl::Kind::StaticAssert: {
-            // static_assert nodes are generated after the preprocessor and they don't really add
-            // any value to the ApiView.
+            // static_assert nodes are generated after the preprocessor and they don't
+            // really add any value to the ApiView.
             break;
           }
           default: {
@@ -2353,7 +2340,8 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
     }
   }
 
-  // If we're a templated class, don't insert the extra newline before the class definition.
+  // If we're a templated class, don't insert the extra newline before the class
+  // definition.
   if (dumpOptions.NeedsLeadingNewline)
   {
     dumper->Newline();
@@ -2491,13 +2479,6 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   }
 }
 
-void AstParameter::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
-{
-  m_type.Dump(dumper, dumpOptions);
-  dumper->InsertWhitespace();
-  dumper->InsertMemberName(m_name);
-}
-
 void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
 {
   if (dumpOptions.NeedsLeftAlign)
@@ -2611,31 +2592,40 @@ void AstInitializerList::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) co
 {
   if (!m_initializerValues.empty())
   {
-    // If the initializer list has multiple values, dump them as a list, one per line.
-    if (m_initializerValues.size() != 1)
+    if (IsEmptyExpression())
     {
       dumper->InsertPunctuation('{');
-      bool firstInitializer = true;
-      dumper->AdjustIndent(4);
-      for (const auto& initializer : m_initializerValues)
-      {
-        if (!firstInitializer)
-        {
-          dumper->InsertPunctuation(',');
-          dumper->InsertWhitespace();
-        }
-        firstInitializer = false;
-        dumper->Newline();
-        dumper->LeftAlign();
-        initializer->Dump(dumper, dumpOptions);
-      }
-      dumper->AdjustIndent(-4);
       dumper->InsertPunctuation('}');
     }
     else
     {
-      // If the initializer list has only a single value, just dump it.
-      m_initializerValues.front()->Dump(dumper, dumpOptions);
+
+      // If the initializer list has multiple values, dump them as a list, one per line.
+      if (m_initializerValues.size() != 1)
+      {
+        dumper->InsertPunctuation('{');
+        bool firstInitializer = true;
+        dumper->AdjustIndent(4);
+        for (const auto& initializer : m_initializerValues)
+        {
+          if (!firstInitializer)
+          {
+            dumper->InsertPunctuation(',');
+            dumper->InsertWhitespace();
+          }
+          firstInitializer = false;
+          dumper->Newline();
+          dumper->LeftAlign();
+          initializer->Dump(dumper, dumpOptions);
+        }
+        dumper->AdjustIndent(-4);
+        dumper->InsertPunctuation('}');
+      }
+      else
+      {
+        // If the initializer list has only a single value, just dump it.
+        m_initializerValues.front()->Dump(dumper, dumpOptions);
+      }
     }
   }
 }
@@ -2683,7 +2673,7 @@ std::unique_ptr<AstNode> AstNode::Create(
       return std::make_unique<AstFunctionTemplate>(cast<FunctionTemplateDecl>(decl), parentNode);
 
     case Decl::Kind::ClassTemplate:
-      return std::make_unique<AstClassTemplate>(cast<TemplateDecl>(decl), parentNode);
+      return std::make_unique<AstClassTemplate>(cast<ClassTemplateDecl>(decl), parentNode);
 
     case Decl::Kind::TemplateTypeParm:
       return std::make_unique<AstTemplateParameter>(cast<TemplateTypeParmDecl>(decl), parentNode);
@@ -2744,15 +2734,15 @@ bool AzureClassesDatabase::IsMemberOfObject(NamedDecl const* decl)
     return true;
   }
 
-  // If this object is the target of a friend declaration, then there is a friend declaration that
-  // actually defines the object.
+  // If this object is the target of a friend declaration, then there is a friend
+  // declaration that actually defines the object.
   if (decl->getFriendObjectKind() != clang::Decl::FOK_None)
   {
     return true;
   }
 
-  // Not strictly true, but if this decl has a describing template, then it's covered by another
-  // node type.
+  // Not strictly true, but if this decl has a describing template, then it's covered by
+  // another node type.
   if (decl->getDescribedTemplate() != nullptr)
   {
     return true;
@@ -2779,96 +2769,6 @@ void AzureClassesDatabase::CreateAstNode()
 {
   // Create a terminal node to force closing of all outstanding namespaces.
   m_typeList.push_back(std::make_unique<AstTerminalNode>());
-}
-
-void AzureClassesDatabase::CreateAstNode(CXXRecordDecl* cxxDecl)
-{
-  // Include private elements if we're allowed to include private elements.
-  if (m_processor->IncludePrivate() || cxxDecl->getAccess() != AS_private)
-  {
-    //// Skip over this class if it's a template declaration.
-    // if (!cxxDecl->isEmbeddedInDeclarator() && !IsMemberOfObject(cxxDecl) && cxxDecl->getKind() !=
-    // Decl::Kind::ClassTemplateSpecialization)
-    //{
-    //   m_typeList.push_back(AstNode::Create(
-    //       cxxDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(cxxDecl))));
-    // }
-  }
-}
-
-void AzureClassesDatabase::CreateAstNode(clang::FunctionDecl* functionDecl)
-{
-  if (m_processor->IncludePrivate() || functionDecl->getAccess() != AS_private)
-  {
-    // if (functionDecl->isGlobal() && !IsMemberOfObject(functionDecl))
-    //{
-    //   m_typeList.push_back(AstNode::Create(
-    //       functionDecl,
-    //       m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(functionDecl))));
-    // }
-  }
-}
-
-void AzureClassesDatabase::CreateAstNode(clang::TemplateDecl* templateDecl)
-{
-  if (m_processor->IncludePrivate() || templateDecl->getAccess() != AS_private)
-  {
-    // if (!IsMemberOfObject(templateDecl))
-    //{
-    //   m_typeList.push_back(AstNode::Create(
-    //       templateDecl,
-    //       m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
-    // }
-  }
-}
-void AzureClassesDatabase::CreateAstNode(clang::VarDecl* variableDecl)
-{
-  if (m_processor->IncludePrivate() || variableDecl->getAccess() != AS_private)
-  {
-    // if (!IsMemberOfObject(variableDecl))
-    //{
-    //   m_typeList.push_back(AstNode::Create(
-    //       variableDecl,
-    //       m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(variableDecl))));
-    // }
-  }
-}
-
-void AzureClassesDatabase::CreateAstNode(clang::EnumDecl* enumDecl)
-{
-  if (m_processor->IncludePrivate() || enumDecl->getAccess() != AS_private)
-  {
-    // if (!IsMemberOfObject(enumDecl))
-    //{
-    //   m_typeList.push_back(AstNode::Create(
-    //       enumDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(enumDecl))));
-    // }
-  }
-}
-
-void AzureClassesDatabase::CreateAstNode(clang::ClassTemplateSpecializationDecl* templateDecl)
-{
-  if (m_processor->IncludePrivate() || templateDecl->getAccess() != AS_private)
-  {
-    // if (!IsMemberOfObject(templateDecl))
-    //{
-    //   m_typeList.push_back(AstNode::Create(
-    //       templateDecl,
-    //       m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(templateDecl))));
-    // }
-  }
-}
-
-void AzureClassesDatabase::CreateAstNode(clang::TypeAliasDecl* aliasDecl)
-{
-  if (m_processor->IncludePrivate() || aliasDecl->getAccess() != AS_private)
-  {
-    // if (!IsMemberOfObject(aliasDecl))
-    //{
-    //   m_typeList.push_back(AstNode::Create(
-    //       aliasDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(aliasDecl))));
-    // }
-  }
 }
 
 void AzureClassesDatabase::CreateAstNode(clang::NamedDecl* namedDecl)

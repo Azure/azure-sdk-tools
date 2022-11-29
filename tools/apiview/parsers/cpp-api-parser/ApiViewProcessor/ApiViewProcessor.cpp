@@ -10,11 +10,6 @@
 using namespace clang;
 using namespace clang::tooling;
 
-ApiViewProcessor::ApiViewProcessor(ApiViewProcessorOptions const& options)
-    : m_processorImpl{std::make_unique<ApiViewProcessorImpl>(options)}
-{
-}
-
 ApiViewProcessor::ApiViewProcessor(
     std::string_view const& pathToProcessor,
     std::string_view const apiViewSettings)
@@ -31,15 +26,6 @@ ApiViewProcessor::ApiViewProcessor(
 ApiViewProcessor::~ApiViewProcessor() {}
 
 int ApiViewProcessor::ProcessApiView() { return m_processorImpl->ProcessApiView(); }
-
-int ApiViewProcessor::ProcessApiView(
-    std::string_view const& sourceLocation,
-    std::vector<std::string> const& additionalCompilerArguments,
-    std::vector<std::string_view> const& filesToProcess)
-{
-  return m_processorImpl->ProcessApiView(
-      sourceLocation, additionalCompilerArguments, filesToProcess);
-}
 
 std::unique_ptr<AzureClassesDatabase> const& ApiViewProcessor::GetClassesDatabase()
 {

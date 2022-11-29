@@ -18,26 +18,9 @@ struct AstNode;
 
 namespace clang {
 class Decl;
-class CXXRecordDecl;
-class FunctionDecl;
-//class FunctionTemplateDecl;
-class TemplateDecl;
-class TypeAliasDecl;
 class NamedDecl;
-class VarDecl;
-class EnumDecl;
-class ASTContext;
-class ClassTemplateSpecializationDecl;
-enum AccessSpecifier : int;
 } // namespace clang
 
-struct ApiViewProcessorOptions
-{
-  bool IncludeInternal{false};
-  bool IncludeDetail{false};
-  bool IncludePrivate{false};
-  std::string FilterNamespace;
-};
 class AstDumper;
 
 class TypeHierarchy {
@@ -100,13 +83,6 @@ public:
 
   TypeHierarchy* GetTypeHierarchy() { return &m_typeHierarchy; }
 
-  void CreateAstNode(clang::TypeAliasDecl* aliasDecl);
-  void CreateAstNode(clang::CXXRecordDecl* recordDecl);
-  void CreateAstNode(clang::FunctionDecl* functionDecl);
-  void CreateAstNode(clang::TemplateDecl* templateDecl);
-  void CreateAstNode(clang::ClassTemplateSpecializationDecl* templateDecl);
-  void CreateAstNode(clang::VarDecl* variableDecl);
-  void CreateAstNode(clang::EnumDecl* variableDecl);
   void CreateAstNode(clang::NamedDecl* namedNode);
   void CreateAstNode(); // Create a terminal AstNode which is used to close out all outstanding
                         // namespaces.
@@ -123,7 +99,6 @@ class ApiViewProcessor {
   std::unique_ptr<ApiViewProcessorImpl> m_processorImpl;
 
 public:
-  ApiViewProcessor(ApiViewProcessorOptions const& options = {});
   ApiViewProcessor(
       std::string_view const& pathToProcessor,
       std::string_view const apiViewSettings = "ApiViewSettings.json");
@@ -132,11 +107,6 @@ public:
   ~ApiViewProcessor();
 
   int ProcessApiView();
-
-  int ProcessApiView(
-      std::string_view const& sourceLocation,
-      std::vector<std::string> const& additionalCompilerArguments,
-      std::vector<std::string_view> const& filesToProcess);
 
   std::unique_ptr<AzureClassesDatabase> const& GetClassesDatabase();
   std::string_view const ReviewName();

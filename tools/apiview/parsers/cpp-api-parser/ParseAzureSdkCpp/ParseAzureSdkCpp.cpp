@@ -40,6 +40,12 @@ int main(int argc, char** argv)
     commandLine.parse(argc, argv);
     std::filesystem::path outputFileName{std::filesystem::absolute(outputFileArg.getValue())};
 
+    if (outputFileName.extension() != ".json")
+    {
+      std::cerr << "Output file name must have an extension of .json" << std::endl;
+      return 1;
+    }
+
     std::string directoryToParse{inputDirectory.getValue()};
     if (directoryToParse.back() == '\\')
     {

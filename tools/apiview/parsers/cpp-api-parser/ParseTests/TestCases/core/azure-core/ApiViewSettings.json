@@ -16,7 +16,7 @@
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": "Azure::",
-  "reviewName": "My first Review",
+  "reviewName": "Azure Core Review",
   "serviceName": null,
   "packageName": "azure.core"
 }

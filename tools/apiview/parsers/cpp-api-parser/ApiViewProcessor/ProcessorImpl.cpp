@@ -19,13 +19,6 @@ inline std::string_view stringFromU8string(std::u8string const& str)
   return std::string_view(reinterpret_cast<const char*>(str.data()), str.size());
 }
 
-ApiViewProcessorImpl::ApiViewProcessorImpl(ApiViewProcessorOptions const& options)
-    : m_classDatabase{std::make_unique<AzureClassesDatabase>(this)},
-      m_includeDetail{options.IncludeDetail}, m_includePrivate{options.IncludePrivate},
-      m_filterNamespace{options.FilterNamespace}, m_includeInternal{options.IncludeDetail}
-{
-}
-
 std::vector<std::filesystem::path> GatherSubdirectories(std::filesystem::path const& path)
 {
   std::vector<std::filesystem::path> subdirectories;
@@ -93,6 +86,7 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
       m_classDatabase{std::make_unique<AzureClassesDatabase>(this)}
 {
   // CHDIR to the directory to process so relative paths in the configuration are properly resolved.
+  auto currentDirectory{std::filesystem::current_path()};
   std::filesystem::current_path(directoryToProcess);
   if (configurationJson.contains("includeInternal"))
   {
@@ -171,7 +165,7 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
     llvm::outs() << llvm::raw_ostream::Colors::CYAN << "No source files specified"
                  << llvm::raw_ostream::Colors::RESET << " collecting all files under "
                  << stringFromU8string(m_currentSourceRoot.u8string()) << "\n";
-    auto subdirectories = GatherSubdirectories(directoryToProcess);
+    auto subdirectories = GatherSubdirectories(m_currentSourceRoot);
     for (auto& subdirectory : subdirectories)
     {
       for (auto& entry : std::filesystem::directory_iterator(subdirectory))
@@ -199,6 +193,7 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
       }
     }
   }
+  std::filesystem::current_path(currentDirectory);
 }
 
 AzureClassesDatabase::AzureClassesDatabase(ApiViewProcessorImpl* processor) : m_processor{processor}
@@ -222,19 +217,16 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
     clang::NamedDecl* namedDecl)
 {
   bool shouldCollect = false;
-
   // By default, we consider any types within desired set of input files.
   auto fileId = namedDecl->getASTContext().getSourceManager().getFileID(namedDecl->getLocation());
   auto fileEntry = namedDecl->getASTContext().getSourceManager().getFileEntryForID(fileId);
   if (fileEntry)
   {
-    for (auto const& fileToProcess : m_processorImpl->GetFilesToCompile())
+    if (fileEntry->getName().startswith_insensitive(
+            stringFromU8string(m_processorImpl->CurrentSourceRoot().u8string())))
     {
-      if (fileToProcess.compare(std::string(fileEntry->getName())) == 0)
-      {
-        // Figure out the source file for this type.
-        shouldCollect = true;
-      }
+      // If the file containing the type is within the source root, we want to consider the type.
+      shouldCollect = true;
     }
   }
   if (shouldCollect)
@@ -262,7 +254,11 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
       // We have a namespace filter set. Look at all types whose names start with the filter
       // namespace name.
       std::string typeName{namedDecl->getQualifiedNameAsString()};
-      if (typeName.find(m_processorImpl->FilterNamespace()) == 0)
+      if (typeName.find(m_processorImpl->FilterNamespace()) != 0)
+      {
+        shouldCollect = false;
+      }
+      if (shouldCollect)
       {
         // Assume we're going to process this type.
         shouldCollect = true;
@@ -372,72 +368,13 @@ int ApiViewProcessorImpl::ProcessApiView()
 {
   // clang really likes all input paths to be absolute paths, so use the fiilesystem to
   // canonicalize the input filename and source location.
-
-  std::filesystem::path tempFile = std::filesystem::temp_directory_path();
-  tempFile /= "TempSourceFile.cpp";
-  if (m_filesToCompile.size() == 1)
+  auto currentDirectory{std::filesystem::current_path()};
+  try
   {
-    tempFile = m_filesToCompile.front();
-  }
-  else
-  {
-    {
-      std::ofstream sourceFileAggregate(
-          static_cast<std::string>(stringFromU8string(tempFile.u8string())),
-          std::ios::out | std::ios::trunc);
-      for (const auto& file : m_filesToCompile)
-      {
-        assert(file.u8string().find(m_currentSourceRoot.u8string()) == 0);
-        auto relativeFile = static_cast<std::string>(stringFromU8string(
-            file.u8string().erase(0, m_currentSourceRoot.u8string().size() + 1)));
-        std::string quotedFile = replaceAll(relativeFile, "\\", "\\\\");
-        sourceFileAggregate << "#include \"" << quotedFile << "\"" << std::endl;
-      }
-    }
-  }
 
-  // Create a compilation database consisting of the source root and source file.
-  auto absTemp = m_currentSourceRoot;
-  //  absTemp /= tempFile;
-  ApiViewCompilationDatabase compileDb(
-      {std::filesystem::absolute(tempFile)},
-      m_currentSourceRoot,
-      m_additionalIncludeDirectories,
-      m_additionalCompilerArguments);
+    std::filesystem::path tempFile = std::filesystem::temp_directory_path();
+    tempFile /= "TempSourceFile.cpp";
 
-  std::vector<std::string> sourceFiles;
-  sourceFiles.push_back(
-      std::string(stringFromU8string(std::filesystem::absolute(tempFile).u8string())));
-
-  ClangTool tool(compileDb, sourceFiles);
-
-  auto frontEndActionFactory{std::make_unique<AstVisitorActionFactory>(this)};
-  auto rv = tool.run(frontEndActionFactory.get());
-
-  // Insert a terminal node into the classes database, which ensures that all opened namespaces
-  // are closed.
-  m_classDatabase->CreateAstNode();
-  return rv;
-}
-
-int ApiViewProcessorImpl::ProcessApiView(
-    std::string_view const& sourceLocation,
-    std::vector<std::string> const& additionalCompilerArguments,
-    std::vector<std::string_view> const& filesToProcess)
-{
-  // clang really likes all input paths to be absolute paths, so use the fiilesystem to
-  // canonicalize the input filename and source location.
-  for (const auto file : filesToProcess)
-  {
-    std::filesystem::path sourcePath(file);
-    m_filesToCompile.push_back(std::filesystem::absolute(sourcePath));
-  }
-
-  std::filesystem::path rootPath(sourceLocation);
-  m_currentSourceRoot = std::filesystem::absolute(rootPath);
-
-  std::filesystem::path tempFile("TempSourceFile.cpp");
-  {
     std::ofstream sourceFileAggregate(
         static_cast<std::string>(stringFromU8string(tempFile.u8string())),
         std::ios::out | std::ios::trunc);
@@ -449,34 +386,38 @@ int ApiViewProcessorImpl::ProcessApiView(
       std::string quotedFile = replaceAll(relativeFile, "\\", "\\\\");
       sourceFileAggregate << "#include \"" << quotedFile << "\"" << std::endl;
     }
+
+    // Create a compilation database consisting of the source root and source file.
+    auto absTemp = m_currentSourceRoot;
+
+    ApiViewCompilationDatabase compileDb(
+        {std::filesystem::absolute(tempFile)},
+        m_currentSourceRoot,
+        m_additionalIncludeDirectories,
+        m_additionalCompilerArguments);
+
+    std::vector<std::string> sourceFiles;
+    sourceFiles.push_back(
+        std::string(stringFromU8string(std::filesystem::absolute(tempFile).u8string())));
+
+    ClangTool tool(compileDb, sourceFiles);
+
+    auto frontEndActionFactory{std::make_unique<AstVisitorActionFactory>(this)};
+    auto rv = tool.run(frontEndActionFactory.get());
+
+    // Insert a terminal node into the classes database, which ensures that all opened namespaces
+    // are closed.
+    m_classDatabase->CreateAstNode();
+    // Restore the current directory after processing (tool.run will change the current directory).
+    std::filesystem::current_path(currentDirectory);
+    return rv;
   }
-
-  // Create a compilation database consisting of the source root and source file.
-  auto absTemp = m_currentSourceRoot;
-  //  absTemp /= tempFile;
-  ApiViewCompilationDatabase compileDb(
-      /* m_filesToCompile*/ {std::filesystem::absolute(tempFile)},
-      m_currentSourceRoot,
-      {},
-      additionalCompilerArguments);
-
-  std::vector<std::string> sourceFiles;
-  //  for (auto const& file : m_filesToCompile)
-  //  {
-  //    sourceFiles.push_back(std::string(stringFromU8string(file.u8string())));
-  //  }
-  sourceFiles.push_back(
-      std::string(stringFromU8string(std::filesystem::absolute(tempFile).u8string())));
-
-  ClangTool tool(compileDb, sourceFiles);
-
-  auto frontEndActionFactory{std::make_unique<AstVisitorActionFactory>(this)};
-  auto rv = tool.run(frontEndActionFactory.get());
-
-  // Insert a terminal node into the classes database, which ensures that all opened namespaces
-  // are closed.
-  m_classDatabase->CreateAstNode();
-  return rv;
+  catch (std::exception&)
+  {
+    // Restore the current directory after processing.
+    std::filesystem::current_path(currentDirectory);
+    throw;
+  }
 }
 
 void AzureClassesDatabase::DumpClassDatabase(AstDumper* dumper) const

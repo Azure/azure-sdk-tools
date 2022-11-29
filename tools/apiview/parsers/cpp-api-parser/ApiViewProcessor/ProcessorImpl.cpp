@@ -103,7 +103,19 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
   if (configurationJson.contains("filterNamespace")
       && !configurationJson["filterNamespace"].is_null())
   {
-    m_filterNamespace = configurationJson["filterNamespace"].get<std::string>();
+    if (configurationJson["filterNamespace"].is_string())
+    {
+      m_filterNamespaces.push_back(configurationJson["filterNamespace"].get<std::string>());
+    }
+    else if (configurationJson["filterNamespace"].is_array())
+    {
+      m_filterNamespaces = configurationJson["filterNamespace"];
+    }
+    else
+    {
+      throw std::runtime_error(
+          "Configuration element `filterNamespace` is neither a string or an array of strings.");
+    }
   }
   if (configurationJson.contains("additionalCompilerSwitches")
       && configurationJson["additionalIncludeDirectories"].is_array()
@@ -232,7 +244,7 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
   if (shouldCollect)
   {
     // If we don't have a filter namespace, include all the types.
-    if (m_processorImpl->FilterNamespace().empty())
+    if (m_processorImpl->FilterNamespaces().empty())
     {
       std::string typeName{namedDecl->getQualifiedNameAsString()};
       // However if the type is in the _internal namespace, then we want to exclude it if
@@ -253,9 +265,14 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
     {
       // We have a namespace filter set. Look at all types whose names start with the filter
       // namespace name.
-      std::string typeName{namedDecl->getQualifiedNameAsString()};
-      if (typeName.find(m_processorImpl->FilterNamespace()) != 0)
+      const std::string typeName{namedDecl->getQualifiedNameAsString()};
+      if (std::find_if(
+              std::begin(m_processorImpl->FilterNamespaces()),
+              std::end(m_processorImpl->FilterNamespaces()),
+              [&typeName](std::string const& ns) { return typeName.find(ns) == 0; })
+          == std::end(m_processorImpl->FilterNamespaces()))
       {
+          // *** GENERATE A DIAGNOSTIC IF WE FIND A TYPE OUTSIDE THE NAMESPACE FILTER ***
         shouldCollect = false;
       }
       if (shouldCollect)

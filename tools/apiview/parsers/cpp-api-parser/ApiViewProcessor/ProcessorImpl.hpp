@@ -31,7 +31,7 @@ class ApiViewProcessorImpl {
   bool m_includeInternal{false};
   bool m_includeDetail{false};
   bool m_includePrivate{false};
-  std::string m_filterNamespace;
+  std::vector<std::string> m_filterNamespaces;
 
   class CollectCppClassesVisitor : public clang::RecursiveASTVisitor<CollectCppClassesVisitor> {
     ApiViewProcessorImpl* m_processorImpl;
@@ -120,5 +120,5 @@ public:
   std::string_view const ReviewName() { return m_reviewName; };
   std::string_view const ServiceName() { return m_serviceName; };
   std::string_view const PackageName() { return m_packageName; };
-  std::string_view const FilterNamespace() { return m_filterNamespace; }
+  std::vector<std::string> const &FilterNamespaces() { return m_filterNamespaces; }
 };

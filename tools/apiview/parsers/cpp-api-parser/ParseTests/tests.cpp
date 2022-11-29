@@ -278,6 +278,27 @@ TEST_F(TestParser, NamespaceFilter3)
   EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated3.cpp"));
 }
 
+TEST_F(TestParser, NamespaceFilter4)
+{
+  ApiViewProcessor processor("tests", R"({
+  "sourceFilesToProcess": [
+    "SimpleTest.cpp"
+  ],
+  "additionalIncludeDirectories": [],
+  "additionalCompilerSwitches": null,
+  "includeInternal": false,
+  "includeDetail": false,
+  "includePrivate": false,
+  "filterNamespace": ["Test::Inner", "A::AB"]
+}
+)"_json);
+  processor.ProcessApiView();
+
+  auto& db = processor.GetClassesDatabase();
+  EXPECT_EQ(5ul, db->GetAstNodeMap().size());
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated4.cpp"));
+}
+
 TEST_F(TestParser, Class1)
 {
   ApiViewProcessor processor("tests", R"({

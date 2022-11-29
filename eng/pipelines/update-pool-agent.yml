@@ -4,22 +4,31 @@ parameters:
   default:
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
+      RecordSession: ''
     - RepoOwner: Azure
       RepoName: azure-sdk-for-c
+      RecordSession: ''
     - RepoOwner: Azure
       RepoName: azure-sdk-for-cpp
+      RecordSession: ''
     - RepoOwner: Azure
       RepoName: azure-sdk-for-go
+      RecordSession: ''
     - RepoOwner: Azure
       RepoName: azure-sdk-for-ios
+      RecordSession: ''
     - RepoOwner: Azure
       RepoName: azure-sdk-for-java
+      RecordSession: 'resources/session-records'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-js
+      RecordSession: 'recordings/node'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-net
+      RecordSession: 'tests/SessionRecords'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-python
+      RecordSession: 'tests/recordings'
 - name: MigrateFrom
   type: string
   default: 'not-specified'
@@ -49,7 +58,7 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             Write-Host "checking $(DefaultBranch)"
-            $files = git ls-tree -r --name-only main
+            $files = Get-ChildItem "$(Build.SourcesDirectory)" -Recurse | Where-Object {!($_.FullName -match "${{ repo.RecordSession }}")}
             Write-Host "getting all files"
             # Scan all Files
             foreach ($file in $files) {

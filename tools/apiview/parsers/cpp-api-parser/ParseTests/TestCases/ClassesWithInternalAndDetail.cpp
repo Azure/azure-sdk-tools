@@ -164,7 +164,7 @@ namespace _internal {
     TransportPolicy& operator=(TransportPolicy&&);
     virtual ~TransportPolicy() = default;
   };
-  class RetryPolicy : public HttpPolicy {
+  class RetryPolicy : public HttpPolicy, RawResponse {
   public:
     RetryPolicy();
     virtual std::unique_ptr<HttpPolicy> Clone();
@@ -186,7 +186,7 @@ namespace _internal {
     RetryPolicy& operator=(RetryPolicy&&);
     virtual ~RetryPolicy() = default;
   };
-  class RequestIdPolicy : public HttpPolicy {
+  class RequestIdPolicy : public HttpPolicy, private RawResponse {
   public:
     RequestIdPolicy();
     virtual std::unique_ptr<HttpPolicy> Clone();

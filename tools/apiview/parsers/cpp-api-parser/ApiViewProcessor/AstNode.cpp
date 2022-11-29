@@ -11,6 +11,7 @@
 #include <clang/AST/Type.h>
 #include <clang/AST/TypeVisitor.h>
 #include <iostream>
+#include <iterator>
 #include <list>
 #include <vector>
 
@@ -757,8 +758,8 @@ public:
   }
   virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
   {
-//    dumper->InsertPunctuation('{');
-//    dumper->InsertPunctuation('}');
+    //    dumper->InsertPunctuation('{');
+    //    dumper->InsertPunctuation('}');
   }
 };
 
@@ -773,8 +774,8 @@ public:
   }
   virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
   {
-//    dumper->InsertPunctuation('{');
-//    dumper->InsertPunctuation('}');
+    //    dumper->InsertPunctuation('{');
+    //    dumper->InsertPunctuation('}');
   }
 };
 
@@ -834,11 +835,19 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
         case Stmt::CXXTemporaryObjectExprClass:
           return std::make_unique<AstCtorExpr>(cast<CXXConstructExpr>(actualExpr), context);
 
+        case Stmt::CXXConstCastExprClass:
+        case Stmt::CXXStaticCastExprClass:
         case Stmt::CXXFunctionalCastExprClass:
           return std::make_unique<AstCastExpr>(cast<CastExpr>(actualExpr), context);
 
         case Stmt::CXXStdInitializerListExprClass:
           // Assert that there is a single child of the CxxStdInitializerListExpr object.
+          assert(++actualExpr->child_begin() == actualExpr->child_end());
+          return Create(*actualExpr->child_begin(), context);
+        case Stmt::CallExprClass:
+          return std::make_unique<AstCallExpr>(cast<CallExpr>(actualExpr), context);
+        case Stmt::ExprWithCleanupsClass:
+          // Assert that there is a single child of the ExprWithCleanupsClass.
           assert(++actualExpr->child_begin() == actualExpr->child_end());
           return Create(*actualExpr->child_begin(), context);
 
@@ -854,16 +863,6 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
       // else if (isa<CastExpr>(actualExpr))
       //{
       //   return std::make_unique<AstCastExpr>(cast<CastExpr>(actualExpr), context);
-      // }
-      // else if (isa<CallExpr>(actualExpr))
-      //{
-      //   return std::make_unique<AstCallExpr>(cast<CallExpr>(actualExpr), context);
-      // }
-      // else if (isa<ExprWithCleanups>(actualExpr))
-      //{
-      //   // Assert that there is a single child of the ExprWithCleanupsClass.
-      //   assert(++actualExpr->child_begin() == actualExpr->child_end());
-      //   return Create(*actualExpr->child_begin(), context);
       // }
     }
     else
@@ -1029,8 +1028,11 @@ public:
 
 void AstBaseClass::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
 {
-  dumper->InsertKeyword(AccessSpecifierToString(m_access));
-  dumper->InsertWhitespace();
+  if (m_access != AS_none)
+  {
+    dumper->InsertKeyword(AccessSpecifierToString(m_access));
+    dumper->InsertWhitespace();
+  }
   m_baseClass.Dump(dumper, dumpOptions);
 }
 
@@ -2372,13 +2374,13 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
         bool firstType = true;
         for (auto const& base : m_baseClasses)
         {
-          base->DumpNode(dumper, dumpOptions);
           if (!firstType)
           {
             dumper->InsertPunctuation(',');
             dumper->InsertWhitespace();
-            firstType = false;
           }
+          firstType = false;
+          base->DumpNode(dumper, dumpOptions);
         }
       }
 

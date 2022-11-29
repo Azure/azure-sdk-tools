@@ -39,13 +39,17 @@ stages:
 
         steps:
           - pwsh: |
+          - pwsh: |
+              cmd /c dir c:\
+              mkdir c:\vcpkg
+              chdir c:\vcpkg
               Write-Host "git clone https://github.com/Microsoft/vcpkg"
               git clone https://github.com/Microsoft/vcpkg
               if ($LASTEXITCODE -ne 0) {
                 Write-Error "Unable to check out vcpkg fork repo"
                 exit $LASTEXITCODE
               }
-              cd vcpkg
+              cd c:\vcpkg
               git fetch --tags
               git checkout tags/$(VcpkgRelease)
             displayName: Clone vcpkg 
@@ -54,7 +58,7 @@ stages:
             displayName: Bootstrap vcpkg.
             condition: succeeded()
           - pwsh: |
-              $vcpkgRoot = Resolve-Path "./vcpkg"
+              $vcpkgRoot = Resolve-Path "c:/vcpkg"
               Write-Host "Set VCPKG_ROOT: $vcpkgRoot"
               Write-Host "##vso[task.setvariable variable=VCPKG_ROOT]$vcpkgRoot"
             displayName: Set VCPKG_ROOT

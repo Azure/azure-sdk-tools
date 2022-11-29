@@ -53,7 +53,7 @@ jobs:
             Write-Host "getting all files"
             # Scan all Files
             foreach ($file in $files) {
-              $content = Get-Content $file -Raw
+              $content = Get-Content -LiteralPath $file -Raw
               $newcontent = ""
               if ($content -match "${{ parameters.MigrateFrom }}") {
                 Write-Host $file

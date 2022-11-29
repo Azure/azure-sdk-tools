@@ -510,7 +510,7 @@ Services:
     Net:
       Project: sdk/eventhub/Azure.Messaging.EventHubs/perf/Azure.Messaging.EventHubs.Perf.csproj
       PackageVersions:
-      - Azure.Messaging.EventHubs: 5.7.2
+      - Azure.Messaging.EventHubs: 5.7.5
       - Azure.Messaging.EventHubs: source
     Python:
       Project: sdk/eventhub/azure-eventhub
@@ -561,7 +561,7 @@ Services:
     Net:
       Project: sdk/eventhub/Azure.Messaging.EventHubs.Processor/perf/Azure.Messaging.EventHubs.Processor.Perf.csproj
       PackageVersions:
-      - Azure.Messaging.EventHubs.Processor: 5.7.2
+      - Azure.Messaging.EventHubs.Processor: 5.7.5
       - Azure.Messaging.EventHubs.Processor: source
   Tests:
   - Test: process-event

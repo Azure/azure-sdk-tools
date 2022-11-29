@@ -45,7 +45,7 @@ stages:
                 Write-Error "Unable to check out vcpkg fork repo"
                 exit $LASTEXITCODE
               }
-              git checkout ${{VcpkgRelease}}
+              git checkout $(VcpkgRelease)
             displayName: Clone vcpkg 
           - pwsh: |
                 ./vcpkg/bootstrap-vcpkg

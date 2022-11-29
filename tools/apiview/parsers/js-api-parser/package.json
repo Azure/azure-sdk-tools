@@ -3,7 +3,9 @@
   "version": "1.0.3",
   "description": "",
   "main": "index.js",
-  "publishConfig":{"registry":"https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/"},
+  "publishConfig": {
+    "registry": "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/"
+  },
   "dependencies": {
     "@microsoft/api-extractor-model": "^7.22.2",
     "js-tokens": "^6.0.0"

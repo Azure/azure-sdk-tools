@@ -80,7 +80,7 @@ jobs:
           parameters:
             BaseBranchName: $(DefaultBranch)
             PRBranchName: migrate-pool
-            CommitMsg: "Migrate from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}"
+            CommitMsg: "[Testing phase, don't review] Migrate from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}"
             RepoOwner: ${{ repo.RepoOwner }}
             RepoName: ${{ repo.RepoName }}
             PRTitle: Migrate to new pool

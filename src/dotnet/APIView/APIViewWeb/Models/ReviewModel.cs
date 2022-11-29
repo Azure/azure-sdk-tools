@@ -1,12 +1,12 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
-using APIViewWeb.Repositories;
 using Newtonsoft.Json;
 
 namespace APIViewWeb
@@ -129,5 +129,8 @@ namespace APIViewWeb
         public DateTime ApprovalRequestedOn;
 
         public DateTime ApprovalDate;
+        public bool IsApprovedForFirstRelease { get; set; }
+        public string ApprovedForFirstReleaseBy { get; set; }
+        public DateTime ApprovedForFirstReleaseOn { get; set; }
     }
 }

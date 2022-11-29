@@ -6,20 +6,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 
 
 namespace APIViewWeb
 {
-    public class CosmosReviewRepository
+    public class CosmosReviewRepository : ICosmosReviewRepository
     {
         private readonly Container _reviewsContainer;
         private readonly CosmosClient _cosmosClient;
 
-        public CosmosReviewRepository(IConfiguration configuration, CosmosClient cosmosClient = null)
+        public CosmosReviewRepository(IConfiguration configuration)
         {
-            _cosmosClient = cosmosClient ?? new CosmosClient(configuration["Cosmos:ConnectionString"]);
+            _cosmosClient = new CosmosClient(configuration["Cosmos:ConnectionString"]);
             _reviewsContainer = _cosmosClient.GetContainer("APIView", "Reviews");
         }
 
@@ -275,6 +276,37 @@ namespace APIViewWeb
             return result;
         }
 
+        public async Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName)
+        {
+            var query = $"SELECT * FROM Reviews r WHERE r.IsClosed = false AND IS_DEFINED(r.IsApprovedForFirstRelease) AND r.IsApprovedForFirstRelease = true AND " +
+                        $"EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";
+            var allReviews = new List<ReviewModel>();
+            var queryDefinition = new QueryDefinition(query).WithParameter("@packageName", packageName).WithParameter("@language", language);
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                allReviews.AddRange(result.Resource);
+            }
+
+            return allReviews;
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetApprovedReviews(string language, string packageName)
+        {
+            var query = $"SELECT * FROM Reviews r WHERE  EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE revision.IsApproved = true AND EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";
+            var allReviews = new List<ReviewModel>();
+            var queryDefinition = new QueryDefinition(query).WithParameter("@packageName", packageName).WithParameter("@language", language);
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                allReviews.AddRange(result.Resource);
+            }
+
+            return allReviews;
+        }
+
         private static string ArrayToQueryString<T>(IEnumerable<T> items)
         {
             var result = new StringBuilder();
@@ -289,7 +321,7 @@ namespace APIViewWeb
                 {
                     result.Append($"\"{item}\",");
                 }
-                
+
             }
             result.Remove(result.Length - 1, 1);
             result.Append(")");

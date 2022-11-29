@@ -6,12 +6,15 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView;
 using APIView.DIff;
+using APIView.Model;
 using APIViewWeb.Helpers;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
+
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -20,27 +23,27 @@ namespace APIViewWeb.Pages.Assemblies
         private static int REVIEW_DIFF_CONTEXT_SIZE = 3;
         private const string DIFF_CONTEXT_SEPERATOR = "<br><span>.....</span><br>";
 
-        private readonly ReviewManager _manager;
+        private readonly IReviewManager _manager;
 
-        private readonly BlobCodeFileRepository _codeFileRepository;
+        private readonly IBlobCodeFileRepository _codeFileRepository;
 
-        private readonly CommentsManager _commentsManager;
+        private readonly ICommentsManager _commentsManager;
 
-        private readonly NotificationManager _notificationManager;
+        private readonly INotificationManager _notificationManager;
 
         public readonly UserPreferenceCache _preferenceCache;
 
-        private readonly CosmosUserProfileRepository _userProfileRepository;
+        private readonly ICosmosUserProfileRepository _userProfileRepository;
 
         private readonly IConfiguration _configuration;
 
         public ReviewPageModel(
-            ReviewManager manager,
-            BlobCodeFileRepository codeFileRepository,
-            CommentsManager commentsManager,
-            NotificationManager notificationManager,
+            IReviewManager manager,
+            IBlobCodeFileRepository codeFileRepository,
+            ICommentsManager commentsManager,
+            INotificationManager notificationManager,
             UserPreferenceCache preferenceCache,
-            CosmosUserProfileRepository userProfileRepository,
+            ICosmosUserProfileRepository userProfileRepository,
             IConfiguration configuration)
         {
             _manager = manager;
@@ -57,13 +60,12 @@ namespace APIViewWeb.Pages.Assemblies
         public ReviewRevisionModel Revision { get; set; }
         public ReviewRevisionModel DiffRevision { get; set; }
         public ReviewRevisionModel[] PreviousRevisions {get; set; }
-
         public CodeFile CodeFile { get; set; }
-
         public CodeLineModel[] Lines { get; set; }
         public InlineDiffLine<CodeLine>[] DiffLines { get; set; }
         public ReviewCommentsModel Comments { get; set; }
         public HashSet<GithubUser> TaggableUsers { get; set; }
+        public HashSet<int> HeadingsOfSectionsWithDiff { get; set; } = new HashSet<int>();
 
         /// <summary>
         /// The number of active conversations for this iteration
@@ -86,35 +88,26 @@ namespace APIViewWeb.Pages.Assemblies
 
         public IEnumerable<ReviewModel> ReviewsForPackage { get; set; } = new List<ReviewModel>();
 
-        public readonly HashSet<string> approvers = new HashSet<string>();
+        public readonly HashSet<string> PreferredApprovers = new HashSet<string>();
 
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
             TempData["Page"] = "api";
 
-            Review = await _manager.GetReviewAsync(User, id);
+            await GetReviewPageModelPropertiesAsync(id, revisionId);
 
             if (!Review.Revisions.Any())
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }
-
-            TaggableUsers = _commentsManager.TaggableUsers;
-
-            Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Revision = GetReviewRevision(revisionId);
-            PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
-
             var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
             CodeFile = renderedCodeFile.CodeFile;
 
             var fileDiagnostics = CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
             var fileHtmlLines = renderedCodeFile.Render(ShowDocumentation);
 
-            if (DiffRevisionId != null)
+            if (DiffRevision != null)
             {
-                DiffRevision = PreviousRevisions.Single(r=>r.RevisionId == DiffRevisionId);
-
                 var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
 
                 var previousHtmlLines = previousRevisionFile.RenderReadOnly(ShowDocumentation);
@@ -151,23 +144,23 @@ namespace APIViewWeb.Pages.Assemblies
                         var langs = userCache.ApprovedLanguages.ToHashSet();
                         if (!langs.Any())
                         {
-                            UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                            UserProfileModel user = await _userProfileRepository.TryGetUserProfileAsync(username);
                             langs = user.Languages;
                             userCache.ApprovedLanguages = langs;
                             _preferenceCache.UpdateUserPreference(userCache, User);
                         }
-                        if (langs.Contains(Review.Language))
+                        if (langs.Contains(Review.Language) || !langs.Any())
                         {
-                            approvers.Add(username);
+                            PreferredApprovers.Add(username);
                         }
                     }
                     else
                     {
-                        UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                        UserProfileModel user = await _userProfileRepository.TryGetUserProfileAsync(username);
                         var langs = user.Languages;
-                        if (langs.Contains(Review.Language))
+                        if (langs.Contains(Review.Language) || !langs.Any())
                         {
-                            approvers.Add(username);
+                            PreferredApprovers.Add(username);
                         }
                     }
                 }
@@ -176,18 +169,61 @@ namespace APIViewWeb.Pages.Assemblies
             return Page();
         }
 
-        public async Task<PartialViewResult> OnGetCodeLineSectionAsync(string id, int sectionId, string revisionId = null)
+        public async Task<PartialViewResult> OnGetCodeLineSectionAsync(
+            string id, int sectionKey, int? sectionKeyA = null, int? sectionKeyB = null,
+            string revisionId = null, string diffRevisionId = null, bool diffOnly = false)
         {
-            Review = await _manager.GetReviewAsync(User, id);
-            Revision = GetReviewRevision(revisionId);
+            await GetReviewPageModelPropertiesAsync(id, revisionId, diffRevisionId, diffOnly);
             var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
-            var htmlLines = renderedCodeFile.GetCodeLineSection(sectionId);
             var fileDiagnostics = renderedCodeFile.CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
-            Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Lines = CreateLines(fileDiagnostics, htmlLines, Comments, true);
+            CodeLine[] currentHtmlLines;
+
+            if (DiffRevision != null)
+            {
+                InlineDiffLine<CodeLine>[] diffLines;
+                var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
+
+                if (sectionKeyA != null && sectionKeyB != null)
+                {
+                    var currentRootNode = renderedCodeFile.GetCodeLineSectionRoot((int)sectionKeyA);
+                    var previousRootNode = previousRevisionFile.GetCodeLineSectionRoot((int)sectionKeyB);
+                    var diffSectionRoot = _manager.ComputeSectionDiff(previousRootNode, currentRootNode, previousRevisionFile, renderedCodeFile);
+                    diffLines = renderedCodeFile.GetDiffCodeLineSection(diffSectionRoot);
+                }
+                else if (sectionKeyA != null)
+                {
+                    currentHtmlLines = renderedCodeFile.GetCodeLineSection((int)sectionKeyA);
+                    var previousRevisionHtmlLines = new CodeLine[] { };
+                    var previousRevisionTextLines = new CodeLine[] { };
+                    var currentRevisionTextLines = renderedCodeFile.GetCodeLineSection((int)sectionKeyA, renderType: RenderType.Text);
+                    diffLines = InlineDiff.Compute(
+                        previousRevisionTextLines,
+                        currentRevisionTextLines,
+                        previousRevisionHtmlLines,
+                        currentHtmlLines);
+                }
+                else 
+                {
+                    currentHtmlLines = new CodeLine[] { }; 
+                    var previousRevisionHtmlLines = previousRevisionFile.GetCodeLineSection((int)sectionKeyB, RenderType.ReadOnly);
+                    var previousRevisionTextLines = previousRevisionFile.GetCodeLineSection((int)sectionKeyB, renderType: RenderType.Text);
+                    var currentRevisionTextLines = new CodeLine[] { };
+                    diffLines = InlineDiff.Compute(
+                        previousRevisionTextLines,
+                        currentRevisionTextLines,
+                        previousRevisionHtmlLines,
+                        currentHtmlLines);
+                }
+                Lines = CreateLines(fileDiagnostics, diffLines, Comments, true);
+            }
+            else
+            {
+                currentHtmlLines = renderedCodeFile.GetCodeLineSection(sectionKey);
+                Lines = CreateLines(fileDiagnostics, currentHtmlLines, Comments, true);
+            }
             TempData["CodeLineSection"] = Lines;
             TempData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User) ?? new UserPreferenceModel();
-            return Partial("_CodeLinePartial", sectionId);
+            return Partial("_CodeLinePartial", sectionKey);
         }
 
         public async Task<ActionResult> OnPostToggleClosedAsync(string id)
@@ -208,6 +244,7 @@ namespace APIViewWeb.Pages.Assemblies
             await _manager.ToggleApprovalAsync(User, id, revisionId);
             return RedirectToPage(new { id = id });
         }
+
         public async Task<ActionResult> OnPostRequestReviewersAsync(string id, HashSet<string> reviewers)
         {
             await _manager.RequestApproversAsync(User, id, reviewers);
@@ -240,11 +277,22 @@ namespace APIViewWeb.Pages.Assemblies
             return _preferenceCache.GetUserPreferences(User).Result;
         }
 
-        private ReviewRevisionModel GetReviewRevision(string revisionId = null)
+        private async Task GetReviewPageModelPropertiesAsync(string id, string revisionId = null, string diffRevisionId = null, bool diffOnly = false)
         {
-            return revisionId != null ?
+            Review = await _manager.GetReviewAsync(User, id);
+            TaggableUsers = _commentsManager.GetTaggableUsers();
+            Comments = await _commentsManager.GetReviewCommentsAsync(id);
+            Revision = revisionId != null ?
                 Review.Revisions.Single(r => r.RevisionId == revisionId) :
                 Review.Revisions.Last();
+            PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
+            DiffRevisionId = (DiffRevisionId == null) ? diffRevisionId : DiffRevisionId;
+            ShowDiffOnly = (ShowDiffOnly == false) ? diffOnly : ShowDiffOnly;
+            DiffRevision = DiffRevisionId != null ?
+                PreviousRevisions.Single(r => r.RevisionId == DiffRevisionId) :
+                DiffRevision;
+            HeadingsOfSectionsWithDiff = (DiffRevision != null && DiffRevision.HeadingsOfSectionsWithDiff.ContainsKey(Revision.RevisionId)) ? 
+                DiffRevision.HeadingsOfSectionsWithDiff[Revision.RevisionId] : new HashSet<int>();
         }
 
         private InlineDiffLine<CodeLine>[] CreateDiffOnlyLines(InlineDiffLine<CodeLine>[] lines)
@@ -288,28 +336,65 @@ namespace APIViewWeb.Pages.Assemblies
             return filteredLines.ToArray();
         }
 
-        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, InlineDiffLine<CodeLine>[] lines, ReviewCommentsModel comments)
+        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, InlineDiffLine<CodeLine>[] lines, ReviewCommentsModel comments, bool hideCommentRows = false)
         {
             if (ShowDiffOnly)
             {
                 lines = CreateDiffOnlyLines(lines);
             }
+            List<int> documentedByLines = new List<int>();
+            int lineNumberExcludingDocumentation = 0;
+            int diffSectionId = 0;
 
             return lines.Select(
-                (diffLine, index) => new CodeLineModel(
-                    diffLine.Kind,
-                    diffLine.Line,
-                    diffLine.Kind != DiffLineKind.Removed &&
-                    comments.TryGetThreadForLine(diffLine.Line.ElementId, out var thread) ?
-                        thread :
-                        null,
-
-                    diffLine.Kind != DiffLineKind.Removed ?
-                        diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
-                        Array.Empty<CodeDiagnostic>(),
-                    diffLine.Line.LineNumber ?? ++index,
-                    new int[] { }
-                )).ToArray();
+                (diffLine, index) =>
+                {
+                    if (diffLine.Line.IsDocumentation)
+                    {
+                        // documentedByLines must include the index of a line, assuming that documentation lines are counted
+                        documentedByLines.Add(++index);
+                        return new CodeLineModel(
+                            kind: diffLine.Kind,
+                            codeLine: diffLine.Line,
+                            commentThread: comments.TryGetThreadForLine(diffLine.Line.ElementId, out var thread, hideCommentRows) ?
+                                thread :
+                                null,
+                            diagnostics: diffLine.Kind != DiffLineKind.Removed ?
+                                diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
+                                Array.Empty<CodeDiagnostic>(),
+                            lineNumber: lineNumberExcludingDocumentation,
+                            documentedByLines: new int[] { },
+                            isDiffView: true,
+                            diffSectionId: diffLine.Line.SectionKey != null ? ++diffSectionId : null,
+                            otherLineSectionKey: diffLine.Kind == DiffLineKind.Unchanged ? diffLine.OtherLine.SectionKey : null,
+                            headingsOfSectionsWithDiff: HeadingsOfSectionsWithDiff,
+                            isSubHeadingWithDiffInSection: diffLine.IsHeadingWithDiffInSection
+                        );
+                    }
+                    else
+                    {
+                        CodeLineModel c = new CodeLineModel(
+                             kind: diffLine.Kind,
+                             codeLine: diffLine.Line,
+                             commentThread: diffLine.Kind != DiffLineKind.Removed &&
+                                 comments.TryGetThreadForLine(diffLine.Line.ElementId, out var thread, hideCommentRows) ?
+                                     thread :
+                                     null,
+                             diagnostics: diffLine.Kind != DiffLineKind.Removed ?
+                                 diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
+                                 Array.Empty<CodeDiagnostic>(),
+                             lineNumber: diffLine.Line.LineNumber ?? ++lineNumberExcludingDocumentation,
+                             documentedByLines: documentedByLines.ToArray(),
+                             isDiffView: true,
+                             diffSectionId: diffLine.Line.SectionKey != null ? ++diffSectionId : null,
+                             otherLineSectionKey: diffLine.Kind == DiffLineKind.Unchanged ? diffLine.OtherLine.SectionKey : null,
+                             headingsOfSectionsWithDiff: HeadingsOfSectionsWithDiff,
+                             isSubHeadingWithDiffInSection: diffLine.IsHeadingWithDiffInSection
+                         );
+                        documentedByLines.Clear();
+                        return c;
+                    }
+                }).ToArray();
         }
 
         private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments, bool hideCommentRows = false)

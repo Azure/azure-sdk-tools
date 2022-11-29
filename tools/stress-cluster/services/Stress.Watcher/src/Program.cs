@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using k8s;
@@ -53,9 +54,16 @@ namespace Stress.Watcher
             ArmClient armClient = new ArmClient(subscriptionId, new DefaultAzureCredential());
 
             var podEventHandler = new PodEventHandler(client, chaosClient, armClient, options.Namespace);
+            var jobEventHandler = new JobEventHandler(client, chaosClient, armClient, options.Namespace);
 
             var cts = new CancellationTokenSource();
-            await podEventHandler.Watch(cts.Token);
+            var taskList = new List<Task>
+            {
+                Task.Run(async () => { await podEventHandler.Watch(cts.Token); }),
+                Task.Run(async () => { await jobEventHandler.Watch(cts.Token); }),
+            };
+
+            await Task.WhenAll(taskList.ToArray());
         }
     }
 }

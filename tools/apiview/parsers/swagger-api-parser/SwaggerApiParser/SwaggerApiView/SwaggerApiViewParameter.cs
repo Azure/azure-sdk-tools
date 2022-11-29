@@ -30,6 +30,26 @@ public class SwaggerApiViewParameter : ITokenSerializable
         return ret;
     }
 
+    public String GetTypeFormat()
+    {
+        var ret = "";
+        if (this.type != null)
+        {
+            ret = this.type;
+        }
+        else if (this.schema != null)
+        {
+            ret = this.schema.GetTypeFormat();
+        }
+
+        if (this.format != null)
+        {
+            ret += $"/{this.format}";
+        }
+
+        return ret;
+    }
+
 
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
@@ -39,7 +59,7 @@ public class SwaggerApiViewParameter : ITokenSerializable
             ret.Add(TokenSerializer.NavigableToken("ref", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("ref")));
             ret.Add(TokenSerializer.Colon());
             string navigationToId = context.IteratorPath.rootPath() + Utils.GetRefDefinitionIdPath(this.Ref);
-            ret.Add(new CodeFileToken(this.Ref, CodeFileTokenKind.Literal){NavigateToId = navigationToId});
+            ret.Add(new CodeFileToken(this.Ref, CodeFileTokenKind.Literal) {NavigateToId = navigationToId});
             return ret.ToArray();
         }
 
@@ -130,12 +150,8 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
         foreach (var parameter in this)
         {
             ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(parameter.name, CodeFileTokenKind.MemberName)}));
-            var parameterType = parameter.type;
+            var parameterType = parameter.GetTypeFormat();
 
-            if (parameter.format != null)
-            {
-                parameterType += "/" + parameter.format;
-            }
 
             ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(parameterType, CodeFileTokenKind.Keyword)}));
             ret.AddRange(TokenSerializer.TableCell(new[] {new CodeFileToken(String.Join(",", parameter.GetKeywords()), CodeFileTokenKind.Literal)}));

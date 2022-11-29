@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -11,15 +13,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.Repositories
 {
-    public class DevopsArtifactRepository
+    public class DevopsArtifactRepository : IDevopsArtifactRepository
     {
         static readonly HttpClient _devopsClient = new();
         private readonly IConfiguration _configuration;
@@ -28,6 +30,7 @@ namespace APIViewWeb.Repositories
         private readonly string _hostUrl;
 
         private IMemoryCache _pipelineNameCache;
+        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
         public DevopsArtifactRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMemoryCache cache)
         {
             _configuration = configuration;
@@ -50,12 +53,27 @@ namespace APIViewWeb.Repositories
                     downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=" + filePath;
                 }
                 
-                SetDevopsClientHeaders();
-                var downloadResp = await _devopsClient.GetAsync(downloadUrl);
+                var downloadResp = await GetFromDevopsAsync(downloadUrl);
                 downloadResp.EnsureSuccessStatusCode();
                 return await downloadResp.Content.ReadAsStreamAsync();
             }
             return null;
+        }
+
+        private async Task<HttpResponseMessage> GetFromDevopsAsync(string request)
+        {
+            SetDevopsClientHeaders();
+            var downloadResp = await _devopsClient.GetAsync(request);
+            int count = 0;
+            while (downloadResp.StatusCode == HttpStatusCode.TooManyRequests && count < 5)
+            {
+                var retryAfter = downloadResp.Headers.RetryAfter.ToString();
+                _telemetryClient.TrackTrace($"Download request from devops artifact is throttled. Retry After: {retryAfter}, Retry count: {count}");
+                await Task.Delay(int.Parse(retryAfter) * 1000);
+                downloadResp = await _devopsClient.GetAsync(request);
+                count++;
+            }
+            return downloadResp;
         }
 
         private void SetDevopsClientHeaders()
@@ -68,8 +86,7 @@ namespace APIViewWeb.Repositories
         private async Task<string> GetDownloadArtifactUrl(string repoName, string buildId, string artifactName, string project)
         {
             var artifactGetReq = GetArtifactRestAPIForRepo(repoName).Replace("{buildId}", buildId).Replace("{artifactName}", artifactName).Replace("{project}", project);
-            SetDevopsClientHeaders();
-            var response = await _devopsClient.GetAsync(artifactGetReq);
+            var response = await GetFromDevopsAsync(artifactGetReq);
             response.EnsureSuccessStatusCode();
             var buildResource = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             if (buildResource == null)
@@ -99,10 +116,12 @@ namespace APIViewWeb.Repositories
 
             BuildHttpClient buildClient = await devOpsConnection.GetClientAsync<BuildHttpClient>();
             var projectClient = await devOpsConnection.GetClientAsync<ProjectHttpClient>();
-            int definitionId = await GetPipelineId(pipelineName, buildClient, projectName);
+            string envName = _configuration["apiview-deployment-environment"];
+            string updatedPipelineName = string.IsNullOrEmpty(envName) ? pipelineName : $"{pipelineName}-{envName}";
+            int definitionId = await GetPipelineId(updatedPipelineName, buildClient, projectName);
             if (definitionId == 0)
             {
-                throw new Exception(string.Format("Azure Devops pipeline is not found with name {0}. Please recheck and ensure pipeline exists with this name", pipelineName));
+                throw new Exception(string.Format("Azure Devops pipeline is not found with name {0}. Please recheck and ensure pipeline exists with this name", updatedPipelineName));
             }
             
             var definition = await buildClient.GetDefinitionAsync(projectName, definitionId);            

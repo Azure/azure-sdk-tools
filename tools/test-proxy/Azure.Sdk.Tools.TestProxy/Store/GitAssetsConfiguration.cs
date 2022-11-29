@@ -1,12 +1,35 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Azure.Sdk.tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
+
+    public class NormalizedStringConverter : JsonConverter<NormalizedString>
+    {
+        public override NormalizedString Read(
+            ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            using (var jsonDoc = JsonDocument.ParseValue(ref reader))
+            {
+                return new NormalizedString(reader.GetString());
+            }
+        }
+
+        public override void Write(
+            Utf8JsonWriter writer, NormalizedString value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value);
+        }
+    }
+
     /// <summary>
     /// This class is used to represent any assets.json configuration. An assets.json configuration contains all the necessary configuration needed to restore an asset to the local storage directory of the test-proxy.
     /// </summary>
@@ -30,7 +53,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <summary>
         /// Within the assets repo, is there a prefix that should be inserted prior to writing out files?
         /// </summary>
-        public string AssetsRepoPrefixPath { get; set; }
+
+        [JsonConverter(typeof(NormalizedStringConverter))]
+        public NormalizedString AssetsRepoPrefixPath { get; set; }
 
         /// <summary>
         /// Tags are generated and pushed with each changeset. This prefix will inform the name of the tag to be recognizable as soemthing other than a guid.
@@ -40,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <summary>
         /// The location of the assets repo for this config.
         /// </summary>
-        public string AssetsRepoLocation
+        public NormalizedString AssetsRepoLocation
         { 
             get { return ResolveAssetRepoLocation(); }
         }
@@ -65,32 +90,32 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Used to resolve the location of the "assets" store location. This is the folder CONTAINING other cloned repos. No git data will be restored or staged directly within this folder.
         /// </summary>
         /// <returns></returns>
-        public string ResolveAssetsStoreLocation()
+        public NormalizedString ResolveAssetsStoreLocation()
         {
-            var location = Environment.GetEnvironmentVariable("PROXY_ASSETS_FOLDER") ?? Path.Join(RepoRoot, ".assets");
+            var location = Environment.GetEnvironmentVariable("PROXY_ASSETS_FOLDER") ?? Path.Join(RepoRoot.ToString(), ".assets");
             if (!Directory.Exists(location))
             {
                 Directory.CreateDirectory(location);
             }
 
-            return location;
+            return new NormalizedString(location);
         }
 
         /// <summary>
         /// Resolves the location of the actual folder containing a cloned repository WITHIN the asset store. Git data will be stored directly within this directory.
         /// </summary>
         /// <returns></returns>
-        public string ResolveAssetRepoLocation()
+        public NormalizedString ResolveAssetRepoLocation()
         {
             var assetsStore = ResolveAssetsStoreLocation();
 
-            var location = Path.Join(assetsStore, AssetRepoShortHash);
+            var location = Path.Join(assetsStore.ToString(), AssetRepoShortHash);
             if (!Directory.Exists(location))
             {
                 Directory.CreateDirectory(location);
             }
 
-            return location;
+            return new NormalizedString(location);
         }
 
         /// <summary>
@@ -100,7 +125,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public bool IsAssetsRepoInitialized(bool autoCreate = true)
         {
-            var location = Path.Join(ResolveAssetRepoLocation(), ".git");
+            var location = Path.Join(ResolveAssetRepoLocation().ToString(), ".git");
 
             return Directory.Exists(location);
         }

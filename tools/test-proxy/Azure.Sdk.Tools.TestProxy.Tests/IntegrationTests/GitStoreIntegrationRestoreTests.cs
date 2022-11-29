@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
@@ -124,7 +124,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
@@ -182,7 +182,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
@@ -227,18 +227,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             {
                 GitStoretests.AssetsJson
             };
+            GitStore additionalStore = new GitStore();
 
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
             var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
             var tempTag = string.Format("test_{0}", Guid.NewGuid().ToString());
-            await _defaultStore.Restore(jsonFileLocation);
-            GitStore additionalStore = new GitStore();
 
             try
             {
-                TestHelpers.InitIntegrationTag(assets, tempTag);
+                await _defaultStore.Restore(jsonFileLocation);
+
+                // manually update our tag to one that doesn't exist it
                 assets.Tag = tempTag;
+                // We also update the assets TagPrefix because that's what we use in InitIntegrationTag.
+                // TODO: Cleanup TagPrefix usage. Covered in Azure/azure-sdk-tools#4497
+                assets.TagPrefix = tempTag;
+                TestHelpers.InitIntegrationTag(assets, tempTag);
+
                 TestHelpers.WriteTestFile(JsonSerializer.Serialize(assets), jsonFileLocation);
                 // this is the first time this Gitstore has seen this assets.json. This allows
                 // us to simulate a re-entrant command on an already initialized repo.
@@ -280,7 +286,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 await _defaultStore.Restore(jsonFileLocation);
 
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
@@ -299,7 +305,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
               ""Tag"": ""INVALID_TAG""
-        }", "error: pathspec 'INVALID_TAG' did not match any file(s) known to git")]
+        }", "Invocation of \"git fetch origin refs/tags/INVALID_TAG:refs/tags/INVALID_TAG\" had a non-zero exit code -1")]
         [Trait("Category", "Integration")]
         public async Task InvalidTagThrows(string inputJson, string httpException)
         {
@@ -356,7 +362,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             {
                 await recordingHandler.Restore(pathToAssets);
 
-                var result = (await _defaultStore.ParseConfigurationFile(pathToAssets)).AssetsRepoLocation;
+                var result = (await _defaultStore.ParseConfigurationFile(pathToAssets)).AssetsRepoLocation.ToString();
 
                 Assert.Equal(result, recordingHandler.ContextDirectory);
                 await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { pathToAssets });

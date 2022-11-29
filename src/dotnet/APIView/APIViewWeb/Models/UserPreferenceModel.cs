@@ -13,10 +13,8 @@ namespace APIViewWeb.Models
         internal IEnumerable<string> _status;
         internal bool? _hideLineNumbers;
         internal bool? _hideLeftNavigation;
+        internal bool? _showHiddenApis;
         internal string _theme;
-
-        [JsonProperty("id")]
-        public string PreferenceId { get; set; } = IdHelper.GenerateId();
 
         public string UserName { get; set; }
 
@@ -67,6 +65,12 @@ namespace APIViewWeb.Models
         public string Theme {
             get => _theme ?? "light-theme";
             set => _theme = value;
+        }
+
+        [Name("ShowHiddenApis")]
+        public bool? ShowHiddenApis {
+            get => _showHiddenApis ?? false;
+            set => _showHiddenApis = value;
         }
     }
 }

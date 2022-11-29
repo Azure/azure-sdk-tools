@@ -15,6 +15,7 @@ using Octokit;
 using System.Threading;
 using Microsoft.Extensions.Primitives;
 using System.Security.Claims;
+using APIViewWeb.Managers;
 
 namespace APIViewWeb.Repositories
 {
@@ -22,9 +23,9 @@ namespace APIViewWeb.Repositories
     {
         private readonly IMemoryCache _cache;
         private readonly IMapper _mapper;
-        private readonly UserProfileManager _userProfileManager;
+        private readonly IUserProfileManager _userProfileManager;
 
-        public UserPreferenceCache(IMemoryCache cache, IMapper mapper, UserProfileManager profileManager)
+        public UserPreferenceCache(IMemoryCache cache, IMapper mapper, IUserProfileManager profileManager)
         {
             _cache = cache;
             _mapper = mapper;
@@ -47,7 +48,7 @@ namespace APIViewWeb.Repositories
             }
             else
             {
-                var preference = (await _userProfileManager.tryGetUserProfileAsync(User)).Preferences;
+                var preference = (await _userProfileManager.TryGetUserProfileAsync(User)).Preferences;
                 UpdateCache(preference, User);
                 return preference;
             }
@@ -72,10 +73,8 @@ namespace APIViewWeb.Repositories
                     if (reason == EvictionReason.TokenExpired || reason == EvictionReason.Expired || reason == EvictionReason.Capacity)
                     {
                         UserPreferenceModel newPreference = (UserPreferenceModel)value;
-                        UserPreferenceModel existingPreference = (await _userProfileManager.tryGetUserProfileAsync(User)).Preferences;
-                        newPreference.PreferenceId = existingPreference.PreferenceId;
                         newPreference.UserName = User.GetGitHubLogin();
-                        await _userProfileManager.updateUserPreferences(User, newPreference);
+                        await _userProfileManager.UpdateUserPreferences(User, newPreference);
                     }
                 });
             _cache.Set(userName, preference, memoryCacheEntryOptions);

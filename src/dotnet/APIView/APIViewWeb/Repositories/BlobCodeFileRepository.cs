@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -6,21 +6,21 @@ using System.IO;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
-    public class BlobCodeFileRepository
+    public class BlobCodeFileRepository : IBlobCodeFileRepository
     {
         private BlobContainerClient _container;
         private readonly IMemoryCache _cache;
 
         public BlobCodeFileRepository(IConfiguration configuration, IMemoryCache cache)
         {
-            var connectionString = configuration["Blob:ConnectionString"];
-            _container = new BlobContainerClient(connectionString, "codefiles");
+            _container = new BlobContainerClient(configuration["Blob:ConnectionString"], "codefiles");
             _cache = cache;
         }
 
@@ -52,19 +52,6 @@ namespace APIViewWeb
             return codeFile;
         }
 
-        private BlobClient GetBlobClient(string revisionId, string codeFileId, out string key)
-        {
-            if (revisionId == codeFileId)
-            {
-                key = codeFileId;
-            }
-            else
-            {
-                key = revisionId + "/" + codeFileId;
-            }
-            return _container.GetBlobClient(key);
-        }
-
         public async Task UpsertCodeFileAsync(string revisionId, string codeFileId, CodeFile codeFile)
         {
             var memoryStream = new MemoryStream();
@@ -83,6 +70,19 @@ namespace APIViewWeb
         {
             await GetBlobClient(revisionId, codeFileId, out var key).DeleteAsync();
             _cache.Remove(key);
+        }
+
+        private BlobClient GetBlobClient(string revisionId, string codeFileId, out string key)
+        {
+            if (revisionId == codeFileId)
+            {
+                key = codeFileId;
+            }
+            else
+            {
+                key = revisionId + "/" + codeFileId;
+            }
+            return _container.GetBlobClient(key);
         }
     }
 }

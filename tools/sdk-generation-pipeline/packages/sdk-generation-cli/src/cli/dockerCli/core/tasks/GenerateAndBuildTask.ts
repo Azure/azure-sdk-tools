@@ -33,20 +33,27 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
         }
         const generateAndBuildOptions = generateAndBuildTask as GenerateAndBuildOptions;
         const runOptions = generateAndBuildOptions.generateAndBuildScript;
-        const readmeMdAbsolutePath = path.join(this.context.specRepo.repoPath, this.context.readmeMdPath);
+        const readmeMdAbsolutePath = !!this.context.readmeMdPath? path.join(this.context.specRepo.repoPath, this.context.readmeMdPath) : '';
+        const cadlProjectFolderAbsolutPath = !!this.context.cadlProjectFolderPath?
+            path.join(this.context.specRepo.repoPath, this.context.cadlProjectFolderPath) : '';
         const specRepoPath = this.context.specRepo.repoPath.includes('specification')?
             this.context.specRepo.repoPath : path.join(this.context.specRepo.repoPath, 'specification');
-        const relatedReadmeMdFileRelativePath = path.relative(specRepoPath, readmeMdAbsolutePath);
+        const relatedReadmeMdFileRelativePath = !!readmeMdAbsolutePath? path.relative(specRepoPath, readmeMdAbsolutePath) : '';
+        const relatedCadlProjectFolderRelativePath = !!cadlProjectFolderAbsolutPath? path.relative(specRepoPath, cadlProjectFolderAbsolutPath) : '';
         const inputContent: GenerateAndBuildInput = {
             specFolder: specRepoPath,
             headSha: this.context.specRepo.headSha,
             headRef: this.context.specRepo.headRef,
             repoHttpsUrl: this.context.specRepo.repoHttpsUrl,
-            relatedReadmeMdFile: relatedReadmeMdFileRelativePath,
             serviceType: this.context.serviceType,
             autorestConfig: this.context.autorestConfig,
             skipGeneration: this.context.skipGeneration
         };
+        if (!!relatedCadlProjectFolderRelativePath) {
+            inputContent.relatedCadlProjectFolder = relatedCadlProjectFolderRelativePath;
+        } else if (!!relatedReadmeMdFileRelativePath) {
+            inputContent.relatedReadmeMdFile = relatedReadmeMdFileRelativePath;
+        }
         const inputJson = JSON.stringify(inputContent, undefined, 2);
         this.context.logger.info(`Get ${path.basename(this.context.generateAndBuildInputJsonFile)}:`);
         this.context.logger.info(inputJson);

@@ -36,8 +36,8 @@ pr:
       - eng/common
 
 pool:
-  name: azsdk-pool-mms-win-2019-general
-  vmImage: MMS2019
+  name: azsdk-pool-mms-ubuntu-2004-general
+  vmImage: MMSUbuntu20.04
 
 stages:
   - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
@@ -95,7 +95,10 @@ stages:
             runOnce:
               deploy:
                 steps:
-                  - checkout: self
+                  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+                    parameters:
+                      Paths:
+                        - ${{ parameters.DirectoryToSync }}
 
                   - pwsh: |
                       New-Item -Path $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} -ItemType File
@@ -161,7 +164,10 @@ stages:
             runOnce:
               deploy:
                 steps:
-                  - checkout: self
+                  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+                    parameters:
+                      Paths:
+                        - ${{ parameters.DirectoryToSync }}
 
                   - download: current
                     artifact: ${{parameters.ArtifactName}}
@@ -212,6 +218,11 @@ stages:
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
           steps:
+            - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+              parameters:
+                Paths:
+                  - ${{ parameters.DirectoryToSync }}
+
             - template: ./templates/steps/sync-directory.yml
               parameters:
                 CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository

@@ -1,0 +1,22 @@
+# Release History
+
+## 1.0.3 (11-17-2022)
+
++ Remove trailing colon from API path
++ Support operation level parameters
++ Fix circular reference issue for cross file reference schema
+
+
+## Version 1.0.2 (11-8-2022)
++ Add null check when cannot resolve reference from schema cache.
++ Change enum type to JsonElement to support different enum type like, string, boolean, int
+
+## Version 1.0.1 (10-31-2022)
+
++ Fix missing first property for definition
++ Fix wrong "required" property in xMsParameterizedHost parameters by resolving parameter reference
++ Show enum type for definition
++ Support resolve definition files from common types file.
+
+## Version 1.0.0 (10-5-2022)
+Initial release.

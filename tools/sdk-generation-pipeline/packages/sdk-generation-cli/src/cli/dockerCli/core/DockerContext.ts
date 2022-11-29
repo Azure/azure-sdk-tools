@@ -10,6 +10,7 @@ import { DockerRunningModel } from './DockerRunningModel';
 export class DockerContext {
     mode: DockerRunningModel;
     readmeMdPath?: string;
+    cadlProjectFolderPath?: string;
     tag?: string;
     sdkList: string[];
     specRepo?: string;
@@ -31,6 +32,7 @@ export class DockerContext {
     * */
     public initialize(inputParams: DockerCliInput) {
         this.readmeMdPath = inputParams.readmeMdPath;
+        this.cadlProjectFolderPath = inputParams.cadlProjectFolderPath;
         this.tag = inputParams.tag;
         this.sdkList = inputParams.sdkList?.split(',').map((e) => e.trim()).filter((e) => e.length > 0);
         this.specRepo = inputParams.specRepo;
@@ -66,7 +68,7 @@ export class DockerContext {
             this.mode = DockerRunningModel.CodeGenAndGrowUp;
             this.isPublicRepo = false;
             this.validateSpecRepo();
-            this.validateReadmeMdPath();
+            this.validateReadmeMdPathOrCadlProjectFolderPath();
             this.validateSdk();
         } else {
             this.logger.info('Preparing environment to generate codes in pipeline');
@@ -74,7 +76,7 @@ export class DockerContext {
             this.isPublicRepo = inputParams.isPublicRepo;
             this.validateSdkRepo();
             this.validateSpecRepo();
-            this.validateReadmeMdPath();
+            this.validateReadmeMdPathOrCadlProjectFolderPath();
             this.validateOutputFolder();
         }
     }
@@ -85,12 +87,15 @@ export class DockerContext {
         }
     }
 
-    private validateReadmeMdPath() {
-        if (!this.readmeMdPath) {
-            throw new Error(`Get empty readme.md path, please input it with --readme`);
+    private validateReadmeMdPathOrCadlProjectFolderPath() {
+        if (!this.readmeMdPath && !this.cadlProjectFolderPath) {
+            throw new Error(`Get empty readme.md path and cadl project folder path, please input it with --readme or --cadl-project`);
         }
-        if (!fs.existsSync(path.join(this.specRepo, this.readmeMdPath))) {
+        if (!!this.readmeMdPath && !fs.existsSync(path.join(this.specRepo, this.readmeMdPath))) {
             throw new Error(`Cannot find file ${this.readmeMdPath}, please input a valid one`);
+        }
+        if (!!this.cadlProjectFolderPath && !fs.existsSync(path.join(this.specRepo, this.cadlProjectFolderPath))) {
+            throw new Error(`Cannot find file ${this.cadlProjectFolderPath}, please input a valid one`);
         }
     }
 

@@ -1,4 +1,4 @@
-﻿$(() => {
+$(() => {
   const INVISIBLE = "invisible";
   const SEL_CODE_DIAG = ".code-diagnostics";
   const SEL_COMMENT_ICON = ".icon-comments";
@@ -326,7 +326,7 @@
     var inlineId = $(e.currentTarget).prop("hash").substring(1);
     var inlineRow = $(`tr[data-inline-id='${inlineId}']`);
     inlineRow[0].scrollIntoView();
-    highlightCurrentRow(inlineRow);
+    highlightCurrentRow(inlineRow, true);
   });
 
   $("#jump-to-first-comment").on("click", function () {
@@ -335,14 +335,16 @@
     $(displayedCommentRows[0])[0].scrollIntoView();
   });
 
-  function highlightCurrentRow(rowElement: JQuery<HTMLElement> = $()) {
-    if (location.hash.length < 1) return;
+  function highlightCurrentRow(rowElement: JQuery<HTMLElement> = $(), isInlineRow: boolean = false) {
+    if (location.hash.length < 1 && !isInlineRow) return;
     var row = (rowElement.length > 0) ? rowElement : getCodeRow(location.hash.substring(1));
     row.addClass("active");
     row.on("animationend", () => {
         row.removeClass("active");
     });
   }
+
+  
 
   function getReviewId(element: HTMLElement) {
     return getParentData(element, "data-review-id");

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIView;
@@ -21,11 +21,11 @@ namespace ApiView
             return new RenderResult(codeLines.ToArray(), sections);
         }
 
-        public CodeLine[] Render(CodeFileToken[] tokens)
+        public CodeLine[] Render(CodeFileToken[] tokens, bool showDocumentation = false, bool enableSkipDiff = false)
         {
             var codeLines = new List<CodeLine>();
             var sections = new Dictionary<int, TreeNode<CodeLine>>();
-            Render(codeLines, tokens, false, false, sections);
+            Render(codeLines, tokens, showDocumentation, enableSkipDiff, sections);
             return codeLines.ToArray();
         }
 
@@ -34,6 +34,7 @@ namespace ApiView
             var stringBuilder = new StringBuilder();
             string currentId = null;
             bool isDocumentationRange = false;
+            bool isHiddenApiToken = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
             Stack<SectionType> nodesInProcess = new Stack<SectionType>();
@@ -56,7 +57,7 @@ namespace ApiView
                 {
                     case CodeFileTokenKind.Newline:
                         int ? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count: null;
-                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange);
+                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange, isHiddenApi: isHiddenApiToken);
                         if (leafSectionPlaceHolderNumber != 0)
                         {
                             lineNumber += leafSectionPlaceHolderNumber - 1;
@@ -104,6 +105,14 @@ namespace ApiView
                         isDocumentationRange = false;
                         break;
 
+                    case CodeFileTokenKind.HiddenApiRangeStart:
+                        isHiddenApiToken = true;
+                        break;
+
+                    case CodeFileTokenKind.HiddenApiRangeEnd:
+                        isHiddenApiToken = false;
+                        break;
+
                     case CodeFileTokenKind.DeprecatedRangeStart:
                         isDeprecatedToken = true;
                         break;
@@ -123,7 +132,7 @@ namespace ApiView
                     case CodeFileTokenKind.FoldableSectionHeading:
                         nodesInProcess.Push(SectionType.Heading);
                         currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
-                        RenderToken(token, stringBuilder, isDeprecatedToken);
+                        RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentStart:
@@ -163,18 +172,24 @@ namespace ApiView
                         if (tableColumnCount.Curr == 0)
                         {
                             stringBuilder.Append($"<thead><tr>");
-                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">{token.Value}</th>");
+                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
+                            RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
+                            stringBuilder.Append("</th>");
                             tableColumnCount.Curr++;
                         }
                         else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
                         {
-                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">{token.Value}</th>");
+                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
+                            RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
+                            stringBuilder.Append("</th>");
                             stringBuilder.Append("</tr></thead><tbody>");
                             tableColumnCount.Curr = 0;
                         }
                         else
                         {
-                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">{token.Value}</th>");
+                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
+                            RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
+                            stringBuilder.Append("</th>");
                             tableColumnCount.Curr++;
                         }
                         break;
@@ -228,13 +243,13 @@ namespace ApiView
 
                     default:
                         currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
-                        RenderToken(token, stringBuilder, isDeprecatedToken);
+                        RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
                         break;
                 }
             }
         }
 
-        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken)
+        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken, bool isHiddenApiToken)
         {
             if (token.Value != null)
             {

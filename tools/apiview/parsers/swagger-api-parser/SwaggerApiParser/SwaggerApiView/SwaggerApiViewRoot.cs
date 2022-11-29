@@ -24,7 +24,16 @@ public class SwaggerApiViewRoot : ITokenSerializable
     public void AddSwaggerSpec(SwaggerSpec swaggerSpec, string swaggerFilePath, string resourceProvider = "", string swaggerLink="")
     {
         var swaggerApiViewSpec = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, swaggerFilePath, this.schemaCache, resourceProvider, swaggerLink);
-        this.SwaggerApiViewSpecs.Add(swaggerFilePath, swaggerApiViewSpec);
+
+        if (swaggerApiViewSpec != null)
+        {
+            this.SwaggerApiViewSpecs.Add(swaggerFilePath, swaggerApiViewSpec);
+        }
+    }
+
+    public void AddDefinitionToCache(SwaggerSpec swaggerSpec, string swaggerFilePath)
+    {
+        SwaggerApiViewGenerator.AddDefinitionsToCache(swaggerSpec, swaggerFilePath, this.schemaCache);
     }
 
     public CodeFile GenerateCodeFile()

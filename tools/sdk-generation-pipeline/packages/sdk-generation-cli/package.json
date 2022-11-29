@@ -40,16 +40,13 @@
     "@azure/storage-blob": "^12.8.0",
     "ajv": "^6.12.6",
     "convict": "^6.2.3",
-    "@azure-tools/sdk-generation-lib": "^1.0.0",
+    "@azure-tools/sdk-generation-lib": "^1.0.5",
     "axios": "^0.24.0",
     "dotenv": "^16.0.0",
-    "winston": "~3.7.2",
+    "winston": "3.7.2",
     "command-line-args": "~5.2.1",
     "simple-git": "~3.7.1"
   },
-  "bundledDependencies": [
-    "@azure-tools/sdk-generation-lib"
-  ],
   "devDependencies": {
     "@types/node": "^16.11.7",
     "rimraf": "^3.0.2",

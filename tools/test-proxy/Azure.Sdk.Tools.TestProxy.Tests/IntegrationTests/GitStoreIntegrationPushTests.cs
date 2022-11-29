@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // These are the files pulled down with the original Tag
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -152,7 +152,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // These are the files pulled down with the original Tag
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -234,7 +234,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // These are the files pulled down with the original Tag
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -327,7 +327,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // These are the files pulled down with the original Tag
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -416,7 +416,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // These are the files pulled down with the original Tag
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -433,7 +433,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath2 = Path.GetFullPath(Path.Combine(parsedConfiguration2.AssetsRepoLocation, parsedConfiguration2.AssetsRepoPrefixPath));
+                string localFilePath2 = Path.GetFullPath(Path.Combine(parsedConfiguration2.AssetsRepoLocation.ToString(), parsedConfiguration2.AssetsRepoPrefixPath.ToString()));
 
                 // These are the files pulled down with the original Tag
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath2).Count());

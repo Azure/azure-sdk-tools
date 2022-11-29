@@ -1,4 +1,5 @@
 import {
+  AliasStatementNode,
   EnumStatementNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
@@ -21,6 +22,7 @@ export class ApiViewNavigation {
 
   constructor(
     objNode:
+      | AliasStatementNode
       | NamespaceModel
       | ModelStatementNode
       | OperationStatementNode
@@ -51,11 +53,16 @@ export class ApiViewNavigation {
         for (const node of objNode.models.values()) {
           modelItems.push(new ApiViewNavigation(node, stack));
         }
-        this.ChildItems = [
-          { Text: "Operations", ChildItems: operationItems, Tags: { TypeKind: ApiViewNavigationKind.Method }, NavigationId: "" },
-          { Text: "Resources", ChildItems: resourceItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" },
-          { Text: "Models", ChildItems: modelItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" },
-        ];
+        this.ChildItems = [];
+        if (operationItems.length) {
+          this.ChildItems.push({ Text: "Operations", ChildItems: operationItems, Tags: { TypeKind: ApiViewNavigationKind.Method }, NavigationId: "" });
+        }
+        if (resourceItems.length) {
+          this.ChildItems.push({ Text: "Resources", ChildItems: resourceItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" });
+        }
+        if (modelItems.length) {
+          this.ChildItems.push({ Text: "Models", ChildItems: modelItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" });
+        }
         break;
       case SyntaxKind.ModelStatement:
         obj = objNode as ModelStatementNode;
@@ -93,6 +100,13 @@ export class ApiViewNavigation {
         stack.push(obj.id.sv);
         this.Text = obj.id.sv;
         this.Tags = { TypeKind: ApiViewNavigationKind.Enum };
+        this.ChildItems = [];
+        break;
+      case SyntaxKind.AliasStatement:
+        obj = objNode as AliasStatementNode;
+        stack.push(obj.id.sv);
+        this.Text = obj.id.sv;
+        this.Tags = { TypeKind: ApiViewNavigationKind.Class };
         this.ChildItems = [];
         break;
       case SyntaxKind.ModelExpression:

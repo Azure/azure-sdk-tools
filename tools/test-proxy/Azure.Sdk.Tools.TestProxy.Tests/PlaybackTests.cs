@@ -246,7 +246,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             HttpRequest request = TestHelpers.CreateRequestFromEntry(entry);
 
             // compress the body to simulate what the request coming from the library will look like
-            request.Body = new MemoryStream(GZipUtilities.CompressBody(BinaryData.FromStream(request.Body).ToArray(), request.Headers));
+            request.Body = new MemoryStream(CompressionUtilities.CompressBody(BinaryData.FromStream(request.Body).ToArray(), request.Headers));
             HttpResponse response = new DefaultHttpContext().Response;
             await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
         }

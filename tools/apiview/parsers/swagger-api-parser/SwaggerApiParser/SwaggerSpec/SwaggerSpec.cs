@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text.Json.Serialization;
 
 namespace SwaggerApiParser;
@@ -9,6 +8,10 @@ namespace SwaggerApiParser;
 public class SwaggerSpec
 {
     public string swagger { get; set; }
+
+    public string swaggerFilePath;
+
+    public string swaggerLink;
 
     public Info info { get; set; }
     public string host { get; set; }
@@ -22,7 +25,7 @@ public class SwaggerSpec
 
 
     public SecurityDefinitions securityDefinitions { get; set; }
-    public Dictionary<string, Dictionary<string, Operation>> paths { get; set; }
+    public Dictionary<string, ApiPath> paths { get; set; }
 
     public Dictionary<string, Parameter> parameters { get; set; }
 
@@ -40,6 +43,10 @@ public class SwaggerSpec
         if (Ref.Contains("parameters"))
         {
             var key = Ref.Split("/").Last();
+            if (this.parameters == null)
+            {
+                return null;
+            }
             this.parameters.TryGetValue(key, out var ret);
             return ret;
         }

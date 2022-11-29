@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <exception cref="GitProcessException">Throws GitProcessException on returnCode != 0 OR if an unexpected exception is thrown during invocation.</exception>
         public virtual CommandResult Run(string arguments, GitAssetsConfiguration config)
         {
-            return Run(arguments, config.AssetsRepoLocation);
+            return Run(arguments, config.AssetsRepoLocation.ToString());
         }
 
         /// <summary>
@@ -192,11 +192,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <summary>
         /// Invokes git binary against a GitAssetsConfiguration.
         /// </summary>
-        /// <param name="config"></param>
         /// <param name="arguments"></param>
+        /// <param name="workingDirectory"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public virtual bool TryRun(string arguments, GitAssetsConfiguration config, out CommandResult result)
+        public virtual bool TryRun(string arguments, string workingDirectory, out CommandResult result)
         {
             // Surface an easy to understand error when we shoot ourselves in the foot
             if (arguments.StartsWith("git"))
@@ -204,11 +204,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 throw new Exception("GitProcessHandler commands should not start with 'git'");
             }
 
-            ProcessStartInfo processStartInfo = CreateGitProcessInfo(config.AssetsRepoLocation);
+            ProcessStartInfo processStartInfo = CreateGitProcessInfo(workingDirectory);
             processStartInfo.Arguments = arguments;
             var commandResult = new CommandResult();
 
-            var queue = AssetTasks.GetOrAdd(config.AssetsRepoLocation, new TaskQueue());
+            var queue = AssetTasks.GetOrAdd(workingDirectory, new TaskQueue());
 
             queue.Enqueue(() =>
             {

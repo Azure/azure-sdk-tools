@@ -24,6 +24,9 @@ If flag InitialPush is set, recordings will be automatically pushed to the asset
 .PARAMETER TestProxyExe
 The executable used during the "InitialPush" action. Defaults to the dotnet tool test-proxy, but also supports "docker" or "podman".
 
+If the user provides their own value that doesn't match options "test-proxy", "docker", or "podman", the script will use this input as the test-proxy exe
+when invoking commands. EG "$TestProxyExe push -a sdk/keyvault/azure-keyvault-keys/assets.json."
+
 .PARAMETER InitialPush
 Pass this flag to automagically move all recordings found UNDER your assets.json to an assets repo.
 
@@ -43,7 +46,6 @@ repo are identical to the default assets repo.
 
 #>
 param(
-  [ValidateSet("test-proxy", "docker", "podman", IgnoreCase = $true)]
   [Parameter(Mandatory = $false)]
   [string] $TestProxyExe = "test-proxy",
   [switch] $InitialPush,
@@ -56,7 +58,7 @@ $GitExe = "git"
 
 # The built test proxy on a dev machine will have the version 1.0.0-dev.20221013.1
 # whereas the one installed from nuget will have the version 20221013.1 (minus the 1.0.0-dev.)
-$MinTestProxyVersion = "20221017.1"
+$MinTestProxyVersion = "20221017.4"
 
 $DefaultAssetsRepo = "Azure/azure-sdk-assets"
 if ($UseTestRepo) {
@@ -268,8 +270,9 @@ Function Invoke-ProxyCommand {
     }
 
     if(-not $token -or -not $committer -or -not $email){
-      Write-Error "When running this transition script in `"docker`" or `"podman`" mode, " `
-        + "the environment variables GIT_TOKEN, GIT_COMMIT_OWNER, GIT_COMMIT_EMAIL must be set to reflect the appropriate user. "
+      Write-Error ("When running this transition script in `"docker`" or `"podman`" mode, " `
+        + "the environment variables GIT_TOKEN, GIT_COMMIT_OWNER, and GIT_COMMIT_EMAIL must be set to reflect the appropriate user. ")
+        exit 1
     }
 
     $targetImage = if ($env:TRANSITION_SCRIPT_DOCKER_TAG) { $env:TRANSITION_SCRIPT_DOCKER_TAG } else { "azsdkengsys.azurecr.io/engsys/test-proxy:latest" }
@@ -287,7 +290,7 @@ Function Invoke-ProxyCommand {
   }
 
   Write-Host "$TestProxyExe $CommandArgs"
-  [array] $output = & "$TestProxyExe" $CommandArgs.Split(" ")
+  [array] $output = & "$TestProxyExe" $CommandArgs.Split(" ") --storage-location="$updatedDirectory"
   # echo the command output
   foreach ($line in $output) {
     Write-Host "$line"
@@ -301,13 +304,14 @@ Function Get-AssetsRoot {
   )
   $repoRoot = Get-Repo-Root
   $relPath = [IO.Path]::GetRelativePath($repoRoot, $AssetsJsonFile).Replace("`\", "/")
+  $assetsJsonDirectory = Split-Path $relPath
   $breadcrumbFile = Join-Path $repoRoot ".assets" ".breadcrumb"
 
   $breadcrumbString = Get-Content $breadcrumbFile | Where-Object { $_.StartsWith($relPath) }
-  $assetRepo = $breadcrumbString.Split(";;")[1]
+  $assetRepo = $breadcrumbString.Split(";")[1]
   $assetsPrefix = (Get-Content $AssetsJsonFile | Out-String | ConvertFrom-Json).AssetsRepoPrefixPath
 
-  return Join-Path $repoRoot ".assets" $assetRepo $assetsPrefix $relPath
+  return Join-Path $repoRoot ".assets" $assetRepo $assetsPrefix $assetsJsonDirectory
 }
 
 Function Move-AssetsFromLangRepo {
@@ -321,8 +325,8 @@ Function Move-AssetsFromLangRepo {
   [string] $currentDir = Get-Location
 
   foreach ($fromFile in $filesToMove) {
-    Write-Host $fromFile
     $relPath = [IO.Path]::GetRelativePath($currentDir, $fromFile)
+
     $toFile = Join-Path -Path $AssetsRoot -ChildPath $relPath
     # Write-Host "Moving from=$fromFile"
     # Write-Host "          to=$toFile"
@@ -347,10 +351,11 @@ if ($InitialPush) {
 
   if ($TestProxyExe -eq "test-proxy") {
     Test-TestProxyVersion -TestProxyExe $TestProxyExe
-    if (!$LangRecordingDirs.ContainsKey($language)) {
-      Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
-      exit 1
-    }
+  }
+
+  if (!$LangRecordingDirs.ContainsKey($language)) {
+    Write-Error "The language, $language, does not have an entry in the LangRecordingDirs dictionary."
+    exit 1
   }
 }
 
@@ -372,7 +377,7 @@ if ($InitialPush) {
     $CommandArgs = "restore --assets-json-path $assetsJsonRelPath"
     Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -TargetDirectory $repoRoot
 
-    $assetsRoot = Get-AssetsRoot -AssetsJsonFile $assetsJsonFile
+    $assetsRoot = (Get-AssetsRoot -AssetsJsonFile $assetsJsonFile)
     Write-Host "assetsRoot=$assetsRoot"
 
     Move-AssetsFromLangRepo -AssetsRoot $assetsRoot

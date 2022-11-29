@@ -70,6 +70,7 @@ class FunctionNode(NodeEntityBase):
             lines.append(f"{arg.argname}:{arg.argtype},")
         for arg in self.kwargs.values():
             lines.append(f"{arg.argname}:{arg.argtype},")
+        # FIXME: Need to include kwargs and args here?
         lines.append(f")->{self.return_type}")
         namespace_id = "".join(lines)
         return namespace_id
@@ -83,6 +84,7 @@ class FunctionNode(NodeEntityBase):
         # Update namespace ID to reflect async status. Otherwise ID will conflict between sync and async methods
         if self.is_async:
             self.namespace_id += ":async"
+            self.full_name = self.namespace_id
         
         # Turn any decorators into annotation
         if self.node and self.node.decorators:
@@ -221,7 +223,7 @@ class FunctionNode(NodeEntityBase):
         self._generate_args_for_collection(self.args, apiview, use_multi_line)
         if self.special_vararg:
             self._newline_if_needed(apiview, use_multi_line)
-            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=True, prefix="*")
+            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line, prefix="*")
             apiview.add_punctuation(",", False, True)
 
         # add keyword argument marker        
@@ -233,7 +235,7 @@ class FunctionNode(NodeEntityBase):
         self._generate_args_for_collection(self.kwargs, apiview, use_multi_line)
         if self.special_kwarg:
             self._newline_if_needed(apiview, use_multi_line)
-            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=True, prefix="**")
+            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line, prefix="**")
             apiview.add_punctuation(",", False, True)
 
         # pop the final ", " tokens

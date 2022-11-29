@@ -119,6 +119,22 @@ public class SwaggerApiViewTest
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
     }
+    
+    [Fact]
+    public async Task TestContentModerator()
+    {
+        const string contentModerator = "./fixtures/ContentModerator.json";
+        var contentModeratorSwagger = await SwaggerDeserializer.Deserialize(contentModerator);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.ContentModerator", "Microsoft.ContentModerator");
+        root.AddSwaggerSpec(contentModeratorSwagger, Path.GetFullPath(contentModerator), "Microsoft.ContentModerator");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./contentModerator_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
 
     [Fact]
     public async Task TestMultivariate()
@@ -150,6 +166,23 @@ public class SwaggerApiViewTest
         this.output.WriteLine($"Write output to: {outputFilePath}");
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
+    }
+
+    [Fact]
+    public async Task TestDevCenterEnvironment()
+    {
+        const string devCenterSwaggerFile = "./fixtures/environment.json";
+        var devCenter = await SwaggerDeserializer.Deserialize(devCenterSwaggerFile);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.DevCenter", "Microsoft.DevCenter");
+        root.AddSwaggerSpec(devCenter, Path.GetFullPath(devCenterSwaggerFile), "Microsoft.DevCenter");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./devCenter_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+        
     }
 
     [Fact]

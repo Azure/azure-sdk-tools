@@ -58,10 +58,13 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             Write-Host "checking ${{ repo.RecordSession }}"
-            $files = Get-ChildItem "$(Build.SourcesDirectory)" -Recurse | Where-Object {$_.FullName -NotMatch "${{ repo.RecordSession }}"}
+            $files = Get-ChildItem "$(Build.SourcesDirectory)" -Recurse -File
+            if(${{ repo.RecordSession }}) {
+              $filteredFiles = $files | Where-Object {$_.FullName -NotMatch "${{ repo.RecordSession }}"}
+            }
             Write-Host "getting all files"
             # Scan all Files
-            foreach ($file in $files) {
+            foreach ($file in $filteredFiles) {
               Write-Host "file: $($file.FullName)"
               $content = Get-Content $file.FullName -Raw
               $newcontent = ""

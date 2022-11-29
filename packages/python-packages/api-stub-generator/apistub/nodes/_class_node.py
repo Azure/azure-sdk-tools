@@ -135,7 +135,7 @@ class ClassNode(NodeEntityBase):
                 )
             )
 
-    def _parse_functions_from_class(self, class_obj) -> list[astroid.FunctionDef]:
+    def _parse_functions_from_class(self, class_obj) -> List[astroid.FunctionDef]:
         try:
             class_node = astroid.parse(inspect.getsource(class_obj)).body[0]
             return [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]

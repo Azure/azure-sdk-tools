@@ -59,7 +59,7 @@ jobs:
         - pwsh: |
             Write-Host "checking ${{ repo.RecordSession }}"
             $files = Get-ChildItem "$(Build.SourcesDirectory)" -Recurse -File
-            if(${{ repo.RecordSession }}) {
+            if("${{ repo.RecordSession }}") {
               $filteredFiles = $files | Where-Object {$_.FullName -NotMatch "${{ repo.RecordSession }}"}
             }
             Write-Host "getting all files"

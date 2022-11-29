@@ -62,12 +62,12 @@ jobs:
             Write-Host "getting all files"
             # Scan all Files
             foreach ($file in $files) {
-              $content = Get-Content -LiteralPath $file -Raw
+              $content = Get-Content -LiteralPath $file.FullName -Raw
               $newcontent = ""
               if ($content -match "${{ parameters.MigrateFrom }}") {
-                Write-Host $file
+                Write-Host $file.FullName
                 $newcontent = $content -replace "${{ parameters.MigrateFrom }}", "${{ parameters.MigrateTo }}"
-                Set-Content -Path $file -Value $newcontent
+                Set-Content -Path $file.FullName -Value $newcontent
               }
             }
           displayName: Update pool version from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}

@@ -28,7 +28,7 @@ variables:
   FeedRegistry: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-cpp/'
 
 stages:
-  - stage: 'Prepare BUild'
+  - stage: 'Prepare'
     jobs:
       - job: 'vcpkg'
         pool:

@@ -40,8 +40,7 @@ stages:
         steps:
           - pwsh: |
               cmd /c dir c:\
-              mkdir c:\vcpkg
-              chdir c:\vcpkg
+              cmd /c dir d:\
               Write-Host "git clone https://github.com/Microsoft/vcpkg"
               git clone https://github.com/Microsoft/vcpkg
               if ($LASTEXITCODE -ne 0) {
@@ -52,25 +51,22 @@ stages:
               git fetch --tags
               git checkout tags/$(VcpkgRelease)
             displayName: Clone vcpkg 
-            workingDirectory: c:\
           - pwsh: |
                 ./vcpkg/bootstrap-vcpkg
             displayName: Bootstrap vcpkg.
             condition: succeeded()
-            workingDirectory: c:\
           - pwsh: |
               $vcpkgRoot = Resolve-Path "c:/vcpkg"
               Write-Host "Set VCPKG_ROOT: $vcpkgRoot"
               Write-Host "##vso[task.setvariable variable=VCPKG_ROOT]$vcpkgRoot"
             displayName: Set VCPKG_ROOT
-            workingDirectory: c:\
             condition: succeeded()
           - pwsh: mkdir build
             displayName: Create cmake build directory.
             workingDirectory: tools/apiview/parsers/cpp-api-parser
             condition: succeeded()
           - pwsh: |
-              cmake.exe -G "Ninja" -DCMAKE_C_COMPILER:STRING="cl.exe" -DCMAKE_CXX_COMPILER:STRING="cl.exe" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE:STRING="Release" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static" -DCMAKE_INSTALL_PREFIX:PATH="$(Build.SourcesDirectory)/build" ..
+              cmake.exe -G "Ninja" -DCMAKE_C_COMPILER:STRING="cl.exe" -DCMAKE_COMPILE_PARALLEL:BOOLEAN=ON -DCMAKE_CXX_COMPILER:STRING="cl.exe" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE:STRING="Release" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static" -DCMAKE_INSTALL_PREFIX:PATH="$(Build.SourcesDirectory)/build" ..
             displayName: CMAKE Generate.
             workingDirectory: tools/apiview/parsers/cpp-api-parser/build
             condition: succeeded()

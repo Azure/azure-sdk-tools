@@ -39,6 +39,8 @@ variables:
   GoParserPackagePath: 'src/go'
   GoVersion: '1.18'
   NugetSecurityAnalysisWarningLevel: 'none'
+  AzuriteConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1"
+  CosmosEmulatorConnectionString: "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
 
 stages:
   - stage: 'Main'
@@ -150,6 +152,21 @@ stages:
           - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
             parameters:
               StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
+          
+          - script: |
+              npm install -g azurite
+            displayName: 'Install Azurite'
+
+          - task: Powershell@2
+            inputs:
+              workingDirectory: $(Agent.TempDirectory)
+              filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
+              arguments: >
+                -Process "azurite.cmd"
+                -ArgumentList "--silent"
+                -Port "10000"
+              pwsh: true
+            displayName: 'Start Azurite'
 
           - script: |
               npm install -g azurite
@@ -182,42 +199,15 @@ stages:
               packageType: runtime
               version: '$(DotNetRuntimeVersion)'
 
-          - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-            - task: Powershell@2
-              inputs:
-                filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
-                arguments: >
-                  -Process "dotnet"
-                  -ArgumentList "run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj"
-                  -Port "5000"
-                pwsh: true
-              displayName: 'Start APIView Application'
-              env:
-                APIVIEW_BLOB__CONNECTIONSTRING: $(apiview-blob-connectionstring)
-                APIVIEW_COSMOS__CONNECTIONSTRING: $(apiview-cosmos-connectionstring)
-                APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
-                APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
-                APIVIEW_AUTHENTICATIONSCHEME: "Test"
-                APIVIEW_SENDGRID__KEY: "Test"
-
-            - task: DotNetCoreCLI@2
-              displayName: 'Build & Test'
-              env:
-                DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-                DOTNET_CLI_TELEMETRY_OPTOUT: 1
-                DOTNET_MULTILEVEL_LOOKUP: 0
-              inputs:
-                command: test
-                projects: src/dotnet/APIView/**/APIViewUITests.csproj
-                arguments: --logger trx
-                publishTestResults: false
-
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
+              APIVIEW_ENDPOINT: "http://localhost:5000"
+              APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
+              APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
             inputs:
               command: test
               projects: |
@@ -225,6 +215,14 @@ stages:
                 src/dotnet/APIView/**/APIViewIntegrationTests.csproj
               arguments: --logger trx
               publishTestResults: false
+          
+          - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
+            - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml
+              parameters:
+                NodeVersion: $(NodeVersion)
+                WebClientProjectDirectory: $(WebClientProjectDirectory)
+                AzuriteConnectionString: $(AzuriteConnectionString)
+                CosmosEmulatorConnectionString: $(CosmosEmulatorConnectionString)
 
           - task: PublishTestResults@2
             condition: succeededOrFailed()

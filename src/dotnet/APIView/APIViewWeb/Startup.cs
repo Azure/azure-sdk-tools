@@ -113,6 +113,7 @@ namespace APIViewWeb
             {
                 services.AddAuthentication("Test")
                     .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });
+                services.AddSingleton<IStartupFilter, UITestsStartUpFilter>();
             }
             else
             {

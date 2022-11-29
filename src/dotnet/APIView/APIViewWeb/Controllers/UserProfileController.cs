@@ -9,10 +9,10 @@ namespace APIViewWeb.Controllers
 {
     public class UserProfileController : Controller
     {
-        private readonly UserProfileManager _userProfileManager;
+        private readonly IUserProfileManager _userProfileManager;
         private readonly UserPreferenceCache _userPreferenceCache;
 
-        public UserProfileController(UserProfileManager userProfileManager, UserPreferenceCache userPreferenceCache)
+        public UserProfileController(IUserProfileManager userProfileManager, UserPreferenceCache userPreferenceCache)
         {
             _userProfileManager = userProfileManager;
             _userPreferenceCache = userPreferenceCache;

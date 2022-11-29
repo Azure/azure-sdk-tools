@@ -14,12 +14,12 @@ namespace APIViewWeb.HostedServices
     public class ReviewBackgroundHostedService : BackgroundService
     {
         private readonly bool _isDisabled;
-        private readonly ReviewManager _reviewManager;
+        private readonly IReviewManager _reviewManager;
         private readonly int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
 
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
-        public ReviewBackgroundHostedService(ReviewManager reviewManager, IConfiguration configuration)
+        public ReviewBackgroundHostedService(IReviewManager reviewManager, IConfiguration configuration)
         {
             _reviewManager = reviewManager;
             // We can disable background task using app settings if required

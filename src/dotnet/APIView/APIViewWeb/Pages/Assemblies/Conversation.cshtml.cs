@@ -15,11 +15,11 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class ConversationModel : PageModel
     {
-        private readonly CommentsManager _commentsManager;
-        private readonly ReviewManager _reviewManager;
-        private readonly UsageSampleManager _samplesManager;
+        private readonly ICommentsManager _commentsManager;
+        private readonly IReviewManager _reviewManager;
+        private readonly IUsageSampleManager _samplesManager;
         private const string ENDPOINT_SETTING = "Endpoint";
-        private readonly BlobCodeFileRepository _codeFileRepository;
+        private readonly IBlobCodeFileRepository _codeFileRepository;
         public readonly UserPreferenceCache _preferenceCache;
 
         public string Endpoint { get; }
@@ -32,11 +32,11 @@ namespace APIViewWeb.Pages.Assemblies
         public HashSet<GithubUser> TaggableUsers { get; set; }
         public ConversationModel(
             IConfiguration configuration,
-            BlobCodeFileRepository codeFileRepository,
-            CommentsManager commentsManager,
-            ReviewManager reviewManager,
+            IBlobCodeFileRepository codeFileRepository,
+            ICommentsManager commentsManager,
+            IReviewManager reviewManager,
             UserPreferenceCache preferenceCache,
-            UsageSampleManager samplesManager)
+            IUsageSampleManager samplesManager)
         {
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
@@ -48,7 +48,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            TaggableUsers = _commentsManager.TaggableUsers;
+            TaggableUsers = _commentsManager.GetTaggableUsers();
             TempData["Page"] = "conversation";
             Review = await _reviewManager.GetReviewAsync(User, id);
             Sample = (await _samplesManager.GetReviewUsageSampleAsync(id)).FirstOrDefault();

@@ -39,7 +39,6 @@ stages:
 
         steps:
           - pwsh: |
-          - pwsh: |
               cmd /c dir c:\
               mkdir c:\vcpkg
               chdir c:\vcpkg
@@ -53,15 +52,18 @@ stages:
               git fetch --tags
               git checkout tags/$(VcpkgRelease)
             displayName: Clone vcpkg 
+            workingDirectory: c:\
           - pwsh: |
                 ./vcpkg/bootstrap-vcpkg
             displayName: Bootstrap vcpkg.
             condition: succeeded()
+            workingDirectory: c:\
           - pwsh: |
               $vcpkgRoot = Resolve-Path "c:/vcpkg"
               Write-Host "Set VCPKG_ROOT: $vcpkgRoot"
               Write-Host "##vso[task.setvariable variable=VCPKG_ROOT]$vcpkgRoot"
             displayName: Set VCPKG_ROOT
+            workingDirectory: c:\
             condition: succeeded()
           - pwsh: mkdir build
             displayName: Create cmake build directory.
@@ -75,11 +77,13 @@ stages:
           - pwsh: |
               cmake.exe --build $(Build.SourcesDirectory)/build --config Release --target cpp-api-parser
             displayName: Build ApiView Parser.
+            workingDirectory: tools/apiview/parsers/cpp-api-parser
             condition: succeeded()
           - pwsh: |
                 $cppApiParser = Resolve-Path "${Build.SourcesDirectory}/build/bin/Release/cpp-api-parser.exe"
                 Write-Host "Set CPP_API_PARSER: $cppApiParser"
                 Write-Host "##vso[task.setvariable variable=CPP_API_PARSER]$cppApiParser"
+            workingDirectory: tools/apiview/parsers/cpp-api-parser
             condition: succeeded()
   #- stage: 'Publish'
   #  jobs:

@@ -71,7 +71,7 @@ jobs:
               if ($content -match "${{ parameters.MigrateFrom }}") {
                 Write-Host $file.FullName
                 $newcontent = $content -replace "${{ parameters.MigrateFrom }}", "${{ parameters.MigrateTo }}"
-                Set-Content -Path $file.FullName -Value $newcontent -NoNewLine
+                Set-Content -Path $file.FullName -Value $newcontent.Trim() -NoNewLine
               }
             }
           displayName: Update pool version from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}

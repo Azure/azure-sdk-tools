@@ -12,8 +12,12 @@ This is the deployment config of the SDK Release App should update.
 
 4. Check dataverse table columns length (especially branchName and Url)
 
+5. Edit flow **'SDK Scheduled Release'** change Start time early than today to trigger flow
+
 ## Test SDK release app in PPE env
 
 This is the requirement for testing in PPE environment.
 
 1. environment variable: 'SDK Generation Create ReleaseRequest', don't create ReleaseRequest in test
+
+2. If don't set 'environment variable', go to 'https://github.com/Azure/sdk-release-request/issues/created_by/@me' close

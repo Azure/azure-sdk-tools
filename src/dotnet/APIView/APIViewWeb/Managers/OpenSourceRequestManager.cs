@@ -50,7 +50,7 @@ namespace APIViewWeb.Managers
                 if(resp.StatusCode == HttpStatusCode.TooManyRequests)
                 {
                     var retryAfter = resp.Headers.RetryAfter?.ToString() ?? "60";
-                    _telemetryClient.TrackTrace($"Download request from devops artifact is throttled. Retry After: {retryAfter}, Retry count: {counter}");
+                    _telemetryClient.TrackTrace($"Request to get user info from OSS manger has been throttled. Retry After: {retryAfter}, Retry count: {counter}");
                     await Task.Delay(int.Parse(retryAfter) * 1000);
                     counter++;
                 }

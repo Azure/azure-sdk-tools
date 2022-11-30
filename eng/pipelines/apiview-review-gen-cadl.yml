@@ -2,6 +2,15 @@ pr: none
 
 trigger: none
 
+parameters:
+  parameters:
+  - name: Reviews
+    type: string
+    default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","SourceRepoName":"<RepoName>","FileName":"<fileName>","SourceBranchName":"<SourceBranchName>"}]'
+  - name: APIViewURL
+    type: string
+    default: 'https://apiview.dev' 
+
 pool:
   name: azsdk-pool-mms-ubuntu-2004-general
   vmImage: MMSUbuntu20.04
@@ -22,10 +31,17 @@ jobs:
       versionSpec: $(NodeVersion)
     displayName: "Use Node $(NodeVersion)"
 
-  - pwsh: |
-      npm install -g cadl
-      npm install -g @cadl-lang/compiler
-    displayName: "Install cadl compiler"
+  - ${{if ne(parameters.Reviews, '')}}:
+    - pwsh: |
+        echo "##vso[task.setvariable variable=Reviews]${{parameters.Reviews}}"
+      displayName: "Setup Reviews Variable"
+      condition: eq(variables['Reviews'], '')
+
+  - ${{if ne(parameters.APIViewURL, '')}}:
+    - pwsh: |
+        echo "##vso[task.setvariable variable=APIViewURL]${{parameters.APIViewURL}}"
+      displayName: "Setup APIViewURL Variable"
+      condition: eq(variables['APIViewURL'], '')
 
   - pwsh: |
       Write-Host "Review Details Json: $(Reviews)"
@@ -52,6 +68,8 @@ jobs:
   - pwsh: |
       npm install
       npm install @azure-tools/cadl-apiview
+      npm install -g cadl
+      npm install -g @cadl-lang/compiler
     workingDirectory: $(System.DefaultWorkingDirectory)/cadlRepo$(PackagePath)
     displayName: "Install npm packages"
 

@@ -66,7 +66,7 @@ stages:
             workingDirectory: tools/apiview/parsers/cpp-api-parser
             condition: succeeded()
           - pwsh: |
-              cmake.exe -G "Ninja" -DCMAKE_C_COMPILER:STRING="cl.exe" -DCMAKE_CXX_COMPILER:STRING="cl.exe" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DCMAKE_BUILD_TYPE:STRING="Release" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static" -DCMAKE_INSTALL_PREFIX:PATH="$(Build.SourcesDirectory)/build" ..
+              cmake.exe -G "Ninja" -DCMAKE_C_COMPILER:STRING="cl.exe" -DCMAKE_CXX_COMPILER:STRING="cl.exe" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" -DCMAKE_INSTALL_PREFIX:PATH="$(Build.SourcesDirectory)/build" ..
             displayName: CMAKE Generate.
             workingDirectory: tools/apiview/parsers/cpp-api-parser/build
             condition: succeeded()

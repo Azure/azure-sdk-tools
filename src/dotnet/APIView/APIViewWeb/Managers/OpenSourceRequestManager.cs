@@ -74,7 +74,7 @@ namespace APIViewWeb.Managers
             var resp = await GetUserInfo(githubUserId);
             if (resp == null)
                 return false;
-            // For now we only need to check if user info is availableon MS OSS
+            // For now we only need to check if user is part of MS open source data
             return true;
         }
 

@@ -3,7 +3,6 @@ pr: none
 trigger: none
 
 parameters:
-  parameters:
   - name: Reviews
     type: string
     default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","SourceRepoName":"<RepoName>","FileName":"<fileName>","SourceBranchName":"<SourceBranchName>"}]'

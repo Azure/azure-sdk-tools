@@ -35,6 +35,7 @@ public:
     Enum,
     Delegate,
     Assembly,
+    Namespace,
   };
 
   struct TypeHierarchyNode
@@ -51,7 +52,7 @@ public:
     std::string NodeName;
     std::string NavigationId;
     TypeHierarchyClass NodeClass;
-    std::vector<std::shared_ptr<TypeHierarchyNode>> Children;
+    std::map<std::string, std::shared_ptr<TypeHierarchyNode>> Children;
     std::shared_ptr<TypeHierarchyNode> InsertChildNode(
         std::string_view const& nodeName,
         std::string_view const& navigationId,

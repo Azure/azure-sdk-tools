@@ -5,6 +5,8 @@
 #include "ApiViewDiagnostic.hpp"
 #include "AstDumper.hpp"
 #include <iostream>
+#include <string>
+#include <string_view>
 
 class TextDumper : public AstDumper {
   std::ostream& m_stream;
@@ -34,10 +36,55 @@ public:
   virtual void AddDiffRangeEnd() override { m_stream << " ** DIFF ** */"; }
   virtual void AddInheritanceInfoStart() override { m_stream << "/* ** INHERITANCE **"; }
   virtual void AddInheritanceInfoEnd() override { m_stream << " ** INHERITANCE ** */"; }
-  virtual void DumpTypeHierarchyNode(std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node)
+
+  void DoDumpHierarchyNode(
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node,
+      int indentation)
   {
-    InsertNewline();
+    std::string prefix(indentation, ' ');
+    m_stream << prefix << "/* ** HIERARCHY NODE START ** */" << std::endl;
+    m_stream << prefix << "/* Type: ";
+    switch (node->NodeClass)
+    {
+      case TypeHierarchy::TypeHierarchyClass::Assembly:
+        m_stream << prefix << "Assembly";
+        break;
+      case TypeHierarchy::TypeHierarchyClass::Class:
+        m_stream << prefix << "Class";
+        break;
+      case TypeHierarchy::TypeHierarchyClass::Interface:
+        m_stream << prefix << "Interface";
+        break;
+      case TypeHierarchy::TypeHierarchyClass::Struct:
+        m_stream << prefix << "Struct";
+        break;
+      case TypeHierarchy::TypeHierarchyClass::Enum:
+        m_stream << prefix << "Enum";
+        break;
+      case TypeHierarchy::TypeHierarchyClass::Delegate:
+        m_stream << prefix << "Delegate";
+        break;
+      case TypeHierarchy::TypeHierarchyClass::Namespace:
+        m_stream << prefix << "Namespace";
+        break;
+    };
+    m_stream << " */" << std::endl;
+
+    m_stream << prefix << "/* Navigation:" << node->NavigationId << " */" << std::endl;
+    m_stream << prefix << "/* Name: " << node->NodeName << " */" << std::endl;
+    for (auto const& child : node->Children)
+    {
+      DoDumpHierarchyNode(child.second, indentation + 2);
+    }
+    m_stream << prefix << "/* ** HIERARCHY NODE END ** */" << std::endl;
   }
+
+  virtual void DumpTypeHierarchyNode(
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node) override
+  {
+    DoDumpHierarchyNode(node, 0);
+  }
+
   virtual void DumpDiagnosticNode(std::unique_ptr<ApiViewDiagnostic> const& diagnostic) override
   {
     m_stream << "/* ** DIAGNOSTIC START ** */" << std::endl;

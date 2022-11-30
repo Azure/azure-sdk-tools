@@ -75,9 +75,9 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             condition: succeeded()
           - pwsh: |
-              cmake.exe --build $(Build.SourcesDirectory)/build --config Release --target cpp-api-parser
-            displayName: Build ApiView Parser.
+              cmake.exe --build --config Release --target cpp-api-parser
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
+            displayName: Build ApiView Parser.
             condition: succeeded()
           - pwsh: |
                 $cppApiParser = Resolve-Path "$(Build.SourcesDirectory)/build/bin/Release/cpp-api-parser.exe"

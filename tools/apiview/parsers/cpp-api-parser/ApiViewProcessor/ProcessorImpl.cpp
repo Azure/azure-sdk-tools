@@ -272,7 +272,7 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
               [&typeName](std::string const& ns) { return typeName.find(ns) == 0; })
           == std::end(m_processorImpl->FilterNamespaces()))
       {
-          // *** GENERATE A DIAGNOSTIC IF WE FIND A TYPE OUTSIDE THE NAMESPACE FILTER ***
+        // *** GENERATE A DIAGNOSTIC IF WE FIND A TYPE OUTSIDE THE NAMESPACE FILTER ***
         shouldCollect = false;
       }
       if (shouldCollect)
@@ -450,7 +450,11 @@ void TypeHierarchy::Dump(AstDumper* dumper) const
 {
   for (auto const& [namespaceName, namespaceRoot] : m_namespaceRoots)
   {
-    dumper->DumpTypeHierarchyNode(namespaceRoot);
+    // Skip empty namespace nodes.
+    if (!namespaceRoot->Children.empty())
+    {
+      dumper->DumpTypeHierarchyNode(namespaceRoot);
+    }
   }
 }
 
@@ -462,7 +466,7 @@ std::shared_ptr<TypeHierarchy::TypeHierarchyNode> TypeHierarchy::GetNamespaceRoo
   if (result == m_namespaceRoots.end())
   {
     rv = std::make_shared<TypeHierarchyNode>(
-        static_cast<std::string>(namespaceName), "", TypeHierarchyClass::Assembly);
+        static_cast<std::string>(namespaceName), "", TypeHierarchyClass::Namespace);
     m_namespaceRoots.emplace(std::make_pair(namespaceName, rv));
     return rv;
   }
@@ -479,6 +483,6 @@ std::shared_ptr<TypeHierarchy::TypeHierarchyNode> TypeHierarchy::TypeHierarchyNo
 {
   std::shared_ptr<TypeHierarchyNode> rv = std::make_shared<TypeHierarchyNode>(
       static_cast<std::string>(name), static_cast<std::string>(navigationId), nodeClass);
-  Children.push_back(rv);
+  Children.emplace(static_cast<std::string>(name), rv);
   return rv;
 }

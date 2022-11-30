@@ -228,7 +228,7 @@ public:
     nlohmann::json newNode;
     newNode["Text"] = node->NodeName;
     newNode["NavigationId"] = node->NavigationId;
-    for (auto const& child : node->Children)
+    for (auto const& [childName, child] : node->Children)
     {
       newNode["ChildItems"].push_back(DoDumpTypeHierarchyNode(child));
     }
@@ -252,6 +252,9 @@ public:
       case TypeHierarchy::TypeHierarchyClass::Struct:
         newNode["Tags"]["TypeKind"] = "struct";
         break;
+      case TypeHierarchy::TypeHierarchyClass::Namespace:
+        newNode["Tags"]["TypeKind"] = "namespace";
+        break;
       case TypeHierarchy::TypeHierarchyClass::Unknown:
         newNode["Tags"]["TypeKind"] = "unknown";
         break;
@@ -259,7 +262,8 @@ public:
     return newNode;
   }
 
-  virtual void DumpTypeHierarchyNode(std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node)
+  virtual void DumpTypeHierarchyNode(
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node) override
   {
     m_json["Navigation"].push_back(DoDumpTypeHierarchyNode(node));
   };
@@ -275,5 +279,5 @@ public:
   // ID using a counter in format AZ_PY_<Countrervalue> by python
   // parser and AZ_JAVA_<CountrerValue> by Java parser>,
 
-  virtual void DumpDiagnosticNode(std::unique_ptr<ApiViewDiagnostic> const&) {}
+  virtual void DumpDiagnosticNode(std::unique_ptr<ApiViewDiagnostic> const&) override {}
 };

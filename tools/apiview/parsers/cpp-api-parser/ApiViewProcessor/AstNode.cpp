@@ -2174,11 +2174,6 @@ AstClassLike::AstClassLike(
     default:
       break;
   }
-  if (parentNode)
-  {
-    parentNode = parentNode->InsertChildNode(m_name, m_navigationId, classType);
-  }
-
   // We want to special case anonymous structures which are embedded in another type. It's
   // possible that the following declaration is a field declaration referencing the
   // anonymous structure:
@@ -2197,6 +2192,11 @@ AstClassLike::AstClassLike(
   {
     m_isAnonymousNamedStruct = true;
     m_anonymousNamedStructName = cast<FieldDecl>(decl->getNextDeclInContext())->getNameAsString();
+  }
+  if (parentNode)
+  {
+    parentNode = parentNode->InsertChildNode(
+        !m_isAnonymousNamedStruct ? m_name : m_anonymousNamedStructName, m_navigationId, classType);
   }
 
   for (auto& attr : decl->attrs())
@@ -2224,7 +2224,6 @@ AstClassLike::AstClassLike(
     {
       m_baseClasses.push_back(std::make_unique<AstBaseClass>(base));
     }
-
     bool shouldSkipNextChild = false;
     for (auto child : decl->decls())
     {

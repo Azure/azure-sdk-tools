@@ -51,12 +51,12 @@ stages:
               git fetch --tags
               git checkout tags/$(VcpkgRelease)
             displayName: Clone vcpkg 
-            workingDirectory: '${Build.SourcesDirectory}'
+            workingDirectory: '$(Build.SourcesDirectory)'
           - pwsh: |
                 ./vcpkg/bootstrap-vcpkg
             displayName: Bootstrap vcpkg.
             condition: succeeded()
-            workingDirectory: '${Build.SourcesDirectory}'
+            workingDirectory: '$(Build.SourcesDirectory)'
           - pwsh: |
               $vcpkgRoot = Resolve-Path "./vcpkg"
               Write-Host "Set VCPKG_ROOT: $vcpkgRoot"
@@ -65,23 +65,23 @@ stages:
             condition: succeeded()
           - pwsh: mkdir build
             displayName: Create cmake build directory.
-            workingDirectory: ${Build.SourcesDirectory}/tools/apiview/parsers/cpp-api-parser
+            workingDirectory: '$(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser'
             condition: succeeded()
           - pwsh: |
               cmake.exe -G "Ninja" -DCMAKE_C_COMPILER:STRING="cl.exe" -DCMAKE_CXX_COMPILER:STRING="cl.exe" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" -DCMAKE_INSTALL_PREFIX:PATH="$(Build.SourcesDirectory)/build" ..
             displayName: CMAKE Generate.
-            workingDirectory: ${Build.SourcesDirectory}/tools/apiview/parsers/cpp-api-parser/build
+            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             condition: succeeded()
           - pwsh: |
               cmake.exe --build $(Build.SourcesDirectory)/build --config Release --target cpp-api-parser
             displayName: Build ApiView Parser.
-            workingDirectory: ${Build.SourcesDirectory}/tools/apiview/parsers/cpp-api-parser/build
+            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             condition: succeeded()
           - pwsh: |
-                $cppApiParser = Resolve-Path "${Build.SourcesDirectory}/build/bin/Release/cpp-api-parser.exe"
+                $cppApiParser = Resolve-Path "$(Build.SourcesDirectory)/build/bin/Release/cpp-api-parser.exe"
                 Write-Host "Set CPP_API_PARSER: $cppApiParser"
                 Write-Host "##vso[task.setvariable variable=CPP_API_PARSER]$cppApiParser"
-            workingDirectory: ${Build.SourcesDirectory}/tools/apiview/parsers/cpp-api-parser
+            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser
             condition: succeeded()
   #- stage: 'Publish'
   #  jobs:

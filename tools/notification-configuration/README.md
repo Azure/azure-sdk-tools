@@ -1,6 +1,6 @@
 # About
 
-This directory contains sources for tools implementing the
+This directory contains sources of tools implementing the
 "Subscribe to AzureDevOps notifications through CODEOWNERS file" feature.
 
 To learn more about it, including links to relevant ADO pipelines, please see

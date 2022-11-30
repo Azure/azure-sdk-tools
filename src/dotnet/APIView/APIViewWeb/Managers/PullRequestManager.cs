@@ -35,6 +35,7 @@ namespace APIViewWeb.Managers
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IOpenSourceRequestManager _openSourceManager;
         private readonly int _pullRequestCleanupDays;
         private HashSet<string> _allowedListBotAccounts;
         private readonly bool _isGitClientAvailable;
@@ -46,7 +47,8 @@ namespace APIViewWeb.Managers
             ICosmosPullRequestsRepository pullRequestsRepository,
             IBlobCodeFileRepository codeFileRepository,
             IDevopsArtifactRepository devopsArtifactRepository,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IOpenSourceRequestManager openSourceRequestManager
             )
         {
             _reviewManager = reviewManager;
@@ -56,6 +58,7 @@ namespace APIViewWeb.Managers
             _codeFileRepository = codeFileRepository;
             _devopsArtifactRepository = devopsArtifactRepository;
             _authorizationService = authorizationService;
+            _openSourceManager = openSourceRequestManager;
             var ghToken = _configuration["github-access-token"];
             if (!string.IsNullOrEmpty(ghToken))
             {
@@ -220,7 +223,8 @@ namespace APIViewWeb.Managers
                     FilePath = originalFile,
                     Author = pullRequest.User.Login,
                     PackageName = packageName,
-                    Language = language
+                    Language = language,
+                    Assignee = pullRequest.Assignee?.Login
                 };
             }
             return pullRequestModel;
@@ -450,15 +454,19 @@ namespace APIViewWeb.Managers
             // White list bot accounts to create API reviews from PR automatically
             if (!_allowedListBotAccounts.Contains(prModel.Author))
             {
-                var orgs = await _githubClient.Organization.GetAllForUser(prModel.Author);
-                var orgNames = orgs.Select(o => o.Login);
-                var result = await _authorizationService.AuthorizeAsync(
-                    null,
-                    orgNames,
-                    new[] { PullRequestPermissionRequirement.Instance });
-                if (!result.Succeeded)
+                var isAuthorized = await _openSourceManager.IsAuthorizedUser(prModel.Author);
+                if (!isAuthorized)
                 {
-                    _telemetryClient.TrackTrace($"API change detection permission failed for user {prModel.Author}.");
+                    // Check if PR is assigned to a different user in case PR author is not authorized
+                    // This is possible is PR is contributed by external user but assigned to an internal user
+                    if (prModel.Assignee != null && prModel.Assignee != prModel.Author)
+                    {
+                        isAuthorized = await _openSourceManager.IsAuthorizedUser(prModel.Assignee);
+                    }
+                }
+                if (!isAuthorized)
+                {
+                    _telemetryClient.TrackTrace($"API change detection permission failed for user {prModel.Author}. API review is only created if either PR author or assignee is an internal user.");
                     throw new AuthorizationFailedException();
                 }
             }

@@ -94,6 +94,7 @@ namespace APIViewWeb
             services.AddSingleton<IPackageNameManager, PackageNameManager>();
             services.AddSingleton<IUsageSampleManager, UsageSampleManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
+            services.AddSingleton<IOpenSourceRequestManager, OpenSourceRequestManager>();
             services.AddSingleton<UserPreferenceCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
@@ -211,7 +212,6 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
-            services.AddSingleton<IAuthorizationHandler, PullRequestPermissionRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, UsageSampleOwnerRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();

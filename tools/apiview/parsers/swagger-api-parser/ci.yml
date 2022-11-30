@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/apiview/parsers/swagger-api-parser/SwaggerApiParser
+      - tools/apiview/parsers/swagger-api-parser
 
 pr:
   branches:
@@ -19,10 +19,11 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/apiview/parsers/swagger-api-parser/SwaggerApiParser
+      - tools/apiview/parsers/swagger-api-parser
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ToolDirectory: tools/apiview/parsers/swagger-api-parser/SwaggerApiParser
+    PackageDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/swagger-api-parser/SwaggerApiParser
+    TestDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/swagger-api-parser/SwaggerApiParserTest
     SkipDotNetInstall: true

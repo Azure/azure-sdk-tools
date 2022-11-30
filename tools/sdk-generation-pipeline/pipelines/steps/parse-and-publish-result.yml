@@ -116,19 +116,6 @@ steps:
     condition: always()
     displayName: Submit Pull Request
 
-  - pwsh: |
-      $PRNum = "$(Submitted.PullRequest.Number)"
-      Write-Host "PR number is $PRNum"
-      Write-Host "##vso[task.setvariable variable=testaaaa]abc"
-      Write-Host "testaaaa is $(testaaaa)"
-    condition: always()
-
-  - pwsh: |
-      $PRNum1 = "$(Submitted.PullRequest.Number)"
-      Write-Host "PR number is $PRNum1"
-      Write-Host "testaaaa is $(testaaaa)"
-    condition: always()
-
   - bash: |
       cp /tmp/output/docker.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-full.log
       cp /tmp/output/init-task.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-init.log

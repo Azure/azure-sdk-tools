@@ -730,7 +730,7 @@ namespace APIViewWeb.Managers
             }
 
             var languageService = language != null ? _languageServices.FirstOrDefault( l=> l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
-            //Run pipeline to generateteh review if sandbox is enabled
+            // Run pipeline to generate the review if sandbox is enabled
             if (languageService != null && languageService.IsReviewGenByPipeline)
             {
                 // Run offline review gen for review and reviewCodeFileModel
@@ -761,7 +761,7 @@ namespace APIViewWeb.Managers
             using var memoryStream = new MemoryStream();
             var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream, language);
             var reviewCodeFileModel = await CreateReviewCodeFileModel(revisionId, memoryStream, codeFile);
-            reviewCodeFileModel.FileName = originalName;            
+            reviewCodeFileModel.FileName = originalName;
             return reviewCodeFileModel;
         }
 

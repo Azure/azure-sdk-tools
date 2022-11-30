@@ -86,4 +86,5 @@ jobs:
             PRTitle: Migrate to new pool
             OpenAsDraft: true
             WorkingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
+            PushArgs: -f
           

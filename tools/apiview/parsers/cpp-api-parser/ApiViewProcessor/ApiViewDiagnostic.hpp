@@ -26,7 +26,6 @@ enum class ApiViewDiagnostics
   CPPA0004, // Non enum class enums (https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Renum-class)
   CPPA0005, // Non-const static fields
   CPPA0006, // Protected fields in final class
-  
-  
+  CPPA0007, // Internal types in a non-core package
 };
 

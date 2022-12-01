@@ -57,5 +57,5 @@ public:
 
   virtual void DumpTypeHierarchyNode(std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node)
       = 0;
-  virtual void DumpDiagnosticNode(std::unique_ptr<ApiViewDiagnostic> const&) = 0;
+  virtual void DumpMessageNode(ApiViewMessage const&) = 0;
 };

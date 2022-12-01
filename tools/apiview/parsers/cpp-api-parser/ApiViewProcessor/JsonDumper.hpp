@@ -279,5 +279,35 @@ public:
   // ID using a counter in format AZ_PY_<Countrervalue> by python
   // parser and AZ_JAVA_<CountrerValue> by Java parser>,
 
-  virtual void DumpDiagnosticNode(std::unique_ptr<ApiViewDiagnostic> const&) override {}
+  nlohmann::json DoDumpDiagnosticNode(ApiViewMessage const& error)
+  {
+    nlohmann::json newNode;
+    newNode["DiagnosticId"] = error.DiagnosticId;
+    newNode["Text"] = error.DiagnosticText;
+    newNode["TargetId"] = error.TargetId;
+    if (!error.HelpLinkUri.empty())
+    {
+      newNode["HelpLinkUri"] = error.HelpLinkUri;
+    }
+    switch (error.Level)
+    {
+      case ApiViewMessage::MessageLevel::Info:
+        newNode["Level"] = 1;
+        break;
+      case ApiViewMessage::MessageLevel::Warning:
+        newNode["Level"] = 2;
+        break;
+      case ApiViewMessage::MessageLevel::Error:
+        newNode["Level"] = 3;
+        break;
+      case ApiViewMessage::MessageLevel::None:
+        break;
+    }
+    return newNode;
+  }
+
+  virtual void DumpMessageNode(ApiViewMessage const& error) override
+  {
+    m_json["Diagnostics"].push_back(DoDumpDiagnosticNode(error));
+  }
 };

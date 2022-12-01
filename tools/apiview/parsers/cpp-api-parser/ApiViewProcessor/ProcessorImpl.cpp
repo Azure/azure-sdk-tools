@@ -228,6 +228,11 @@ ApiViewProcessorImpl::AstVisitorAction::AstVisitorAction(ApiViewProcessorImpl* p
 bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
     clang::NamedDecl* namedDecl)
 {
+  // We don't even want to consider any types which are a member of a class.
+  if (AzureClassesDatabase::IsMemberOfObject(namedDecl))
+  {
+    return false;
+  }
   bool shouldCollect = false;
   // By default, we consider any types within desired set of input files.
   auto fileId = namedDecl->getASTContext().getSourceManager().getFileID(namedDecl->getLocation());
@@ -264,22 +269,35 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
     else
     {
       // We have a namespace filter set. Look at all types whose names start with the filter
-      // namespace name.
+      // namespace name. We don't want to consider namespaces, since they're not descrete entries in
+      // our resulting output.
       const std::string typeName{namedDecl->getQualifiedNameAsString()};
-      if (std::find_if(
-              std::begin(m_processorImpl->FilterNamespaces()),
-              std::end(m_processorImpl->FilterNamespaces()),
-              [&typeName](std::string const& ns) { return typeName.find(ns) == 0; })
-          == std::end(m_processorImpl->FilterNamespaces()))
+      if (namedDecl->getKind() != Decl::Namespace)
       {
-        // *** GENERATE A DIAGNOSTIC IF WE FIND A TYPE OUTSIDE THE NAMESPACE FILTER ***
-        shouldCollect = false;
+        if (std::find_if(
+                std::begin(m_processorImpl->FilterNamespaces()),
+                std::end(m_processorImpl->FilterNamespaces()),
+                [&typeName](std::string const& ns) { return typeName.find(ns) == 0; })
+            == std::end(m_processorImpl->FilterNamespaces()))
+        {
+          shouldCollect = true;
+          bool generateError = true;
+          // Don't flag "using" declarations or forward declarations.
+          if ((namedDecl->getKind() == Decl::Using) || (namedDecl->getKind() == Decl::TypeAlias)
+              || (namedDecl->getKind() == Decl::CXXRecord
+                  && cast<CXXRecordDecl>(namedDecl)->getDefinition() != namedDecl))
+          {
+            generateError = false;
+          }
+          if (generateError)
+          {
+            m_processorImpl->GetClassesDatabase()->CreateApiViewMessage(
+                ApiViewMessages::TypeDeclaredInNamespaceOutsideFilter, typeName);
+          }
+        }
       }
       if (shouldCollect)
       {
-        // Assume we're going to process this type.
-        shouldCollect = true;
-
         // However if the type is in the _internal namespace, then we want to exclude it if we're
         // excluding internal types.
         if ((typeName.find("::_internal") != std::string::npos)
@@ -304,13 +322,12 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
         // diagnostic.
         PrintingPolicy pp{LangOptions{}};
         pp.adjustForCPlusPlus();
-
         std::string namespaceName;
         llvm::raw_string_ostream osNamespace(namespaceName);
         namedDecl->printQualifiedName(osNamespace, pp);
         std::string typeName;
         llvm::raw_string_ostream osType(typeName);
-        namedDecl->printName(osNamespace);
+        namedDecl->printName(osType);
         if (typeName == namespaceName)
         {
           shouldCollect = true;
@@ -444,6 +461,10 @@ void AzureClassesDatabase::DumpClassDatabase(AstDumper* dumper) const
     classNode->DumpNode(dumper, {});
   }
   m_typeHierarchy.Dump(dumper);
+  for (auto const& diagnostic : m_diagnostics)
+  {
+    dumper->DumpMessageNode(diagnostic);
+  }
 }
 
 void TypeHierarchy::Dump(AstDumper* dumper) const

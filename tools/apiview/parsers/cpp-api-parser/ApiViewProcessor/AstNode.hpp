@@ -33,27 +33,31 @@ struct AstNode
 {
   virtual void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) = 0;
   AstNode(clang::Decl const* decl);
-  
+
   virtual std::string_view const Namespace() { return ""; }
 
   static std::string GetCommentForNode(clang::ASTContext& context, clang::Decl const* decl);
   static std::string GetCommentForNode(clang::ASTContext& context, clang::Decl const& decl);
   static std::unique_ptr<AstNode> Create(
       clang::Decl const* decl,
+      AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode);
   static std::string GetNamespaceForDecl(clang::Decl const* decl);
 };
 
 class AstNamedNode : public AstNode {
-public:
+protected:
+  AzureClassesDatabase* const m_classDatabase;
   std::string m_namespace;
   std::string m_name;
   std::string m_navigationId;
   std::string m_nodeDocumentation;
   clang::AccessSpecifier m_nodeAccess;
 
+public:
   AstNamedNode(
       clang::NamedDecl const* decl,
+      AzureClassesDatabase* const classDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode);
   virtual void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   {

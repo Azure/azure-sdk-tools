@@ -195,7 +195,7 @@ protected:
 
 TEST_F(TestParser, Create)
 {
-  ApiViewProcessor processor(".");
+  ApiViewProcessor processor(".", R"({})"_json);
 
   auto& db = processor.GetClassesDatabase();
 
@@ -360,7 +360,7 @@ TEST_F(TestParser, Expressions)
   auto& db = processor.GetClassesDatabase();
   EXPECT_TRUE(SyntaxCheckClassDb(db, "Expression1.cpp"));
 }
-
+#if 0
 TEST_F(TestParser, AzureCore1)
 {
   ApiViewProcessor processor("Tests", R"({
@@ -410,3 +410,4 @@ TEST_F(TestParser, AzureAttestation)
   auto& db = processor.GetClassesDatabase();
   EXPECT_TRUE(SyntaxCheckClassDb(db, "Attestation1.cpp", true, false));
 }
+#endif

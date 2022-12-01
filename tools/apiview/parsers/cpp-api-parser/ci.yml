@@ -21,6 +21,13 @@ pr:
     include:
       - tools/apiview/parsers/cpp-api-parser
 
+schedules:
+- cron: "0 3 * * *"
+  displayName: Nightly Build.
+  branches:
+    include:
+      - main
+
 variables:
   NodeVersion: '16.x'
   TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parserts-genapi'
@@ -88,6 +95,13 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             displayName: Build ApiView Parser.
             condition: succeeded()
+          - pwsh: |
+              az --version
+              az extension add --name azure-devops
+            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
+            displayName: Create Universal package.
+            condition: succeeded()
+
   #- stage: 'Publish'
   #  jobs:
   #    - job: 'Build Prerequisites - cmake'

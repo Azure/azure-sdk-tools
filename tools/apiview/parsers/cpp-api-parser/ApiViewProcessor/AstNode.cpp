@@ -877,138 +877,14 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
   {
     return nullptr;
   }
-
-  // if (isa<Expr>(statement))
-  //{
-  //   auto expression = cast<Expr>(statement);
-  //   const Expr* actualExpr = expression->IgnoreUnlessSpelledInSource();
-  //   if (isa<IntegerLiteral>(actualExpr))
-  //   {
-  //     return std::make_unique<AstIntExpr>(actualExpr, context);
-  //   }
-  //   else if (isa<StringLiteral>(actualExpr))
-  //   {
-  //     return std::make_unique<AstStringExpr>(cast<StringLiteral>(actualExpr), context);
-  //   }
-  //   else if (isa<FloatingLiteral>(actualExpr))
-  //   {
-  //     return std::make_unique<AstFloatExpr>(cast<FloatingLiteral>(actualExpr), context);
-  //   }
-  //   else if (isa<CXXBoolLiteralExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstBoolExpr>(cast<CXXBoolLiteralExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<CXXNamedCastExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstNamedCastExpr>(cast<CXXNamedCastExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<ImplicitCastExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstImplicitCastExpr>(cast<ImplicitCastExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<CastExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstCastExpr>(cast<CastExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<CXXDefaultInitExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstDefaultInitExpr>(cast<CXXDefaultInitExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<CXXDefaultArgExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstDefaultArgExpr>(cast<CXXDefaultArgExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<CXXConstructExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstCtorExpr>(cast<CXXConstructExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<DependentScopeDeclRefExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstDependentDeclRefExpr>(
-  //         cast<DependentScopeDeclRefExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<DeclRefExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstDeclRefExpr>(cast<DeclRefExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<CXXNullPtrLiteralExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstNullptrRefExpr>(
-  //         cast<CXXNullPtrLiteralExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<MemberExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstMemberExpr>(cast<MemberExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<CXXMemberCallExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstMethodCallExpr>(cast<CXXMemberCallExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<CallExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstCallExpr>(cast<CallExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<InitListExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstInitializerList>(cast<InitListExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<UnaryOperator>(actualExpr))
-  //   {
-  //     return std::make_unique<AstUnaryOperatorExpr>(cast<UnaryOperator>(actualExpr), context);
-  //   }
-  //   else if (isa<BinaryOperator>(actualExpr))
-  //   {
-  //     return std::make_unique<AstBinaryOperatorExpr>(cast<BinaryOperator>(actualExpr), context);
-  //   }
-  //   else if (isa<CXXScalarValueInitExpr>(actualExpr))
-  //   {
-  //     return std::make_unique<AstScalarValueInit>(
-  //         cast<CXXScalarValueInitExpr>(actualExpr), context);
-  //   }
-  //   else if (isa<ExprWithCleanups>(actualExpr))
-  //   {
-  //     // Assert that there is a single child of the ExprWithCleanupsClass.
-  //     assert(++actualExpr->child_begin() == actualExpr->child_end());
-  //     return Create(*actualExpr->child_begin(), context);
-  //   }
-  //   else if (isa<MaterializeTemporaryExpr>(actualExpr))
-  //   {
-  //     // Assert that there is a single child of the MaterializeTemporaryExpr object.
-  //     assert(++actualExpr->child_begin() == actualExpr->child_end());
-  //     return Create(*actualExpr->child_begin(), context);
-  //   }
-
-  //  else if (isa<CXXStdInitializerListExpr>(actualExpr))
-  //  {
-  //    // Assert that there is a single child of the CxxStdInitializerListExpr object.
-  //    assert(++actualExpr->child_begin() == actualExpr->child_end());
-  //    return Create(*actualExpr->child_begin(), context);
-  //  }
-  //  else
-  //  {
-  //    llvm::outs() << "Unknown expression type : " << actualExpr->getStmtClassName() << "\n ";
-  //    actualExpr->dump(llvm::outs(), context);
-  //    return nullptr;
-  //  }
-  //}
-  // else
-  //{
-  //  assert(isa<Stmt>(statement));
-  //  llvm::outs() << "Unknown statement type : " << statement->getStmtClassName() << "\n ";
-  //  statement->dump(llvm::outs(), context);
-  //  return nullptr;
-  //}
-  //}
-  // else
-  //{
-  //  return nullptr;
-  //}
 }
 
 AstNamedNode::AstNamedNode(
     NamedDecl const* namedDecl,
+    AzureClassesDatabase* const database,
     std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-    : AstNode(namedDecl), m_namespace{AstNode::GetNamespaceForDecl(namedDecl)},
+    : AstNode(namedDecl),
+      m_classDatabase(database), m_namespace{AstNode::GetNamespaceForDecl(namedDecl)},
       m_name{namedDecl->getNameAsString()}, m_navigationId{namedDecl->getQualifiedNameAsString()},
       m_nodeDocumentation{AstNode::GetCommentForNode(namedDecl->getASTContext(), namedDecl)},
       m_nodeAccess{namedDecl->getAccess()}
@@ -1047,8 +923,9 @@ class AstParamVariable : public AstNamedNode {
 public:
   AstParamVariable(
       ParmVarDecl const* var,
+      AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(var, parentNode), m_type{var->getType(), var->getASTContext()},
+      : AstNamedNode(var, database, parentNode), m_type{var->getType(), var->getASTContext()},
         m_isStatic(var->isStaticDataMember())
 
   {
@@ -1128,8 +1005,11 @@ class AstVariable : public AstNamedNode {
   std::string m_variableInitializer;
 
 public:
-  AstVariable(VarDecl const* var, std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(var, parentNode), m_type{var->getType(), var->getASTContext()},
+  AstVariable(
+      VarDecl const* var,
+      AzureClassesDatabase* const database,
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
+      : AstNamedNode(var, database, parentNode), m_type{var->getType(), var->getASTContext()},
         m_isStatic(var->isStaticDataMember()), m_isConstexpr(var->isConstexpr())
   {
     clang::PrintingPolicy pp{LangOptions{}};
@@ -1201,8 +1081,9 @@ class AstTemplateParameter : public AstNamedNode {
 public:
   AstTemplateParameter(
       TemplateTypeParmDecl const* param,
+      AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(param, parentNode),
+      : AstNamedNode(param, database, parentNode),
         m_wasDeclaredWithTypename{param->wasDeclaredWithTypename()},
         m_paramName{param->getNameAsString()}, m_isParameterPack{param->isParameterPack()}
   {
@@ -1251,9 +1132,9 @@ class AstNonTypeTemplateParam : public AstNamedNode {
 public:
   AstNonTypeTemplateParam(
       NonTypeTemplateParmDecl const* param,
-
+      AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(param, parentNode),
+      : AstNamedNode(param, database, parentNode),
         m_defaultArgument(AstExpr::Create(param->getDefaultArgument(), param->getASTContext())),
         m_templateType{param->getType()}
   {
@@ -1287,8 +1168,9 @@ class AstTypeAlias : public AstNamedNode {
 public:
   AstTypeAlias(
       TypeAliasDecl const* alias,
+      AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(alias, parentNode), m_aliasedType{alias->getUnderlyingType()}
+      : AstNamedNode(alias, database, parentNode), m_aliasedType{alias->getUnderlyingType()}
 
   {
   }
@@ -1388,8 +1270,9 @@ protected:
 public:
   AstFunction(
       FunctionDecl const* func,
+      AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(func, parentNode), m_isConstexpr(func->isConstexpr()),
+      : AstNamedNode(func, database, parentNode), m_isConstexpr(func->isConstexpr()),
         m_isStatic(func->isStatic()), m_returnValue(func->getReturnType(), func->getASTContext()),
         m_isMemberOfClass{func->isCXXClassMember()},
         m_isSpecialFunction{
@@ -1412,10 +1295,14 @@ public:
       }
     }
 
-    //    llvm::outs() << "Function: " << Name << "\n";
     for (auto param : func->parameters())
     {
-      m_parameters.push_back(AstNode::Create(param, parentNode));
+      m_parameters.push_back(AstNode::Create(param, database, parentNode));
+    }
+
+    if (m_namespace.empty())
+    {
+      database->CreateApiViewMessage(ApiViewMessages::TypeDeclaredInGlobalNamespace, m_navigationId);
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
@@ -1509,8 +1396,9 @@ protected:
 public:
   AstMethod(
       CXXMethodDecl const* method,
+      AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstFunction(method, parentNode), m_isVirtual(method->isVirtual()),
+      : AstFunction(method, database, parentNode), m_isVirtual(method->isVirtual()),
         m_isPure(method->isPure()), m_isConst(method->isConst())
   {
     auto typePtr = method->getType().getTypePtr()->castAs<FunctionProtoType>();
@@ -1583,8 +1471,9 @@ class AstConstructor : public AstMethod {
 public:
   AstConstructor(
       CXXConstructorDecl const* ctor,
+      AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstMethod(ctor, parentNode), m_isDefault{ctor->isDefaulted()},
+      : AstMethod(ctor, database, parentNode), m_isDefault{ctor->isDefaulted()},
         m_isDeleted{ctor->isDeleted()}, m_isExplicit{ctor->isExplicit()},
         m_isExplicitlyDefaulted{ctor->isExplicitlyDefaulted()}
   {
@@ -1645,8 +1534,9 @@ class AstDestructor : public AstMethod {
 public:
   AstDestructor(
       CXXDestructorDecl const* dtor,
+      AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstMethod(dtor, parentNode), m_isDefault{dtor->isDefaulted()},
+      : AstMethod(dtor, database, parentNode), m_isDefault{dtor->isDefaulted()},
         m_isDeleted{dtor->isDeleted()}, m_isExplicitlyDefaulted{dtor->isExplicitlyDefaulted()}
   {
   }
@@ -1693,7 +1583,7 @@ class AstAccessSpec : public AstNode {
   AccessSpecifier m_accessSpecifier;
 
 public:
-  AstAccessSpec(clang::AccessSpecDecl const* accessSpec)
+  AstAccessSpec(clang::AccessSpecDecl const* accessSpec, AzureClassesDatabase* const)
       : AstNode(accessSpec), m_accessSpecifier{accessSpec->getAccess()}
   {
   }
@@ -1763,6 +1653,7 @@ private:
 public:
   AstClassLike(
       CXXRecordDecl const* decl,
+      AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode);
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override;
 };
@@ -1774,14 +1665,16 @@ class AstClassTemplate : public AstNamedNode {
 public:
   AstClassTemplate(
       ClassTemplateDecl const* templateDecl,
+      AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(templateDecl, parentNode)
+      : AstNamedNode(templateDecl, azureClassesDatabase, parentNode)
   {
     for (auto param : templateDecl->getTemplateParameters()->asArray())
     {
-      m_parameters.push_back(AstNode::Create(param, parentNode));
+      m_parameters.push_back(AstNode::Create(param, azureClassesDatabase, parentNode));
     }
-    m_templateBody = AstNode::Create(templateDecl->getTemplatedDecl(), parentNode);
+    m_templateBody
+        = AstNode::Create(templateDecl->getTemplatedDecl(), azureClassesDatabase, parentNode);
     //    m_namespace = static_cast<AstNamedNode*>(m_templateBody.get())->m_namespace;
   }
 
@@ -1828,13 +1721,15 @@ class AstFunctionTemplate : public AstNamedNode {
 public:
   AstFunctionTemplate(
       FunctionTemplateDecl const* functionTemplate,
+      AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(functionTemplate, parentNode),
-        m_functionNode{AstNode::Create(functionTemplate->getTemplatedDecl(), parentNode)}
+      : AstNamedNode(functionTemplate, azureClassesDatabase, parentNode),
+        m_functionNode{
+            AstNode::Create(functionTemplate->getTemplatedDecl(), azureClassesDatabase, parentNode)}
   {
     for (auto param : functionTemplate->getTemplateParameters()->asArray())
     {
-      m_parameters.push_back(AstNode::Create(param, parentNode));
+      m_parameters.push_back(AstNode::Create(param, azureClassesDatabase, parentNode));
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
@@ -1878,13 +1773,17 @@ class AstTypeAliasTemplate : public AstNamedNode {
 public:
   AstTypeAliasTemplate(
       TypeAliasTemplateDecl const* typeAliasTemplate,
+      AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(typeAliasTemplate, parentNode),
-        m_typeAliasNode{AstNode::Create(typeAliasTemplate->getTemplatedDecl(), parentNode)}
+      : AstNamedNode(typeAliasTemplate, azureClassesDatabase, parentNode),
+        m_typeAliasNode{AstNode::Create(
+            typeAliasTemplate->getTemplatedDecl(),
+            azureClassesDatabase,
+            parentNode)}
   {
     for (auto param : typeAliasTemplate->getTemplateParameters()->asArray())
     {
-      m_parameters.push_back(AstNode::Create(param, parentNode));
+      m_parameters.push_back(AstNode::Create(param, azureClassesDatabase, parentNode));
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
@@ -1938,8 +1837,9 @@ class AstClassTemplateSpecialization : public AstClassLike {
 public:
   AstClassTemplateSpecialization(
       ClassTemplateSpecializationDecl const* templateDecl,
+      AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstClassLike(templateDecl, parentNode)
+      : AstClassLike(templateDecl, azureClassesDatabase, parentNode)
 
   {
     for (const auto& arg : templateDecl->getTemplateArgs().asArray())
@@ -1978,11 +1878,11 @@ class AstConversion : public AstNamedNode {
 public:
   AstConversion(
       CXXConversionDecl const* conversion,
+      AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(conversion, parentNode), m_isExplicit{conversion->isExplicit()},
-        m_isConstexpr{conversion->isConstexpr()}, m_conversionType{
-                                                      conversion->getConversionType(),
-                                                      conversion->getASTContext()}
+      : AstNamedNode(conversion, azureClassesDatabase, parentNode),
+        m_isExplicit{conversion->isExplicit()}, m_isConstexpr{conversion->isConstexpr()},
+        m_conversionType{conversion->getConversionType(), conversion->getASTContext()}
   {
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
@@ -2025,10 +1925,14 @@ class AstField : public AstNamedNode {
   bool m_isMutable{};
 
 public:
-  AstField(FieldDecl const* fieldDecl, std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(fieldDecl, parentNode), m_fieldType{fieldDecl->getType()},
-        m_initializer{
-            AstExpr::Create(fieldDecl->getInClassInitializer(), fieldDecl->getASTContext())},
+  AstField(
+      FieldDecl const* fieldDecl,
+      AzureClassesDatabase* const azureClassesDatabase,
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
+      : AstNamedNode(fieldDecl, azureClassesDatabase, parentNode),
+        m_fieldType{fieldDecl->getType()}, m_initializer{AstExpr::Create(
+                                               fieldDecl->getInClassInitializer(),
+                                               fieldDecl->getASTContext())},
         m_classInitializerStyle{fieldDecl->getInClassInitStyle()},
         m_hasDefaultMemberInitializer{fieldDecl->hasInClassInitializer()},
         m_isMutable{fieldDecl->isMutable()}
@@ -2044,6 +1948,7 @@ class AstFriend : public AstNode {
 public:
   AstFriend(
       FriendDecl const* friendDecl,
+      AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNode(friendDecl)
   {
@@ -2054,7 +1959,8 @@ public:
     }
     else if (friendDecl->getFriendDecl())
     {
-      m_friendFunction = AstNode::Create(friendDecl->getFriendDecl(), parentNode);
+      m_friendFunction
+          = AstNode::Create(friendDecl->getFriendDecl(), azureClassesDatabase, parentNode);
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
@@ -2095,8 +2001,9 @@ class AstEnumerator : public AstNamedNode {
 public:
   AstEnumerator(
       EnumConstantDecl const* enumerator,
+      AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(enumerator, parentNode)
+      : AstNamedNode(enumerator, azureClassesDatabase, parentNode)
   {
     if (enumerator->getInitExpr())
     {
@@ -2126,12 +2033,19 @@ class AstEnum : public AstNamedNode {
   bool m_isFixed;
 
 public:
-  AstEnum(EnumDecl const* enumDecl, std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(enumDecl, parentNode),
+  AstEnum(
+      EnumDecl const* enumDecl,
+      AzureClassesDatabase* const azureClassesDatabase,
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
+      : AstNamedNode(enumDecl, azureClassesDatabase, parentNode),
         m_underlyingType{enumDecl->getIntegerType().getAsString()},
         m_isScoped{enumDecl->isScoped()},
         m_isScopedWithClass{enumDecl->isScopedUsingClassTag()}, m_isFixed{enumDecl->isFixed()}
   {
+    if (!m_isScoped)
+    {
+      azureClassesDatabase->CreateApiViewMessage(ApiViewMessages::UnscopedEnumeration, m_navigationId);
+    }
     // All the types created under this node use a newly created node for their parent.
     if (parentNode)
     {
@@ -2140,7 +2054,7 @@ public:
     }
     for (auto enumerator : enumDecl->enumerators())
     {
-      m_enumerators.push_back(AstNode::Create(enumerator, parentNode));
+      m_enumerators.push_back(AstNode::Create(enumerator, azureClassesDatabase, parentNode));
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override;
@@ -2148,8 +2062,9 @@ public:
 
 AstClassLike::AstClassLike(
     CXXRecordDecl const* decl,
+    AzureClassesDatabase* const azureClassesDatabase,
     std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-    : AstNamedNode(decl, parentNode), m_tagUsed{decl->getTagKind()},
+    : AstNamedNode(decl, azureClassesDatabase, parentNode), m_tagUsed{decl->getTagKind()},
       m_hasDefinition{decl->hasDefinition()}, m_isForwardDeclaration{decl != decl->getDefinition()}
 {
   // All the types created under this node use a newly created node for their parent.
@@ -2260,12 +2175,12 @@ AstClassLike::AstClassLike(
         switch (child->getKind())
         {
           case Decl::Kind::Var: {
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::CXXRecord: {
-            m_children.push_back(
-                std::make_unique<AstClassLike>(cast<CXXRecordDecl>(child), parentNode));
+            m_children.push_back(std::make_unique<AstClassLike>(
+                cast<CXXRecordDecl>(child), azureClassesDatabase, parentNode));
             // For an anonymous named structure, we want to skip the next field because
             // it's been embedded in the anonymous struct definition.
             if (static_cast<AstClassLike*>(m_children.back().get())->m_isAnonymousNamedStruct)
@@ -2276,44 +2191,44 @@ AstClassLike::AstClassLike(
             break;
           }
           case Decl::Kind::CXXMethod: {
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::CXXConstructor: {
 
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::CXXDestructor: {
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::Field: {
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::AccessSpec: {
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::FunctionTemplate: {
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::Friend: {
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::Enum: {
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::TypeAlias: {
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::CXXConversion: {
-            m_children.push_back(AstNode::Create(child, parentNode));
+            m_children.push_back(AstNode::Create(child, azureClassesDatabase, parentNode));
             break;
           }
           case Decl::Kind::StaticAssert: {
@@ -2516,33 +2431,7 @@ void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
 
 void AstType::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const
 {
-  //  if (m_isConstQualified)
-  //  {
-  //    dumper->InsertKeyword("const");
-  //    dumper->InsertWhitespace();
-  //  }
-  //  if (m_underlyingType)
-  //  {
-  //    m_underlyingType->Dump(dumper);
-  //  }
-  //  else
-  {
-    dumper->InsertMemberName(m_internalTypeName);
-  }
-  //  if (m_isRValueReference)
-  //  {
-  //    dumper->InsertPunctuation('&');
-  //}
-  // if (m_isReference)
-  //{
-  //  dumper->InsertPunctuation('&');
-  //}
-  // if (m_isPointer)
-  //{
-  //  dumper->InsertPunctuation('*');
-  //}
-
-  //  dumper->InsertComment(std::string("/* ") + m_internalTypeName + " */");
+  dumper->InsertMemberName(m_internalTypeName);
 }
 
 void AstExpr::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const
@@ -2557,20 +2446,6 @@ void AstMethodCallExpr::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) con
 {
   // Dump the class and member field to be called.
   m_memberAccessor->Dump(dumper, dumpOptions);
-
-  // m_type.Dump(dumper, dumpOptions);
-  // dumper->InsertMemberName(m_calledMethod);
-  // bool firstParam = true;
-  // for (const auto& param : m_methodParams)
-  //{
-  //   if (!firstParam)
-  //   {
-  //     dumper->InsertPunctuation(',');
-  //     dumper->InsertWhitespace();
-  //   }
-  //   firstParam = false;
-  //   param->Dump(dumper, dumpOptions);
-  // }
 }
 void AstMemberExpr::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const
 {
@@ -2633,78 +2508,93 @@ void AstInitializerList::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) co
 
 std::unique_ptr<AstNode> AstNode::Create(
     clang::Decl const* decl,
+    AzureClassesDatabase* const azureClassesDatabase,
     std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
 {
   switch (decl->getKind())
   {
     case Decl::Kind::CXXConstructor:
-      return std::make_unique<AstConstructor>(cast<CXXConstructorDecl>(decl), parentNode);
+      return std::make_unique<AstConstructor>(
+          cast<CXXConstructorDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::CXXDestructor:
-      return std::make_unique<AstDestructor>(cast<CXXDestructorDecl>(decl), parentNode);
+      return std::make_unique<AstDestructor>(
+          cast<CXXDestructorDecl>(decl), azureClassesDatabase, parentNode);
     case Decl::Kind::CXXConversion:
-      return std::make_unique<AstConversion>(cast<CXXConversionDecl>(decl), parentNode);
+      return std::make_unique<AstConversion>(
+          cast<CXXConversionDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::CXXMethod:
-      return std::make_unique<AstMethod>(cast<CXXMethodDecl>(decl), parentNode);
+      return std::make_unique<AstMethod>(
+          cast<CXXMethodDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::Function:
-      return std::make_unique<AstFunction>(cast<FunctionDecl>(decl), parentNode);
+      return std::make_unique<AstFunction>(
+          cast<FunctionDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::ParmVar: {
-      return std::make_unique<AstParamVariable>(cast<ParmVarDecl>(decl), parentNode);
+      return std::make_unique<AstParamVariable>(
+          cast<ParmVarDecl>(decl), azureClassesDatabase, parentNode);
     }
     case Decl::Kind::Var:
-      return std::make_unique<AstVariable>(cast<VarDecl>(decl), parentNode);
+      return std::make_unique<AstVariable>(cast<VarDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::ClassTemplateSpecialization:
       return std::make_unique<AstClassTemplateSpecialization>(
-          cast<ClassTemplateSpecializationDecl>(decl), parentNode);
+          cast<ClassTemplateSpecializationDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::Enum:
-      return std::make_unique<AstEnum>(cast<EnumDecl>(decl), parentNode);
+      return std::make_unique<AstEnum>(cast<EnumDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::EnumConstant:
-      return std::make_unique<AstEnumerator>(cast<EnumConstantDecl>(decl), parentNode);
+      return std::make_unique<AstEnumerator>(
+          cast<EnumConstantDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::Field:
-      return std::make_unique<AstField>(cast<FieldDecl>(decl), parentNode);
+      return std::make_unique<AstField>(cast<FieldDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::FunctionTemplate:
-      return std::make_unique<AstFunctionTemplate>(cast<FunctionTemplateDecl>(decl), parentNode);
+      return std::make_unique<AstFunctionTemplate>(
+          cast<FunctionTemplateDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::ClassTemplate:
-      return std::make_unique<AstClassTemplate>(cast<ClassTemplateDecl>(decl), parentNode);
+      return std::make_unique<AstClassTemplate>(
+          cast<ClassTemplateDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::TemplateTypeParm:
-      return std::make_unique<AstTemplateParameter>(cast<TemplateTypeParmDecl>(decl), parentNode);
+      return std::make_unique<AstTemplateParameter>(
+          cast<TemplateTypeParmDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::NonTypeTemplateParm:
       return std::make_unique<AstNonTypeTemplateParam>(
-          cast<NonTypeTemplateParmDecl>(decl), parentNode);
+          cast<NonTypeTemplateParmDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::TypeAliasTemplate:
-      return std::make_unique<AstTypeAliasTemplate>(cast<TypeAliasTemplateDecl>(decl), parentNode);
+      return std::make_unique<AstTypeAliasTemplate>(
+          cast<TypeAliasTemplateDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::TypeAlias:
-      return std::make_unique<AstTypeAlias>(cast<TypeAliasDecl>(decl), parentNode);
+      return std::make_unique<AstTypeAlias>(
+          cast<TypeAliasDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::CXXRecord:
-      return std::make_unique<AstClassLike>(cast<CXXRecordDecl>(decl), parentNode);
+      return std::make_unique<AstClassLike>(
+          cast<CXXRecordDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::AccessSpec:
-      return std::make_unique<AstAccessSpec>(cast<AccessSpecDecl>(decl));
+      return std::make_unique<AstAccessSpec>(cast<AccessSpecDecl>(decl), azureClassesDatabase);
 
     case Decl::Kind::Friend:
-      return std::make_unique<AstFriend>(cast<FriendDecl>(decl), parentNode);
+      return std::make_unique<AstFriend>(cast<FriendDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::NamespaceAlias:
       return nullptr;
-      //    return std::make_unique<AstNamespaceAlias>(cast<NamespaceAliasDecl>(decl));
+      //    return std::make_unique<AstNamespaceAlias>(cast<NamespaceAliasDecl>(decl,
+      //    azureClassesDatabase));
 
     case Decl::Kind::Namespace:
       return nullptr;
-      //    return std::make_unique<AstNamespace>(cast<NamespaceDecl>(decl));
+      //    return std::make_unique<AstNamespace>(cast<NamespaceDecl>(decl, azureClassesDatabase));
     case Decl::Kind::Using:
       return nullptr;
       //   return std::make_unique<AstUsing>(cast<UsingDecl>(decl));
@@ -2779,7 +2669,9 @@ void AzureClassesDatabase::CreateAstNode(clang::NamedDecl* namedDecl)
     if (!IsMemberOfObject(namedDecl))
     {
       auto node = AstNode::Create(
-          namedDecl, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(namedDecl)));
+          namedDecl,
+          this,
+          m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(namedDecl)));
       if (node)
       {
         m_typeList.push_back(std::move(node));

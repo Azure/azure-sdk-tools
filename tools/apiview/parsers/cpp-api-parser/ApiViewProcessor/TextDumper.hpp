@@ -85,30 +85,32 @@ public:
     DoDumpHierarchyNode(node, 0);
   }
 
-  virtual void DumpDiagnosticNode(std::unique_ptr<ApiViewDiagnostic> const& diagnostic) override
+  virtual void DumpMessageNode(ApiViewMessage const& message) override
   {
     m_stream << "/* ** DIAGNOSTIC START ** */" << std::endl;
-    m_stream << "Type: " << diagnostic->DiagnosticId << std::endl;
-    m_stream << "NodeId" << diagnostic->TargetId << std::endl;
-    if (!diagnostic->HelpLinkUri.empty())
+    m_stream << "/* Type: " << message.DiagnosticId << " */" << std::endl;
+    m_stream << "/* NodeId: " << message.TargetId << " */" << std::endl;
+    if (!message.HelpLinkUri.empty())
     {
-      m_stream << "HelpUri" << diagnostic->HelpLinkUri;
+      m_stream << "/* HelpUri: " << message.HelpLinkUri << " */" << std::endl;
     }
-    if (diagnostic->Level != ApiViewDiagnostic::DiagnosticLevel::None)
+    m_stream << "/* Text: " << message.DiagnosticText << " */" << std::endl;
+    m_stream << "/* Level: ";
+    if (message.Level != ApiViewMessage::MessageLevel::None)
     {
-      switch (diagnostic->Level)
+      switch (message.Level)
       {
-        case ApiViewDiagnostic::DiagnosticLevel::Error:
+        case ApiViewMessage::MessageLevel::Error:
           m_stream << "Error";
           break;
-        case ApiViewDiagnostic::DiagnosticLevel::Warning:
+        case ApiViewMessage::MessageLevel::Warning:
           m_stream << "Warning" << std::endl;
           break;
-        case ApiViewDiagnostic::DiagnosticLevel::Info:
+        case ApiViewMessage::MessageLevel::Info:
           m_stream << "Info";
           break;
       }
-      m_stream << std::endl;
+      m_stream << " */" << std::endl;
     }
     m_stream << "/* ** DIAGNOSTIC END ** */" << std::endl;
   }

@@ -131,3 +131,26 @@ struct BlobItem final
     return param1 + param3 + param4 + param5;
   }
 };
+namespace Meow {
+
+enum Enumeration1
+{
+  Enumerator1,
+  Enumerator2,
+  Enumerator3,
+};
+
+enum class Enumeration2
+{
+  Enumerator1,
+  Enumerator2,
+  Enumerator3,
+};
+
+enum struct Enumeration3 : uint16_t
+{
+  Enumerator1,
+  Enumerator2,
+  Enumerator3,
+};
+} // namespace Meow

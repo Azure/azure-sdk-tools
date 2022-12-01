@@ -575,7 +575,7 @@ Services:
 - Service: servicebus
   Languages:
     JS:
-      Project: sdk/eventhub/perf-tests/event-hubs
+      Project: sdk/servicebus/perf-tests/service-bus
       PrimaryPackage: '@azure/service-bus'
       PackageVersions:
       - '@azure/service-bus': 7.7.3

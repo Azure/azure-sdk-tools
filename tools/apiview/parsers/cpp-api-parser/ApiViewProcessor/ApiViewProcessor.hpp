@@ -3,7 +3,7 @@
 
 #pragma once
 
-// #include "AstNode.hpp"
+#include "ApiViewDiagnostic.hpp"
 #include <map>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -17,7 +17,6 @@ class ApiViewProcessorImpl;
 struct AstNode;
 
 namespace clang {
-class Decl;
 class NamedDecl;
 } // namespace clang
 
@@ -84,6 +83,7 @@ public:
 
   TypeHierarchy* GetTypeHierarchy() { return &m_typeHierarchy; }
 
+  void CreateApiViewDiagnostic(ApiViewDiagnostics diagostic, std::string_view const& targetId);
   void CreateAstNode(clang::NamedDecl* namedNode);
   void CreateAstNode(); // Create a terminal AstNode which is used to close out all outstanding
                         // namespaces.

@@ -10,7 +10,7 @@
           "DownloadUrl": "https://github.com/llvm/llvm-project/archive/llvmorg-14.0.4.tar.gz"
         }
       },
-      "DevelopmentDependency": true
+      "DevelopmentDependency": false
     },
     {
       "Component": {
@@ -30,7 +30,7 @@
           "CommitHash": "bc889afb4c5bf1c0d8ee29ef35eaaf4c8bef8a5d"
         }
       },
-      "DevelopmentDependency": true
+      "DevelopmentDependency": false
     },
     {
       "Component": {
@@ -46,17 +46,6 @@
       "Component": {
         "Type": "other",
         "Other": {
-          "Name": "llvm",
-          "Version": "14.0.4",
-          "DownloadUrl": "https://github.com/llvm/llvm-project/archive/llvmorg-14.0.4.tar.gz"
-        }
-      },
-      "DevelopmentDependency": true
-    },
-    {
-      "Component": {
-        "Type": "other",
-        "Other": {
           "Name": "tclap",
           "Version": "1.2.5",
           "DownloadUrl": " https://sourceforge.net/projects/tclap//files/tclap-1.2.5.tar.gz/download"
@@ -64,7 +53,6 @@
       },
       "DevelopmentDependency": true
     },
-
     {
       "Component": {
         "Type": "other",

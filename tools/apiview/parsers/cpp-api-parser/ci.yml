@@ -70,12 +70,12 @@ stages:
             workingDirectory: '$(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser'
             condition: succeeded()
           - pwsh: |
-              cmake.exe -G "Visual Studio 16 2019" -DCMAKE_C_COMPILER:STRING="cl.exe" -DCMAKE_CXX_COMPILER:STRING="cl.exe" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" -DCMAKE_INSTALL_PREFIX:PATH="$(Build.SourcesDirectory)/build" ..
+              cmake.exe -G "Visual Studio 16 2019" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" ..
             displayName: CMAKE Generate.
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             condition: succeeded()
           - pwsh: |
-                cmake.exe --build . --parallel 8 --config Release --target ParseAzureSdkCpp
+              cmake.exe --build . --parallel 8 --target ParseAzureSdkCpp --clean-first --config Release
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             displayName: Build ApiView Parser.
             condition: succeeded()

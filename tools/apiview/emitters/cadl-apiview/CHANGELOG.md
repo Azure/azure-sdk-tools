@@ -1,5 +1,8 @@
 # Release History
 
+## Verison 0.3.0 (Unreleased)
+Add support for aliases and augment decorators.
+
 ## Version 0.2.1 (10-27-2022)
 Change behavior of `version` emitter option so that if it is not supplied, APIView will be generated for the
   un-projected Cadl, rendering all versioning decorators. Supplying `version` allows the user to project a

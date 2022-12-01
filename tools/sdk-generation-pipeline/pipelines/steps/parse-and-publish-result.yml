@@ -96,6 +96,18 @@ steps:
 
           prNumber=`echo ${RESULT} | jq -r '.number'`
           prLink=`echo ${RESULT} | jq -r '.html_url'`
+          if [ 10 -gt ${#prLink} ];then
+            sdkRepoPullsList="${sdkRepoPullsApi}?state=open&head=$(SDK_PUSH_OWNER):${branchName}&base=$(sdkMainBranch)"
+            RESULT=$(curl \
+              -u "$(REPO_OWNER)":"$(azuresdk-github-pat)" \
+              -H "Accept: application/vnd.github.v3+json" \
+              -X GET \
+              ${sdkRepoPullsList})
+            if [[ `echo ${RESULT} | jq -r '. | length'` -gt 0 ]]; then
+              prNumber=`echo ${RESULT} | jq -r '.[0].number'`
+              prLink=`echo ${RESULT} | jq -r '.[0].html_url'`
+            fi
+          fi
         fi
 
         echo "##vso[task.setvariable variable=prNumber;]${prNumber}"

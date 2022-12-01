@@ -41,8 +41,8 @@ export class GitOperationWrapper {
     }
 
     public async checkoutPr(prNumber: string) {
-        await this.git.raw(['fetch', 'origin', '+refs/pull/*:refs/remotes/origin/pr/*']);
-        await this.git.raw(['switch', `pr/${prNumber}/merge`]);
+        await this.git.raw(['fetch', 'origin', `pull/${prNumber}/head`]);
+        await this.git.raw(['checkout', '-B', `pr-${prNumber}`, `FETCH_HEAD`]);
     }
 
     public async getChangedPackageDirectory(): Promise<Set<string>> {

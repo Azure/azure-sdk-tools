@@ -1,0 +1,50 @@
+parameters:
+  - name: TargetDirectory
+    type: string
+  - name: StagingDirectory
+    type: string
+    default: $(Build.ArtifactStagingDirectory)
+  - name: BuildMatrix
+    type: object
+    default: []
+
+# A `BuildMatrix` is merely a list of possible targeted platforms. .NET 6 can build for any target from any other target.
+  # - rid: win-x64
+  #   framework: net6.0
+  # - rid: linux-x64
+  #   framework: net6.0
+  # - rid: osx-x64
+  #   framework: net6.0
+
+steps:
+  - ${{ each target in parameters.BuildMatrix }}:
+    - pwsh: |
+        $destinationPathSegment = "$(Build.ArtifactStagingDirectory)/$((Split-Path -Leaf "${{ parameters.TargetDirectory }}"))-standalone-${{ target.rid }}"
+        $sourcePath = "${{ parameters.TargetDirectory }}/${{ target.rid }}"
+
+        Write-Host "dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}"
+        dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "dotnet publish failed with exit code $LASTEXITCODE."
+          exit $LASTEXITCODE
+        }
+
+        # windows? produce a zip, otherwise tar.gz
+        if ("${{ target.rid }}".StartsWith("win")){
+          Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
+        }
+        else {
+          tar -cvzf "$($destinationPathSegment).tar.gz" "$sourcePath"
+        }
+
+        # clean up the uncompressed artifact directory
+        Remove-Item -Recurse -Force -Path $sourcePath
+      displayName: 'Produce Executable for ${{ target.rid }}'
+      workingDirectory: "${{ parameters.TargetDirectory }}"
+      env:
+        DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+        DOTNET_CLI_TELEMETRY_OPTOUT: 1
+        DOTNET_MULTILEVEL_LOOKUP: 0
+
+

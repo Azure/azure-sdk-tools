@@ -6,20 +6,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 
 
 namespace APIViewWeb
 {
-    public class CosmosReviewRepository
+    public class CosmosReviewRepository : ICosmosReviewRepository
     {
         private readonly Container _reviewsContainer;
         private readonly CosmosClient _cosmosClient;
 
-        public CosmosReviewRepository(IConfiguration configuration, CosmosClient cosmosClient = null)
+        public CosmosReviewRepository(IConfiguration configuration)
         {
-            _cosmosClient = cosmosClient ?? new CosmosClient(configuration["Cosmos:ConnectionString"]);
+            _cosmosClient = new CosmosClient(configuration["Cosmos:ConnectionString"]);
             _reviewsContainer = _cosmosClient.GetContainer("APIView", "Reviews");
         }
 
@@ -275,30 +276,9 @@ namespace APIViewWeb
             return result;
         }
 
-        private static string ArrayToQueryString<T>(IEnumerable<T> items)
+        public async Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName)
         {
-            var result = new StringBuilder();
-            result.Append("(");
-            foreach (var item in items)
-            {
-                if (item is int)
-                {
-                    result.Append($"{item},");
-                }
-                else
-                {
-                    result.Append($"\"{item}\",");
-                }
-                
-            }
-            result.Remove(result.Length - 1, 1);
-            result.Append(")");
-            return result.ToString();
-        }
-
-        public async Task<IEnumerable<ReviewModel>> GetPackageNameApprovedReviews(string language, string packageName)
-        {
-            var query = $"SELECT * FROM Reviews r WHERE r.IsClosed = false AND IS_DEFINED(r.IsPackageNameApproved) AND r.IsPackageNameApproved = true AND " +
+            var query = $"SELECT * FROM Reviews r WHERE r.IsClosed = false AND IS_DEFINED(r.IsApprovedForFirstRelease) AND r.IsApprovedForFirstRelease = true AND " +
                         $"EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition(query).WithParameter("@packageName", packageName).WithParameter("@language", language);
@@ -325,6 +305,27 @@ namespace APIViewWeb
             }
 
             return allReviews;
+        }
+
+        private static string ArrayToQueryString<T>(IEnumerable<T> items)
+        {
+            var result = new StringBuilder();
+            result.Append("(");
+            foreach (var item in items)
+            {
+                if (item is int)
+                {
+                    result.Append($"{item},");
+                }
+                else
+                {
+                    result.Append($"\"{item}\",");
+                }
+
+            }
+            result.Remove(result.Length - 1, 1);
+            result.Append(")");
+            return result.ToString();
         }
     }
 }

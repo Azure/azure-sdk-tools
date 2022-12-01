@@ -3,16 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using ApiView;
 using APIView.DIff;
 using APIView.Model;
-using Markdig.Syntax.Inlines;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
-using Newtonsoft.Json.Linq;
-using Octokit;
 
 namespace APIViewWeb.Models
 {

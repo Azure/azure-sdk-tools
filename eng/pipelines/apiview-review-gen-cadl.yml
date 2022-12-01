@@ -46,9 +46,9 @@ jobs:
       condition: eq(variables['APIViewURL'], '')
 
   - pwsh: |
-      $reviews = "$(Reviews)"
-      Write-Host "Review Details Json: $($reviews)"
-      $revs = ConvertFrom-Json $reviews
+      $reviewDetails = "$(Reviews)"
+      Write-Host "Review Details Json: $($reviewDetails)"
+      $revs = ConvertFrom-Json $reviewDetails
       if ($revs)
       {
         Write-Host "##vso[task.setvariable variable=ReviewId;]$($revs[0].ReviewId)"

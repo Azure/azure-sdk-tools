@@ -86,6 +86,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('p', "package-versions", HelpText = "Regex of package versions to run")]
             public string PackageVersions { get; set; }
 
+            [Option("profile", HelpText = "Enables capture of profiling data")]
+            public bool Profile { get; set; }
+
             [Option('s', "services", HelpText = "Regex of services to run")]
             public string Services { get; set; }
 
@@ -100,9 +103,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             [Option('t', "tests", HelpText = "Regex of tests to run")]
             public string Tests { get; set; }
-
-            [Option("profile", HelpText = "Enables capture of profiling data")]
-            public bool? Profile { get; set; }
         }
 
         public static async Task Main(string[] args)
@@ -221,7 +221,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputMd = outputFiles[3];
 
             var results = new List<Result>();
-            var profile = options.Profile ?? false;
             var profileDirectories = new List<DirectoryInfo>();
 
             foreach (var service in selectedServices)
@@ -231,7 +230,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     var language = l.Key;
                     var serviceLanugageInfo = l.Value;
 
-                    if (profile)
+                    if (options.Profile)
                     {
                         // For each language create a directory name "{language name}-profile" that will be used to contain
                         // all profiling data for a performance run by that language.
@@ -257,7 +256,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
             }
 
-            if (profile) 
+            if (options.Profile) 
             {
                 // For each language that ran create a ZIP file containing all profiling data collected.
                 // This can be retained for in-depth performance analysis.
@@ -387,7 +386,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         test.TestNames[language],
                                         allArguments,
                                         context,
-                                        options.Profile ?? false
+                                        options.Profile
                                     );
                                 }
                                 catch (Exception e)

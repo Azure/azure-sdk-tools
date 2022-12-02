@@ -28,11 +28,5 @@
     <ItemGroup>
       <Content Include="fixtures/**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
-    <ItemGroup>
-      <Content Remove="fixtures\appconfiguration\appconfigurationreadme.md" />
-    </ItemGroup>
-    <ItemGroup>
-      <Folder Include="fixtures\appconfiguration\" />
-    </ItemGroup>
 
 </Project>

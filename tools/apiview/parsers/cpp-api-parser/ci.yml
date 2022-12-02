@@ -113,13 +113,14 @@ stages:
                 steps: 
                   - checkout: none
                   - download: current
+                    artifact: release-artifacts
                   - pwsh: Get-ChildItem -Recurse
                     displayName: List files
                   - task: UniversalPackages@0
                     displayName: Publish ApiView Parser.
                     inputs:
                       command: publish
-                      publishDirectory: release-artifacts
+                      publishDirectory: .
                       vstsFeedPublish: 'internal/AzureSDKForCpp'
                       vstsFeedPackagePublish: 'parseazuresdkcpp'
                       versionOption: minor

@@ -32,4 +32,5 @@ enum class ApiViewMessages
   NonConstStaticFields, // Non-const static fields
   ProtectedFieldsInFinalClass, // Protected fields in final class
   InternalTypesInNonCorePackage, // Internal types in a non-core package
+  ImplicitConstructor, // Constructor for a type is not marked "explicit".
 };

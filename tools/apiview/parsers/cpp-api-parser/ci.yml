@@ -95,19 +95,15 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             displayName: Build ApiView Parser.
             condition: succeeded()
-          - pwsh: |
-              az login  --use-device-code
-              az artifacts universal publish `
-                --organization https://dev.azure.com/azure-sdk/ `
-                --project="internal" `
-                --scope project `
-                --feed AzureSDKForCpp `
-                --name ParseAzureSdkCpp `
-                --version 0.0.1 `
-                --description "Azure C++ SDK API View Parser." `
-                --path .            
-            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
-            displayName: Create Universal package.
+          - task: UniversalPackages@0
+            displayName: Universal Publish
+            inputs:
+              command: publish
+              publishDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/ParseAzureSdkCpp
+              vstsFeedPublish: 'AzureSDKForCpp '
+              vstsFeedPackagePublish: 'test-universal-package'
+              versionOption: minor
+              packagePublishDescription: Azure C++ SDK API View Parser.
             condition: succeeded()
 
   #- stage: 'Publish'

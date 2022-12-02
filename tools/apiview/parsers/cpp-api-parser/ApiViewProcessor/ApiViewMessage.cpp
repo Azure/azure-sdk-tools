@@ -60,6 +60,13 @@ void AzureClassesDatabase::CreateApiViewMessage(
       newMessage.Level = ApiViewMessage::MessageLevel::Warning;
       break;
     }
+    case ApiViewMessages::ImplicitConstructor: {
+      newMessage.DiagnosticId = "CPA0008";
+      newMessage.DiagnosticText
+          = "Implicit Constructor is found. Constructors should be marked 'explicit'";
+      newMessage.Level = ApiViewMessage::MessageLevel::Info;
+      break;
+    }
   }
   newMessage.TargetId = targetId;
   m_diagnostics.push_back(std::move(newMessage));

@@ -1011,8 +1011,8 @@ public:
       AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(var, database, parentNode), m_type{var->getType(), var->getASTContext()},
-        m_isStatic(var->isStaticDataMember()),
-        m_isConstexpr(var->isConstexpr()), m_isConst(var->getType().isConstQualified())
+        m_isStatic(var->isStaticDataMember()), m_isConstexpr(var->isConstexpr()),
+        m_isConst(var->getType().isConstQualified())
   {
     clang::PrintingPolicy pp{LangOptions{}};
     pp.adjustForCPlusPlus();
@@ -1309,7 +1309,8 @@ public:
 
     if (m_namespace.empty())
     {
-      database->CreateApiViewMessage(ApiViewMessages::TypeDeclaredInGlobalNamespace, m_navigationId);
+      database->CreateApiViewMessage(
+          ApiViewMessages::TypeDeclaredInGlobalNamespace, m_navigationId);
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
@@ -1488,6 +1489,11 @@ public:
     {
       llvm::outs() << "?? Defaulted deleted constructor?";
     }
+    // Noisy diagnostic. Consider making it less noisy in the future.
+    // if (!m_isExplicit)
+    //{
+    //  database->CreateApiViewMessage(ApiViewMessages::ImplicitConstructor, m_navigationId);
+    //}
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
   {
@@ -2052,7 +2058,8 @@ public:
   {
     if (!m_isScoped)
     {
-      azureClassesDatabase->CreateApiViewMessage(ApiViewMessages::UnscopedEnumeration, m_navigationId);
+      azureClassesDatabase->CreateApiViewMessage(
+          ApiViewMessages::UnscopedEnumeration, m_navigationId);
     }
     // All the types created under this node use a newly created node for their parent.
     if (parentNode)
@@ -2169,14 +2176,10 @@ AstClassLike::AstClassLike(
           shouldSkipNextChild = false;
         }
       }
+
       // If the class is final, don't include protected fields.
-      // **NOTE**: This should be an ApiReview failure if it happens.
       if (shouldIncludeChild)
       {
-        if (m_isFinal && child->getAccess() == AS_protected)
-        {
-          shouldIncludeChild = false;
-        }
       }
       if (shouldIncludeChild)
       {
@@ -2247,6 +2250,16 @@ AstClassLike::AstClassLike(
           default: {
             llvm::outs() << "Unhandled Decl Type: " << std::string(child->getDeclKindName())
                          << "\n";
+          }
+        }
+        if (m_isFinal && child->getAccess() == AS_protected)
+        {
+          // protected types in final classes should be flagged.
+          if (child->getKind() != Decl::AccessSpec && cast<NamedDecl>(child)->getIdentifier())
+          {
+            azureClassesDatabase->CreateApiViewMessage(
+                ApiViewMessages::ProtectedFieldsInFinalClass,
+                cast<NamedDecl>(child)->getQualifiedNameAsString());
           }
         }
       }

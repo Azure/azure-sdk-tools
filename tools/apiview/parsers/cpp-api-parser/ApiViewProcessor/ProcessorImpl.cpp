@@ -300,12 +300,22 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
       {
         // However if the type is in the _internal namespace, then we want to exclude it if we're
         // excluding internal types.
-        if ((typeName.find("::_internal") != std::string::npos)
-            && !m_processorImpl->IncludeInternal())
+        if (typeName.find("::_internal") != std::string::npos)
         {
-          shouldCollect = false;
+          if (!m_processorImpl->IncludeInternal())
+          {
+            shouldCollect = false;
+          }
+          // If this _internal type is not in a namespace starting with "Azure::Core", then
+          // we want to flag it as an error and include the type.
+          if (typeName.find("Azure::Core") != 0)
+          {
+            m_processorImpl->GetClassesDatabase()->CreateApiViewMessage(
+                ApiViewMessages::InternalTypesInNonCorePackage, typeName);
+            shouldCollect = true;
+          }
         }
-        // However if the type is in the _detail namespace, then we want to exclude it if we're
+        // If the type is in the _detail namespace, then we want to exclude it if we're
         // excluding detail types.
         if ((typeName.find("::_detail") != std::string::npos) && !m_processorImpl->IncludeDetail())
         {
@@ -318,8 +328,8 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
       }
       else
       {
-        // We want to include any free types within the set of headers because they will result in a
-        // diagnostic.
+        // We want to include any free types within the set of headers because they will result in
+        // a diagnostic.
         PrintingPolicy pp{LangOptions{}};
         pp.adjustForCPlusPlus();
         std::string namespaceName;
@@ -442,7 +452,8 @@ int ApiViewProcessorImpl::ProcessApiView()
     // Insert a terminal node into the classes database, which ensures that all opened namespaces
     // are closed.
     m_classDatabase->CreateAstNode();
-    // Restore the current directory after processing (tool.run will change the current directory).
+    // Restore the current directory after processing (tool.run will change the current
+    // directory).
     std::filesystem::current_path(currentDirectory);
     return rv;
   }

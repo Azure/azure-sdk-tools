@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Azure.Sdk.Tools.PipelineWitness
@@ -28,4 +28,3 @@ namespace Azure.Sdk.Tools.PipelineWitness
         public List<BuildLogInfo> TimelineLogs { get; } = new List<BuildLogInfo>();
     }
 }
-

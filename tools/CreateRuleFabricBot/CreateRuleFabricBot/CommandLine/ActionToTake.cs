@@ -1,4 +1,4 @@
-﻿namespace CreateRuleFabricBot.CommandLine
+namespace CreateRuleFabricBot.CommandLine
 {
     public enum ActionToTake
     {

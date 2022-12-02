@@ -24,4 +24,3 @@ class NodeIndex:
         if node and hasattr(node, "namespace_id"):
             return node.namespace_id
         return None
-

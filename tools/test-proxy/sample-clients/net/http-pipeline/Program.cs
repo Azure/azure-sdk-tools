@@ -1,4 +1,4 @@
-﻿using Azure.Core;
+using Azure.Core;
 using Azure.Core.Pipeline;
 using System;
 using System.IO;

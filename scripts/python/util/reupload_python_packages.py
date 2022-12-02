@@ -184,4 +184,3 @@ if __name__ == "__main__":
     logging.info("Uploaded {} sdists.".format(len(results)))
     for uri in results:
         print(uri)
-

@@ -1,4 +1,4 @@
-﻿using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
+using MS.Az.Mgmt.CI.BuildTasks.Common.Base;
 using System;
 using System.Collections.Generic;
 using System.Text;

@@ -59,4 +59,3 @@ extends:
   parameters:
     DockerDeployments: ${{ parameters.DockerDeployments }}
     ImageTag: $(imageTag)
-

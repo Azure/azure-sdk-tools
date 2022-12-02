@@ -1,4 +1,3 @@
-
 import {ApiViewTokenKind, IApiViewToken} from './models';
 
 const jsTokens = require("js-tokens");

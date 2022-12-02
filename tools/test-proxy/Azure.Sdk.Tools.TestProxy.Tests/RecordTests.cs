@@ -62,9 +62,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         [Theory]
         [InlineData("recordings/TestStartRecordSimple_nosave.json", "request-response")]
-        [InlineData("recordings/TestStartRecordSimplé_nosave.json", "request-response")]
+        [InlineData("recordings/TestStartRecordSimplï¿½_nosave.json", "request-response")]
         [InlineData("recordings/TestStartRecordSimple.json", "")]
-        [InlineData("recordings/TestStartRecordSimplé.json", "")]
+        [InlineData("recordings/TestStartRecordSimplï¿½.json", "")]
         public async Task TestStopRecordingSimple(string targetFile, string additionalEntryModeHeader)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

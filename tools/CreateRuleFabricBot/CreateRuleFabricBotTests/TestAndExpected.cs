@@ -1,4 +1,4 @@
-﻿namespace CreateRuleFabricBotTests
+namespace CreateRuleFabricBotTests
 {
     public class TestAndExpected
     {

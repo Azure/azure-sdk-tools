@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {

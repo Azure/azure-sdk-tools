@@ -16,4 +16,4 @@ Run `node ./export.js <Path to api-extractor JSON output> <Path to apiviewFile>
 
 For e.g.
 
-`node .\export.js C:\git\azure-sdk-for-js\sdk\core\core-client\temp\core-client.api.json C:\git\azure-sdk-for-js\sdk\core\core-client\temp\apiview.json` 
+`node .\export.js C:\git\azure-sdk-for-js\sdk\core\core-client\temp\core-client.api.json C:\git\azure-sdk-for-js\sdk\core\core-client\temp\apiview.json`

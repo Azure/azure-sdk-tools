@@ -47,7 +47,3 @@ Token file will be created with a naming convention `<package-name>_python.json'
 - Go to ``https://apiview.dev``
 - Click on `Create review`
 - Select generated token file and upload
-
-
-
-

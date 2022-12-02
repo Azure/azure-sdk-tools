@@ -1,4 +1,4 @@
-﻿using Azure.Data.AppConfiguration;
+using Azure.Data.AppConfiguration;
 using Azure.Security.KeyVault.Secrets;
 using GitHubIssues;
 using Microsoft.Extensions.Azure;

@@ -94,4 +94,3 @@ We have already specified that `azure-storage-queue` is the only onboarded previ
 ```
 
 The reasoning behind this automatic constriction is that if an entry is _left behind_ in the `reference.yml` for preview when there is no associated package to render below it, the ToC entries are rendered with no children.
-

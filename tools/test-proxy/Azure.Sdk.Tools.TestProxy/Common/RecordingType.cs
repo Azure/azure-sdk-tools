@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.TestProxy.Common
+namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public enum RecordingType
     {

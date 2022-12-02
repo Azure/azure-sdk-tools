@@ -55,8 +55,3 @@ For restructured text, like `/folder1/README.rst`:
 ```
 .. image::  <your HOSTNAME>/api/impressions/cool-repo%2Ffolder1%2FREADME.png
 ```
-
-
-
-
-

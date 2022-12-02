@@ -1,4 +1,4 @@
-﻿The values present in test_pem_value, test_pem_key are from an expired test environment.
+The values present in test_pem_value, test_pem_key are from an expired test environment.
 
 The value present in test_public-key-only_pem is locally generated and from a self-signed cert. Generation steps:
 

@@ -1,4 +1,4 @@
-﻿using Azure.Data.AppConfiguration;
+using Azure.Data.AppConfiguration;
 using Azure.Data.Tables;
 using Azure.Identity;
 using Azure.Sdk.Tools.CheckEnforcer;

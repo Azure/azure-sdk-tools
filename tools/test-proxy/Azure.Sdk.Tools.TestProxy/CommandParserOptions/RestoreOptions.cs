@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 
 namespace Azure.Sdk.Tools.TestProxy.CommandParserOptions
 {

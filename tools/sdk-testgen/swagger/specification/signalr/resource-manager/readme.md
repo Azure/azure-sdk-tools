@@ -193,6 +193,3 @@ csharp:
   output-folder: $(csharp-sdks-folder)/signalr/Microsoft.Azure.Management.SignalR/src/Generated
   clear-output-folder: true
 ```
-
-
-

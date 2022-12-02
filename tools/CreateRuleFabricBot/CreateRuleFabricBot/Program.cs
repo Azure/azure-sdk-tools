@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 using CreateRuleFabricBot.CommandLine;
 using CreateRuleFabricBot.Markdown;
 using CreateRuleFabricBot.Rules;

@@ -1,4 +1,4 @@
-﻿using APIViewWeb.Models;
+using APIViewWeb.Models;
 using AutoMapper;
 using Microsoft.CodeAnalysis.Diagnostics;
 

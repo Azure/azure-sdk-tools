@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Azure.Sdk.Tools.PerfAutomation.Models;
 using NUnit.Framework;
 

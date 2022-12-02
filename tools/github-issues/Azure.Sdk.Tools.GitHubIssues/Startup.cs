@@ -1,4 +1,4 @@
-﻿using Azure.Data.AppConfiguration;
+using Azure.Data.AppConfiguration;
 using Azure.Identity;
 using Azure.Sdk.Tools.GitHubIssues;
 using Azure.Sdk.Tools.GitHubIssues.Reports;

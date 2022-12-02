@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 using Microsoft.Extensions.Caching.Memory;
 using Octokit;
 using System;

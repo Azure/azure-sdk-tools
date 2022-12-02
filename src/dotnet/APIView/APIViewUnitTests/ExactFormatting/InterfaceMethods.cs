@@ -1,4 +1,4 @@
-﻿/*-*/using System;/*-*/
+/*-*/using System;/*-*/
 namespace A {
     public interface IInt {
         void M0(string s);

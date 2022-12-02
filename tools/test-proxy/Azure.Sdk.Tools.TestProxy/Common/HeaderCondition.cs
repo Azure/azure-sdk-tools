@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.TestProxy.Common
+namespace Azure.Sdk.Tools.TestProxy.Common
 {
     /// <summary>
     /// A condition that can be used to apply an action based on the presence of a header.

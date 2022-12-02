@@ -1,4 +1,4 @@
-﻿namespace common.Helpers
+namespace common.Helpers
 {
     public static class StringHelper
     {

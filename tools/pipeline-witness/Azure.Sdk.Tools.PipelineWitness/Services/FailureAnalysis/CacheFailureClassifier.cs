@@ -1,4 +1,4 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using System.Linq;
 using System.Threading.Tasks;

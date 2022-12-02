@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
+using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;

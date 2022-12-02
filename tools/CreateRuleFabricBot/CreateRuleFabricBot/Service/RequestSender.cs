@@ -1,4 +1,4 @@
-﻿using OutputColorizer;
+using OutputColorizer;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -150,4 +150,3 @@ namespace CreateRuleFabricBot.Service
         }
     }
 }
-

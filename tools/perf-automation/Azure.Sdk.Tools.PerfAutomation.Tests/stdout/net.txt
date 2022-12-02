@@ -1,4 +1,4 @@
-﻿[11:50:52.377] [/mnt/vss/_work/1/s] dotnet /mnt/vss/_work/1/s/artifacts/perf/Azure.Storage.Blobs.Perf.dll DownloadBlob --size 10240 --parallel 64
+[11:50:52.377] [/mnt/vss/_work/1/s] dotnet /mnt/vss/_work/1/s/artifacts/perf/Azure.Storage.Blobs.Perf.dll DownloadBlob --size 10240 --parallel 64
 [11:50:52.527] === Options ===
 [11:50:52.544] {
 [11:50:52.544]   "MaximumTransferSize": null,
@@ -105,4 +105,4 @@
 [11:51:07.937]   Loaded:        1.0.0.0
 [11:51:07.937]   Informational: 1.0.0-alpha.20220719.3+5e7750d5d3d4754b657da8430ea805591522c43b
 [11:51:07.937]   JITOptimizer:  Enabled
-[11:51:07.937] 
+[11:51:07.937]

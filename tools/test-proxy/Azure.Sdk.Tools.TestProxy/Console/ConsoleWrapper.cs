@@ -1,4 +1,3 @@
-﻿
 using System;
 
 namespace Azure.Sdk.Tools.TestProxy.Console

@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.NotificationConfiguration.Enums
+namespace Azure.Sdk.Tools.NotificationConfiguration.Enums
 {
     /// <summary>
     /// Purpose of a DevOps team

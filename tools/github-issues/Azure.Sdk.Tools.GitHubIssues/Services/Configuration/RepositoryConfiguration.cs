@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.GitHubIssues.Services.Configuration
+namespace Azure.Sdk.Tools.GitHubIssues.Services.Configuration
 {
     public class RepositoryConfiguration
     {

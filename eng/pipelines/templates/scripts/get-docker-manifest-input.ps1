@@ -43,6 +43,3 @@ if(!$assembledVariable){
 }
 
 return $assembledVariable
-
-
-

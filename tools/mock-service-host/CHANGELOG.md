@@ -52,4 +52,3 @@
 ### Patches
 
 - mock resource type for non-pagable list.
-

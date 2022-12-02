@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
+using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
 using ComposableAsync;
 using Octokit;
 using RateLimiter;

@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.PipelineOwnersExtractor.Configuration
+namespace Azure.Sdk.Tools.PipelineOwnersExtractor.Configuration
 {
     public class PipelineOwnerSettings
     {

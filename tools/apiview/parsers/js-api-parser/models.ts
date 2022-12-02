@@ -1,4 +1,3 @@
-
 export declare const enum ApiViewTokenKind {
     Text = 0,
     Newline = 1,

@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33103.201
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.GithubCodeownerSubscriber", "github-codeowner-subscriber\Azure.Sdk.Tools.GithubCodeownerSubscriber.csproj", "{0198E848-DEF4-4241-BD7C-A7793239AA62}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.NotificationConfiguration", "notification-creator\Azure.Sdk.Tools.NotificationConfiguration.csproj", "{5759063D-A7B3-4D36-ACF4-5595C2789D27}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeOwnersParser", "..\code-owners-parser\CodeOwnersParser\Azure.Sdk.Tools.CodeOwnersParser.csproj", "{A9826C8B-85DF-48DB-8A05-40FB04833C42}"
@@ -22,10 +20,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0198E848-DEF4-4241-BD7C-A7793239AA62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0198E848-DEF4-4241-BD7C-A7793239AA62}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0198E848-DEF4-4241-BD7C-A7793239AA62}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0198E848-DEF4-4241-BD7C-A7793239AA62}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5759063D-A7B3-4D36-ACF4-5595C2789D27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5759063D-A7B3-4D36-ACF4-5595C2789D27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5759063D-A7B3-4D36-ACF4-5595C2789D27}.Release|Any CPU.ActiveCfg = Release|Any CPU

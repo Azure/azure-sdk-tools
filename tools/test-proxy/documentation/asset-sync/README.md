@@ -46,9 +46,9 @@ The `Tag` "commit SHA" is literally the SHA of the tag being pushed. This allows
 
 The `assets.json` contains _targeting_ information about WHERE to get recordings, but how do those recordings actually end up available on disk?
 
-The test-proxy will restore an `assets.json` file in two scenarios:
+The `test-proxy` uses the information contained within the `assets.json` to `restore` files that are contained within the targeted tag. These files are downloaded to the user machine, under the `.assets` folder. A `restore` option is invoked in one of two possible ways:
 
-1. The user explicitly calls `test-proxy restore/push/reset <path-to-assets.json>`.
+1. The user explicitly calls `test-proxy restore <path-to-assets.json>`.
 2. The user's test framework provides an additional key in the BODY of the `record/start` or `playback/start` request.
 
 Only in the above two scenarios will assets be restored. Scenario #2 is discussed in [a section below.](#im-a-dev-who-uses-the-test-proxy-currently-how-do-i-externalize-my-recordings)

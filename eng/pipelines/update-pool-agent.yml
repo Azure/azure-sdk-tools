@@ -67,14 +67,13 @@ jobs:
             Write-Host "getting all files"
             # Scan all Files
             foreach ($file in $files) {
-              Write-Host "file: $($file.FullName)"
               $content = Get-Content $file.FullName -Raw
               $newcontent = ""
               foreach ($migrate in $MigrationMap) {
+                Write-Host $migrate.MigrateFrom
+                Write-Host $migrate.MigrateTo
                 if ($content -match $migrate.MigrateFrom) {
                   Write-Host $file.FullName
-                  Write-Host $migrate.MigrateFrom
-                  Write-Host $migrate.MigrateTo
                   $newcontent = $content -replace "$($migrate.MigrateFrom)", "$($migrate.MigrateTo)"
                 }
               }

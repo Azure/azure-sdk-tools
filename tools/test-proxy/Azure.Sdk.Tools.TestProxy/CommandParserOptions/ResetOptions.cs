@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.TestProxy.CommandParserOptions
     class ResetOptions : CLICommandOptions
     {
 
-        [Option('y', "yes", Default = null, HelpText = "Skip prompt for reset when discarding pending changes.")]
+        [Option('y', "yes", Default = null, HelpText = "Do not prompt for confirmation when resetting pending changes.")]
         public string ConfirmReset { get; set; }
     }
 }

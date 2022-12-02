@@ -100,10 +100,10 @@ stages:
             inputs:
               command: publish
               publishDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/ParseAzureSdkCpp
-              vstsFeedPublish: 'AzureSDKForCpp '
-              vstsFeedPackagePublish: 'test-universal-package'
+              vstsFeedPublish: 'internal/AzureSDKForCpp '
+              vstsFeedPackagePublish: 'ParseAzureSdkCpp'
               versionOption: minor
-              packagePublishDescription: Azure C++ SDK API View Parser.
+              packagePublishDescription: 'Azure C++ SDK API View Parser.'
             condition: succeeded()
 
   #- stage: 'Publish'

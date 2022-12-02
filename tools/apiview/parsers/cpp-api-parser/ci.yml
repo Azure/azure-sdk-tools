@@ -96,7 +96,7 @@ stages:
             displayName: Build ApiView Parser.
             condition: succeeded()
           - pwsh: |
-              az login
+              az login  --use-device-code
               az artifacts universal publish `
                 --organization https://dev.azure.com/azure-sdk/ `
                 --project="internal" `

@@ -70,6 +70,7 @@ jobs:
               $content = Get-Content $file.FullName -Raw
               $newcontent = ""
               $map = '${{ convertToJson(parameters.MigrationMap) }}'
+              Write-Host $map
               foreach ($migrate in $map ) {
                 Write-Host $migrate.MigrateFrom
                 Write-Host $migrate.MigrateTo

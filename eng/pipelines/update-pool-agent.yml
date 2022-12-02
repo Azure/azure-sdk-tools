@@ -3,6 +3,12 @@ parameters:
   type: object
   default:
     - RepoOwner: Azure
+      RepoName: azure-sdk-tools
+      RecordSession: ''
+    - RepoOwner: Azure
+      RepoName: azure-sdk
+      RecordSession: ''
+    - RepoOwner: Azure
       RepoName: azure-sdk-for-android
       RecordSession: 'resources/session-records'
     - RepoOwner: Azure
@@ -67,14 +73,16 @@ jobs:
               foreach ($migrate in $MigrationMap) {
                 if ($content -match $migrate.MigrateFrom) {
                   Write-Host $file.FullName
-                  $newcontent = $content -replace $migrate.MigrateFrom, $migrate.MigrateTo
+                  Write-Host $migrate.MigrateFrom
+                  Write-Host $migrate.MigrateTo
+                  $newcontent = $content -replace "$($migrate.MigrateFrom)", "$($migrate.MigrateTo)"
                 }
               }
               if ($newcontent) {
                 Set-Content -Path $file.FullName -Value $newcontent.Trim() -NoNewLine
               }
             }
-          displayName: Update pool version 
+          displayName: Update pool version for "${{ repo.RepoName }}"
           workingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
         - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
           parameters:

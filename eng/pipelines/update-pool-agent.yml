@@ -29,13 +29,9 @@ parameters:
     - RepoOwner: Azure
       RepoName: azure-sdk-for-python
       RecordSession: 'tests/recordings'
-- name: MigrateFrom
-  type: string
-  default: 'not-specified'
-- name: MigrateTo
-  type: string
-  default: 'not-specified'
-
+- name: MigrationMap
+  type: object
+  default: []
 trigger: none
 pr: none
 
@@ -68,9 +64,13 @@ jobs:
               Write-Host "file: $($file.FullName)"
               $content = Get-Content $file.FullName -Raw
               $newcontent = ""
-              if ($content -match "${{ parameters.MigrateFrom }}") {
-                Write-Host $file.FullName
-                $newcontent = $content -replace "${{ parameters.MigrateFrom }}", "${{ parameters.MigrateTo }}"
+              foreach ($migrate in $MigrationMap) {
+                if ($content -match "${{ migrate.MigrateFrom }}") {
+                  Write-Host $file.FullName
+                  $newcontent = $content -replace "${{ migrate.MigrateFrom }}", "${{ migrate.MigrateTo }}"
+                }
+              }
+              if ($newcontent) {
                 Set-Content -Path $file.FullName -Value $newcontent.Trim() -NoNewLine
               }
             }
@@ -80,10 +80,10 @@ jobs:
           parameters:
             BaseBranchName: $(DefaultBranch)
             PRBranchName: migrate-pool
-            CommitMsg: "[Testing phase, don't review] Migrate from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}"
+            CommitMsg: "Migrate from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}"
             RepoOwner: ${{ repo.RepoOwner }}
             RepoName: ${{ repo.RepoName }}
-            PRTitle: Migrate to new pool
+            PRTitle: "[Testing phase, don't review] Migrate to new pool"
             OpenAsDraft: true
             WorkingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
             PushArgs: -f

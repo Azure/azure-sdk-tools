@@ -48,7 +48,7 @@ The `assets.json` contains _targeting_ information about WHERE to get recordings
 
 The test-proxy will restore an `assets.json` file in two scenarios:
 
-1. The user explicitly calls `test-proxy restore/push/reset <path-to-assets.json>`.
+1. The user explicitly calls `test-proxy restore <path-to-assets.json>`.
 2. The user's test framework provides an additional key in the BODY of the `record/start` or `playback/start` request.
 
 Only in the above two scenarios will assets be restored. Scenario #2 is discussed in [a section below.](#im-a-dev-who-uses-the-test-proxy-currently-how-do-i-externalize-my-recordings)

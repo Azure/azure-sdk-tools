@@ -88,7 +88,7 @@ stages:
               release/parseTests
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/parseTests
             displayName: Run ApiView Tests.
-          - pwsh: Get-ChildItem - Recurse
+          - pwsh: Get-ChildItem -Recurse
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/ParseAzureSdkCpp
           - task: PublishPipelineArtifact@1
             inputs:

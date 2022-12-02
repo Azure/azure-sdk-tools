@@ -98,6 +98,7 @@ stages:
 
   - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
     - stage: 'Release'
+      dependsOn: Build
       jobs:
         - deployment: Release
           # Use GitHub environment as it's used for other C++ releases

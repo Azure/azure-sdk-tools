@@ -46,7 +46,7 @@ stages:
 
         steps:
           - pwsh: |
-              Write-Host "git clone https://github.com/Microsoft/vcpkg $(VcpkgRelease)"
+              Write-Host "git clone https://github.com/Microsoft/vcpkg /refs/$(VcpkgRelease)"
               git clone https://github.com/Microsoft/vcpkg $(VcpkgRelease)
               if ($LASTEXITCODE -ne 0) {
                 Write-Error "Unable to check out vcpkg fork repo"

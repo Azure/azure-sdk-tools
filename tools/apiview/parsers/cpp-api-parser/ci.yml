@@ -96,8 +96,15 @@ stages:
             displayName: Build ApiView Parser.
             condition: succeeded()
           - pwsh: |
-              az --version
-              az extension add --name azure-devops
+              az artifacts universal publish `
+                --organization https://dev.azure.com/azure-sdk/ `
+                --project="internal" `
+                --scope project `
+                --feed AzureSDKForCpp `
+                --name ParseAzureSdkCpp `
+                --version 0.0.1 `
+                --description "Azure C++ SDK API View Parser." `
+                --path .            
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             displayName: Create Universal package.
             condition: succeeded()

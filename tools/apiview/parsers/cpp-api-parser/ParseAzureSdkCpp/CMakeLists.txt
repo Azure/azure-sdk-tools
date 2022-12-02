@@ -4,7 +4,7 @@
 cmake_minimum_required (VERSION 3.15)
 project(ApiViewDriver)
 
-add_executable(ParseAzureSdkCpp ParseAzureSdkCpp.cpp ParseAzureSdkCpp.h)
+add_executable(ParseAzureSdkCpp ParseAzureSdkCpp.cpp )
 add_dependencies(ParseAzureSdkCpp ApiViewProcessor)
 target_include_directories(ParseAzureSdkCpp PRIVATE ${ApiViewProcessor_SOURCE_DIR})
 

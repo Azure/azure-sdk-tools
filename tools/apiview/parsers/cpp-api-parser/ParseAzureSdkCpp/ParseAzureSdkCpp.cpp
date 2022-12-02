@@ -10,7 +10,6 @@
 // provided on the command line.
 //
 
-#include "ParseAzureSdkCpp.h"
 #include "ApiViewProcessor.hpp"
 #include "JsonDumper.hpp"
 #include "TextDumper.hpp"

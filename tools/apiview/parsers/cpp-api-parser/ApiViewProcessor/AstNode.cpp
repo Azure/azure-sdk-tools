@@ -1001,6 +1001,7 @@ class AstVariable : public AstNamedNode {
   AstType m_type;
   bool m_isStatic{};
   bool m_isConstexpr{};
+  bool m_isConst{};
   bool m_isArray{};
   std::string m_variableInitializer;
 
@@ -1010,7 +1011,8 @@ public:
       AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(var, database, parentNode), m_type{var->getType(), var->getASTContext()},
-        m_isStatic(var->isStaticDataMember()), m_isConstexpr(var->isConstexpr())
+        m_isStatic(var->isStaticDataMember()),
+        m_isConstexpr(var->isConstexpr()), m_isConst(var->getType().isConstQualified())
   {
     clang::PrintingPolicy pp{LangOptions{}};
     pp.adjustForCPlusPlus();
@@ -1028,6 +1030,11 @@ public:
     {
       llvm::raw_string_ostream os{m_variableInitializer};
       value->printPretty(os, var->getASTContext(), var->getType());
+    }
+
+    if (m_isStatic && !(m_isConstexpr || m_isConst))
+    {
+      database->CreateApiViewMessage(ApiViewMessages::NonConstStaticFields, m_navigationId);
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
@@ -1923,6 +1930,7 @@ class AstField : public AstNamedNode {
   InClassInitStyle m_classInitializerStyle;
   bool m_hasDefaultMemberInitializer{};
   bool m_isMutable{};
+  bool m_isConst{};
 
 public:
   AstField(
@@ -1935,7 +1943,7 @@ public:
                                                fieldDecl->getASTContext())},
         m_classInitializerStyle{fieldDecl->getInClassInitStyle()},
         m_hasDefaultMemberInitializer{fieldDecl->hasInClassInitializer()},
-        m_isMutable{fieldDecl->isMutable()}
+        m_isMutable{fieldDecl->isMutable()}, m_isConst{fieldDecl->getType().isConstQualified()}
   {
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override;

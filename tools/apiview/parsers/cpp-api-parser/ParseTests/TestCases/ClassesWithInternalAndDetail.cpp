@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace Outer1 {
 class OuterClass1 final {
@@ -221,6 +222,21 @@ namespace _internal {
     TelemetryPolicy& operator=(const TelemetryPolicy&);
     TelemetryPolicy& operator=(TelemetryPolicy&&);
     virtual ~TelemetryPolicy() = default;
+  };
+
+  class MultipleFields {
+  public:
+    static bool StaticField;
+    const bool ConstField;
+    static const bool StaticConstField;
+    mutable bool MutableField;
+    bool Field;
+  };
+  struct MultipleFieldsStruct {
+    static bool StaticField;
+    const bool ConstField;
+    static const bool StaticConstField;
+    bool Field;
   };
 } // namespace _internal
 } // namespace Outer1

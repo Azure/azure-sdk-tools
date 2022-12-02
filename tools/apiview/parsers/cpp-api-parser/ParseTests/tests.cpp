@@ -216,6 +216,47 @@ TEST_F(TestParser, CompileSimple)
     EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated.cpp"));
   }
 }
+struct NsDumper : AstDumper
+{
+  // Inherited via AstDumper
+  virtual void InsertNewline() override {}
+  virtual void InsertWhitespace(int count) override {}
+  virtual void InsertKeyword(std::string_view const& keyword) override {}
+  virtual void InsertText(std::string_view const& text) override {}
+  virtual void InsertPunctuation(char punctuation) override {}
+  virtual void InsertLineIdMarker() override {}
+  virtual void InsertTypeName(
+      std::string_view const& type,
+      std::string_view const& typeNavigationId) override
+  {
+  }
+  virtual void InsertMemberName(std::string_view const& member) override {}
+  virtual void InsertStringLiteral(std::string_view const& str) override {}
+  virtual void InsertLiteral(std::string_view const& str) override {}
+  virtual void InsertComment(std::string_view const& comment) override {}
+  virtual void AddDocumentRangeStart() override {}
+  virtual void AddDocumentRangeEnd() override {}
+  virtual void AddDeprecatedRangeStart() override {}
+  virtual void AddDeprecatedRangeEnd() override {}
+  virtual void AddDiffRangeStart() override {}
+  virtual void AddDiffRangeEnd() override {}
+  virtual void AddInheritanceInfoStart() override {}
+  virtual void AddInheritanceInfoEnd() override {}
+  virtual void DumpTypeHierarchyNode(
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node) override
+  {
+  }
+  struct Message
+  {
+    std::string_view DiagnosticId;
+    std::string_view FailingId;
+  };
+  std::vector<Message> Messages;
+  virtual void DumpMessageNode(ApiViewMessage const& msg) override
+  {
+    Messages.push_back({msg.DiagnosticId, msg.TargetId});
+  }
+};
 
 TEST_F(TestParser, NamespaceFilter1)
 {
@@ -232,9 +273,23 @@ TEST_F(TestParser, NamespaceFilter1)
 }
 )"_json);
 
+  NsDumper dumper;
   processor.ProcessApiView();
   auto& db = processor.GetClassesDatabase();
-  EXPECT_EQ(4ul, db->GetAstNodeMap().size());
+  EXPECT_EQ(8ul, db->GetAstNodeMap().size());
+  db->DumpClassDatabase(&dumper);
+  EXPECT_EQ(5ul, dumper.Messages.size());
+  EXPECT_EQ("CPA0003", dumper.Messages[0].DiagnosticId);
+  EXPECT_EQ("GlobalFunction4", dumper.Messages[0].FailingId);
+  EXPECT_EQ("CPA0002", dumper.Messages[1].DiagnosticId);
+  EXPECT_EQ("GlobalFunction4", dumper.Messages[1].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[2].DiagnosticId);
+  EXPECT_EQ("A::AB::ABC::FunctionABC", dumper.Messages[2].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[3].DiagnosticId);
+  EXPECT_EQ("A::AB::FunctionAB", dumper.Messages[3].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[4].DiagnosticId);
+  EXPECT_EQ("A::AB::ABD::ABE::FunctionABE", dumper.Messages[4].FailingId);
+
   EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated1.cpp"));
 }
 TEST_F(TestParser, NamespaceFilter2)
@@ -254,7 +309,27 @@ TEST_F(TestParser, NamespaceFilter2)
 
   processor.ProcessApiView();
   auto& db = processor.GetClassesDatabase();
-  EXPECT_EQ(2ul, db->GetAstNodeMap().size());
+  EXPECT_EQ(8ul, db->GetAstNodeMap().size());
+
+  NsDumper dumper;
+  db->DumpClassDatabase(&dumper);
+  EXPECT_EQ(7ul, dumper.Messages.size());
+
+  EXPECT_EQ("CPA0003", dumper.Messages[0].DiagnosticId);
+  EXPECT_EQ("Test::Function1", dumper.Messages[0].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[1].DiagnosticId);
+  EXPECT_EQ("Test::Function2", dumper.Messages[1].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[2].DiagnosticId);
+  EXPECT_EQ("GlobalFunction4", dumper.Messages[2].FailingId);
+  EXPECT_EQ("CPA0002", dumper.Messages[3].DiagnosticId);
+  EXPECT_EQ("GlobalFunction4", dumper.Messages[3].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[4].DiagnosticId);
+  EXPECT_EQ("A::AB::ABC::FunctionABC", dumper.Messages[4].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[5].DiagnosticId);
+  EXPECT_EQ("A::AB::FunctionAB", dumper.Messages[5].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[6].DiagnosticId);
+  EXPECT_EQ("A::AB::ABD::ABE::FunctionABE", dumper.Messages[6].FailingId);
+
   EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated2.cpp"));
 }
 TEST_F(TestParser, NamespaceFilter3)
@@ -274,7 +349,29 @@ TEST_F(TestParser, NamespaceFilter3)
   processor.ProcessApiView();
 
   auto& db = processor.GetClassesDatabase();
-  EXPECT_EQ(1ul, db->GetAstNodeMap().size());
+  EXPECT_EQ(8ul, db->GetAstNodeMap().size());
+
+  NsDumper dumper;
+  db->DumpClassDatabase(&dumper);
+  EXPECT_EQ(8ul, dumper.Messages.size());
+
+  EXPECT_EQ("CPA0003", dumper.Messages[0].DiagnosticId);
+  EXPECT_EQ("Test::Function1", dumper.Messages[0].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[1].DiagnosticId);
+  EXPECT_EQ("Test::Function2", dumper.Messages[1].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[2].DiagnosticId);
+  EXPECT_EQ("Test::Inner::Function3", dumper.Messages[2].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[3].DiagnosticId);
+  EXPECT_EQ("GlobalFunction4", dumper.Messages[3].FailingId);
+  EXPECT_EQ("CPA0002", dumper.Messages[4].DiagnosticId);
+  EXPECT_EQ("GlobalFunction4", dumper.Messages[4].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[5].DiagnosticId);
+  EXPECT_EQ("A::AB::ABC::FunctionABC", dumper.Messages[5].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[6].DiagnosticId);
+  EXPECT_EQ("A::AB::FunctionAB", dumper.Messages[6].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[7].DiagnosticId);
+  EXPECT_EQ("A::AB::ABD::ABE::FunctionABE", dumper.Messages[7].FailingId);
+
   EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated3.cpp"));
 }
 
@@ -295,7 +392,21 @@ TEST_F(TestParser, NamespaceFilter4)
   processor.ProcessApiView();
 
   auto& db = processor.GetClassesDatabase();
-  EXPECT_EQ(5ul, db->GetAstNodeMap().size());
+  EXPECT_EQ(8ul, db->GetAstNodeMap().size());
+
+  NsDumper dumper;
+  db->DumpClassDatabase(&dumper);
+  EXPECT_EQ(4ul, dumper.Messages.size());
+
+  EXPECT_EQ("CPA0003", dumper.Messages[0].DiagnosticId);
+  EXPECT_EQ("Test::Function1", dumper.Messages[0].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[1].DiagnosticId);
+  EXPECT_EQ("Test::Function2", dumper.Messages[1].FailingId);
+  EXPECT_EQ("CPA0003", dumper.Messages[2].DiagnosticId);
+  EXPECT_EQ("GlobalFunction4", dumper.Messages[2].FailingId);
+  EXPECT_EQ("CPA0002", dumper.Messages[3].DiagnosticId);
+  EXPECT_EQ("GlobalFunction4", dumper.Messages[3].FailingId);
+  
   EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated4.cpp"));
 }
 
@@ -336,7 +447,7 @@ TEST_F(TestParser, Class2)
   processor.ProcessApiView();
 
   auto& db = processor.GetClassesDatabase();
-  EXPECT_EQ(14ul, db->GetAstNodeMap().size());
+  EXPECT_EQ(16ul, db->GetAstNodeMap().size());
   EXPECT_TRUE(SyntaxCheckClassDb(db, "Classes1B.cpp"));
 }
 

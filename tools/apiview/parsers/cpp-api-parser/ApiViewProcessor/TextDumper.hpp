@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #pragma once
-#include "ApiViewDiagnostic.hpp"
+#include "ApiViewMessage.hpp"
 #include "AstDumper.hpp"
 #include <iostream>
 #include <string>

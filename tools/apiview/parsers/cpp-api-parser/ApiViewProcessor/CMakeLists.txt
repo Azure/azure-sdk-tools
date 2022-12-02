@@ -22,7 +22,7 @@ include(HandleLLVMOptions)
 add_definitions(${LLVM_DEFINITIONS})
 
 add_compile_options(/EHsc)
-add_library(ApiViewProcessor STATIC AstNode.cpp ApiViewProcessor.cpp ProcessorImpl.cpp AstDumper.cpp  "ApiViewDiagnostic.cpp")
+add_library(ApiViewProcessor STATIC AstNode.cpp ApiViewProcessor.cpp ProcessorImpl.cpp AstDumper.cpp  ApiViewMessage.cpp)
 
 
 target_include_directories(ApiViewProcessor PRIVATE ${LLVM_INCLUDE_DIRS})

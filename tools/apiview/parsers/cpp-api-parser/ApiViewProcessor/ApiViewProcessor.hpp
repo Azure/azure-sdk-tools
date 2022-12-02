@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "ApiViewDiagnostic.hpp"
+#include "ApiViewMessage.hpp"
 #include <map>
 #include <memory>
 #include <nlohmann/json.hpp>

@@ -85,7 +85,7 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             displayName: Build ApiView Tests.
           - pwsh: |
-              release/parseTests
+              RelWithDebInfo/parseTests
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/parseTests
             displayName: Run ApiView Tests.
           - pwsh: Get-ChildItem -Recurse

@@ -77,11 +77,11 @@ stages:
             env:
               VCPKG_BINARY_SOURCES: $(VCPKG_BINARY_SOURCES_SECRET)
           - pwsh: |
-              cmake.exe --build . --parallel 8 --target ParseAzureSdkCpp --clean-first --config RelWithDebInfo
+              cmake.exe --build . --parallel 8 --target ParseAzureSdkCpp --config RelWithDebInfo
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             displayName: Build ApiView Parser.
           - pwsh: |
-              cmake.exe --build . --parallel 8 --target parseTests --clean-first --config RelWithDebInfo
+              cmake.exe --build . --parallel 8 --target parseTests --config RelWithDebInfo
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             displayName: Build ApiView Tests.
           - pwsh: |

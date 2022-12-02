@@ -21,19 +21,9 @@ pr:
     include:
       - tools/apiview/parsers/cpp-api-parser
 
-schedules:
-- cron: "0 3 * * *"
-  displayName: Nightly Build.
-  branches:
-    include:
-      - main
-
 variables:
-  NodeVersion: '16.x'
-  TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parserts-genapi'
   ArtifactName: 'apiview'
   VcpkgRelease: '2022.11.14'
-  FeedRegistry: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-cpp/'
 
 stages:
   - stage: 'Build'
@@ -90,13 +80,17 @@ stages:
               cmake.exe --build . --parallel 8 --target ParseAzureSdkCpp --clean-first --config Release
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             displayName: Build ApiView Parser.
-#          - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
-          - task: UniversalPackages@0
-            displayName: Publish ApiView Parser.
-            inputs:
-              command: publish
-              publishDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/ParseAzureSdkCpp
-              vstsFeedPublish: 'internal/AzureSDKForCpp '
-              vstsFeedPackagePublish: 'parseazuresdkcpp'
-              versionOption: minor
-              packagePublishDescription: 'Azure C++ SDK API View Parser.'
+          - pwsh: |
+              cmake.exe --build . --parallel 8 --target ParseTests --clean-first --config Release
+            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
+            displayName: Build ApiView Tests.
+          - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
+            - task: UniversalPackages@0
+              displayName: Publish ApiView Parser.
+              inputs:
+                command: publish
+                publishDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/ParseAzureSdkCpp
+                vstsFeedPublish: 'internal/AzureSDKForCpp '
+                vstsFeedPackagePublish: 'parseazuresdkcpp'
+                versionOption: minor
+                packagePublishDescription: 'Azure C++ SDK API View Parser.'

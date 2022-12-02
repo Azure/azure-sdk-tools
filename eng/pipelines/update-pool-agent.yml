@@ -74,13 +74,13 @@ jobs:
                 Set-Content -Path $file.FullName -Value $newcontent.Trim() -NoNewLine
               }
             }
-          displayName: Update pool version from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}
+          displayName: Update pool version 
           workingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
         - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
           parameters:
             BaseBranchName: $(DefaultBranch)
             PRBranchName: migrate-pool
-            CommitMsg: "Migrate from ${{ parameters.MigrateFrom }} to ${{ parameters.MigrateTo }}"
+            CommitMsg: "Migrate to new pool"
             RepoOwner: ${{ repo.RepoOwner }}
             RepoName: ${{ repo.RepoName }}
             PRTitle: "[Testing phase, don't review] Migrate to new pool"

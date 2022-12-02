@@ -69,7 +69,8 @@ jobs:
             foreach ($file in $files) {
               $content = Get-Content $file.FullName -Raw
               $newcontent = ""
-              foreach ($migrate in "${{ parameters.MigrationMap}}" ) {
+              $map = ${{ convertToJson(parameters.MigrationMap) }} 
+              foreach ($migrate in $map ) {
                 Write-Host $migrate.MigrateFrom
                 Write-Host $migrate.MigrateTo
                 if ($content -match $migrate.MigrateFrom) {

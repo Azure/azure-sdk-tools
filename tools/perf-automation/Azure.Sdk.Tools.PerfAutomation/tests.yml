@@ -524,7 +524,7 @@ Services:
         azure-eventhub: 5.10.1
       - azure-core: source
         azure-eventhub: source
-     JS:
+    JS:
       Project: sdk/eventhub/perf-tests/event-hubs
       PrimaryPackage: '@azure/event-hubs'
       PackageVersions:

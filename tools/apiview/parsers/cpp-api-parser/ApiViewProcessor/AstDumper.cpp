@@ -15,12 +15,6 @@ constexpr int namespaceIndent = 2;
 std::vector<std::string> SplitNamespace(std::string_view const& namespaceName)
 {
   std::vector<std::string> namespaceComponents;
-#if 0
-  for (const auto ns : std::views::split(namespaceName, std::string_view("::")))
-  {
-    namespaceComponents.push_back(std::string(ns.begin(), ns.end()));
-  }
-#else
   if (!namespaceName.empty())
   {
     std::string ns{namespaceName};
@@ -36,7 +30,6 @@ std::vector<std::string> SplitNamespace(std::string_view const& namespaceName)
     } while (separator != std::string::npos);
     namespaceComponents.push_back(ns);
   }
-#endif
   return namespaceComponents;
 }
 
@@ -92,7 +85,6 @@ void AstDumper::CloseNamespaces(
   InsertComment(ss.str());
   Newline();
   Newline();
-
 }
 
 void AstDumper::CloseNamespace(std::string_view const& namespaceName)
@@ -144,6 +136,7 @@ void AstDumper::SetNamespace(std::string_view const& newNamespace)
 }
 
 void AstDumper::Newline() { InsertNewline(); }
+
 void AstDumper::LeftAlign() { InsertWhitespace(m_indentationLevel); }
 
 void AstDumper::AdjustIndent(int indentDelta) { m_indentationLevel += indentDelta; }

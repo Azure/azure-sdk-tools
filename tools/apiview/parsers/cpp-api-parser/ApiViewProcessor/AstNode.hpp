@@ -34,7 +34,9 @@ struct AstNode
   virtual void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) = 0;
   AstNode(clang::Decl const* decl);
 
+  // AstNode's don't have namespaces or names, so return something that would make callers happy.
   virtual std::string_view const Namespace() { return ""; }
+  virtual std::string_view const Name() { return ""; }
 
   static std::string GetCommentForNode(clang::ASTContext& context, clang::Decl const* decl);
   static std::string GetCommentForNode(clang::ASTContext& context, clang::Decl const& decl);
@@ -61,7 +63,8 @@ public:
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode);
   virtual void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   {
-    assert(!"Pure virtual base");
+    assert(!"Pure virtual base - missing implementation of DumpNode in derived class.");
   };
   std::string_view const Namespace() override { return m_namespace; }
+  std::string_view const Name() override { return m_name; }
 };

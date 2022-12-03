@@ -79,6 +79,18 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
 {
 }
 
+class CurrentDirectorySetter {
+  std::filesystem::path m_oldPath;
+
+public:
+  explicit CurrentDirectorySetter(std::filesystem::path const& newPath)
+      : m_oldPath(std::filesystem::current_path())
+  {
+    std::filesystem::current_path(newPath);
+  }
+  ~CurrentDirectorySetter() { std::filesystem::current_path(m_oldPath); }
+};
+
 ApiViewProcessorImpl::ApiViewProcessorImpl(
     std::string_view directoryToProcess,
     nlohmann::json const& configurationJson)
@@ -86,8 +98,7 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
       m_classDatabase{std::make_unique<AzureClassesDatabase>(this)}
 {
   // CHDIR to the directory to process so relative paths in the configuration are properly resolved.
-  auto currentDirectory{std::filesystem::current_path()};
-  std::filesystem::current_path(directoryToProcess);
+  CurrentDirectorySetter currentDirectory{directoryToProcess};
   if (configurationJson.contains("includeInternal"))
   {
     m_includeInternal = configurationJson["includeInternal"];
@@ -205,7 +216,6 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
       }
     }
   }
-  std::filesystem::current_path(currentDirectory);
 }
 
 AzureClassesDatabase::AzureClassesDatabase(ApiViewProcessorImpl* processor) : m_processor{processor}
@@ -354,6 +364,13 @@ class ApiViewCompilationDatabase : public CompilationDatabase {
   std::vector<std::filesystem::path> m_additionalIncludePaths;
   std::vector<std::string> m_additionalArguments;
 
+  // Note that this is *NOT* a real command line - instead it's the set of command line switches
+  // handed to the clang tooling. And specifically the 1st entry tells clang that it should treat
+  // the command line arguments as if they were arguments to clang (if it was "cl.exe", it would
+  // treat the command line arguments as if they were from MSVC.
+  std::vector<std::string>
+      defaultCommandLine{"clang++.exe", "-DAZ_RTTI", "-fcxx-exceptions", "-c", "-std=c++14"};
+
 public:
   ApiViewCompilationDatabase(
       std::vector<std::filesystem::path> const& filesToCompile,
@@ -368,8 +385,7 @@ public:
       m_additionalArguments.push_back(std::string(arg));
     }
   }
-  std::vector<std::string>
-      defaultCommandLine{"clang++.exe", "-DAZ_RTTI", "-fcxx-exceptions", "-c", "-std=c++14"};
+
   // Inherited via CompilationDatabase
   virtual std::vector<CompileCommand> getCompileCommands(StringRef FilePath) const override
   {
@@ -410,59 +426,51 @@ public:
 
 int ApiViewProcessorImpl::ProcessApiView()
 {
+  // clang::tooling::ClangTool.run changes the current directory to the directory returned by the
+  // compilation database. Use the CurrentDirectorySetter to preserve and restore the current
+  // directory across calls into the clang tooling.
+  CurrentDirectorySetter currentDirectory{std::filesystem::current_path()};
   // clang really likes all input paths to be absolute paths, so use the fiilesystem to
   // canonicalize the input filename and source location.
-  auto currentDirectory{std::filesystem::current_path()};
-  try
+  std::filesystem::path tempFile = std::filesystem::temp_directory_path();
+  tempFile /= "TempSourceFile.cpp";
+
+  std::ofstream sourceFileAggregate(
+      static_cast<std::string>(stringFromU8string(tempFile.u8string())),
+      std::ios::out | std::ios::trunc);
+  for (const auto& file : m_filesToCompile)
   {
-
-    std::filesystem::path tempFile = std::filesystem::temp_directory_path();
-    tempFile /= "TempSourceFile.cpp";
-
-    std::ofstream sourceFileAggregate(
-        static_cast<std::string>(stringFromU8string(tempFile.u8string())),
-        std::ios::out | std::ios::trunc);
-    for (const auto& file : m_filesToCompile)
-    {
-      assert(file.u8string().find(m_currentSourceRoot.u8string()) == 0);
-      auto relativeFile = static_cast<std::string>(
-          stringFromU8string(file.u8string().erase(0, m_currentSourceRoot.u8string().size() + 1)));
-      std::string quotedFile = replaceAll(relativeFile, "\\", "\\\\");
-      sourceFileAggregate << "#include \"" << quotedFile << "\"" << std::endl;
-    }
-
-    // Create a compilation database consisting of the source root and source file.
-    auto absTemp = m_currentSourceRoot;
-
-    ApiViewCompilationDatabase compileDb(
-        {std::filesystem::absolute(tempFile)},
-        m_currentSourceRoot,
-        m_additionalIncludeDirectories,
-        m_additionalCompilerArguments);
-
-    std::vector<std::string> sourceFiles;
-    sourceFiles.push_back(
-        std::string(stringFromU8string(std::filesystem::absolute(tempFile).u8string())));
-
-    ClangTool tool(compileDb, sourceFiles);
-
-    auto frontEndActionFactory{std::make_unique<AstVisitorActionFactory>(this)};
-    auto rv = tool.run(frontEndActionFactory.get());
-
-    // Insert a terminal node into the classes database, which ensures that all opened namespaces
-    // are closed.
-    m_classDatabase->CreateAstNode();
-    // Restore the current directory after processing (tool.run will change the current
-    // directory).
-    std::filesystem::current_path(currentDirectory);
-    return rv;
+    assert(file.u8string().find(m_currentSourceRoot.u8string()) == 0);
+    auto relativeFile = static_cast<std::string>(
+        stringFromU8string(file.u8string().erase(0, m_currentSourceRoot.u8string().size() + 1)));
+    std::string quotedFile = replaceAll(relativeFile, "\\", "\\\\");
+    sourceFileAggregate << "#include \"" << quotedFile << "\"" << std::endl;
   }
-  catch (std::exception&)
-  {
-    // Restore the current directory after processing.
-    std::filesystem::current_path(currentDirectory);
-    throw;
-  }
+
+  // Create a compilation database consisting of the source root and source file.
+  auto absTemp = m_currentSourceRoot;
+
+  ApiViewCompilationDatabase compileDb(
+      {std::filesystem::absolute(tempFile)},
+      m_currentSourceRoot,
+      m_additionalIncludeDirectories,
+      m_additionalCompilerArguments);
+
+  std::vector<std::string> sourceFiles;
+  sourceFiles.push_back(
+      std::string(stringFromU8string(std::filesystem::absolute(tempFile).u8string())));
+
+  ClangTool tool(compileDb, sourceFiles);
+
+  auto frontEndActionFactory{std::make_unique<AstVisitorActionFactory>(this)};
+  auto rv = tool.run(frontEndActionFactory.get());
+
+  // Insert a terminal node into the classes database, which ensures that all opened namespaces
+  // are closed.
+  m_classDatabase->CreateAstNode();
+  // Restore the current directory after processing (tool.run will change the current
+  // directory).
+  return rv;
 }
 
 void AzureClassesDatabase::DumpClassDatabase(AstDumper* dumper) const

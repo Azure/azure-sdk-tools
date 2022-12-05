@@ -375,7 +375,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 try
                                 {
                                     Console.WriteLine($"RunAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
-                                        $"{test.TestNames[language]}, {allArguments}, {context}, {options.Profiling})");
+                                        $"{test.TestNames[language]}, {allArguments}, {context}, {options.Profile})");
                                     Console.WriteLine();
 
                                     iterationResult = await _languages[language].RunAsync(

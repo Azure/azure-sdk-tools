@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context, bool profiling)
+            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context, bool profile)
         {
             var jarFile = (string)context;
 

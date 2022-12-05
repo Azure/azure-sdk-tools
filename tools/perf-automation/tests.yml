@@ -139,7 +139,7 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        Iterations: ${{ variables.Iterations }}
+        Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeJava }}:
@@ -173,7 +173,7 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        Iterations: ${{ variables.Iterations }}
+        Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeJS }}:
@@ -230,7 +230,7 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        Iterations: ${{ variables.Iterations }}
+        Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeCpp }}:
@@ -257,7 +257,7 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        Iterations: ${{ variables.Iterations }}
+        Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
 
 - stage: Print_Results

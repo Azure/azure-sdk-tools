@@ -73,8 +73,6 @@ jobs:
               $map = ConvertFrom-Json $map 
               Write-Host $map
               foreach ($migrate in $map ) {
-                Write-Host $migrate.MigrateFrom
-                Write-Host $migrate.MigrateTo
                 if ($content -match $migrate.MigrateFrom) {
                   $flag = $True
                   Write-Host $file.FullName
@@ -90,7 +88,7 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
           parameters:
             BaseBranchName: $(DefaultBranch)
-            PRBranchName: migrate-pool
+            PRBranchName: migrate-pools
             CommitMsg: "Migrate to new pool"
             RepoOwner: ${{ repo.RepoOwner }}
             RepoName: ${{ repo.RepoName }}

@@ -139,7 +139,6 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
         Profile: ${{ parameters.Profile }}
 
@@ -174,7 +173,6 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
         Profile: ${{ parameters.Profile }}
 
@@ -202,7 +200,6 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
 
@@ -233,7 +230,6 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
         Profile: ${{ parameters.Profile }}
 
@@ -261,7 +257,6 @@ stages:
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
-        # Iterations parameter has type 'number' so must use this variable syntax
         Iterations: ${{ variables.Iterations }}
         Profile: ${{ parameters.Profile }}
 

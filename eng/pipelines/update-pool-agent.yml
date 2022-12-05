@@ -68,6 +68,7 @@ jobs:
             # Scan all Files
             foreach ($file in $files) {
               $newcontent = Get-Content $file.FullName -Raw
+              $flag = $False
               $map = '${{ convertToJson(parameters.MigrationMap) }}'
               $map = ConvertFrom-Json $map 
               Write-Host $map
@@ -75,11 +76,12 @@ jobs:
                 Write-Host $migrate.MigrateFrom
                 Write-Host $migrate.MigrateTo
                 if ($content -match $migrate.MigrateFrom) {
+                  $flag = $True
                   Write-Host $file.FullName
                   $newcontent = $newcontent -replace "$($migrate.MigrateFrom)", "$($migrate.MigrateTo)"
                 }
               }
-              if ($newcontent) {
+              if ($flag) {
                 Set-Content -Path $file.FullName -Value $newcontent.Trim() -NoNewLine
               }
             }

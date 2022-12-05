@@ -51,7 +51,7 @@ namespace APIViewIntegrationTests
         {
             var reviewManager = testsBaseFixture.ReviewManager;
             var user = testsBaseFixture.User;
-            var review = await testsBaseFixture.ReviewManager.CreateReviewAsync(user, fileNameA, "Revision1", fileStreamA, false, true);
+            var review = await testsBaseFixture.ReviewManager.CreateReviewAsync(user, fileNameA, "Revision1", fileStreamA, false, "Swagger", true);
             await reviewManager.AddRevisionAsync(user, review.ReviewId, fileNameB, "Revision2", fileStreamB, true);
             review = await reviewManager.GetReviewAsync(user, review.ReviewId);
             var headingWithDiffInSections = review.Revisions[0].HeadingsOfSectionsWithDiff[review.Revisions[1].RevisionId];
@@ -64,7 +64,7 @@ namespace APIViewIntegrationTests
         {
             var reviewManager = testsBaseFixture.ReviewManager;
             var user = testsBaseFixture.User;
-            var review = await reviewManager.CreateReviewAsync(user, fileNameC, "Azure.Analytics.Purview.Account", fileStreamC, false, true);
+            var review = await reviewManager.CreateReviewAsync(user, fileNameC, "Azure.Analytics.Purview.Account", fileStreamC, false, "Swagger", true);
             await reviewManager.AddRevisionAsync(user, review.ReviewId, fileNameD, "Azure.Analytics.Purview.Account", fileStreamD, true);
             review = await reviewManager.GetReviewAsync(user, review.ReviewId);
             var headingWithDiffInSections = review.Revisions[0].HeadingsOfSectionsWithDiff[review.Revisions[1].RevisionId];

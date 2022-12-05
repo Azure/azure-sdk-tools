@@ -47,7 +47,6 @@ jobs:
       npm install -g @azure-tools/cadl-apiview
       npm install -g cadl
       npm install -g @cadl-lang/compiler
-    workingDirectory: $(System.DefaultWorkingDirectory)/cadlRepo$(PackagePath)
     displayName: "Install npm packages"
 
   - task: Powershell@2

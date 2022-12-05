@@ -35,7 +35,7 @@ parameters:
 jobs:
   - job: CleanUp
     pool:
-      vmImage: windows-2019
+      vmImage: windows-2022
     variables:
       - template: ./templates/variables/globals.yml
     steps:

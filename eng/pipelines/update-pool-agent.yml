@@ -5,36 +5,36 @@ parameters:
     - RepoOwner: Azure
       RepoName: azure-sdk-tools
       RecordSession: ''
-    # - RepoOwner: Azure
-    #   RepoName: azure-sdk
-    #   RecordSession: ''
-    # - RepoOwner: Azure
-    #   RepoName: azure-sdk-for-android
-    #   RecordSession: 'resources/session-records'
-    # - RepoOwner: Azure
-    #   RepoName: azure-sdk-for-c
-    #   RecordSession: ''
-    # - RepoOwner: Azure
-    #   RepoName: azure-sdk-for-cpp
-    #   RecordSession: ''
-    # - RepoOwner: Azure
-    #   RepoName: azure-sdk-for-go
-    #   RecordSession: ''
-    # - RepoOwner: Azure
-    #   RepoName: azure-sdk-for-ios
-    #   RecordSession: ''
-    # - RepoOwner: Azure
-    #   RepoName: azure-sdk-for-java
-    #   RecordSession: 'resources/session-records'
-    # - RepoOwner: Azure
-    #   RepoName: azure-sdk-for-js
-    #   RecordSession: 'recordings/node'
-    # - RepoOwner: Azure
-    #   RepoName: azure-sdk-for-net
-    #   RecordSession: 'tests/SessionRecords'
-    # - RepoOwner: Azure
-    #   RepoName: azure-sdk-for-python
-    #   RecordSession: 'tests/recordings'
+    - RepoOwner: Azure
+      RepoName: azure-sdk
+      RecordSession: ''
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-android
+      RecordSession: 'resources/session-records'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-c
+      RecordSession: ''
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-cpp
+      RecordSession: ''
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-go
+      RecordSession: ''
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-ios
+      RecordSession: ''
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-java
+      RecordSession: 'resources/session-records'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-js
+      RecordSession: 'recordings/node'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-net
+      RecordSession: 'tests/SessionRecords'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-python
+      RecordSession: 'tests/recordings'
 - name: MigrationMap
   type: object
   default: []
@@ -91,8 +91,8 @@ jobs:
             CommitMsg: "Migrate to new pool"
             RepoOwner: ${{ repo.RepoOwner }}
             RepoName: ${{ repo.RepoName }}
-            PRTitle: "[Testing phase, don't review] Migrate to new pool"
-            OpenAsDraft: true
+            PRTitle: "Migrate to new pool"
+            # OpenAsDraft: true
             WorkingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
             PushArgs: -f
           

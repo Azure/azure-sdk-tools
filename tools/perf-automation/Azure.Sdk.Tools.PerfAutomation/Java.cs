@@ -124,7 +124,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     profilingConfig += $",settings={jfrConfigurationFile}";
                 }
             }
-            
+
             var processArguments = $"-XX:+CrashOnOutOfMemoryError {profilingConfig} -jar {jarFile} -- {testName} {arguments}";
 
             var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false,

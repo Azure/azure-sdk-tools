@@ -91,9 +91,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             if (!initialized)
             {
                 _consoleWrapper.WriteLine($"The targeted assets.json \"{config.AssetsJsonRelativeLocation}\" has not been restored prior to attempting push. " +
-                    "Are you certain you're pushing the correct assets.json? Please invoke \'test-proxy restore \"{config.AssetsJsonRelativeLocation}\"\' prior to invoking a push operation.");
+                    $"Are you certain you're pushing the correct assets.json? Please invoke \'test-proxy restore \"{config.AssetsJsonRelativeLocation}\"\' prior to invoking a push operation.");
 
-                Environment.Exit(-1);
+                Environment.Exit(1);
             }
 
             var pendingChanges = DetectPendingChanges(config);

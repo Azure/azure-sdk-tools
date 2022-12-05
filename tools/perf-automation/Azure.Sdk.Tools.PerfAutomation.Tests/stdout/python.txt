@@ -1,4 +1,4 @@
-﻿Package              Version   Editable project location
+Package              Version   Editable project location
 -------------------- --------- -----------------------------------------------
 aiohttp              3.8.1
 aiosignal            1.2.0

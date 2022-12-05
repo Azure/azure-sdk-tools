@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
+using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
 using Azure.Security.KeyVault.Secrets;
 using GitHubIssues.Helpers;
 using Microsoft.Extensions.Logging;

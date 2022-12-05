@@ -211,4 +211,3 @@ public extension Collection where Element: Equatable {
         return true
     }
 }
-

@@ -1,4 +1,3 @@
-
 export type MockEventTarget = {
     $emit (event: string, data: any): void;
     $emitted (event: string): boolean;

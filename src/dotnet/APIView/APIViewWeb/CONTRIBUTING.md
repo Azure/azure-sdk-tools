@@ -193,4 +193,3 @@ Happy coding!!!!
  Parser version should always be incremented if change is at parser level and if that change is required to be reflected on existing reviews as well. Existing reviews are refreshed to reflect the changes as a backend task if parser version is changed. So, this won't reflect immediately.
 
  Create a GitHub pull request for the changes to merge it to main branch if code changes are ready and tested thoroughly.
- 

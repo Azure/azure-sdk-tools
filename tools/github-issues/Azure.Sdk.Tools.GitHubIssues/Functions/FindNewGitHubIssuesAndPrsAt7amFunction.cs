@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.GitHubIssues.Reports;
+using Azure.Sdk.Tools.GitHubIssues.Reports;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;

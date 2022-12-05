@@ -146,4 +146,3 @@ ConfigurationClient configurationClient = new ConfigurationClientBuilder()
     .connectionString(connectionString)
     .buildClient();
 ```
-

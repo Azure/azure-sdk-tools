@@ -51,4 +51,3 @@ steps:
         Write-Error "Could not connect to test proxy."
         exit 1
       displayName: Test Proxy IsAlive
-

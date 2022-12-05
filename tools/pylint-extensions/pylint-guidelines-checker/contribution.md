@@ -17,4 +17,3 @@ False Positives     | Impact on code | Action |
 | None/Few      | Low       | Register checker, and inform azure-sdk-for-python of new checker. Note which SDKs will be impacted.         |
 | None/Few      | High  | Register checker, and disable it within the azure-sdk-for-python pylintrc file. The checker will appear in APIView and not break CI pipelines.      |            |
 | High      | N/A       | Do not register the checker until false positives have been resolved.         |
-

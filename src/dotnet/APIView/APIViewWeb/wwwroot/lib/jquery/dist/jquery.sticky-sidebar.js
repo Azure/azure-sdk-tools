@@ -1,4 +1,4 @@
-﻿// Copied from https://github.com/abouolia/sticky-sidebar/blob/master/dist/jquery.sticky-sidebar.js
+// Copied from https://github.com/abouolia/sticky-sidebar/blob/master/dist/jquery.sticky-sidebar.js
 
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :

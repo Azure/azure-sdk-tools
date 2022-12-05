@@ -1,4 +1,4 @@
-﻿namespace APIViewWeb.Models
+namespace APIViewWeb.Models
 {
     public class ReviewGenPipelineParamModel
     {

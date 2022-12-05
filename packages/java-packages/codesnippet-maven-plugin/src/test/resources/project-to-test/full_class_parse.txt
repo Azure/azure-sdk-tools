@@ -1,4 +1,3 @@
-
 // BEGIN: full-class-readme-sample
 /**
  * This class contains code samples for generating javadocs through doclets for {@link ConfigurationClient}

@@ -1,4 +1,4 @@
-﻿using Azure.Data.AppConfiguration;
+using Azure.Data.AppConfiguration;
 using Azure.Identity;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;

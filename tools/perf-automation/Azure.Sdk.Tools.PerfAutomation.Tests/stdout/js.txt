@@ -1,4 +1,4 @@
-﻿@azure-tests/perf-storage-blob@1.0.0 /home/user/js/common/deploy/sdk/storage/perf-tests/storage-blob
+@azure-tests/perf-storage-blob@1.0.0 /home/user/js/common/deploy/sdk/storage/perf-tests/storage-blob
 ├─┬ @azure/core-http@2.2.8 -> ./../../../core/core-http
 │ ├─┬ @azure/abort-controller@1.1.1 -> ./../../../core/abort-controller
 │ │ ├── UNMET DEPENDENCY @azure/dev-tool@^1.0.0

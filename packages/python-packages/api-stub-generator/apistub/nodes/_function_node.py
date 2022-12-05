@@ -291,4 +291,4 @@ class FunctionNode(NodeEntityBase):
         apiview.add_newline()
         if not use_multi_line:
             for err in self.pylint_errors:
-                err.generate_tokens(apiview, self.namespace_id)            
+                err.generate_tokens(apiview, self.namespace_id)

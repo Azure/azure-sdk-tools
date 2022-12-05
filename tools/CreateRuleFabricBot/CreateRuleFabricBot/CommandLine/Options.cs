@@ -1,4 +1,4 @@
-﻿using CommandLine.Attributes;
+using CommandLine.Attributes;
 using CommandLine.Attributes.Advanced;
 
 namespace CreateRuleFabricBot.CommandLine

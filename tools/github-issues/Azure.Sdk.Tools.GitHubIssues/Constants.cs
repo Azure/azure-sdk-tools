@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.GitHubIssues
+namespace Azure.Sdk.Tools.GitHubIssues
 {
     internal static class Constants
     {

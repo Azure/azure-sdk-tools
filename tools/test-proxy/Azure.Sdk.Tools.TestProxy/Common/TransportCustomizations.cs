@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 
 namespace Azure.Sdk.Tools.TestProxy.Common

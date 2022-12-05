@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.GitHubIssues.Reports;
+using Azure.Sdk.Tools.GitHubIssues.Reports;
 using System;
 using System.Collections.Generic;
 using System.Linq;

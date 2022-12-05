@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -23,4 +23,3 @@ namespace Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines
         public string Classification { get; set; }
     }
 }
-

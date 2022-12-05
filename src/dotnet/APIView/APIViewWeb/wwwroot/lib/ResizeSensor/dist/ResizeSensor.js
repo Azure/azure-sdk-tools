@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 /**
  * Copyright Marc J. Schmidt. See the LICENSE file at the top-level

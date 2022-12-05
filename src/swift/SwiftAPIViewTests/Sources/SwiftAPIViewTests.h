@@ -14,5 +14,3 @@ FOUNDATION_EXPORT double SwiftAPIViewTestsVersionNumber;
 FOUNDATION_EXPORT const unsigned char SwiftAPIViewTestsVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <SwiftAPIViewTests/PublicHeader.h>
-
-

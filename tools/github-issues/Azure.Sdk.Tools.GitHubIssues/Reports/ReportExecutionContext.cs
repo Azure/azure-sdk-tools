@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
+using Azure.Sdk.Tools.GitHubIssues.Services.Configuration;
 using Microsoft.Extensions.Logging;
 using Octokit;
 using System;

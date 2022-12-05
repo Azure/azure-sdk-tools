@@ -1,4 +1,3 @@
-
 # Overview - How Changelog Tool Works
 
 *Note: changelog tool only supports hlc now.*

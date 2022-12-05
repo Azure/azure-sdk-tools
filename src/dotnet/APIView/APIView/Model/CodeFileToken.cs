@@ -1,4 +1,4 @@
-﻿namespace APIView
+namespace APIView
 {
     public struct CodeFileToken
     {

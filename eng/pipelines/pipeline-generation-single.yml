@@ -47,4 +47,3 @@ jobs:
     displayName: 'Generate pipeline'
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
-

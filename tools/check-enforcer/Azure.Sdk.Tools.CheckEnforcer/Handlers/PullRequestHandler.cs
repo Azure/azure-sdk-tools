@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;
 using Azure.Sdk.Tools.CheckEnforcer.Services.PullRequestTracking;
 using Microsoft.Extensions.Logging;

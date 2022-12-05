@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
@@ -903,4 +903,3 @@ namespace Azure.Sdk.Tools.PipelineWitness
         }
     }
 }
-

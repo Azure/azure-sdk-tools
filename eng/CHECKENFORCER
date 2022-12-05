@@ -38,4 +38,3 @@ message: >
   
   Note that using the override command triggers alerts so that follow-up
   investigations can occur (PRs still need to be approved as normal).
-  

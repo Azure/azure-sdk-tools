@@ -97,4 +97,3 @@ stages:
             rm ~/.npmrc || { echo 'rm ~/.npmrc failed' ; exit 1; }
           displayName: Publish
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/
-

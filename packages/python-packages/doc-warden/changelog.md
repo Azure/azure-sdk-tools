@@ -76,4 +76,4 @@ However, up till now, the following features have been added:
 * Configuration File Parsing 
 * Readme Presence Verification
 * Readme Content Verification
-* Support for exception and scan exclusion lists 
+* Support for exception and scan exclusion lists

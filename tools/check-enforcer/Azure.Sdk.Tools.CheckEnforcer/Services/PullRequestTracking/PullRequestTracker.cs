@@ -1,4 +1,4 @@
-﻿using Azure.Data.Tables;
+using Azure.Data.Tables;
 using Azure.Security.KeyVault.Secrets;
 using System;
 using System.Collections.Generic;

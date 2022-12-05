@@ -3114,4 +3114,3 @@ class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
         importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
-

@@ -1,4 +1,4 @@
-﻿$(() => {
+$(() => {
   $(document).on("click", ".revision-rename-icon", e => {
     toggleNameField($(e.target));
   });

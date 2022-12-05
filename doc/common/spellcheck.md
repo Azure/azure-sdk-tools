@@ -1,4 +1,3 @@
-
 # Spell Checking the Azure SDK
 
 To keep code quality high we use a code scanner (cspell) to check for spelling errors in source and other files. To keep code quality high we check spelling in CI. These tools can be run locally as well.

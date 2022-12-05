@@ -261,4 +261,4 @@ class TestClassParsing:
         expected = [
             "class AliasUnion(Union[str, int, bool]):"
         ]
-        _check_all(actuals, expected, obj)        
+        _check_all(actuals, expected, obj)

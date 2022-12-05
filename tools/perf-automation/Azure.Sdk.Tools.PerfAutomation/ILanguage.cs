@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using Azure.Sdk.Tools.PerfAutomation.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

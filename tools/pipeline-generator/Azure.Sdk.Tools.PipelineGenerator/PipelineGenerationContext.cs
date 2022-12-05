@@ -1,4 +1,4 @@
-﻿using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;

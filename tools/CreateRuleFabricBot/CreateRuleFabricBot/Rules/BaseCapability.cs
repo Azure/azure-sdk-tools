@@ -1,4 +1,4 @@
-﻿namespace CreateRuleFabricBot.Rules
+namespace CreateRuleFabricBot.Rules
 {
     public abstract class BaseCapability
     {

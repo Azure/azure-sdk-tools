@@ -1,4 +1,4 @@
-﻿namespace A {
+namespace A {
     public class Class {
         public Class(int a)/*-*/{/*-*/;/*-*/}/*-*/
         protected Class()/*-*/{/*-*/;/*-*/}/*-*/

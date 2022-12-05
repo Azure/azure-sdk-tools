@@ -59,4 +59,3 @@ extends:
       framework: net6.0
     - rid: osx-x64
       framework: net6.0
-      

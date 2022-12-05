@@ -1,4 +1,4 @@
-      // BEGIN: Code Generation Metadata Section
+// BEGIN: Code Generation Metadata Section
       public static readonly String AutoRestVersion = "{{AutoRestVersion}}";
       public static readonly String AutoRestBootStrapperVersion = "{{AutoRestBootStrapperVersion}}";
       public static readonly String AutoRestCmdExecuted = "{{AutoRestCmdExecuted}}";
@@ -8,4 +8,3 @@
       public static readonly String CodeGenerationErrors = "{{CodeGenerationErrors}}";
       public static readonly String GithubRepoName = "{{GithubRepoName}}";
       // END: Code Generation Metadata Section
-      

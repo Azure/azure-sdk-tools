@@ -1,4 +1,4 @@
-﻿using Azure.Core;
+using Azure.Core;
 using Azure.Identity;
 using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Azure.Sdk.Tools.CheckEnforcer.Integrations.GitHub;

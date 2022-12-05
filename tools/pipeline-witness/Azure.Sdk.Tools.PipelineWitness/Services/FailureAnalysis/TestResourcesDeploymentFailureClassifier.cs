@@ -1,4 +1,4 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.Build.WebApi;
 using System;
 using System.Collections.Generic;
 using System.Linq;

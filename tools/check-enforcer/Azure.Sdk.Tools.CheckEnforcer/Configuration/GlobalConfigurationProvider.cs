@@ -1,4 +1,4 @@
-﻿using Azure.Data.AppConfiguration;
+using Azure.Data.AppConfiguration;
 using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using Microsoft.Extensions.Azure;
 using System;

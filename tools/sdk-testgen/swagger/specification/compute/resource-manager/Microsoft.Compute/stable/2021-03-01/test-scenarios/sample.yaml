@@ -58,4 +58,3 @@ scenarios:
             fromResponse: /id
       - step: getVM
         operationId: VirtualMachines_Get
-          

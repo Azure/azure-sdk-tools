@@ -1,4 +1,4 @@
-﻿$(() => {
+$(() => {
   const defaultPageSize = 50;
   const reviewsFilterPartial = $( '#reviews-filter-partial' );
   const languageFilter = $( '#language-filter-bootstraps-select' );

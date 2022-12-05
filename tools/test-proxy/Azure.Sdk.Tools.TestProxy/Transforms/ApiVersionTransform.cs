@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;

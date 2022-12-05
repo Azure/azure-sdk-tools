@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.PipelineWitness
+namespace Azure.Sdk.Tools.PipelineWitness
 {
     using System;
 
@@ -17,4 +17,3 @@
         public Guid? ParentRecordId { get; set; }        
     }
 }
-

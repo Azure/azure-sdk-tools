@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.CheckEnforcer.Configuration;
+using Azure.Sdk.Tools.CheckEnforcer.Configuration;
 using ComposableAsync;
 using RateLimiter;
 using System;

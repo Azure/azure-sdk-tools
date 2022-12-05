@@ -1,4 +1,4 @@
-﻿using Microsoft.Crank.Agent;
+using Microsoft.Crank.Agent;
 using System;
 
 namespace Azure.Sdk.Tools.PerfAutomation

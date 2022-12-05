@@ -42,5 +42,3 @@ output-folder: $(python-sdks-folder)/signalr/azure-mgmt-signalr/azure/mgmt/signa
 basic-setup-py: true
 output-folder: $(python-sdks-folder)/signalr/azure-mgmt-signalr
 ```
-
-

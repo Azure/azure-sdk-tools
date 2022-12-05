@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.NotificationConfiguration.Enums;
+using Azure.Sdk.Tools.NotificationConfiguration.Enums;
 
 namespace Azure.Sdk.Tools.NotificationConfiguration.Models
 {

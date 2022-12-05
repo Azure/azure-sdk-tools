@@ -130,7 +130,10 @@ $(() => {
 
   var prevLanguageValue = languageSelect.val();
   languageSelect.on('change', function (e) {
-    var val = $(this).val().replace("C++", "Cpp").replace("C#", "Csharp");
+    var val = $(this).val();
+    if (val == "C++" || val == "C#") {
+      val = val.replace("C++", "Cpp").replace("C#", "Csharp");
+    }
     var helpName = "#help-" + val;
     $(helpName).click();
     if (val == 'Cadl' || prevLanguageValue == 'Cadl') {

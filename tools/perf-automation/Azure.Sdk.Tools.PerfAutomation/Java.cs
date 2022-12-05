@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             // '-XX:+UnlockCommercialFeatures' isn't required and fails when used in a version higher than Java 8, need to inspect the Java version to determine if it should be added.
             var profilingConfig = "";
-            if (profiling)
+            if (profile)
             {
                 var profileOutputPath = Path.GetFullPath(Path.Combine(ProfileDirectory, $"{testName}_{profileCount++}.jfr"));
                 profilingConfig = $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";
@@ -125,7 +125,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
             }
             
-            var processArguments = $"-XX:+CrashOnOutOfMemoryError {profilingConfig} -jar {context} -- {testName} {arguments}";
+            var processArguments = $"-XX:+CrashOnOutOfMemoryError {profilingConfig} -jar {jarFile} -- {testName} {arguments}";
 
             var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false,
                 outputBuilder: outputBuilder, errorBuilder: errorBuilder);

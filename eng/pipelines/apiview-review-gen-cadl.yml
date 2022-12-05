@@ -30,67 +30,35 @@ jobs:
       versionSpec: $(NodeVersion)
     displayName: "Use Node $(NodeVersion)"
 
-  - ${{if ne(parameters.Reviews, '')}}:
-    - pwsh: |
-        $reviews = "${{ parameters.Reviews }}"
-        Write-Host "Reviews: $($reviews)"
-        echo "##vso[task.setvariable variable=Reviews]$reviews"
-      displayName: "Setup Reviews Variable"
-      condition: eq(variables['Reviews'], '')
-
-  - ${{if ne(parameters.APIViewURL, '')}}:
-    - pwsh: |
-        $url = "${{parameters.APIViewURL}}"
-        echo "##vso[task.setvariable variable=APIViewURL]$url"
-      displayName: "Setup APIViewURL Variable"
-      condition: eq(variables['APIViewURL'], '')
+  - pwsh: |
+      $reviews = "${{ parameters.Reviews }}"
+      Write-Host "Reviews: $($reviews)"
+      echo "##vso[task.setvariable variable=Reviews]$reviews"
+    displayName: "Setup Reviews Variable"
+    condition: eq(variables['Reviews'], '')
 
   - pwsh: |
-      $reviewDetails = "$(Reviews)"
-      Write-Host "Review Details Json: $($reviewDetails)"
-      $revs = ConvertFrom-Json $reviewDetails
-      if ($revs)
-      {
-        Write-Host "##vso[task.setvariable variable=ReviewId;]$($revs[0].ReviewId)"
-        Write-Host "##vso[task.setvariable variable=RevisionId;]$($revs[0].RevisionId)"
-        Write-Host "##vso[task.setvariable variable=RepoName;]$($revs[0].SourceRepoName)"
-        Write-Host "##vso[task.setvariable variable=BranchName;]$($revs[0].SourceBranchName)"
-        Write-Host "##vso[task.setvariable variable=PackagePath;]$($revs[0].FileName)"
-      }
-        
-  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-    parameters:
-      SkipCheckoutNone: true
-      Repositories:
-      - Name: $(RepoName)
-        Commitish: $(BranchName)
-        WorkingDirectory: $(System.DefaultWorkingDirectory)/cadlRepo
-      Paths:
-      - $(PackagePath)
+      $url = "${{parameters.APIViewURL}}"
+      echo "##vso[task.setvariable variable=APIViewURL]$url"
+    displayName: "Setup APIViewURL Variable"
+    condition: eq(variables['APIViewURL'], '')
 
   - pwsh: |
-      npm install
-      npm install @azure-tools/cadl-apiview
+      npm install -g @azure-tools/cadl-apiview
       npm install -g cadl
       npm install -g @cadl-lang/compiler
     workingDirectory: $(System.DefaultWorkingDirectory)/cadlRepo$(PackagePath)
     displayName: "Install npm packages"
 
-  - pwsh: |      
-      cadl compile . --emit=@azure-tools/cadl-apiview
-    workingDirectory: $(System.DefaultWorkingDirectory)/cadlRepo$(PackagePath)
-    displayName: "Compile and generate apiview token file"
-
-  - pwsh: |
-      $stagingReviewPath = Join-Path $(Build.ArtifactStagingDirectory) $(ReviewId)
-      $stagingPath = Join-Path $stagingReviewPath $(RevisionId)
-      New-Item $stagingPath -ItemType Directory -Force
-      Write-Host "staging path: $($stagingPath)"
-      Copy-Item -Destination $stagingPath -Path $(System.DefaultWorkingDirectory)/cadlRepo$(PackagePath)/cadl-output/*
-      Write-Host "Verifying file in output path"
-      $cadlRepoStruct = ls $stagingPath
-      Write-Host $($cadlRepoStruct)
-    displayName: 'Copy APIView token file to staging path'
+  - task: Powershell@2
+    displayName: 'Generate APIView Token files'
+    inputs:
+      pwsh: true
+      filePath: $(Build.SourcesDirectory)/eng/scripts/Create-Apiview-Token-Cadl.ps1
+      arguments: >
+        -Reviews "${{ parameters.Reviews }}"
+        -OutputDir "$(Build.ArtifactStagingDirectory)"
+        -WorkingDir "$(Pipeline.Workspace)"
 
   - task: PublishBuildArtifacts@1
     inputs:

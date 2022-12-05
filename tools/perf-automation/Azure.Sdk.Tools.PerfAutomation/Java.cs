@@ -19,6 +19,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private string PerfCoreProjectFile => Path.Combine(WorkingDirectory, "common", "perf-test-core", "pom.xml");
         private string VersionFile => Path.Combine(WorkingDirectory, "eng", "versioning", "version_client.txt");
 
+        private static int profileCount = 0;
+
         private static readonly Dictionary<string, string> _buildEnvironment = new Dictionary<string, string>()
         {
             // Prevents error "InvocationTargetException: Java heap space" in azure-storage-file-datalake when compiling azure-storage-perf
@@ -98,7 +100,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context)
+            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context, bool profile)
         {
             var jarFile = (string)context;
 
@@ -109,7 +111,21 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             var runtimePackageVersions = GetRuntimePackageVersions(dependencyListResult.StandardOutput);
 
-            var processArguments = $"-XX:+CrashOnOutOfMemoryError -jar {jarFile} -- {testName} {arguments}";
+            // '-XX:+UnlockCommercialFeatures' isn't required and fails when used in a version higher than Java 8, need to inspect the Java version to determine if it should be added.
+            var profilingConfig = "";
+            if (profile)
+            {
+                var profileOutputPath = Path.GetFullPath(Path.Combine(ProfileDirectory, $"{testName}_{profileCount++}.jfr"));
+                profilingConfig = $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";
+
+                var jfrConfigurationFile = Path.Combine(WorkingDirectory, "eng", "PerfAutomation.jfc");
+                if (File.Exists(jfrConfigurationFile))
+                {
+                    profilingConfig += $",settings={jfrConfigurationFile}";
+                }
+            }
+
+            var processArguments = $"-XX:+CrashOnOutOfMemoryError {profilingConfig} -jar {jarFile} -- {testName} {arguments}";
 
             var result = await Util.RunAsync("java", processArguments, WorkingDirectory, throwOnError: false,
                 outputBuilder: outputBuilder, errorBuilder: errorBuilder);

@@ -1,5 +1,6 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PerfAutomation
@@ -8,6 +9,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         protected abstract Language Language { get; }
         protected string WorkingDirectory => Program.Config.WorkingDirectories[Language];
+        protected string ProfileDirectory => Path.GetFullPath(Path.Combine(WorkingDirectory, Language + "-profile"));
 
         public abstract Task CleanupAsync(string project);
 
@@ -18,7 +20,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             IDictionary<string, string> packageVersions,
             string testName,
             string arguments,
-            object context);
+            object context,
+            bool profile);
 
         public abstract Task<(string output, string error, object context)> SetupAsync(
             string project,

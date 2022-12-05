@@ -64,6 +64,9 @@ parameters:
 - name: Iterations
   type: number
   default: 1
+- name: Profile
+  type: boolean
+  default: false
 - name: OperatingSystems
   type: string
   default: 'Linux'
@@ -137,6 +140,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeJava }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -170,6 +174,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeJS }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -196,6 +201,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludePython }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -225,6 +231,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeCpp }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -251,6 +258,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
 - stage: Print_Results
   displayName: Print Results

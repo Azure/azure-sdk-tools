@@ -4,6 +4,7 @@ using CommandLine.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -84,6 +85,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             [Option('p', "package-versions", HelpText = "Regex of package versions to run")]
             public string PackageVersions { get; set; }
+
+            [Option("profile", HelpText = "Enables capture of profiling data")]
+            public bool Profile { get; set; }
 
             [Option('s', "services", HelpText = "Regex of services to run")]
             public string Services { get; set; }
@@ -217,6 +221,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputMd = outputFiles[3];
 
             var results = new List<Result>();
+            var profileDirectories = new List<DirectoryInfo>();
 
             foreach (var service in selectedServices)
             {
@@ -224,6 +229,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 {
                     var language = l.Key;
                     var serviceLanugageInfo = l.Value;
+
+                    if (options.Profile)
+                    {
+                        // For each language create a directory name "{language name}-profile" that will be used to contain
+                        // all profiling data for a performance run by that language.
+                        // Later this directory will be zipped to create ZIP file that can be retained with the name "{language name}-profile.zip".
+                        string profileDirectory = Path.Combine(Program.Config.WorkingDirectories[language], language + "-profile");
+                        if (!Directory.Exists(profileDirectory))
+                        {
+                            profileDirectories.Add(Directory.CreateDirectory(profileDirectory));
+                        }
+                    }
 
                     var languageInfo = selectedlanguages[language];
 
@@ -236,6 +253,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 language, serviceLanugageInfo, languageVersion, packageVersions);
                         }
                     }
+                }
+            }
+
+            if (options.Profile) 
+            {
+                // For each language that ran create a ZIP file containing all profiling data collected.
+                // This can be retained for in-depth performance analysis.
+                foreach (var profileDirectory in profileDirectories)
+                {
+                    ZipFile.CreateFromDirectory(profileDirectory.FullName, Path.Combine(profileDirectory.Parent.FullName, profileDirectory.Name + ".zip"));
                 }
             }
         }
@@ -348,7 +375,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 try
                                 {
                                     Console.WriteLine($"RunAsync({serviceLanguageInfo.Project}, {languageVersion}, " +
-                                        $"{test.TestNames[language]}, {allArguments}, {context})");
+                                        $"{test.TestNames[language]}, {allArguments}, {context}, {options.Profile})");
                                     Console.WriteLine();
 
                                     iterationResult = await _languages[language].RunAsync(
@@ -358,7 +385,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         packageVersions,
                                         test.TestNames[language],
                                         allArguments,
-                                        context
+                                        context,
+                                        options.Profile
                                     );
                                 }
                                 catch (Exception e)

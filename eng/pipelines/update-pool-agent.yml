@@ -71,7 +71,6 @@ jobs:
               $flag = $False
               $map = '${{ convertToJson(parameters.MigrationMap) }}'
               $map = ConvertFrom-Json $map 
-              Write-Host $map
               foreach ($migrate in $map ) {
                 if ($content -match $migrate.MigrateFrom) {
                   $flag = $True

@@ -184,7 +184,7 @@ stages:
             displayName: 'Start Azurite'
 
           - task: UseDotNet@2
-            displayName: 'Install .NET RunTime'
+            displayName: 'Install .NET'
             inputs:
               version: '$(DotNetRuntimeVersion)'
 

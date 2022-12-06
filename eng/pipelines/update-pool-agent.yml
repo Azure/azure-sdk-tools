@@ -62,7 +62,7 @@ jobs:
             Write-Host "checking ${{ repo.RecordSession }}"
             $files = Get-ChildItem "./" -Exclude 'sdk*' | Get-ChildItem -Recurse 
             $files += Get-ChildItem "./sdk/*" -Recurse -File -Filter "platform-matrix*" -Include *.json
-            $files += Get-ChildItem "./sdk/*" -Recurse -File -Filter -Include *.yml
+            $files += Get-ChildItem "./sdk/*" -Recurse -File -Include *.yml
             if("${{ repo.RecordSession }}") {
               $files = $files | Where-Object {$_.FullName -NotMatch "${{ repo.RecordSession }}"}
             }

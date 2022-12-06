@@ -67,9 +67,13 @@ namespace APIViewWeb
                 .GetSection("Github")
                 .Bind(options));
 
+#pragma warning disable ASP5001 // Type or member is obsolete
+#pragma warning disable CS0618 // Type or member is obsolete
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .AddRazorRuntimeCompilation();
+#pragma warning restore CS0618 // Type or member is obsolete
+#pragma warning restore ASP5001 // Type or member is obsolete
 
             services.AddRazorPages(options =>
             {

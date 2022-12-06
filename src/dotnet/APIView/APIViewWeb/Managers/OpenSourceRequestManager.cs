@@ -7,65 +7,55 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
 using APIViewWeb.Models;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Octokit;
 
 namespace APIViewWeb.Managers
 {
     public class OpenSourceRequestManager : IOpenSourceRequestManager
     {
-        static readonly string _ossApiUrl = "https://repos.opensource.microsoft.com/api/people/links/github/{GithubUser}?api-version=2019-10-01";
+        static readonly string[] scopes = new string[] { "api://2789159d-8d8b-4d13-b90b-ca29c1707afd/.default" };
         static readonly HttpClient _ossClient = new();
-        static readonly HttpClient _tokenClient = new();
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
-        private readonly string _aadClientId;
-        private readonly string _aadClientSecret;
-        private readonly string _aadTenantId;
-        private readonly string _tokenApiUrl;
-
+        private readonly ClientSecretCredential _clientCredential;
         private DateTime _tokenExpiry;
         private string _token;
     
         public OpenSourceRequestManager(IConfiguration configuration)
         {
-            _aadClientId = configuration["opensource-aad-app-id"] ?? "";
-            _aadClientSecret = configuration["opensource-aad-client-secret"] ?? "";
-            _aadTenantId = configuration["opensource-aad-tenant-id"] ?? "";
-            _tokenApiUrl = $"https://login.microsoftonline.com/{_aadTenantId}/oauth2/token";
+            var aadClientId = configuration["opensource-aad-app-id"] ?? "";
+            var aadClientSecret = configuration["opensource-aad-client-secret"] ?? "";
+            var aadTenantId = configuration["opensource-aad-tenant-id"] ?? "";
+            _clientCredential = new ClientSecretCredential(aadTenantId, aadClientId, aadClientSecret);
         }
 
         public async Task<OpenSourceUserInfo> GetUserInfo(string githubUserId)
-        {
-            await SetHeaders();
-            int counter = 0;
-            bool retryStatus = true;
-
-            while(retryStatus && counter <= 5)
+        {            
+            try
             {
-                var resp = await _ossClient.GetAsync(_ossApiUrl.Replace("{GithubUser}", githubUserId));
-                if(resp.StatusCode == HttpStatusCode.TooManyRequests)
-                {
-                    var retryAfter = resp.Headers.RetryAfter?.ToString() ?? "60";
-                    _telemetryClient.TrackTrace($"Request to get user info from OSS manger has been throttled. Retry After: {retryAfter}, Retry count: {counter}");
-                    await Task.Delay(int.Parse(retryAfter) * 1000);
-                    counter++;
-                }
-                else if (resp.StatusCode == HttpStatusCode.OK)
-                {
-                    var content = await resp.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<OpenSourceUserInfo>(content);
-                }
-                else
-                {
-                    retryStatus = false;
-                    _telemetryClient.TrackTrace("Failed to get user info from Microsoft Open source management");
-                }
+                await SetHeaders();
+                var response = await _ossClient.GetAsync($"https://repos.opensource.microsoft.com/api/people/links/github/{githubUserId}");
+                response.EnsureSuccessStatusCode();
+                var userDetailsJson = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<OpenSourceUserInfo>(userDetailsJson);
             }
-            
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                _telemetryClient.TrackTrace($"Github username {githubUserId} is not found");
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
             return null;            
         }
 
@@ -81,47 +71,20 @@ namespace APIViewWeb.Managers
         private async Task SetHeaders()
         {
             var token = await GetAccessToken();
+            _ossClient.DefaultRequestHeaders.Add("content_type", "application/json");
+            _ossClient.DefaultRequestHeaders.Add("api-version", "2019-10-01");
             _ossClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
         
         private async Task<string> GetAccessToken()
         {
-            // Reuse access token if not expired
             if (DateTime.Compare(DateTime.Now.AddSeconds(100), _tokenExpiry) >= 0 || _token == null)
             {
-                var body = new Dictionary<string, string>
-                {
-                    {"grant_type", "client_credentials"},
-                    {"client_id", _aadClientId},
-                    {"client_secret", _aadClientSecret},
-                    { "resource", "api://repos.opensource.microsoft.com/audience/7e04aa67" }
-                };
-
-                var tokenResp = await _tokenClient.PostAsync(_tokenApiUrl, new FormUrlEncodedContent(body));
-                tokenResp.EnsureSuccessStatusCode();
-                var content = await tokenResp.Content.ReadAsStringAsync();
-                var token = JsonConvert.DeserializeObject<Token>(content);
-                _tokenExpiry = DateTime.Now.AddSeconds(token.ExpiresIn);
-                _token = token.AccessToken;
+                var token = await _clientCredential.GetTokenAsync(new TokenRequestContext(scopes));
+                _token = token.Token;
+                _tokenExpiry = token.ExpiresOn.DateTime;
             }
-
             return _token;
          }
-    }
-
-    public class Token
-    {
-        [JsonProperty("access_token")]
-        public string AccessToken { get; set; }
-
-        [JsonProperty("token_type")]
-        public string TokenType { get; set; }
-
-        [JsonProperty("expires_in")]
-        public int ExpiresIn { get; set; }
-
-        [JsonProperty("refresh_token")]
-        public string RefreshToken { get; set; }
-    }
-    
+    }  
 }

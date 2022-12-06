@@ -131,7 +131,7 @@ namespace APIViewWeb.Managers
         private string GetCommentTagHtmlContent(CommentModel comment, ReviewModel review)
         {
             var reviewName = review.Name;
-            var reviewLink = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}#{Uri.EscapeUriString(comment.ElementId)}");
+            var reviewLink = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}#{Uri.EscapeDataString(comment.ElementId)}");
             var commentText = comment.Comment;
             var poster = comment.Username;
             var userLink = new Uri($"{_endpoint}/Assemblies/Profile/{poster}");
@@ -148,7 +148,7 @@ namespace APIViewWeb.Managers
 
         private string GetHtmlContent(CommentModel comment, ReviewModel review)
         {
-            var uri = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}#{Uri.EscapeUriString(comment.ElementId)}");
+            var uri = new Uri($"{_endpoint}/Assemblies/Review/{review.ReviewId}#{Uri.EscapeDataString(comment.ElementId)}");
             var sb = new StringBuilder();
             sb.Append(GetContentHeading(comment, true));
             sb.Append("<br><br>");

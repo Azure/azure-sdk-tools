@@ -184,7 +184,12 @@ stages:
             displayName: 'Start Azurite'
 
           - task: UseDotNet@2
-            displayName: 'Install .NET Core SDK'
+            displayName: 'Install .NET RunTime'
+            inputs:
+              version: '$(DotNetRuntimeVersion)'
+
+          - task: UseDotNet@2
+            displayName: 'Install .NET RunTime'
             inputs:
               packageType: runtime
               version: '$(DotNetRuntimeVersion)'

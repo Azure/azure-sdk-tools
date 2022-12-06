@@ -634,7 +634,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new DirectoryEvaluation()
             {
                 AssetsJsonPresent = File.Exists(assetsJsonLocation),
-                IsGitRoot = File.Exists(gitLocation) || Directory.Exists(gitLocation),
+                IsGitRoot = Directory.Exists(gitLocation) || File.Exists(gitLocation),
                 IsRoot = new DirectoryInfo(directoryPath).Parent == null
             };
         }

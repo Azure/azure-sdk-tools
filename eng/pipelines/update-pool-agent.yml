@@ -94,7 +94,7 @@ jobs:
             RepoOwner: ${{ repo.RepoOwner }}
             RepoName: ${{ repo.RepoName }}
             PRTitle: "Migrate to new pool"
-            # OpenAsDraft: true
+            OpenAsDraft: true
             WorkingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
             PushArgs: -f
           

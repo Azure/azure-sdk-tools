@@ -4,37 +4,52 @@ parameters:
   default:
     - RepoOwner: Azure
       RepoName: azure-sdk-tools
-      RecordSession: ''
+      ExcludePath: ''
     - RepoOwner: Azure
       RepoName: azure-sdk
-      RecordSession: ''
+      ExcludePath: 
+        - eng/common
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
-      RecordSession: 'resources/session-records'
+      ExcludePath: 
+        - eng/common
+        - resources/session-records
     - RepoOwner: Azure
       RepoName: azure-sdk-for-c
-      RecordSession: ''
+      ExcludePath: 
+        - eng/common
     - RepoOwner: Azure
       RepoName: azure-sdk-for-cpp
-      RecordSession: ''
+      ExcludePath: 
+        - eng/common
     - RepoOwner: Azure
       RepoName: azure-sdk-for-go
-      RecordSession: ''
+      ExcludePath: 
+        - eng/common
     - RepoOwner: Azure
       RepoName: azure-sdk-for-ios
-      RecordSession: ''
+      ExcludePath: 
+        - eng/common
     - RepoOwner: Azure
       RepoName: azure-sdk-for-java
-      RecordSession: 'resources/session-records'
+      ExcludePath: 
+        - eng/common
+        - resources/session-records
     - RepoOwner: Azure
       RepoName: azure-sdk-for-js
-      RecordSession: 'recordings/node'
+      ExcludePath: 
+        - eng/common
+        - recordings/node
     - RepoOwner: Azure
       RepoName: azure-sdk-for-net
-      RecordSession: 'tests/SessionRecords'
+      ExcludePath: 
+        - eng/common
+        - tests/SessionRecords
     - RepoOwner: Azure
       RepoName: azure-sdk-for-python
-      RecordSession: 'tests/recordings'
+      ExcludePath: 
+        - eng/common
+        - tests/recordings
 - name: MigrationMap
   type: object
   default: []
@@ -60,11 +75,14 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             Write-Host "checking ${{ repo.RecordSession }}"
-            $files = Get-ChildItem "./" -Exclude 'sdk*' | Get-ChildItem -Recurse -File
-            $files += Get-ChildItem "./sdk/*" -Recurse -File -Filter "platform-matrix*" -Include *.json
-            $files += Get-ChildItem "./sdk/*" -Recurse -File -Include *.yml
-            if("${{ repo.RecordSession }}") {
-              $files = $files | Where-Object {$_.FullName -NotMatch "${{ repo.RecordSession }}"}
+            $excludes = @('sdk*')
+            if ("${{ repo.ExcludePath }}") {
+              $excludes += @("${{ repo.ExcludePath }}")
+            }
+            $files = Get-ChildItem "./" -Exclude $excludes | Get-ChildItem -Recurse -File
+            if (Test-Path "./sdk/*") {
+              $files += Get-ChildItem "./sdk/*" -Recurse -File -Filter "platform-matrix*" -Include *.json
+              $files += Get-ChildItem "./sdk/*" -Recurse -File -Include *.yml
             }
             Write-Host "getting all files"
             # Scan all Files

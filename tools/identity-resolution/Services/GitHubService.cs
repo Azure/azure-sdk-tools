@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,8 +14,10 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
     /// </summary>
     public class GitHubService
     {
-        private static HttpClient httpClient = new HttpClient();
-        private static ConcurrentDictionary<string, List<CodeOwnerEntry>> codeownersFileCache = new ConcurrentDictionary<string, List<CodeOwnerEntry>>();
+        private static readonly HttpClient httpClient = new HttpClient();
+
+        private static readonly ConcurrentDictionary<string, List<CodeOwnerEntry>>
+            codeownersFileCache = new ConcurrentDictionary<string, List<CodeOwnerEntry>>();
 
         private readonly ILogger<GitHubService> logger;
 

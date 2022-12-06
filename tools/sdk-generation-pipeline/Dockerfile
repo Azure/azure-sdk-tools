@@ -26,10 +26,11 @@ RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt -y install nodejs
 
 # install python
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wget apt-transport-https software-properties-common
 RUN apt install python3-pip -y && apt install python3-venv -y && pip3 install --upgrade pip
+RUN add-apt-repository ppa:deadsnakes/ppa -y && apt-get install python3.10 -y && apt-get install python3.10-venv -y
 
 # install powershell
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wget apt-transport-https software-properties-common
 RUN wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
 RUN dpkg -i packages-microsoft-prod.deb
 RUN apt-get update && apt-get install -y powershell

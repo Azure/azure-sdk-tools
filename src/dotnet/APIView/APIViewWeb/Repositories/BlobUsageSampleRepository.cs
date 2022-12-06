@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.IO;
@@ -6,13 +6,11 @@ using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 using System.Text;
-using Microsoft.VisualStudio.Services.FileContainer;
-using Octokit;
 using System;
 
-namespace APIViewWeb
+namespace APIViewWeb.Repositories
 {
-    public class BlobUsageSampleRepository
+    public class BlobUsageSampleRepository : IBlobUsageSampleRepository
     {
         private BlobContainerClient _container;
 
@@ -43,11 +41,6 @@ namespace APIViewWeb
             }
         }
 
-        private BlobClient GetBlobClient(string sampleFileId)
-        {
-            return _container.GetBlobClient(sampleFileId);
-        }
-
         public async Task UploadUsageSampleAsync(string sampleFileId, Stream stream)
         {
             await GetBlobClient(sampleFileId).UploadAsync(stream, overwrite:true);
@@ -56,6 +49,11 @@ namespace APIViewWeb
         public async Task DeleteUsageSampleAsync (string sampleFileId)
         {
             await GetBlobClient(sampleFileId).DeleteAsync();
+        }
+
+        private BlobClient GetBlobClient(string sampleFileId)
+        {
+            return _container.GetBlobClient(sampleFileId);
         }
     }
 }

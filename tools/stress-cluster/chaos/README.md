@@ -471,6 +471,13 @@ Stress test owners can also reference the custom config values they put in the s
 {{ .Stress.<custom_config_key> }}
 ```
 
+All of the custom configuration values will also be passed to the docker image as build-args during build stage.
+Users can reference the values by first defining the build arg in the dockerfile (multiple args will require multiple lines), then referencing the args with a dollar sign and curly braces
+```
+ARG VERSION
+FROM python:${VERSION}
+```
+
 A more detailed information on the logic behind the matrix generation can be found in the [README for job-matrix](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/job-matrix/README.md).
 
 The `stress-test-addons` helm library will handle a scenarios matrix automatically, and deploy multiple instances of the stress test job, one for each scenario with customized values.

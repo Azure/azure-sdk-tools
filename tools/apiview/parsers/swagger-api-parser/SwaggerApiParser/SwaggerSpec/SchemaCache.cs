@@ -69,10 +69,22 @@ public class SchemaCache
         var key = Ref.Split("/").Last();
         return key;
     }
+    
+    public static string RemoveCrossFileReferenceFromRef(string Ref)
+    {
+        var idx = Ref.IndexOf("#", StringComparison.Ordinal); 
+        var key = Ref[idx..];
+        return key;
+    }
+
+    public static string GetResolvedCacheRefKey(string Ref, string currentSwaggerFilePath)
+    {
+        return RemoveCrossFileReferenceFromRef(Ref) + GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
+    }
 
     private BaseSchema GetSchemaFromResolvedCache(string Ref, string currentSwaggerFilePath)
     {
-        var resolvedKey = Ref + currentSwaggerFilePath;
+        var resolvedKey = GetResolvedCacheRefKey(Ref, currentSwaggerFilePath);
         this.ResolvedCache.TryGetValue(resolvedKey, out var resolvedSchema);
         return resolvedSchema;
     }
@@ -89,7 +101,6 @@ public class SchemaCache
         if (swaggerSchema == null)
         {
             return null;
-            throw new Exception($"Swagger schema not found. swagger file path: {currentSwaggerFilePath}");
         }
 
         var key = GetRefKey(Ref);
@@ -167,7 +178,7 @@ public class SchemaCache
             var schema = this.GetSchemaFromCache(root.Ref, currentSwaggerFilePath);
             var ret = this.GetResolvedSchema(schema, GetReferencedSwaggerFile(root.Ref, currentSwaggerFilePath), refChain);
             // write back resolved cache
-            this.ResolvedCache.TryAdd(root.Ref + currentSwaggerFilePath, schema);
+            this.ResolvedCache.TryAdd(GetResolvedCacheRefKey(root.Ref, currentSwaggerFilePath), schema);
             refChain.RemoveLast();
 
             if (ret == null)

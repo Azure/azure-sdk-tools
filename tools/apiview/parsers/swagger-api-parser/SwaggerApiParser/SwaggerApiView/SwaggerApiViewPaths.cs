@@ -89,7 +89,6 @@ public class SwaggerApiViewPaths : SortedDictionary<string, List<SwaggerApiViewO
             // ret.Add(TokenSerializer.Intent(context.intent));
             context.IteratorPath.Add(key);
             ret.Add(TokenSerializer.NavigableToken(key, CodeFileTokenKind.FoldableSectionHeading, context.IteratorPath.CurrentPath()));
-            ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
             
             ret.Add(TokenSerializer.FoldableContentStart());

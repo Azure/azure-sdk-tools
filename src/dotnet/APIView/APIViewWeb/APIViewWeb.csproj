@@ -59,6 +59,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="StartUpFilters\**" />
+    <Content Remove="StartUpFilters\**" />
+    <EmbeddedResource Remove="StartUpFilters\**" />
+    <None Remove="StartUpFilters\**" />
+    <TypeScriptCompile Remove="StartUpFilters\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\APIView\APIView.csproj" />
   </ItemGroup>
 

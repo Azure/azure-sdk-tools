@@ -169,6 +169,23 @@ public class SwaggerApiViewTest
     }
 
     [Fact]
+    public async Task TestDevCenterEnvironment()
+    {
+        const string devCenterSwaggerFile = "./fixtures/environment.json";
+        var devCenter = await SwaggerDeserializer.Deserialize(devCenterSwaggerFile);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.DevCenter", "Microsoft.DevCenter");
+        root.AddSwaggerSpec(devCenter, Path.GetFullPath(devCenterSwaggerFile), "Microsoft.DevCenter");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./devCenter_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+        
+    }
+
+    [Fact]
     public async Task TestSignalRCrossFileReferenceCommonTypes()
     {
         const string signalRFilePath = "./fixtures/signalr/resource-manager/Microsoft.SignalRService/stable/2022-02-01/signalr.json";

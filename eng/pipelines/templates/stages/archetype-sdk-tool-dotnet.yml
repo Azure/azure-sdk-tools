@@ -3,10 +3,16 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20220920.1
+      ref: refs/tags/azure-sdk-build-tools_20221201.3
 
 parameters:
   - name: ToolDirectory
+    type: string
+    default: ''
+  - name: PackageDirectory
+    type: string
+    default: ''
+  - name: TestDirectory
     type: string
     default: ''
   - name: DotNetCoreVersion
@@ -30,6 +36,9 @@ parameters:
   - name: ManifestDeployment
     type: object
     default: []
+  - name: StandaloneExeMatrix
+    type: object
+    default: []
 
 variables:
   - template: ../variables/globals.yml
@@ -48,6 +57,7 @@ stages:
 
     jobs:
       - job: BuildAndPackage
+        displayName: Build and Package
 
         steps:
           - task: UseDotNet@2
@@ -58,11 +68,17 @@ stages:
 
           - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release'
             displayName: 'Build and Package'
-            workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
+            workingDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
+
+          - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
+            parameters:
+              StagingDirectory: $(Build.ArtifactStagingDirectory)
+              BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
+              TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
           - publish: $(Build.ArtifactStagingDirectory)
             displayName: Publish package to run artifacts
@@ -80,7 +96,7 @@ stages:
 
           - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
             displayName: 'Test'
-            workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
+            workingDirectory: '${{ coalesce(parameters.TestDirectory, parameters.ToolDirectory) }}'
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1

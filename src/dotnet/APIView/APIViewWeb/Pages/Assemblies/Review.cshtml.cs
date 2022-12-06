@@ -8,6 +8,7 @@ using APIView;
 using APIView.DIff;
 using APIView.Model;
 using APIViewWeb.Helpers;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -22,27 +23,27 @@ namespace APIViewWeb.Pages.Assemblies
         private static int REVIEW_DIFF_CONTEXT_SIZE = 3;
         private const string DIFF_CONTEXT_SEPERATOR = "<br><span>.....</span><br>";
 
-        private readonly ReviewManager _manager;
+        private readonly IReviewManager _manager;
 
-        private readonly BlobCodeFileRepository _codeFileRepository;
+        private readonly IBlobCodeFileRepository _codeFileRepository;
 
-        private readonly CommentsManager _commentsManager;
+        private readonly ICommentsManager _commentsManager;
 
-        private readonly NotificationManager _notificationManager;
+        private readonly INotificationManager _notificationManager;
 
         public readonly UserPreferenceCache _preferenceCache;
 
-        private readonly CosmosUserProfileRepository _userProfileRepository;
+        private readonly ICosmosUserProfileRepository _userProfileRepository;
 
         private readonly IConfiguration _configuration;
 
         public ReviewPageModel(
-            ReviewManager manager,
-            BlobCodeFileRepository codeFileRepository,
-            CommentsManager commentsManager,
-            NotificationManager notificationManager,
+            IReviewManager manager,
+            IBlobCodeFileRepository codeFileRepository,
+            ICommentsManager commentsManager,
+            INotificationManager notificationManager,
             UserPreferenceCache preferenceCache,
-            CosmosUserProfileRepository userProfileRepository,
+            ICosmosUserProfileRepository userProfileRepository,
             IConfiguration configuration)
         {
             _manager = manager;
@@ -143,7 +144,7 @@ namespace APIViewWeb.Pages.Assemblies
                         var langs = userCache.ApprovedLanguages.ToHashSet();
                         if (!langs.Any())
                         {
-                            UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                            UserProfileModel user = await _userProfileRepository.TryGetUserProfileAsync(username);
                             langs = user.Languages;
                             userCache.ApprovedLanguages = langs;
                             _preferenceCache.UpdateUserPreference(userCache, User);
@@ -155,7 +156,7 @@ namespace APIViewWeb.Pages.Assemblies
                     }
                     else
                     {
-                        UserProfileModel user = await _userProfileRepository.tryGetUserProfileAsync(username);
+                        UserProfileModel user = await _userProfileRepository.TryGetUserProfileAsync(username);
                         var langs = user.Languages;
                         if (langs.Contains(Review.Language) || !langs.Any())
                         {
@@ -279,7 +280,7 @@ namespace APIViewWeb.Pages.Assemblies
         private async Task GetReviewPageModelPropertiesAsync(string id, string revisionId = null, string diffRevisionId = null, bool diffOnly = false)
         {
             Review = await _manager.GetReviewAsync(User, id);
-            TaggableUsers = _commentsManager.TaggableUsers;
+            TaggableUsers = _commentsManager.GetTaggableUsers();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
             Revision = revisionId != null ?
                 Review.Revisions.Single(r => r.RevisionId == revisionId) :

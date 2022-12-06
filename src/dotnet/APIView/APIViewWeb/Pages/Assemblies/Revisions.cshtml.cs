@@ -1,5 +1,6 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
@@ -10,11 +11,11 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class RevisionsPageModel : PageModel
     {
-        private readonly ReviewManager _manager;
+        private readonly IReviewManager _manager;
         public readonly UserPreferenceCache _preferenceCache;
 
         public RevisionsPageModel(
-            ReviewManager manager, UserPreferenceCache preferenceCache)
+            IReviewManager manager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _preferenceCache = preferenceCache;

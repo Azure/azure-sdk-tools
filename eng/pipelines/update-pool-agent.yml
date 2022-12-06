@@ -74,11 +74,11 @@ jobs:
               - /*
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
-            Write-Host "checking ${{ repo.RecordSession }}"
             $excludes = @('sdk*')
             if ("${{ repo.ExcludePath }}") {
               $excludes += @("${{ repo.ExcludePath }}")
             }
+            $excludes | Write-Host
             $files = Get-ChildItem "./" -Exclude $excludes | Get-ChildItem -Recurse -File
             if (Test-Path "./sdk/*") {
               $files += Get-ChildItem "./sdk/*" -Recurse -File -Filter "platform-matrix*" -Include *.json

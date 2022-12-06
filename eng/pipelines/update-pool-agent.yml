@@ -75,8 +75,10 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             $excludes = @('sdk*')
-            if ("${{ repo.ExcludePath }}") {
-              $excludes += @("${{ repo.ExcludePath }}")
+            
+            $excludePaths = '${{ convertToJson(parameters.ExcludePath) }}' | ConvertFrom-Json
+            if ($excludePaths) {
+              $excludePaths | Where-Object {$excludes += $_}
             }
             $excludes | Write-Host
             $files = Get-ChildItem "./" -Exclude $excludes | Get-ChildItem -Recurse -File

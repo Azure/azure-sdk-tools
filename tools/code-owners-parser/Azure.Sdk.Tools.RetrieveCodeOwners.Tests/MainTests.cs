@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
     [TestFixture]
     public class MainTests
     {
-        private const string CodeOwnerFilePath = "CODEOWNERS";
+        private const string CodeOwnersFilePath = "CODEOWNERS";
 
         private static readonly object[] sourceLists =
         {
@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
         {
             using (var consoleOutput = new ConsoleOutput())
             {
-                Program.Main(CodeOwnerFilePath, targetDirectory, includeUserAliasesOnly);
+                Program.Main(CodeOwnersFilePath, targetDirectory, includeUserAliasesOnly);
                 var output = consoleOutput.GetOutput();
                 TestExpectResult(expectedReturn, output);
                 consoleOutput.Dispose();

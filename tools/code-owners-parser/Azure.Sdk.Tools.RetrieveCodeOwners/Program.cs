@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json;
 using Azure.Sdk.Tools.CodeOwnersParser;
 
@@ -7,10 +7,10 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
     /// <summary>
     /// The tool command to retrieve code owners.
     /// </summary>
-    public class Program
+    public static class Program
     {
         /// <summary>
-        /// Retrieves codeowners information for specific section of the repo
+        /// Retrieves CODEOWNERS information for specific section of the repo
         /// </summary>
         /// <param name="codeOwnerFilePath">The path of CODEOWNERS file in repo</param>
         /// <param name="targetDirectory">The directory whose information is to be retrieved</param>

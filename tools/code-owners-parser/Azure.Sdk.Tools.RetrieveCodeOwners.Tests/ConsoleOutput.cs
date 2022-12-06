@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
@@ -8,8 +8,8 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
     /// </summary>
     public class ConsoleOutput : IDisposable
     {
-        private StringWriter stringWriter;
-        private TextWriter originalOutput;
+        private readonly StringWriter stringWriter;
+        private readonly TextWriter originalOutput;
 
         /// <summary>
         /// The constructor is where we take in the console output and output to string writer.
@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
         /// Writes the text representation of a string builder to the string.
         /// </summary>
         /// <returns>The string from console output.</returns>
-        public string GetOuput()
+        public string GetOutput()
         {
             return this.stringWriter.ToString();
         }

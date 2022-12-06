@@ -26,7 +26,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
         protected override Language Language => Language.Cpp;
 
         public override async Task<(string output, string error, object context)> SetupAsync(
-            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions)
         {
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
 
@@ -57,8 +60,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (result.StandardOutput, result.StandardError, exe);
         }
 
-        public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context, bool profile)
+        public override async Task<IterationResult> RunAsync(
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            string testName,
+            string arguments,
+            bool profile,
+            object context)
         {
             var perfExe = (string)context;
 

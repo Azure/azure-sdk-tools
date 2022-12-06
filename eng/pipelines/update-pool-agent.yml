@@ -60,7 +60,7 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             Write-Host "checking ${{ repo.RecordSession }}"
-            $files = Get-ChildItem "./" -Exclude 'sdk*' | Get-ChildItem -Recurse 
+            $files = Get-ChildItem "./" -Exclude 'sdk*' | Get-ChildItem -Recurse -File
             $files += Get-ChildItem "./sdk/*" -Recurse -File -Filter "platform-matrix*" -Include *.json
             $files += Get-ChildItem "./sdk/*" -Recurse -File -Include *.yml
             if("${{ repo.RecordSession }}") {

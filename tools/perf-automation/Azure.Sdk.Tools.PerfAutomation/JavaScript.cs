@@ -17,7 +17,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
         protected override Language Language => Language.JS;
 
         public override async Task<(string output, string error, object context)> SetupAsync(
-            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions)
         {
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
@@ -120,8 +123,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (outputBuilder.ToString(), errorBuilder.ToString(), runtimePackageVersions);
         }
 
-        public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context, bool profile)
+        public override async Task<IterationResult> RunAsync(
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            string testName,
+            string arguments,
+            bool profile,
+            object context)
         {
             var runtimePackageVersions = (Dictionary<string, string>) context;
 

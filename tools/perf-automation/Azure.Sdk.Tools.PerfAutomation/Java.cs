@@ -28,7 +28,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
         };
 
         public override async Task<(string output, string error, object context)> SetupAsync(
-            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions)
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
@@ -58,7 +61,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (result.StandardOutput, result.StandardError, jar);
         }
 
-        private static void UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions, IDictionary<string, string> sourceVersions)
+        private static void UpdatePackageVersions(
+            string projectFile,
+            IDictionary<string, string> packageVersions,
+            IDictionary<string, string> sourceVersions)
         {
             // Create backup.  Throw if exists, since this shouldn't happen
             File.Copy(projectFile, projectFile + ".bak", overwrite: false);
@@ -99,8 +105,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             doc.Save(projectFile);
         }
 
-        public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context, bool profile)
+        public override async Task<IterationResult> RunAsync(
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            string testName,
+            string arguments,
+            bool profile,
+            object context)
         {
             var jarFile = (string)context;
 

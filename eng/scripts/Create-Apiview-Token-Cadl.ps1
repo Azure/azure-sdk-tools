@@ -8,13 +8,14 @@ param (
     [string] $OutputDir
 )
 
+Set-StrictMode -Version 3
 $sparseCheckoutFile = ".git/info/sparse-checkout"
 
 
 function Sparse-Checkout($branchName, $packagePath)
 {
-    git sparse-checkout init --cone
     Remove-Item $sparseCheckoutFile -Force
+    git sparse-checkout init --cone
     git sparse-checkout set $packagePath
     git checkout $BranchName
 }
@@ -45,9 +46,8 @@ function Stage-Apiview-File($packagePath, $reviewId, $revisionId)
 }
 
 
-$reviewDetails = "$Reviews"
-Write-Host "Review Details Json: $($reviewDetails)"
-$revs = ConvertFrom-Json $reviewDetails
+Write-Host "Review Details Json: $($Reviews)"
+$revs = ConvertFrom-Json $Reviews
 if ($revs)
 {
     $prevRepo = ""

@@ -4,7 +4,7 @@ This is the deployment config of the SDK Release App should update.
 
 ## SDK release app deployment variable to change
 
-1. environment variable: 'SDK Generation DockerImage', docker image name
+1. environment variable: 'SDK Generation DockerImage', SDK REPO OWNER
 
 2. environment variable: 'SDK Generation Pipeline DefinitionId', SDK generation pipeline id of **'SDK Generation - Trigger SDK Generation Pipeline'** flow
 
@@ -12,7 +12,9 @@ This is the deployment config of the SDK Release App should update.
 
 4. Check dataverse table columns length (especially branchName and Url)
 
-5. Edit flow **'SDK Scheduled Release'** change Start time early than today to trigger flow
+5. Check sdk generation pipeline environment variable
+
+6. Edit flow **'SDK Scheduled Release'** change Start time early than today to trigger flow
 
 ## Test SDK release app in PPE env
 

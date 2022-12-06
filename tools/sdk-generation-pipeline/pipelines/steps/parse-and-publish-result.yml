@@ -22,10 +22,10 @@ parameters:
 
   - name: swagger
     type: object
-  
+
   - name: OpenAsDraft
-    type: boolen 
-    default: true
+    type: boolean
+    default: false
 steps:
   - bash: |
       echo "will parse task result"

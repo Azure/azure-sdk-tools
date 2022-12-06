@@ -56,7 +56,6 @@ public class SwaggerApiViewOperation : ITokenSerializable
             ret.Add(TokenSerializer.NewLine());
         }
 
-        // ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(TokenSerializer.NavigableToken("operationId", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
         ret.Add(TokenSerializer.Colon());
         ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
@@ -72,7 +71,6 @@ public class SwaggerApiViewOperation : ITokenSerializable
     
         if (this.xMsLongRunningOperation)
         {
-            // ret.Add(TokenSerializer.Intent(context.intent));
             ret.Add(TokenSerializer.NavigableToken("x-ms-long-running-operation", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-long-running-operation")));
             ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken("true", CodeFileTokenKind.Literal));

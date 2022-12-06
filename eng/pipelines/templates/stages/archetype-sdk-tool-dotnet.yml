@@ -66,7 +66,7 @@ stages:
             inputs:
               version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
 
-          - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release'
+          - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory)/packages $(Warn) -c Release'
             displayName: 'Build and Package'
             workingDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
             env:
@@ -80,10 +80,16 @@ stages:
               BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
               TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
-          - publish: $(Build.ArtifactStagingDirectory)
-            displayName: Publish package to run artifacts
+          - publish: $(Build.ArtifactStagingDirectory)/packages
+            displayName: Publish to packages artifact
             artifact: packages
             condition: succeededOrFailed()
+
+          - ${{ if gt(length(parameters.StandaloneExeMatrix), 0) }}:
+              - publish: $(Build.ArtifactStagingDirectory)/binaries
+                displayName: Publish executables to binaries artifact
+                artifact: binaries
+                condition: succeededOrFailed()
 
       - job: Test
 

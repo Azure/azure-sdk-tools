@@ -35,7 +35,7 @@ steps:
         }
 
         # windows? produce a zip, otherwise tar.gz
-        if ("${{ target.rid }}".StartsWith("win")){
+        if ("${{ target.rid }}".StartsWith("win") -or "${{ target.rid }}".StartsWith("osx")){
           Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
         }
         else {

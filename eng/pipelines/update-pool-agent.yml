@@ -7,47 +7,47 @@ parameters:
       ExcludePath: ''
     - RepoOwner: Azure
       RepoName: azure-sdk
-      ExcludePath: 
+      ExcludePaths: 
         - eng/common
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
-      ExcludePath: 
+      ExcludePaths: 
         - eng/common
         - resources/session-records
     - RepoOwner: Azure
       RepoName: azure-sdk-for-c
-      ExcludePath: 
+      ExcludePaths: 
         - eng/common
     - RepoOwner: Azure
       RepoName: azure-sdk-for-cpp
-      ExcludePath: 
+      ExcludePaths: 
         - eng/common
     - RepoOwner: Azure
       RepoName: azure-sdk-for-go
-      ExcludePath: 
+      ExcludePaths: 
         - eng/common
     - RepoOwner: Azure
       RepoName: azure-sdk-for-ios
-      ExcludePath: 
+      ExcludePaths: 
         - eng/common
     - RepoOwner: Azure
       RepoName: azure-sdk-for-java
-      ExcludePath: 
+      ExcludePaths: 
         - eng/common
         - resources/session-records
     - RepoOwner: Azure
       RepoName: azure-sdk-for-js
-      ExcludePath: 
+      ExcludePaths: 
         - eng/common
         - recordings/node
     - RepoOwner: Azure
       RepoName: azure-sdk-for-net
-      ExcludePath: 
+      ExcludePaths: 
         - eng/common
         - tests/SessionRecords
     - RepoOwner: Azure
       RepoName: azure-sdk-for-python
-      ExcludePath: 
+      ExcludePaths: 
         - eng/common
         - tests/recordings
 - name: MigrationMap
@@ -76,7 +76,9 @@ jobs:
         - pwsh: |
             $excludes = @('sdk*')
             
-            $excludePaths = '${{ convertToJson(parameters.ExcludePath) }}' | ConvertFrom-Json
+            $excludePaths = '${{ convertToJson(parameters.ExcludePaths) }}' 
+            Write-Host $excludePaths
+            $excludePaths = ConvertFrom-Json $excludePaths 
             Write-Host $excludePaths
             if ($excludePaths) {
               $excludePaths | Where-Object {$excludes += $_}

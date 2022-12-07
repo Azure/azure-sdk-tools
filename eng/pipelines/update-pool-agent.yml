@@ -59,12 +59,13 @@ jobs:
               - /*
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
-            $excludes = @()
-            if ("${{ repo.ExcludePaths }}") {
-              $excludes = "${{ repo.ExcludePaths }}".Split(",") | Where-Object {$_.Trim()}
+            $excludes = "${{ repo.ExcludePaths }}".Split(",")
+            $files = Get-ChildItem "./*" -Recurse -File 
+            foreach ($excludePath in $excludes) {
+              $excludePath = $excludePath.Trim()
+              $files = $files | Where-Object {$_.FullName -notmatch $excludePath}
             }
-            $excludes | Write-Host
-            $files = Get-ChildItem "./" -Exclude $excludes | Get-ChildItem -Recurse -File
+            
             if (Test-Path "./sdk/*") {
               $files += Get-ChildItem "./sdk/*" -Recurse -File -Filter "platform-matrix*" -Include *.json
               $files += Get-ChildItem "./sdk/*" -Recurse -File -Include *.yml

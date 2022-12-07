@@ -7,8 +7,7 @@ parameters:
       ExcludePath: ''
     - RepoOwner: Azure
       RepoName: azure-sdk
-      ExcludePaths: 
-        - eng/common
+      ExcludePaths: 'eng/common'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
       ExcludePaths: 
@@ -76,7 +75,7 @@ jobs:
         - pwsh: |
             $excludes = @('sdk*')
             
-            $excludePaths = '${{ convertToJson(parameters.ExcludePaths) }}' 
+            $excludePaths = '${{ convertToJson(repo.ExcludePaths) }}' 
             Write-Host $excludePaths
             $excludePaths = ConvertFrom-Json $excludePaths 
             Write-Host $excludePaths

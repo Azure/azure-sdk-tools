@@ -10,6 +10,7 @@ import { getOutputPackageInfo } from "../../utils/getOutputPackageInfo";
 import { getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory } from "../../utils/git";
 import { logger } from "../../utils/logger";
 import { RunningEnvironment } from "../../utils/runningEnvironment";
+import { copyPackageJsonFileIfNotExist } from '../utils/copyPackageJsonFileIfNotExist';
 import { generateChangelog } from "../utils/generateChangelog";
 import {
     generateAutorestConfigurationFileForMultiClientByPrComment,
@@ -41,6 +42,7 @@ export async function generateRLCInPipeline(options: {
                 stdio: 'inherit',
                 cwd: path.join(options.swaggerRepo, options.cadlProject)
             });
+            copyPackageJsonFileIfNotExist(path.join(options.sdkRepo, 'eng', 'typescript-emitter-package.json'), path.join(options.swaggerRepo, options.cadlProject, 'package.json'))
             updateCadlProjectYamlFile(path.join(options.swaggerRepo, options.cadlProject, 'cadl-project.yaml'), options.sdkRepo, options.cadlEmitter);
             logger.logGreen(`npx cadl compile . --emit ${options.cadlEmitter}`);
             execSync(`npx cadl compile . --emit ${options.cadlEmitter}`, {
@@ -139,7 +141,7 @@ export async function generateRLCInPipeline(options: {
             packagePath = path.dirname(path.dirname(autorestConfigFilePath));
             relativePackagePath = path.relative(options.sdkRepo, packagePath);
 
-            let cmd = `autorest --version=3.8.2 ${path.basename(autorestConfigFilePath)} --output-folder=${packagePath}`;
+            let cmd = `autorest --version=3.9.3 ${path.basename(autorestConfigFilePath)} --output-folder=${packagePath}`;
             if (options.use) {
                 cmd += ` --use=${options.use}`;
             }

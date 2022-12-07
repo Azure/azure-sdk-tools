@@ -10,45 +10,31 @@ parameters:
       ExcludePaths: 'eng/common'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
-      ExcludePaths: 
-        - eng/common
-        - resources/session-records
+      ExcludePaths: 'eng/common, resources/session-records'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-c
-      ExcludePaths: 
-        - eng/common
+      ExcludePaths: 'eng/common'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-cpp
-      ExcludePaths: 
-        - eng/common
+      ExcludePaths: 'eng/common'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-go
-      ExcludePaths: 
-        - eng/common
+      ExcludePaths: 'eng/common'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-ios
-      ExcludePaths: 
-        - eng/common
+      ExcludePaths: 'eng/common'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-java
-      ExcludePaths: 
-        - eng/common
-        - resources/session-records
+      ExcludePaths: 'eng/common, resources/session-records'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-js
-      ExcludePaths: 
-        - eng/common
-        - recordings/node
+      ExcludePaths: 'eng/common, recordings/node'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-net
-      ExcludePaths: 
-        - eng/common
-        - tests/SessionRecords
+      ExcludePaths: 'eng/common, tests/SessionRecords'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-python
-      ExcludePaths: 
-        - eng/common
-        - tests/recordings
+      ExcludePaths: 'eng/common, tests/recordings'
 - name: MigrationMap
   type: object
   default: []
@@ -74,13 +60,8 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             $excludes = @('sdk*')
-            
-            $excludePaths = '${{ convertToJson(repo.ExcludePaths) }}' 
-            Write-Host $excludePaths
-            $excludePaths = ConvertFrom-Json $excludePaths 
-            Write-Host $excludePaths
-            if ($excludePaths) {
-              $excludePaths | Where-Object {$excludes += $_}
+            if ("$${{ repo.ExcludePaths }}") {
+              $excludes += "$${{ repo.ExcludePaths }}".Split(",")
             }
             $excludes | Write-Host
             $files = Get-ChildItem "./" -Exclude $excludes | Get-ChildItem -Recurse -File

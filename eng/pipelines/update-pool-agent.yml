@@ -60,8 +60,9 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             $excludes = @('sdk*')
-            if ("$${{ repo.ExcludePaths }}") {
-              $excludes += "$${{ repo.ExcludePaths }}".Split(",")
+            Write-Host "${{ repo.ExcludePaths }}"
+            if ("${{ repo.ExcludePaths }}") {
+              $excludes += "${{ repo.ExcludePaths }}".Split(",")
             }
             $excludes | Write-Host
             $files = Get-ChildItem "./" -Exclude $excludes | Get-ChildItem -Recurse -File

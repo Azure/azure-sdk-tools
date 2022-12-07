@@ -210,6 +210,7 @@ Services:
     - --size 209715200 --parallel 1
     - --size 1073741824 --parallel 1 --warmup 60 --duration 60
     - --size 1073741824 --parallel 8 --warmup 60 --duration 60
+    - --size 12345 --parallel 1
     TestNames:
       Net: DownloadBlob
       Java: downloadblob

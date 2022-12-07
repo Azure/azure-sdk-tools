@@ -135,7 +135,7 @@ stages:
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - template: pipelines/stages/net-github-release-binaries.yml@azure-sdk-build-tools
       parameters:
-        # DependsOn: 'Release'
+        DependsOn: 'BuildAndTestPackage'
         ExeMatrix: ${{ parameters.StandaloneExeMatrix }}
 
   - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:

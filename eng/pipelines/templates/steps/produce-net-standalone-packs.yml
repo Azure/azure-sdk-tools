@@ -23,7 +23,6 @@ steps:
 
   - ${{ each target in parameters.BuildMatrix }}:
     - pwsh: |
-
         $destinationPathSegment = "$(Build.ArtifactStagingDirectory)/binaries/$((Split-Path -Leaf "${{ parameters.TargetDirectory }}"))-standalone-${{ target.rid }}"
         $sourcePath = "${{ parameters.TargetDirectory }}/${{ target.rid }}"
 

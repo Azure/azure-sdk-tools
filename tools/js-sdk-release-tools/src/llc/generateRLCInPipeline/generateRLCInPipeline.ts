@@ -37,12 +37,13 @@ export async function generateRLCInPipeline(options: {
     if (options.cadlProject) {
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.cadlProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
+            logger.logGreen(`copy package.json file if not exist`);
+            copyPackageJsonFileIfNotExist(path.join(options.sdkRepo, 'eng', 'typescript-emitter-package.json'), path.join(options.swaggerRepo, options.cadlProject, 'package.json'))
             logger.logGreen(`npm install`);
             execSync('npm install', {
                 stdio: 'inherit',
                 cwd: path.join(options.swaggerRepo, options.cadlProject)
             });
-            copyPackageJsonFileIfNotExist(path.join(options.sdkRepo, 'eng', 'typescript-emitter-package.json'), path.join(options.swaggerRepo, options.cadlProject, 'package.json'))
             updateCadlProjectYamlFile(path.join(options.swaggerRepo, options.cadlProject, 'cadl-project.yaml'), options.sdkRepo, options.cadlEmitter);
             logger.logGreen(`npx cadl compile . --emit ${options.cadlEmitter}`);
             execSync(`npx cadl compile . --emit ${options.cadlEmitter}`, {

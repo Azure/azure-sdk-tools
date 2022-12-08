@@ -204,6 +204,47 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
 
+    def test_ignores_send_request_method(self):
+        class_node, func_node_a, func_node_b = astroid.extract_node(
+            """
+        from azure.core.tracing.decorator import distributed_trace
+        class MyClient(): #@
+            def send_request(self, some, **kwargs): #@
+                pass
+            
+            @distributed_trace
+            def do_thing(self, some, **kwargs): #@
+                pass
+        """
+        )
+
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(func_node_a)
+            self.checker.visit_functiondef(func_node_b)
+
+    def test_ignores_overloaded_methods(self):
+        class_node, func_node_a, func_node_b = astroid.extract_node(
+            """
+        from azure.core.tracing.decorator import distributed_trace
+        from typing import overload
+        class MyClient(): #@
+            @overload
+            def do_thing(self, some, some_two, **kwargs): #@
+                pass
+            
+            @distributed_trace
+            def do_thing(self, some, **kwargs): #@
+                pass
+        """
+        )
+
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(func_node_a)
+            self.checker.visit_functiondef(func_node_b)
+
+
+
+
     def test_guidelines_link_active(self):
         url = "https://azure.github.io/azure-sdk/python_implementation.html#distributed-tracing"
         config = Configuration()

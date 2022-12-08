@@ -65,10 +65,11 @@ jobs:
             foreach ($file in $files) {
               $f = $True
               $relativePath = Resolve-Path -Path $file.FullName -Relative
+              Write-Host $relativePath
               foreach ($excludePath in $excludes) {
                 $excludePath = $excludePath.Trim()
-                # Write-Host "$relativePath -match $excludePath"
                 if ($relativePath -match $excludePath) {
+                  Write-Host "$relativePath -match $excludePath"
                   $f = $False
                 }
               }

@@ -457,16 +457,7 @@ namespace APIViewWeb.Managers
                 var isAuthorized = await _openSourceManager.IsAuthorizedUser(prModel.Author);
                 if (!isAuthorized)
                 {
-                    // Check if PR is assigned to a different user in case PR author is not authorized
-                    // This is possible is PR is contributed by external user but assigned to an internal user
-                    if (prModel.Assignee != null && prModel.Assignee != prModel.Author)
-                    {
-                        isAuthorized = await _openSourceManager.IsAuthorizedUser(prModel.Assignee);
-                    }
-                }
-                if (!isAuthorized)
-                {
-                    _telemetryClient.TrackTrace($"API change detection permission failed for user {prModel.Author}. API review is only created if either PR author or assignee is an internal user.");
+                    _telemetryClient.TrackTrace($"API change detection permission failed for user {prModel.Author}. API review is only created if PR author is an internal user.");
                     throw new AuthorizationFailedException();
                 }
             }

@@ -74,7 +74,10 @@ jobs:
             $newFileCollection = @()
             foreach ($file in $files) {
               $relativePath = Resolve-Path -LiteralPath $file.FullName -Relative
-              if ($relativePath -notmatch "${{ repo.excludePaths }}" -and $relativePath -match "${{ repo.includePaths }}") {
+              if ($relativePath -match "${{ repo.excludePaths }}" -and $relativePath -match "${{ repo.includePaths }}) {
+                $newFileCollection += $file
+              }
+              elseif ($relativePath -notmatch "${{ repo.excludePaths }}") {
                 $newFileCollection += $file
               }
             }

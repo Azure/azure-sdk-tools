@@ -61,18 +61,28 @@ jobs:
         - pwsh: |
             $excludes = "${{ repo.ExcludePaths }}".Split(",")
             $files = Get-ChildItem "./*" -Recurse -File 
-            foreach ($excludePath in $excludes) {
-              $excludePath = $excludePath.Trim()
-              $files = $files | Where-Object {$_.FullName -notmatch $excludePath}
+            $newFileCollection = @()
+            foreach ($file in $files) {
+              $f = $True
+              foreach ($excludePath in $excludes) {
+                $excludePath = $excludePath.Trim()
+                if ($file -match $excludePath) {
+                  $f = $False
+                  continue
+                }
+              }
+              if ($f) {
+                $newFileCollection += $file
+              }
             }
             
             if (Test-Path "./sdk/*") {
-              $files += Get-ChildItem "./sdk/*" -Recurse -File -Filter "platform-matrix*" -Include *.json
-              $files += Get-ChildItem "./sdk/*" -Recurse -File -Include *.yml
+              $newFileCollection += Get-ChildItem "./sdk/*" -Recurse -File -Filter "platform-matrix*" -Include *.json
+              $newFileCollection += Get-ChildItem "./sdk/*" -Recurse -File -Include *.yml
             }
             Write-Host "getting all files"
             # Scan all Files
-            foreach ($file in $files) {
+            foreach ($file in $newFileCollection) {
               $newcontent = Get-Content $file.FullName -Raw
               $flag = $False
               $map = '${{ convertToJson(parameters.MigrationMap) }}'

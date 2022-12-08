@@ -387,7 +387,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         try:
             if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                     node.parent.name not in self.ignore_clients:
-                if node.args.kwarg and node.name not in self.ignore_functions \
+                if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
                     and self.ignore_decorators[0] not in node.decoratornames() \
                         and self.ignore_decorators[1] not in node.decoratornames() \
                             and self.ignore_decorators[2] not in node.decoratornames():
@@ -411,7 +411,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         try:
             if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                     node.parent.name not in self.ignore_clients:
-                if node.args.kwarg and node.name not in self.ignore_functions \
+                if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
                     and self.ignore_decorators[0] not in node.decoratornames() \
                         and self.ignore_decorators[1] not in node.decoratornames() \
                             and self.ignore_decorators[3] not in node.decoratornames():

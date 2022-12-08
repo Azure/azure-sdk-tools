@@ -70,18 +70,19 @@ jobs:
               - /*
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
-            "./sdk/fdsf" -match "${{ repo.excludePaths }}"
-            $files = Get-ChildItem "./*" -Recurse -File 
-            $newFileCollection = @()
-            foreach ($file in $files) {
-              $relativePath = Resolve-Path -LiteralPath $file.FullName -Relative
-              if ($relativePath -notmatch "${{ repo.excludePaths }}") {
-                $newFileCollection += $file
-              }
-              elseif ($relativePath -match "${{ repo.excludePaths }}" -and $relativePath -match "${{ repo.includePaths }}) {
-                $newFileCollection += $file
-              }
-            }
+            Write-Host '${{ convertToJson(parameters.MigrationMap) }}'
+            # "./sdk/fdsf" -match "${{ repo.excludePaths }}"
+            # $files = Get-ChildItem "./*" -Recurse -File 
+            # $newFileCollection = @()
+            # foreach ($file in $files) {
+            #   $relativePath = Resolve-Path -LiteralPath $file.FullName -Relative
+            #   if ($relativePath -notmatch "${{ repo.excludePaths }}") {
+            #     $newFileCollection += $file
+            #   }
+            #   elseif ($relativePath -match "${{ repo.excludePaths }}" -and $relativePath -match "${{ repo.includePaths }}) {
+            #     $newFileCollection += $file
+            #   }
+            # }
             
             # Write-Host "The number of matching files: $($newFileCollection.Count)"
             # # Scan all Files and check the match

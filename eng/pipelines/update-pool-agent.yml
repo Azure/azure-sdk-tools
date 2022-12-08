@@ -99,7 +99,7 @@ jobs:
             }
             
             Write-Host "getting all files. $($newFileCollection.Count)"
-            # Scan all Files
+            # Scan all Files and check the match
             foreach ($file in $newFileCollection) {
               $newcontent = Get-Content $file.FullName -Raw
               $flag = $False
@@ -113,7 +113,7 @@ jobs:
                 }
               }
               if ($flag) {
-                Set-Content -Path $file.FullName -Value $newcontent.Trim() -NoNewLine
+                Set-Content -Path $file.FullName -Value $newcontent.Trim()
               }
             }
           displayName: Update pool version for "${{ repo.RepoName }}"

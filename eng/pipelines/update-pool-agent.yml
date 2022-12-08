@@ -31,7 +31,7 @@ parameters:
       ExcludePaths: "sdk*,eng/common*,*recordings/node*"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-net
-      ExcludePaths: "sdk*,eng/common*,*tests/SessionRecords*"
+      ExcludePaths: "sdk/*,eng/common*,*tests/SessionRecords*"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-python
       ExcludePaths: "sdk*,eng/common*,*tests/recordings*"
@@ -66,9 +66,9 @@ jobs:
               $f = $True
               foreach ($excludePath in $excludes) {
                 $excludePath = $excludePath.Trim()
+                Write-Host "$file -match $excludePath"
                 if ($file -match $excludePath) {
                   $f = $False
-                  continue
                 }
               }
               if ($f) {

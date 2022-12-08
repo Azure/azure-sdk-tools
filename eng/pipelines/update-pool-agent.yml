@@ -67,12 +67,13 @@ jobs:
               $relativePath = Resolve-Path -Path $file.FullName -Relative
               foreach ($excludePath in $excludes) {
                 $excludePath = $excludePath.Trim()
-                Write-Host "$relativePath -match $excludePath"
+                # Write-Host "$relativePath -match $excludePath"
                 if ($relativePath -match $excludePath) {
                   $f = $False
                 }
               }
               if ($f) {
+                Write-Host $file
                 $newFileCollection += $file
               }
             }

@@ -12,7 +12,7 @@ parameters:
       IncludePaths: ''
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
-      ExcludePaths: "(^./sdk/)|(^./eng/common/)|(/tests/resources/session-records/)"
+      ExcludePaths: "^./sdk/|^./eng/common/)|(/tests/resources/session-records/)"
       IncludePaths: "(^./sdk/.*/platform-matrix.*.json$)|(^./sdk/.*/.*yml$)"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-c
@@ -109,5 +109,6 @@ jobs:
             PRTitle: "Migrate to new pool"
             OpenAsDraft: true
             WorkingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
+            GHAssignessVariable: $(Build.QueuedBy)
             PushArgs: -f
           

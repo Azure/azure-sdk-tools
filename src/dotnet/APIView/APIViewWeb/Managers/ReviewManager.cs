@@ -717,6 +717,11 @@ namespace APIViewWeb.Managers
                 review.RunAnalysis,
                 language);
 
+            // Set revision name using file name in case input is a URL(Input is either fielstream or URL)
+            if (fileStream == null)
+            {
+                revision.Name = Path.GetFileName(name);
+            }
             revision.Files.Add(codeFile);
             revision.Author = user.GetGitHubLogin();
             revision.Label = label;

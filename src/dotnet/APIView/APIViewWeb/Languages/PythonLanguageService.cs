@@ -75,7 +75,7 @@ namespace APIViewWeb
             catch(Exception ex)
             {
                 _telemetryClient.TrackException(ex);
-                throw ex;
+                throw;
             }
             finally
             {

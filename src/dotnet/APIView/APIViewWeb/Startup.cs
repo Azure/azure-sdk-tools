@@ -67,9 +67,13 @@ namespace APIViewWeb
                 .GetSection("Github")
                 .Bind(options));
 
+#pragma warning disable ASP5001 // Type or member is obsolete
+#pragma warning disable CS0618 // Type or member is obsolete
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .AddRazorRuntimeCompilation();
+#pragma warning restore CS0618 // Type or member is obsolete
+#pragma warning restore ASP5001 // Type or member is obsolete
 
             services.AddRazorPages(options =>
             {
@@ -94,6 +98,7 @@ namespace APIViewWeb
             services.AddSingleton<IPackageNameManager, PackageNameManager>();
             services.AddSingleton<IUsageSampleManager, UsageSampleManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
+            services.AddSingleton<IOpenSourceRequestManager, OpenSourceRequestManager>();
             services.AddSingleton<UserPreferenceCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
@@ -212,7 +217,6 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
-            services.AddSingleton<IAuthorizationHandler, PullRequestPermissionRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, UsageSampleOwnerRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();

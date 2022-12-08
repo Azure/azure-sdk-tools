@@ -25,7 +25,7 @@ export async function createApiViewTestRunner({
   return createTestWrapper(host, {
     autoUsings: autoUsings,
     compilerOptions: {
-      emitters: { "@azure-tools/cadl-apiview": {} },
+      emit: ["@azure-tools/cadl-apiview"],
     }
   });
 }

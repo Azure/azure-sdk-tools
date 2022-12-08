@@ -62,17 +62,17 @@ namespace APIViewWeb.Managers
             _packageNameManager = packageNameManager;
         }
 
-        public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis, bool awaitComputeDiff = false)
+        public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis, string langauge, bool awaitComputeDiff = false)
         {
             var review = new ReviewModel
             {
                 Author = user.GetGitHubLogin(),
                 CreationDate = DateTime.UtcNow,
                 RunAnalysis = runAnalysis,
-                Name = originalName,
+                Name = fileStream != null? originalName : Path.GetFileName(originalName),
                 FilterType = ReviewType.Manual
             };
-            await AddRevisionAsync(user, review, originalName, label, fileStream, awaitComputeDiff);
+            await AddRevisionAsync(user, review, originalName, label, fileStream, langauge, awaitComputeDiff);
             return review;
         }
 
@@ -203,22 +203,27 @@ namespace APIViewWeb.Managers
             string reviewId,
             string name,
             string label,
-            Stream fileStream, bool awaitComputeDiff = false)
+            Stream fileStream,
+            bool awaitComputeDiff = false)
         {
             var review = await GetReviewAsync(user, reviewId);
             await AssertAutomaticReviewModifier(user, review);
-            await AddRevisionAsync(user, review, name, label, fileStream, awaitComputeDiff);
+            await AddRevisionAsync(user, review, name, label, fileStream, review.Language, awaitComputeDiff);
         }
 
         public async Task<CodeFile> CreateCodeFile(
             string originalName,
             Stream fileStream,
             bool runAnalysis,
-            MemoryStream memoryStream)
+            MemoryStream memoryStream,
+            string language = null)
         {
-            var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(originalName));
-            await fileStream.CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
+            var languageService = _languageServices.FirstOrDefault(s => (language != null ? s.Name == language : s.IsSupportedFile(originalName)));
+            if (fileStream != null)
+            {
+                await fileStream.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+            }            
             CodeFile codeFile = null;
             if (languageService.IsReviewGenByPipeline)
             {
@@ -242,10 +247,12 @@ namespace APIViewWeb.Managers
             };
 
             InitializeFromCodeFile(reviewCodeFileModel, codeFile);
-            memoryStream.Position = 0;
-            await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
+            if (memoryStream != null)
+            {
+                memoryStream.Position = 0;
+                await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.ReviewFileId, memoryStream);
+            }
             await _codeFileRepository.UpsertCodeFileAsync(revisionId, reviewCodeFileModel.ReviewFileId, codeFile);
-
             return reviewCodeFileModel;
         }
 
@@ -698,6 +705,7 @@ namespace APIViewWeb.Managers
             string name,
             string label,
             Stream fileStream,
+            string language,
             bool awaitComputeDiff = false)
         {
             var revision = new ReviewRevisionModel();
@@ -706,12 +714,12 @@ namespace APIViewWeb.Managers
                 revision.RevisionId,
                 name,
                 fileStream,
-                review.RunAnalysis);
+                review.RunAnalysis,
+                language);
 
             revision.Files.Add(codeFile);
             revision.Author = user.GetGitHubLogin();
             revision.Label = label;
-
             review.Revisions.Add(revision);
 
             if (review.PackageName != null)
@@ -721,12 +729,12 @@ namespace APIViewWeb.Managers
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
             }
 
-            var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
-            //Run pipeline to generate the review if sandbox is enabled
+            var languageService = language != null ? _languageServices.FirstOrDefault( l=> l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
+            // Run pipeline to generate the review if sandbox is enabled
             if (languageService != null && languageService.IsReviewGenByPipeline)
             {
                 // Run offline review gen for review and reviewCodeFileModel
-                await GenerateReviewOffline(review, revision.RevisionId, codeFile.ReviewFileId, name);
+                await GenerateReviewOffline(review, revision.RevisionId, codeFile.ReviewFileId, name, language);
             }
 
             // auto subscribe revision creation user
@@ -747,10 +755,11 @@ namespace APIViewWeb.Managers
             string revisionId,
             string originalName,
             Stream fileStream,
-            bool runAnalysis)
+            bool runAnalysis,
+            string language)
         {
             using var memoryStream = new MemoryStream();
-            var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream);
+            var codeFile = await CreateCodeFile(originalName, fileStream, runAnalysis, memoryStream, language);
             var reviewCodeFileModel = await CreateReviewCodeFileModel(revisionId, memoryStream, codeFile);
             reviewCodeFileModel.FileName = originalName;
             return reviewCodeFileModel;
@@ -934,8 +943,10 @@ namespace APIViewWeb.Managers
             return null;
         }
 
-        private async Task GenerateReviewOffline(ReviewModel review, string revisionId, string fileId, string fileName)
+        private async Task GenerateReviewOffline(ReviewModel review, string revisionId, string fileId, string fileName, string language = null)
         {
+            var languageService = _languageServices.Single(s => s.Name == language || s.Name == review.Language);
+            var revision = review.Revisions.FirstOrDefault(r => r.RevisionId == revisionId);
             var param = new ReviewGenPipelineParamModel()
             {
                 FileID = fileId,
@@ -943,9 +954,14 @@ namespace APIViewWeb.Managers
                 RevisionID = revisionId,
                 FileName = fileName
             };
+            if (!languageService.GeneratePipelineRunParams(param))
+            {
+                throw new Exception($"Failed to run pipeline for review: {param.ReviewID}, file: {param.FileName}");
+            }
+
             var paramList = new List<ReviewGenPipelineParamModel>();
             paramList.Add(param);
-            var languageService = _languageServices.Single(s => s.Name == review.Language);
+            
             await RunReviewGenPipeline(paramList, languageService.Name);
         }
 

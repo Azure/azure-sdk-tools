@@ -57,16 +57,30 @@
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
-                            <div class="custom-file">
+                            <span>
+                                    <select asp-for="Upload.Language" class="selectpicker show-menu-arrow shadow-sm mr-20 ml-20" data-style="btn-light btn-sm border" data-selected-text-format="value" id="review-language-select">
+                                    <option selected disabled value="">Select Language</option>
+                                    @foreach(string lang in UploadModel.SupportedLanguages)
+                                    {
+                                        <option value=@lang data-content=@lang>@lang</option>
+                                    }
+                                </select>                                
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <div class="custom-file package-selector">
                                 <input asp-for="Upload.Files" type="file" class="custom-file-input">
                                 <label asp-for="Upload.Files" class="custom-file-label">Select file to include in API review</label>
                             </div>
                         </div>
+                        <div class="form-group package-selector hidden-row">
+                            <input asp-for="Upload.FilePath" class="form-control"  type="text" placeholder="Enter URL to package root source. For e.g. URL to CADL file">
+                        </div>
 
                         <div class="form-group">
-                            <div class="form-check">
-                                <input class="form-check-input" asp-for="Upload.RunAnalysis" checked>
-                                <label class="form-check-label">
+                            <div class="form-check" >
+                                <input class="form-check-input" hidden asp-for="Upload.RunAnalysis" checked>
+                                <label class="form-check-label" hidden>
                                     Run static analysis
                                 </label>
                             </div>
@@ -74,41 +88,44 @@
                         <div class="form-group">
                             <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional review label">
                         </div>
-                        <div class="form-group">
-                            <label>What to upload:</label>
+                        <div class="form-group" id="help">
+                            <a href="#help-content" data-toggle="collapse">What to upload</a>
 
-                            <ul class="nav nav-pills nav-fill mb-3">
+                            <ul class="nav nav-pills nav-fill mb-3" hidden>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#c-help">C</a>
+                                    <a class="nav-link" id="help-C" data-toggle="tab" href="#c-help">C</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link active" id="home-tab" data-toggle="tab" href="#csharp-help">C#</a>
+                                    <a class="nav-link active" id="help-Csharp" data-toggle="tab" href="#csharp-help">C#</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#cpp-help">C++</a>
+                                    <a class="nav-link" id="help-Cpp" data-toggle="tab" href="#cpp-help">C++</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#go-help">Go</a>
+                                    <a class="nav-link" id="help-Go" data-toggle="tab" href="#go-help">Go</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#java-help">Java</a>
+                                    <a class="nav-link" id="help-Java" data-toggle="tab" href="#java-help">Java</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#js-help">JS/TS</a>
+                                    <a class="nav-link" id="help-JavaScript" data-toggle="tab" href="#js-help">JS/TS</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#python-help">Python</a>
+                                    <a class="nav-link" id="help-Python" data-toggle="tab" href="#python-help">Python</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#protocol-help">Protocol</a>
+                                    <a class="nav-link" id="help-Swift" data-toggle="tab" href="#swift-help">Swift</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#swift-help">Swift</a>
+                                    <a class="nav-link" id="help-Swagger" data-toggle="tab" href="#swagger-help">Swagger</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="help-CADL" data-toggle="tab" href="#cadl-help">CADL</a>
                                 </li>
                             </ul>
 
                             <!-- Tab panes -->
-                            <div class="tab-content border rounded p-3">
+                            <div class="tab-content border rounded p-3 panel-collapse collapse hidden" id="help-content">
                                 <div class="tab-pane active" id="csharp-help">
                                     <ol>
                                         <li>
@@ -206,6 +223,23 @@
                                         <li>
                                             Upload generated JSON
                                         </li>
+                                    </ol>
+                                </div>
+                                <div class="tab-pane" id="swagger-help">
+                                    <ol>
+                                        <li>
+                                            Rename swagger json to replace file extension to .swagger  <code>Rename-Item PetSwagger.json -NewName PetSwagger.swagger</code>
+                                        </li>
+                                        <li>
+                                            Upload renamed swagger file
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="tab-pane" id="cadl-help">
+                                    <ol>
+                                        <li>
+                                            Provide URL to cadl project root path.
+                                        </li>                                        
                                     </ol>
                                 </div>
                             </div>

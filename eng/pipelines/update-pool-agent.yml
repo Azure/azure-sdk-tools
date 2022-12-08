@@ -80,7 +80,7 @@ jobs:
               $newFileCollection += Get-ChildItem "./sdk/*" -Recurse -File -Filter "platform-matrix*" -Include *.json
               $newFileCollection += Get-ChildItem "./sdk/*" -Recurse -File -Include *.yml
             }
-            Write-Host "getting all files"
+            Write-Host "getting all files. $($newFileCollection.Count)"
             # Scan all Files
             foreach ($file in $newFileCollection) {
               $newcontent = Get-Content $file.FullName -Raw

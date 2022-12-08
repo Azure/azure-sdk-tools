@@ -64,7 +64,7 @@ jobs:
             $newFileCollection = @()
             foreach ($file in $files) {
               $f = $True
-              $relativePath = Resolve-Path -Path $file.FullName -Relative
+              $relativePath = Resolve-Path -LiteralPath $file.FullName -Relative
               Write-Host $relativePath
               foreach ($excludePath in $excludes) {
                 $excludePath = $excludePath.Trim()

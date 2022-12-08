@@ -317,6 +317,16 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
     visit_asyncfunctiondef = visit_functiondef
 
 
+#make sure it isn't on overloaded functions -- or should it be, currently it is 
+# make sure it isnt an auth related function --- get token I think should have tracing?, but 3 functions all call each other - do they all require tracing
+# ^ think of container registry async_exhcange_client
+# sdk\identity\azure-identity\azure\identity\_internal\aad_client.py -- should these functions require tracing because they are under a private _internal folder
+#     def get_cryptography_client(self, key_name, **kwargs) -- azure-keyvault-keys, getting cryptography client count as child client? 
+# for an example of patch.py can look at metrics advisor 
+# also why do a lot of send_request not have distributed tracing? Ignore send_request for now 
+# delete_alias, search, _search_index_client -- has @distributed tracing --- says it doesnt, it is a sync distributed trace on an async function
+# storage filedatalake has a loottt
+
 class ClientMethodsHaveTracingDecorators(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -357,6 +367,9 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         ),
     )
     ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
+    ignore_functions = ["send_request"]
+    ignore_decorators = ["typing.overload", "builtins.classmethod", "azure.core.tracing.decorator.distributed_trace", 
+        "azure.core.tracing.decorator_async.distributed_trace_async"]
 
     def __init__(self, linter=None):
         super(ClientMethodsHaveTracingDecorators, self).__init__(linter)
@@ -374,8 +387,11 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         try:
             if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                     node.parent.name not in self.ignore_clients:
-                if node.args.kwarg and "azure.core.tracing.decorator.distributed_trace" not in node.decoratornames() \
-                        and "builtins.classmethod" not in node.decoratornames():
+                if node.args.kwarg and node.name not in self.ignore_functions \
+                    and self.ignore_decorators[0] not in node.decoratornames() \
+                        and self.ignore_decorators[1] not in node.decoratornames() \
+                            and self.ignore_decorators[2] not in node.decoratornames():
+                    
                     self.add_message(
                         msgid="client-method-missing-tracing-decorator", node=node, confidence=None
                     )
@@ -395,8 +411,11 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         try:
             if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                     node.parent.name not in self.ignore_clients:
-                if node.args.kwarg and "azure.core.tracing.decorator_async.distributed_trace_async" not in \
-                        node.decoratornames() and "builtins.classmethod" not in node.decoratornames():
+                if node.args.kwarg and node.name not in self.ignore_functions \
+                    and self.ignore_decorators[0] not in node.decoratornames() \
+                        and self.ignore_decorators[1] not in node.decoratornames() \
+                            and self.ignore_decorators[3] not in node.decoratornames():
+                    
                     self.add_message(
                         msgid="client-method-missing-tracing-decorator-async", node=node, confidence=None
                     )
@@ -1917,6 +1936,8 @@ class CheckNamingMismatchGeneratedCode(BaseChecker):
         except Exception:
                 logger.debug("Pylint custom checker failed to check if model is aliased.")
 
+
+# showed up in azure.core.rest _requests_basic.py --- shouldnt do that
 class NonCoreNetworkImport(BaseChecker):
     """There are certain imports that should only occur in the core package.
     For example, instead of using `requests` to make requests, clients should
@@ -1956,6 +1977,10 @@ class NonCoreNetworkImport(BaseChecker):
                     msgid=f"networking-import-outside-azure-core-transport", node=node, confidence=None
                 )
 
+# showed up in azure core utils pipeline_transport_rest_shared
+# from azure.core.pipeline.transport import RequestsTransport
+# in storage fileshare: from azure.core.pipeline.transport import AioHttpTransport
+# in storage queue: from azure.core.pipeline.transport import RequestsTransport, HttpTransport
 class NonAbstractTransportImport(BaseChecker):
     """Rule to check that we aren't importing transports outside of `azure.core.pipeline.transport`.
     Transport selection should be up to `azure.core` or the end-user, not individual SDKs.
@@ -2008,7 +2033,7 @@ def register(linter):
     linter.register_checker(NonCoreNetworkImport(linter))
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
     linter.register_checker(NonAbstractTransportImport(linter))
-
+    linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
@@ -2017,7 +2042,6 @@ def register(linter):
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))
     # linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
-    # linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))

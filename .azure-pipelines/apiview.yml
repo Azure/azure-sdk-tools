@@ -188,12 +188,6 @@ stages:
             inputs:
               version: '$(DotNetRuntimeVersion)'
 
-          - task: UseDotNet@2
-            displayName: 'Install .NET RunTime'
-            inputs:
-              packageType: runtime
-              version: '$(DotNetRuntimeVersion)'
-
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
             env:

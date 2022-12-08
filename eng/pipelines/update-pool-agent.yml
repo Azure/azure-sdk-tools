@@ -12,40 +12,40 @@ parameters:
       IncludePaths: ''
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
-      ExcludePaths: "^./sdk*,^./eng/common/*,/tests/resources/session-records*"
-      IncludePaths: '^./sdk/.*/platform-matrix.*.json$,^./sdk/.*/.*yml$'
+      ExcludePaths: "(^./sdk/)|(^./eng/common/)|(/tests/resources/session-records/)"
+      IncludePaths: "(^./sdk/.*/platform-matrix.*.json$)|(^./sdk/.*/.*yml$)"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-c
-      ExcludePaths: "^./sdk*,^./eng/common/*"
-      IncludePaths: '^./sdk/.*/platform-matrix.*.json$,^./sdk/.*/.*yml$'
+      ExcludePaths: "(^./sdk/)|(^./eng/common/)"
+      IncludePaths: "(^./sdk/.*/platform-matrix.*.json$)|(^./sdk/.*/.*yml$)"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-cpp
-      ExcludePaths: "^./sdk*,^./eng/common/*"
-      IncludePaths: '^./sdk/.*/platform-matrix.*.json$,^./sdk/.*/.*yml$'
+      ExcludePaths: "(^./sdk/)|(^./eng/common/)"
+      IncludePaths: "(^./sdk/.*/platform-matrix.*.json$)|(^./sdk/.*/.*yml$)"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-go
-      ExcludePaths: "^./sdk*,^./eng/common/*"
-      IncludePaths: '^./sdk/.*/platform-matrix.*.json$,^./sdk/.*/.*yml$'
+      ExcludePaths: "(^./sdk/)|(^./eng/common/)"
+      IncludePaths: "(^./sdk/.*/platform-matrix.*.json$)|(^./sdk/.*/.*yml$)"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-ios
-      ExcludePaths: "^./sdk*,^./eng/common/*"
-      IncludePaths: '^./sdk/.*/platform-matrix.*.json$,^./sdk/.*/.*yml$'
+      ExcludePaths: "(^./sdk/)|(^./eng/common/)"
+      IncludePaths: "(^./sdk/.*/platform-matrix.*.json$)|(^./sdk/.*/.*yml$)"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-java
-      ExcludePaths: "^./sdk*,^./eng/common/*,*resources/session-records*"
-      IncludePaths: '^./sdk/.*/platform-matrix.*.json$,^./sdk/.*/.*yml$'
+      ExcludePaths: "(^./sdk/,^./eng/common/)|(/resources/session-records/)"
+      IncludePaths: "(^./sdk/.*/platform-matrix.*.json$)|(^./sdk/.*/.*yml$)"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-js
-      ExcludePaths: "^./sdk*,^./eng/common/*,*recordings/node*"
-      IncludePaths: '^./sdk/.*/platform-matrix.*.json$,^./sdk/.*/.*yml$'
+      ExcludePaths: "(^./sdk/)|(^./eng/common/)|(/recordings/node/)"
+      IncludePaths: "(^./sdk/.*/platform-matrix.*.json$)|(^./sdk/.*/.*yml$)"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-net
-      ExcludePaths: "^./sdk*,^./eng/common/*,*tests/SessionRecords*"
-      IncludePaths: '^./sdk/.*/platform-matrix.*.json$,^./sdk/.*/.*yml$'
+      ExcludePaths: "(^./sdk/)|(^./eng/common/)|(/tests/SessionRecords/)"
+      IncludePaths: "(^./sdk/.*/platform-matrix.*.json$)|(^./sdk/.*/.*yml$)"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-python
-      ExcludePaths: "^./sdk*,^./eng/common/*,*tests/recordings*"
-      IncludePaths: '^./sdk/.*/platform-matrix.*.json$,^./sdk/.*/.*yml$'
+      ExcludePaths: "(^./sdk/)|(^./eng/common/)|(/tests/recordings/)"
+      IncludePaths: "(^./sdk/.*/platform-matrix.*.json$)|(^./sdk/.*/.*yml$)"
 - name: MigrationMap
   type: object
   default: []
@@ -70,35 +70,16 @@ jobs:
               - /*
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
-            $excludes = "${{ repo.ExcludePaths }}".Split(",")
             $files = Get-ChildItem "./*" -Recurse -File 
             $newFileCollection = @()
             foreach ($file in $files) {
-              $excludeFlag = $False
               $relativePath = Resolve-Path -LiteralPath $file.FullName -Relative
-              Write-Host $relativePath
-              foreach ($excludePath in $excludes) {
-                $excludePath = $excludePath.Trim()
-                if ($relativePath -match $excludePath) {
-                  Write-Host "$relativePath -match $excludePath"
-                  $excludeFlag = $True
-                }
-              }
-              if ($excludeFlag) {
-                $includes = "${{ repo.IncludePaths }}".Split(",")
-                foreach ($includePath in $includes) {
-                  if ($relativePath -match $includePath) {
-                    Write-Host "$relativePath -match $excludePath"
-                    $excludeFlag = $False
-                  }
-                }
-              }
-              if (!$excludeFlag)
+              if ($relativePath -notmatch ${{ repo.excludePaths }} -and $relativePath -match ${{ repo.includePaths }}) {
                 $newFileCollection += $file
               }
             }
             
-            Write-Host "getting all files. $($newFileCollection.Count)"
+            Write-Host "The number of matching files: $($newFileCollection.Count)"
             # Scan all Files and check the match
             foreach ($file in $newFileCollection) {
               $newcontent = Get-Content $file.FullName -Raw
@@ -126,7 +107,7 @@ jobs:
             RepoOwner: ${{ repo.RepoOwner }}
             RepoName: ${{ repo.RepoName }}
             PRTitle: "Migrate to new pool"
-            # OpenAsDraft: true
+            OpenAsDraft: true
             WorkingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
             PushArgs: -f
           

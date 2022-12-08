@@ -70,14 +70,15 @@ jobs:
               - /*
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
+            "./sdk/fdsf" -match "${{ repo.excludePaths }}"
             $files = Get-ChildItem "./*" -Recurse -File 
             $newFileCollection = @()
             foreach ($file in $files) {
               $relativePath = Resolve-Path -LiteralPath $file.FullName -Relative
-              if ($relativePath -match "${{ repo.excludePaths }}" -and $relativePath -match "${{ repo.includePaths }}) {
+              if ($relativePath -notmatch "${{ repo.excludePaths }}") {
                 $newFileCollection += $file
               }
-              elseif ($relativePath -notmatch "${{ repo.excludePaths }}") {
+              elseif ($relativePath -match "${{ repo.excludePaths }}" -and $relativePath -match "${{ repo.includePaths }}) {
                 $newFileCollection += $file
               }
             }

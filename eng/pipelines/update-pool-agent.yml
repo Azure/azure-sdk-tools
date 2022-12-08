@@ -71,37 +71,6 @@ jobs:
         - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
         - pwsh: |
             Write-Host '${{ convertToJson(parameters.MigrationMap) }}'
-            # "./sdk/fdsf" -match "${{ repo.excludePaths }}"
-            # $files = Get-ChildItem "./*" -Recurse -File 
-            # $newFileCollection = @()
-            # foreach ($file in $files) {
-            #   $relativePath = Resolve-Path -LiteralPath $file.FullName -Relative
-            #   if ($relativePath -notmatch "${{ repo.excludePaths }}") {
-            #     $newFileCollection += $file
-            #   }
-            #   elseif ($relativePath -match "${{ repo.excludePaths }}" -and $relativePath -match "${{ repo.includePaths }}) {
-            #     $newFileCollection += $file
-            #   }
-            # }
-            
-            # Write-Host "The number of matching files: $($newFileCollection.Count)"
-            # # Scan all Files and check the match
-            # foreach ($file in $newFileCollection) {
-            #   $newcontent = Get-Content $file.FullName -Raw
-            #   $flag = $False
-            #   $map = '${{ convertToJson(parameters.MigrationMap) }}'
-            #   $map = ConvertFrom-Json $map 
-            #   foreach ($migrate in $map ) {
-            #     if ($newcontent -match $migrate.MigrateFrom) {
-            #       $flag = $True
-            #       Write-Host $file.FullName
-            #       $newcontent = $newcontent -replace "$($migrate.MigrateFrom)", "$($migrate.MigrateTo)"
-            #     }
-            #   }
-            #   if ($flag) {
-            #     Set-Content -Path $file.FullName -Value $newcontent.Trim()
-            #   }
-            # }
           displayName: Update pool version for "${{ repo.RepoName }}"
           workingDirectory: $(Build.SourcesDirectory)/docs/${{ repo.RepoName }}
         - template: /eng/common/pipelines/templates/steps/create-pull-request.yml

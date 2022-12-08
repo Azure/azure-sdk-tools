@@ -1,4 +1,4 @@
-import { resolvePath } from "@cadl-lang/compiler";
+import { Diagnostic, logDiagnostics, resolvePath } from "@cadl-lang/compiler";
 import { expectDiagnosticEmpty } from "@cadl-lang/compiler/testing";
 import assert, { fail, strictEqual } from "assert";
 import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
@@ -9,11 +9,11 @@ describe("apiview: tests", () => {
   async function apiViewFor(code: string, options: ApiViewEmitterOptions): Promise<ApiViewDocument> {
     const runner = await createApiViewTestRunner({withVersioning: true});
     const outPath = resolvePath("/apiview.json");
-    const diagnostics = await runner.diagnose(code, {
+    await runner.compile(code, {
       noEmit: false,
       emitters: { "@azure-tools/cadl-apiview": { ...options, "output-file": outPath } },
+      miscOptions: { "disable-linter": true },
     });
-    expectDiagnosticEmpty(diagnostics);
 
     const jsonText = runner.fs.get(outPath)!;
     const apiview = JSON.parse(jsonText) as ApiViewDocument;

@@ -194,7 +194,7 @@ Function Get-Repo-Language {
   # will match what is below. If the regular expression needs to be updated the following
   # link below will go to a regex playground
   # https://regex101.com/r/2uvYDF/1
-  $lang = $remotes[0] | ForEach-Object { if ($_ -match "azure-sdk-for-(?<lang>[^\-\.\/]+)") {
+  $lang = $remotes[0] | ForEach-Object { if ($_ -match "azure-sdk-for-(?<lang>[^\-\.\/ ]+)") {
       #Return the named language match
       return $Matches["lang"]
     }

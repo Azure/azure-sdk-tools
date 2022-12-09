@@ -389,8 +389,8 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
  
         try:
             path = node.path
-            location = path.count("\_") + path.count("/_")
-            if location==0:
+            split_path = os.path.split(path)
+            if split_path[0].count("_") == 0:
                 if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                         node.parent.name not in self.ignore_clients:
                     if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
@@ -416,8 +416,8 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         """
         try:
             path = node.path
-            location = path.count("\_") + path.count("/_")
-            if location==0:
+            split_path = os.path.split(path)
+            if split_path[0].count("_") == 0:
                 if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                         node.parent.name not in self.ignore_clients:
                     if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \

@@ -10,7 +10,7 @@
     <DelaySign>false</DelaySign>
     <PackageFilesPath>$(MSBuildThisFileDirectory)NugetToolsPackage\CI.Tools.Package\build</PackageFilesPath>
   </PropertyGroup>
-
+tet
   <!--TestLoaded property is being set in test project file-->
   <ItemGroup>
     <PackageReference Include="Microsoft.Build" Version="15.9.20" ExcludeAssets="runtime" />

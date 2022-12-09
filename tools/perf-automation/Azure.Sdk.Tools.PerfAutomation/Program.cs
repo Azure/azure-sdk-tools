@@ -139,50 +139,66 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             Config = DeserializeYaml<Config>(options.ConfigFile);
 
-            var input = DeserializeYaml<Input>(options.InputFile);
+            IEnumerable<ServiceInfo> selectedServices;
+            IDictionary<Language, LanguageInfo> selectedLanguages;
 
-            var selectedlanguages = input.Languages
-                .Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
-                .ToDictionary(l => l.Key, l => new LanguageInfo()
-                {
-                    DefaultVersions = l.Value.DefaultVersions.Where(v =>
-                            (String.IsNullOrEmpty(options.LanguageVersions) || Regex.IsMatch(v, options.LanguageVersions)) &&
-                            !(l.Key == Language.Net && v == "net461" && !Util.IsWindows)),
-                    OptionalVersions = l.Value.OptionalVersions.Where(v =>
-                            (!String.IsNullOrEmpty(options.LanguageVersions) && Regex.IsMatch(v, options.LanguageVersions)) &&
-                            !(l.Key == Language.Net && v == "net461" && !Util.IsWindows))
-                });
+            if (options.InputFile == "tests.yml")
+            {
+                // Centralized input file
+                var input = DeserializeYaml<Input>(options.InputFile);
+
+                selectedLanguages = input.Languages
+                    .Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
+                    .ToDictionary(l => l.Key, l => new LanguageInfo()
+                    {
+                        DefaultVersions = l.Value.DefaultVersions.Where(v =>
+                                (String.IsNullOrEmpty(options.LanguageVersions) || Regex.IsMatch(v, options.LanguageVersions)) &&
+                                !(l.Key == Language.Net && v == "net461" && !Util.IsWindows)),
+                        OptionalVersions = l.Value.OptionalVersions.Where(v =>
+                                (!String.IsNullOrEmpty(options.LanguageVersions) && Regex.IsMatch(v, options.LanguageVersions)) &&
+                                !(l.Key == Language.Net && v == "net461" && !Util.IsWindows))
+                    });
 
 
-            var selectedServices = input.Services
-                .Where(s => String.IsNullOrEmpty(options.Services) || Regex.IsMatch(s.Service, options.Services, RegexOptions.IgnoreCase))
-                .Select(s => new ServiceInfo
-                {
-                    Service = s.Service,
-                    Languages = s.Languages
-                        .Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
-                        .ToDictionary(p => p.Key, p => new ServiceLanguageInfo()
-                        {
-                            Project = p.Value.Project,
-                            AdditionalArguments = p.Value.AdditionalArguments,
-                            PackageVersions = p.Value.PackageVersions.Where(d =>
-                                String.IsNullOrEmpty(options.PackageVersions) || Regex.IsMatch(d[p.Value.PrimaryPackage], options.PackageVersions)),
-                            PrimaryPackage = p.Value.PrimaryPackage,
-                        }),
-                    Tests = s.Tests
-                        .Where(t => String.IsNullOrEmpty(options.Tests) || Regex.IsMatch(t.Test, options.Tests, RegexOptions.IgnoreCase))
-                        .Select(t => new TestInfo
-                        {
-                            Test = t.Test,
-                            Arguments = t.Arguments.Where(a =>
-                                String.IsNullOrEmpty(options.Arguments) || Regex.IsMatch(a, options.Arguments, RegexOptions.IgnoreCase)),
-                            TestNames = t.TestNames.Where(n => !options.Languages.Any() || options.Languages.Contains(n.Key))
-                                        .ToDictionary(p => p.Key, p => p.Value)
-                        })
-                        .Where(t => t.TestNames.Any())
-                        .Where(t => t.Arguments.Any()),
-                })
-                .Where(s => s.Tests.Any());
+                selectedServices = input.Services
+                    .Where(s => String.IsNullOrEmpty(options.Services) || Regex.IsMatch(s.Service, options.Services, RegexOptions.IgnoreCase))
+                    .Select(s => new ServiceInfo
+                    {
+                        Service = s.Service,
+                        Languages = s.Languages
+                            .Where(l => !options.Languages.Any() || options.Languages.Contains(l.Key))
+                            .ToDictionary(p => p.Key, p => new ServiceLanguageInfo()
+                            {
+                                Project = p.Value.Project,
+                                AdditionalArguments = p.Value.AdditionalArguments,
+                                PackageVersions = p.Value.PackageVersions.Where(d =>
+                                    String.IsNullOrEmpty(options.PackageVersions) || Regex.IsMatch(d[p.Value.PrimaryPackage], options.PackageVersions)),
+                                PrimaryPackage = p.Value.PrimaryPackage,
+                            }),
+                        Tests = s.Tests
+                            .Where(t => String.IsNullOrEmpty(options.Tests) || Regex.IsMatch(t.Test, options.Tests, RegexOptions.IgnoreCase))
+                            .Select(t => new TestInfo
+                            {
+                                Test = t.Test,
+                                Arguments = t.Arguments.Where(a =>
+                                    String.IsNullOrEmpty(options.Arguments) || Regex.IsMatch(a, options.Arguments, RegexOptions.IgnoreCase)),
+                                TestNames = t.TestNames.Where(n => !options.Languages.Any() || options.Languages.Contains(n.Key))
+                                            .ToDictionary(p => p.Key, p => p.Value)
+                            })
+                            .Where(t => t.TestNames.Any())
+                            .Where(t => t.Arguments.Any()),
+                    })
+                    .Where(s => s.Tests.Any());
+
+            }
+            else
+            {
+                // Language+Service input file
+                var input = DeserializeYaml<LanguageServiceInput>(options.InputFile);
+
+                selectedLanguages = null;
+                selectedServices = null;
+            }
 
             var serializer = new Serializer();
             Console.WriteLine("=== Options ===");
@@ -191,7 +207,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Console.WriteLine();
 
             Console.WriteLine("=== Test Plan ===");
-            serializer.Serialize(Console.Out, new Input() { Languages = selectedlanguages, Services = selectedServices });
+            serializer.Serialize(Console.Out, new Input() { Languages = selectedLanguages, Services = selectedServices });
 
             if (options.DryRun)
             {
@@ -242,7 +258,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         }
                     }
 
-                    var languageInfo = selectedlanguages[language];
+                    var languageInfo = selectedLanguages[language];
 
                     foreach (var languageVersion in languageInfo.DefaultVersions.Concat(languageInfo.OptionalVersions))
                     {

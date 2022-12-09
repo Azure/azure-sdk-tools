@@ -14,7 +14,10 @@ $sparseCheckoutFile = ".git/info/sparse-checkout"
 
 function Sparse-Checkout($branchName, $packagePath)
 {
-    Remove-Item $sparseCheckoutFile -Force
+    if (Test-Path $sparseCheckoutFile)
+    {
+        Remove-Item $sparseCheckoutFile -Force
+    }    
     git sparse-checkout init --cone
     git sparse-checkout set $packagePath
     git checkout $BranchName
@@ -59,6 +62,10 @@ if ($revs)
         $GitRepoName = $r.SourceRepoName
         $branchName = $r.SourceBranchName
 
+        if ($packagePath.StartsWith("/"))
+        {
+            $packagePath = $packagePath.Substring(1)
+        }
         Write-Host "Generating API review for Review ID: '$($reviewId), Revision ID: '$($revisionId)"
         Write-Host "URL to Repo: '$($GitRepoName), Branch name: '$($branchName), Package Path: '$($packagePath)"
 

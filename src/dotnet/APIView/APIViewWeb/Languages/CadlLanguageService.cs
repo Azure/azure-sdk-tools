@@ -45,7 +45,7 @@ namespace APIViewWeb
 
         public override bool GeneratePipelineRunParams(ReviewGenPipelineParamModel param)
         {
-            var filePath = param.FileName.ToLower();
+            var filePath = param.FileName;
             // Verify cadl source file path is a GitHub URL to cadl package root 
             if (filePath == null || !filePath.StartsWith("https://github.com/"))
                 return false;

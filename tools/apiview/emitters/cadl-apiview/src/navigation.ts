@@ -7,6 +7,7 @@ import {
   ModelStatementNode,
   OperationStatementNode,
   ProjectionModelExpressionNode,
+  ScalarStatementNode,
   SyntaxKind,
   UnionExpressionNode,
   UnionStatementNode,
@@ -31,6 +32,7 @@ export class ApiViewNavigation {
       | ModelExpressionNode
       | IntersectionExpressionNode
       | ProjectionModelExpressionNode
+      | ScalarStatementNode
       | UnionStatementNode
       | UnionExpressionNode,
       stack: NamespaceStack
@@ -115,6 +117,13 @@ export class ApiViewNavigation {
         throw new Error(`Navigation unsupported for "IntersectionExpression".`);
       case SyntaxKind.ProjectionModelExpression:
         throw new Error(`Navigation unsupported for "ProjectionModelExpression".`);
+      case SyntaxKind.ScalarStatement:
+        obj = objNode as ScalarStatementNode;
+        stack.push(obj.id.sv);
+        this.Text = obj.id.sv;
+        this.Tags = { TypeKind: ApiViewNavigationKind.Class };
+        this.ChildItems = [];
+        break;
       default:
         throw new Error(`Navigation unsupported for "${objNode.kind.toString()}".`);
     }

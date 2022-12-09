@@ -34,12 +34,12 @@ steps:
           exit $LASTEXITCODE
         }
 
-        # windows/osx? produce a zip, otherwise tar.gz
-        if ("${{ target.rid }}".StartsWith("win") -or "${{ target.rid }}".StartsWith("osx")){
-          Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
+        # produce a tar.gz only for linux
+        if ("${{ target.rid }}".Contains("linux")){
+          tar -cvzf "$($destinationPathSegment).tar.gz" "$sourcePath"
         }
         else {
-          tar -cvzf "$($destinationPathSegment).tar.gz" "$sourcePath"
+          Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
         }
 
         # clean up the uncompressed artifact directory

@@ -25,6 +25,7 @@ import {
   Program,
   Node,
   visitChildren,
+  ScalarStatementNode,
 } from "@cadl-lang/compiler";
 
 export class NamespaceModel {
@@ -40,6 +41,7 @@ export class NamespaceModel {
     | IntersectionExpressionNode
     | ProjectionModelExpressionNode
     | EnumStatementNode
+    | ScalarStatementNode
     | UnionStatementNode
     | UnionExpressionNode
   >();
@@ -51,6 +53,7 @@ export class NamespaceModel {
     | IntersectionExpressionNode
     | ProjectionModelExpressionNode
     | EnumStatementNode
+    | ScalarStatementNode
     | UnionStatementNode
     | UnionExpressionNode
   >();
@@ -93,6 +96,9 @@ export class NamespaceModel {
     for (const [unionName, un] of ns.unions) {
       this.models.set(unionName, un.node);
     }
+    for (const [scalarName, sc] of ns.scalars) {
+      this.models.set(scalarName, sc.node);
+    }
     for (const alias of findNodes(SyntaxKind.AliasStatement, program, ns)) {
       this.models.set(alias.id.sv, alias);
     }
@@ -103,9 +109,9 @@ export class NamespaceModel {
     }
 
     // sort operations and models
-    this.operations = new Map([...this.operations].sort());
-    this.resources = new Map([...this.resources].sort());
-    this.models = new Map([...this.models].sort());
+    this.operations = new Map([...this.operations].sort(caseInsenstiveSort));
+    this.resources = new Map([...this.resources].sort(caseInsenstiveSort));
+    this.models = new Map([...this.models].sort(caseInsenstiveSort));
   }
 
   /**
@@ -262,4 +268,10 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
   } else {
     return name;
   }
+}
+
+function caseInsenstiveSort(a: [string, any], b: [string, any]): number {
+  const aLower = a[0].toLowerCase();
+  const bLower = b[0].toLowerCase();
+  return aLower > bLower ? 1 : (aLower < bLower ? -1 : 0);
 }

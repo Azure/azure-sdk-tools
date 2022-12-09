@@ -143,6 +143,33 @@ describe("apiview: tests", () => {
     validateDefinitionIds(apiview);
   });
 
+  it("describes scalar", async () => {
+    const input = `
+    @Cadl.service( { title: "Test", version: "1" } )
+    namespace Azure.Test {
+      scalar Password extends string;
+
+      scalar ternary;
+
+      @doc(T)
+      scalar Unreal<T extends string>;
+    }
+    `;
+    const expect = `
+    namespace Azure.Test {
+      scalar Password extends string
+
+      scalar ternary
+      @doc(T)
+      scalar Unreal<T extends string>
+    }
+    `;
+    const apiview = await apiViewFor(input, {});
+    const actual = apiViewText(apiview);
+    compare(expect, actual, 9);
+    validateDefinitionIds(apiview);
+  });
+
   it("describes alias", async () => {
     const input = `
     @Cadl.service( { title: "Test", version: "1" } )

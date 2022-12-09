@@ -6,7 +6,7 @@
 """
 Pylint custom checkers for SDK guidelines: C4717 - C4749
 """
-
+import os
 import logging
 import astroid
 from pylint.checkers import BaseChecker
@@ -326,7 +326,8 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
 # also why do a lot of send_request not have distributed tracing? Ignore send_request for now 
 # delete_alias, search, _search_index_client -- has @distributed tracing --- says it doesnt, it is a sync distributed trace on an async function
 # storage filedatalake has a loottt
-
+import logging
+import sys
 class ClientMethodsHaveTracingDecorators(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -370,6 +371,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
     ignore_functions = ["send_request"]
     ignore_decorators = ["typing.overload", "builtins.classmethod", "azure.core.tracing.decorator.distributed_trace", 
         "azure.core.tracing.decorator_async.distributed_trace_async"]
+    ignore_internal = False
 
     def __init__(self, linter=None):
         super(ClientMethodsHaveTracingDecorators, self).__init__(linter)
@@ -384,18 +386,22 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         :type node: ast.FunctionDef
         :return: None
         """
+ 
         try:
-            if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
-                    node.parent.name not in self.ignore_clients:
-                if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
-                    and self.ignore_decorators[0] not in node.decoratornames() \
-                        and self.ignore_decorators[1] not in node.decoratornames() \
-                            and self.ignore_decorators[2] not in node.decoratornames():
-                    
-                    self.add_message(
-                        msgid="client-method-missing-tracing-decorator", node=node, confidence=None
-                    )
-        except AttributeError:
+            path = node.path
+            location = path.count("\_") + path.count("/_")
+            if location==0:
+                if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
+                        node.parent.name not in self.ignore_clients:
+                    if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
+                        and self.ignore_decorators[0] not in node.decoratornames() \
+                            and self.ignore_decorators[1] not in node.decoratornames() \
+                                and self.ignore_decorators[2] not in node.decoratornames():
+                        
+                        self.add_message(
+                            msgid="client-method-missing-tracing-decorator", node=node, confidence=None
+                        )
+        except:
             pass
 
     def visit_asyncfunctiondef(self, node):
@@ -409,17 +415,20 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         :return: None
         """
         try:
-            if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
-                    node.parent.name not in self.ignore_clients:
-                if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
-                    and self.ignore_decorators[0] not in node.decoratornames() \
-                        and self.ignore_decorators[1] not in node.decoratornames() \
-                            and self.ignore_decorators[3] not in node.decoratornames():
-                    
-                    self.add_message(
-                        msgid="client-method-missing-tracing-decorator-async", node=node, confidence=None
-                    )
-        except AttributeError:
+            path = node.path
+            location = path.count("\_") + path.count("/_")
+            if location==0:
+                if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
+                        node.parent.name not in self.ignore_clients:
+                    if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
+                        and self.ignore_decorators[0] not in node.decoratornames() \
+                            and self.ignore_decorators[1] not in node.decoratornames() \
+                                and self.ignore_decorators[3] not in node.decoratornames():
+                        
+                        self.add_message(
+                            msgid="client-method-missing-tracing-decorator-async", node=node, confidence=None
+                        )
+        except:
             pass
 
 

@@ -34,7 +34,7 @@ steps:
           exit $LASTEXITCODE
         }
 
-        # windows? produce a zip, otherwise tar.gz
+        # windows/osx? produce a zip, otherwise tar.gz
         if ("${{ target.rid }}".StartsWith("win") -or "${{ target.rid }}".StartsWith("osx")){
           Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
         }

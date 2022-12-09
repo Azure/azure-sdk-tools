@@ -25,4 +25,4 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/pipeline-generator
-    DotNetCoreVersion: 6.0.405
+    DotNetCoreVersion: 6.0.403

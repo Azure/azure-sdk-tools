@@ -352,7 +352,7 @@ namespace SwaggerApiParser
         /// <param name="scopeEnd"></param>
         private void VisitObject(JsonElement obj, string scopeStart = "{", string scopeEnd = "}")
         {
-            bool multiLine = !FitsOnOneLine(obj);
+            bool multiLine = AlwaysMultiLine(obj);
 
             using (this.Writer.Scope(scopeStart, scopeEnd, multiLine))
             {
@@ -427,7 +427,7 @@ namespace SwaggerApiParser
         /// <param name="scopeEnd"></param>
         private void VisitArray(JsonElement array, string scopeStart = "[ ", string scopeEnd = " ]")
         {
-            bool multiLine = !FitsOnOneLine(array);
+            bool multiLine = AlwaysMultiLine(array);
             using (this.Writer.Scope(scopeStart, scopeEnd, multiLine))
             {
                 int index = 0;
@@ -483,6 +483,11 @@ namespace SwaggerApiParser
                 default:
                     throw new InvalidOperationException($"Expected a literal JSON element, not {value.ValueKind}.");
             }
+        }
+        
+        private bool AlwaysMultiLine (JsonElement element)
+        {
+            return true;
         }
 
         /// <summary>

@@ -13,7 +13,6 @@ public class SwaggerApiViewResponse : ITokenSerializable
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
-        // ret.Add(TokenSerializer.Intent(context.intent));
         context.IteratorPath.Add(this.statusCode);
         ret.Add(TokenSerializer.NavigableToken(this.statusCode, CodeFileTokenKind.Keyword, context.IteratorPath.CurrentPath()));
         ret.Add(TokenSerializer.Colon());

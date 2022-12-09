@@ -164,7 +164,6 @@ namespace SwaggerApiParser
 
             if (schema.allOfProperities?.Count != 0 && schema.allOf != null)
             {
-                // ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken("allOf", CodeFileTokenKind.Keyword));
                 ret.Add(TokenSerializer.Colon());
                 ret.Add(TokenSerializer.NewLine());
@@ -234,7 +233,6 @@ namespace SwaggerApiParser
 
             foreach (var kv in properties)
             {
-                // ret.Add(TokenSerializer.Intent(context.intent));
                 ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.Literal));
                 ret.Add(TokenSerializer.Colon());
                 if (kv.Value == null)
@@ -258,7 +256,6 @@ namespace SwaggerApiParser
                 else if (kv.Value.Ref != null)
                 {
                     ret.Add(TokenSerializer.NewLine());
-                    // ret.Add(TokenSerializer.Intent(context.intent + 1));
                     ret.Add(new CodeFileToken("<", CodeFileTokenKind.Punctuation));
                     var refName = kv.Value.Ref;
                     ret.Add(new CodeFileToken(refName.Split("/").Last(), CodeFileTokenKind.TypeName));
@@ -308,12 +305,17 @@ namespace SwaggerApiParser
                 ret.Add(new CodeFileToken(refName.Split("/").Last(), CodeFileTokenKind.TypeName));
                 ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
                 ret.Add(TokenSerializer.NewLine());
+                
                 // circular reference
                 if (arraySchema.items.Ref != null)
                 {
                     return;
                 }
-                ret.AddRange(arraySchema.items.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), arraySchema.items, ref flattenedTableItems, serializeRef));
+
+                if (serializeRef)
+                {
+                    ret.AddRange(arraySchema.items.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), arraySchema.items, ref flattenedTableItems, serializeRef));
+                }
             }
         }
 
@@ -324,7 +326,6 @@ namespace SwaggerApiParser
                 retTableItems = new List<SchemaTableItem>();
                 this.TokenSerializeInternal(context, this, ref retTableItems, serializeRef);
             }
-            // var ret = this.TokenSerializeInternal(context, this, ref flattenedSchema);
         }
 
         public CodeFileToken[] TokenSerialize(SerializeContext context)

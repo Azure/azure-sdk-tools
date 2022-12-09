@@ -39,6 +39,9 @@ parameters:
   - name: StandaloneExeMatrix
     type: object
     default: []
+  - name: ReleaseBinaries
+    type: boolean
+    default: false
 
 variables:
   - template: ../variables/globals.yml

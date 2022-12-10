@@ -573,7 +573,7 @@ Services:
     - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --uamqp-transport --sync --warmup 30
     TestNames:
       Python: ProcessEventsBatchTest
-  - Test: send-event-batch
+  - Test: send
     Arguments:
     - --event-size 1024 --batch-size 100 --parallel 64
     TestNames:

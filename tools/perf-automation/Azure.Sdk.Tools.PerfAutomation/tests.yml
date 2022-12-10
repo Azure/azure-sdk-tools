@@ -575,7 +575,7 @@ Services:
       Python: ProcessEventsBatchTest
   - Test: send-event-batch
     Arguments:
-    - --body-size 1024 --batch-size 100 --warmup 2
+    - --event-size 1024 --batch-size 100 --parallel 64
     TestNames:
       JS: SendTest
   - Test: subscribe

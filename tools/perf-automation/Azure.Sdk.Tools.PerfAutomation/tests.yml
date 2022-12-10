@@ -580,7 +580,7 @@ Services:
       JS: SendTest
   - Test: subscribe
     Arguments:
-    - --events 100000 --event-size 1024 --partitions 10 --max-batch-size 100 --warmup 2
+    - --event-size 1024 --max-batch-size 100 --events 1000000
     TestNames:
       JS: SubscribeTest
 

@@ -25,4 +25,6 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/pipeline-generator
+    # As of 12/10/2022 this is a temporary override until the globally-set
+    # SDK is set to net6.0. For details, please see:
     DotNetCoreVersion: 6.0.403

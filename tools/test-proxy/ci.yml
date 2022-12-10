@@ -52,12 +52,12 @@ extends:
       - 'latest'
     ReleaseBinaries: true
     StandaloneExeMatrix:
-    # - rid: osx-x64
-    #   framework: net6.0
-    # - rid: osx-arm64
-    #   framework: net6.0
-    # - rid: win-x64
-    #   framework: net6.0
+    - rid: osx-x64
+      framework: net6.0
+    - rid: osx-arm64
+      framework: net6.0
+    - rid: win-x64
+      framework: net6.0
     - rid: linux-x64
       framework: net6.0
     - rid: linux-arm64

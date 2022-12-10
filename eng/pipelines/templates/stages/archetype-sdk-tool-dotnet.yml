@@ -146,4 +146,3 @@ stages:
             DockerDeployments: ${{ parameters.DockerDeployments }}
             ManifestDeployment: ${{ parameters.ManifestDeployment }}
             ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
-

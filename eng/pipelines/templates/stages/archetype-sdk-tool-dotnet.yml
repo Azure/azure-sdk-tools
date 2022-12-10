@@ -133,13 +133,13 @@ stages:
       parameters:
         # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
         DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
-        PublishBinariesToRelease: true
 
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'), eq(parameters['ReleaseBinaries'], 'true'))}}:
     - template: pipelines/stages/net-github-release-binaries.yml@azure-sdk-build-tools
       parameters:
         DependsOn: 'Release'
         ExeMatrix: ${{ parameters.StandaloneExeMatrix }}
+        Input1: $[ stageDependencies.Release.outputs['gitrelease.release'] ]
 
   - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - stage: PublishDockerImages

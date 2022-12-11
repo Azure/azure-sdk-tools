@@ -613,7 +613,7 @@ Services:
       JS: SubscribeTest
   - Test: receive-batch
     Arguments:
-    - --number-of-messages 10000 --body-size 2000 --max-message-count 50 --warmup 2
+    - --number-of-messages 10000 --message-size 2000 --max-message-count 50 --warmup 2
     TestNames:
       JS: BatchReceiveTest
 

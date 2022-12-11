@@ -608,7 +608,7 @@ Services:
       JS: BatchSendTest
   - Test: subscribe
     Arguments:
-    - --body-size 2000 --messages 10000 --mcc 1000 --warmup 2
+    - --message-size 2000 --messages 10000 --mcc 1000 --warmup 2
     TestNames:
       JS: SubscribeTest
   - Test: receive-batch

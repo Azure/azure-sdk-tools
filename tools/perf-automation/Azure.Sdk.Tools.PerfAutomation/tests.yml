@@ -603,7 +603,7 @@ Services:
   Tests:
   - Test: send-event-batch
     Arguments:
-    - --size 10240 --batch-size 10 --warmup 2
+    - --size 10240 --batch-size 10
     TestNames:
       JS: BatchSendTest
   - Test: subscribe

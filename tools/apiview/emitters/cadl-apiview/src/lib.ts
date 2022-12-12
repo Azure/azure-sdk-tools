@@ -1,7 +1,6 @@
 import { createCadlLibrary, JSONSchemaType, paramMessage } from "@cadl-lang/compiler";
 
 export interface ApiViewEmitterOptions {
-  "output-dir"?: string;
   "output-file"?: string;
   "namespace"?: string;
   "version"?: string;
@@ -11,7 +10,6 @@ const ApiViewEmitterOptionsSchema: JSONSchemaType<ApiViewEmitterOptions> = {
   type: "object",
   additionalProperties: false,
   properties: {
-    "output-dir": { type: "string", nullable: true },
     "output-file": { type: "string", nullable: true },
     "namespace": { type: "string", nullable: true },
     "version": {type: "string", nullable: true },

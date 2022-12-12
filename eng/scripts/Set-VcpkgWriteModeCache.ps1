@@ -5,7 +5,12 @@ param(
 ."$PSScriptRoot/../common/scripts/Helpers/PSModule-Helpers.ps1"
 
 Write-Host "`$env:PSModulePath = $($env:PSModulePath)"
-
+if ($StorageAccountKey) {
+    Write-Host "I am not empty"
+}
+else {
+    Write-Host "I am empty"
+}
 # Work around double backslash
 if ($IsWindows) {
     $hostedAgentModulePath = $env:SystemDrive + "\\Modules"

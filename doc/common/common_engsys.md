@@ -21,18 +21,21 @@ languages repos as they will be overwritten the next time an update is taken fro
 ## Workflow
 
 When you create a PR against `azure-sdk-tools` repo that changes contents of `eng/common` directory, the PR
-triggers an [`azure-sdk-tools - sync - eng-common` pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=1372&_a=summary) that will mirror all changes in `azure-sdk-tools eng/common` directory
+triggers an [`azure-sdk-tools - sync - eng-common` pipeline][pipeline] that will mirror all changes in `azure-sdk-tools eng/common` directory
 to the corresponding `eng/common` dirs in the language repositories. The pipeline also triggers language-repository-specific tests for you to review. This process of mirroring involves multiple stages and requires
-your manual review & approval before the changes are fully reflected to language repositories. Your approval is needed first to allow automatic creation of PRs, then to allow them being merged on your behalf.
+your manual reviews & approvals before the changes are fully reflected to language repositories. Your approval is needed first to allow automatic creation of PRs, then to allow them being merged on your behalf.
 
 This process is set up in such a way to make it easier for changes to be tested in each individual language repo before merging the changes in the `azure-sdk-tools` repo. The workflow is explained below:
 
 1. You create a PR (let's call it here the **Tools PR**) in the `azure-sdk-tools` repo with changes to `eng/common` directory.
-2. `azure-sdk-tools - sync - eng-common` pipeline is automatically triggered for the **Tools PR**.
-3. The  `azure-sdk-tools - sync - eng-common` pipeline queues test runs for template pipelines in various languages. These help you test your changes in the **Tools PR**. TODO
+2. [`azure-sdk-tools - sync - eng-common` pipeline][pipeline] is automatically triggered for the **Tools PR**.
+3. That pipeline queues test runs for template pipelines in various languages. These help you test your changes in the **Tools PR**. The pipeline also creates branches mirroring your changes, one branch per each language repository to whose `eng/common` dir the changes are mirrored. All of this is done in `Create Sync` stage (display name: `Sync eng/common Directory`) [of the pipeline .yml file][yml], specifically, the logic lives in `template: ./templates/steps/sync-directory.yml`.
 4. If there are changes in the **Tools PR** that will affect the release stage you should approve the release test pipelines by clicking the approval gate. The test (template) pipeline will automatically release the next eligible version without needing manual intervention for the versioning. Please approve your test releases as quickly as possible. A race condition may occur due to someone else queueing the pipeline and going all the way to release using your version while yours is still waiting. If this occurs manually rerun the pipeline that failed.
 5.  If you make additional changes to your **Tools PR** repeat steps 1 - 4 until you have completed the necessary testing of your changes. This includes full releases of the template package, if necessary.
 6. Sign off on CreateSyncPRs stage of the sync pipeline using the approval gate. This stage will create the **Sync PRs** in the various language repos. A link to each of the **Sync PRs** will show up in the **Tools PR** for you to click and review.
 7. Go review and approve each of your **Sync PRs**. For some repos (C and C++) you might need to frequently use the `Update Branch` button to get the checks green.
 8. Sign Off on the VerifyAndMerge stage. This will merge any remaining open **Sync PR** and also append `auto-merge` to the **Tools PR**.
    * If a **Sync PR** has any failing checks, it will need to be manually merged, even if `/check-enforcer override` has been run ([azure-sdk-tools#1147](https://github.com/Azure/azure-sdk-tools/issues/1147)).
+
+[pipeline]: https://dev.azure.com/azure-sdk/internal/_build?definitionId=1372&_a=summary
+[yml]: https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/eng-common-sync.yml

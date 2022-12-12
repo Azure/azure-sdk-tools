@@ -2079,8 +2079,37 @@ class TypePropertyNameTooLong(BaseChecker):
         except:
             pass      
 
+    visit_asyncfunctiondef = visit_functiondef
 
-    
+
+class DeleteOperationReturnStatement(BaseChecker):
+    """Rule to check that a delete* or begin_delete* returns None or LROPoller[None]."""
+    name = "delete-operation-wrong-return-type"
+    priority = -1
+    msgs = {
+        "C4752": (
+            "delete* or begin_delete* does not return None or LROPoller[None].",
+            "delete-operation-wrong-return-type",
+            "delete* or begin_delete* functions should return None or LROPoller[None]."
+        ),
+    }
+
+    def visit_return(self,node):
+        try:
+            if node.parent.name.startswith("delete") or node.parent.name.startswith("begin_delete"):
+                # with open("output.txt", "a") as f:
+                #     # f.write(node.value.infer())
+                #     f.write(node.value.infer())
+             
+                if node.value.infer()!= "LROPoller" and node.value.infer()!= "AsyncLROPoller" and node.value != None:
+                    self.add_message(
+                        msgid=f"delete-operation-wrong-return-type",
+                        node=node,
+                        confidence=None,
+                    )                    
+        except:
+            pass    
+
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
@@ -2107,6 +2136,7 @@ def register(linter):
     linter.register_checker(NonAbstractTransportImport(linter))
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     linter.register_checker(TypePropertyNameTooLong(linter))
+    linter.register_checker(DeleteOperationReturnStatement(linter))
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

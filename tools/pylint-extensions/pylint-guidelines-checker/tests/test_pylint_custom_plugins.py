@@ -3156,3 +3156,72 @@ class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
+class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
+    """Test that we are checking the type and property name lengths"""
+    CHECKER_CLASS = checker.TypePropertyNameTooLong
+
+    def test_class_name_too_long(self):
+        class_node = astroid.extract_node(
+        """
+            class ThisClassNameShouldEndUpBeingTooLongForAClient():
+                def __init__(self, **kwargs):
+                    pass
+        """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="name-too-long",
+                    line=2,
+                    node=class_node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=52
+                )
+        ):
+            self.checker.visit_classdef(class_node)
+
+    def test_variable_name_too_long(self):
+        class_node, function_node = astroid.extract_node(
+        """
+            class ClassNameGoodClient(): #@
+                def this_function_name_should_be_too_long_for_rule(self, **kwargs): #@
+                    pass
+
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="name-too-long",
+                    line=3,
+                    node=function_node,
+                    col_offset=4, 
+                    end_line=3, 
+                    end_col_offset=54
+                )
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_function_name_too_long(self):
+        class_node, function_node, property_node = astroid.extract_node(
+        """
+            class ClassNameGoodClient(): #@
+                def this_function_good(self, **kwargs): #@
+                    this_lists_name_is_too_long_to_work_with_linter_rule = [] #@
+
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="name-too-long",
+                    line=4,
+                    node=property_node,
+                    col_offset=8, 
+                    end_line=4, 
+                    end_col_offset=65
+                )
+        ):
+            self.checker.visit_functiondef(function_node)

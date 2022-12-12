@@ -6,7 +6,6 @@
 """
 Pylint custom checkers for SDK guidelines: C4717 - C4749
 """
-import os
 import logging
 import astroid
 from pylint.checkers import BaseChecker
@@ -326,8 +325,6 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
 # also why do a lot of send_request not have distributed tracing? Ignore send_request for now 
 # delete_alias, search, _search_index_client -- has @distributed tracing --- says it doesnt, it is a sync distributed trace on an async function
 # storage filedatalake has a loottt
-import logging
-import sys
 class ClientMethodsHaveTracingDecorators(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -2021,6 +2018,70 @@ class NonAbstractTransportImport(BaseChecker):
                         confidence=None,
                     )
 
+
+class TypePropertyNameTooLong(BaseChecker):
+    """Rule to check that the character length of type and property names are not over X characters."""
+    name = "name-too-long"
+    priority = -1
+    msgs = {
+        "C4751": (
+            "Name is over standard character length.",
+            "name-too-long",
+            "Only use names that are less than X characters."
+        ),
+    }
+    # Need to determine the length we want here
+    STANDARD_CHARACTER_LENGTH = 25
+
+    def visit_classdef(self,node):
+        try:
+            if len(node.name) > self.STANDARD_CHARACTER_LENGTH:
+                self.add_message(
+                    msgid=f"name-too-long",
+                    node=node,
+                    confidence=None,
+                )
+            # for n in node.body:
+            #     self.visit_functiondef(n)
+        except:
+            pass
+
+
+    def visit_functiondef(self, node):
+        try:
+            if len(node.name) > self.STANDARD_CHARACTER_LENGTH:
+                self.add_message(
+                    msgid=f"name-too-long",
+                    node=node,
+                    confidence=None,
+                )
+        except:
+            pass
+    
+        try:
+            for i in node.body:
+                try:
+                    if len(i.name) > self.STANDARD_CHARACTER_LENGTH:
+                        self.add_message(
+                            msgid=f"name-too-long",
+                            node=i,
+                            confidence=None,
+                        )        
+                except:
+                    for j in i.targets:
+                        name = j.name
+                        if len(name) > self.STANDARD_CHARACTER_LENGTH:
+                            self.add_message(
+                                msgid=f"name-too-long",
+                                node=i,
+                                confidence=None,
+                            )          
+        except:
+            pass      
+
+
+    
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2045,6 +2106,7 @@ def register(linter):
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
     linter.register_checker(NonAbstractTransportImport(linter))
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
+    linter.register_checker(TypePropertyNameTooLong(linter))
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

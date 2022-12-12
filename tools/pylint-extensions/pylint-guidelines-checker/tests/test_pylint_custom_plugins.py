@@ -3225,3 +3225,27 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
                 )
         ):
             self.checker.visit_functiondef(function_node)
+
+
+class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
+    """Test that we are checking the return type of delete functions is correct"""
+    CHECKER_CLASS = checker.DeleteOperationReturnStatement
+
+    def test_class_name_too_long(self):
+        function_node, return_node = astroid.extract_node(
+        """
+            def delete_some_function(self, **kwargs): #@
+                return "this is not nothing" #@
+        """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="delete-operation-wrong-return-type",
+                    line=3,
+                    node=return_node,
+                    col_offset=4, 
+                    end_line=3, 
+                    end_col_offset=32
+                )
+        ):
+            self.checker.visit_return(return_node)

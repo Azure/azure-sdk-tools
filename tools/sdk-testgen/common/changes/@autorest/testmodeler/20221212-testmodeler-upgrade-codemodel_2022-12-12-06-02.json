@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/testmodeler",
+      "comment": "Upgrade @autorest/codemodel to 4.19.2",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/testmodeler"
+}

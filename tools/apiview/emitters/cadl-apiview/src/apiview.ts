@@ -23,6 +23,7 @@ import {
   OperationSignatureReferenceNode,
   OperationStatementNode,
   Program,
+  ScalarStatementNode,
   StringLiteralNode,
   SyntaxKind,
   TemplateParameterDeclarationNode,
@@ -514,6 +515,9 @@ export class ApiView {
         obj = node as StringLiteralNode;
         this.stringLiteral(obj.value);
         break;
+      case SyntaxKind.ScalarStatement:
+        this.tokenizeScalarStatement(node as ScalarStatementNode);
+        break;
       case SyntaxKind.TemplateParameterDeclaration:
         obj = node as TemplateParameterDeclarationNode;
         this.tokenize(obj.id);
@@ -611,6 +615,20 @@ export class ApiView {
     } else {
       this.punctuation("{}", true, false);
     }
+    this.namespaceStack.pop();
+  }
+
+  private tokenizeScalarStatement(node: ScalarStatementNode) {
+    this.namespaceStack.push(node.id.sv);
+    this.tokenizeDecorators(node.decorators, false);
+    this.keyword("scalar", false, true);
+    this.tokenizeIdentifier(node.id, "declaration");
+    if (node.extends != undefined) {
+      this.keyword("extends", true, true);
+      this.tokenize(node.extends);
+    }
+    this.tokenizeTemplateParameters(node.templateParameters);
+    this.blankLines(0);
     this.namespaceStack.pop();
   }
 

@@ -1,6 +1,9 @@
 # Release History
 
-## Verison 0.3.0 (Unreleased)
+## Version 0.3.1 (12-9-2022)
+Support Cadl scalars.
+
+## Version 0.3.0 (11-15-2022)
 Add support for aliases and augment decorators.
 
 ## Version 0.2.1 (10-27-2022)

@@ -29,7 +29,7 @@ pr:
       - tools/apiview/parsers/js-api-parser
 
 variables:
-  DotNetRuntimeVersion: '3.1.x'
+  DotNetRuntimeVersion: '6.x'
   PythonVersion: '3.10.5'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
@@ -183,20 +183,9 @@ stages:
               pwsh: true
             displayName: 'Start Azurite'
 
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core sdk 3.1.x'
+          - task: UseDotNet@2
+            displayName: 'Install .NET'
             inputs:
-              version: '3.1.x'
-          
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core sdk 5.x'
-            inputs:
-              version: '5.x'
-
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core $(DotNetRuntimeVersion)'
-            inputs:
-              packageType: runtime
               version: '$(DotNetRuntimeVersion)'
 
           - task: DotNetCoreCLI@2

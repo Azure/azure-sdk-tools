@@ -26,6 +26,9 @@ namespace APIViewWeb.Pages.Assemblies
         [FromForm]
         public string Label { get; set; }
 
+        [FromForm]
+        public string FilePath { get; set; }
+
         public async Task<IActionResult> OnGetAsync(string id)
         {
             TempData["Page"] = "revisions";
@@ -46,6 +49,10 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 var openReadStream = upload.OpenReadStream();
                 await _manager.AddRevisionAsync(User, id, upload.FileName, Label, openReadStream);
+            }
+            else
+            {
+                await _manager.AddRevisionAsync(User, id, FilePath, Label, null);
             }
 
             return RedirectToPage();

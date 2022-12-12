@@ -11,9 +11,9 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
     [TestFixture]
     public class MainTests
     {
-        private const string codeOwnerFilePath = "CODEOWNERS";
+        private const string CodeOwnersFilePath = "CODEOWNERS";
 
-        private static readonly object[] _sourceLists =
+        private static readonly object[] sourceLists =
         {
             new object[] {"sdk", false, new List<string> { "person1", "person2" } },
             new object[] { "/sdk", false, new List<string> { "person1", "person2" } },
@@ -24,14 +24,13 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
             new object[] { "/sd", true, new List<string>() }
         };
 
-        [TestCaseSource("_sourceLists")]
-        public void TestOnNormalOuput(string targetDirectory, bool includeUserAliasesOnly, List<string> expectedReturn)
+        [TestCaseSource(nameof(sourceLists))]
+        public void TestOnNormalOutput(string targetDirectory, bool includeUserAliasesOnly, List<string> expectedReturn)
         {
-            
             using (var consoleOutput = new ConsoleOutput())
             {
-                Program.Main(codeOwnerFilePath, targetDirectory, includeUserAliasesOnly);
-                var output = consoleOutput.GetOuput();
+                Program.Main(CodeOwnersFilePath, targetDirectory, includeUserAliasesOnly);
+                var output = consoleOutput.GetOutput();
                 TestExpectResult(expectedReturn, output);
                 consoleOutput.Dispose();
             }
@@ -45,10 +44,10 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
             Assert.AreEqual(1, Program.Main(codeOwnerPath, "sdk"));
         }
 
-        private void TestExpectResult(List<string> expectReturn, string output)
+        private static void TestExpectResult(List<string> expectReturn, string output)
         {
             CodeOwnerEntry codeOwnerEntry = JsonSerializer.Deserialize<CodeOwnerEntry>(output);
-            List<string> actualReturn = codeOwnerEntry.Owners;
+            List<string> actualReturn = codeOwnerEntry!.Owners;
             Assert.AreEqual(expectReturn.Count, actualReturn.Count);
             for (int i = 0; i < actualReturn.Count; i++)
             {

@@ -31,7 +31,7 @@ namespace APIViewWeb.Pages.Assemblies
             var requestedReviews = await _manager.GetRequestedReviews(User.GetGitHubLogin());
             ActiveReviews = requestedReviews.Where(r => r.IsApproved == false).OrderByDescending(r => r.ApprovalRequestedOn);
             // Remove all approvals over a week old
-            ApprovedReviews = requestedReviews.Where(r => r.IsApproved == true).Where(r => r.ApprovalDate != null).Where(r => r.ApprovalDate >= DateTime.Now.AddDays(-7)).OrderByDescending(r => r.ApprovalDate);
+            ApprovedReviews = requestedReviews.Where(r => r.IsApproved == true).Where(r => r.ApprovalDate >= DateTime.Now.AddDays(-7)).OrderByDescending(r => r.ApprovalDate);
             return Page();
         }
     }

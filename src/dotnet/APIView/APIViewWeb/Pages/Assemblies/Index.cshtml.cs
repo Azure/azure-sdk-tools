@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Azure;
 using System.Security.Claims;
 using APIViewWeb.Managers;
+using Octokit;
+using Microsoft.TeamFoundation.Common;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -82,15 +84,20 @@ namespace APIViewWeb.Pages.Assemblies
                 return RedirectToPage();
             }
 
-            var file = Upload.Files.SingleOrDefault();
+            var file = Upload.Files?.SingleOrDefault();
 
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    var reviewModel = await _manager.CreateReviewAsync(User, file.FileName, Label, openReadStream, Upload.RunAnalysis);
+                    var reviewModel = await _manager.CreateReviewAsync(User, file.FileName, Label, openReadStream, Upload.RunAnalysis, langauge: Upload.Language);
                     return RedirectToPage("Review", new { id = reviewModel.ReviewId });
                 }
+            }
+            else if (!Upload.FilePath.IsNullOrEmpty())
+            {
+                var reviewModel = await _manager.CreateReviewAsync(User, Upload.FilePath, Label, null, Upload.RunAnalysis, langauge: Upload.Language);
+                return RedirectToPage("Review", new { id = reviewModel.ReviewId });
             }
 
             return RedirectToPage();

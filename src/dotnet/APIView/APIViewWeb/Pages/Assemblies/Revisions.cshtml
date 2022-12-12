@@ -31,12 +31,21 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <div class="form-group">
-                                <div class="custom-file">
-                                    <input name="upload" type="file" class="custom-file-input">
-                                    <label for="upload" class="custom-file-label">Select file to add</label>
+                            @if (Model.Review.Language != "Cadl")
+                            {
+                                <div class="form-group">
+                                    <div class="custom-file">
+                                        <input name="upload" type="file" class="custom-file-input">
+                                        <label for="upload" class="custom-file-label">Select file to add</label>
+                                    </div>
                                 </div>
-                            </div>
+                            }
+                            else
+                            {
+                                <div class="form-group package-selector">
+                                    <input asp-for="FilePath" class="form-control" type="text" placeholder="Enter URL to package root source. For e.g. URL to CADL file">
+                                </div>
+                            }
                             <div>
                                 <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional revision label">
                             </div>

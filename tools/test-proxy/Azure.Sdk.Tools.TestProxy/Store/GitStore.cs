@@ -85,6 +85,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task Push(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
+
+            var initialized = IsAssetsRepoInitialized(config);
+
+            if (!initialized)
+            {
+                _consoleWrapper.WriteLine($"The targeted assets.json \"{config.AssetsJsonRelativeLocation}\" has not been restored prior to attempting push. " +
+                    $"Are you certain you're pushing the correct assets.json? Please invoke \'test-proxy restore \"{config.AssetsJsonRelativeLocation}\"\' prior to invoking a push operation.");
+
+                Environment.ExitCode = -1;
+                return;
+            }
+
             var pendingChanges = DetectPendingChanges(config);
             var generatedTagName = config.TagPrefix;
 
@@ -622,7 +634,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new DirectoryEvaluation()
             {
                 AssetsJsonPresent = File.Exists(assetsJsonLocation),
-                IsGitRoot = File.Exists(gitLocation) || Directory.Exists(gitLocation),
+                IsGitRoot = Directory.Exists(gitLocation) || File.Exists(gitLocation),
                 IsRoot = new DirectoryInfo(directoryPath).Parent == null
             };
         }

@@ -1,8 +1,9 @@
 lockfileVersion: 5.3
 
 specifiers:
-  '@autorest/extension-base': ~3.4.4
-  '@azure-tools/codegen': ~2.9.0
+  '@autorest/codemodel': ^4.19.2
+  '@autorest/extension-base': ^3.5.0
+  '@azure-tools/codegen': ^2.9.1
   '@rush-temp/testmodeler': file:./projects/testmodeler.tgz
   '@types/jest': ^26.0.24
   '@types/lodash': ~4.14.176
@@ -30,7 +31,8 @@ specifiers:
   yuml2svg: ^5.0.1
 
 dependencies:
-  '@autorest/extension-base': 3.4.4
+  '@autorest/codemodel': 4.19.2
+  '@autorest/extension-base': 3.5.0
   '@azure-tools/codegen': 2.9.1
   '@rush-temp/testmodeler': file:projects/testmodeler.tgz
   '@types/jest': 26.0.24
@@ -102,16 +104,16 @@ packages:
       z-schema: 5.0.3
     dev: false
 
-  /@autorest/codemodel/4.18.2:
-    resolution: {integrity: sha512-xnGbxU2xvqtyIQYYwsEZsK+w2MmavbUrQdk1/sLPhjT+cQ5R6VUc5PX1ZTmPzBZWc/utiaAurxFC65J5J/uSgA==}
+  /@autorest/codemodel/4.19.2:
+    resolution: {integrity: sha512-MENLWZxm4bcoJJw20egNeD4nmuhVUOftoIAMgCx+Qicb32sJxJiPBD6L7rjPjmSWlDQe8hP6vWc4Ig1ncZ3J4g==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@azure-tools/codegen': 2.9.1
       js-yaml: 4.0.0
     dev: false
 
-  /@autorest/extension-base/3.4.4:
-    resolution: {integrity: sha512-u7+3GGzeYwFcafjt8gmpt0JM56UCdgP3Okhb23i5jhoc+5v7AWPEi00n5YmMb27OcR8wNDkb1jqtDjjeTnUHeQ==}
+  /@autorest/extension-base/3.5.0:
+    resolution: {integrity: sha512-G+jRTAm9Zd0GRpj6Slsj7QPQDKuy4SFtnuWT7XTcCOJ/R5FU3jPBC73J57Jd4S2SDnlAnWmmX12IeBy/XqJFTw==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@azure-tools/codegen': 2.9.1
@@ -137,7 +139,7 @@ packages:
     dependencies:
       '@azure-tools/async-io': 3.0.254
       js-yaml: 4.0.0
-      semver: 7.3.5
+      semver: 7.3.7
     dev: false
 
   /@azure-tools/openapi-tools-common/1.2.2:
@@ -4540,7 +4542,7 @@ packages:
       jest-resolve: 26.6.2
       natural-compare: 1.4.0
       pretty-format: 26.6.2
-      semver: 7.3.5
+      semver: 7.3.7
     dev: false
 
   /jest-util/26.6.2:
@@ -5438,7 +5440,7 @@ packages:
     dependencies:
       growly: 1.3.0
       is-wsl: 2.2.0
-      semver: 7.3.5
+      semver: 7.3.7
       shellwords: 0.1.1
       uuid: 8.3.2
       which: 2.0.2
@@ -5502,7 +5504,7 @@ packages:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.8.1
-      semver: 7.3.5
+      semver: 7.3.7
       validate-npm-package-license: 3.0.4
     dev: false
 
@@ -6188,7 +6190,7 @@ packages:
     dev: false
 
   /proper-lockfile/2.0.1:
-    resolution: {integrity: sha1-FZ+wYZPTIAP0s2kd0uwaY0qoDR0=}
+    resolution: {integrity: sha512-rjaeGbsmhNDcDInmwi4MuI6mRwJu6zq8GjYCLuSuE7GF+4UjgzkL69sVKKJ2T2xH61kK7rXvGYpvaTu909oXaQ==}
     engines: {node: '>=4.0.0'}
     dependencies:
       graceful-fs: 4.2.10
@@ -6459,7 +6461,7 @@ packages:
     dev: false
 
   /retry/0.10.1:
-    resolution: {integrity: sha1-52OI0heZLCUnUCQdPTlW/tmNj/Q=}
+    resolution: {integrity: sha512-ZXUSQYTHdl3uS7IuCehYfMzKyIDBNoAuUblvy5oGO5UJSUTmStUUVPXbA9Qxd173Bgre53yCQczQuHgRWAdvJQ==}
     dev: false
 
   /retry/0.13.1:
@@ -7743,12 +7745,12 @@ packages:
     dev: false
 
   file:projects/testmodeler.tgz:
-    resolution: {integrity: sha512-gjxIarUc6Kwn3udPsOMKGvgQmN7AJ3zvXxSguYj7NeyhLEew1MkyHobIhgHuq3aBE5t0U0GfbpvDfK6tGLHvtA==, tarball: file:projects/testmodeler.tgz}
+    resolution: {integrity: sha512-JI5JwL4SQWPiR2FbnjP4DQv8fo3PQifwGQaoqsANVeEj+vSki95fzUbe7hkMCPdG14wmZuho7KB+S9ui4Q5NxA==, tarball: file:projects/testmodeler.tgz}
     name: '@rush-temp/testmodeler'
     version: 0.0.0
     dependencies:
-      '@autorest/codemodel': 4.18.2
-      '@autorest/extension-base': 3.4.4
+      '@autorest/codemodel': 4.19.2
+      '@autorest/extension-base': 3.5.0
       '@azure-tools/codegen': 2.9.1
       '@types/jest': 26.0.24
       '@types/lodash': 4.14.181

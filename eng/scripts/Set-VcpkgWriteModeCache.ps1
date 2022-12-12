@@ -3,7 +3,12 @@ param(
 )
 
 ."$PSScriptRoot/../common/scripts/Helpers/PSModule-Helpers.ps1"
-
+if ($StorageAccountKey) {
+    Write-Host "I am not empty"
+}
+else {
+    Write-Host "I am empty"
+}
 Write-Host "`$env:PSModulePath = $($env:PSModulePath)"
 
 # Work around double backslash

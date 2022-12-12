@@ -26,4 +26,7 @@ extends:
   parameters:
     PackageDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/swagger-api-parser/SwaggerApiParser
     TestDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/swagger-api-parser/SwaggerApiParserTest
-    SkipDotNetInstall: true
+    # As of 12/11/2022 this is a temporary override until the globally-set
+    # SDK is set to net6.0. For details, please see:
+    # https://github.com/Azure/azure-sdk-tools/pull/4916
+    DotNetCoreVersion: 6.0.403

@@ -30,7 +30,7 @@ extends:
     # SDK is set to net6.0. For details, please see:
     # https://github.com/Azure/azure-sdk-tools/pull/4916
     DotNetCoreVersion: 6.0.403
-    # As of 12/11/2022 temporarily TestPostSteps disabling because the
+    # As of 12/11/2022 temporarily disabling TestPostSteps because the
     # get-codeowners.ps1 script uses the codeowners-parser NuGet package
     # which has net5.0, not net6.0, which causes it to fail. 
     #

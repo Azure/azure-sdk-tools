@@ -3231,7 +3231,7 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
     """Test that we are checking the return type of delete functions is correct"""
     CHECKER_CLASS = checker.DeleteOperationReturnStatement
 
-    def test_class_name_too_long(self):
+    def test_delete_operation(self):
         function_node, return_node = astroid.extract_node(
         """
             def delete_some_function(self, **kwargs): #@

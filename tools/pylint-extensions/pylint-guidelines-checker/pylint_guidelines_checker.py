@@ -2162,7 +2162,38 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
                 msgid=f"no-raise-with-traceback", node=node, confidence=None
             )
 
+# under install requires
+class SetupNoMsrestNeedsIsodate(BaseChecker):
+    """Rule to check that the setup.py does not contain msrest and should have isodate."""
+    name = "no-msrest-use-isodate"
+    priority = -1
+    msgs = {
+        "C4755": (
+            "Setup.py should not contain msrest, should contain isodate.",
+            "no-msrest-use-isodate",
+            "Setup.py should not contain msrest, should contain isodate."
+        ),
+    }  
+    isodate = False
+    msrest = False
+    
 
+    def visit_moduledef(self, node):
+        try:
+            if node.file.startswith("setup.py"):
+                for keyword in node.body[-1].value.keywords:
+                    if keyword.arg == 'install_requires':
+                        for el in keyword.value.elts:
+                            if "msrest" in el.value:
+                                self.msrest = True
+                            if "isodate" in el.value:
+                                self.isodate = True
+                if self.msrest or not self.isodate:
+                    self.add_message(
+                        msgid=f"no-msrest-use-isodate", node=node, confidence=None
+                    )        
+        except:
+            pass                   
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
@@ -2191,6 +2222,7 @@ def register(linter):
     linter.register_checker(TypePropertyNameTooLong(linter))
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
+    # linter.register_checker(SetupNoMsrestNeedsIsodate(linter)) 
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

@@ -20,15 +20,12 @@ namespace APIViewWeb
                     config.AddUserSecrets(typeof(Program).Assembly);
                     IConfiguration settings = config.Build();
                     string connectionString = settings.GetValue<string>("APPCONFIG");
-                    string clientID = settings.GetValue<string>("APPCONFIG_CLIENT_ID");
-                    string tenantId = settings.GetValue<string>("APPCONFIG_TENANT_ID");
-                    string clientSecret = settings.GetValue<string>("APPCONFIG_CLIENT_SECRET");
                     // Load configuration from Azure App Configuration
                     config.AddAzureAppConfiguration(options =>
                     {
                         options.Connect(connectionString).ConfigureKeyVault(kv => 
                         { 
-                            kv.SetCredential(new ClientSecretCredential(tenantId, clientID, clientSecret));
+                            kv.SetCredential(new DefaultAzureCredential());
                         });
                     });
                 })

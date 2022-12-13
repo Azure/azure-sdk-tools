@@ -44,15 +44,30 @@ Services:
       Project: sdk/test-utils/perfstress
       PackageVersions:
       - '@azure/test-utils-perfstress': source
+    Python:
+      Project: sdk/storage/azure-storage-blob
+      PrimaryPackage: azure-storage-blob
+      PackageVersions:
+      - azure-core: 1.26.1
+        azure-storage-blob: 12.14.1
+      - azure-core: source
+        azure-storage-blob: source
   Tests:
   - Test: no-op
     Arguments:
-    - --cpus 1
-    - --cpus 0
+    - --parallel 4 --processes 1
+    - --parallel 4 --processes 2
+    - --parallel 4 --processes 3
+    - --parallel 4 --processes 4
+    - --parallel 4 --processes 1 --sync
+    - --parallel 4 --processes 2 --sync
+    - --parallel 4 --processes 3 --sync
+    - --parallel 4 --processes 4 --sync
     TestNames:
       Net: NoOp
       Java: noop
       JS: NoOp
+      Python: NoOpTest
 
 - Service: core
   Languages:

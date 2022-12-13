@@ -8,7 +8,7 @@ param (
 )
 
 Start-Process $Process -PassThru -ArgumentList $ArgumentList
-$timeout = 100
+$timeout = 150
 do
 {
   Start-Sleep -Seconds 2

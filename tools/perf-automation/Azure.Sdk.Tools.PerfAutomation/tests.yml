@@ -48,7 +48,9 @@ Services:
   - Test: no-op
     Arguments:
     - --parallel 4 --cpus 1
-    - --parallel 4 --cpus 0
+    - --parallel 4 --cpus 2
+    - --parallel 4 --cpus 3
+    - --parallel 4 --cpus 4
     TestNames:
       Net: NoOp
       Java: noop

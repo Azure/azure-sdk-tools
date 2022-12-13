@@ -1095,56 +1095,6 @@ class ClientConstructorDoesNotHaveConnectionStringParam(BaseChecker):
             pass
 
 
-class PackageNameDoesNotUseUnderscoreOrPeriod(BaseChecker):
-    __implements__ = IAstroidChecker
-
-    name = "package-name-incorrect"
-    priority = -1
-    msgs = {
-        "C4737": (
-            "Package name should not use an underscore or period. Replace with dash (-). See details: "
-            "https://azure.github.io/azure-sdk/python_design.html#packaging",
-            "package-name-incorrect",
-            "Package name should use dashes instead of underscore or period.",
-        ),
-    }
-    options = (
-        (
-            "ignore-package-name-incorrect",
-            {
-                "default": False,
-                "type": "yn",
-                "metavar": "<y_or_n>",
-                "help": "Allow package name to have a different naming convention.",
-            },
-        ),
-    )
-
-    def __init__(self, linter=None):
-        super(PackageNameDoesNotUseUnderscoreOrPeriod, self).__init__(linter)
-
-    def visit_module(self, node):
-        """Visits setup.py and checks that its package name follows correct naming convention.
-
-        :param node: module node
-        :type node: ast.Module
-        :return: None
-        """
-        try:
-            if node.file.endswith("setup.py"):
-                for nod in node.body:
-                    if isinstance(nod, astroid.Assign):
-                        if nod.targets[0].name == "PACKAGE_NAME":
-                            package = nod.value
-                            if package.value.find(".") != -1 or package.value.find("_") != -1:
-                                self.add_message(
-                                    msgid="package-name-incorrect", node=node, confidence=None
-                                )
-        except Exception:
-            logger.debug("Pylint custom checker failed to check if package name is correct.")
-            pass
-
-
 class ServiceClientUsesNameWithClientSuffix(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -1947,6 +1897,8 @@ class CheckNamingMismatchGeneratedCode(BaseChecker):
 
 # showed up in azure.core.rest _requests_basic.py --- shouldnt do that
 class NonCoreNetworkImport(BaseChecker):
+    __implements__ = IAstroidChecker
+
     """There are certain imports that should only occur in the core package.
     For example, instead of using `requests` to make requests, clients should
     take a `azure.core.pipeline.Pipeline` as input to make requests.
@@ -1990,6 +1942,8 @@ class NonCoreNetworkImport(BaseChecker):
 # in storage fileshare: from azure.core.pipeline.transport import AioHttpTransport
 # in storage queue: from azure.core.pipeline.transport import RequestsTransport, HttpTransport
 class NonAbstractTransportImport(BaseChecker):
+    __implements__ = IAstroidChecker
+
     """Rule to check that we aren't importing transports outside of `azure.core.pipeline.transport`.
     Transport selection should be up to `azure.core` or the end-user, not individual SDKs.
     """
@@ -2020,6 +1974,8 @@ class NonAbstractTransportImport(BaseChecker):
 
 
 class TypePropertyNameTooLong(BaseChecker):
+    __implements__ = IAstroidChecker
+
     """Rule to check that the character length of type and property names are not over X characters."""
     name = "name-too-long"
     priority = -1
@@ -2083,6 +2039,8 @@ class TypePropertyNameTooLong(BaseChecker):
 
 
 class DeleteOperationReturnStatement(BaseChecker):
+    __implements__ = IAstroidChecker
+
     """Rule to check that a delete* or begin_delete* returns None or LROPoller[None]."""
     name = "delete-operation-wrong-return-type"
     priority = -1
@@ -2111,6 +2069,8 @@ class DeleteOperationReturnStatement(BaseChecker):
             pass    
 
 class AsyncMethodsReturnAsyncIterables(BaseChecker):
+    __implements__ = IAstroidChecker
+
     """Rule to check that an async method returns an async iterable."""
     name = "async-return-async-iterable"
     priority = -1
@@ -2136,6 +2096,8 @@ class AsyncMethodsReturnAsyncIterables(BaseChecker):
             pass
 
 class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
+    __implements__ = IAstroidChecker
+
     """Rule to check that we don't use raise_with_traceback in azure core."""
     name = "no-raise-with-traceback"
     priority = -1
@@ -2162,8 +2124,9 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
                 msgid=f"no-raise-with-traceback", node=node, confidence=None
             )
 
-# under install requires
 class SetupNoMsrestNeedsIsodate(BaseChecker):
+    __implements__ = IAstroidChecker
+
     """Rule to check that the setup.py does not contain msrest and should have isodate."""
     name = "no-msrest-use-isodate"
     priority = -1
@@ -2180,7 +2143,7 @@ class SetupNoMsrestNeedsIsodate(BaseChecker):
 
     def visit_moduledef(self, node):
         try:
-            if node.file.startswith("setup.py"):
+            if node.file.endswith("setup.py"):
                 for keyword in node.body[-1].value.keywords:
                     if keyword.arg == 'install_requires':
                         for el in keyword.value.elts:
@@ -2222,7 +2185,7 @@ def register(linter):
     linter.register_checker(TypePropertyNameTooLong(linter))
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
-    # linter.register_checker(SetupNoMsrestNeedsIsodate(linter)) 
+    linter.register_checker(SetupNoMsrestNeedsIsodate(linter)) 
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

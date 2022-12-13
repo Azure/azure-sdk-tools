@@ -2,13 +2,13 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
-      "version": "2.3.3",
-      "tag": "@autorest/testmodeler_v2.3.3",
+      "version": "2.4.0",
+      "tag": "@autorest/testmodeler_v2.4.0",
       "date": "Mon, 12 Dec 2022 06:18:04 GMT",
       "comments": {
         "patch": [
           {
-            "comment": "Upgrade @autorest/codemodel to 4.19.2"
+            "comment": "Upgrade @autorest/codemodel to 4.19.2, and use modelerfour@4.25.0"
           }
         ]
       }

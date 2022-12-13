@@ -67,16 +67,16 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
             await RateLimitUtil.writeRateLimits(gitHubClient, "RateLimit after fetching PR files with PageSize 100:");
         }
 
-        internal static async Task UpdatePRLabel(GitHubClient gitHubClient, string rawJson)
-        {
-            var serializer = new SimpleJsonSerializer();
-            PullRequestEventGitHubPayload prEventPayload = serializer.Deserialize<PullRequestEventGitHubPayload>(rawJson);
+        //internal static async Task UpdatePRLabel(GitHubClient gitHubClient, string rawJson)
+        //{
+        //    var serializer = new SimpleJsonSerializer();
+        //    PullRequestEventGitHubPayload prEventPayload = serializer.Deserialize<PullRequestEventGitHubPayload>(rawJson);
 
-            var issueUpdate = CreateIssueUpdateForPR(prEventPayload);
-            issueUpdate.AddLabel("enhancement");
-            //await gitHubClient.Issue.Update(507980610, 8, issueUpdate);
-            await gitHubClient.Issue.Update(prEventPayload.Repository.Id, prEventPayload.Number, issueUpdate);
-        }
+        //    var issueUpdate = IssueUtils.GetIssueUpdate(prEventPayload);
+        //    issueUpdate.AddLabel("enhancement");
+        //    //await gitHubClient.Issue.Update(507980610, 8, issueUpdate);
+        //    await gitHubClient.Issue.Update(prEventPayload.Repository.Id, prEventPayload.Number, issueUpdate);
+        //}
 
         internal static async Task DismissPullRequestApprovals(GitHubClient gitHubClient, string rawJson)
         {
@@ -96,56 +96,6 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
                 }
             }
             return;
-        }
-
-        /// <summary>
-        /// Create an IssueUpdate for a PR. For Issues, creating an IssueUpdate is done calling
-        /// Issue.ToUpdate() on the Issue contained within the IssueEventGitHubPayload which
-        /// create an IssueUpdate prefilled with information from the issue. For PRs, there is no
-        /// such call to create an IssueUpdate. The IssueUpdate needs this prefilled information
-        /// otherwise, 
-        /// </summary>
-        /// <param name="prEventPayload"></param>
-        /// <returns></returns>
-        public static IssueUpdate CreateIssueUpdateForPR(PullRequestEventGitHubPayload prEventPayload)
-        {
-            var milestoneId = prEventPayload.PullRequest.Milestone == null
-                ? new int?()
-                : prEventPayload.PullRequest.Milestone.Number;
-
-            var assignees = prEventPayload.PullRequest.Assignees == null
-                ? null
-                : prEventPayload.PullRequest.Assignees.Select(x => x.Login);
-
-            var labels = prEventPayload.PullRequest.Labels == null
-            ? null
-                : prEventPayload.PullRequest.Labels.Select(x => x.Name);
-
-            ItemState state;
-            var issueUpdate = new IssueUpdate
-            {
-                Body = prEventPayload.PullRequest.Body,
-                Milestone = milestoneId,
-                State = (prEventPayload.PullRequest.State.TryParse(out state) ? (ItemState?)state : null),
-                Title = prEventPayload.PullRequest.Title
-            };
-
-            if (assignees != null)
-            {
-                foreach (var assignee in assignees)
-                {
-                    issueUpdate.AddAssignee(assignee);
-                }
-            }
-
-            if (labels != null)
-            {
-                foreach (var label in labels)
-                {
-                    issueUpdate.AddLabel(label);
-                }
-            }
-            return issueUpdate;
         }
     }
 }

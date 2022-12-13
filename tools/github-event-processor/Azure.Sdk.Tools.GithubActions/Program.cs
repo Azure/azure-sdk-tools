@@ -34,7 +34,9 @@ namespace Azure.Sdk.Tools.GithubEventProcessor
             string rawJson = File.ReadAllText(args[1]);
             GitHubClient gitHubClient = GitHubClientCreator.createClientWithGitHubEnvToken("azure-sdk-github-event-processor");
             // JRS-BeginRemove
-            // gitHubClient.
+            //CollaboratorPermission collaboratorPermission = await gitHubClient.Repository.Collaborator.ReviewPermission(507980610, "msftbot");
+            //Console.WriteLine(collaboratorPermission.Permission == PermissionLevel.None);
+            //Console.WriteLine(collaboratorPermission);
             // JRS-EndRemove
 
             await RateLimitUtil.writeRateLimits(gitHubClient, "RateLimit at start of execution:");

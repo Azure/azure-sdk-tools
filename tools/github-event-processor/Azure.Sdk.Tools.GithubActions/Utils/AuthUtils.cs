@@ -33,12 +33,35 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
             return await gitHubClient.Organization.Member.CheckMember(orgName, user);
         }
 
-        public static async Task<bool> DoesUserHavePermissions(GitHubClient gitHubClient, long repositoryId, string user)
+        public static async Task<bool> DoesUserHavePermission(GitHubClient gitHubClient, long repositoryId, string user, PermissionLevel permission)
         {
-            CollaboratorPermission collaboratorPermission = await gitHubClient.Repository.Collaborator.ReviewPermission(repositoryId, user);
+            List<PermissionLevel> permissionList = new List<PermissionLevel>
+            {
+                permission
+            };
+            return await DoesUserHavePermissions(gitHubClient, repositoryId, user, permissionList);
+        }
 
-            Console.WriteLine(collaboratorPermission.Permission);
-
+        // There are several checks that look to see if a user's permission is NOT Admin or Write which
+        // means both need to be checked but making multiple calls is not necessary
+        public static async Task<bool> DoesUserHavePermissions(GitHubClient gitHubClient, long repositoryId, string user, List<PermissionLevel> permissionList)
+        {
+            try
+            {
+                CollaboratorPermission collaboratorPermission = await gitHubClient.Repository.Collaborator.ReviewPermission(repositoryId, user);
+                // If the user has one of the permissions on the list return true
+                foreach (var permission in permissionList)
+                {
+                    if (collaboratorPermission.Permission == permission)
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                // If this throws it's because it's being checked for a non-user (bot) and we need to return false
+            }
             return false;
         }
     }

@@ -5,6 +5,7 @@ using System.Text;
 namespace Azure.Sdk.Tools.GithubEventProcessor.Constants
 {
     // These should be static readonly but need to be const because of the switch
+    // statement
     public class EventConstants
     {
         public const string issue = "issue";

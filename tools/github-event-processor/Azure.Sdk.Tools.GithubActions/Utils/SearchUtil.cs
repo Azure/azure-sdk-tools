@@ -51,7 +51,8 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
             if (daysSinceLastUpdate > 0)
             {
                 // Octokit's DateRange wants a DateTimeOffset as other constructors are depricated
-                DateTime daysAgo = DateTime.Now.Subtract(TimeSpan.FromDays(daysSinceLastUpdate));
+                // AddDays of 0-days to effectively subtract them.
+                DateTime daysAgo = DateTime.UtcNow.AddDays(0 - daysSinceLastUpdate);
                 DateTimeOffset daysAgoOffset = new DateTimeOffset(daysAgo);
                 request.Updated = new DateRange(daysAgoOffset, SearchQualifierOperator.LessThan);
             }

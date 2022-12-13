@@ -227,8 +227,14 @@ Services:
     - --size 10240 --parallel 64 --processes 3 --sync
     - --size 10240 --parallel 64 --processes 4 --sync
     - --size 1048576 --parallel 1
-    - --size 10485760 --parallel 32
-    - --size 10485760 --parallel 32 --sync
+    - --size 10485760 --parallel 32 --processes 1
+    - --size 10485760 --parallel 32 --processes 2
+    - --size 10485760 --parallel 32 --processes 3
+    - --size 10485760 --parallel 32 --processes 4
+    - --size 10485760 --parallel 32 --processes 1 --sync
+    - --size 10485760 --parallel 32 --processes 2 --sync
+    - --size 10485760 --parallel 32 --processes 3 --sync
+    - --size 10485760 --parallel 32 --processes 4 --sync
     - --size 20971520 --parallel 1
     - --size 209715200 --parallel 1
     - --size 1073741824 --parallel 1 --warmup 60 --duration 60

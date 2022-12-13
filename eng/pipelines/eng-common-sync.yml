@@ -1,4 +1,7 @@
-# Mirror the eng/common folder to all subscribed langauge repos.
+# Mirror the eng/common folder to all subscribed language repos.
+#
+# For more information on this file, please see:
+# doc/common/common_engsys.md
 parameters:
 - name: PRDataFileName
   type: string

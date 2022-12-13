@@ -1,4 +1,10 @@
-import { ClassDeclaration, EnumDeclaration, InterfaceDeclaration, TypeAliasDeclaration } from "parse-ts-to-ast";
+import {
+    ClassDeclaration,
+    EnumDeclaration,
+    FunctionDeclaration,
+    InterfaceDeclaration,
+    TypeAliasDeclaration
+} from "parse-ts-to-ast";
 import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration";
 import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration";
 import { TSExportedMetaData } from "./extractMetaData";
@@ -16,6 +22,7 @@ export class Changelog {
     public typeAliasAddParam: string[] = [];
     public addedEnum: string[] = [];
     public addedEnumValue: string[] = [];
+    public addedFunction: string[] = [];
     // breaking changes
     public removedOperationGroup: string[] = [];
     public removedOperation: string[] = [];
@@ -36,6 +43,7 @@ export class Changelog {
     public typeAliasParamChangeRequired: string[] = [];
     public removedEnum: string[] = [];
     public removedEnumValue: string[] = [];
+    public removedFunction: string[] = [];
 
     public get hasBreakingChange() {
         return this.removedOperationGroup.length > 0 ||
@@ -57,6 +65,7 @@ export class Changelog {
             this.typeAliasParamChangeRequired.length > 0 ||
             this.removedEnum.length > 0 ||
             this.removedEnumValue.length > 0;
+            this.removedFunction.length > 0;
     }
 
     public get hasFeature() {
@@ -71,6 +80,7 @@ export class Changelog {
             this.typeAliasAddParam.length > 0 ||
             this.addedEnum.length > 0 ||
             this.addedEnumValue.length > 0;
+            this.addedFunction.length > 0;
     }
 
     public getBreakingChangeItems(): string[] {
@@ -95,6 +105,7 @@ export class Changelog {
                 .concat(this.typeAliasParamChangeRequired)
                 .concat(this.removedEnum)
                 .concat(this.removedEnumValue)
+                .concat(this.removedFunction)
                 .forEach(e => {
                     items.push(e);
                 });
@@ -118,6 +129,7 @@ export class Changelog {
                 .concat(this.typeAliasAddParam)
                 .concat(this.addedEnum)
                 .concat(this.addedEnumValue)
+                .concat(this.addedFunction)
                 .forEach(e => {
                     display.push('  - ' + e);
                 });
@@ -146,6 +158,7 @@ export class Changelog {
                 .concat(this.typeAliasParamChangeRequired)
                 .concat(this.removedEnum)
                 .concat(this.removedEnumValue)
+                .concat(this.removedFunction)
                 .forEach(e => {
                     display.push('  - ' + e);
                 });
@@ -409,6 +422,16 @@ const findAddedEnumValue = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpo
         }
     });
     return addedEnumValue;
+};
+
+const findAddedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
+    const addedFunction: string[] = [];
+    Object.keys(metaDataNew.functions).forEach(e => {
+        if (!metaDataOld.functions[e]) {
+            addedFunction.push(`Added function ${e}`);
+        }
+    });
+    return addedFunction;
 };
 
 
@@ -1011,6 +1034,17 @@ const findRemovedEnumValue = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
     return removedEnumValue;
 };
 
+const findRemovedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
+    const removedFunction: string[] = [];
+    Object.keys(metaDataOld.functions).forEach(e => {
+        if (!metaDataNew.functions[e]) {
+            removedFunction.push('Removed function ' + e);
+        }
+    });
+    return removedFunction;
+};
+
+
 export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew: TSExportedMetaData): Changelog => {
     const changLog = new Changelog();
 
@@ -1026,6 +1060,7 @@ export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew:
     changLog.typeAliasAddParam = findTypeAliasAddParam(metaDataOld, metadataNew);
     changLog.addedEnum = findAddedEnum(metaDataOld, metadataNew);
     changLog.addedEnumValue = findAddedEnumValue(metaDataOld, metadataNew);
+    changLog.addedFunction = findAddedFunction(metaDataOld, metadataNew);
 
     // breaking changes
     changLog.removedOperationGroup = findRemovedOperationGroup(metaDataOld, metadataNew);
@@ -1047,5 +1082,6 @@ export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew:
     changLog.typeAliasParamChangeRequired = findTypeAliasParamChangeRequired(metaDataOld, metadataNew);
     changLog.removedEnum = findRemovedEnum(metaDataOld, metadataNew);
     changLog.removedEnumValue = findRemovedEnumValue(metaDataOld, metadataNew);
+    changLog.removedFunction = findRemovedFunction(metaDataOld, metadataNew);
     return changLog;
 };

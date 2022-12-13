@@ -1,5 +1,5 @@
 import * as openapiToolsCommon from "@azure-tools/openapi-tools-common";
-import {TypescriptParser} from "parse-ts-to-ast";
+import { FunctionDeclaration, TypescriptParser } from "parse-ts-to-ast";
 import {ClassDeclaration, EnumDeclaration, InterfaceDeclaration, TypeAliasDeclaration} from "parse-ts-to-ast";
 import {changelogGenerator} from "./changelogGenerator";
 import {logger} from "../utils/logger";
@@ -10,6 +10,7 @@ export class TSExportedMetaData {
     public modelInterface = {};
     public enums = {};
     public classes = {};
+    public functions = {};
 }
 
 
@@ -42,6 +43,8 @@ const extractMetaData = async (code: string, metaData: TSExportedMetaData) => {
             } else {
                 metaData.modelInterface[declartion.name] = declartion;
             }
+        } else if (declartion instanceof FunctionDeclaration) {
+            metaData.functions[declartion.name] = declartion;
         }
     });
 };

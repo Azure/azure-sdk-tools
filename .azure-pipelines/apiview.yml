@@ -188,6 +188,11 @@ stages:
             inputs:
               version: '$(DotNetRuntimeVersion)'
           
+          - pwsh: |
+              dotnet --list-runtimes
+              dotnet --version
+            displayName: 'List .Net run times'
+
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
             env:

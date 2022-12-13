@@ -41,9 +41,9 @@ Services:
       PackageVersions:
       - 'com.azure:perf-test-core': source
     JS:
-      Project: sdk/test-utils/perfstress
+      Project: sdk/test-utils/perf
       PackageVersions:
-      - '@azure/test-utils-perfstress': source
+      - '@azure/test-utils-perf': source
   Tests:
   - Test: no-op
     Arguments:

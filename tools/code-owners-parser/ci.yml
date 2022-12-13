@@ -26,12 +26,25 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/code-owners-parser
-    DotNetCoreVersion: 5.0.301
-    TestPostSteps:
-      - task: PowerShell@2
-        displayName: Test on code owner script
-        inputs:
-          pwsh: true
-          filePath: eng/common/scripts/get-codeowners.ps1
-          arguments: >
-            -Test
+    # As of 12/11/2022 this is a temporary override until the globally-set
+    # SDK is set to net6.0. For details, please see:
+    # https://github.com/Azure/azure-sdk-tools/pull/4916
+    DotNetCoreVersion: 6.0.403
+    # As of 12/11/2022 temporarily disabling TestPostSteps because the
+    # get-codeowners.ps1 script uses the codeowners-parser NuGet package
+    # which has net5.0, not net6.0, which causes it to fail. 
+    #
+    # For the failure details, please see:
+    # https://dev.azure.com/azure-sdk/internal/_build/results?buildId=2048136&view=logs&j=f1c271e7-ab66-52b3-53cf-7a71849a1672&t=bbf61168-5c52-5848-16e1-d79919f292cd&l=14
+    #
+    # Work-item to re-enable this:
+    # https://github.com/Azure/azure-sdk-tools/issues/4938
+    #
+    # TestPostSteps:
+    #   - task: PowerShell@2
+    #     displayName: Test on code owner script
+    #     inputs:
+    #       pwsh: true
+    #       filePath: eng/common/scripts/get-codeowners.ps1
+    #       arguments: >
+    #         -Test

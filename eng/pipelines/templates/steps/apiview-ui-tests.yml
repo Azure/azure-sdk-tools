@@ -36,6 +36,19 @@ steps:
   workingDirectory: '${{ parameters.WebClientProjectDirectory }}'
   displayName: "Build client assets"
 
+- pwsh: |
+    dotnet run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj -Port "5000"
+  displayName: 'Test Start APIView Application'
+  env:
+    APIVIEW_BLOB__CONNECTIONSTRING: '${{ parameters.AzuriteConnectionString }}'
+    APIVIEW_COSMOS__CONNECTIONSTRING: '${{ parameters.CosmosEmulatorConnectionString }}'
+    APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
+    APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientsecret)
+    APIVIEW_AUTHENTICATIONSCHEME: "Test"
+    APIVIEW_SENDGRID__KEY: "Test"
+    APIVIEW_APIKEY: "$(azuresdk-apiview-apikey)"
+    APIVIEW_APPCONFIG: "$(apiview-appconfig-connectionstring)"
+
 - task: Powershell@2
   inputs:
     filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1

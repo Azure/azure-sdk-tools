@@ -189,7 +189,7 @@ stages:
               version: '$(DotNetRuntimeVersion)'
           
           - task: UseDotNet@2
-            displayName: 'Install .NET'
+            displayName: 'Install .NET runtime'
             inputs:
               packageType: runtime
               version: '$(DotNetRuntimeVersion)'

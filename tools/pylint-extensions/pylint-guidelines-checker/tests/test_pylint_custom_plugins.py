@@ -3228,6 +3228,7 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
 
 
 class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
+
     """Test that we are checking the return type of delete functions is correct"""
     CHECKER_CLASS = checker.DeleteOperationReturnStatement
 
@@ -3249,3 +3250,58 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
                 )
         ):
             self.checker.visit_return(return_node)
+
+
+class TestAsyncFunctionReturnsIterable(pylint.testutils.CheckerTestCase):
+    """Test that async functions return async iterable"""
+    CHECKER_CLASS = checker.AsyncMethodsReturnAsyncIterables
+
+    def test_delete_operation(self):
+        function_node, return_node = astroid.extract_node(
+        """
+            class MyClient():
+                async def gen(self):
+                    num = 1
+                    yield num
+                async def my_function(self, **kwargs): #@
+                    var = ["one","two"]
+                    for i in var:
+                        print(i)
+                    return await self.gen.__next__() #@
+        """
+        )
+
+        # with self.assertAddsMessages(
+        #         pylint.testutils.MessageTest(
+        #             msg_id="delete-operation-wrong-return-type",
+        #             line=3,
+        #             node=return_node,
+        #             col_offset=4, 
+        #             end_line=3, 
+        #             end_col_offset=32
+        #         )
+        # ):
+        self.checker.visit_asyncfunctiondef(function_node)
+
+class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
+    """Test that we don't use raise with traceback"""
+    CHECKER_CLASS = checker.NoAzureCoreTracebackUseRaiseFrom
+
+    def test_raise_traceback(self):
+        node = astroid.extract_node(
+        """
+        from azure.core.exceptions import DeserializationError, SerializationError, raise_with_traceback
+        """
+        )
+
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="no-raise-with-traceback",
+                    line=2,
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=96
+                )
+        ):
+            self.checker.visit_importfrom(node)

@@ -2031,7 +2031,7 @@ class TypePropertyNameTooLong(BaseChecker):
         ),
     }
     # Need to determine the length we want here
-    STANDARD_CHARACTER_LENGTH = 25
+    STANDARD_CHARACTER_LENGTH = 35
 
     def visit_classdef(self,node):
         try:
@@ -2110,6 +2110,59 @@ class DeleteOperationReturnStatement(BaseChecker):
         except:
             pass    
 
+class AsyncMethodsReturnAsyncIterables(BaseChecker):
+    """Rule to check that an async method returns an async iterable."""
+    name = "async-return-async-iterable"
+    priority = -1
+    msgs = {
+        "C4753": (
+            "async method returns sync iterable.",
+            "async-return-async-iterable",
+            "async methods should return async iterables."
+        ),
+    }
+
+    def visit_asyncfunctiondef(self, node):
+        try:
+            if node.parent.name.endswith("Client"):
+                for n in node.body:
+                    if isinstance(n, astroid.Return):
+                        pass
+                        # print(n)
+                        # if n.value.infer()!=None and n.value
+                        # inferred = n.value.infer()
+                        # print(inferred)
+        except:
+            pass
+
+class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
+    """Rule to check that we don't use raise_with_traceback in azure core."""
+    name = "no-raise-with-traceback"
+    priority = -1
+    msgs = {
+        "C4754": (
+            "Don't use raise_with_traceback, use python 3 raise from syntax.",
+            "no-raise-with-traceback",
+            "Don't use raise_with_traceback instead use python 3 raise from syntax."
+        ),
+    }
+    AZURE_CORE= "azure.core.exceptions"
+
+    def visit_import(self, node):
+        for import_, _ in node.names:
+            self._check_import(import_, node)
+
+    def visit_importfrom(self, node):
+        for import_, _ in node.names:
+            self._check_import(import_, node)
+    
+    def _check_import(self, name, node):
+        if name.startswith("raise_with_traceback"):
+            self.add_message(
+                msgid=f"no-raise-with-traceback", node=node, confidence=None
+            )
+
+
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
@@ -2137,6 +2190,7 @@ def register(linter):
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     linter.register_checker(TypePropertyNameTooLong(linter))
     linter.register_checker(DeleteOperationReturnStatement(linter))
+    linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

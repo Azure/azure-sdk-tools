@@ -48,6 +48,9 @@ steps:
     APIVIEW_SENDGRID__KEY: "Test"
     APIVIEW_APIKEY: "$(azuresdk-apiview-apikey)"
     APIVIEW_APPCONFIG: "$(apiview-appconfig-connectionstring)"
+    APIVIEW_APPCONFIG_CLIENT_ID: "$(apiview-appconfig-client-id)"
+    APIVIEW_APPCONFIG_TENANT_ID: "$(apiview-appconfig-tenant-id)"
+    APIVIEW_APPCONFIG_CLIENT_SECRET: "$(apiview-appconfig-client-secret)"
 
 - task: Powershell@2
   inputs:

@@ -141,9 +141,6 @@ stages:
 
       - job: 'Test'
 
-        dependsOn:
-          - 'Build'
-
         pool:
           name: azsdk-pool-mms-win-2022-general
           vmImage: MMS2019
@@ -157,21 +154,6 @@ stages:
               npm install -g azurite
             displayName: 'Install Azurite'
 
-          - task: Powershell@2
-            inputs:
-              workingDirectory: $(Agent.TempDirectory)
-              filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
-              arguments: >
-                -Process "azurite.cmd"
-                -ArgumentList "--silent"
-                -Port "10000"
-              pwsh: true
-            displayName: 'Start Azurite'
-
-          - script: |
-              npm install -g azurite
-            displayName: 'Install Azurite'
-          
           - task: Powershell@2
             inputs:
               workingDirectory: $(Agent.TempDirectory)
@@ -210,7 +192,7 @@ stages:
               arguments: --logger trx
               publishTestResults: false
           
-          - ${{ if and(ne(variables['Skip.Test'], 'true'), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
+          - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
             - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml
               parameters:
                 NodeVersion: $(NodeVersion)

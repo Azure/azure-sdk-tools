@@ -53,7 +53,7 @@ steps:
     APIVIEW_AUTHENTICATIONSCHEME: "Test"
     APIVIEW_SENDGRID__KEY: "Test"
     APIVIEW_APIKEY: "$(azuresdk-apiview-apikey)"
-    APIVIEW_AppConfig: "$(apiview-appconfig-connectionstring)"
+    APIVIEW_APPCONFIG: "$(apiview-appconfig-connectionstring)"
 
 - task: Powershell@2
   inputs:

@@ -188,18 +188,6 @@ stages:
             inputs:
               version: '$(DotNetRuntimeVersion)'
           
-          - task: UseDotNet@2
-            displayName: 'Install .NET runtime'
-            inputs:
-              packageType: runtime
-              version: '$(DotNetRuntimeVersion)'
-
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core 3.1.x'
-            inputs:
-              packageType: runtime
-              version: '3.1.x'
-
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
             env:
@@ -217,7 +205,7 @@ stages:
               arguments: --logger trx
               publishTestResults: false
           
-          - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
+          - ${{ if and(ne(variables['Skip.Test'], 'true'), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
             - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml
               parameters:
                 NodeVersion: $(NodeVersion)

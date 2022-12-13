@@ -21,14 +21,14 @@ languages repos as they will be overwritten the next time an update is taken fro
 
 ## Workflow
 
-When you create a PR against `azure-sdk-tools` repo that changes contents of `eng/common` directory, the PR
-triggers an [`azure-sdk-tools - sync - eng-common` pipeline][pipeline] that will mirror all changes in `azure-sdk-tools eng/common` directory
+When you create a PR against `azure-sdk-tools` repo that changes contents of the `eng/common` directory, the PR
+triggers an [`azure-sdk-tools - sync - eng-common` pipeline][pipeline] that will mirror all changes in the `azure-sdk-tools eng/common` directory
 to the corresponding `eng/common` dirs in the language repositories. The pipeline also triggers language-repository-specific tests for you to review. This process of mirroring involves multiple stages and requires
 your manual reviews & approvals before the changes are fully reflected to the language repositories. Your approval is needed first to allow automatic creation of PRs, then to allow them being merged on your behalf.
 
 This process is set up in such a way to make it easier for changes to be tested in each individual language repo before merging the changes in the `azure-sdk-tools` repo. The workflow is explained below:
 
-1. You create a PR (let's call it here the **Tools PR**) in the `azure-sdk-tools` repo with changes to `eng/common` directory.
+1. You create a PR (let's call it here the **Tools PR**) in the `azure-sdk-tools` repo with changes to the `eng/common` directory.
 2. The [`azure-sdk-tools - sync - eng-common` pipeline][pipeline] is automatically triggered for the **Tools PR**.
 3. That pipeline also creates branches mirroring your changes, one branch per each language repository to whose `eng/common` dir the changes are mirrored. You can use these branches to run your tests on these repos. The pipeline also queues test runs for template pipelines for each repo. These help you test your changes in the **Tools PR**.  All of this is done in `Create Sync` stage (display name: `Sync eng/common Directory`) [of the pipeline eng-common-sync.yml file][yml], specifically, the logic lives in `template: ./templates/steps/sync-directory.yml`.
     - If there are changes in the **Tools PR** that will affect the release stage you should approve the release test pipelines by clicking the approval gate. The test (template) pipeline will automatically release the next eligible version without needing manual intervention for the versioning. Please approve your test releases as quickly as possible. A race condition may occur due to someone else queueing the pipeline and going all the way to release using your version while yours is still waiting. If this occurs manually rerun the pipeline that failed.

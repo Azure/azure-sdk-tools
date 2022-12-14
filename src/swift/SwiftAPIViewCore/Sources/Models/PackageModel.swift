@@ -33,64 +33,38 @@ class PackageModel: Tokenizable, Linkable {
     let name: String
     var definitionId: String?
     var parent: Linkable?
-    var members: [Tokenizable]
+    var statements: [CodeBlockItemSyntax.Item]
 
     init(name: String, statements: [CodeBlockItemSyntax.Item]) {
         self.name = name
         self.definitionId = name
         self.parent = nil
-        self.members = [Tokenizable]()
-        self.process(statements: statements)
+        self.statements = statements
     }
 
-    private func process(statements: [CodeBlockItemSyntax.Item]) {
+    private func tokenize(statements: [CodeBlockItemSyntax.Item], apiview a: APIViewModel) {
         for statement in statements {
             switch statement {
             case let .decl(decl):
                 switch decl.kind {
-                case .actorDecl:
-                    self.members.append(ActorModel(from: ActorDeclSyntax(decl)!))
-                    break
-                case .classDecl:
-                    self.members.append(ClassModel(from: ClassDeclSyntax(decl)!))
-                    break
-                case .deinitializerDecl:
-                    self.members.append(DeinitializerModel(from: DeinitializerDeclSyntax(decl)!))
-                    break
-                case .enumDecl:
-                    self.members.append(EnumModel(from: EnumDeclSyntax(decl)!))
-                    break
-                case .extensionDecl:
-                    // TODO: Fix how extensions are handled
-                    self.members.append(ExtensionModel(from: ExtensionDeclSyntax(decl)!))
-                    break
-                case .functionDecl:
-                    self.members.append(FunctionModel(from: FunctionDeclSyntax(decl)!))
-                    break
-                case .initializerDecl:
-                    self.members.append(InitializerModel(from: InitializerDeclSyntax(decl)!))
-                    break
-                case .operatorDecl:
-                    self.members.append(OperatorModel(from: OperatorDeclSyntax(decl)!))
-                    break
-                case .precedenceGroupDecl:
-                    self.members.append(PrecedenceGroupModel(from: PrecedenceGroupDeclSyntax(decl)!))
-                    break
-                case .protocolDecl:
-                    self.members.append(ProtocolModel(from: ProtocolDeclSyntax(decl)!))
-                    break
-                case .structDecl:
-                    self.members.append(StructModel(from: StructDeclSyntax(decl)!))
-                    break
-                case .subscriptDecl:
-                    self.members.append(SubscriptModel(from: SubscriptDeclSyntax(decl)!))
-                    break
-                case .typealiasDecl:
-                    self.members.append(TypealiasModel(from: TypealiasDeclSyntax(decl)!))
-                    break
+                case .actorDecl: fallthrough
+                case .classDecl: fallthrough
+                case .deinitializerDecl: fallthrough
+                case .enumDecl: fallthrough
+                case .extensionDecl: fallthrough
+                case .functionDecl: fallthrough
+                case .initializerDecl: fallthrough
+                case .operatorDecl: fallthrough
+                case .precedenceGroupDecl: fallthrough
+                case .protocolDecl: fallthrough
+                case .structDecl: fallthrough
+                case .subscriptDecl: fallthrough
+                case .typealiasDecl: fallthrough
                 case .variableDecl:
-                    self.members.append(VariableModel(from: VariableDeclSyntax(decl)!))
-                    break
+                    // TODO: Fix how extensions are handled
+                    for element in statement.children(viewMode: .sourceAccurate) {
+                        self.tokenize(element: element, apiview: a)
+                    }
                 case .importDecl:
                     // purposely ignore import declarations
                     break
@@ -101,6 +75,7 @@ class PackageModel: Tokenizable, Linkable {
             default:
                 SharedLogger.warn("Unsupported statement type: \(statement.kind)")
             }
+            a.blankLines(set: 0)
         }
     }
 
@@ -111,19 +86,85 @@ class PackageModel: Tokenizable, Linkable {
         a.punctuation("{", prefixSpace: true)
         a.newline()
         a.indent {
-            for member in members {
-                member.tokenize(apiview: a)
-            }
+            self.tokenize(statements: statements, apiview: a)
         }
         a.punctuation("}")
         a.newline()
     }
 
-    func navigationTokenize(apiview a: APIViewModel) {
-        for member in members {
-            guard let member = member as? Linkable else { continue }
-            member.navigationTokenize(apiview: a)
+    func tokenize(element: SyntaxProtocol, apiview a: APIViewModel) {
+        switch element.kind {
+        case .token:
+            let item = TokenSyntax(element)!
+            let tokenKind = item.tokenKind
+
+            if tokenKind.isKeyword {
+                a.keyword(item.withoutTrivia().description, prefixSpace: false, postfixSpace: true)
+                return
+            } else if tokenKind.isPunctuation {
+                let punct = item.withoutTrivia().description
+                // don't render curly braces from the code
+                if !["{", "}"].contains(punct) {
+                    a.punctuation(punct)
+                }
+                return
+            }
+            if case let SwiftSyntax.TokenKind.identifier(val) = tokenKind {
+                // FIXME: should not be text... should be a member declaration or reference
+                a.text(val)
+            } else if case let SwiftSyntax.TokenKind.spacedBinaryOperator(val) = tokenKind {
+                a.punctuation(val, prefixSpace: true, postfixSpace: true)
+            } else if case let SwiftSyntax.TokenKind.unspacedBinaryOperator(val) = tokenKind {
+                a.punctuation(val, prefixSpace: false, postfixSpace: false)
+            } else if case let SwiftSyntax.TokenKind.prefixOperator(val) = tokenKind {
+                a.punctuation(val, prefixSpace: true, postfixSpace: false)
+            } else if case let SwiftSyntax.TokenKind.postfixOperator(val) = tokenKind {
+                a.punctuation(val, prefixSpace: false, postfixSpace: true)
+            } else if case let SwiftSyntax.TokenKind.floatingLiteral(val) = tokenKind {
+                a.literal(val)
+            } else if case let SwiftSyntax.TokenKind.regexLiteral(val) = tokenKind {
+                a.stringLiteral(val)
+            } else if case let SwiftSyntax.TokenKind.stringLiteral(val) = tokenKind {
+                a.stringLiteral(val)
+            } else if case let SwiftSyntax.TokenKind.integerLiteral(val) = tokenKind {
+                a.literal(val)
+            } else if case let SwiftSyntax.TokenKind.contextualKeyword(val) = tokenKind {
+                a.keyword(val, prefixSpace: true, postfixSpace: true)
+            } else if case let SwiftSyntax.TokenKind.stringSegment(val) = tokenKind {
+                a.text(val)
+            } else {
+                SharedLogger.warn("Unsupported tokenKind \(tokenKind)")
+                let unknownText = element.description
+                a.text(unknownText)
+            }
+        case .memberDeclBlock:
+            let item = MemberDeclBlockSyntax(element)!
+            a.punctuation("{", prefixSpace: true)
+            a.newline()
+            a.indent {
+                for child in item.members {
+                    tokenize(element: child, apiview: a)
+                    a.blankLines(set: 0)
+                }
+            }
+            a.punctuation("}")
+        case .codeBlockItem:
+            // Don't render code blocks
+            break
+        default:
+            SharedLogger.warn("Default for \(element.kind)")
+            for child in element.children(viewMode: .sourceAccurate) {
+                self.tokenize(element: child, apiview: a)
+            }
         }
+    }
+
+    func navigationTokenize(apiview a: APIViewModel) {
+        // TODO: rebuild!
+//        for member in members {
+//            guard let member = member as? Linkable else { continue }
+//            member.navigationTokenize(apiview: a)
+//        }
         // sort the root navigation elements by name
         a.navigation.sort { $0.name < $1.name }
     }

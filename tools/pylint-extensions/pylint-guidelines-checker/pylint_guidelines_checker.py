@@ -316,15 +316,6 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
     visit_asyncfunctiondef = visit_functiondef
 
 
-#make sure it isn't on overloaded functions -- or should it be, currently it is 
-# make sure it isnt an auth related function --- get token I think should have tracing?, but 3 functions all call each other - do they all require tracing
-# ^ think of container registry async_exhcange_client
-# sdk\identity\azure-identity\azure\identity\_internal\aad_client.py -- should these functions require tracing because they are under a private _internal folder
-#     def get_cryptography_client(self, key_name, **kwargs) -- azure-keyvault-keys, getting cryptography client count as child client? 
-# for an example of patch.py can look at metrics advisor 
-# also why do a lot of send_request not have distributed tracing? Ignore send_request for now 
-# delete_alias, search, _search_index_client -- has @distributed tracing --- says it doesnt, it is a sync distributed trace on an async function
-# storage filedatalake has a loottt
 class ClientMethodsHaveTracingDecorators(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -930,6 +921,7 @@ class ClientListMethodsUseCorePaging(BaseChecker):
         except (AttributeError, TypeError):
             logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
             pass
+
 
 class ClientLROMethodsUseCorePolling(BaseChecker):
     __implements__ = IAstroidChecker
@@ -1895,7 +1887,6 @@ class CheckNamingMismatchGeneratedCode(BaseChecker):
                 logger.debug("Pylint custom checker failed to check if model is aliased.")
 
 
-# showed up in azure.core.rest _requests_basic.py --- shouldnt do that
 class NonCoreNetworkImport(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -1937,10 +1928,7 @@ class NonCoreNetworkImport(BaseChecker):
                     msgid=f"networking-import-outside-azure-core-transport", node=node, confidence=None
                 )
 
-# showed up in azure core utils pipeline_transport_rest_shared
-# from azure.core.pipeline.transport import RequestsTransport
-# in storage fileshare: from azure.core.pipeline.transport import AioHttpTransport
-# in storage queue: from azure.core.pipeline.transport import RequestsTransport, HttpTransport
+
 class NonAbstractTransportImport(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -2068,6 +2056,7 @@ class DeleteOperationReturnStatement(BaseChecker):
         except:
             pass    
 
+
 class AsyncMethodsReturnAsyncIterables(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -2094,6 +2083,7 @@ class AsyncMethodsReturnAsyncIterables(BaseChecker):
                         # print(inferred)
         except:
             pass
+
 
 class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
     __implements__ = IAstroidChecker
@@ -2123,6 +2113,7 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
             self.add_message(
                 msgid=f"no-raise-with-traceback", node=node, confidence=None
             )
+
 
 class SetupNoMsrestNeedsIsodate(BaseChecker):
     __implements__ = IAstroidChecker

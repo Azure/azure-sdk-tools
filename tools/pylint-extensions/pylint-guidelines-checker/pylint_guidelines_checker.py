@@ -1985,8 +1985,6 @@ class TypePropertyNameTooLong(BaseChecker):
                     node=node,
                     confidence=None,
                 )
-            # for n in node.body:
-            #     self.visit_functiondef(n)
         except:
             pass
 
@@ -2043,10 +2041,6 @@ class DeleteOperationReturnStatement(BaseChecker):
     def visit_return(self,node):
         try:
             if node.parent.name.startswith("delete") or node.parent.name.startswith("begin_delete"):
-                # with open("output.txt", "a") as f:
-                #     # f.write(node.value.infer())
-                #     f.write(node.value.infer())
-             
                 if node.value.infer()!= "LROPoller" and node.value.infer()!= "AsyncLROPoller" and node.value != None:
                     self.add_message(
                         msgid=f"delete-operation-wrong-return-type",
@@ -2076,11 +2070,14 @@ class AsyncMethodsReturnAsyncIterables(BaseChecker):
             if node.parent.name.endswith("Client"):
                 for n in node.body:
                     if isinstance(n, astroid.Return):
-                        pass
-                        # print(n)
-                        # if n.value.infer()!=None and n.value
-                        # inferred = n.value.infer()
-                        # print(inferred)
+                        if isinstance(n.value, astroid.Await):
+                            return 
+                        if isinstance(n.value, astroid.Call):
+                            self.add_message(
+                                msgid=f"async-return-async-iterable",
+                                node=node,
+                                confidence=None,
+                            )      
         except:
             pass
 

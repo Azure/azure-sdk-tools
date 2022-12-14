@@ -3230,17 +3230,33 @@ class TestAsyncFunctionReturnsIterable(pylint.testutils.CheckerTestCase):
         """
         )
 
-        # with self.assertAddsMessages(
-        #         pylint.testutils.MessageTest(
-        #             msg_id="delete-operation-wrong-return-type",
-        #             line=3,
-        #             node=return_node,
-        #             col_offset=4, 
-        #             end_line=3, 
-        #             end_col_offset=32
-        #         )
-        # ):
-        self.checker.visit_asyncfunctiondef(function_node)
+        with self.assertNoMessages():
+            self.checker.visit_asyncfunctiondef(function_node)
+
+    def test_delete_operation_sync(self):
+        function_node, return_node = astroid.extract_node(
+        """
+            from azure.core.polling import LROPoller
+            class MyClient():
+                async def my_function(self, **kwargs): #@
+                    var = ["one","two"]
+                    for i in var:
+                        print(i)
+                    return LROPoller() #@
+        """
+        )
+
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="async-return-async-iterable",
+                    line=4,
+                    node=function_node,
+                    col_offset=4, 
+                    end_line=4, 
+                    end_col_offset=25
+                )
+        ):
+            self.checker.visit_asyncfunctiondef(function_node)
 
 class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
     """Test that we don't use raise with traceback"""

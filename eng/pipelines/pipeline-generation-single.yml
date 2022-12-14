@@ -5,8 +5,8 @@
 # RepositoryName - azure-sdk-for-<lang>
 # DevOpsPath - $(Prefix)\pr
 # ServiceDirectory - "", keyvault, storage, etc.
-# PipelineConvention - ci, up, tests
-# AdditionalOptions - potentially add variablegroups via "--variablegroup x"
+# PipelineConvention - ci, up, tests, testsweekly, upweekly
+# AdditionalOptions - potentially add variablegroups via "--variablegroups x"
 
 pr: none
 
@@ -15,7 +15,7 @@ trigger: none
 variables:
   NugetSecurityAnalysisWarningLevel: none
   skipComponentGovernanceDetection: true
-  DevOpsOrg: https://dev.azure.com/azure-sdk
+  DevOpsOrg: azure-sdk
   PathFilter: $(Pipeline.Workspace)/$(RepositoryName)/sdk/$(ServiceDirectory)
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
       git clone --filter=blob:none --branch $(Branch) https://$(azuresdk-github-pat)@github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
     displayName: 'Clone repository: $(RepositoryName)'
   - script: >
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
       --organization $(DevOpsOrg)
       --project $(DevOpsProject)
       --prefix $(Prefix)

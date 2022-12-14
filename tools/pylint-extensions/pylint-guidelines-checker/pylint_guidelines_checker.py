@@ -1975,7 +1975,7 @@ class TypePropertyNameTooLong(BaseChecker):
         ),
     }
     # Need to determine the length we want here
-    STANDARD_CHARACTER_LENGTH = 35
+    STANDARD_CHARACTER_LENGTH = 40
 
     def visit_classdef(self,node):
         try:
@@ -2023,7 +2023,7 @@ class TypePropertyNameTooLong(BaseChecker):
 
     visit_asyncfunctiondef = visit_functiondef
 
-# MetricsAdvisor has issues in patch.py
+
 class DeleteOperationReturnStatement(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -2062,6 +2062,7 @@ class DeleteOperationReturnStatement(BaseChecker):
     
     visit_asyncfunctiondef = visit_functiondef
 
+
 class AsyncMethodsReturnAsyncIterables(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -2083,7 +2084,7 @@ class AsyncMethodsReturnAsyncIterables(BaseChecker):
                     if isinstance(n, astroid.Return):
                         if isinstance(n.value, astroid.Await):
                             return 
-                        if isinstance(n.value, astroid.Call):
+                        if isinstance(n.value, astroid.Call) and "async" not in n.value.value.as_string():
                             self.add_message(
                                 msgid=f"async-return-async-iterable",
                                 node=node,
@@ -2123,39 +2124,39 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
             )
 
 
-class SetupNoMsrestNeedsIsodate(BaseChecker):
-    __implements__ = IAstroidChecker
+# class SetupNoMsrestNeedsIsodate(BaseChecker):
+#     __implements__ = IAstroidChecker
 
-    """Rule to check that the setup.py does not contain msrest and should have isodate."""
-    name = "no-msrest-use-isodate"
-    priority = -1
-    msgs = {
-        "C4755": (
-            "Setup.py should not contain msrest, should contain isodate.",
-            "no-msrest-use-isodate",
-            "Setup.py should not contain msrest, should contain isodate."
-        ),
-    }  
-    isodate = False
-    msrest = False
+#     """Rule to check that the setup.py does not contain msrest and should have isodate."""
+#     name = "no-msrest-use-isodate"
+#     priority = -1
+#     msgs = {
+#         "C4755": (
+#             "Setup.py should not contain msrest, should contain isodate.",
+#             "no-msrest-use-isodate",
+#             "Setup.py should not contain msrest, should contain isodate."
+#         ),
+#     }  
+#     isodate = False
+#     msrest = False
     
 
-    def visit_moduledef(self, node):
-        try:
-            if node.file.endswith("setup.py"):
-                for keyword in node.body[-1].value.keywords:
-                    if keyword.arg == 'install_requires':
-                        for el in keyword.value.elts:
-                            if "msrest" in el.value:
-                                self.msrest = True
-                            if "isodate" in el.value:
-                                self.isodate = True
-                if self.msrest or not self.isodate:
-                    self.add_message(
-                        msgid=f"no-msrest-use-isodate", node=node, confidence=None
-                    )        
-        except:
-            pass                   
+#     def visit_moduledef(self, node):
+#         try:
+#             if node.file.endswith("setup.py"):
+#                 for keyword in node.body[-1].value.keywords:
+#                     if keyword.arg == 'install_requires':
+#                         for el in keyword.value.elts:
+#                             if "msrest" in el.value:
+#                                 self.msrest = True
+#                             if "isodate" in el.value:
+#                                 self.isodate = True
+#                 if self.msrest or not self.isodate:
+#                     self.add_message(
+#                         msgid=f"no-msrest-use-isodate", node=node, confidence=None
+#                     )        
+#         except:
+#             pass                   
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
@@ -2183,7 +2184,7 @@ def register(linter):
     linter.register_checker(TypePropertyNameTooLong(linter))
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
-    linter.register_checker(SetupNoMsrestNeedsIsodate(linter)) 
+    # linter.register_checker(SetupNoMsrestNeedsIsodate(linter)) 
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

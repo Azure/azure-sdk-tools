@@ -12,7 +12,7 @@ stages:
       jobs:
       - job: BuildPackage
         pool:
-          vmImage: ubuntu-18.04
+          vmImage: MMSUbuntu20.04
         steps:
           - task: UseDotNet@2
             displayName: Tools

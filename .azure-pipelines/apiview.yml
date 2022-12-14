@@ -141,11 +141,8 @@ stages:
 
       - job: 'Test'
 
-        dependsOn:
-          - 'Build'
-
         pool:
-          name: azsdk-pool-mms-win-2019-general
+          name: azsdk-pool-mms-win-2022-general
           vmImage: MMS2019
 
         steps:
@@ -168,25 +165,15 @@ stages:
               pwsh: true
             displayName: 'Start Azurite'
 
-          - script: |
-              npm install -g azurite
-            displayName: 'Install Azurite'
-          
-          - task: Powershell@2
-            inputs:
-              workingDirectory: $(Agent.TempDirectory)
-              filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
-              arguments: >
-                -Process "azurite.cmd"
-                -ArgumentList "--silent"
-                -Port "10000"
-              pwsh: true
-            displayName: 'Start Azurite'
-
           - task: UseDotNet@2
             displayName: 'Install .NET'
             inputs:
               version: '$(DotNetRuntimeVersion)'
+          
+          - pwsh: |
+              dotnet --list-runtimes
+              dotnet --version
+            displayName: 'List .Net run times'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'

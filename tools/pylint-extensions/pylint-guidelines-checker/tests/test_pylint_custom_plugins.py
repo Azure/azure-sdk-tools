@@ -3201,14 +3201,14 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="delete-operation-wrong-return-type",
-                    line=3,
-                    node=return_node,
-                    col_offset=4, 
-                    end_line=3, 
-                    end_col_offset=32
+                    line=2,
+                    node=function_node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=24
                 )
         ):
-            self.checker.visit_return(return_node)
+            self.checker.visit_functiondef(function_node)
 
 
 class TestAsyncFunctionReturnsIterable(pylint.testutils.CheckerTestCase):

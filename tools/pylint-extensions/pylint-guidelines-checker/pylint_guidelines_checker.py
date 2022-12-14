@@ -2023,7 +2023,7 @@ class TypePropertyNameTooLong(BaseChecker):
 
     visit_asyncfunctiondef = visit_functiondef
 
-
+# MetricsAdvisor has issues in patch.py
 class DeleteOperationReturnStatement(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -2038,18 +2038,29 @@ class DeleteOperationReturnStatement(BaseChecker):
         ),
     }
 
-    def visit_return(self,node):
+    def visit_functiondef(self,node):
         try:
-            if node.parent.name.startswith("delete") or node.parent.name.startswith("begin_delete"):
-                if node.value.infer()!= "LROPoller" and node.value.infer()!= "AsyncLROPoller" and node.value != None:
-                    self.add_message(
-                        msgid=f"delete-operation-wrong-return-type",
-                        node=node,
-                        confidence=None,
-                    )                    
+            if node.name.startswith("delete") or node.name.startswith("begin_delete"):
+                inferred = node.infer_call_result()
+                with open("my.txt", "a") as f:
+                    f.write(node.parent.name)
+                    f.write("RAN INFER \n")
+                for x in inferred:
+                    if str(x)=="Uninferable" or x == None:
+                        return
+                    if x.value == None:
+                        return
+                    if x.name == "LROPoller" or x.name == "AsyncLROPoller":
+                        return
+                self.add_message(
+                    msgid=f"delete-operation-wrong-return-type",
+                    node=node,
+                    confidence=None,
+                )   
         except:
-            pass    
-
+            pass
+    
+    visit_asyncfunctiondef = visit_functiondef
 
 class AsyncMethodsReturnAsyncIterables(BaseChecker):
     __implements__ = IAstroidChecker
@@ -2160,7 +2171,6 @@ def register(linter):
     linter.register_checker(ClientMethodNamesDoNotUseDoubleUnderscorePrefix(linter))
     linter.register_checker(SpecifyParameterNamesInCall(linter))
     linter.register_checker(ClientConstructorDoesNotHaveConnectionStringParam(linter))
-    linter.register_checker(PackageNameDoesNotUseUnderscoreOrPeriod(linter))
     linter.register_checker(ServiceClientUsesNameWithClientSuffix(linter))
     linter.register_checker(CheckDocstringAdmonitionNewline(linter))
     linter.register_checker(CheckNamingMismatchGeneratedCode(linter))

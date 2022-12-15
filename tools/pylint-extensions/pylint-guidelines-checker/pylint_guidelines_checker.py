@@ -315,7 +315,7 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
 
     visit_asyncfunctiondef = visit_functiondef
 
-
+#exists BlobClient
 class ClientMethodsHaveTracingDecorators(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -387,9 +387,9 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
                             and self.ignore_decorators[1] not in node.decoratornames() \
                                 and self.ignore_decorators[2] not in node.decoratornames():
                         
-                        self.add_message(
-                            msgid="client-method-missing-tracing-decorator", node=node, confidence=None
-                        )
+                                    self.add_message(
+                                        msgid="client-method-missing-tracing-decorator", node=node, confidence=None
+                                    )
         except:
             pass
 
@@ -2042,9 +2042,6 @@ class DeleteOperationReturnStatement(BaseChecker):
         try:
             if node.name.startswith("delete") or node.name.startswith("begin_delete"):
                 inferred = node.infer_call_result()
-                with open("my.txt", "a") as f:
-                    f.write(node.parent.name)
-                    f.write("RAN INFER \n")
                 for x in inferred:
                     if str(x)=="Uninferable" or x == None:
                         return

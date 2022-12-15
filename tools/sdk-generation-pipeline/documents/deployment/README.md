@@ -16,6 +16,8 @@ This is the deployment config of the SDK Release App should update.
 
 6. Edit flow **'SDK Scheduled Release'** change Start time early than today to trigger flow
 
+7. environment variable: 'ApiViewHost', set apiview host address.
+
 ## Test SDK release app in PPE env
 
 This is the requirement for testing in PPE environment.

@@ -104,8 +104,19 @@ class PackageModel: Tokenizable, Linkable {
             } else if tokenKind.isPunctuation {
                 let punct = item.withoutTrivia().description
                 // don't render curly braces from the code
-                if !["{", "}"].contains(punct) {
-                    a.punctuation(punct)
+                let punctIgnore = ["{", "}"]
+
+                guard !punctIgnore.contains(punct) else { return }
+                let spacing = tokenKind.spacing
+                switch spacing {
+                case .Leading:
+                    a.punctuation(punct, prefixSpace: true, postfixSpace: false)
+                case .Trailing:
+                    a.punctuation(punct, prefixSpace: false, postfixSpace: true)
+                case .Both:
+                    a.punctuation(punct, prefixSpace: true, postfixSpace: true)
+                case .Neither:
+                    a.punctuation(punct, prefixSpace: false, postfixSpace: false)
                 }
                 return
             }
@@ -152,7 +163,7 @@ class PackageModel: Tokenizable, Linkable {
             // Don't render code blocks
             break
         default:
-            SharedLogger.warn("Default for \(element.kind)")
+            //SharedLogger.warn("Default for \(element.kind)")
             for child in element.children(viewMode: .sourceAccurate) {
                 self.tokenize(element: child, apiview: a)
             }

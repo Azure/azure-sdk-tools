@@ -26,6 +26,6 @@
 
 import Foundation
 
-protocol Extensible {
-    var extensions: [ExtensionModel] { get set }
-}
+//protocol Extensible {
+//    var extensions: [ExtensionModel] { get set }
+//}

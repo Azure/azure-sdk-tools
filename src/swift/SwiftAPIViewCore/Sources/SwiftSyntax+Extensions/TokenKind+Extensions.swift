@@ -25,32 +25,29 @@
 // --------------------------------------------------------------------------
 
 import Foundation
+import SwiftSyntax
 
-struct DeclarationModifiersModel: Tokenizable {
+enum SpacingKind {
+    /// Leading space
+    case Leading
+    /// Trailing space
+    case Trailing
+    /// Leading and trailing space
+    case Both
+    /// No spacing
+    case Neither
+}
 
-    var accessLevel: AccessLevelModifier? = nil
-    var modifiers: [String]
-
-    init(from source: DeclarationModifiers) {
-        self.modifiers = [String]()
-        for item in source {
-            switch item {
-            case let .accessLevel(value):
-                self.accessLevel = value
-            case let .mutation(value):
-                self.modifiers.append(value.textDescription)
-            default:
-                self.modifiers.append(item.textDescription)
-            }
-        }
-    }
-
-    func tokenize(apiview a: APIViewModel) {
-        if let accessLevel = accessLevel {
-            a.keyword(accessLevel.textDescription, postfixSpace: true)
-        }
-        modifiers.forEach { value in
-            a.keyword(value, postfixSpace: true)
+extension SwiftSyntax.TokenKind {
+    var spacing: SpacingKind {
+        switch self {
+        case .prefixPeriod: return .Leading
+        case .comma: return .Trailing
+        case .colon: return .Trailing
+        case .semicolon: return .Trailing
+        case .equal: return .Both
+        case .arrow: return .Both
+        default: return .Neither
         }
     }
 }

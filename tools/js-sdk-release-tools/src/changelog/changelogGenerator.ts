@@ -1,7 +1,6 @@
 import {
     ClassDeclaration,
     EnumDeclaration,
-    FunctionDeclaration,
     InterfaceDeclaration,
     TypeAliasDeclaration
 } from "parse-ts-to-ast";
@@ -243,31 +242,6 @@ const findInterfaceAddOptinalParam = (metaDataOld: TSExportedMetaData, metaDataN
         }
     });
     return interfaceAddedParam;
-};
-
-const findClassAddOptionalParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const classAddOptionalParam: string[] = [];
-    Object.keys(metaDataNew.classes).forEach(model => {
-        if (metaDataOld.classes[model]) {
-            const modelFromOld = metaDataOld.classes[model] as ClassDeclaration;
-            const modelFromNew = metaDataNew.classes[model] as ClassDeclaration;
-            modelFromNew.properties.forEach(pNew => {
-                if (pNew.isOptional) {
-                    let find = false;
-                    modelFromOld.properties.forEach(pOld => {
-                        if (pNew.name === pOld.name) {
-                            find = true;
-                            return;
-                        }
-                    });
-                    if (!find) {
-                        classAddOptionalParam.push('Class ' + model + ' has a new optional parameter ' + pNew.name);
-                    }
-                }
-            });
-        }
-    });
-    return classAddOptionalParam;
 };
 
 const findTypeAliasAddInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
@@ -659,31 +633,6 @@ const findClassParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
     return classDeleteParam;
 };
 
-const findClassAddRequiredParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const classAddRequiredParam: string[] = [];
-    Object.keys(metaDataNew.classes).forEach(model => {
-        if (metaDataOld.classes[model]) {
-            const modelFromOld = metaDataOld.classes[model] as ClassDeclaration;
-            const modelFromNew = metaDataNew.classes[model] as ClassDeclaration;
-            modelFromNew.properties.forEach(pNew => {
-                if (!pNew.isOptional) {
-                    let find = false;
-                    modelFromOld.properties.forEach(pOld => {
-                        if (pNew.name === pOld.name) {
-                            find = true;
-                            return;
-                        }
-                    });
-                    if (!find) {
-                        classAddRequiredParam.push('Class ' + model + ' has a new required parameter ' + pNew.name);
-                    }
-                }
-            });
-        }
-    });
-    return classAddRequiredParam;
-};
-
 const findClassParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
     const classParamChangeRequired: string[] = [];
     Object.keys(metaDataNew.classes).forEach(model => {
@@ -705,28 +654,6 @@ const findClassParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataN
         }
     });
     return classParamChangeRequired;
-};
-
-const findClassParamTypeChanged = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const classParamTypeChanged: string[] = [];
-    Object.keys(metaDataNew.classes).forEach(model => {
-        if (metaDataOld.classes[model]) {
-            const modelFromOld = metaDataOld.classes[model] as ClassDeclaration;
-            const modelFromNew = metaDataNew.classes[model] as ClassDeclaration;
-            modelFromNew.properties.forEach(pNew => {
-                modelFromOld.properties.forEach(pOld => {
-                    if (pNew.name === pOld.name) {
-                        if (pNew.type !== pOld.type) {
-                            classParamTypeChanged.push(`Type of parameter ${pNew.name} of class ${model} is changed from ${pOld.type} to ${pNew.type}`);
-                        }
-                        return;
-                    }
-                });
-
-            });
-        }
-    });
-    return classParamTypeChanged;
 };
 
 const findTypeAliasDeleteInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {

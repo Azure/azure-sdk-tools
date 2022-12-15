@@ -275,6 +275,13 @@ Services:
     TestNames:
       Net: DownloadSasUriBlobClient
 
+  - Test: download
+    Arguments:
+    - --parallel 64
+    - --parallel 1
+    TestNames:
+      JS: GetPropsTest
+
 - Service: storage-blob-track1
   Languages:
     Net:

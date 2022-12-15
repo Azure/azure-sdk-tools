@@ -5,7 +5,8 @@ param (
     [ValidateNotNullOrEmpty()]
     [string] $WorkingDir,
     [ValidateNotNullOrEmpty()]
-    [string] $OutputDir
+    [string] $OutputDir,
+    [string] $GitPat = ""
 )
 
 Set-StrictMode -Version 3
@@ -78,7 +79,13 @@ if ($revs)
         # initialize git clone if current review is generated from different repo than previous one
         if ($GitRepoName -ne $prevRepo)
         {
-            git clone --no-checkout --filter=tree:0 "https://github.com/$GitRepoName"
+            $gitUrl = "https://github.com"
+            if ($GitPat)
+            {
+                $gitUrl = "https://$GitPat@github.com"
+            }
+
+            git clone --no-checkout --filter=tree:0 "$gitUrl/$GitRepoName"
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
             $prevRepo = $GitRepoName
         }

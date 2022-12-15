@@ -58,8 +58,7 @@ jobs:
         -Reviews "$(Reviews)"
         -OutputDir "$(Build.ArtifactStagingDirectory)"
         -WorkingDir "$(Pipeline.Workspace)"
-    env:
-      GH_TOKEN: $(azuresdk-github-pat)
+        -GitPat "$(azuresdk-github-pat)"
 
   - task: PublishBuildArtifacts@1
     inputs:

@@ -25,14 +25,27 @@
 // --------------------------------------------------------------------------
 
 import Foundation
+import SwiftSyntax
 
-public class InitializersTestClass {
+enum AccessLevel {
+    case `open`
+    case `public`
+    case `private`
+    case `internal`
+    case unspecified
 
-    // Throwing initializer
-
-    public init(withThrowable: String) throws {}
-
-    // Failable initializer
-
-    public init?(withFailable: String) {}
+    init(text: String) {
+        switch text {
+        case "open":
+            self = .open
+        case "public":
+            self = .public
+        case "private":
+            self = .private
+        case "internal":
+            self = .internal
+        default:
+            self = .unspecified
+        }
+    }
 }

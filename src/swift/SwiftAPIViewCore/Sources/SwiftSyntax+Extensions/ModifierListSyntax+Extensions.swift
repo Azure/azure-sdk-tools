@@ -27,6 +27,17 @@
 import Foundation
 import SwiftSyntax
 
-protocol AccessLevelProtocol: Tokenizable {
-    var accessLevel: AccessLevelModifierSyntax { get set }
+
+extension ModifierListSyntax? {
+    var accessLevel: AccessLevel {
+        guard let modifiers = self else { return .unspecified }
+        for child in modifiers.children(viewMode: .sourceAccurate) {
+            let accessLevel = AccessLevel(text: child.withoutTrivia().description)
+            if accessLevel != .unspecified {
+                return accessLevel
+            }
+        }
+        return .unspecified
+    }
 }
+

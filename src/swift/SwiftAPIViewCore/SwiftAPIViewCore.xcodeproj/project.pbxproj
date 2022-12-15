@@ -23,8 +23,12 @@
 		0A6C659B292EA7EC0075C56F /* SwiftSyntaxBuilder in Frameworks */ = {isa = PBXBuildFile; productRef = 0A6C659A292EA7EC0075C56F /* SwiftSyntaxBuilder */; };
 		0A6C659F292EC8490075C56F /* NavigationTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A1127879D0400C967A8 /* NavigationTags.swift */; };
 		0A6C65A0292EC8490075C56F /* NavigationToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A1327879D0400C967A8 /* NavigationToken.swift */; };
-		0A6C65CD292ED0C60075C56F /* AccessLevelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A84079627F3A54900801E60 /* AccessLevelProtocol.swift */; };
 		0A76BF8B294A9A11007C776E /* TokenKind+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A76BF8A294A9A11007C776E /* TokenKind+Extensions.swift */; };
+		0A76BF8F294B8BCD007C776E /* SyntaxProtocol+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A76BF8E294B8BCD007C776E /* SyntaxProtocol+Extensions.swift */; };
+		0A76BF91294B940A007C776E /* DeclarationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A76BF90294B940A007C776E /* DeclarationModel.swift */; };
+		0A76BF93294B987C007C776E /* DeclSyntaxProtocol+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A76BF92294B987C007C776E /* DeclSyntaxProtocol+Extensions.swift */; };
+		0A76BF95294BA10A007C776E /* AccessLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A76BF94294BA10A007C776E /* AccessLevel.swift */; };
+		0A76BF97294BA4E3007C776E /* ModifierListSyntax+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A76BF96294BA4E3007C776E /* ModifierListSyntax+Extensions.swift */; };
 		0A8469EA27879AE200C967A8 /* SwiftAPIViewCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A8469E127879AE200C967A8 /* SwiftAPIViewCore.framework */; };
 		0A846A0127879BE500C967A8 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 0A846A0027879BE500C967A8 /* OrderedCollections */; };
 		0A846A2F27879E7800C967A8 /* SwiftAPIViewCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A0327879D0400C967A8 /* SwiftAPIViewCoreTests.swift */; };
@@ -42,11 +46,15 @@
 
 /* Begin PBXFileReference section */
 		0A76BF8A294A9A11007C776E /* TokenKind+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TokenKind+Extensions.swift"; sourceTree = "<group>"; };
+		0A76BF8E294B8BCD007C776E /* SyntaxProtocol+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SyntaxProtocol+Extensions.swift"; sourceTree = "<group>"; };
+		0A76BF90294B940A007C776E /* DeclarationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationModel.swift; sourceTree = "<group>"; };
+		0A76BF92294B987C007C776E /* DeclSyntaxProtocol+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeclSyntaxProtocol+Extensions.swift"; sourceTree = "<group>"; };
+		0A76BF94294BA10A007C776E /* AccessLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessLevel.swift; sourceTree = "<group>"; };
+		0A76BF96294BA4E3007C776E /* ModifierListSyntax+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModifierListSyntax+Extensions.swift"; sourceTree = "<group>"; };
 		0A84076127ED2A2500801E60 /* Tokenizable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tokenizable.swift; sourceTree = "<group>"; };
 		0A84076327ED2CA400801E60 /* PackageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageModel.swift; sourceTree = "<group>"; };
 		0A84076527EE3DCE00801E60 /* APIViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIViewModel.swift; sourceTree = "<group>"; };
 		0A84076927EE4E2C00801E60 /* Linkable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Linkable.swift; sourceTree = "<group>"; };
-		0A84079627F3A54900801E60 /* AccessLevelProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessLevelProtocol.swift; sourceTree = "<group>"; };
 		0A84079827F3B34B00801E60 /* Identifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Identifiers.swift; sourceTree = "<group>"; };
 		0A8469E127879AE200C967A8 /* SwiftAPIViewCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftAPIViewCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A8469E927879AE200C967A8 /* SwiftAPIViewCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftAPIViewCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -95,6 +103,9 @@
 		0A76BF89294A99FB007C776E /* SwiftSyntax+Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				0A76BF92294B987C007C776E /* DeclSyntaxProtocol+Extensions.swift */,
+				0A76BF96294BA4E3007C776E /* ModifierListSyntax+Extensions.swift */,
+				0A76BF8E294B8BCD007C776E /* SyntaxProtocol+Extensions.swift */,
 				0A76BF8A294A9A11007C776E /* TokenKind+Extensions.swift */,
 			);
 			path = "SwiftSyntax+Extensions";
@@ -103,7 +114,6 @@
 		0A84077A27EE659100801E60 /* Protocols */ = {
 			isa = PBXGroup;
 			children = (
-				0A84079627F3A54900801E60 /* AccessLevelProtocol.swift */,
 				0A84076927EE4E2C00801E60 /* Linkable.swift */,
 				0A84076127ED2A2500801E60 /* Tokenizable.swift */,
 			);
@@ -164,7 +174,9 @@
 		0A846A0F27879D0400C967A8 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				0A76BF94294BA10A007C776E /* AccessLevel.swift */,
 				0A84076527EE3DCE00801E60 /* APIViewModel.swift */,
+				0A76BF90294B940A007C776E /* DeclarationModel.swift */,
 				0A84076327ED2CA400801E60 /* PackageModel.swift */,
 				0A846A1127879D0400C967A8 /* NavigationTags.swift */,
 				0A846A1327879D0400C967A8 /* NavigationToken.swift */,
@@ -293,19 +305,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A6C65CD292ED0C60075C56F /* AccessLevelProtocol.swift in Sources */,
 				0A76BF8B294A9A11007C776E /* TokenKind+Extensions.swift in Sources */,
 				0A6C659F292EC8490075C56F /* NavigationTags.swift in Sources */,
 				0A6C65A0292EC8490075C56F /* NavigationToken.swift in Sources */,
+				0A76BF97294BA4E3007C776E /* ModifierListSyntax+Extensions.swift in Sources */,
 				0A6C6593292DA0140075C56F /* Linkable.swift in Sources */,
 				0A6C6592292DA0090075C56F /* Token.swift in Sources */,
 				0A6C6591292D9FE60075C56F /* Tokenizable.swift in Sources */,
+				0A76BF93294B987C007C776E /* DeclSyntaxProtocol+Extensions.swift in Sources */,
 				0A6C658F292D9F8B0075C56F /* APIViewModel.swift in Sources */,
+				0A76BF91294B940A007C776E /* DeclarationModel.swift in Sources */,
 				0A6C6590292D9F8B0075C56F /* PackageModel.swift in Sources */,
 				0A6C658B292D9ED60075C56F /* CommandLineArguments.swift in Sources */,
 				0A6C658C292D9ED60075C56F /* Errors.swift in Sources */,
+				0A76BF95294BA10A007C776E /* AccessLevel.swift in Sources */,
 				0A6C658D292D9ED60075C56F /* Identifiers.swift in Sources */,
 				0A6C658E292D9ED60075C56F /* Logger.swift in Sources */,
+				0A76BF8F294B8BCD007C776E /* SyntaxProtocol+Extensions.swift in Sources */,
 				0A6C658A292D9EA00075C56F /* APIViewManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

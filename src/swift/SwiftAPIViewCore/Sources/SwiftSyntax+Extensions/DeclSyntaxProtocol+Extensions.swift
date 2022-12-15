@@ -25,14 +25,41 @@
 // --------------------------------------------------------------------------
 
 import Foundation
+import SwiftSyntax
 
-public class InitializersTestClass {
-
-    // Throwing initializer
-
-    public init(withThrowable: String) throws {}
-
-    // Failable initializer
-
-    public init?(withFailable: String) {}
+protocol hasIdentifier {
+    var identifier: TokenSyntax { get }
 }
+
+protocol hasModifiers {
+    var modifiers: ModifierListSyntax? { get }
+}
+
+protocol hasMembers {
+    var members: MemberDeclBlockSyntax { get }
+}
+
+protocol hasChildren {
+    func children(viewMode: SyntaxTreeViewMode) -> SyntaxChildren
+}
+
+typealias ModelProtocol = hasIdentifier & hasModifiers & hasMembers & hasChildren
+extension ActorDeclSyntax: ModelProtocol {}
+extension ClassDeclSyntax: ModelProtocol {}
+extension EnumDeclSyntax: ModelProtocol {}
+extension ProtocolDeclSyntax: ModelProtocol {}
+extension StructDeclSyntax: ModelProtocol {}
+
+typealias FunctionProtocol = hasIdentifier & hasModifiers & hasChildren
+extension FunctionDeclSyntax: FunctionProtocol {}
+extension TypealiasDeclSyntax: FunctionProtocol {}
+extension OperatorDeclSyntax: FunctionProtocol {}
+extension PrecedenceGroupDeclSyntax: FunctionProtocol {}
+
+typealias FixedNameFunctionProtocol = hasModifiers & hasChildren
+extension InitializerDeclSyntax: FixedNameFunctionProtocol {}
+extension SubscriptDeclSyntax: FixedNameFunctionProtocol {}
+extension VariableDeclSyntax: FixedNameFunctionProtocol {}
+
+typealias ExtensionProtocol = hasModifiers & hasMembers & hasChildren
+extension ExtensionDeclSyntax: ExtensionProtocol {}

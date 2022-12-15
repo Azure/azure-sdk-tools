@@ -61,8 +61,7 @@ class APIViewModel: Tokenizable, Encodable {
     let indentSpaces = 4
 
     /// Access modifier to expose via APIView
-    // FIXME: Fix this!
-    // static let publicModifiers: [AccessLevelModifierSyntax] = [.public, .open]
+    static let publicModifiers: [AccessLevel] = [.public, .open]
 
     /// Tracks assigned definition IDs so they can be linked
     private var definitionIds = Set<String>()
@@ -81,7 +80,7 @@ class APIViewModel: Tokenizable, Encodable {
         navigation = [NavigationToken]()
         tokens = [Token]()
         model = PackageModel(name: packageName, statements: statements)
-        self.tokenize(apiview: self)
+        self.tokenize(apiview: self, parent: nil)
         model.navigationTokenize(apiview: self)
     }
 
@@ -106,7 +105,7 @@ class APIViewModel: Tokenizable, Encodable {
         try container.encode(versionString, forKey: .versionString)
     }
 
-    func tokenize(apiview a: APIViewModel) {
+    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
         // Renders the APIView "preamble"
         let bundle = Bundle(for: Swift.type(of: self))
         let versionKey = "CFBundleShortVersionString"
@@ -114,7 +113,7 @@ class APIViewModel: Tokenizable, Encodable {
         a.text("Package parsed using Swift APIView (version \(apiViewVersion))")
         a.newline()
         a.blankLines(set: 2)
-        model.tokenize(apiview: a)
+        model.tokenize(apiview: a, parent: parent)
     }
 
     // MARK: Token Emitters

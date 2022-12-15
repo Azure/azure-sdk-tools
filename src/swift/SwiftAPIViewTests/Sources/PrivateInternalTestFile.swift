@@ -26,13 +26,6 @@
 
 import Foundation
 
-public class InitializersTestClass {
-
-    // Throwing initializer
-
-    public init(withThrowable: String) throws {}
-
-    // Failable initializer
-
-    public init?(withFailable: String) {}
-}
+private struct _PrivateStruct {}
+internal struct _InternalStruct {}
+struct _ImplicitlyInternalStruct {}

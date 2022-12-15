@@ -55,6 +55,7 @@ extension SwiftSyntax.TokenKind {
         case .leftParen: return .TrimLeft
         case .leftSquareBracket: return .TrimLeft
         case .initKeyword: return .Leading
+        case .wildcardKeyword: return .Neither
         case let .contextualKeyword(val):
             return val == "objc" ? .TrimLeft : .Both
         default:

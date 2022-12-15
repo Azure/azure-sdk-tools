@@ -1,7 +1,6 @@
 import {
     ClassDeclaration,
     EnumDeclaration,
-    FunctionDeclaration,
     InterfaceDeclaration,
     TypeAliasDeclaration
 } from "parse-ts-to-ast";
@@ -17,7 +16,6 @@ export class Changelog {
     public addedClass: string[] = [];
     public addedTypeAlias: string[] = [];
     public interfaceAddOptionalParam: string[] = [];
-    public classAddOptionalParam: string[] = [];
     public typeAliasAddInherit: string[] = [];
     public typeAliasAddParam: string[] = [];
     public addedEnum: string[] = [];
@@ -34,9 +32,7 @@ export class Changelog {
     public interfaceParamTypeChanged: string[] = [];
     public interfaceParamChangeRequired: string[] = [];
     public classParamDelete: string[] = [];
-    public classAddRequiredParam: string[] = [];
     public classParamChangeRequired: string[] = [];
-    public classParamTypeChanged: string[] = [];
     public typeAliasDeleteInherit: string[] = [];
     public typeAliasParamDelete: string[] = [];
     public typeAliasAddRequiredParam: string[] = [];
@@ -56,9 +52,7 @@ export class Changelog {
             this.interfaceParamChangeRequired.length > 0 ||
             this.interfaceParamTypeChanged.length > 0 ||
             this.classParamDelete.length > 0 ||
-            this.classAddRequiredParam.length > 0 ||
             this.classParamChangeRequired.length > 0 ||
-            this.classParamTypeChanged.length > 0 ||
             this.typeAliasDeleteInherit.length > 0 ||
             this.typeAliasParamDelete.length > 0 ||
             this.typeAliasAddRequiredParam.length > 0 ||
@@ -75,7 +69,6 @@ export class Changelog {
             this.addedClass.length > 0 ||
             this.addedTypeAlias.length > 0 ||
             this.interfaceAddOptionalParam.length > 0 ||
-            this.classAddOptionalParam.length > 0 ||
             this.typeAliasAddInherit.length > 0 ||
             this.typeAliasAddParam.length > 0 ||
             this.addedEnum.length > 0 ||
@@ -96,9 +89,7 @@ export class Changelog {
                 .concat(this.interfaceParamChangeRequired)
                 .concat(this.interfaceParamTypeChanged)
                 .concat(this.classParamDelete)
-                .concat(this.classAddRequiredParam)
                 .concat(this.classParamChangeRequired)
-                .concat(this.classParamTypeChanged)
                 .concat(this.typeAliasDeleteInherit)
                 .concat(this.typeAliasParamDelete)
                 .concat(this.typeAliasAddRequiredParam)
@@ -124,7 +115,6 @@ export class Changelog {
                 .concat(this.addedClass)
                 .concat(this.addedTypeAlias)
                 .concat(this.interfaceAddOptionalParam)
-                .concat(this.classAddOptionalParam)
                 .concat(this.typeAliasAddInherit)
                 .concat(this.typeAliasAddParam)
                 .concat(this.addedEnum)
@@ -149,9 +139,7 @@ export class Changelog {
                 .concat(this.interfaceParamChangeRequired)
                 .concat(this.interfaceParamTypeChanged)
                 .concat(this.classParamDelete)
-                .concat(this.classAddRequiredParam)
                 .concat(this.classParamChangeRequired)
-                .concat(this.classParamTypeChanged)
                 .concat(this.typeAliasDeleteInherit)
                 .concat(this.typeAliasParamDelete)
                 .concat(this.typeAliasAddRequiredParam)
@@ -254,31 +242,6 @@ const findInterfaceAddOptinalParam = (metaDataOld: TSExportedMetaData, metaDataN
         }
     });
     return interfaceAddedParam;
-};
-
-const findClassAddOptionalParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const classAddOptionalParam: string[] = [];
-    Object.keys(metaDataNew.classes).forEach(model => {
-        if (metaDataOld.classes[model]) {
-            const modelFromOld = metaDataOld.classes[model] as ClassDeclaration;
-            const modelFromNew = metaDataNew.classes[model] as ClassDeclaration;
-            modelFromNew.properties.forEach(pNew => {
-                if (pNew.isOptional) {
-                    let find = false;
-                    modelFromOld.properties.forEach(pOld => {
-                        if (pNew.name === pOld.name) {
-                            find = true;
-                            return;
-                        }
-                    });
-                    if (!find) {
-                        classAddOptionalParam.push('Class ' + model + ' has a new optional parameter ' + pNew.name);
-                    }
-                }
-            });
-        }
-    });
-    return classAddOptionalParam;
 };
 
 const findTypeAliasAddInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
@@ -670,31 +633,6 @@ const findClassParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
     return classDeleteParam;
 };
 
-const findClassAddRequiredParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const classAddRequiredParam: string[] = [];
-    Object.keys(metaDataNew.classes).forEach(model => {
-        if (metaDataOld.classes[model]) {
-            const modelFromOld = metaDataOld.classes[model] as ClassDeclaration;
-            const modelFromNew = metaDataNew.classes[model] as ClassDeclaration;
-            modelFromNew.properties.forEach(pNew => {
-                if (!pNew.isOptional) {
-                    let find = false;
-                    modelFromOld.properties.forEach(pOld => {
-                        if (pNew.name === pOld.name) {
-                            find = true;
-                            return;
-                        }
-                    });
-                    if (!find) {
-                        classAddRequiredParam.push('Class ' + model + ' has a new required parameter ' + pNew.name);
-                    }
-                }
-            });
-        }
-    });
-    return classAddRequiredParam;
-};
-
 const findClassParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
     const classParamChangeRequired: string[] = [];
     Object.keys(metaDataNew.classes).forEach(model => {
@@ -716,28 +654,6 @@ const findClassParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataN
         }
     });
     return classParamChangeRequired;
-};
-
-const findClassParamTypeChanged = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const classParamTypeChanged: string[] = [];
-    Object.keys(metaDataNew.classes).forEach(model => {
-        if (metaDataOld.classes[model]) {
-            const modelFromOld = metaDataOld.classes[model] as ClassDeclaration;
-            const modelFromNew = metaDataNew.classes[model] as ClassDeclaration;
-            modelFromNew.properties.forEach(pNew => {
-                modelFromOld.properties.forEach(pOld => {
-                    if (pNew.name === pOld.name) {
-                        if (pNew.type !== pOld.type) {
-                            classParamTypeChanged.push(`Type of parameter ${pNew.name} of class ${model} is changed from ${pOld.type} to ${pNew.type}`);
-                        }
-                        return;
-                    }
-                });
-
-            });
-        }
-    });
-    return classParamTypeChanged;
 };
 
 const findTypeAliasDeleteInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
@@ -1055,7 +971,6 @@ export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew:
     changLog.addedClass = findAddedClass(metaDataOld, metadataNew);
     changLog.addedTypeAlias = findAddedTypeAlias(metaDataOld, metadataNew);
     changLog.interfaceAddOptionalParam = findInterfaceAddOptinalParam(metaDataOld, metadataNew);
-    changLog.classAddOptionalParam = findClassAddOptionalParam(metaDataOld, metadataNew);
     changLog.typeAliasAddInherit = findTypeAliasAddInherit(metaDataOld, metadataNew);
     changLog.typeAliasAddParam = findTypeAliasAddParam(metaDataOld, metadataNew);
     changLog.addedEnum = findAddedEnum(metaDataOld, metadataNew);
@@ -1073,9 +988,7 @@ export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew:
     changLog.interfaceParamChangeRequired = findInterfaceParamChangeRequired(metaDataOld, metadataNew);
     changLog.interfaceParamTypeChanged = findInterfaceParamTypeChanged(metaDataOld, metadataNew);
     changLog.classParamDelete = findClassParamDelete(metaDataOld, metadataNew);
-    changLog.classAddRequiredParam = findClassAddRequiredParam(metaDataOld, metadataNew);
     changLog.classParamChangeRequired = findClassParamChangeRequired(metaDataOld, metadataNew);
-    changLog.classParamTypeChanged = findClassParamTypeChanged(metaDataOld, metadataNew);
     changLog.typeAliasDeleteInherit = findTypeAliasDeleteInherit(metaDataOld, metadataNew);
     changLog.typeAliasParamDelete = findTypeAliasDeleteParam(metaDataOld, metadataNew);
     changLog.typeAliasAddRequiredParam = findTypeAliasAddRequiredParam(metaDataOld, metadataNew);

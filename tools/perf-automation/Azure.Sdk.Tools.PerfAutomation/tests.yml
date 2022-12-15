@@ -275,7 +275,7 @@ Services:
     TestNames:
       Net: DownloadSasUriBlobClient
 
-  - Test: download
+  - Test: getProps
     Arguments:
     - --parallel 64
     - --parallel 1

@@ -17,7 +17,6 @@ export class Changelog {
     public addedClass: string[] = [];
     public addedTypeAlias: string[] = [];
     public interfaceAddOptionalParam: string[] = [];
-    public classAddOptionalParam: string[] = [];
     public typeAliasAddInherit: string[] = [];
     public typeAliasAddParam: string[] = [];
     public addedEnum: string[] = [];
@@ -34,9 +33,7 @@ export class Changelog {
     public interfaceParamTypeChanged: string[] = [];
     public interfaceParamChangeRequired: string[] = [];
     public classParamDelete: string[] = [];
-    public classAddRequiredParam: string[] = [];
     public classParamChangeRequired: string[] = [];
-    public classParamTypeChanged: string[] = [];
     public typeAliasDeleteInherit: string[] = [];
     public typeAliasParamDelete: string[] = [];
     public typeAliasAddRequiredParam: string[] = [];
@@ -56,9 +53,7 @@ export class Changelog {
             this.interfaceParamChangeRequired.length > 0 ||
             this.interfaceParamTypeChanged.length > 0 ||
             this.classParamDelete.length > 0 ||
-            this.classAddRequiredParam.length > 0 ||
             this.classParamChangeRequired.length > 0 ||
-            this.classParamTypeChanged.length > 0 ||
             this.typeAliasDeleteInherit.length > 0 ||
             this.typeAliasParamDelete.length > 0 ||
             this.typeAliasAddRequiredParam.length > 0 ||
@@ -75,7 +70,6 @@ export class Changelog {
             this.addedClass.length > 0 ||
             this.addedTypeAlias.length > 0 ||
             this.interfaceAddOptionalParam.length > 0 ||
-            this.classAddOptionalParam.length > 0 ||
             this.typeAliasAddInherit.length > 0 ||
             this.typeAliasAddParam.length > 0 ||
             this.addedEnum.length > 0 ||
@@ -96,9 +90,7 @@ export class Changelog {
                 .concat(this.interfaceParamChangeRequired)
                 .concat(this.interfaceParamTypeChanged)
                 .concat(this.classParamDelete)
-                .concat(this.classAddRequiredParam)
                 .concat(this.classParamChangeRequired)
-                .concat(this.classParamTypeChanged)
                 .concat(this.typeAliasDeleteInherit)
                 .concat(this.typeAliasParamDelete)
                 .concat(this.typeAliasAddRequiredParam)
@@ -124,7 +116,6 @@ export class Changelog {
                 .concat(this.addedClass)
                 .concat(this.addedTypeAlias)
                 .concat(this.interfaceAddOptionalParam)
-                .concat(this.classAddOptionalParam)
                 .concat(this.typeAliasAddInherit)
                 .concat(this.typeAliasAddParam)
                 .concat(this.addedEnum)
@@ -149,9 +140,7 @@ export class Changelog {
                 .concat(this.interfaceParamChangeRequired)
                 .concat(this.interfaceParamTypeChanged)
                 .concat(this.classParamDelete)
-                .concat(this.classAddRequiredParam)
                 .concat(this.classParamChangeRequired)
-                .concat(this.classParamTypeChanged)
                 .concat(this.typeAliasDeleteInherit)
                 .concat(this.typeAliasParamDelete)
                 .concat(this.typeAliasAddRequiredParam)
@@ -1055,7 +1044,6 @@ export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew:
     changLog.addedClass = findAddedClass(metaDataOld, metadataNew);
     changLog.addedTypeAlias = findAddedTypeAlias(metaDataOld, metadataNew);
     changLog.interfaceAddOptionalParam = findInterfaceAddOptinalParam(metaDataOld, metadataNew);
-    changLog.classAddOptionalParam = findClassAddOptionalParam(metaDataOld, metadataNew);
     changLog.typeAliasAddInherit = findTypeAliasAddInherit(metaDataOld, metadataNew);
     changLog.typeAliasAddParam = findTypeAliasAddParam(metaDataOld, metadataNew);
     changLog.addedEnum = findAddedEnum(metaDataOld, metadataNew);
@@ -1073,9 +1061,7 @@ export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew:
     changLog.interfaceParamChangeRequired = findInterfaceParamChangeRequired(metaDataOld, metadataNew);
     changLog.interfaceParamTypeChanged = findInterfaceParamTypeChanged(metaDataOld, metadataNew);
     changLog.classParamDelete = findClassParamDelete(metaDataOld, metadataNew);
-    changLog.classAddRequiredParam = findClassAddRequiredParam(metaDataOld, metadataNew);
     changLog.classParamChangeRequired = findClassParamChangeRequired(metaDataOld, metadataNew);
-    changLog.classParamTypeChanged = findClassParamTypeChanged(metaDataOld, metadataNew);
     changLog.typeAliasDeleteInherit = findTypeAliasDeleteInherit(metaDataOld, metadataNew);
     changLog.typeAliasParamDelete = findTypeAliasDeleteParam(metaDataOld, metadataNew);
     changLog.typeAliasAddRequiredParam = findTypeAliasAddRequiredParam(metaDataOld, metadataNew);

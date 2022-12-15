@@ -190,26 +190,32 @@ class APIViewModel: Tokenizable, Encodable {
         add(token: item)
     }
 
-    func punctuation(_ value: String, prefixSpace: Bool = false, postfixSpace: Bool=false) {
+    func punctuation(_ value: String, spacing: SpacingKind) {
         checkIndent()
-        if prefixSpace {
+        if spacing  == .TrimLeft {
+            self.trim()
+        }
+        if [SpacingKind.Leading, SpacingKind.Both].contains(spacing) {
             self.whitespace()
         }
         let item = Token(definitionId: nil, navigateToId: nil, value: value, kind: .punctuation)
         add(token: item)
-        if postfixSpace {
+        if [SpacingKind.Trailing, SpacingKind.Both].contains(spacing) {
             self.whitespace()
         }
     }
 
-    func keyword(_ keyword: String, prefixSpace: Bool = false, postfixSpace: Bool = false) {
+    func keyword(_ keyword: String, spacing: SpacingKind) {
         checkIndent()
-        if prefixSpace {
+        if spacing  == .TrimLeft {
+            self.trim()
+        }
+        if [SpacingKind.Leading, SpacingKind.Both].contains(spacing) {
             self.whitespace()
         }
         let item = Token(definitionId: nil, navigateToId: nil, value: keyword, kind: .keyword)
         add(token: item)
-        if postfixSpace {
+        if [SpacingKind.Trailing, SpacingKind.Both].contains(spacing) {
             self.whitespace()
         }
     }
@@ -311,5 +317,38 @@ class APIViewModel: Tokenizable, Encodable {
         }
         definitionIds.insert(defId)
         return defId
+    }
+
+    /// Trime whitespace tokens
+    func trim(removeNewlines: Bool = false) {
+        var lineIds = [Token]()
+        while (!tokens.isEmpty) {
+            var continueTrim = true
+            if let kind = tokens.last?.kind {
+                switch kind {
+                case .whitespace:
+                    _ = tokens.popLast()
+                case .newline:
+                    if removeNewlines {
+                        _ = tokens.popLast()
+                    }
+                case .lineIdMarker:
+                    if let popped = tokens.popLast() {
+                        lineIds.append(popped)
+                    }
+                default:
+                    continueTrim = false
+                }
+            }
+            if !continueTrim {
+                break
+            }
+        }
+        // reappend the line id tokens
+        while (!lineIds.isEmpty) {
+            if let popped = lineIds.popLast() {
+                tokens.append(popped)
+            }
+        }
     }
 }

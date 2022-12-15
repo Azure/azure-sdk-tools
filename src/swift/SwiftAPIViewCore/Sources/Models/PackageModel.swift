@@ -83,12 +83,12 @@ class PackageModel: Tokenizable, Linkable {
         a.text("package")
         a.whitespace()
         a.text(name, definitionId: definitionId)
-        a.punctuation("{", prefixSpace: true)
+        a.punctuation("{", spacing: SwiftSyntax.TokenKind.leftBrace.spacing)
         a.newline()
         a.indent {
             self.tokenize(statements: statements, apiview: a)
         }
-        a.punctuation("}")
+        a.punctuation("}", spacing: SwiftSyntax.TokenKind.rightBrace.spacing)
         a.newline()
     }
 
@@ -99,38 +99,24 @@ class PackageModel: Tokenizable, Linkable {
             let tokenKind = item.tokenKind
 
             if tokenKind.isKeyword {
-                a.keyword(item.withoutTrivia().description, prefixSpace: false, postfixSpace: true)
+                a.keyword(item.withoutTrivia().description, spacing: tokenKind.spacing)
                 return
             } else if tokenKind.isPunctuation {
                 let punct = item.withoutTrivia().description
-                // don't render curly braces from the code
-                let punctIgnore = ["{", "}"]
-
-                guard !punctIgnore.contains(punct) else { return }
-                let spacing = tokenKind.spacing
-                switch spacing {
-                case .Leading:
-                    a.punctuation(punct, prefixSpace: true, postfixSpace: false)
-                case .Trailing:
-                    a.punctuation(punct, prefixSpace: false, postfixSpace: true)
-                case .Both:
-                    a.punctuation(punct, prefixSpace: true, postfixSpace: true)
-                case .Neither:
-                    a.punctuation(punct, prefixSpace: false, postfixSpace: false)
-                }
+                a.punctuation(punct, spacing: tokenKind.spacing)
                 return
             }
             if case let SwiftSyntax.TokenKind.identifier(val) = tokenKind {
                 // FIXME: should not be text... should be a member declaration or reference
                 a.text(val)
             } else if case let SwiftSyntax.TokenKind.spacedBinaryOperator(val) = tokenKind {
-                a.punctuation(val, prefixSpace: true, postfixSpace: true)
+                a.punctuation(val, spacing: .Both)
             } else if case let SwiftSyntax.TokenKind.unspacedBinaryOperator(val) = tokenKind {
-                a.punctuation(val, prefixSpace: false, postfixSpace: false)
+                a.punctuation(val, spacing: .Neither)
             } else if case let SwiftSyntax.TokenKind.prefixOperator(val) = tokenKind {
-                a.punctuation(val, prefixSpace: true, postfixSpace: false)
+                a.punctuation(val, spacing: .Leading)
             } else if case let SwiftSyntax.TokenKind.postfixOperator(val) = tokenKind {
-                a.punctuation(val, prefixSpace: false, postfixSpace: true)
+                a.punctuation(val, spacing: .Trailing)
             } else if case let SwiftSyntax.TokenKind.floatingLiteral(val) = tokenKind {
                 a.literal(val)
             } else if case let SwiftSyntax.TokenKind.regexLiteral(val) = tokenKind {
@@ -140,7 +126,7 @@ class PackageModel: Tokenizable, Linkable {
             } else if case let SwiftSyntax.TokenKind.integerLiteral(val) = tokenKind {
                 a.literal(val)
             } else if case let SwiftSyntax.TokenKind.contextualKeyword(val) = tokenKind {
-                a.keyword(val, prefixSpace: true, postfixSpace: true)
+                a.keyword(val, spacing: tokenKind.spacing)
             } else if case let SwiftSyntax.TokenKind.stringSegment(val) = tokenKind {
                 a.text(val)
             } else {
@@ -150,7 +136,7 @@ class PackageModel: Tokenizable, Linkable {
             }
         case .memberDeclBlock:
             let item = MemberDeclBlockSyntax(element)!
-            a.punctuation("{", prefixSpace: true)
+            a.punctuation("{", spacing: SwiftSyntax.TokenKind.leftBrace.spacing)
             a.newline()
             a.indent {
                 for child in item.members {
@@ -158,7 +144,7 @@ class PackageModel: Tokenizable, Linkable {
                     a.blankLines(set: 0)
                 }
             }
-            a.punctuation("}")
+            a.punctuation("}", spacing: SwiftSyntax.TokenKind.rightBrace.spacing)
         case .codeBlockItem:
             // Don't render code blocks
             break

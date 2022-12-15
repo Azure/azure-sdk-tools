@@ -44,7 +44,7 @@ Example: [Custom Test on ci.yml](https://github.com/Azure/azure-sdk-tools/blob/m
 
 - For the tool which is publishing to public repository, do provide ci.yml for building, testing and releasing. 
 
-Example: [ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/CreateRuleFabricBot/ci.yml)
+Example: [ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/notification-configuration/ci.yml)
 
 - Pipelines should use common templates from `eng/pipelines/templates`.
 

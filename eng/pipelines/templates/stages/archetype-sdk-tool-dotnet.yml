@@ -83,6 +83,19 @@ stages:
               BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
               TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
+          # This step creates "$(Build.ArtifactStagingDirectory)/packages" directory if it doesn't exist.
+          # This step is necessary since migration to net6.0. This is because since net6.0, 
+          # in case the "Build and Package" above would not output any packages to this directory, 
+          # the "Publish to packages artifact" step below would fail on missing directory.
+          - pwsh: |
+              if (!(Test-Path -PathType container "$(Build.ArtifactStagingDirectory)/packages")) {
+                New-Item -ItemType Directory -Path "$(Build.ArtifactStagingDirectory)/packages"
+                Write-Host "Created directory $(Build.ArtifactStagingDirectory)/packages"
+              } else {
+                Write-Host "Directory $(Build.ArtifactStagingDirectory)/packages already exists. Nothing to do."
+              }
+            displayName: Create directory for packages to publish if absent
+
           - publish: $(Build.ArtifactStagingDirectory)/packages
             displayName: Publish to packages artifact
             artifact: packages

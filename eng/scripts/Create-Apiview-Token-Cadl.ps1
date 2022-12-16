@@ -21,7 +21,7 @@ function Sparse-Checkout($branchName, $packagePath)
     }    
     git sparse-checkout init --cone
     git sparse-checkout set $packagePath
-    git checkout $BranchName
+    git checkout $branchName
 }
 
 function Generate-Apiview-File($packagePath)
@@ -85,7 +85,7 @@ if ($revs)
                 $gitUrl = "https://$GitPat@github.com"
             }
 
-            git clone --no-checkout --filter=tree:0 "$gitUrl/$GitRepoName"
+            git clone --no-checkout --filter=tree:0 $gitUrl/$GitRepoName
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
             $prevRepo = $GitRepoName
         }

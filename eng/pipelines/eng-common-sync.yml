@@ -92,7 +92,7 @@ stages:
           environment: githubmerges
 
           pool:
-            vmImage: windows-2019
+            vmImage: windows-2022
 
           strategy:
             runOnce:
@@ -161,7 +161,7 @@ stages:
           environment: githubmerges
 
           pool:
-            vmImage: windows-2019
+            vmImage: windows-2022
 
           strategy:
             runOnce:

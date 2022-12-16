@@ -85,7 +85,8 @@ if ($revs)
                 $gitUrl = "https://$GitPat@github.com"
             }
 
-            git clone --no-checkout --filter=tree:0 $gitUrl/$GitRepoName
+            $gitUrl = "$gitUrl/$GitRepoName.git"
+            git clone --no-checkout --filter=tree:0 $gitUrl
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
             $prevRepo = $GitRepoName
         }

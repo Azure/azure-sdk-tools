@@ -69,7 +69,7 @@ namespace APIViewWeb.Models
 
         [Name("ShowHiddenApis")]
         public bool? ShowHiddenApis {
-            get => _showHiddenApis ?? false;
+            get => _showHiddenApis ?? true;
             set => _showHiddenApis = value;
         }
     }

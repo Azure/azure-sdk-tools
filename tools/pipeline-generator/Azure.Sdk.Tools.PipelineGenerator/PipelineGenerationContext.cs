@@ -35,7 +35,7 @@ namespace PipelineGenerator
             string repository,
             string branch,
             string agentPool,
-            string[] variableGroups,
+            int[] variableGroups,
             string devOpsPath,
             string prefix,
             bool whatIf,
@@ -51,7 +51,7 @@ namespace PipelineGenerator
             this.Repository = repository;
             this.Branch = branch;
             this.agentPool = agentPool;
-            this.variableGroups = ParseIntArray(variableGroups);
+            this.variableGroups = variableGroups;
             this.devOpsPath = devOpsPath;
             this.Prefix = prefix;
             this.WhatIf = whatIf;
@@ -69,9 +69,6 @@ namespace PipelineGenerator
         public bool SetManagedVariables { get; set; }
         public int[] VariableGroups => this.variableGroups;
         public string DevOpsPath => string.IsNullOrEmpty(this.devOpsPath) ? Prefix : this.devOpsPath;
-
-        private int[] ParseIntArray(string[] strs)
-            => strs.Select(str => int.Parse(str)).ToArray();
 
         private VssConnection cachedConnection;
 
@@ -135,7 +132,7 @@ namespace PipelineGenerator
 
         private ServiceEndpointHttpClient cachedServiceEndpointClient;
 
-        private async Task<ServiceEndpointHttpClient> GetServiceEndpointClientAsync(CancellationToken cancellationToken)
+        public async Task<ServiceEndpointHttpClient> GetServiceEndpointClientAsync(CancellationToken cancellationToken)
         {
             if (cachedServiceEndpointClient == null)
             {

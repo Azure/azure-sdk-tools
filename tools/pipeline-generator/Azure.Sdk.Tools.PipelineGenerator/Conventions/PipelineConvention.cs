@@ -163,9 +163,9 @@ namespace PipelineGenerator.Conventions
         private async Task<BuildDefinition> CreateDefinitionAsync(string definitionName, SdkComponent component, CancellationToken cancellationToken)
         {
             var serviceEndpoint = await Context.GetServiceEndpointAsync(cancellationToken);
-            
+
             var repository = Context.Repository;
-            
+
             var buildRepository = new BuildRepository
             {
                 DefaultBranch = Context.Branch,
@@ -175,7 +175,7 @@ namespace PipelineGenerator.Conventions
                 Url = new Uri($"https://github.com/{repository}.git"),
                 Properties = { ["connectedServiceId"] = serviceEndpoint.Id.ToString() }
             };
-            
+
             var projectReference = await Context.GetProjectReferenceAsync(cancellationToken);
             var agentPoolQueue = await Context.GetAgentPoolQueue(cancellationToken);
             var normalizedRelativeYamlPath = component.RelativeYamlPath.Replace("\\", "/");

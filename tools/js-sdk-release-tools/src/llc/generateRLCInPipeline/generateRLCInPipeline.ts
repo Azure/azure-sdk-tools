@@ -10,7 +10,7 @@ import { getOutputPackageInfo } from "../../utils/getOutputPackageInfo";
 import { getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory } from "../../utils/git";
 import { logger } from "../../utils/logger";
 import { RunningEnvironment } from "../../utils/runningEnvironment";
-import { copyPackageJsonFileIfNotExist } from '../utils/copyPackageJsonFileIfNotExist';
+import { prepareCommandToInstallDependenciesForCadlProject } from '../utils/prepareCommandToInstallDependenciesForCadlProject';
 import { generateChangelog } from "../utils/generateChangelog";
 import {
     generateAutorestConfigurationFileForMultiClientByPrComment,
@@ -38,15 +38,19 @@ export async function generateRLCInPipeline(options: {
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.cadlProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
             logger.logGreen(`copy package.json file if not exist`);
-            copyPackageJsonFileIfNotExist(path.join(options.sdkRepo, 'eng', 'typescript-emitter-package.json'), path.join(options.swaggerRepo, options.cadlProject, 'package.json'))
-            logger.logGreen(`npm install`);
-            execSync('npm install', {
+            const command = prepareCommandToInstallDependenciesForCadlProject(path.join(options.sdkRepo, 'eng', 'typescript-emitter-package.json'), path.join(options.swaggerRepo, options.cadlProject, 'package.json'));
+            logger.logGreen(command);
+            execSync(command, {
                 stdio: 'inherit',
                 cwd: path.join(options.swaggerRepo, options.cadlProject)
             });
             updateCadlProjectYamlFile(path.join(options.swaggerRepo, options.cadlProject, 'cadl-project.yaml'), options.sdkRepo, options.cadlEmitter);
-            logger.logGreen(`npx cadl compile . --emit ${options.cadlEmitter}`);
-            execSync(`npx cadl compile . --emit ${options.cadlEmitter}`, {
+            let cadlSource = '.';
+            if (fs.existsSync(path.join(options.swaggerRepo, options.cadlProject, 'client.cadl'))) {
+                cadlSource = 'client.cadl';
+            }
+            logger.logGreen(`npx cadl compile ${cadlSource} --emit ${options.cadlEmitter}`);
+            execSync(`npx cadl compile ${cadlSource} --emit ${options.cadlEmitter}`, {
                 stdio: 'inherit',
                 cwd: path.join(options.swaggerRepo, options.cadlProject)
             });

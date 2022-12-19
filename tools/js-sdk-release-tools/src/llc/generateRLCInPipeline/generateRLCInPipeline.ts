@@ -38,9 +38,9 @@ export async function generateRLCInPipeline(options: {
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.cadlProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
             logger.logGreen(`copy package.json file if not exist`);
-            const command = prepareCommandToInstallDependenciesForCadlProject(path.join(options.sdkRepo, 'eng', 'typescript-emitter-package.json'), path.join(options.swaggerRepo, options.cadlProject, 'package.json'));
-            logger.logGreen(command);
-            execSync(command, {
+            const installCommand = prepareCommandToInstallDependenciesForCadlProject(path.join(options.sdkRepo, 'eng', 'typescript-emitter-package.json'), path.join(options.swaggerRepo, options.cadlProject, 'package.json'));
+            logger.logGreen(installCommand);
+            execSync(installCommand, {
                 stdio: 'inherit',
                 cwd: path.join(options.swaggerRepo, options.cadlProject)
             });
@@ -49,7 +49,7 @@ export async function generateRLCInPipeline(options: {
             if (fs.existsSync(path.join(options.swaggerRepo, options.cadlProject, 'client.cadl'))) {
                 cadlSource = 'client.cadl';
             }
-            logger.logGreen(`npx cadl compile ${cadlSource} --emit ${options.cadlEmitter}`);
+            logger.logGreen(`npx cadl compile ${cadlSource} --emit ${options.cadlEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`);
             execSync(`npx cadl compile ${cadlSource} --emit ${options.cadlEmitter}`, {
                 stdio: 'inherit',
                 cwd: path.join(options.swaggerRepo, options.cadlProject)

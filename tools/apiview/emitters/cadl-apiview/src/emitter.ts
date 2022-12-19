@@ -1,6 +1,7 @@
 // See: https://cadlwebsite.z1.web.core.windows.net/docs/extending-cadl/emitters-basics
 
 import {
+  EmitContext,
   emitFile,
   getServiceNamespace,
   getServiceTitle,
@@ -22,26 +23,24 @@ const defaultOptions = {
 } as const;
 
 export interface ResolvedApiViewEmitterOptions {
+  emitterOutputDir?: string;
   outputPath: string;
   namespace?: string;
   version?: string;
 }
 
-export async function $onEmit(program: Program, emitterOptions?: ApiViewEmitterOptions) {
-  const options = resolveOptions(program, emitterOptions ?? {});
-  const emitter = createApiViewEmitter(program, options);
+export async function $onEmit(context: EmitContext<ApiViewEmitterOptions>) {
+  const options = resolveOptions(context);
+  const emitter = createApiViewEmitter(context.program, options);
   await emitter.emitApiView();
 }
 
-export function resolveOptions(
-  program: Program,
-  options: ApiViewEmitterOptions
-): ResolvedApiViewEmitterOptions {
-  const resolvedOptions = { ...defaultOptions, ...options };
+export function resolveOptions(context: EmitContext<ApiViewEmitterOptions>): ResolvedApiViewEmitterOptions {
+  const resolvedOptions = { ...defaultOptions, ...context.options };
 
   return {
     outputPath: resolvePath(
-      resolvedOptions["output-dir"] ?? `${program.compilerOptions.outputDir!}/apiview`,
+      context.emitterOutputDir,
       resolvedOptions["output-file"]
     ),
     namespace: resolvedOptions["namespace"],

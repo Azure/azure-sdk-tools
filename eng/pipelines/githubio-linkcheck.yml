@@ -91,20 +91,6 @@ jobs:
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
 
-  - task: PowerShell@2
-    displayName: 'go link check'
-    condition: succeededOrFailed()
-    inputs:
-      pwsh: true
-      filePath: eng/common/scripts/Verify-Links.ps1
-      arguments: >
-        -urls "https://raw.githubusercontent.com/Azure/azure-sdk-for-go/main/CHANGELOG.md"
-        -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
-        -inputCacheFile "$(cachefile)"
-        -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
-        -checkLinkGuidance: $true
-
   - publish: $(cachefile)
     artifact: verify-links-cache.txt
     condition: succeededOrFailed()

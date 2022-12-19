@@ -12,12 +12,13 @@ stages:
       jobs:
       - job: BuildPackage
         pool:
-          vmImage: ubuntu-18.04
+          name: azsdk-pool-mms-ubuntu-2004-general
+          vmImage: MMSUbuntu20.04
         steps:
           - task: UseDotNet@2
             displayName: Tools
             inputs:
-              version: '3.1.201'
+              version: '6.x'
           - pwsh: |
               dotnet build tools/${{ parameters.ToolName }} --configuration Release
             displayName: Build

@@ -50,7 +50,7 @@ export async function generateRLCInPipeline(options: {
                 cadlSource = 'client.cadl';
             }
             logger.logGreen(`npx cadl compile ${cadlSource} --emit ${options.cadlEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`);
-            execSync(`npx cadl compile ${cadlSource} --emit ${options.cadlEmitter}`, {
+            execSync(`npx cadl compile ${cadlSource} --emit ${options.cadlEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`, {
                 stdio: 'inherit',
                 cwd: path.join(options.swaggerRepo, options.cadlProject)
             });

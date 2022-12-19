@@ -14,11 +14,15 @@
                 <partial name="Shared/_ReviewBadge" model=" Model.Review" />
             </div>
         </div>
-        <div class="row" asp-resource="@Model.Review" asp-requirement="@AutoReviewModifierRequirement.Instance">
-            <div class="bottom-right-floating">
-                <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>ADD</small></br><i class="fas fa-sm fa-plus"></i></br><small>REVISION</small></button>
-            </div>
-        </div>
+        @if (Model.Review.FilterType == ReviewType.Manual)
+        {
+            <div class="row" asp-resource="@Model.Review" asp-requirement="@AutoReviewModifierRequirement.Instance">
+                <div class="bottom-right-floating">
+                         <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>REVISION</small></button>
+                </div>
+             </div>
+        }
+        
 
         <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">

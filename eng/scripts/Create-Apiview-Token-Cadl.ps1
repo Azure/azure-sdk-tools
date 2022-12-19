@@ -5,7 +5,8 @@ param (
     [ValidateNotNullOrEmpty()]
     [string] $WorkingDir,
     [ValidateNotNullOrEmpty()]
-    [string] $OutputDir
+    [string] $OutputDir,
+    [string] $GitPat = ""
 )
 
 Set-StrictMode -Version 3
@@ -20,7 +21,7 @@ function Sparse-Checkout($branchName, $packagePath)
     }    
     git sparse-checkout init --cone
     git sparse-checkout set $packagePath
-    git checkout $BranchName
+    git checkout $branchName
 }
 
 function Generate-Apiview-File($packagePath)
@@ -70,20 +71,26 @@ if ($revs)
         Write-Host "URL to Repo: '$($GitRepoName), Branch name: '$($branchName), Package Path: '$($packagePath)"
 
         $repoDirectory = Split-Path $GitRepoName -leaf
-        if (Test-Path $repoDirectory)
-        {
-            Write-Host "Destination path '$($repoDirectory)' already exists in working directory and is not an empty directory."
-            exit 1
-        }
         # initialize git clone if current review is generated from different repo than previous one
         if ($GitRepoName -ne $prevRepo)
         {
-            git clone --no-checkout --filter=tree:0 "https://github.com/$GitRepoName"
+            $gitUrl = "https://github.com"
+            if ($GitPat)
+            {
+                $gitUrl = "https://$GitPat@github.com"
+            }
+
+            $gitUrl = "$gitUrl/$GitRepoName.git"
+            if (Test-Path $repoDirectory)
+            {
+                Write-Host "Destination path '$($repoDirectory)' already exists in working directory. Deleting '$($repoDirectory)'"
+                Remove-Item $repoDirectory -Force -Recurse
+            }
+            git clone --no-checkout --filter=tree:0 $gitUrl
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
             $prevRepo = $GitRepoName
         }
 
-        $repoDirectory = Split-Path $GitRepoName -leaf
         Push-Location $repoDirectory
         try
         {

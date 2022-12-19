@@ -58,6 +58,7 @@ jobs:
         -Reviews "$(Reviews)"
         -OutputDir "$(Build.ArtifactStagingDirectory)"
         -WorkingDir "$(Pipeline.Workspace)"
+        -GitPat "$(github-access-token)"
 
   - task: PublishBuildArtifacts@1
     inputs:

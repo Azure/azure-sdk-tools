@@ -66,11 +66,7 @@ steps:
             git add ${path}
         done
         git commit -m '[auto]create by sdk generation'
-        if [ "${{ parameters.serviceType }}" = "resource-manager" ];then
-          branchName=sdkGen/${{ parameters.sdkGenerationName }}/arm-${{ parameters.service }}-${packageName}
-        else
-          branchName=sdkGen/${{ parameters.sdkGenerationName }}/dpg-${{ parameters.service }}-${packageName}
-        fi
+        branchName=sdkGen/${{ parameters.sdkGenerationName }}/${{ parameters.service }}-${packageName}
         git checkout -b ${branchName}
         pushSdkRepoUrl=$(echo $(sdkRepoUrl) | sed "s#https://#https://$(REPO_OWNER):$(azuresdk-github-pat)@#")
         pushSdkRepoUrl=$(echo ${pushSdkRepoUrl} | sed "s#$(SDK_OWNER)#$(SDK_PUSH_OWNER)#")

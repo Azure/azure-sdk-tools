@@ -315,7 +315,7 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
 
     visit_asyncfunctiondef = visit_functiondef
 
-#exists BlobClient
+
 class ClientMethodsHaveTracingDecorators(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -382,8 +382,8 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
             if new_path.count("_") == 0:
                 if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                         node.parent.name not in self.ignore_clients:
-                    if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
-                        and self.ignore_decorators[0] not in node.decoratornames() \
+                    if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client"):
+                        if self.ignore_decorators[0] not in node.decoratornames() \
                             and self.ignore_decorators[1] not in node.decoratornames() \
                                 and self.ignore_decorators[2] not in node.decoratornames():
                         
@@ -2076,17 +2076,24 @@ class AsyncMethodsReturnAsyncIterables(BaseChecker):
 
     def visit_asyncfunctiondef(self, node):
         try:
-            if node.parent.name.endswith("Client"):
-                for n in node.body:
-                    if isinstance(n, astroid.Return):
-                        if isinstance(n.value, astroid.Await):
-                            return 
-                        if isinstance(n.value, astroid.Call) and "async" not in n.value.value.as_string():
-                            self.add_message(
+            if "Client" in node.parent.name:
+                inferred = node.infer_call_result()
+                for n in inferred:
+                    if str(n) == "Uninferable" or n == None:
+                        return
+                    if "async" not in n.as_string().lower():
+                          self.add_message(
                                 msgid=f"async-return-async-iterable",
                                 node=node,
                                 confidence=None,
-                            )      
+                            )   
+                    else:
+                        return 
+        #             # if isinstance(n, astroid.Return):
+        #             #     if isinstance(n.value, astroid.Await):
+        #             #         return 
+        #             #     if isinstance(n.value, astroid.Call) and "async" not in n.value.value.as_string():
+                            
         except:
             pass
 
@@ -2147,6 +2154,7 @@ def register(linter):
     linter.register_checker(TypePropertyNameTooLong(linter))
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
+    linter.register_checker(AsyncMethodsReturnAsyncIterables(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

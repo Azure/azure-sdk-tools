@@ -400,7 +400,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         node.decoratornames() returns a set of the method's decorator names.
 
         :param node: function node
-        :type node: ast.FunctionDef
+        :type node: ast.AsyncFunctionDef
         :return: None
         """
         try:
@@ -1969,15 +1969,18 @@ class TypePropertyNameTooLong(BaseChecker):
     priority = -1
     msgs = {
         "C4751": (
-            "Name is over standard character length.",
+            "Name is over standard character length of 40.",
             "name-too-long",
-            "Only use names that are less than X characters."
+            "Only use names that are less than 40 characters."
         ),
     }
-    # Need to determine the length we want here
+
     STANDARD_CHARACTER_LENGTH = 40
 
     def visit_classdef(self,node):
+        """Visit every class and check that the
+         class name is within the character length limit."""
+
         try:
             if len(node.name) > self.STANDARD_CHARACTER_LENGTH:
                 self.add_message(
@@ -1990,6 +1993,9 @@ class TypePropertyNameTooLong(BaseChecker):
 
 
     def visit_functiondef(self, node):
+        """Visit every function and check that the function and 
+        its variable names are within the character length limit."""
+
         try:
             if len(node.name) > self.STANDARD_CHARACTER_LENGTH:
                 self.add_message(
@@ -2039,6 +2045,8 @@ class DeleteOperationReturnStatement(BaseChecker):
     }
 
     def visit_functiondef(self,node):
+        """Visits all delete functions and checks that their return types
+        are LROPoller or None. """
         try:
             if node.name.startswith("delete") or node.name.startswith("begin_delete"):
                 inferred = node.infer_call_result()
@@ -2108,14 +2116,22 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
     AZURE_CORE= "azure.core.exceptions"
 
     def visit_import(self, node):
+        """Checks all imports to make sure we are 
+        not using raise_with_traceback from azure core."""
+
         for import_, _ in node.names:
             self._check_import(import_, node)
 
     def visit_importfrom(self, node):
+        """Checks all `from` imports to make sure we are 
+        not using raise_with_traceback from azure core."""
+
         for import_, _ in node.names:
             self._check_import(import_, node)
     
     def _check_import(self, name, node):
+        """Raises message if raise_with_traceback is found."""
+
         if name.startswith("raise_with_traceback"):
             self.add_message(
                 msgid=f"no-raise-with-traceback", node=node, confidence=None

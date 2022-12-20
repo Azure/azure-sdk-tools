@@ -30,7 +30,7 @@ namespace PipelineGenerator.CommandParserOptions
         [Option('c', "convention", Required = true, HelpText = "The convention to build pipelines for: [ci|up|upweekly|tests|testsweekly]")]
         public string Convention { get; set; }
 
-        [Option('v', "variablegroups", Required = true, HelpText = "Variable groups to link, separated by a space, e.g. --variablegroups 1 9 64")]
+        [Option('v', "variablegroups", Required = false, HelpText = "Variable groups to link, separated by a space, e.g. --variablegroups 1 9 64")]
         public IEnumerable<int> VariableGroups { get; set; }
 
         [Option("open", Required = false, HelpText = "Open a browser window to the definitions that are created")]

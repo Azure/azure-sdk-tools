@@ -3280,15 +3280,3 @@ class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
                 )
         ):
             self.checker.visit_importfrom(node)
-
-class TestSetupMsrestIsodate(pylint.testutils.CheckerTestCase):
-    """Test that we don't use raise with traceback"""
-    CHECKER_CLASS = checker.SetupNoMsrestNeedsIsodate
-
-    def test_raise_traceback(self):
-        file = open(os.path.join(TEST_FOLDER, "test_files", "setup.py"))
-        node = astroid.parse(file.read())
-        file.close()
-    
-        with self.assertNoMessages():
-            self.checker.visit_moduledef(node)

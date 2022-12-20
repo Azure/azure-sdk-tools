@@ -73,7 +73,7 @@ parameters:
   # Use general pools instead of perf pools for faster startup due to more warm agents
 - name: LinuxPool
   type: string
-  default: 'azsdk-pool-mms-ubuntu-2004-general'
+  default: azsdk-pool-mms-ubuntu-2204-general
 - name: WindowsPool
   type: string
   default: 'azsdk-pool-mms-win-2022-general'
@@ -107,7 +107,7 @@ resources:
     ref: main
 
 variables:
-  LinuxVmImage: 'MMSUbuntu20.04'
+  LinuxVmImage: MMSUbuntu22.04
   WindowsVmImage: 'MMS2022'
   ToolsRepoCommitish: $(Build.SourceVersion)
 
@@ -263,8 +263,8 @@ stages:
 - stage: Print_Results
   displayName: Print Results
   pool:
-    name: 'azsdk-pool-mms-ubuntu-2004-general'
-    vmImage: 'MMSUbuntu20.04'
+    name: azsdk-pool-mms-ubuntu-2204-general
+    vmImage: MMSUbuntu22.04
   condition: succeededOrFailed()
   variables:
   - template: /eng/pipelines/templates/variables/globals.yml

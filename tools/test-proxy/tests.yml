@@ -15,7 +15,7 @@ stages:
             Pool: 'azsdk-pool-mms-win-2022-general'
             OS: 'Windows'
           Linux:
-            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            Pool: azsdk-pool-mms-ubuntu-2204-general
             OS: 'Linux'
           Mac:
             Pool: 'Azure Pipelines'
@@ -56,7 +56,7 @@ stages:
             Pool: 'azsdk-pool-mms-win-2022-general'
             OS: 'Windows'
           Linux:
-            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            Pool: azsdk-pool-mms-ubuntu-2204-general
             OS: 'Linux'
           Mac:
             Pool: 'Azure Pipelines'
@@ -88,7 +88,7 @@ stages:
     - job: Docker_CLI_Integration_Test
 
       pool:
-        name: 'azsdk-pool-mms-ubuntu-2004-general'
+        name: azsdk-pool-mms-ubuntu-2204-general
 
       variables:
         CLI_TEST_DOCKER_TAG: localproxyinstance
@@ -130,7 +130,7 @@ stages:
             Pool: 'azsdk-pool-mms-win-2022-general'
             OS: 'Windows'
           Linux:
-            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            Pool: azsdk-pool-mms-ubuntu-2204-general
             OS: 'Linux'
           Mac:
             Pool: 'Azure Pipelines'
@@ -187,7 +187,7 @@ stages:
             Pool: 'azsdk-pool-mms-win-2022-general'
             OS: 'Windows'
           Linux:
-            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            Pool: azsdk-pool-mms-ubuntu-2204-general
             OS: 'Linux'
           Mac:
             Pool: 'Azure Pipelines'

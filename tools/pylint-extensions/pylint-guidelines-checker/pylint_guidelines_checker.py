@@ -2077,22 +2077,28 @@ class AsyncMethodsReturnAsyncIterables(BaseChecker):
     def visit_asyncfunctiondef(self, node):
         try:
             if "Client" in node.parent.name:
-                inferred = node.infer_call_result()
-                for n in inferred:
-                    if str(n) == "Uninferable" or n == None:
-                        return
-                    if "async" not in n.as_string().lower():
-                          self.add_message(
+                for n in node.body:
+                # inferred = node.infer_call_result()
+                # for n in inferred:
+                #     if str(n) == "Uninferable" or n == None:
+                #         return
+                #     if "async" not in n.as_string().lower():
+                #           self.add_message(
+                #                 msgid=f"async-return-async-iterable",
+                #                 node=node,
+                #                 confidence=None,
+                #             )   
+                #     else:
+                #         return 
+                    if isinstance(n, astroid.Return):
+                        if isinstance(n.value, astroid.Await):
+                            return 
+                        if isinstance(n.value, astroid.Call) and "async" not in n.value.value.as_string():
+                            self.add_message(
                                 msgid=f"async-return-async-iterable",
                                 node=node,
                                 confidence=None,
                             )   
-                    else:
-                        return 
-        #             # if isinstance(n, astroid.Return):
-        #             #     if isinstance(n.value, astroid.Await):
-        #             #         return 
-        #             #     if isinstance(n.value, astroid.Call) and "async" not in n.value.value.as_string():
                             
         except:
             pass

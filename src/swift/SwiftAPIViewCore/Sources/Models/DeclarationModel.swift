@@ -47,6 +47,17 @@ class DeclarationModel: Tokenizable, Linkable {
         self.accessLevel = decl.modifiers.accessLevel
     }
 
+    init(from decl: DeclSyntax, parent: Linkable) {
+        SharedLogger.warn("Unexpected declaration type: \(decl.kind). This may not appear correctly in APIView.")
+        self.parent = parent
+        let name = (decl as? hasIdentifier)?.identifier.withoutTrivia().text ?? ""
+        definitionId = identifier(forName: name, withPrefix: parent.definitionId)
+        lineId = nil
+        self.name = name
+        self.childNodes = decl.children(viewMode: .sourceAccurate)
+        self.accessLevel = (decl as? hasModifiers)?.modifiers.accessLevel ?? .unspecified
+    }
+
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
         guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
         for child in childNodes {

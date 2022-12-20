@@ -79,26 +79,22 @@ class PackageModel: Tokenizable, Linkable {
                     members.append(DeclarationModel(from: StructDeclSyntax(decl)!, parent: self))
                 case .typealiasDecl:
                     members.append(DeclarationModel(from: TypealiasDeclSyntax(decl)!, parent: self))
-                default:
+                case .extensionDecl:
+                    // TODO: implement this
                     break
-//                    for child in statement.children(viewMode: .sourceAccurate) {
-//                        child.tokenize(apiview: a)
-//                    }
-//                case .extensionDecl: fallthrough
-//                case .initializerDecl: fallthrough
-//                case .subscriptDecl: fallthrough
-//                case .variableDecl:
-//                    for child in statement.children(viewMode: .sourceAccurate) {
-//                        child.tokenize(apiview: a)
-//                    }
-//                default:
-//                    // handle any new types of declarations Apple might conjure without crashing!
-//                    SharedLogger.warn("Unexpected declaration type: \(decl.kind). This may not appear correctly in APIView.")
-//                    for child in statement.children(viewMode: .sourceAccurate) {
-//                        child.tokenize(apiview: a)
-//                    }
+                case .initializerDecl:
+                    // TODO: implement this
+                    break
+                case .subscriptDecl:
+                    // TODO: implement this
+                    break
+                case .variableDecl:
+                    // TODO: implement this
+                    break
+                default:
+                    // Create an generic declaration model of unknown type
+                    members.append(DeclarationModel(from: decl, parent: self))
                 }
-                break
             default:
                 SharedLogger.fail("Unexpectedly encountered a non-declaration: \(statement.kind)")
             }

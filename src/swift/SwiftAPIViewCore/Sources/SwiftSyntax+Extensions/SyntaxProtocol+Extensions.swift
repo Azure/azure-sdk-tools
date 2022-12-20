@@ -33,6 +33,9 @@ extension SyntaxProtocol {
             SharedLogger.fail("\(self.kind) needs a parent")
         }
         switch self.kind {
+        case .associatedtypeDecl:
+            // TODO: Support this
+            break
         case .attribute:
             for child in self.children(viewMode: .sourceAccurate) {
                 child.tokenize(apiview: a, parent: parent)
@@ -44,8 +47,15 @@ extension SyntaxProtocol {
 //                child.tokenize(apiview: a, parent: parent)
 //                a.blankLines(set: 0)
 //            }
-        case .codeBlockItem:
+        case .codeBlock:
+            // FIXME: Does this also suppress get/set blocks?
             // Don't render code blocks. APIView is unconcerned with implementation
+            break
+        case .enumCaseDecl:
+            // TODO: Support this
+            break
+        case .functionDecl:
+            // TODO: implement this
             break
         case .functionParameter:
             let param = FunctionParameterSyntax(self)!
@@ -53,34 +63,96 @@ extension SyntaxProtocol {
                 let childNameInParent = child.childNameInParent
                 // we do not want to render the internal name
                 guard childNameInParent != "internal name" else { continue }
-                child.tokenize(apiview: a, parent: nil)
+                child.tokenize(apiview: a, parent: parent)
             }
-        case .memberDeclBlock:
-            // TODO: Handle member declarations
+        case .functionSignature:
+            // TODO: implement this
             break
-        case .token:
-            tokenize(token: TokenSyntax(self)!, apiview: a)
-        default:
+        case .genericParameter:
+            // TODO: Support this
+            break
+        case .genericParameterClause:
+            // TODO: Support this
+            break
+        case .genericWhereClause:
+            // TODO: Support this
+            break
+        case .initializerClause:
+            // TODO: Support this
+            break
+        case .initializerDecl:
+            // TODO: implement this
+            break
+        case .memberDeclBlock:
+            let declBlock = MemberDeclBlockSyntax(self)!
+            // don't render anything if there are no members
+            // FIXME: This will need to account only for public members!
+            guard declBlock.members.count > 0 else { break }
             for child in self.children(viewMode: .sourceAccurate) {
                 child.tokenize(apiview: a, parent: parent)
             }
+        case .memberDeclList:
+            a.indent {
+                for child in self.children(viewMode: .sourceAccurate) {
+                    child.tokenize(apiview: a, parent: parent)
+                }
+                a.newline()
+            }
+        case .memberDeclListItem:
+            a.newline()
+            for child in self.children(viewMode: .sourceAccurate) {
+                child.tokenize(apiview: a, parent: parent)
+            }
+        case .modifierList:
+            // TODO: Support this
+            break
+        case .operatorPrecedenceAndTypes:
+            // TODO: Support this
+            break
+        case .precedenceGroupAttributeList:
+            // TODO: Support this
+            break
+        case .subscriptDecl:
+            // TODO: Support this
+            break
+        case .token:
+            let token = TokenSyntax(self)!
+            tokenize(token: token, apiview: a)
+        case .typealiasDecl:
+            // TODO: Support this
+            break
+        case .typeInheritanceClause:
+            // TODO: Support this
+            break
+        case .typeInitializerClause:
+            // TODO: Support this
+            break
+        case .variableDecl:
+            // TODO: implement this
+            break
+        default:
+            // FIXME: Re-enable fallback once most things are supported again
+            SharedLogger.warn("Skipping: \(self.kind)")
+//            for child in self.children(viewMode: .sourceAccurate) {
+//                child.tokenize(apiview: a, parent: parent)
+//            }
         }
     }
 
     func tokenize(token: TokenSyntax, apiview a: APIViewModel) {
         let tokenKind = token.tokenKind
+        let tokenText = token.withoutTrivia().description
 
         if tokenKind.isKeyword {
-            a.keyword(token.withoutTrivia().description, spacing: tokenKind.spacing)
+            a.keyword(tokenText, spacing: tokenKind.spacing)
             return
         } else if tokenKind.isPunctuation {
-            let punct = token.withoutTrivia().description
-            a.punctuation(punct, spacing: tokenKind.spacing)
+            a.punctuation(tokenText, spacing: tokenKind.spacing)
             return
         }
         if case let SwiftSyntax.TokenKind.identifier(val) = tokenKind {
-            // FIXME: What if this is a type reference?
-            a.member(name: val)
+            // FIXME: Need to distinguish between member names and referenced types...
+            a.typeReference(name: val)
         } else if case let SwiftSyntax.TokenKind.spacedBinaryOperator(val) = tokenKind {
             a.punctuation(val, spacing: .Both)
         } else if case let SwiftSyntax.TokenKind.unspacedBinaryOperator(val) = tokenKind {
@@ -102,9 +174,8 @@ extension SyntaxProtocol {
         } else if case let SwiftSyntax.TokenKind.stringSegment(val) = tokenKind {
             a.text(val)
         } else {
-            SharedLogger.warn("Unsupported tokenKind \(tokenKind)")
-            let unknownText = self.description
-            a.text(unknownText)
+            SharedLogger.warn("Unsupported tokenKind \(tokenKind) = \(tokenText)")
+            a.text(tokenText)
         }
     }
 

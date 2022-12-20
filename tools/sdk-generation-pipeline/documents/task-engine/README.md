@@ -20,7 +20,7 @@ SDK Automation is launched in azure pipeline. It runs tasks in the following ste
 
 ### CodegenToSdkConfig
 This is type of file `./codegen_to_sdk_config.json` in sdk repo.
-The running environment of these scripts would be expected to be __Ubuntu 18.04__ on Azure Pipeline. This may change in the future. All the running script should be executable.
+The running environment of these scripts would be expected to be __Ubuntu 20.04__ on Azure Pipeline. This may change in the future. All the running script should be executable.
 The working folder of all the scripts is the __root folder of sdk repo__.
 
 #### CodegenToSdkConfig Example

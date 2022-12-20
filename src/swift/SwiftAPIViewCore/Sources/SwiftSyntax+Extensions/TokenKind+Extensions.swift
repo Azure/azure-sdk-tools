@@ -57,7 +57,11 @@ extension SwiftSyntax.TokenKind {
         case .initKeyword: return .Leading
         case .wildcardKeyword: return .Neither
         case let .contextualKeyword(val):
-            return val == "objc" ? .TrimLeft : .Both
+            switch val {
+            case "objc": return .TrimLeft
+            case "lowerThan", "higherThan", "associativity": return .Neither
+            default: return .Both
+            }
         default:
             return self.isKeyword ? .Both : .Neither
         }

@@ -37,9 +37,7 @@ extension SyntaxProtocol {
             // TODO: Support this
             break
         case .attribute:
-            for child in self.children(viewMode: .sourceAccurate) {
-                child.tokenize(apiview: a, parent: parent)
-            }
+            tokenizeChildren(apiview: a, parent: parent)
         case .attributeList:
             // FIXME: Address attribute lists, which could be line-by-line or inline
             break
@@ -88,30 +86,35 @@ extension SyntaxProtocol {
             // don't render anything if there are no members
             // FIXME: This will need to account only for public members!
             guard declBlock.members.count > 0 else { break }
-            for child in self.children(viewMode: .sourceAccurate) {
-                child.tokenize(apiview: a, parent: parent)
-            }
+            tokenizeChildren(apiview: a, parent: parent)
         case .memberDeclList:
             a.indent {
-                for child in self.children(viewMode: .sourceAccurate) {
-                    child.tokenize(apiview: a, parent: parent)
-                }
+                tokenizeChildren(apiview: a, parent: parent)
                 a.newline()
             }
         case .memberDeclListItem:
             a.newline()
-            for child in self.children(viewMode: .sourceAccurate) {
-                child.tokenize(apiview: a, parent: parent)
-            }
+            tokenizeChildren(apiview: a, parent: parent)
         case .modifierList:
             // TODO: Support this
             break
         case .operatorPrecedenceAndTypes:
-            // TODO: Support this
-            break
+            tokenizeChildren(apiview: a, parent: parent)
         case .precedenceGroupAttributeList:
-            // TODO: Support this
-            break
+            a.indent {
+                tokenizeChildren(apiview: a, parent: parent)
+                a.newline()
+            }
+        case .precedenceGroupRelation:
+            // TODO: needs to be commentable
+            a.newline()
+            tokenizeChildren(apiview: a, parent: parent)
+        case .precedenceGroupNameList, .precedenceGroupNameElement:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .precedenceGroupAssociativity:
+            // TODO: needs to be commentable
+            a.newline()
+            tokenizeChildren(apiview: a, parent: parent)
         case .subscriptDecl:
             // TODO: Support this
             break
@@ -131,11 +134,14 @@ extension SyntaxProtocol {
             // TODO: implement this
             break
         default:
-            // FIXME: Re-enable fallback once most things are supported again
-            SharedLogger.warn("Skipping: \(self.kind)")
-//            for child in self.children(viewMode: .sourceAccurate) {
-//                child.tokenize(apiview: a, parent: parent)
-//            }
+            SharedLogger.warn("No implmentation for token kind: \(self.kind)")
+            tokenizeChildren(apiview: a, parent: parent)
+        }
+    }
+
+    func tokenizeChildren(apiview a: APIViewModel, parent: Linkable?) {
+        for child in self.children(viewMode: .sourceAccurate) {
+            child.tokenize(apiview: a, parent: parent)
         }
     }
 

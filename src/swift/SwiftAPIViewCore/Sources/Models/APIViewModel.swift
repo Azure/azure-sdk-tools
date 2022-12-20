@@ -330,6 +330,8 @@ class APIViewModel: Tokenizable, Encodable {
                 case .newline:
                     if removeNewlines {
                         _ = tokens.popLast()
+                    } else {
+                        continueTrim = false
                     }
                 case .lineIdMarker:
                     if let popped = tokens.popLast() {

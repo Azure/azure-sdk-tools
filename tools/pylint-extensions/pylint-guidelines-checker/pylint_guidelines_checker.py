@@ -2080,6 +2080,8 @@ class AsyncMethodsReturnAsyncIterables(BaseChecker):
     }
 
     def visit_asyncfunctiondef(self, node):
+        """Checks all async functions, if there is a return statement, checks that it is preceded by an await. 
+        If it is a call to a function, it checks that the function is async. i.e AsyncLROPoller"""
         try:
             if "Client" in node.parent.name:
                 for n in node.body:

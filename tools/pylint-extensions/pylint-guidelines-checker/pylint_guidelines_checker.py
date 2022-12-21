@@ -2051,12 +2051,9 @@ class DeleteOperationReturnStatement(BaseChecker):
             if node.name.startswith("delete") or node.name.startswith("begin_delete"):
                 inferred = node.infer_call_result()
                 for x in inferred:
-                    if str(x)=="Uninferable" or x == None:
-                        return
-                    if x.value == None:
-                        return
-                    if x.name == "LROPoller" or x.name == "AsyncLROPoller":
-                        return
+                    if str(x)=="Uninferable" or x == None or x.value == None or \
+                        x.name == "LROPoller" or x.name == "AsyncLROPoller":
+                            return
                 self.add_message(
                     msgid=f"delete-operation-wrong-return-type",
                     node=node,

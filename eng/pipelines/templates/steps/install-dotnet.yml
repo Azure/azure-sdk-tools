@@ -11,7 +11,7 @@ parameters:
 steps:
   # https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/use-dotnet-v2?view=azure-pipelines
   - task: UseDotNet@2
-    condition: eq(parameters.DotNetCoreVersion, '')
+    condition: eq(${{ parameters.DotNetCoreVersion }}, '')
     displayName: "Use .NET SDK ${{ coalesce( parameters.DotNetCoreVersion, 'from global.json') }}"
     retryCountOnTaskFailure: 3
     inputs:

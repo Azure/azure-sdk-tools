@@ -83,11 +83,9 @@ class PackageModel: Tokenizable, Linkable {
                     // TODO: implement this
                     break
                 case .initializerDecl:
-                    // TODO: implement this
-                    break
+                    members.append(DeclarationModel(from: InitializerDeclSyntax(decl)!, parent: self))
                 case .subscriptDecl:
-                    // TODO: implement this
-                    break
+                    members.append(DeclarationModel(from: SubscriptDeclSyntax(decl)!, parent: self))
                 case .variableDecl:
                     // TODO: implement this
                     break

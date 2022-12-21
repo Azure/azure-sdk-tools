@@ -25,8 +25,9 @@
 // --------------------------------------------------------------------------
 
 import Foundation
+import SwiftSyntax
 
-/// Constructs an identifier
+/// Constructs an identifier based on a simple name
 func identifier(forName name: String, withPrefix prefix: String?) -> String {
     var defId = name
     if let prefix = prefix {
@@ -34,4 +35,19 @@ func identifier(forName name: String, withPrefix prefix: String?) -> String {
     }
     defId = defId.replacingOccurrences(of: " ", with: "_")
     return defId
+}
+
+
+func identifier(forName name: String, withSignature signature: FunctionSignatureSyntax, withPrefix prefix: String?) -> String {
+    var defId = name
+    // TODO: append signature-related stuff
+    return identifier(forName: defId, withPrefix: prefix)
+
+}
+
+func identifier(forName name: String, withSignature signature: SubscriptDeclSyntax.Accessor?, withPrefix prefix: String?) -> String {
+    var defId = name
+    // TODO: append signature-related stuff
+    return identifier(forName: defId, withPrefix: prefix)
+
 }

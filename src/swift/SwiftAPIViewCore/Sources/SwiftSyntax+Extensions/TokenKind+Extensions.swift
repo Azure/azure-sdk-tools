@@ -60,6 +60,7 @@ extension SwiftSyntax.TokenKind {
             switch val {
             case "objc": return .TrimLeft
             case "lowerThan", "higherThan", "associativity": return .Neither
+            case "available", "unavailable", "introduced", "deprecated", "obsoleted", "message", "renamed": return .Neither
             default: return .Both
             }
         default:

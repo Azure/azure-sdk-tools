@@ -37,16 +37,44 @@ class DeclarationModel: Tokenizable, Linkable {
     var parent: Linkable?
     let childNodes: SyntaxChildren
 
-    init(from decl: hasIdentifier & hasModifiers & hasChildren, parent: Linkable) {
-        self.parent = parent
-        let name = decl.identifier.withoutTrivia().text
-        definitionId = identifier(forName: name, withPrefix: parent.definitionId)
-        lineId = nil
+    init(name: String, decl: SyntaxProtocol, defId: String, parent: Linkable) {
         self.name = name
+        self.parent = parent
+        self.accessLevel = (decl as? hasModifiers)?.modifiers.accessLevel ?? .unspecified
         self.childNodes = decl.children(viewMode: .sourceAccurate)
-        self.accessLevel = decl.modifiers.accessLevel
+        self.definitionId = defId
+        self.lineId = nil
     }
 
+    /// Initialize from function declaration
+    convenience init(from decl: FunctionDeclSyntax, parent: Linkable) {
+        let name = decl.identifier.withoutTrivia().text
+        let defId = identifier(forName: name, withSignature: decl.signature, withPrefix: parent.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent)
+    }
+
+    /// Initialize from initializer declaration
+    convenience init(from decl: InitializerDeclSyntax, parent: Linkable) {
+        let name = "init"
+        let defId = identifier(forName: name, withSignature: decl.signature, withPrefix: parent.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent)
+    }
+
+    /// Initialize from subscript declaration
+    convenience init(from decl: SubscriptDeclSyntax, parent: Linkable) {
+        let name = "subscript"
+        let defId = identifier(forName: name, withSignature: decl.accessor, withPrefix: parent.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent)
+    }
+
+    /// Used for most declaration types that have members
+    convenience init(from decl: SyntaxProtocol, parent: Linkable) {
+        let name = (decl as? hasIdentifier)!.identifier.withoutTrivia().text
+        let defId = identifier(forName: name, withPrefix: parent.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent)
+    }
+
+    /// Used when the declaration type is unknown
     init(from decl: DeclSyntax, parent: Linkable) {
         SharedLogger.warn("Unexpected declaration type: \(decl.kind). This may not appear correctly in APIView.")
         self.parent = parent

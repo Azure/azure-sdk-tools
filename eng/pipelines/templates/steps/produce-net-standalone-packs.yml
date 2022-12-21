@@ -18,7 +18,7 @@ parameters:
 
 steps:
   - pwsh: |
-      New-Item -ItemType Directory -Path "$(Build.ArtifactStagingDirectory)/binaries"
+      New-Item -ItemType Directory -Path "$(Build.ArtifactStagingDirectory)/binaries" -Force
       Write-Host "Created directory ""$(Build.ArtifactStagingDirectory)/binaries"""
     displayName: Create .NET standalone packs destination directory
 

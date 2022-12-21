@@ -2163,7 +2163,6 @@ def register(linter):
     linter.register_checker(TypePropertyNameTooLong(linter))
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
-    linter.register_checker(AsyncMethodsReturnAsyncIterables(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
@@ -2174,3 +2173,5 @@ def register(linter):
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
+    # linter.register_checker(AsyncMethodsReturnAsyncIterables(linter))
+

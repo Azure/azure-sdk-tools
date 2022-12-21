@@ -23,27 +23,26 @@ namespace APIViewWeb.Managers
     public class OpenSourceRequestManager : IOpenSourceRequestManager
     {
         static readonly string[] scopes = new string[] { "api://2789159d-8d8b-4d13-b90b-ca29c1707afd/.default" };
-        static readonly HttpClient _ossClient = new();
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
-        private readonly ClientSecretCredential _clientCredential;
-        private DateTime _tokenExpiry;
-        private string _token;
-    
+        private readonly string _aadClientId;
+        private readonly string _aadClientSecret;
+        private readonly string _aadTenantId;
+
         public OpenSourceRequestManager(IConfiguration configuration)
         {
-            var aadClientId = configuration["opensource-aad-app-id"] ?? "";
-            var aadClientSecret = configuration["opensource-aad-client-secret"] ?? "";
-            var aadTenantId = configuration["opensource-aad-tenant-id"] ?? "";
-            _clientCredential = new ClientSecretCredential(aadTenantId, aadClientId, aadClientSecret);
+            _aadClientId = configuration["opensource-aad-app-id"] ?? "";
+            _aadClientSecret = configuration["opensource-aad-client-secret"] ?? "";
+            _aadTenantId = configuration["opensource-aad-tenant-id"] ?? "";
         }
 
         public async Task<OpenSourceUserInfo> GetUserInfo(string githubUserId)
         {            
             try
             {
-                await SetHeaders();
-                var response = await _ossClient.GetAsync($"https://repos.opensource.microsoft.com/api/people/links/github/{githubUserId}");
+                var ossClient = new HttpClient();
+                await SetHeaders(ossClient);
+                var response = await ossClient.GetAsync($"https://repos.opensource.microsoft.com/api/people/links/github/{githubUserId}");
                 response.EnsureSuccessStatusCode();
                 var userDetailsJson = await response.Content.ReadAsStringAsync();
                 return JsonConvert.DeserializeObject<OpenSourceUserInfo>(userDetailsJson);
@@ -68,23 +67,13 @@ namespace APIViewWeb.Managers
             return true;
         }
 
-        private async Task SetHeaders()
+        private async Task SetHeaders(HttpClient ossClient)
         {
-            var token = await GetAccessToken();
-            _ossClient.DefaultRequestHeaders.Add("content_type", "application/json");
-            _ossClient.DefaultRequestHeaders.Add("api-version", "2019-10-01");
-            _ossClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var clientCredential = new ClientSecretCredential(_aadTenantId, _aadClientId, _aadClientSecret);
+            var token =  (await clientCredential.GetTokenAsync(new TokenRequestContext(scopes))).Token;
+            ossClient.DefaultRequestHeaders.Add("content_type", "application/json");
+            ossClient.DefaultRequestHeaders.Add("api-version", "2019-10-01");
+            ossClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
-        
-        private async Task<string> GetAccessToken()
-        {
-            if (DateTime.Compare(DateTime.Now.AddSeconds(100), _tokenExpiry) >= 0 || _token == null)
-            {
-                var token = await _clientCredential.GetTokenAsync(new TokenRequestContext(scopes));
-                _token = token.Token;
-                _tokenExpiry = token.ExpiresOn.DateTime;
-            }
-            return _token;
-         }
     }  
 }

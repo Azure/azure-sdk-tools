@@ -82,8 +82,8 @@ stages:
     jobs:
       - job: SdkGeneration
         pool:
-          name: azsdk-pool-mms-ubuntu-2004-general
-          vmImage: MMSUbuntu20.04
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: MMSUbuntu22.04
         timeoutInMinutes: 180
         displayName: ${{ parameters.sdkToGenerate }}-${{ parameters.serviceType }}-${{ parameters.service }}
         steps:

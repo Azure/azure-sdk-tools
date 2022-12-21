@@ -31,7 +31,7 @@ RUN apt install python3-pip -y && apt install python3-venv -y && pip3 install --
 RUN add-apt-repository ppa:deadsnakes/ppa -y && apt-get install python3.10 -y && apt-get install python3.10-venv -y
 
 # install powershell
-RUN wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+RUN wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
 RUN dpkg -i packages-microsoft-prod.deb
 RUN apt-get update && apt-get install -y powershell
 RUN rm packages-microsoft-prod.deb

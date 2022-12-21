@@ -93,6 +93,8 @@ stages:
                 Write-Host "Created directory $(Build.ArtifactStagingDirectory)/packages"
               } else {
                 Write-Host "Directory $(Build.ArtifactStagingDirectory)/packages already exists. Nothing to do."
+                Write-Host" Directory contents:"
+                Get-ChildItem $(Build.ArtifactStagingDirectory)/packages | ForEach-Object { Write-Host $_ }
               }
             displayName: Create directory for packages to publish if absent
 

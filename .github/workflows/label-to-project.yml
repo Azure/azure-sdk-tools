@@ -9,7 +9,7 @@ on:
 jobs:
   check_issue_label:
     name: Check label on issue
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # This image is intentionally set to "latest", and not to a specific version
 
     steps:
       - uses: actions/checkout@v3

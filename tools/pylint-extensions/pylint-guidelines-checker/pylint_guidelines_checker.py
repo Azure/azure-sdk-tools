@@ -2003,7 +2003,7 @@ class TypePropertyNameTooLong(BaseChecker):
                     node=node,
                     confidence=None,
                 )
-                
+
             for i in node.body:
                 try:
                     if len(i.name) > self.STANDARD_CHARACTER_LENGTH:
@@ -2013,9 +2013,9 @@ class TypePropertyNameTooLong(BaseChecker):
                             confidence=None,
                         )        
                 except:
+                    # Gets the names of ast.Assign statements
                     for j in i.targets:
-                        name = j.name
-                        if len(name) > self.STANDARD_CHARACTER_LENGTH:
+                        if len(j.name) > self.STANDARD_CHARACTER_LENGTH:
                             self.add_message(
                                 msgid=f"name-too-long",
                                 node=i,

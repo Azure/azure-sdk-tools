@@ -2003,10 +2003,7 @@ class TypePropertyNameTooLong(BaseChecker):
                     node=node,
                     confidence=None,
                 )
-        except:
-            pass
-    
-        try:
+                
             for i in node.body:
                 try:
                     if len(i.name) > self.STANDARD_CHARACTER_LENGTH:
@@ -2117,16 +2114,21 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
     def visit_import(self, node):
         """Checks all imports to make sure we are 
         not using raise_with_traceback from azure core."""
-
-        for import_, _ in node.names:
-            self._check_import(import_, node)
+        try:
+            for import_, _ in node.names:
+                self._check_import(import_, node)
+        except:
+            pass
 
     def visit_importfrom(self, node):
         """Checks all `from` imports to make sure we are 
         not using raise_with_traceback from azure core."""
 
-        for import_, _ in node.names:
-            self._check_import(import_, node)
+        try:
+            for import_, _ in node.names:
+                self._check_import(import_, node)
+        except:
+            pass 
     
     def _check_import(self, name, node):
         """Raises message if raise_with_traceback is found."""
@@ -2174,4 +2176,3 @@ def register(linter):
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
     # linter.register_checker(AsyncMethodsReturnAsyncIterables(linter))
-

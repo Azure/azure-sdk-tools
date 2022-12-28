@@ -517,8 +517,6 @@ Services:
       PrimaryPackage: azure-eventhub
       PackageVersions:
       - azure-core: 1.26.1
-        azure-eventhub: 5.9.0
-      - azure-core: 1.26.1
         azure-eventhub: 5.10.0
       - azure-core: 1.26.1
         azure-eventhub: 5.10.1

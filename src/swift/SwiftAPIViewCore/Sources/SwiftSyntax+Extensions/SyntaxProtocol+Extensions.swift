@@ -157,7 +157,8 @@ extension SyntaxProtocol {
             }
         case .memberDeclListItem:
             let decl = MemberDeclListItemSyntax(self)!.decl
-            var showDecl = decl.shouldShow()
+            let publicModifiers = APIViewModel.publicModifiers
+            var showDecl = publicModifiers.contains(decl.modifiers?.accessLevel ?? .unspecified)
             switch decl.kind {
             case .associatedtypeDecl:
                 // all associated types are public
@@ -348,10 +349,26 @@ extension PrecedenceGroupAssociativitySyntax {
 }
 
 extension DeclSyntax {
-    func shouldShow() -> Bool {
-        if let modifiers = (self as? hasModifiers)?.modifiers {
-            return APIViewModel.publicModifiers.contains(modifiers.accessLevel)
+    var modifiers: ModifierListSyntax? {
+        switch self.kind {
+        case .associatedtypeDecl:
+            return AssociatedtypeDeclSyntax(self)!.modifiers
+        case .enumCaseDecl:
+            // enum cases don't have modifiers
+            return nil
+        case .functionDecl:
+            return FunctionDeclSyntax(self)!.modifiers
+        case .initializerDecl:
+            return InitializerDeclSyntax(self)!.modifiers
+        case .subscriptDecl:
+            return SubscriptDeclSyntax(self)!.modifiers
+        case .typealiasDecl:
+            return TypealiasDeclSyntax(self)!.modifiers
+        case .variableDecl:
+            return VariableDeclSyntax(self)!.modifiers
+        default:
+            SharedLogger.warn("Unhandled syntax type when looking for modifiers: \(self.kind)")
+            return nil
         }
-        return false
     }
 }

@@ -553,9 +553,9 @@ $ Invoke-Pester
 
 Starting discovery in 3 files.
 Discovery finished in 75ms.
-[+] /home/ben/sdk/azure-sdk-tools/eng/common/scripts/job-matrix/tests/job-matrix-functions.filter.tests.ps1 750ms (309ms|428ms)
-[+] /home/ben/sdk/azure-sdk-tools/eng/common/scripts/job-matrix/tests/job-matrix-functions.modification.tests.ps1 867ms (250ms|608ms)
-[+] /home/ben/sdk/azure-sdk-tools/eng/common/scripts/job-matrix/tests/job-matrix-functions.tests.ps1 2.71s (725ms|1.93s)
+[+] /home/ben/sdk/azure-sdk-tools/eng/common-tests/matrix-generator/tests/job-matrix-functions.filter.tests.ps1 750ms (309ms|428ms)
+[+] /home/ben/sdk/azure-sdk-tools/eng/common-tests/matrix-generator/tests/job-matrix-functions.modification.tests.ps1 867ms (250ms|608ms)
+[+] /home/ben/sdk/azure-sdk-tools/eng/common-tests/matrix-generator/tests/job-matrix-functions.tests.ps1 2.71s (725ms|1.93s)
 Tests completed in 4.33s
 Tests Passed: 141, Failed: 0, Skipped: 4 NotRun: 0
 ```

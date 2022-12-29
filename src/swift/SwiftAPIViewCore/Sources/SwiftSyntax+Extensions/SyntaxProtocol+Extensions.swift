@@ -33,13 +33,30 @@ extension SyntaxProtocol {
             SharedLogger.fail("\(self.kind) needs a parent")
         }
         switch self.kind {
+        case .accessorBlock:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .accessorDecl:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .accessorList:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .accessorParameter:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .arrayElement:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .arrayElementList:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .arrayExpr:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .arrayType:
+            tokenizeChildren(apiview: a, parent: parent)
         case .associatedtypeDecl:
             // FIXME: needs to be commentable and linkable
             tokenizeChildren(apiview: a, parent: parent)
         case .attribute:
-            // FIXME: needs to be commentable
+            // default implementation should not have newlines
             tokenizeChildren(apiview: a, parent: parent)
-            a.newline()
+        case .attributedType:
+            tokenizeChildren(apiview: a, parent: parent)
         case .attributeList:
             tokenizeChildren(apiview: a, parent: parent)
         case .availabilityArgument:
@@ -50,13 +67,24 @@ extension SyntaxProtocol {
             tokenizeChildren(apiview: a, parent: parent)
         case .availabilityVersionRestriction:
             tokenizeChildren(apiview: a, parent: parent)
+        case .classRestrictionType:
+            // in this simple context, class should not have a trailing space
+            a.keyword("class", spacing: .Neither)
         case .codeBlock:
-            // FIXME: Does this also suppress get/set blocks?
             // Don't render code blocks. APIView is unconcerned with implementation
             break
+        case .compositionType:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .compositionTypeElement:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .compositionTypeElementList:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .conformanceRequirement:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .constrainedSugarType:
+            tokenizeChildren(apiview: a, parent: parent)
         case .customAttribute:
-            // TODO: support this
-            break
+            tokenizeChildren(apiview: a, parent: parent)
         case .declModifier:
             tokenizeChildren(apiview: a, parent: parent)
         case .designatedTypeList:
@@ -70,7 +98,12 @@ extension SyntaxProtocol {
             // FIXME: render tokens as members and make line commentable
             // Arguably, make each case on a separate line, regardless of how it is in the code
             tokenizeChildren(apiview: a, parent: parent)
+        case .floatLiteralExpr:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .functionCallExpr:
+            tokenizeChildren(apiview: a, parent: parent)
         case .functionDecl:
+            // needs to be commentable
             DeclarationModel(from: FunctionDeclSyntax(self)!, parent: parent!).tokenize(apiview: a, parent: parent)
         case .functionParameter:
             let param = FunctionParameterSyntax(self)!
@@ -83,27 +116,36 @@ extension SyntaxProtocol {
         case .functionParameterList:
             tokenizeChildren(apiview: a, parent: parent)
         case .functionSignature:
-            // TODO: implement this
-            break
+            tokenizeChildren(apiview: a, parent: parent)
+        case .functionType:
+            tokenizeChildren(apiview: a, parent: parent)
         case .genericParameter:
-            // TODO: Support this
-            break
+            tokenizeChildren(apiview: a, parent: parent)
         case .genericParameterClause:
-            // TODO: Support this
-            break
+            tokenizeChildren(apiview: a, parent: parent)
+        case .genericParameterList:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .genericRequirement:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .genericRequirementList:
+            tokenizeChildren(apiview: a, parent: parent)
         case .genericWhereClause:
-            // TODO: Support this
-            break
+            tokenizeChildren(apiview: a, parent: parent)
+        case .identifierExpr:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .identifierPattern:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .inheritedType:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .inheritedTypeList:
+            tokenizeChildren(apiview: a, parent: parent)
         case .initializerClause:
-            // TODO: Support this
-            break
+            tokenizeChildren(apiview: a, parent: parent)
         case .initializerDecl:
             DeclarationModel(from: InitializerDeclSyntax(self)!, parent: parent!).tokenize(apiview: a, parent: parent)
+        case .integerLiteralExpr:
+            tokenizeChildren(apiview: a, parent: parent)
         case .memberDeclBlock:
-            let declBlock = MemberDeclBlockSyntax(self)!
-            // don't render anything if there are no members
-            // FIXME: This will need to account only for public members!
-            guard declBlock.members.count > 0 else { break }
             tokenizeChildren(apiview: a, parent: parent)
         case .memberDeclList:
             a.indent {
@@ -115,13 +157,31 @@ extension SyntaxProtocol {
                 }
             }
         case .memberDeclListItem:
-            a.newline()
+            let decl = MemberDeclListItemSyntax(self)!.decl
+            var show = decl.shouldShow()
+            // Public protocols should expose all members even if they have no access level modifier
+            if let parentDecl = (parent as? DeclarationModel), parentDecl.isProtocol {
+                show = show || APIViewModel.publicModifiers.contains(parentDecl.accessLevel)
+            }
+            if show {
+                a.newline()
+                tokenizeChildren(apiview: a, parent: parent)
+            }
+        case .memberTypeIdentifier:
             tokenizeChildren(apiview: a, parent: parent)
         case .modifierList:
             tokenizeChildren(apiview: a, parent: parent)
         case .operatorPrecedenceAndTypes:
             tokenizeChildren(apiview: a, parent: parent)
+        case .optionalType:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .packExpansionType:
+            tokenizeChildren(apiview: a, parent: parent)
         case .parameterClause:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .patternBinding:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .patternBindingList:
             tokenizeChildren(apiview: a, parent: parent)
         case .precedenceGroupAttributeList:
             a.indent {
@@ -145,26 +205,41 @@ extension SyntaxProtocol {
             }
             tokenizeChildren(apiview: a, parent: parent)
         case .returnClause:
-            // TODO: Support this
-            break
+            tokenizeChildren(apiview: a, parent: parent)
+        case .sameTypeRequirement:
+            tokenizeChildren(apiview: a, parent: parent)
         case .simpleTypeIdentifier:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .stringLiteralExpr:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .stringLiteralSegments:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .stringSegment:
             tokenizeChildren(apiview: a, parent: parent)
         case .subscriptDecl:
             DeclarationModel(from: SubscriptDeclSyntax(self)!, parent: parent!).tokenize(apiview: a, parent: parent)
         case .token:
             let token = TokenSyntax(self)!
             tokenize(token: token, apiview: a)
+        case .tupleExprElementList:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .tupleType:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .tupleTypeElement:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .tupleTypeElementList:
+            tokenizeChildren(apiview: a, parent: parent)
         case .typealiasDecl:
             DeclarationModel(from: TypealiasDeclSyntax(self)!, parent: parent!).tokenize(apiview: a, parent: parent)
+        case .typeAnnotation:
+            tokenizeChildren(apiview: a, parent: parent)
         case .typeInheritanceClause:
-            // TODO: Support this
-            break
+            tokenizeChildren(apiview: a, parent: parent)
         case .typeInitializerClause:
-            // TODO: Support this
-            break
+            tokenizeChildren(apiview: a, parent: parent)
         case .variableDecl:
-            // TODO: implement this
-            break
+            // FIXME: This needs to be commentable
+            tokenizeChildren(apiview: a, parent: parent)
         case .versionTuple:
             tokenizeChildren(apiview: a, parent: parent)
         default:
@@ -201,9 +276,9 @@ extension SyntaxProtocol {
                 a.typeReference(name: val)
             }
         } else if case let SwiftSyntax.TokenKind.spacedBinaryOperator(val) = tokenKind {
-            a.punctuation(val, spacing: .Neither)
-        } else if case let SwiftSyntax.TokenKind.unspacedBinaryOperator(val) = tokenKind {
             a.punctuation(val, spacing: .Both)
+        } else if case let SwiftSyntax.TokenKind.unspacedBinaryOperator(val) = tokenKind {
+            a.punctuation(val, spacing: .Neither)
         } else if case let SwiftSyntax.TokenKind.prefixOperator(val) = tokenKind {
             a.punctuation(val, spacing: .Leading)
         } else if case let SwiftSyntax.TokenKind.postfixOperator(val) = tokenKind {
@@ -251,5 +326,14 @@ extension PrecedenceGroupAssociativitySyntax {
         case let .contextualKeyword(val): return val
         default: return nil
         }
+    }
+}
+
+extension DeclSyntax {
+    func shouldShow() -> Bool {
+        if let modifiers = (self as? hasModifiers)?.modifiers {
+            return APIViewModel.publicModifiers.contains(modifiers.accessLevel)
+        }
+        return false
     }
 }

@@ -28,16 +28,26 @@ import Foundation
 import SwiftSyntax
 
 
+private func level(for modifiers: ModifierListSyntax) -> AccessLevel {
+    for child in modifiers.children(viewMode: .sourceAccurate) {
+        let accessLevel = AccessLevel(text: child.withoutTrivia().description)
+        if accessLevel != .unspecified {
+            return accessLevel
+        }
+    }
+    return .unspecified
+}
+
 extension ModifierListSyntax? {
     var accessLevel: AccessLevel {
         guard let modifiers = self else { return .unspecified }
-        for child in modifiers.children(viewMode: .sourceAccurate) {
-            let accessLevel = AccessLevel(text: child.withoutTrivia().description)
-            if accessLevel != .unspecified {
-                return accessLevel
-            }
-        }
-        return .unspecified
+        return level(for: modifiers)
     }
 }
 
+extension ModifierListSyntax {
+    var accessLevel: AccessLevel {
+        let modifiers = self
+        return level(for: modifiers)
+    }
+}

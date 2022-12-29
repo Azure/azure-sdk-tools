@@ -32,6 +32,8 @@
 		0A8469EA27879AE200C967A8 /* SwiftAPIViewCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A8469E127879AE200C967A8 /* SwiftAPIViewCore.framework */; };
 		0A846A0127879BE500C967A8 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 0A846A0027879BE500C967A8 /* OrderedCollections */; };
 		0A846A2F27879E7800C967A8 /* SwiftAPIViewCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A0327879D0400C967A8 /* SwiftAPIViewCoreTests.swift */; };
+		0AA1BFBE2953839E00AE8C11 /* ExtensionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AA1BFBD2953839E00AE8C11 /* ExtensionModel.swift */; };
+		0AA1BFC02953955500AE8C11 /* PatternBindingListSyntax+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AA1BFBF2953955500AE8C11 /* PatternBindingListSyntax+Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +69,8 @@
 		0A846A1327879D0400C967A8 /* NavigationToken.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NavigationToken.swift; sourceTree = "<group>"; };
 		0A846A1927879D0400C967A8 /* APIViewManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIViewManager.swift; sourceTree = "<group>"; };
 		0A846A342787A88E00C967A8 /* CoreInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = CoreInfo.plist; sourceTree = "<group>"; };
+		0AA1BFBD2953839E00AE8C11 /* ExtensionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionModel.swift; sourceTree = "<group>"; };
+		0AA1BFBF2953955500AE8C11 /* PatternBindingListSyntax+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PatternBindingListSyntax+Extensions.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +109,7 @@
 			children = (
 				0A76BF92294B987C007C776E /* DeclSyntaxProtocol+Extensions.swift */,
 				0A76BF96294BA4E3007C776E /* ModifierListSyntax+Extensions.swift */,
+				0AA1BFBF2953955500AE8C11 /* PatternBindingListSyntax+Extensions.swift */,
 				0A76BF8E294B8BCD007C776E /* SyntaxProtocol+Extensions.swift */,
 				0A76BF8A294A9A11007C776E /* TokenKind+Extensions.swift */,
 			);
@@ -177,6 +182,7 @@
 				0A76BF94294BA10A007C776E /* AccessLevel.swift */,
 				0A84076527EE3DCE00801E60 /* APIViewModel.swift */,
 				0A76BF90294B940A007C776E /* DeclarationModel.swift */,
+				0AA1BFBD2953839E00AE8C11 /* ExtensionModel.swift */,
 				0A84076327ED2CA400801E60 /* PackageModel.swift */,
 				0A846A1127879D0400C967A8 /* NavigationTags.swift */,
 				0A846A1327879D0400C967A8 /* NavigationToken.swift */,
@@ -310,6 +316,7 @@
 				0A6C65A0292EC8490075C56F /* NavigationToken.swift in Sources */,
 				0A76BF97294BA4E3007C776E /* ModifierListSyntax+Extensions.swift in Sources */,
 				0A6C6593292DA0140075C56F /* Linkable.swift in Sources */,
+				0AA1BFBE2953839E00AE8C11 /* ExtensionModel.swift in Sources */,
 				0A6C6592292DA0090075C56F /* Token.swift in Sources */,
 				0A6C6591292D9FE60075C56F /* Tokenizable.swift in Sources */,
 				0A76BF93294B987C007C776E /* DeclSyntaxProtocol+Extensions.swift in Sources */,
@@ -319,6 +326,7 @@
 				0A6C658B292D9ED60075C56F /* CommandLineArguments.swift in Sources */,
 				0A6C658C292D9ED60075C56F /* Errors.swift in Sources */,
 				0A76BF95294BA10A007C776E /* AccessLevel.swift in Sources */,
+				0AA1BFC02953955500AE8C11 /* PatternBindingListSyntax+Extensions.swift in Sources */,
 				0A6C658D292D9ED60075C56F /* Identifiers.swift in Sources */,
 				0A6C658E292D9ED60075C56F /* Logger.swift in Sources */,
 				0A76BF8F294B8BCD007C776E /* SyntaxProtocol+Extensions.swift in Sources */,

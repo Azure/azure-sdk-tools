@@ -27,41 +27,25 @@
 import Foundation
 import SwiftSyntax
 
-enum SpacingKind {
-    /// Leading space
-    case Leading
-    /// Trailing space
-    case Trailing
-    /// Leading and trailing space
-    case Both
-    /// No spacing
-    case Neither
-    /// chomps any leading whitespace to the left
-    case TrimLeft
-}
-
-extension SwiftSyntax.TokenKind {
-    var spacing: SpacingKind {
-        switch self {
-        case .prefixPeriod: return .Leading
-        case .comma: return .Trailing
-        case .colon: return .Trailing
-        case .semicolon: return .Trailing
-        case .equal: return .Both
-        case .arrow: return .Both
-        case .postfixQuestionMark: return .TrimLeft
-        case .leftBrace: return .Leading
-        case .initKeyword: return .Leading
-        case .wildcardKeyword: return .Neither
-        case let .contextualKeyword(val):
-            switch val {
-            case "objc": return .TrimLeft
-            case "lowerThan", "higherThan", "associativity": return .Neither
-            case "available", "unavailable", "introduced", "deprecated", "obsoleted", "message", "renamed": return .Neither
-            default: return .Both
+extension PatternBindingListSyntax {
+    var names: [String] {
+        var values = [String]()
+        for binding in self {
+            switch binding.kind {
+            case .patternBinding:
+                let pattern = PatternBindingSyntax(binding)!.pattern
+                let patternKind = pattern.kind
+                switch patternKind {
+                case .identifierPattern:
+                    let name = IdentifierPatternSyntax(pattern)!.identifier.withoutTrivia().text
+                    values.append(name)
+                default:
+                    SharedLogger.fail("Unsupported pattern kind: \(patternKind)")
+                }
+            default:
+                SharedLogger.fail("Unsupported binding kind: \(binding.kind)")
             }
-        default:
-            return self.isKeyword ? .Both : .Neither
         }
+        return values
     }
 }

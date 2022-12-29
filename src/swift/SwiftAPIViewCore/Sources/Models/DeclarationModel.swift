@@ -36,58 +36,74 @@ class DeclarationModel: Tokenizable, Linkable {
     var lineId: String?
     var parent: Linkable?
     let childNodes: SyntaxChildren
+    var isProtocol: Bool
 
-    init(name: String, decl: SyntaxProtocol, defId: String, parent: Linkable) {
+    init(name: String, decl: SyntaxProtocol, defId: String, parent: Linkable?, isProtocol: Bool) {
         self.name = name
         self.parent = parent
         self.accessLevel = (decl as? hasModifiers)?.modifiers.accessLevel ?? .unspecified
         self.childNodes = decl.children(viewMode: .sourceAccurate)
         self.definitionId = defId
         self.lineId = nil
+        self.isProtocol = isProtocol
     }
 
     /// Initialize from function declaration
-    convenience init(from decl: FunctionDeclSyntax, parent: Linkable) {
+    convenience init(from decl: FunctionDeclSyntax, parent: Linkable?) {
         let name = decl.identifier.withoutTrivia().text
-        let defId = identifier(forName: name, withSignature: decl.signature, withPrefix: parent.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent)
+        let defId = identifier(forName: name, withSignature: decl.signature, withPrefix: parent?.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
+    }
+
+    /// Initialize from protocol declaration
+    convenience init(from decl: ProtocolDeclSyntax, parent: Linkable?) {
+        let name = decl.identifier.withoutTrivia().text
+        let defId = identifier(forName: name, withPrefix: parent?.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: true)
     }
 
     /// Initialize from initializer declaration
-    convenience init(from decl: InitializerDeclSyntax, parent: Linkable) {
+    convenience init(from decl: InitializerDeclSyntax, parent: Linkable?) {
         let name = "init"
-        let defId = identifier(forName: name, withSignature: decl.signature, withPrefix: parent.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent)
+        let defId = identifier(forName: name, withSignature: decl.signature, withPrefix: parent?.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
     }
 
     /// Initialize from subscript declaration
-    convenience init(from decl: SubscriptDeclSyntax, parent: Linkable) {
+    convenience init(from decl: SubscriptDeclSyntax, parent: Linkable?) {
         let name = "subscript"
-        let defId = identifier(forName: name, withSignature: decl.accessor, withPrefix: parent.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent)
+        let defId = identifier(forName: name, withSignature: decl.accessor, withPrefix: parent?.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
     }
 
     /// Used for most declaration types that have members
-    convenience init(from decl: SyntaxProtocol, parent: Linkable) {
+    convenience init(from decl: SyntaxProtocol, parent: Linkable?) {
         let name = (decl as? hasIdentifier)!.identifier.withoutTrivia().text
-        let defId = identifier(forName: name, withPrefix: parent.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent)
+        let defId = identifier(forName: name, withPrefix: parent?.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
+    }
+
+    /// Used for variable declarations
+    convenience init(from decl: VariableDeclSyntax, parent: Linkable?) {
+        let name = decl.bindings.names.joined(separator: ",")
+        let defId = identifier(forName: name, withPrefix: parent?.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
     }
 
     /// Used when the declaration type is unknown
-    init(from decl: DeclSyntax, parent: Linkable) {
+    init(from decl: DeclSyntax, parent: Linkable?) {
         SharedLogger.warn("Unexpected declaration type: \(decl.kind). This may not appear correctly in APIView.")
         self.parent = parent
         let name = (decl as? hasIdentifier)?.identifier.withoutTrivia().text ?? ""
-        definitionId = identifier(forName: name, withPrefix: parent.definitionId)
+        definitionId = identifier(forName: name, withPrefix: parent?.definitionId)
         lineId = nil
         self.name = name
         self.childNodes = decl.children(viewMode: .sourceAccurate)
         self.accessLevel = (decl as? hasModifiers)?.modifiers.accessLevel ?? .unspecified
+        self.isProtocol = false
     }
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
         for child in childNodes {
             switch child.kind {
             case .token:
@@ -104,8 +120,25 @@ class DeclarationModel: Tokenizable, Linkable {
     }
 
     func navigationTokenize(apiview a: APIViewModel) {
-        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
         a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .class))
         // TODO: Restore nested links
+    }
+
+    func shouldShow() -> Bool {
+        let publicModifiers = APIViewModel.publicModifiers
+        guard let parentDecl = (parent as? DeclarationModel) else {
+            return publicModifiers.contains(self.accessLevel)
+        }
+        if parentDecl.isProtocol {
+            let parentAccess = parentDecl.accessLevel
+            return publicModifiers.contains(self.accessLevel) || publicModifiers.contains(parentAccess)
+        } else {
+            return publicModifiers.contains(self.accessLevel)
+        }
+    }
+
+    func shouldShow(inExtension ext: ExtensionModel) -> Bool {
+        let publicModifiers = APIViewModel.publicModifiers
+        return publicModifiers.contains(self.accessLevel) || publicModifiers.contains(ext.accessLevel)
     }
 }

@@ -249,8 +249,9 @@ class APIViewModel: Tokenizable, Encodable {
             // we must completely match the final segment of the type name
             matches = definitionIds.filter { $0.split(separator: ".").last! == name }
         }
-        guard matches.count < 2 else {
-            SharedLogger.fail("Found \(matches.count) matches for \(name).")
+        if matches.count > 1 {
+            // FIXME: Extensions will violate this...
+            SharedLogger.warn("Found \(matches.count) matches for \(name).")
         }
         let linkId = matches.first
         let item = Token(definitionId: nil, navigateToId: linkId, value: name, kind: .typeName)

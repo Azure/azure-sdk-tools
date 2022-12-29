@@ -33,14 +33,17 @@ class PackageModel: Tokenizable, Linkable {
     let name: String
     var definitionId: String?
     var parent: Linkable?
-    var members: [Tokenizable]
+    var members: [DeclarationModel]
+    var extensions: [ExtensionModel]
 
     init(name: String, statements: [CodeBlockItemSyntax.Item]) {
         self.name = name
         self.definitionId = name
         self.parent = nil
-        self.members = [Tokenizable]()
+        self.members = [DeclarationModel]()
+        self.extensions = [ExtensionModel]()
         process(statements: statements)
+        processExtensions()
     }
 
     func process(statements: [CodeBlockItemSyntax.Item]) {
@@ -49,17 +52,17 @@ class PackageModel: Tokenizable, Linkable {
             case let .decl(decl):
                 switch decl.kind {
                 case .actorDecl:
-                    members.append(DeclarationModel(from: ActorDeclSyntax(decl)!, parent: self))
+                    appendIfVisible(DeclarationModel(from: ActorDeclSyntax(decl)!, parent: self))
                 case .classDecl:
-                    members.append(DeclarationModel(from: ClassDeclSyntax(decl)!, parent: self))
+                    appendIfVisible(DeclarationModel(from: ClassDeclSyntax(decl)!, parent: self))
                 case .deinitializerDecl:
                     // deinitializers cannot be called by users, so it makes no sense
                     // to expose them in APIView
                     break
                 case .enumDecl:
-                    members.append(DeclarationModel(from: EnumDeclSyntax(decl)!, parent: self))
+                    appendIfVisible(DeclarationModel(from: EnumDeclSyntax(decl)!, parent: self))
                 case .functionDecl:
-                    members.append(DeclarationModel(from: FunctionDeclSyntax(decl)!, parent: self))
+                    appendIfVisible(DeclarationModel(from: FunctionDeclSyntax(decl)!, parent: self))
                 case .importDecl:
                     // purposely ignore import declarations
                     break
@@ -67,31 +70,29 @@ class PackageModel: Tokenizable, Linkable {
                     let model = DeclarationModel(from: OperatorDeclSyntax(decl)!, parent: self)
                     // operators are global and must always be displayed
                     model.accessLevel = .public
-                    members.append(model)
+                    appendIfVisible(model)
                 case .precedenceGroupDecl:
                     let model = DeclarationModel(from: PrecedenceGroupDeclSyntax(decl)!, parent: self)
                     // precedence groups are public and must always be displayed
                     model.accessLevel = .public
-                    members.append(model)
+                    appendIfVisible(model)
                 case .protocolDecl:
-                    members.append(DeclarationModel(from: ProtocolDeclSyntax(decl)!, parent: self))
+                    appendIfVisible(DeclarationModel(from: ProtocolDeclSyntax(decl)!, parent: self))
                 case .structDecl:
-                    members.append(DeclarationModel(from: StructDeclSyntax(decl)!, parent: self))
+                    appendIfVisible(DeclarationModel(from: StructDeclSyntax(decl)!, parent: self))
                 case .typealiasDecl:
-                    members.append(DeclarationModel(from: TypealiasDeclSyntax(decl)!, parent: self))
+                    appendIfVisible(DeclarationModel(from: TypealiasDeclSyntax(decl)!, parent: self))
                 case .extensionDecl:
-                    // TODO: implement this
-                    break
+                    extensions.append(ExtensionModel(from: ExtensionDeclSyntax(decl)!))
                 case .initializerDecl:
-                    members.append(DeclarationModel(from: InitializerDeclSyntax(decl)!, parent: self))
+                    appendIfVisible(DeclarationModel(from: InitializerDeclSyntax(decl)!, parent: self))
                 case .subscriptDecl:
-                    members.append(DeclarationModel(from: SubscriptDeclSyntax(decl)!, parent: self))
+                    appendIfVisible(DeclarationModel(from: SubscriptDeclSyntax(decl)!, parent: self))
                 case .variableDecl:
-                    // TODO: implement this
-                    break
+                    appendIfVisible(DeclarationModel(from: VariableDeclSyntax(decl)!, parent: self))
                 default:
                     // Create an generic declaration model of unknown type
-                    members.append(DeclarationModel(from: decl, parent: self))
+                    appendIfVisible(DeclarationModel(from: decl, parent: self))
                 }
             default:
                 SharedLogger.fail("Unexpectedly encountered a non-declaration: \(statement.kind)")
@@ -113,6 +114,36 @@ class PackageModel: Tokenizable, Linkable {
         }
         a.punctuation("}", spacing: SwiftSyntax.TokenKind.rightBrace.spacing)
         a.newline()
+    }
+
+    /// Move extensions into the model representations for declared package types
+    func processExtensions() {
+        for ext in extensions {
+            let extendedType = ext.extendedType
+            if let match = findDeclaration(for: extendedType) {
+                // FIXME: Move the declaration into the matched type
+                let test = "best"
+            } else {
+                // FIXME: Where to put these extensions of other types?
+                let test = "best"
+            }
+        }
+    }
+
+    func appendIfVisible(_ decl: DeclarationModel) {
+        if decl.shouldShow() {
+            members.append(decl)
+        }
+    }
+
+    func findDeclaration(for name: String) -> DeclarationModel? {
+        let result = members.filter { decl in
+            decl.name == name
+        }
+        guard result.count < 2 else {
+            SharedLogger.fail("Unexpectedly found \(result.count) matches for type \(name)")
+        }
+        return result.first
     }
 
     func navigationTokenize(apiview a: APIViewModel) {

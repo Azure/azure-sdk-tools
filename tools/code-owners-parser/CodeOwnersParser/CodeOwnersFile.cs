@@ -59,13 +59,27 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             return entries;
         }
 
-        public static CodeOwnerEntry ParseAndFindOwnersForClosestMatch(string codeOwnersFilePathOrUrl, string targetPath)
+        public static CodeOwnerEntry ParseAndFindOwnersForClosestMatch(
+            string codeOwnersFilePathOrUrl,
+            string targetPath,
+            bool useNewFindOwnersForClosestMatchImpl = false)
         {
             var codeOwnerEntries = ParseFile(codeOwnersFilePathOrUrl);
-            return FindOwnersForClosestMatch(codeOwnerEntries, targetPath);
+            return FindOwnersForClosestMatch(codeOwnerEntries, targetPath, useNewFindOwnersForClosestMatchImpl);
         }
 
-        public static CodeOwnerEntry FindOwnersForClosestMatch(List<CodeOwnerEntry> codeOwnerEntries, string targetPath)
+        public static CodeOwnerEntry FindOwnersForClosestMatch(
+            List<CodeOwnerEntry> codeOwnerEntries,
+            string targetPath,
+            bool useNewFindOwnersForClosestMatchImpl = false)
+        {
+            return useNewFindOwnersForClosestMatchImpl
+                ? new MatchedCodeOwnerEntry(codeOwnerEntries, targetPath).Value
+                : FindOwnersForClosestMatchLegacyImpl(codeOwnerEntries, targetPath);
+        }
+
+        private static CodeOwnerEntry FindOwnersForClosestMatchLegacyImpl(List<CodeOwnerEntry> codeOwnerEntries,
+            string targetPath)
         {
             // Normalize the start and end of the paths by trimming slash
             targetPath = targetPath.Trim('/');

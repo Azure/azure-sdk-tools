@@ -41,17 +41,17 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
         [TestCase("https://testLink")]
         public void TestOnError(string codeOwnerPath)
         {
-            Assert.AreEqual(1, Program.Main(codeOwnerPath, "sdk"));
+            Assert.That(Program.Main(codeOwnerPath, "sdk"), Is.EqualTo(1));
         }
 
         private static void TestExpectResult(List<string> expectReturn, string output)
         {
-            CodeOwnerEntry codeOwnerEntry = JsonSerializer.Deserialize<CodeOwnerEntry>(output);
+            CodeOwnerEntry? codeOwnerEntry = JsonSerializer.Deserialize<CodeOwnerEntry>(output);
             List<string> actualReturn = codeOwnerEntry!.Owners;
-            Assert.AreEqual(expectReturn.Count, actualReturn.Count);
+            Assert.That(actualReturn.Count, Is.EqualTo(expectReturn.Count));
             for (int i = 0; i < actualReturn.Count; i++)
             {
-                Assert.AreEqual(expectReturn[i], actualReturn[i]);
+                Assert.That(actualReturn[i], Is.EqualTo(expectReturn[i]));
             }
         }
     }

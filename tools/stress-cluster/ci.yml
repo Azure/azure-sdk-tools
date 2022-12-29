@@ -7,6 +7,8 @@ trigger:
       - tools/stress-cluster
       - eng/common/scripts/stress-testing
 
+# TESTING 1
+
 pr:
   branches:
     include:

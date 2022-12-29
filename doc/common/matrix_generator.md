@@ -548,7 +548,7 @@ The matrix is stored as a one-dimensional array, with a row-major indexing schem
 The matrix functions can be tested using [pester](https://pester.dev/). The test command must be run from within the tests directory.
 
 ```
-$ cd tests
+$ cd <azure sdk tools repo root>/eng/common-tests/matrix-generator/tests
 $ Invoke-Pester
 
 Starting discovery in 3 files.

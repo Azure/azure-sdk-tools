@@ -40,14 +40,14 @@ func identifier(forName name: String, withPrefix prefix: String?) -> String {
 
 func identifier(forName name: String, withSignature signature: FunctionSignatureSyntax, withPrefix prefix: String?) -> String {
     var defId = name
-    // TODO: append signature-related stuff
+    // FIXME: append signature-related stuff
     return identifier(forName: defId, withPrefix: prefix)
 
 }
 
 func identifier(forName name: String, withSignature signature: SubscriptDeclSyntax.Accessor?, withPrefix prefix: String?) -> String {
     var defId = name
-    // TODO: append signature-related stuff
+    // FIXME: append signature-related stuff
     return identifier(forName: defId, withPrefix: prefix)
 
 }

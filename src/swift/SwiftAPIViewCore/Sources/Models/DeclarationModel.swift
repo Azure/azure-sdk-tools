@@ -76,6 +76,13 @@ class DeclarationModel: Tokenizable, Linkable {
         self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
     }
 
+    /// Initialize from associated type declaration
+    convenience init(from decl: AssociatedtypeDeclSyntax, parent: Linkable?) {
+        let name = decl.identifier.withoutTrivia().text
+        let defId = identifier(forName: name, withPrefix: parent?.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
+    }
+
     /// Used for most declaration types that have members
     convenience init(from decl: SyntaxProtocol, parent: Linkable?) {
         let name = (decl as? hasIdentifier)!.identifier.withoutTrivia().text
@@ -121,7 +128,7 @@ class DeclarationModel: Tokenizable, Linkable {
 
     func navigationTokenize(apiview a: APIViewModel) {
         a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .class))
-        // TODO: Restore nested links
+        // FIXME: Restore nested links
     }
 
     func shouldShow() -> Bool {

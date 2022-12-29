@@ -50,8 +50,8 @@ extension SyntaxProtocol {
         case .arrayType:
             tokenizeChildren(apiview: a, parent: parent)
         case .associatedtypeDecl:
-            // FIXME: needs to be commentable and linkable
-            tokenizeChildren(apiview: a, parent: parent)
+            let decl = DeclarationModel(from: AssociatedtypeDeclSyntax(self)!, parent: parent)
+            decl.tokenize(apiview: a, parent: parent)
         case .attribute:
             // default implementation should not have newlines
             tokenizeChildren(apiview: a, parent: parent)
@@ -92,18 +92,15 @@ extension SyntaxProtocol {
         case .enumCaseDecl:
             tokenizeChildren(apiview: a, parent: parent)
         case .enumCaseElement:
-            // FIXME: render token as member and make line commentable
+            // FIXME: Must be commentable
             tokenizeChildren(apiview: a, parent: parent)
         case .enumCaseElementList:
-            // FIXME: render tokens as members and make line commentable
-            // Arguably, make each case on a separate line, regardless of how it is in the code
             tokenizeChildren(apiview: a, parent: parent)
         case .floatLiteralExpr:
             tokenizeChildren(apiview: a, parent: parent)
         case .functionCallExpr:
             tokenizeChildren(apiview: a, parent: parent)
         case .functionDecl:
-            // needs to be commentable
             DeclarationModel(from: FunctionDeclSyntax(self)!, parent: parent!).tokenize(apiview: a, parent: parent)
         case .functionParameter:
             let param = FunctionParameterSyntax(self)!
@@ -134,7 +131,9 @@ extension SyntaxProtocol {
         case .identifierExpr:
             tokenizeChildren(apiview: a, parent: parent)
         case .identifierPattern:
-            tokenizeChildren(apiview: a, parent: parent)
+            let name = IdentifierPatternSyntax(self)!.identifier.withoutTrivia().text
+            let lineId = identifier(forName: name, withPrefix: parent?.definitionId)
+            a.member(name: name, definitionId: lineId)
         case .inheritedType:
             tokenizeChildren(apiview: a, parent: parent)
         case .inheritedTypeList:
@@ -158,12 +157,29 @@ extension SyntaxProtocol {
             }
         case .memberDeclListItem:
             let decl = MemberDeclListItemSyntax(self)!.decl
-            var show = decl.shouldShow()
-            // Public protocols should expose all members even if they have no access level modifier
-            if let parentDecl = (parent as? DeclarationModel), parentDecl.isProtocol {
-                show = show || APIViewModel.publicModifiers.contains(parentDecl.accessLevel)
+            var showDecl = decl.shouldShow()
+            switch decl.kind {
+            case .associatedtypeDecl:
+                // all associated types are public
+                showDecl = true
+            case .enumCaseDecl:
+                // all enum cases are public
+                showDecl = true
+            case .functionDecl: fallthrough
+            case .initializerDecl: fallthrough
+            case .subscriptDecl: fallthrough
+            case .typealiasDecl: fallthrough
+            case .variableDecl:
+                // Public protocols should expose all members even if they have no access level modifier
+                if let parentDecl = (parent as? DeclarationModel), parentDecl.isProtocol {
+                    showDecl = showDecl || APIViewModel.publicModifiers.contains(parentDecl.accessLevel)
+                }
+            default:
+                // show the unrecognized member by default
+                SharedLogger.warn("Unhandled member declaration type '\(decl.kind)'. This may not display correctly in APIView.")
+                showDecl = true
             }
-            if show {
+            if showDecl {
                 a.newline()
                 tokenizeChildren(apiview: a, parent: parent)
             }
@@ -238,7 +254,6 @@ extension SyntaxProtocol {
         case .typeInitializerClause:
             tokenizeChildren(apiview: a, parent: parent)
         case .variableDecl:
-            // FIXME: This needs to be commentable
             tokenizeChildren(apiview: a, parent: parent)
         case .versionTuple:
             tokenizeChildren(apiview: a, parent: parent)
@@ -250,6 +265,7 @@ extension SyntaxProtocol {
 
     func tokenizeChildren(apiview a: APIViewModel, parent: Linkable?) {
         for child in self.children(viewMode: .sourceAccurate) {
+            let childKind = child.kind
             child.tokenize(apiview: a, parent: parent)
         }
     }
@@ -272,7 +288,9 @@ extension SyntaxProtocol {
                 a.text(tokenText)
                 a.whitespace()
             } else {
-                // FIXME: Associatedvalues needs to do a type declaration here...
+                // FIXME: May need a parent reference here to resolve references.
+                // The use of an associatedtype inside a protocol, for example.
+                // This seems to works right now... by accident?
                 a.typeReference(name: val)
             }
         } else if case let SwiftSyntax.TokenKind.spacedBinaryOperator(val) = tokenKind {

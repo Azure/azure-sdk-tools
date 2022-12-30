@@ -229,7 +229,8 @@ class APIViewModel: Tokenizable, Encodable {
     /// Register the declaration of a new type
     func typeDeclaration(name: String, definitionId: String?) {
         guard let definitionId = definitionId else {
-            SharedLogger.fail("Type declaration '\(name)' does not have a definition ID.")
+            SharedLogger.warn("Type declaration '\(name)' does not have a definition ID. APIView linking and commenting will not work correclty.")
+            return
         }
         checkIndent()
         let item = Token(definitionId: definitionId, navigateToId: definitionId, value: name, kind: .typeName)
@@ -322,13 +323,10 @@ class APIViewModel: Tokenizable, Encodable {
 
     /// Constructs a definition ID and ensures it is unique.
     func defId(forName name: String, withPrefix prefix: String?) -> String {
-        let defId = prefix != nil ? "\(prefix!).\(name)" : name
-        if defId.contains(" ") {
-            SharedLogger.fail("Definition ID should not contain whitespace: \(defId)")
-        }
+        var defId = prefix != nil ? "\(prefix!).\(name)" : name
+        defId = defId.filter { !$0.isWhitespace }
         if self.definitionIds.contains(defId) {
-            // FIXME: Change back to fail when extensions are fixed
-            SharedLogger.warn("Duplicate definition ID: \(defId). Will result in duplicate comments.")
+            SharedLogger.warn("Duplicate definition ID: \(defId). APIView will display duplicate comments.")
         }
         definitionIds.insert(defId)
         return defId

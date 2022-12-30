@@ -30,7 +30,7 @@ import SwiftSyntax
 extension SyntaxProtocol {
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
         if self.needsParent && parent == nil {
-            SharedLogger.fail("\(self.kind) needs a parent")
+            SharedLogger.warn("SyntaxKind '\(self.kind)' needs a parent. APIView may not display correctly.")
         }
 
         switch self.kind {

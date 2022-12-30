@@ -95,7 +95,7 @@ class PackageModel: Tokenizable, Linkable {
                     appendIfVisible(DeclarationModel(from: decl, parent: self))
                 }
             default:
-                SharedLogger.fail("Unexpectedly encountered a non-declaration: \(statement.kind)")
+                SharedLogger.warn("Unexpectedly encountered a non-declaration statement: \(statement.kind). APIView may not display correctly.")
             }
         }
     }
@@ -140,15 +140,14 @@ class PackageModel: Tokenizable, Linkable {
         let result = members.filter { decl in
             decl.name == name
         }
-        guard result.count < 2 else {
-            SharedLogger.fail("Unexpectedly found \(result.count) matches for type \(name)")
+        if result.count > 1 {
+            SharedLogger.warn("Unexpectedly found \(result.count) matches for type \(name).")
         }
         return result.first
     }
 
     func navigationTokenize(apiview a: APIViewModel) {
         for member in members {
-            guard let member = member as? Linkable else { continue }
             member.navigationTokenize(apiview: a)
         }
         // sort the root navigation elements by name

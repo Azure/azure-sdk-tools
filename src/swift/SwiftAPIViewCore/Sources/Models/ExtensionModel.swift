@@ -44,7 +44,8 @@ class ExtensionModel {
         case .simpleTypeIdentifier:
             self.extendedType = SimpleTypeIdentifierSyntax(extType)!.name.withoutTrivia().description
         default:
-            SharedLogger.fail("Unsupported type kind: \(extType.kind)")
+            SharedLogger.warn("Unhandled extended type kind: \(extType.kind). APIView may not display correctly")
+            self.extendedType = "_UNKNOWN_"
         }
         self.members = [DeclarationModel]()
         self.definitionId = ""
@@ -106,7 +107,7 @@ class ExtensionModel {
                 case .typealiasDecl:
                     appendIfVisible(DeclarationModel(from: TypealiasDeclSyntax(decl)!, parent: nil))
                 case .extensionDecl:
-                    SharedLogger.fail("Extensions containing extensions is not supported")
+                    SharedLogger.warn("Extensions containing extensions is not supported. Contact the Swift APIView team.")
                 case .initializerDecl:
                     appendIfVisible(DeclarationModel(from: InitializerDeclSyntax(decl)!, parent: nil))
                 case .subscriptDecl:

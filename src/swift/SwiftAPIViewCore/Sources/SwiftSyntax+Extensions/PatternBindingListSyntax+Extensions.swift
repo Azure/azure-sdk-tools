@@ -40,10 +40,12 @@ extension PatternBindingListSyntax {
                     let name = IdentifierPatternSyntax(pattern)!.identifier.withoutTrivia().text
                     values.append(name)
                 default:
-                    SharedLogger.fail("Unsupported pattern kind: \(patternKind)")
+                    SharedLogger.warn("Unsupported pattern kind: \(patternKind). APIView may not display correctly.")
+                    return []
                 }
             default:
-                SharedLogger.fail("Unsupported binding kind: \(binding.kind)")
+                SharedLogger.warn("Unsupported binding kind: \(binding.kind). APIView may not display correctly.")
+                return []
             }
         }
         return values

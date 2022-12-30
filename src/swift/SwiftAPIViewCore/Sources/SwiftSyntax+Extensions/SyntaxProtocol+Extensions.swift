@@ -93,7 +93,21 @@ extension SyntaxProtocol {
             tokenizeChildren(apiview: a, parent: parent)
         case .enumCaseElement:
             // FIXME: Must be commentable
-            tokenizeChildren(apiview: a, parent: parent)
+            for child in self.children(viewMode: .sourceAccurate) {
+                let childIndex = child.indexInParent
+                // index 1 is the enum case label. It must be rendered as a member
+                if childIndex == 1 {
+                    let token = TokenSyntax(child)!
+                    if case let SwiftSyntax.TokenKind.identifier(label) = token.tokenKind {
+                        let defId = identifier(forName: label, withPrefix: parent?.definitionId)
+                        a.member(name: label, definitionId: defId)
+                    } else {
+                        SharedLogger.warn("Unhandled enum label kind '\(token.tokenKind)'. APIView may not display correctly.")
+                    }
+                } else {
+                    child.tokenize(apiview: a, parent: parent)
+                }
+            }
         case .enumCaseElementList:
             tokenizeChildren(apiview: a, parent: parent)
         case .floatLiteralExpr:

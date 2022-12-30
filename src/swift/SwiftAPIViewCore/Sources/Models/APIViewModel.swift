@@ -237,21 +237,35 @@ class APIViewModel: Tokenizable, Encodable {
         add(token: item)
     }
 
+    func findNonFunctionParent(from item: DeclarationModel?) -> DeclarationModel? {
+        guard let item = item else { return nil }
+        switch item.kind {
+        case .method:
+            // look to the parent of the function
+            return findNonFunctionParent(from: (item.parent as? DeclarationModel))
+        default:
+            return item
+        }
+    }
+
     /// Link to a registered type
-    func typeReference(name: String) {
+    func typeReference(name: String, parent: DeclarationModel?) {
         checkIndent()
-        // TODO: Ensure this works for dotted names
+        var matchVal = name
+        if !matchVal.contains("."), let parentObject = findNonFunctionParent(from: parent), let parentDefId = parentObject.definitionId {
+            // if a plain, undotted name is provided, try to append the parent prefix
+            matchVal = "\(parentDefId).\(matchVal)"
+        }
         let matches: [String]
-        if name.contains(".") {
-            matches = definitionIds.filter { $0.hasSuffix(name) }
+        if matchVal.contains(".") {
+            matches = definitionIds.filter { $0.hasSuffix(matchVal) }
         } else {
             // if type does not contain a dot, then suffix is insufficient
             // we must completely match the final segment of the type name
             matches = definitionIds.filter { $0.split(separator: ".").last! == name }
         }
         if matches.count > 1 {
-            // FIXME: Extensions will violate this...
-            SharedLogger.warn("Found \(matches.count) matches for \(name).")
+            SharedLogger.warn("Found \(matches.count) matches for \(name). Using \(matches.first!). Swift APIView may not link correctly.")
         }
         let linkId = matches.first
         let item = Token(definitionId: nil, navigateToId: linkId, value: name, kind: .typeName)

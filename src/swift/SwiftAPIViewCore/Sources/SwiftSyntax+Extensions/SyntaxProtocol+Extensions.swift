@@ -32,6 +32,7 @@ extension SyntaxProtocol {
         if self.needsParent && parent == nil {
             SharedLogger.fail("\(self.kind) needs a parent")
         }
+
         switch self.kind {
         case .accessorBlock:
             tokenizeChildren(apiview: a, parent: parent)
@@ -52,9 +53,11 @@ extension SyntaxProtocol {
         case .associatedtypeDecl:
             let decl = DeclarationModel(from: AssociatedtypeDeclSyntax(self)!, parent: parent)
             decl.tokenize(apiview: a, parent: parent)
+        case .customAttribute: fallthrough
         case .attribute:
             // default implementation should not have newlines
             tokenizeChildren(apiview: a, parent: parent)
+            a.whitespace()
         case .attributedType:
             tokenizeChildren(apiview: a, parent: parent)
         case .attributeList:
@@ -83,8 +86,6 @@ extension SyntaxProtocol {
             tokenizeChildren(apiview: a, parent: parent)
         case .constrainedSugarType:
             tokenizeChildren(apiview: a, parent: parent)
-        case .customAttribute:
-            tokenizeChildren(apiview: a, parent: parent)
         case .declModifier:
             tokenizeChildren(apiview: a, parent: parent)
         case .designatedTypeList:
@@ -92,7 +93,6 @@ extension SyntaxProtocol {
         case .enumCaseDecl:
             tokenizeChildren(apiview: a, parent: parent)
         case .enumCaseElement:
-            // FIXME: Must be commentable
             for child in self.children(viewMode: .sourceAccurate) {
                 let childIndex = child.indexInParent
                 // index 1 is the enum case label. It must be rendered as a member
@@ -314,10 +314,7 @@ extension SyntaxProtocol {
                 a.text(tokenText)
                 a.whitespace()
             } else {
-                // FIXME: May need a parent reference here to resolve references.
-                // The use of an associatedtype inside a protocol, for example.
-                // This seems to works right now... by accident?
-                a.typeReference(name: val)
+                a.typeReference(name: val, parent: parent)
             }
         } else if case let SwiftSyntax.TokenKind.spacedBinaryOperator(val) = tokenKind {
             a.punctuation(val, spacing: .Both)

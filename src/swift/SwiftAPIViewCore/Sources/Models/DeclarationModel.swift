@@ -40,12 +40,29 @@ class DeclarationModel: Tokenizable, Linkable {
     let kind: Kind
 
     enum Kind {
-        case object
+        case `class`
         case `enum`
         case method
+        case package
         case `protocol`
+        case `struct`
         case unknown
         case variable
+
+        var navigationSymbol: NavigationTypeKind {
+            switch self {
+            case .class: return .class
+            case .struct: return .struct
+            case .enum: return .enum
+            // nothing for methods?
+            case .method: return .interface
+            case .package: return .assembly
+            case .protocol: return .interface
+            case .unknown: return .unknown
+            // nothing for variables really
+            case .variable: return .struct
+            }
+        }
     }
 
     init(name: String, decl: SyntaxProtocol, defId: String, parent: Linkable?, kind: Kind) {
@@ -82,22 +99,29 @@ class DeclarationModel: Tokenizable, Linkable {
     /// Initialize from subscript declaration
     convenience init(from decl: SubscriptDeclSyntax, parent: Linkable?) {
         let name = "subscript"
-        let defId = identifier(forName: name, withSignature: decl.accessor, withPrefix: parent?.definitionId)
+        let defId = identifier(for: decl, withPrefix: parent?.definitionId)
         self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .method)
+    }
+
+    /// Initialize from class type declaration
+    convenience init(from decl: ClassDeclSyntax, parent: Linkable?) {
+        let name = decl.identifier.withoutTrivia().text
+        let defId = identifier(forName: name, withPrefix: parent?.definitionId)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .class)
     }
 
     /// Initialize from associated type declaration
     convenience init(from decl: AssociatedtypeDeclSyntax, parent: Linkable?) {
         let name = decl.identifier.withoutTrivia().text
         let defId = identifier(forName: name, withPrefix: parent?.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .object)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .struct)
     }
 
     /// Used for most declaration types that have members
     convenience init(from decl: SyntaxProtocol, parent: Linkable?) {
         let name = (decl as? hasIdentifier)!.identifier.withoutTrivia().text
         let defId = identifier(forName: name, withPrefix: parent?.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .object)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .struct)
     }
 
     /// Used for variable declarations
@@ -123,17 +147,30 @@ class DeclarationModel: Tokenizable, Linkable {
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
         for child in childNodes {
             switch child.kind {
+            case .attributeList:
+                // attributes on declarations should have newlines
+                let obj = AttributeListSyntax(child)!
+                for attr in obj.children(viewMode: .sourceAccurate) {
+                    attr.tokenize(apiview: a, parent: parent)
+                    let attrText = attr.withoutTrivia().description.filter { !$0.isWhitespace }
+                    a.lineIdMarker(definitionId: "\(definitionId!).\(attrText)")
+                    a.blankLines(set: 0)
+                }
             case .token:
                 if child.withoutTrivia().description == self.name {
                     // render as the correct APIView token type
                     switch self.kind {
-                    case .object:
+                    case .class:
                         a.typeDeclaration(name: name, definitionId: definitionId)
                     case .enum:
                         a.typeDeclaration(name: name, definitionId: definitionId)
                     case .method:
                         a.member(name: name, definitionId: definitionId)
+                    case .package:
+                        a.typeDeclaration(name: name, definitionId: definitionId)
                     case .protocol:
+                        a.typeDeclaration(name: name, definitionId: definitionId)
+                    case .struct:
                         a.typeDeclaration(name: name, definitionId: definitionId)
                     case .unknown:
                         a.typeDeclaration(name: name, definitionId: definitionId)
@@ -151,7 +188,7 @@ class DeclarationModel: Tokenizable, Linkable {
     }
 
     func navigationTokenize(apiview a: APIViewModel) {
-        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .class))
+        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: kind.navigationSymbol))
         // FIXME: Restore nested links
     }
 

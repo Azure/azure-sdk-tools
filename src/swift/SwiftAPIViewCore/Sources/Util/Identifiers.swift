@@ -40,14 +40,24 @@ func identifier(forName name: String, withPrefix prefix: String?) -> String {
 
 func identifier(forName name: String, withSignature signature: FunctionSignatureSyntax, withPrefix prefix: String?) -> String {
     var defId = name
-    // FIXME: append signature-related stuff
+    var modifiedSignature = signature
+    // strip out the internal names and remove spaces
+    for (idx, item) in modifiedSignature.input.parameterList.enumerated() {
+        var modifiedItem = item
+        modifiedItem.secondName = nil
+        modifiedSignature.input.parameterList = modifiedSignature.input.parameterList.replacing(childAt: idx, with: modifiedItem)
+    }
+    let signatureText = modifiedSignature.withoutTrivia().description.filter { !$0.isWhitespace }
+    defId = "\(defId)\(signatureText)"
     return identifier(forName: defId, withPrefix: prefix)
-
 }
 
-func identifier(forName name: String, withSignature signature: SubscriptDeclSyntax.Accessor?, withPrefix prefix: String?) -> String {
-    var defId = name
-    // FIXME: append signature-related stuff
+func identifier(for decl: SubscriptDeclSyntax, withPrefix prefix: String?) -> String {
+    var modifiedDecl = decl
+    // ignore everything but the signature
+    modifiedDecl.accessor = nil
+    modifiedDecl.modifiers = nil
+    modifiedDecl.attributes = nil
+    let defId = modifiedDecl.withoutTrivia().description.filter { !$0.isWhitespace }
     return identifier(forName: defId, withPrefix: prefix)
-
 }

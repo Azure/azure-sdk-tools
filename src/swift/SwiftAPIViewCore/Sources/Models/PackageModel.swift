@@ -111,6 +111,16 @@ class PackageModel: Tokenizable, Linkable {
                 member.tokenize(apiview: a, parent: self)
                 a.blankLines(set: 1)
             }
+            // render any orphaned extensions
+            if !extensions.isEmpty {
+                a.comment("Non-package extensions")
+                a.newline()
+                for ext in extensions {
+                    ext.tokenize(apiview: a, parent: nil)
+                    a.lineIdMarker(definitionId: ext.definitionId)
+                    a.blankLines(set: 1)
+                }
+            }
         }
         a.punctuation("}", spacing: SwiftSyntax.TokenKind.rightBrace.spacing)
         a.newline()
@@ -118,16 +128,16 @@ class PackageModel: Tokenizable, Linkable {
 
     /// Move extensions into the model representations for declared package types
     func processExtensions() {
+        var otherExtensions = [ExtensionModel]()
         for ext in extensions {
             let extendedType = ext.extendedType
             if let match = findDeclaration(for: extendedType) {
-                // FIXME: Move the declaration into the matched type
-                let test = "best"
+                match.extensions.append(ext)
             } else {
-                // FIXME: Where to put these extensions of other types?
-                let test = "best"
+                otherExtensions.append(ext)
             }
         }
+        self.extensions = otherExtensions
     }
 
     func appendIfVisible(_ decl: DeclarationModel) {

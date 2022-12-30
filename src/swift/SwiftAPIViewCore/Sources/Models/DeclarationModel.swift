@@ -37,6 +37,7 @@ class DeclarationModel: Tokenizable, Linkable {
     var lineId: String?
     var parent: Linkable?
     let childNodes: SyntaxChildren
+    var extensions: [ExtensionModel]
     let kind: Kind
 
     enum Kind {
@@ -73,6 +74,7 @@ class DeclarationModel: Tokenizable, Linkable {
         self.definitionId = defId
         self.lineId = nil
         self.kind = kind
+        self.extensions = []
     }
 
     /// Initialize from function declaration
@@ -142,6 +144,7 @@ class DeclarationModel: Tokenizable, Linkable {
         self.childNodes = decl.children(viewMode: .sourceAccurate)
         self.accessLevel = (decl as? hasModifiers)?.modifiers.accessLevel ?? .unspecified
         self.kind = .unknown
+        self.extensions = []
     }
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
@@ -185,6 +188,13 @@ class DeclarationModel: Tokenizable, Linkable {
                 child.tokenize(apiview: a, parent: self)
             }
         }
+        if !extensions.isEmpty {
+            a.blankLines(set: 1)
+            for ext in extensions {
+                ext.tokenize(apiview: a, parent: self)
+                a.blankLines(set: 1)
+            }
+        }
     }
 
     func navigationTokenize(apiview a: APIViewModel) {
@@ -203,10 +213,5 @@ class DeclarationModel: Tokenizable, Linkable {
         } else {
             return publicModifiers.contains(self.accessLevel)
         }
-    }
-
-    func shouldShow(inExtension ext: ExtensionModel) -> Bool {
-        let publicModifiers = APIViewModel.publicModifiers
-        return publicModifiers.contains(self.accessLevel) || publicModifiers.contains(ext.accessLevel)
     }
 }

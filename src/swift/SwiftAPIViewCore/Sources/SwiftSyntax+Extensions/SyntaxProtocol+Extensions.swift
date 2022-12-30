@@ -29,10 +29,6 @@ import SwiftSyntax
 
 extension SyntaxProtocol {
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        if self.needsParent && parent == nil {
-            SharedLogger.warn("SyntaxKind '\(self.kind)' needs a parent. APIView may not display correctly.")
-        }
-
         switch self.kind {
         case .accessorBlock:
             tokenizeChildren(apiview: a, parent: parent)
@@ -110,12 +106,14 @@ extension SyntaxProtocol {
             }
         case .enumCaseElementList:
             tokenizeChildren(apiview: a, parent: parent)
+        case .enumDecl:
+            DeclarationModel(from: EnumDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
         case .floatLiteralExpr:
             tokenizeChildren(apiview: a, parent: parent)
         case .functionCallExpr:
             tokenizeChildren(apiview: a, parent: parent)
         case .functionDecl:
-            DeclarationModel(from: FunctionDeclSyntax(self)!, parent: parent!).tokenize(apiview: a, parent: parent)
+            DeclarationModel(from: FunctionDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
         case .functionParameter:
             let param = FunctionParameterSyntax(self)!
             for child in param.children(viewMode: .sourceAccurate) {
@@ -142,6 +140,12 @@ extension SyntaxProtocol {
             tokenizeChildren(apiview: a, parent: parent)
         case .functionType:
             tokenizeChildren(apiview: a, parent: parent)
+        case .genericArgument:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .genericArgumentClause:
+            tokenizeChildren(apiview: a, parent: parent)
+        case .genericArgumentList:
+            tokenizeChildren(apiview: a, parent: parent)
         case .genericParameter:
             tokenizeChildren(apiview: a, parent: parent)
         case .genericParameterClause:
@@ -167,7 +171,7 @@ extension SyntaxProtocol {
         case .initializerClause:
             tokenizeChildren(apiview: a, parent: parent)
         case .initializerDecl:
-            DeclarationModel(from: InitializerDeclSyntax(self)!, parent: parent!).tokenize(apiview: a, parent: parent)
+            DeclarationModel(from: InitializerDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
         case .integerLiteralExpr:
             tokenizeChildren(apiview: a, parent: parent)
         case .memberDeclBlock:
@@ -192,6 +196,7 @@ extension SyntaxProtocol {
             case .enumCaseDecl:
                 // all enum cases are public
                 showDecl = true
+            case .enumDecl: fallthrough
             case .functionDecl: fallthrough
             case .initializerDecl: fallthrough
             case .subscriptDecl: fallthrough
@@ -260,7 +265,7 @@ extension SyntaxProtocol {
         case .stringSegment:
             tokenizeChildren(apiview: a, parent: parent)
         case .subscriptDecl:
-            DeclarationModel(from: SubscriptDeclSyntax(self)!, parent: parent!).tokenize(apiview: a, parent: parent)
+            DeclarationModel(from: SubscriptDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
         case .token:
             let token = TokenSyntax(self)!
             tokenize(token: token, apiview: a, parent: (parent as? DeclarationModel))
@@ -273,7 +278,7 @@ extension SyntaxProtocol {
         case .tupleTypeElementList:
             tokenizeChildren(apiview: a, parent: parent)
         case .typealiasDecl:
-            DeclarationModel(from: TypealiasDeclSyntax(self)!, parent: parent!).tokenize(apiview: a, parent: parent)
+            DeclarationModel(from: TypealiasDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
         case .typeAnnotation:
             tokenizeChildren(apiview: a, parent: parent)
         case .typeInheritanceClause:
@@ -285,7 +290,7 @@ extension SyntaxProtocol {
         case .versionTuple:
             tokenizeChildren(apiview: a, parent: parent)
         default:
-            SharedLogger.warn("No implmentation for syntax kind: \(self.kind)")
+            SharedLogger.warn("No implementation for syntax kind: \(self.kind)")
             tokenizeChildren(apiview: a, parent: parent)
         }
     }
@@ -341,15 +346,6 @@ extension SyntaxProtocol {
             a.text(tokenText)
         }
     }
-
-    var needsParent: Bool {
-        switch self.kind {
-        case .attributeList: return true
-        case .memberDeclList: return true
-        case .enumCaseDecl: return true
-        default: return false
-        }
-    }
 }
 
 extension PrecedenceGroupRelationSyntax {
@@ -378,6 +374,8 @@ extension DeclSyntax {
         case .enumCaseDecl:
             // enum cases don't have modifiers
             return nil
+        case .enumDecl:
+            return EnumDeclSyntax(self)!.modifiers
         case .functionDecl:
             return FunctionDeclSyntax(self)!.modifiers
         case .initializerDecl:

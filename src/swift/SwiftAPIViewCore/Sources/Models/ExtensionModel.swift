@@ -28,12 +28,14 @@ import Foundation
 import SwiftSyntax
 
 
-class ExtensionModel {
+class ExtensionModel: Tokenizable {
     var accessLevel: AccessLevel
     var extendedType: String
     var definitionId: String
     var members: [DeclarationModel]
     let childNodes: SyntaxChildren
+    var parent: Linkable?
+    private let decl: ExtensionDeclSyntax
 
     /// Initialize from initializer declaration
     init(from decl: ExtensionDeclSyntax) {
@@ -48,82 +50,92 @@ class ExtensionModel {
             self.extendedType = "_UNKNOWN_"
         }
         self.members = [DeclarationModel]()
+        self.decl = decl
         self.definitionId = ""
-        self.definitionId = identifier(forType: decl.extendedType, inheritClause: decl.inheritanceClause, whereClause: decl.genericWhereClause)
-        process(members: decl.members.members)
+        self.parent = nil
     }
 
-    func identifier(forType type: TypeSyntax, inheritClause: TypeInheritanceClauseSyntax?, whereClause: GenericWhereClauseSyntax?) -> String {
+    private func identifier(for decl: ExtensionDeclSyntax) -> String {
         var defId = ""
-        let a = APIViewModel(name: "", packageName: "", versionString: "", statements: [])
-        a.tokens = []
-        type.tokenize(apiview: a, parent: nil)
-        inheritClause?.tokenize(apiview: a, parent: nil)
-        whereClause?.tokenize(apiview: a, parent: nil)
-        let tokens = a.tokens
-        tokens.forEach { token in
-            if let val = token.value {
-                defId.append(val)
-            }
+        var modifiedDecl = decl.withoutTrivia()
+        modifiedDecl.attributes = nil
+        modifiedDecl.modifiers = nil
+        defId = modifiedDecl.withoutTrivia().description
+        defId = defId.filter { !$0.isWhitespace }
+        // remove the member block
+        if let idx = defId.firstIndex(of: "{") {
+            defId.removeSubrange(idx..<defId.endIndex)
         }
-        defId = defId.replacingOccurrences(of: " ", with: "_")
         return defId
     }
 
-    func process(members: MemberDeclListSyntax) {
-        for member in members {
+    func processMembers(withParent parent: Linkable?) {
+        self.parent = parent
+        self.definitionId = identifier(for: decl)
+        for member in decl.members.members {
             let decl = member.decl
-            let declKind = decl.kind
             switch decl.kind {
                 case .actorDecl:
-                    appendIfVisible(DeclarationModel(from: ActorDeclSyntax(decl)!, parent: nil))
+                    appendIfVisible(DeclarationModel(from: ActorDeclSyntax(decl)!, parent: parent))
                 case .classDecl:
-                    appendIfVisible(DeclarationModel(from: ClassDeclSyntax(decl)!, parent: nil))
+                    appendIfVisible(DeclarationModel(from: ClassDeclSyntax(decl)!, parent: parent))
                 case .deinitializerDecl:
                     // deinitializers cannot be called by users, so it makes no sense
                     // to expose them in APIView
                     break
                 case .enumDecl:
-                    appendIfVisible(DeclarationModel(from: EnumDeclSyntax(decl)!, parent: nil))
+                    appendIfVisible(DeclarationModel(from: EnumDeclSyntax(decl)!, parent: parent))
                 case .functionDecl:
-                    appendIfVisible(DeclarationModel(from: FunctionDeclSyntax(decl)!, parent: nil))
+                    appendIfVisible(DeclarationModel(from: FunctionDeclSyntax(decl)!, parent: parent))
                 case .importDecl:
                     // purposely ignore import declarations
                     break
                 case .operatorDecl:
-                    let model = DeclarationModel(from: OperatorDeclSyntax(decl)!, parent: nil)
+                    let model = DeclarationModel(from: OperatorDeclSyntax(decl)!, parent: parent)
                     // operators are global and must always be displayed
                     model.accessLevel = .public
                     appendIfVisible(model)
                 case .precedenceGroupDecl:
-                    let model = DeclarationModel(from: PrecedenceGroupDeclSyntax(decl)!, parent: nil)
+                    let model = DeclarationModel(from: PrecedenceGroupDeclSyntax(decl)!, parent: parent)
                     // precedence groups are public and must always be displayed
                     model.accessLevel = .public
                     appendIfVisible(model)
                 case .protocolDecl:
-                    appendIfVisible(DeclarationModel(from: ProtocolDeclSyntax(decl)!, parent:  nil))
+                    appendIfVisible(DeclarationModel(from: ProtocolDeclSyntax(decl)!, parent:  parent))
                 case .structDecl:
-                    appendIfVisible(DeclarationModel(from: StructDeclSyntax(decl)!, parent: nil))
+                    appendIfVisible(DeclarationModel(from: StructDeclSyntax(decl)!, parent: parent))
                 case .typealiasDecl:
-                    appendIfVisible(DeclarationModel(from: TypealiasDeclSyntax(decl)!, parent: nil))
+                    appendIfVisible(DeclarationModel(from: TypealiasDeclSyntax(decl)!, parent: parent))
                 case .extensionDecl:
                     SharedLogger.warn("Extensions containing extensions is not supported. Contact the Swift APIView team.")
                 case .initializerDecl:
-                    appendIfVisible(DeclarationModel(from: InitializerDeclSyntax(decl)!, parent: nil))
+                    appendIfVisible(DeclarationModel(from: InitializerDeclSyntax(decl)!, parent: parent))
                 case .subscriptDecl:
-                    appendIfVisible(DeclarationModel(from: SubscriptDeclSyntax(decl)!, parent: nil))
+                    appendIfVisible(DeclarationModel(from: SubscriptDeclSyntax(decl)!, parent: parent))
                 case .variableDecl:
-                    appendIfVisible(DeclarationModel(from: VariableDeclSyntax(decl)!, parent: nil))
+                    appendIfVisible(DeclarationModel(from: VariableDeclSyntax(decl)!, parent: parent))
                 default:
                     // Create an generic declaration model of unknown type
-                    appendIfVisible(DeclarationModel(from: decl, parent: nil))
+                    appendIfVisible(DeclarationModel(from: decl, parent: parent))
                 }
         }
     }
 
     func appendIfVisible(_ decl: DeclarationModel) {
-        if decl.shouldShow(inExtension: self) {
+        if extendedType == "Vector2D" {
+            let test = "best"
+        }
+        let publicModifiers = APIViewModel.publicModifiers
+        if publicModifiers.contains(decl.accessLevel) || publicModifiers.contains(self.accessLevel) {
             self.members.append(decl)
+        }
+    }
+
+    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
+        processMembers(withParent: parent)
+        for child in childNodes {
+            child.tokenize(apiview: a, parent: parent)
+            a.lineIdMarker(definitionId: definitionId)
         }
     }
 }

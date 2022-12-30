@@ -259,6 +259,7 @@ class APIViewModel: Tokenizable, Encodable {
     }
 
     func member(name: String, definitionId: String? = nil) {
+        checkIndent()
         let item = Token(definitionId: definitionId, navigateToId: nil, value: name, kind: .memberName)
         add(token: item)
     }

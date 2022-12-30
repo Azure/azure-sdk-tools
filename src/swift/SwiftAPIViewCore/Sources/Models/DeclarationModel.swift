@@ -28,6 +28,7 @@ import Foundation
 import SwiftSyntax
 
 
+
 class DeclarationModel: Tokenizable, Linkable {
 
     var accessLevel: AccessLevel
@@ -36,65 +37,74 @@ class DeclarationModel: Tokenizable, Linkable {
     var lineId: String?
     var parent: Linkable?
     let childNodes: SyntaxChildren
-    var isProtocol: Bool
+    let kind: Kind
 
-    init(name: String, decl: SyntaxProtocol, defId: String, parent: Linkable?, isProtocol: Bool) {
+    enum Kind {
+        case object
+        case `enum`
+        case method
+        case `protocol`
+        case unknown
+        case variable
+    }
+
+    init(name: String, decl: SyntaxProtocol, defId: String, parent: Linkable?, kind: Kind) {
         self.name = name
         self.parent = parent
         self.accessLevel = (decl as? hasModifiers)?.modifiers.accessLevel ?? .unspecified
         self.childNodes = decl.children(viewMode: .sourceAccurate)
         self.definitionId = defId
         self.lineId = nil
-        self.isProtocol = isProtocol
+        self.kind = kind
     }
 
     /// Initialize from function declaration
     convenience init(from decl: FunctionDeclSyntax, parent: Linkable?) {
         let name = decl.identifier.withoutTrivia().text
         let defId = identifier(forName: name, withSignature: decl.signature, withPrefix: parent?.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .method)
     }
 
     /// Initialize from protocol declaration
     convenience init(from decl: ProtocolDeclSyntax, parent: Linkable?) {
         let name = decl.identifier.withoutTrivia().text
         let defId = identifier(forName: name, withPrefix: parent?.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: true)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .protocol)
     }
 
     /// Initialize from initializer declaration
     convenience init(from decl: InitializerDeclSyntax, parent: Linkable?) {
         let name = "init"
         let defId = identifier(forName: name, withSignature: decl.signature, withPrefix: parent?.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .method)
     }
 
     /// Initialize from subscript declaration
     convenience init(from decl: SubscriptDeclSyntax, parent: Linkable?) {
         let name = "subscript"
         let defId = identifier(forName: name, withSignature: decl.accessor, withPrefix: parent?.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .method)
     }
 
     /// Initialize from associated type declaration
     convenience init(from decl: AssociatedtypeDeclSyntax, parent: Linkable?) {
         let name = decl.identifier.withoutTrivia().text
         let defId = identifier(forName: name, withPrefix: parent?.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .object)
     }
 
     /// Used for most declaration types that have members
     convenience init(from decl: SyntaxProtocol, parent: Linkable?) {
         let name = (decl as? hasIdentifier)!.identifier.withoutTrivia().text
         let defId = identifier(forName: name, withPrefix: parent?.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .object)
     }
 
     /// Used for variable declarations
     convenience init(from decl: VariableDeclSyntax, parent: Linkable?) {
         let name = decl.bindings.names.joined(separator: ",")
         let defId = identifier(forName: name, withPrefix: parent?.definitionId)
-        self.init(name: name, decl: decl, defId: defId, parent: parent, isProtocol: false)
+        self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .variable)
     }
 
     /// Used when the declaration type is unknown
@@ -107,7 +117,7 @@ class DeclarationModel: Tokenizable, Linkable {
         self.name = name
         self.childNodes = decl.children(viewMode: .sourceAccurate)
         self.accessLevel = (decl as? hasModifiers)?.modifiers.accessLevel ?? .unspecified
-        self.isProtocol = false
+        self.kind = .unknown
     }
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
@@ -115,7 +125,21 @@ class DeclarationModel: Tokenizable, Linkable {
             switch child.kind {
             case .token:
                 if child.withoutTrivia().description == self.name {
-                    a.typeDeclaration(name: self.name, definitionId: self.definitionId)
+                    // render as the correct APIView token type
+                    switch self.kind {
+                    case .object:
+                        a.typeDeclaration(name: name, definitionId: definitionId)
+                    case .enum:
+                        a.typeDeclaration(name: name, definitionId: definitionId)
+                    case .method:
+                        a.member(name: name, definitionId: definitionId)
+                    case .protocol:
+                        a.typeDeclaration(name: name, definitionId: definitionId)
+                    case .unknown:
+                        a.typeDeclaration(name: name, definitionId: definitionId)
+                    case .variable:
+                        a.member(name: name, definitionId: definitionId)
+                    }
                 } else {
                     child.tokenize(apiview: a, parent: nil)
                 }
@@ -136,7 +160,7 @@ class DeclarationModel: Tokenizable, Linkable {
         guard let parentDecl = (parent as? DeclarationModel) else {
             return publicModifiers.contains(self.accessLevel)
         }
-        if parentDecl.isProtocol {
+        if parentDecl.kind == .protocol {
             let parentAccess = parentDecl.accessLevel
             return publicModifiers.contains(self.accessLevel) || publicModifiers.contains(parentAccess)
         } else {

@@ -105,10 +105,22 @@ extension SyntaxProtocol {
         case .functionParameter:
             let param = FunctionParameterSyntax(self)!
             for child in param.children(viewMode: .sourceAccurate) {
-                let childNameInParent = child.childNameInParent
-                // we do not want to render the internal name
-                guard childNameInParent != "internal name" else { continue }
-                child.tokenize(apiview: a, parent: parent)
+                let childIndex = child.indexInParent
+                // index 7 is the interal name, which we don't render at all
+                guard childIndex != 7 else { continue }
+                if childIndex == 5 {
+                    // index 5 is the external name, which we always render as text
+                    let token = TokenSyntax(child)!
+                    if case let SwiftSyntax.TokenKind.identifier(val) = token.tokenKind {
+                        a.text(val)
+                    } else if case SwiftSyntax.TokenKind.wildcardKeyword = token.tokenKind {
+                        a.text("_")
+                    } else {
+                        SharedLogger.warn("Unhandled tokenKind '\(token.tokenKind)' for function parameter label")
+                    }
+                } else {
+                    child.tokenize(apiview: a, parent: parent)
+                }
             }
         case .functionParameterList:
             tokenizeChildren(apiview: a, parent: parent)
@@ -172,7 +184,7 @@ extension SyntaxProtocol {
             case .typealiasDecl: fallthrough
             case .variableDecl:
                 // Public protocols should expose all members even if they have no access level modifier
-                if let parentDecl = (parent as? DeclarationModel), parentDecl.isProtocol {
+                if let parentDecl = (parent as? DeclarationModel), parentDecl.kind == .protocol {
                     showDecl = showDecl || APIViewModel.publicModifiers.contains(parentDecl.accessLevel)
                 }
             default:
@@ -237,7 +249,7 @@ extension SyntaxProtocol {
             DeclarationModel(from: SubscriptDeclSyntax(self)!, parent: parent!).tokenize(apiview: a, parent: parent)
         case .token:
             let token = TokenSyntax(self)!
-            tokenize(token: token, apiview: a)
+            tokenize(token: token, apiview: a, parent: (parent as? DeclarationModel))
         case .tupleExprElementList:
             tokenizeChildren(apiview: a, parent: parent)
         case .tupleType:
@@ -266,12 +278,11 @@ extension SyntaxProtocol {
 
     func tokenizeChildren(apiview a: APIViewModel, parent: Linkable?) {
         for child in self.children(viewMode: .sourceAccurate) {
-            let childKind = child.kind
             child.tokenize(apiview: a, parent: parent)
         }
     }
 
-    func tokenize(token: TokenSyntax, apiview a: APIViewModel) {
+    func tokenize(token: TokenSyntax, apiview a: APIViewModel, parent: DeclarationModel?) {
         let tokenKind = token.tokenKind
         let tokenText = token.withoutTrivia().description
 
@@ -283,8 +294,8 @@ extension SyntaxProtocol {
             return
         }
         if case let SwiftSyntax.TokenKind.identifier(val) = tokenKind {
-            // FIXME: Need to distinguish between member names, declarations and referenced types...
             let nameInParent = self.childNameInParent
+            // used in @availabililty annotations
             if nameInParent == "platform" {
                 a.text(tokenText)
                 a.whitespace()

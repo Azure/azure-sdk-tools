@@ -78,13 +78,21 @@ public class CodeOwnersFileTests
         new(       "*10" ,   "a/b/cxy/d" , "/**/*x*/" ,  false , true  ),
         new(        "1*" ,           "a" , "*"        ,  false , true  ),
         new(        "2*" ,         "a/b" , "a/*"      ,  false , true  ),
-        new(        "3*" ,       "x/a/b" , "a/*"      ,  false , false ),
-        new(        "4*" ,         "a/b" , "a/*/*"    ,  false , false ),
-        new(        "5*" ,     "a/b/c/d" , "a/*/*/d"  ,  false , true  ),
-        new(        "6*" ,   "a/b/x/c/d" , "a/*/*/d"  ,  false , false ),
-        new(        "7*" ,   "a/b/x/c/d" , "a/**/*/d" ,  false , true  ),
+        // There is discrepancy between GitHub CODEOWNERS behavior [1] and .gitignore behavior here
+        // CODEOWNERS will not match this path, while .gitignore will
+        // [1] The "docs/*" example in https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#example-of-a-codeowners-file
+        // [2] Confirmed empirically. The .gitignore will match "a/*" to "a/b" and thus ignore everything.
+        new(        "3*" ,       "a/b/c" , "a/*"      ,  false , true  ),
+        new(        "4*" ,       "x/a/b" , "a/*"      ,  false , false ),
+        new(       "1*/" ,         "a/b" , "a/*/"     ,  false , false ),
+        new(       "2*/" ,        "a/b/" , "a/*/"     ,  false , true  ),
+        new(       "3*/" ,       "a/b/c" , "a/*/"     ,  false , true  ),
+        new(      "1*/*" ,         "a/b" , "a/*/*"    ,  false , false ),
+        new(      "2*/*" ,     "a/b/c/d" , "a/*/*/d"  ,  false , true  ),
+        new(      "3*/*" ,   "a/b/x/c/d" , "a/*/*/d"  ,  false , false ),
+        new(     "1**/*" ,   "a/b/x/c/d" , "a/**/*/d" ,  false , true  ),
         new(        "*1" ,         "a/b" , "*/b"      ,  false , true  ),
-        new(        "*2" ,         "a/b" , "*/*/b"    ,  false , false ),
+        new(      "*/*1" ,         "a/b" , "*/*/b"    ,  false , false ),
         new(       "1**" ,           "a" , "a/**"     ,  false , false ),
         new(       "2**" ,          "a/" , "a/**"     ,  false , true  ),
         new(       "3**" ,         "a/b" , "a/**"     ,  false , true  ),
@@ -103,7 +111,7 @@ public class CodeOwnersFileTests
         // New parser should return false, but returns true due to https://github.com/dotnet/runtime/issues/80076
         // TODO globbug1 actually covers-up problem with the parser, where it converts "*" to "**/*".
         new(  "globbug1" ,         "a/b" , "*"        ,  false , true  ),
-        new(  "globbug2" ,         "a/b" , "a/*"      ,  false , true  )
+        new(  "globbug2" ,      "a/b/c/" , "a/*/"     ,  false , true  )
         // @formatter:on
     };
 

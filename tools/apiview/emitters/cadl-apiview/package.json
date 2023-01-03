@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/cadl-apiview",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "author": "Microsoft Corporation",
   "description": "Cadl library for emitting APIView token files from Cadl specifications",
   "homepage": "https://github.com/Azure/azure-sdk-tools",
@@ -56,7 +56,7 @@
   "devDependencies": {
     "@azure-tools/cadl-azure-core": "~0.24.0",
     "@azure-tools/cadl-dpg": "~0.24.0",
-    "@cadl-lang/compiler": "~0.38.0",
+    "@cadl-lang/compiler": "~0.38.5",
     "@cadl-lang/rest": "~0.38.0",
     "@cadl-lang/versioning": "~0.38.0",
     "@cadl-lang/eslint-plugin": "~0.38.0",

@@ -828,6 +828,10 @@ export class ApiView {
       this.tokenize(node);
       this.blankLines(1);
     }
+    for (const node of model.aliases.values()) {
+        this.tokenize(node);
+        this.blankLines(1);
+    }  
     this.endGroup();
     this.newline();
     this.namespaceStack.pop();

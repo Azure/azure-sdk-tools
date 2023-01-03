@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.3.2 (12-20-2022)
+Changed structure of APIView navigation so that aliases appear under a separate "Alias" section, instead of
+  within the existing "Models" section. Will likely result in a non-API-related diff with prior APIView versions.
+
 ## Version 0.3.1 (12-9-2022)
 Support Cadl scalars.
 

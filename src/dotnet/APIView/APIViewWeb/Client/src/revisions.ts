@@ -1,4 +1,4 @@
-﻿$(() => {
+$(() => {
   $(document).on("click", ".revision-rename-icon", e => {
     toggleNameField($(e.target));
   });
@@ -16,4 +16,12 @@
     renameIcon.toggle();
     renameIcon.siblings(".revision-name-input").toggle();
   }
+
+  const languageSelect = $('#revision-language-select');
+  languageSelect.on('change', function (e) {
+    const fileSelectors = $(".package-file-selector");
+    for (var i = 0; i < fileSelectors.length; i++) {
+      $(fileSelectors[i]).toggleClass("hidden-row");
+    }
+  });
 });

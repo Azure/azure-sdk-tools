@@ -204,11 +204,12 @@ namespace APIViewWeb.Managers
             string name,
             string label,
             Stream fileStream,
+            string language = "",
             bool awaitComputeDiff = false)
         {
             var review = await GetReviewAsync(user, reviewId);
             await AssertAutomaticReviewModifier(user, review);
-            await AddRevisionAsync(user, review, name, label, fileStream, review.Language, awaitComputeDiff);
+            await AddRevisionAsync(user, review, name, label, fileStream, language, awaitComputeDiff);
         }
 
         public async Task<CodeFile> CreateCodeFile(

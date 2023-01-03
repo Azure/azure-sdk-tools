@@ -923,7 +923,7 @@ export class ApiView {
             this.typeDeclaration(node.sv, this.namespaceStack.value());
             break;
           case "reference":
-            const defId = this.definitionIdFor(node.sv);
+            const defId = this.definitionIdFor(node.sv, this.packageName);
             this.typeReference(node.sv, defId);
             break;
           case "member":
@@ -993,7 +993,7 @@ export class ApiView {
   resolveMissingTypeReferences() {
     for (const token of this.tokens) {
       if (token.Kind == ApiViewTokenKind.TypeName && token.NavigateToId == "__MISSING__") {
-        token.NavigateToId = this.definitionIdFor(token.Value!);
+        token.NavigateToId = this.definitionIdFor(token.Value!, this.packageName);
       }
     }
   }
@@ -1010,9 +1010,10 @@ export class ApiView {
     };
   }
 
-  definitionIdFor(value: string): string | undefined {
+  definitionIdFor(value: string, prefix: string): string | undefined {
     if (value.includes(".")) {
-      return this.typeDeclarations.has(value) ? value : undefined;
+      const fullName = `${prefix}.${value}`;
+      return this.typeDeclarations.has(fullName) ? fullName : undefined;
     }
     for (const item of this.typeDeclarations) {
       if (item.split(".").splice(-1)[0] == value) {

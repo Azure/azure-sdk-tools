@@ -44,6 +44,8 @@ function Stage-Apiview-File($packagePath, $reviewId, $revisionId)
     $tokenFilePath = Join-Path $packagePath "cadl-output"
     $stagingReviewPath = Join-Path $OutputDir $reviewId
     $stagingPath = Join-Path $stagingReviewPath $revisionId
+    Write-Host "Out files in cadl-output"
+    Get-ChildItem -Path $tokenFilePath
     Write-Host "Copying APIView file from '$($tokenFilePath)' to '$($stagingPath)'"
     New-Item $stagingPath -ItemType Directory -Force
     Copy-Item -Destination $stagingPath -Path "$tokenFilePath/*"

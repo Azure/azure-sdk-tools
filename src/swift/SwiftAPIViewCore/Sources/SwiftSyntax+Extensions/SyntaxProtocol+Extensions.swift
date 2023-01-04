@@ -30,64 +30,27 @@ import SwiftSyntax
 extension SyntaxProtocol {
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
         switch self.kind {
-        case .accessorBlock:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .accessorDecl:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .accessorList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .accessorParameter:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .arrayElement:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .arrayElementList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .arrayExpr:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .arrayType:
-            tokenizeChildren(apiview: a, parent: parent)
         case .associatedtypeDecl:
             let decl = DeclarationModel(from: AssociatedtypeDeclSyntax(self)!, parent: parent)
             decl.tokenize(apiview: a, parent: parent)
         case .customAttribute: fallthrough
         case .attribute:
             // default implementation should not have newlines
-            tokenizeChildren(apiview: a, parent: parent)
+            for child in self.children(viewMode: .sourceAccurate) {
+                if child.childNameInParent == "name" {
+                    let attrName = child.withoutTrivia().description
+                    a.keyword(attrName, spacing: .Neither)
+                } else {
+                    child.tokenize(apiview: a, parent: parent)
+                }
+            }
             a.whitespace()
-        case .attributedType:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .attributeList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .availabilityArgument:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .availabilityLabeledArgument:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .availabilitySpecList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .availabilityVersionRestriction:
-            tokenizeChildren(apiview: a, parent: parent)
         case .classRestrictionType:
             // in this simple context, class should not have a trailing space
             a.keyword("class", spacing: .Neither)
         case .codeBlock:
             // Don't render code blocks. APIView is unconcerned with implementation
             break
-        case .compositionType:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .compositionTypeElement:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .compositionTypeElementList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .conformanceRequirement:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .constrainedSugarType:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .declModifier:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .designatedTypeList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .enumCaseDecl:
-            tokenizeChildren(apiview: a, parent: parent)
         case .enumCaseElement:
             for child in self.children(viewMode: .sourceAccurate) {
                 let childIndex = child.indexInParent
@@ -104,14 +67,8 @@ extension SyntaxProtocol {
                     child.tokenize(apiview: a, parent: parent)
                 }
             }
-        case .enumCaseElementList:
-            tokenizeChildren(apiview: a, parent: parent)
         case .enumDecl:
             DeclarationModel(from: EnumDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
-        case .floatLiteralExpr:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .functionCallExpr:
-            tokenizeChildren(apiview: a, parent: parent)
         case .functionDecl:
             DeclarationModel(from: FunctionDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
         case .functionParameter:
@@ -134,48 +91,12 @@ extension SyntaxProtocol {
                     child.tokenize(apiview: a, parent: parent)
                 }
             }
-        case .functionParameterList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .functionSignature:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .functionType:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .genericArgument:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .genericArgumentClause:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .genericArgumentList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .genericParameter:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .genericParameterClause:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .genericParameterList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .genericRequirement:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .genericRequirementList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .genericWhereClause:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .identifierExpr:
-            tokenizeChildren(apiview: a, parent: parent)
         case .identifierPattern:
             let name = IdentifierPatternSyntax(self)!.identifier.withoutTrivia().text
             let lineId = identifier(forName: name, withPrefix: parent?.definitionId)
             a.member(name: name, definitionId: lineId)
-        case .inheritedType:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .inheritedTypeList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .initializerClause:
-            tokenizeChildren(apiview: a, parent: parent)
         case .initializerDecl:
             DeclarationModel(from: InitializerDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
-        case .integerLiteralExpr:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .memberDeclBlock:
-            tokenizeChildren(apiview: a, parent: parent)
         case .memberDeclList:
             a.indent {
                 let beforeCount = a.tokens.count
@@ -193,6 +114,9 @@ extension SyntaxProtocol {
             case .associatedtypeDecl:
                 // all associated types are public
                 showDecl = true
+            case .deinitializerDecl:
+                // deinitializers can't be called directly and don't need to be shown as public API
+                showDecl = false
             case .enumCaseDecl:
                 // all enum cases are public
                 showDecl = true
@@ -215,22 +139,6 @@ extension SyntaxProtocol {
                 a.newline()
                 tokenizeChildren(apiview: a, parent: parent)
             }
-        case .memberTypeIdentifier:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .modifierList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .operatorPrecedenceAndTypes:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .optionalType:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .packExpansionType:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .parameterClause:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .patternBinding:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .patternBindingList:
-            tokenizeChildren(apiview: a, parent: parent)
         case .precedenceGroupAttributeList:
             a.indent {
                 tokenizeChildren(apiview: a, parent: parent)
@@ -243,8 +151,6 @@ extension SyntaxProtocol {
                 a.lineIdMarker(definitionId: lineId)
             }
             tokenizeChildren(apiview: a, parent: parent)
-        case .precedenceGroupNameList, .precedenceGroupNameElement:
-            tokenizeChildren(apiview: a, parent: parent)
         case .precedenceGroupAssociativity:
             a.newline()
             if let name = PrecedenceGroupAssociativitySyntax(self)!.keyword {
@@ -252,45 +158,15 @@ extension SyntaxProtocol {
                 a.lineIdMarker(definitionId: lineId)
             }
             tokenizeChildren(apiview: a, parent: parent)
-        case .returnClause:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .sameTypeRequirement:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .simpleTypeIdentifier:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .stringLiteralExpr:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .stringLiteralSegments:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .stringSegment:
-            tokenizeChildren(apiview: a, parent: parent)
         case .subscriptDecl:
             DeclarationModel(from: SubscriptDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
         case .token:
             let token = TokenSyntax(self)!
             tokenize(token: token, apiview: a, parent: (parent as? DeclarationModel))
-        case .tupleExprElementList:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .tupleType:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .tupleTypeElement:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .tupleTypeElementList:
-            tokenizeChildren(apiview: a, parent: parent)
         case .typealiasDecl:
             DeclarationModel(from: TypealiasDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
-        case .typeAnnotation:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .typeInheritanceClause:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .typeInitializerClause:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .variableDecl:
-            tokenizeChildren(apiview: a, parent: parent)
-        case .versionTuple:
-            tokenizeChildren(apiview: a, parent: parent)
         default:
-            SharedLogger.warn("No implementation for syntax kind: \(self.kind)")
+            // default behavior for all nodes is to render all children
             tokenizeChildren(apiview: a, parent: parent)
         }
     }
@@ -386,6 +262,10 @@ extension DeclSyntax {
             return TypealiasDeclSyntax(self)!.modifiers
         case .variableDecl:
             return VariableDeclSyntax(self)!.modifiers
+        case .deinitializerDecl:
+            // deinitializers can never be called directly anyhow so this
+            // is irrelevant
+            return nil
         default:
             SharedLogger.warn("Unhandled syntax type when looking for modifiers: \(self.kind)")
             return nil

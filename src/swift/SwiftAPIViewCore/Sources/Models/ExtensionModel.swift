@@ -45,6 +45,8 @@ class ExtensionModel: Tokenizable {
         switch extType.kind {
         case .simpleTypeIdentifier:
             self.extendedType = SimpleTypeIdentifierSyntax(extType)!.name.withoutTrivia().description
+        case .memberTypeIdentifier:
+            self.extendedType = MemberTypeIdentifierSyntax(extType)!.name.withoutTrivia().description
         default:
             SharedLogger.warn("Unhandled extended type kind: \(extType.kind). APIView may not display correctly")
             self.extendedType = "_UNKNOWN_"
@@ -122,9 +124,6 @@ class ExtensionModel: Tokenizable {
     }
 
     func appendIfVisible(_ decl: DeclarationModel) {
-        if extendedType == "Vector2D" {
-            let test = "best"
-        }
         let publicModifiers = APIViewModel.publicModifiers
         if publicModifiers.contains(decl.accessLevel) || publicModifiers.contains(self.accessLevel) {
             self.members.append(decl)

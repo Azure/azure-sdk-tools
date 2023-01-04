@@ -41,7 +41,7 @@ class PackageModel: Tokenizable, Linkable {
         self.definitionId = name
         self.parent = nil
         self.members = [DeclarationModel]()
-        self.extensions = [ExtensionModel]()
+        self.extensions = []
         process(statements: statements)
         processExtensions()
     }
@@ -131,13 +131,25 @@ class PackageModel: Tokenizable, Linkable {
         var otherExtensions = [ExtensionModel]()
         for ext in extensions {
             let extendedType = ext.extendedType
-            if let match = findDeclaration(for: extendedType) {
-                match.extensions.append(ext)
+            if let parentMatch = findDeclaration(for: extendedType) {
+                parentMatch.extensions.append(ext)
             } else {
                 otherExtensions.append(ext)
             }
         }
         self.extensions = otherExtensions
+        // process orphaned extensions
+        for ext in extensions {
+            ext.processMembers(withParent: nil)
+        }
+        extensions = extensions.resolveDuplicates()
+        // process all extensions associated with members
+        for member in members {
+            for ext in member.extensions {
+                ext.processMembers(withParent: ext.parent)
+            }
+            member.extensions = member.extensions.resolveDuplicates()
+        }
     }
 
     func appendIfVisible(_ decl: DeclarationModel) {

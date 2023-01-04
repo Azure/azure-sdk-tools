@@ -131,7 +131,6 @@ class ExtensionModel: Tokenizable {
     }
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        processMembers(withParent: parent)
         a.lineIdMarker(definitionId: definitionId)
         for child in childNodes {
             let childIdx = child.indexInParent
@@ -153,5 +152,19 @@ class ExtensionModel: Tokenizable {
                 child.tokenize(apiview: a, parent: parent)
             }
         }
+    }
+}
+
+extension Array<ExtensionModel> {
+    func resolveDuplicates() -> [ExtensionModel] {
+        var resolved = [String: ExtensionModel]()
+        for ext in self {
+            if let match = resolved[ext.definitionId] {
+                match.members.append(contentsOf: ext.members)
+            } else {
+                resolved[ext.definitionId] = ext
+            }
+        }
+        return Array(resolved.values)
     }
 }

@@ -70,7 +70,11 @@ foreach ($currentRepository in $repositories)
     Write-Host " ==================================================== " -ForegroundColor Green
 
     $snapshotLabels = BuildSnapshotHash (Join-Path $SnapshotDirectory "$($name).csv")
-    $currentLabels = ((dotnet ./ghcreator/GHCreator.dll List Label $currentRepository -token $GitHubAccessToken) | Select-Object -Skip 1)
+    # GHCreator been deleted by this PR: TODO
+    # Hence, this script is currently broken and needs updating to use GH CLI, per:
+    # https://github.com/Azure/azure-sdk-tools/issues/4888#issuecomment-1369900827
+    #$currentLabels = ((dotnet ./ghcreator/GHCreator.dll List Label $currentRepository -token $GitHubAccessToken) | Select-Object -Skip 1)
+    $currentLabels = ""
     $any = $false
 
     foreach ($line in $currentLabels)

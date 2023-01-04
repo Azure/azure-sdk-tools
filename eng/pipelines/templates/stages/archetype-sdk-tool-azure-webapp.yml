@@ -16,8 +16,8 @@ stages:
       jobs:
       - job: BuildPackage
         pool:
-          name: azsdk-pool-mms-ubuntu-2004-general
-          vmImage: MMSUbuntu20.04
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: MMSUbuntu22.04
         steps:
           - task: UseDotNet@2
             displayName: Tools
@@ -44,8 +44,8 @@ stages:
         - deployment: PublishFunction
           environment: ${{ parameters.Staging.EnvironmentName }}
           pool:
-            name: azsdk-pool-mms-ubuntu-2004-general
-            vmImage: MMSUbuntu20.04
+            name: azsdk-pool-mms-ubuntu-2204-general
+            vmImage: MMSUbuntu22.04
           strategy:
             runOnce:
               deploy:
@@ -71,8 +71,8 @@ stages:
         - deployment: PublishFunction
           environment: ${{ parameters.Production.EnvironmentName }}
           pool:
-            name: azsdk-pool-mms-ubuntu-2004-general
-            vmImage: MMSUbuntu20.04
+            name: azsdk-pool-mms-ubuntu-2204-general
+            vmImage: MMSUbuntu22.04
           strategy:
             runOnce:
                 deploy:

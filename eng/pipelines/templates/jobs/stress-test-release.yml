@@ -44,8 +44,8 @@ jobs:
           Repository: Azure/azure-sdk-for-cpp
           Filters: '@{}'
   pool:
-    name: 'azsdk-pool-mms-ubuntu-2004-general'
-    vmImage: 'MMSUbuntu20.04'
+    name: azsdk-pool-mms-ubuntu-2204-general
+    vmImage: MMSUbuntu22.04
   steps:
     - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:

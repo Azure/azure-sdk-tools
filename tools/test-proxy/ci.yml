@@ -29,16 +29,16 @@ extends:
     DockerTagPrefix: '1.0.0-dev.'
     DockerDeployments:
     - name: test_proxy_linux
-      pool: 'azsdk-pool-mms-ubuntu-2004-general'
-      vmImage: 'MMSUbuntu20.04'
+      pool: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: MMSUbuntu22.04
       dockerRepo: 'engsys/testproxy-lin'
       prepareScript: tools/test-proxy/docker/prepare.ps1
       dockerFile: 'tools/test-proxy/docker/dockerfile'
       stableTags:
       - 'latest'
     - name: test_proxy_linux_arm64
-      pool: 'azsdk-pool-mms-ubuntu-2004-general'
-      vmImage: 'MMSUbuntu20.04'
+      pool: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: MMSUbuntu22.04
       dockerRepo: 'engsys/testproxy-lin-arm64'
       prepareScript: 'tools/test-proxy/docker/prepare.ps1 -qemu'
       additionalDockerArgs: '--build-arg ARCH=-arm64v8 --platform linux/arm64'

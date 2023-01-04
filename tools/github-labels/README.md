@@ -4,8 +4,8 @@ This area is focused on the management of GitHub labels for the various Azure SD
 
 ## Changelog
 
-As of this PR: TODO.
-The management of GitHub labels no longer uses GHCreator. It is to be migrated to use GH CLI, per:
+As of this PR: https://github.com/Azure/azure-sdk-tools/pull/5042  
+The management of GitHub labels no longer uses GHCreator. It is to be migrated to use GH CLI, per:  
 https://github.com/Azure/azure-sdk-tools/issues/4888#issuecomment-1369900827
 
 ## Prerequisites

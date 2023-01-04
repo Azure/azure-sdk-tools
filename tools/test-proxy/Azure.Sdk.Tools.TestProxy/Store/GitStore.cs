@@ -123,7 +123,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     }
                     SetOrigin(config);
 
-                    GitHandler.Run($"tag {generatedTagName}", config);
+                    GitHandler.Run($"tag -c tag.gpgsign=false {generatedTagName}", config);
                     GitHandler.Run($"push origin {generatedTagName}", config);
                     HideOrigin(config);
                 }

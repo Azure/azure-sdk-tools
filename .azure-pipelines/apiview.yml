@@ -165,11 +165,10 @@ stages:
               pwsh: true
             displayName: 'Start Azurite'
 
-          - task: UseDotNet@2
-            displayName: 'Install .NET'
-            inputs:
-              version: '$(DotNetRuntimeVersion)'
-          
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: $(DotNetRuntimeVersion)
+
           - pwsh: |
               dotnet --list-runtimes
               dotnet --version

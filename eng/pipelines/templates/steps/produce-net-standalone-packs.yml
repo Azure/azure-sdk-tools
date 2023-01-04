@@ -42,6 +42,7 @@ steps:
 
         # produce a tar.gz only for linux
         if ("${{ target.rid }}".Contains("linux")){
+          Write-Host "tar -cvzf $($destinationPathSegment).tar.gz $sourcePath"
           tar -cvzf "$($destinationPathSegment).tar.gz" "$sourcePath"
         }
         else {

@@ -1,0 +1,20 @@
+# As of 12/20/2022 this is work in progress.
+# Please see:
+# https://github.com/Azure/azure-sdk-tools/issues/5009
+# and linked PRs.
+parameters:
+  # Use this parameter if you want to override the .NET SDK set by global.json
+  - name: DotNetCoreVersion
+    type: string
+    default: ''
+
+steps:
+  # https://learn.microsoft.com/azure/devops/pipelines/tasks/reference/use-dotnet-v2?view=azure-pipelines
+  - task: UseDotNet@2
+    displayName: "Use .NET SDK ${{ coalesce( parameters.DotNetCoreVersion, 'from global.json') }}"
+    retryCountOnTaskFailure: 3
+    inputs:
+      ${{ if eq( 'parameters.DotNetCoreVersion', '') }}:
+        useGlobalJson: true
+      ${{ else }}:
+        version: ${{ parameters.DotNetCoreVersion }}

@@ -67,12 +67,10 @@ stages:
         displayName: Build and Package
 
         steps:
-          - task: UseDotNet@2
-            condition: eq(${{ parameters.SkipDotNetInstall }}, false)
-            displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-            inputs:
-              version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
+              
           - script: 'dotnet pack /p:ArtifactsPackagesDir=$(packagesToPublishDir) $(Warn) -c Release'
             displayName: 'Build and Package'
             workingDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'

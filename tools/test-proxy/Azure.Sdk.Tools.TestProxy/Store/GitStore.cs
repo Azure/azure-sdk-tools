@@ -85,6 +85,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task Push(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
+
+            var initialized = IsAssetsRepoInitialized(config);
+
+            if (!initialized)
+            {
+                _consoleWrapper.WriteLine($"The targeted assets.json \"{config.AssetsJsonRelativeLocation}\" has not been restored prior to attempting push. " +
+                    $"Are you certain you're pushing the correct assets.json? Please invoke \'test-proxy restore \"{config.AssetsJsonRelativeLocation}\"\' prior to invoking a push operation.");
+
+                Environment.ExitCode = -1;
+                return;
+            }
+
             var pendingChanges = DetectPendingChanges(config);
             var generatedTagName = config.TagPrefix;
 
@@ -219,6 +231,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new HttpException(HttpStatusCode.InternalServerError, message);
         }
 
+        private void SetSafeDirectory(GitAssetsConfiguration config)
+        {
+            // Workaround for git directory ownership checks that may fail when running in a container as a different user.
+            if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER"))
+            {
+                GitHandler.Run($"config --global --add safe.directory {config.AssetsRepoLocation}", config);
+            }
+        }
+
         /// <summary>
         /// Checks an asset repository for pending changes. Equivalent of "git status --porcelain".
         /// </summary>
@@ -226,6 +247,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public string[] DetectPendingChanges(GitAssetsConfiguration config)
         {
+            SetSafeDirectory(config);
+
             if (!GitHandler.TryRun("status --porcelain", config.AssetsRepoLocation.ToString(), out var diffResult))
             {
                 throw GenerateInvokeException(diffResult);
@@ -269,10 +292,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             try
             {
-                // Workaround for git directory ownership checks that may fail when running in a container as a different user.
-                if ("true" == Environment.GetEnvironmentVariable("TEST_PROXY_CONTAINER")) {
-                    GitHandler.Run($"config --global --add safe.directory {config.AssetsRepoLocation}", config);
-                }
+                SetSafeDirectory(config);
 
                 if (!string.IsNullOrEmpty(config.Tag))
                 {
@@ -614,7 +634,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new DirectoryEvaluation()
             {
                 AssetsJsonPresent = File.Exists(assetsJsonLocation),
-                IsGitRoot = File.Exists(gitLocation) || Directory.Exists(gitLocation),
+                IsGitRoot = Directory.Exists(gitLocation) || File.Exists(gitLocation),
                 IsRoot = new DirectoryInfo(directoryPath).Parent == null
             };
         }

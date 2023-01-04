@@ -135,6 +135,38 @@ public class SwaggerApiViewTest
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
     }
+    
+    [Fact]
+    public async Task TestAzureOpenai()
+    {
+        const string openai = "./fixtures/azureopenai.json";
+        var openaiSwagger = await SwaggerDeserializer.Deserialize(openai);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.OpenAI", "Microsoft.OpenAI");
+        root.AddSwaggerSpec(openaiSwagger, Path.GetFullPath(openai), "Microsoft.OpenAI");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./openai_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
+    
+    [Fact]
+    public async Task TestPersonalize()
+    {
+        const string personal = "./fixtures/personalizer.json";
+        var personalizeSwagger = await SwaggerDeserializer.Deserialize(personal);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Personalize", "Microsoft.Personalize");
+        root.AddSwaggerSpec(personalizeSwagger, Path.GetFullPath(personal), "Microsoft.Personalize");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./personal_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
 
     [Fact]
     public async Task TestMultivariate()
@@ -166,6 +198,23 @@ public class SwaggerApiViewTest
         this.output.WriteLine($"Write output to: {outputFilePath}");
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
+    }
+
+    [Fact]
+    public async Task TestDevCenterEnvironment()
+    {
+        const string devCenterSwaggerFile = "./fixtures/environment.json";
+        var devCenter = await SwaggerDeserializer.Deserialize(devCenterSwaggerFile);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.DevCenter", "Microsoft.DevCenter");
+        root.AddSwaggerSpec(devCenter, Path.GetFullPath(devCenterSwaggerFile), "Microsoft.DevCenter");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./devCenter_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+        
     }
 
     [Fact]

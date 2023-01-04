@@ -42,6 +42,17 @@ As one can see in the example image above, the test-proxy does the heavy lifting
 
 The `Tag` "commit SHA" is literally the SHA of the tag being pushed. This allows us limited restore capabilities in the case of non-GC-ed accidentally-deleted tags.
 
+### How does the test-proxy relate to the `assets.json`?
+
+The `assets.json` contains _targeting_ information about WHERE to get recordings, but how do those recordings actually end up available on disk?
+
+The `test-proxy` uses the information contained within the `assets.json` to `restore` files that are contained within the targeted tag. These files are downloaded to the user machine, under the `.assets` folder. A `restore` option is invoked in one of two possible ways:
+
+1. The user explicitly calls `test-proxy restore <path-to-assets.json>`.
+2. The user's test framework provides an additional key in the BODY of the `record/start` or `playback/start` request.
+
+Only in the above two scenarios will assets be restored. Scenario #2 is discussed in [a section below.](#im-a-dev-who-uses-the-test-proxy-currently-how-do-i-externalize-my-recordings)
+
 ## Restore, push, reset when proxy is waiting for requests
 
 Interactions with the external assets repository are accessible when the proxy is actively serving requests. These are available through routes:
@@ -143,6 +154,11 @@ First, ensure that your language-specific "shim" supports the automatic addition
 - [PR Enabling in Go](https://github.com/Azure/azure-sdk-for-go/pull/19322)
 
 Use [the transition script](../../scripts/transition-scripts/generate-assets-json.ps1) and follow the [readme](../../scripts/transition-scripts/README.md)!
+
+In summary, once an assets.json is present, the shim _must_ be updated to **actually send** a reference to that assets.json inside the `record/start` or `playback/start` requests!
+
+
+![assets diagram](../_images/before_after.png)
 
 ### What does this look like in practice?
 

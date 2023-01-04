@@ -1,6 +1,6 @@
 {
     "name": "@autorest/testmodeler",
-    "version": "2.3.2",
+    "version": "2.4.0",
     "lockfileVersion": 2,
     "requires": true,
     "packages": {
@@ -9,9 +9,9 @@
             "version": "2.3.2",
             "license": "MIT",
             "dependencies": {
-                "@autorest/codemodel": "~4.18.2",
-                "@autorest/extension-base": "~3.4.4",
-                "@azure-tools/codegen": "~2.9.0",
+                "@autorest/codemodel": "^4.19.2",
+                "@autorest/extension-base": "^3.5.0",
+                "@azure-tools/codegen": "^2.9.1",
                 "@types/lodash": "~4.14.176",
                 "autorest": "^3.2.3",
                 "cross-env": "^7.0.3",
@@ -109,9 +109,9 @@
             }
         },
         "node_modules/@autorest/codemodel": {
-            "version": "4.18.2",
-            "resolved": "https://registry.npmjs.org/@autorest/codemodel/-/codemodel-4.18.2.tgz",
-            "integrity": "sha512-xnGbxU2xvqtyIQYYwsEZsK+w2MmavbUrQdk1/sLPhjT+cQ5R6VUc5PX1ZTmPzBZWc/utiaAurxFC65J5J/uSgA==",
+            "version": "4.19.2",
+            "resolved": "https://registry.npmjs.org/@autorest/codemodel/-/codemodel-4.19.2.tgz",
+            "integrity": "sha512-MENLWZxm4bcoJJw20egNeD4nmuhVUOftoIAMgCx+Qicb32sJxJiPBD6L7rjPjmSWlDQe8hP6vWc4Ig1ncZ3J4g==",
             "dependencies": {
                 "@azure-tools/codegen": "~2.9.1",
                 "js-yaml": "~4.0.0"
@@ -121,11 +121,11 @@
             }
         },
         "node_modules/@autorest/extension-base": {
-            "version": "3.4.4",
-            "resolved": "https://registry.npmjs.org/@autorest/extension-base/-/extension-base-3.4.4.tgz",
-            "integrity": "sha512-u7+3GGzeYwFcafjt8gmpt0JM56UCdgP3Okhb23i5jhoc+5v7AWPEi00n5YmMb27OcR8wNDkb1jqtDjjeTnUHeQ==",
+            "version": "3.5.0",
+            "resolved": "https://registry.npmjs.org/@autorest/extension-base/-/extension-base-3.5.0.tgz",
+            "integrity": "sha512-G+jRTAm9Zd0GRpj6Slsj7QPQDKuy4SFtnuWT7XTcCOJ/R5FU3jPBC73J57Jd4S2SDnlAnWmmX12IeBy/XqJFTw==",
             "dependencies": {
-                "@azure-tools/codegen": "~2.9.0",
+                "@azure-tools/codegen": "~2.9.1",
                 "js-yaml": "~4.0.0",
                 "vscode-jsonrpc": "^3.5.0"
             },
@@ -12967,12 +12967,6 @@
                 "extsprintf": "^1.2.0"
             }
         },
-        "node_modules/viz.js": {
-            "version": "2.1.2",
-            "resolved": "https://registry.npmjs.org/viz.js/-/viz.js-2.1.2.tgz",
-            "integrity": "sha512-UO6CPAuEMJ8oNR0gLLNl+wUiIzQUsyUOp8SyyDKTqVRBtq7kk1VnFmIZW8QufjxGrGEuI+LVR7p/C7uEKy0LQw==",
-            "deprecated": "no longer supported"
-        },
         "node_modules/vscode-jsonrpc": {
             "version": "3.6.2",
             "resolved": "https://registry.npmjs.org/vscode-jsonrpc/-/vscode-jsonrpc-3.6.2.tgz",
@@ -13489,20 +13483,20 @@
             }
         },
         "@autorest/codemodel": {
-            "version": "4.18.2",
-            "resolved": "https://registry.npmjs.org/@autorest/codemodel/-/codemodel-4.18.2.tgz",
-            "integrity": "sha512-xnGbxU2xvqtyIQYYwsEZsK+w2MmavbUrQdk1/sLPhjT+cQ5R6VUc5PX1ZTmPzBZWc/utiaAurxFC65J5J/uSgA==",
+            "version": "4.19.2",
+            "resolved": "https://registry.npmjs.org/@autorest/codemodel/-/codemodel-4.19.2.tgz",
+            "integrity": "sha512-MENLWZxm4bcoJJw20egNeD4nmuhVUOftoIAMgCx+Qicb32sJxJiPBD6L7rjPjmSWlDQe8hP6vWc4Ig1ncZ3J4g==",
             "requires": {
                 "@azure-tools/codegen": "~2.9.1",
                 "js-yaml": "~4.0.0"
             }
         },
         "@autorest/extension-base": {
-            "version": "3.4.4",
-            "resolved": "https://registry.npmjs.org/@autorest/extension-base/-/extension-base-3.4.4.tgz",
-            "integrity": "sha512-u7+3GGzeYwFcafjt8gmpt0JM56UCdgP3Okhb23i5jhoc+5v7AWPEi00n5YmMb27OcR8wNDkb1jqtDjjeTnUHeQ==",
+            "version": "3.5.0",
+            "resolved": "https://registry.npmjs.org/@autorest/extension-base/-/extension-base-3.5.0.tgz",
+            "integrity": "sha512-G+jRTAm9Zd0GRpj6Slsj7QPQDKuy4SFtnuWT7XTcCOJ/R5FU3jPBC73J57Jd4S2SDnlAnWmmX12IeBy/XqJFTw==",
             "requires": {
-                "@azure-tools/codegen": "~2.9.0",
+                "@azure-tools/codegen": "~2.9.1",
                 "js-yaml": "~4.0.0",
                 "vscode-jsonrpc": "^3.5.0"
             }
@@ -23371,10 +23365,6 @@
                 "core-util-is": "1.0.2",
                 "extsprintf": "^1.2.0"
             }
-        },
-        "viz.js": {
-            "version": "https://registry.npmjs.org/viz.js/-/viz.js-2.1.2.tgz",
-            "integrity": "sha512-UO6CPAuEMJ8oNR0gLLNl+wUiIzQUsyUOp8SyyDKTqVRBtq7kk1VnFmIZW8QufjxGrGEuI+LVR7p/C7uEKy0LQw=="
         },
         "vscode-jsonrpc": {
             "version": "3.6.2",

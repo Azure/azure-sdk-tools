@@ -1,4 +1,5 @@
 import {
+  AliasStatementNode,
   Namespace,
   ModelStatementNode,
   OperationStatementNode,
@@ -20,6 +21,11 @@ import {
   UnionStatementNode,
   UnionExpressionNode,
   UnionVariantNode,
+  AugmentDecoratorStatementNode,
+  Program,
+  Node,
+  visitChildren,
+  ScalarStatementNode,
 } from "@cadl-lang/compiler";
 
 export class NamespaceModel {
@@ -29,11 +35,13 @@ export class NamespaceModel {
   operations = new Map<string, OperationStatementNode | InterfaceStatementNode>();
   resources = new Map<
     string,
+    | AliasStatementNode
     | ModelStatementNode
     | ModelExpressionNode
     | IntersectionExpressionNode
     | ProjectionModelExpressionNode
     | EnumStatementNode
+    | ScalarStatementNode
     | UnionStatementNode
     | UnionExpressionNode
   >();
@@ -44,11 +52,14 @@ export class NamespaceModel {
     | IntersectionExpressionNode
     | ProjectionModelExpressionNode
     | EnumStatementNode
+    | ScalarStatementNode
     | UnionStatementNode
     | UnionExpressionNode
   >();
+  aliases = new Map<string, AliasStatementNode>;
+  augmentDecorators = new Array<AugmentDecoratorStatementNode>();
 
-  constructor(name: string, ns: Namespace) {
+  constructor(name: string, ns: Namespace, program: Program) {
     this.name = name;
     this.node = ns.node;
 
@@ -85,11 +96,25 @@ export class NamespaceModel {
     for (const [unionName, un] of ns.unions) {
       this.models.set(unionName, un.node);
     }
+    for (const [scalarName, sc] of ns.scalars) {
+      this.models.set(scalarName, sc.node);
+    }
+
+    // Gather aliases
+    for (const alias of findNodes(SyntaxKind.AliasStatement, program, ns)) {
+      this.aliases.set(alias.id.sv, alias);
+    }
+
+    // collect augment decorators
+    for (const augment of findNodes(SyntaxKind.AugmentDecoratorStatement, program, ns)) {
+      this.augmentDecorators.push(augment);
+    }
 
     // sort operations and models
-    this.operations = new Map([...this.operations].sort());
-    this.resources = new Map([...this.resources].sort());
-    this.models = new Map([...this.models].sort());
+    this.operations = new Map([...this.operations].sort(caseInsensitiveSort));
+    this.resources = new Map([...this.resources].sort(caseInsensitiveSort));
+    this.models = new Map([...this.models].sort(caseInsensitiveSort));
+    this.aliases = new Map([...this.aliases].sort(caseInsensitiveSort));
   }
 
   /**
@@ -99,6 +124,34 @@ export class NamespaceModel {
   shouldEmit(): boolean {
     return (this.models.size > 0 || this.operations.size > 0 || this.resources.size > 0);
   }
+}
+
+function findNodes<T extends SyntaxKind>(kind: T, program: Program, namespace: Namespace): (Node & { kind: T })[] {
+  const nodes: Node[] = [];
+  for (const file of program.sourceFiles.values()) {
+    visitChildren(file, function visit(node) {
+      if (node.kind === kind && inNamespace(node, program, namespace)) {
+        nodes.push(node);
+      }
+      visitChildren(node, visit);
+    });
+  }
+  return nodes as any;
+}
+
+function inNamespace(node: Node, program: Program, namespace: Namespace): boolean {
+  for (let n: Node | undefined = node; n; n = n.parent) {
+    switch (n.kind) {
+      case SyntaxKind.NamespaceStatement:
+        return program.checker.getTypeForNode(n) === namespace;
+      case SyntaxKind.CadlScript:
+        if (n.inScopeNamespaces.length > 0 && inNamespace(n.inScopeNamespaces[0], program, namespace)) {
+          return true;
+        }
+        return false;
+    }
+  }
+  return false;
 }
 
 export function generateId(obj: BaseNode | NamespaceModel | undefined): string | undefined {
@@ -218,4 +271,10 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
   } else {
     return name;
   }
+}
+
+function caseInsensitiveSort(a: [string, any], b: [string, any]): number {
+  const aLower = a[0].toLowerCase();
+  const bLower = b[0].toLowerCase();
+  return aLower > bLower ? 1 : (aLower < bLower ? -1 : 0);
 }

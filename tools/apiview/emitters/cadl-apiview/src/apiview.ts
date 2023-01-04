@@ -1,5 +1,7 @@
 import {
+  AliasStatementNode,
   ArrayExpressionNode,
+  AugmentDecoratorStatementNode,
   BaseNode,
   BooleanLiteralNode,
   DecoratorExpressionNode,
@@ -21,6 +23,7 @@ import {
   OperationSignatureReferenceNode,
   OperationStatementNode,
   Program,
+  ScalarStatementNode,
   StringLiteralNode,
   SyntaxKind,
   TemplateParameterDeclarationNode,
@@ -323,7 +326,7 @@ export class ApiView {
       if (!name.startsWith(this.packageName)) {
         continue;
       }
-      const nsModel = new NamespaceModel(name, ns);
+      const nsModel = new NamespaceModel(name, ns, program);
       if (nsModel.shouldEmit()) {
         this.tokenizeNamespaceModel(nsModel);
         this.buildNavigation(nsModel);  
@@ -348,11 +351,43 @@ export class ApiView {
     let obj;
     switch (node.kind) {
       case SyntaxKind.AliasStatement:
-        throw new Error(`Case "AliasStatement" not implemented`);
+        obj = node as AliasStatementNode;
+        this.namespaceStack.push(obj.id.sv);
+        this.keyword("alias", false, true);
+        this.typeDeclaration(obj.id.sv, this.namespaceStack.value());
+        this.punctuation("=", true, true);
+        this.tokenize(obj.value);
+        this.namespaceStack.pop();
+        break;
       case SyntaxKind.ArrayExpression:
         obj = node as ArrayExpressionNode;
         this.tokenize(obj.elementType);
         this.punctuation("[]");
+        break;
+      case SyntaxKind.AugmentDecoratorStatement:
+        obj = node as AugmentDecoratorStatementNode;
+        const decoratorName = this.getNameForNode(obj.target);
+        this.namespaceStack.push(decoratorName);
+        this.punctuation("@@", false, false);
+        this.tokenizeIdentifier(obj.target, "keyword");
+        this.lineMarker();
+        if (obj.arguments.length) {
+          const last = obj.arguments.length - 1;
+          this.punctuation("(", false, false);
+          this.tokenize(obj.targetType);
+          if (obj.arguments.length) {
+            this.punctuation(",", false, true);
+          }
+          for (let x = 0; x < obj.arguments.length; x++) {
+            const arg = obj.arguments[x];
+            this.tokenize(arg);
+            if (x != last) {
+              this.punctuation(",", false, true);
+            }
+          }
+          this.punctuation(")", false, false);
+          this.namespaceStack.pop();
+        }
         break;
       case SyntaxKind.BooleanLiteral:
         obj = node as BooleanLiteralNode;
@@ -480,6 +515,9 @@ export class ApiView {
         obj = node as StringLiteralNode;
         this.stringLiteral(obj.value);
         break;
+      case SyntaxKind.ScalarStatement:
+        this.tokenizeScalarStatement(node as ScalarStatementNode);
+        break;
       case SyntaxKind.TemplateParameterDeclaration:
         obj = node as TemplateParameterDeclarationNode;
         this.tokenize(obj.id);
@@ -577,6 +615,20 @@ export class ApiView {
     } else {
       this.punctuation("{}", true, false);
     }
+    this.namespaceStack.pop();
+  }
+
+  private tokenizeScalarStatement(node: ScalarStatementNode) {
+    this.namespaceStack.push(node.id.sv);
+    this.tokenizeDecorators(node.decorators, false);
+    this.keyword("scalar", false, true);
+    this.tokenizeIdentifier(node.id, "declaration");
+    if (node.extends != undefined) {
+      this.keyword("extends", true, true);
+      this.tokenize(node.extends);
+    }
+    this.tokenizeTemplateParameters(node.templateParameters);
+    this.blankLines(0);
     this.namespaceStack.pop();
   }
 
@@ -760,6 +812,10 @@ export class ApiView {
     this.keyword("namespace", false, true);
     this.typeDeclaration(model.name, this.namespaceStack.value());
     this.beginGroup();
+    for (const node of model.augmentDecorators) {
+      this.tokenize(node);
+      this.blankLines(1);
+    }
     for (const node of model.operations.values()) {
       this.tokenize(node);
       this.blankLines(1);
@@ -772,6 +828,10 @@ export class ApiView {
       this.tokenize(node);
       this.blankLines(1);
     }
+    for (const node of model.aliases.values()) {
+        this.tokenize(node);
+        this.blankLines(1);
+    }  
     this.endGroup();
     this.newline();
     this.namespaceStack.pop();
@@ -787,7 +847,7 @@ export class ApiView {
           this.tokens.push(item);
           this.blankLines(2);
           break;
-        } else if (item.Kind == ApiViewTokenKind.Punctuation) {
+        } else if ([ApiViewTokenKind.Punctuation, ApiViewTokenKind.TypeName].includes(item.Kind)) {
           this.tokens.push(item);
           // for now, render with no newlines, per stewardship board request
           const lineCount = ["{", "("].includes(item.Value!) ? 0 : 0;
@@ -863,7 +923,7 @@ export class ApiView {
             this.typeDeclaration(node.sv, this.namespaceStack.value());
             break;
           case "reference":
-            const defId = this.definitionIdFor(node.sv);
+            const defId = this.definitionIdFor(node.sv, this.packageName);
             this.typeReference(node.sv, defId);
             break;
           case "member":
@@ -933,7 +993,7 @@ export class ApiView {
   resolveMissingTypeReferences() {
     for (const token of this.tokens) {
       if (token.Kind == ApiViewTokenKind.TypeName && token.NavigateToId == "__MISSING__") {
-        token.NavigateToId = this.definitionIdFor(token.Value!);
+        token.NavigateToId = this.definitionIdFor(token.Value!, this.packageName);
       }
     }
   }
@@ -950,9 +1010,10 @@ export class ApiView {
     };
   }
 
-  definitionIdFor(value: string): string | undefined {
+  definitionIdFor(value: string, prefix: string): string | undefined {
     if (value.includes(".")) {
-      return this.typeDeclarations.has(value) ? value : undefined;
+      const fullName = `${prefix}.${value}`;
+      return this.typeDeclarations.has(fullName) ? fullName : undefined;
     }
     for (const item of this.typeDeclarations) {
       if (item.split(".").splice(-1)[0] == value) {

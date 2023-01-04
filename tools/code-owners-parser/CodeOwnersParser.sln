@@ -7,7 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeOwnersP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.RetrieveCodeOwners", "Azure.Sdk.Tools.RetrieveCodeOwners\Azure.Sdk.Tools.RetrieveCodeOwners.csproj", "{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.RetrieveCodeOwners.Tests", "Azure.Sdk.Tools.RetrieveCodeOwners.Tests\Azure.Sdk.Tools.RetrieveCodeOwners.Tests.csproj", "{798B8CAC-68FC-49FD-A0F6-51C0DC4A4D1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.RetrieveCodeOwners.Tests", "Azure.Sdk.Tools.RetrieveCodeOwners.Tests\Azure.Sdk.Tools.RetrieveCodeOwners.Tests.csproj", "{798B8CAC-68FC-49FD-A0F6-51C0DC4A4D1D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EF585CCA-55F8-44EB-921A-30996CBAFC49}"
+	ProjectSection(SolutionItems) = preProject
+		ci.yml = ci.yml
+		..\..\eng\common\scripts\get-codeowners.ps1 = ..\..\eng\common\scripts\get-codeowners.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

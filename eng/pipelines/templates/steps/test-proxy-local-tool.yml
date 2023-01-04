@@ -9,7 +9,7 @@ steps:
       dotnet tool install --tool-path $(Build.BinariesDirectory)/test-proxy `
         --prerelease `
         --add-source $(Build.ArtifactStagingDirectory) `
-        azure.sdk.tools.testproxy
+        test-proxy
     displayName: "Install test-proxy from local file"
     workingDirectory: $(Build.SourcesDirectory)/tools/test-proxy
 

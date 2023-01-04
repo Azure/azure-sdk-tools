@@ -4,12 +4,13 @@
     <Description>Tests for MS.Az.NetSdk.Build.Tasks msbuild build tasks tests</Description>
     <AssemblyTitle>MS.Az.NetSdk.Build.Tasks Tests</AssemblyTitle>
     <AssemblyName>Build.Tasks.Tests</AssemblyName>
+    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
 
     <!-- Skip test projects until tests can be fixed -->
     <IsTestProject>false</IsTestProject>
   </PropertyGroup>
   <PropertyGroup>
-		<TargetFrameworks>netcoreapp2.1</TargetFrameworks>
+		<TargetFrameworks>net6.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
 	</PropertyGroup>
   <ItemGroup>

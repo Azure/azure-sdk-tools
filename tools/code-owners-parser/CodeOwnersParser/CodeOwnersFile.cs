@@ -1,4 +1,3 @@
-﻿using OutputColorizer;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,20 +8,15 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     {
         public static List<CodeOwnerEntry> ParseFile(string filePathOrUrl)
         {
-            string content;
-            content = FileHelpers.GetFileContents(filePathOrUrl);
-
+            string content = FileHelpers.GetFileContents(filePathOrUrl);
             return ParseContent(content);
         }
 
         public static List<CodeOwnerEntry> ParseContent(string fileContent)
         {
             List<CodeOwnerEntry> entries = new List<CodeOwnerEntry>();
-            string line;
-
 
             // An entry ends when we get to a path (a real path or a commented dummy path)
-
             using (StringReader sr = new StringReader(fileContent))
             {
                 CodeOwnerEntry entry = new CodeOwnerEntry();
@@ -30,7 +24,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 // we are going to read line by line until we find a line that is not a comment OR that is using the placeholder entry inside the comment.
                 // while we are trying to find the folder entry, we parse all comment lines to extract the labels from it.
                 // when we find the path or placeholder, we add the completed entry and create a new one.
-                while ((line = sr.ReadLine()) != null)
+                while (sr.ReadLine() is { } line)
                 {
                     line = NormalizeLine(line);
 
@@ -93,14 +87,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         }
 
         private static string NormalizeLine(string line)
-        {
-            if (string.IsNullOrEmpty(line))
-            {
-                return line;
-            }
-
-            // Remove tabs and trim extra whitespace
-            return line.Replace('\t', ' ').Trim();
-        }
+            => !string.IsNullOrEmpty(line)
+                // Remove tabs and trim extra whitespace
+                ? line.Replace('\t', ' ').Trim()
+                : line;
     }
 }

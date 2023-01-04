@@ -136,10 +136,10 @@ try-require:
     - ./readme.test.md
     - ./readme.testmodeler.md
 
-version: 3.7.3
+version: 3.9.3
 
 use-extension:
-  "@autorest/modelerfour" : "4.23.7"
+  "@autorest/modelerfour" : "4.25.0"
 
 pipeline:
     test-modeler:

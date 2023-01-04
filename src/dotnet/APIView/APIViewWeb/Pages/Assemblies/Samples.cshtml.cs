@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -18,9 +19,9 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class UsageSamplePageModel : PageModel
     {
-        private readonly UsageSampleManager _samplesManager;
-        private readonly ReviewManager _reviewManager;
-        private readonly CommentsManager _commentsManager;
+        private readonly IUsageSampleManager _samplesManager;
+        private readonly IReviewManager _reviewManager;
+        private readonly ICommentsManager _commentsManager;
         public readonly UserPreferenceCache _preferenceCache;
         private readonly IAuthorizationService _authorizationService;
 
@@ -33,9 +34,9 @@ namespace APIViewWeb.Pages.Assemblies
         public string SampleOriginal { get; set; }
 
         public UsageSamplePageModel(
-            UsageSampleManager samplesManager,
-            ReviewManager reviewManager,
-            CommentsManager commentsManager,
+            IUsageSampleManager samplesManager,
+            IReviewManager reviewManager,
+            ICommentsManager commentsManager,
             UserPreferenceCache preferenceCache, 
             IAuthorizationService authorizationService)
         {

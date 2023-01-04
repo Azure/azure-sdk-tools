@@ -132,9 +132,26 @@ class ExtensionModel: Tokenizable {
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
         processMembers(withParent: parent)
+        a.lineIdMarker(definitionId: definitionId)
         for child in childNodes {
-            child.tokenize(apiview: a, parent: parent)
-            a.lineIdMarker(definitionId: definitionId)
+            let childIdx = child.indexInParent
+            if childIdx == 13 {
+                // special case for extension members
+                a.punctuation("{", spacing: SwiftSyntax.TokenKind.leftBrace.spacing)
+                if !members.isEmpty {
+                    a.newline()
+                    a.indent {
+                        for member in members {
+                            member.tokenize(apiview: a, parent: parent)
+                            a.newline()
+                        }
+                    }
+                }
+                a.punctuation("}", spacing: SwiftSyntax.TokenKind.rightBrace.spacing)
+                a.newline()
+            } else {
+                child.tokenize(apiview: a, parent: parent)
+            }
         }
     }
 }

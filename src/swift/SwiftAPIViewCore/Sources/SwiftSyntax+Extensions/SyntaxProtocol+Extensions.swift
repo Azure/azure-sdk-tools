@@ -29,7 +29,8 @@ import SwiftSyntax
 
 extension SyntaxProtocol {
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        switch self.kind {
+        let syntaxKind = self.kind
+        switch syntaxKind {
         case .associatedtypeDecl:
             let decl = DeclarationModel(from: AssociatedtypeDeclSyntax(self)!, parent: parent)
             decl.tokenize(apiview: a, parent: parent)
@@ -198,7 +199,12 @@ extension SyntaxProtocol {
                 a.typeReference(name: val, parent: parent)
             }
         } else if case let SwiftSyntax.TokenKind.spacedBinaryOperator(val) = tokenKind {
-            a.punctuation(val, spacing: .Both)
+            // in APIView, * is never used for multiplication
+            if val == "*" {
+                a.punctuation(val, spacing: .Neither)
+            } else {
+                a.punctuation(val, spacing: .Both)
+            }
         } else if case let SwiftSyntax.TokenKind.unspacedBinaryOperator(val) = tokenKind {
             a.punctuation(val, spacing: .Neither)
         } else if case let SwiftSyntax.TokenKind.prefixOperator(val) = tokenKind {

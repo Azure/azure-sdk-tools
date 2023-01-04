@@ -183,7 +183,7 @@ class APIViewModel: Tokenizable, Encodable {
 
     func whitespace(count: Int = 1) {
         // don't double up on whitespace
-        guard tokens.last?.kind != .whitespace else { return }
+        guard tokens.lastVisible != .whitespace else { return }
         let value = String(repeating: " ", count: count)
         let item = Token(definitionId: nil, navigateToId: nil, value: value, kind: .whitespace)
         add(token: item)

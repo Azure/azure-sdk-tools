@@ -44,6 +44,7 @@ extension SwiftSyntax.TokenKind {
     var spacing: SpacingKind {
         switch self {
         case .anyKeyword: return .Neither
+        case .nilKeyword: return .Neither
         case .prefixPeriod: return .Leading
         case .comma: return .Trailing
         case .colon: return .Trailing

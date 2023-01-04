@@ -1,4 +1,17 @@
 ################
+# Misc
+################
+/*                               @azure/azure-sdk-eng
+/.azure-pipelines/               @azure/azure-sdk-eng
+/.devcontainer/                  @azure/azure-sdk-eng
+/artifacts/                      @azure/azure-sdk-eng
+/config/                         @azure/azure-sdk-eng
+/doc/                            @azure/azure-sdk-eng
+/scripts/                        @azure/azure-sdk-eng
+/src/                            @azure/azure-sdk-eng
+/web/                            @azure/azure-sdk-eng
+
+################
 # Automation
 ################
 
@@ -9,7 +22,6 @@
 ###########
 # Eng Sys
 ###########
-global.json                      @azure/azure-sdk-eng
 /eng/                            @azure/azure-sdk-eng
 /eng/common/                     @sima-zhu @weshaggard @benbp
 /eng/common/TestResources/       @benbp @weshaggard @heaths

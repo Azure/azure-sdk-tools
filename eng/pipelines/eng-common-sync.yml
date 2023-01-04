@@ -39,8 +39,8 @@ pr:
       - eng/common
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2004-general
-  vmImage: MMSUbuntu20.04
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: MMSUbuntu22.04
 
 stages:
   - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:

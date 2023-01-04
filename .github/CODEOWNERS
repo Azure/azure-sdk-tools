@@ -9,6 +9,7 @@
 ###########
 # Eng Sys
 ###########
+global.json                      @azure/azure-sdk-eng
 /eng/                            @azure/azure-sdk-eng
 /eng/common/                     @sima-zhu @weshaggard @benbp
 /eng/common/TestResources/       @benbp @weshaggard @heaths

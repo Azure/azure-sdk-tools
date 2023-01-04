@@ -98,7 +98,7 @@ stages:
                 Write-Host "Directory ""$(packagesToPublishDir)"" contents:"
                 Get-ChildItem $(packagesToPublishDir) | ForEach-Object { Write-Host $_ }
               }
-            displayName: Create XOR list contents of directory of packages to publish
+            displayName: Create dir for packages to publish or list its contents
 
           - publish: $(packagesToPublishDir)
             displayName: Publish to packages artifact

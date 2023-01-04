@@ -188,12 +188,13 @@ Function Get-Repo-Language {
   # origin git@github.com:Azure/azure-sdk-for-python-pr.git (fetch)
   # fork git@github.com:UserName/azure-sdk-for-python (fetch)
   # azure-sdk https://github.com/azure-sdk/azure-sdk-for-net.git (fetch)
+  # origin  https://github.com/Azure/azure-sdk-for-python/ (fetch)
   # ForEach-Object splits the string on whitespace so each of the above strings is actually
   # 3 different strings. The first and last pieces won't match anything, the middle string
   # will match what is below. If the regular expression needs to be updated the following
   # link below will go to a regex playground
-  # https://regex101.com/r/btVW5A/1
-  $lang = $remotes[0] | ForEach-Object { if ($_ -match "azure-sdk-for-(?<lang>[^\-\.]+)") {
+  # https://regex101.com/r/auOnAr/1
+  $lang = $remotes[0] | ForEach-Object { if ($_ -match "azure-sdk-for-(?<lang>[^\-\.\/ ]+)") {
       #Return the named language match
       return $Matches["lang"]
     }

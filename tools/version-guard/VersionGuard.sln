@@ -1,9 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33103.201
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Azure.Sdk.Tools.VersionGuard", "Microsoft.Azure.Sdk.Tools.VersionGuard\Microsoft.Azure.Sdk.Tools.VersionGuard.csproj", "{ACE99BEA-7554-4BAD-8818-5E9E64669D78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.Sdk.Tools.VersionGuard", "Microsoft.Azure.Sdk.Tools.VersionGuard\Microsoft.Azure.Sdk.Tools.VersionGuard.csproj", "{ACE99BEA-7554-4BAD-8818-5E9E64669D78}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{75788B13-FAE7-40B4-B57C-6201CDC98C08}"
+	ProjectSection(SolutionItems) = preProject
+		ci.yml = ci.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,9 +18,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{ACE99BEA-7554-4BAD-8818-5E9E64669D78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -30,5 +32,8 @@ Global
 		{ACE99BEA-7554-4BAD-8818-5E9E64669D78}.Release|x64.Build.0 = Release|Any CPU
 		{ACE99BEA-7554-4BAD-8818-5E9E64669D78}.Release|x86.ActiveCfg = Release|Any CPU
 		{ACE99BEA-7554-4BAD-8818-5E9E64669D78}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal

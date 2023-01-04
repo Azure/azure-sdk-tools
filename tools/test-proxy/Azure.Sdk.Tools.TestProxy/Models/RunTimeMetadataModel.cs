@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -129,8 +129,10 @@ namespace Azure.Sdk.Tools.TestProxy.Models
         // for this to work you need to have generatexmldoc activated and the generated comment xml MUST be alongside the assembly
         public XmlDocument GetDocCommentXML()
         {
-            var location = Assembly.Location;
-            using (var xmlReader = new StreamReader(Path.ChangeExtension(location, ".xml")))
+            var location = System.AppContext.BaseDirectory;
+
+            var name = Assembly.GetName().Name;
+            using (var xmlReader = new StreamReader(Path.Join(location, $"{name}.xml")))
             {
                 XmlDocument result = new XmlDocument();
                 result.Load(xmlReader);

@@ -26,4 +26,3 @@ extends:
   parameters:
     PackageDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/swagger-api-parser/SwaggerApiParser
     TestDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/swagger-api-parser/SwaggerApiParserTest
-    SkipDotNetInstall: true

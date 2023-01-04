@@ -9,7 +9,7 @@ parameters:
     default: ''
 
 steps:
-  # https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/use-dotnet-v2?view=azure-pipelines
+  # https://learn.microsoft.com/azure/devops/pipelines/tasks/reference/use-dotnet-v2?view=azure-pipelines
   - task: UseDotNet@2
     displayName: "Use .NET SDK ${{ coalesce( parameters.DotNetCoreVersion, 'from global.json') }}"
     retryCountOnTaskFailure: 3

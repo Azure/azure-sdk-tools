@@ -18,8 +18,9 @@ parameters:
 
 steps:
   - pwsh: |
-      mkdir -p "$(Build.ArtifactStagingDirectory)/binaries"
-    displayName: Create destination directory
+      New-Item -ItemType Directory -Path "$(Build.ArtifactStagingDirectory)/binaries" -Force
+      Write-Host "Created directory ""$(Build.ArtifactStagingDirectory)/binaries"""
+    displayName: Create .NET standalone packs destination directory
 
   - ${{ each target in parameters.BuildMatrix }}:
     - pwsh: |

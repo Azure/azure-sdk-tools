@@ -42,8 +42,10 @@ steps:
 
         # produce a tar.gz only for linux
         if ("${{ target.rid }}".Contains("linux")){
-          Write-Host "tar -C $sourcePath -cvzf $($destinationPathSegment).tar.gz $sourcePath"
-          tar -cvzf -C "$sourcePath" "$($destinationPathSegment).tar.gz" "$sourcePath"
+          Write-Host "tar -cvzf `"$($destinationPathSegment).tar.gz`" ."
+          Push-Location $sourcePath
+          tar -cvzf "$($destinationPathSegment).tar.gz" .
+          Pop-Location
         }
         else {
           Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"

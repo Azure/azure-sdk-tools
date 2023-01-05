@@ -1,7 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.FileSystemGlobbing;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
@@ -9,12 +8,39 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// Represents a CODEOWNERS file entry that matched to targetPath from
     /// the list of entries, assumed to have been parsed from CODEOWNERS file.
     ///
+    /// To use this class, construct it.
+    /// 
     /// To obtain the value of the matched entry, reference "Value" member.
+    ///
+    /// Reference:
+    /// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
+    /// https://git-scm.com/docs/gitignore#_pattern_format
     /// </summary>
     internal class MatchedCodeOwnerEntry
     {
         public readonly CodeOwnerEntry Value;
 
+        /// <summary>
+        /// The entry is valid if it obeys following conditions:
+        /// - The Value was obtained with a call to Azure.Sdk.Tools.CodeOwnersParser.CodeOwnersFile.ParseContent().
+        ///   - As a consequence, in the case of no match, the entry is not valid.
+        /// - the Value.PathExpression starts with "/".
+        ///
+        /// Once the validation described in the following issue is implemented:
+        /// https://github.com/Azure/azure-sdk-tools/issues/4859
+        /// To be valid, the entry will also have to obey following conditions:
+        /// - if the Value.PathExpression ends with "/", at least one corresponding
+        /// directory exists in the repository
+        /// - if the Value.PathExpression does not end with "/", at least one corresponding
+        /// file exists in the repository.
+        /// </summary>
+        public bool IsValid => this.Value.PathExpression.StartsWith("/");
+
+        /// <summary>
+        /// Any CODEOWNERS path with these characters will be skipped.
+        /// Note these are valid parts of file paths, but we are not supporting
+        /// them to simplify the parser logic.
+        /// </summary>
         private static readonly char[] unsupportedChars = { '[', ']', '!', '?' };
 
         public MatchedCodeOwnerEntry(List<CodeOwnerEntry> entries, string targetPath)
@@ -24,10 +50,8 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         /// <summary>
         /// Returns a CodeOwnerEntry from codeOwnerEntries that matches targetPath
-        /// per algorithm described in:
-        /// https://git-scm.com/docs/gitignore#_pattern_format
-        /// and
-        /// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
+        /// per algorithm described in the GitHub CODEOWNERS reference,
+        /// as linked to in this class comment.
         ///
         /// If there is no match, returns "new CodeOwnerEntry()".
         /// </summary>
@@ -40,145 +64,104 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             if (!targetPath.StartsWith("/"))
                 targetPath = "/" + targetPath;
 
-            // We do not trim or add the slash ("/") at the end of the targetPath because its
-            // presence influences the matching algorithm:
-            // Slash at the end denotes the target path is a directory, not a file, so it might
-            // match against a CODEOWNERS entry that matches only directories and not files.
+            // Note we cannot add or trim the slash at the end of targetPath.
+            // Slash at the end of target path denotes it is a directory, not a file,
+            // so it can not match against a CODEOWNERS entry that is guaranteed to be a file,
+            // by the virtue of not ending with "/".
 
-            // Entries below take precedence, hence we read the file from the bottom up.
-            // By convention, entries in CODEOWNERS should be sorted top-down in the order of:
-            // - 'RepoPath',
-            // - 'ServicePath'
-            // - and then 'PackagePath'.
-            // However, due to lack of validation, as of 12/29/2022 this is not always the case.
-            for (int i = codeownersEntries.Count - 1; i >= 0; i--)
-            {
-                string codeownersPath = codeownersEntries[i].PathExpression;
-                if (ContainsUnsupportedCharacters(codeownersPath))
-                {
-                    continue;
-                }
+            
+            CodeOwnerEntry matchedEntry = codeownersEntries
+                .Where(entry => !ContainsUnsupportedCharacters(entry.PathExpression))
+                // Entries listed in CODEOWNERS file below take precedence, hence we read the file from the bottom up.
+                // By convention, entries in CODEOWNERS should be sorted top-down in the order of:
+                // - 'RepoPath',
+                // - 'ServicePath'
+                // - and then 'PackagePath'.
+                // However, due to lack of validation, as of 12/29/2022 this is not always the case.
+                .Reverse()
+                .FirstOrDefault(
+                    entry => Matches(targetPath, entry), 
+                    // assert: none of the codeownersEntries matched targetPath
+                    new CodeOwnerEntry());
 
-                List<string> globPatterns = ConvertToGlobPatterns(codeownersPath);
-                PatternMatchingResult patternMatchingResult = MatchGlobPatterns(targetPath, globPatterns);
-                if (patternMatchingResult.HasMatches)
-                {
-                    return codeownersEntries[i];
-                }
-            }
-            // assert: none of the codeownersEntries matched targetPath
-            return new CodeOwnerEntry();
+            return matchedEntry;
         }
 
         private static bool ContainsUnsupportedCharacters(string codeownersPath)
             => unsupportedChars.Any(codeownersPath.Contains);
 
-        /// <summary>
-        /// Converts codeownersPath to a set of glob patterns to include in
-        /// glob matching. The conversion is a translation from codeowners and .gitignore
-        /// spec into glob. That is, it reduces the spec to glob rules,
-        /// which then can be checked against using glob matcher.
-        /// </summary>
-        /// <returns>
-        /// Usually 1 glob pattern to include in matching. In one special case
-        /// returns 2 patterns, which happens when the path needs to be interpreted
-        /// both as-is file, or as a directory prefix.
-        /// </returns>
-        private static List<string> ConvertToGlobPatterns(string codeownersPath)
+        private static bool Matches(string targetPath, CodeOwnerEntry entry)
         {
-            codeownersPath = ConvertPrefix(codeownersPath);
-            var patternsToInclude = PatternsToInclude(codeownersPath);
-            return patternsToInclude;
+            string codeownersPath = entry.PathExpression;
+
+            targetPath = NormalizeTargetPath(targetPath, codeownersPath);
+
+            Regex regex = ConvertToRegex(codeownersPath);
+            return regex.IsMatch(targetPath);
         }
 
-        private static string ConvertPrefix(string codeownersPath)
+        private static string NormalizeTargetPath(string targetPath, string codeownersPath)
         {
-            // Codeowners entry path starting with "/*" is equivalent to it starting with "*".
-            // Note this also covers cases when it starts with "/**".
-            if (codeownersPath.StartsWith("/*"))
-                codeownersPath = codeownersPath.Substring("/".Length);
+            // If the considered CODEOWNERS path ends with "/", it means we can
+            // assume targetPath also is a path to directory.
+            //
+            // This works in all 3 cases, which are:
+            //
+            // 1. The targetPath is the same as the CODEOWNERS path, except
+            // the targetPath doesn't have "/" at the end. If so,
+            // it might be a path to a file or directory,
+            // but the exact path match with CODEOWNERS path and our validation
+            // guarantees it is an existing directory, hence we can append "/".
+            //
+            // 2. The targetPath is a prefix path of CODEOWNERS path. In such case
+            // there won't be a match, and appending "/" won't change that.
+            //
+            // 3. The CODEOWNERS path is a prefix path of targetPath. In such case
+            // there will be a match, and appending "/" won't change that.
+            if (codeownersPath.EndsWith("/") && !targetPath.EndsWith("/"))
+                targetPath += "/";
 
-            // If the codeownersPath doesn't have any slash at the beginning or in the middle,
-            // then it means its start is relative to any directory in the repository,
-            // hence we prepend "**/" to reflect this as a glob pattern.
-            if (!codeownersPath.TrimEnd('/').Contains("/"))
-            {
-                codeownersPath = "**/" + codeownersPath;
-            }
-            // If, on the other hand, codeownersPath has to start at the root, we ensure
-            // it starts with slash to reflect that.
-            else 
-            {
-                if (!codeownersPath.StartsWith("/"))
-                {
-                    codeownersPath = "/" + codeownersPath;
-                }
-                else
-                {
-                    // codeownersPath already starts with "/", so nothing to prepend.
-                }
-            }
-
-            return codeownersPath;
+            return targetPath;
         }
 
-        private static List<string> PatternsToInclude(string codeownersPath)
+        private static Regex ConvertToRegex(string codeownersPath)
         {
-            List<string> patternsToInclude = new List<string>();
+            // CODEOWNERS paths that do not start with "/" are relative and considered invalid.
+            // However, here we handle such cases to accomodate for parsing CODEOWNERS file
+            // paths that somehow slipped through validation. We do so by instead treating
+            // such paths as if they were absolute to repository root, i.e. starting with "/".
+            if (!codeownersPath.StartsWith("/"))
+                codeownersPath = "/" + codeownersPath;
 
-            if (codeownersPath.EndsWith("/"))
+            string pattern = codeownersPath;
+
+            // Kind of hoping here that the CODEOWNERS path will never have
+            // "_DOUBLE_STAR_" or "_SINGLE_STAR_" strings in it.
+            pattern = pattern.Replace("**", "_DOUBLE_STAR_");
+            pattern = pattern.Replace("*", "_SINGLE_STAR_");
+
+            pattern = Regex.Escape(pattern);
+
+            // Denote that all paths are absolute by prepending "beginning of string" symbol.
+            pattern = "^" + pattern;
+
+            // Lack of slash at the end denotes the path is a path to a file,
+            // per our validation logic.
+            // Note we assume this is the case even if the path is invalid,
+            // even though in such case it might not necessarily be true.
+            if (!(pattern.EndsWith("/") 
+                  || pattern.EndsWith("_DOUBLE_STAR_")))
             {
-                patternsToInclude.Add(ConvertDirectorySuffix(codeownersPath));
-            }
-            else
-            {
-                patternsToInclude.Add(ConvertDirectorySuffix(codeownersPath + "/"));
-                patternsToInclude.Add(codeownersPath);
+                // Append "end of string", symbol, denoting the match has to be exact,
+                // not a substring, as we are dealing with a file.
+                pattern += "$";
             }
 
-            return patternsToInclude;
-        }
-
-        private static string ConvertDirectorySuffix(string codeownersPath)
-        {
-            // If the codeownersPath doesn't already end with "*",
-            // we need to append "**", to denote that codeownersPath has to match
-            // a prefix of the targetPath, not the entire path.
-            if (!codeownersPath.TrimEnd('/').EndsWith("*"))
-            {
-                codeownersPath += "**";
-            }
-            else
-            {
-                // codeownersPath directory already has stars in the suffix, so nothing to do.
-                // Example paths:
-                // apps/*/
-                // apps/**/
-            }
-
-            return codeownersPath;
-        }
-
-        private static PatternMatchingResult MatchGlobPatterns(
-            string targetPath,
-            List<string> patterns)
-        {
-            // Note we use StringComparison.Ordinal, not StringComparison.OrdinalIgnoreCase,
-            // as CODEOWNERS paths are case-sensitive.
-            var globMatcher = new Matcher(StringComparison.Ordinal);
-
-            foreach (var pattern in patterns)
-            {
-                globMatcher.AddInclude(pattern);
-            }
-            
-            var dir = new InMemoryDirectoryInfo(
-                // This 'rootDir: "/"' is used here only because the globMatcher API requires it.
-                rootDir: "/", 
-                files: new List<string> { targetPath });
-
-            var patternMatchingResult = globMatcher.Execute(dir);
-            return patternMatchingResult;
+            pattern = pattern.Replace("_DOUBLE_STAR_/", "(.*)");
+            pattern = pattern.Replace("/_DOUBLE_STAR_", "(.*)");
+            pattern = pattern.Replace("_DOUBLE_STAR_", "(.*)");
+            pattern = pattern.Replace("_SINGLE_STAR_", "([^/]*)");
+            return new Regex(pattern);
         }
     }
 }

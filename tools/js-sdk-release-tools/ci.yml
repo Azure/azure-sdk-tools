@@ -46,7 +46,7 @@ stages:
         strategy:
           matrix:
             linux:
-              imageName: ubuntu-22.04 # This image is intentionally set to "latest", and not to a specific version
+              imageName: ubuntu-22.04
             mac:
               imageName: 'macos-latest'
             windows:

@@ -37,7 +37,12 @@ steps:
 
         # produce a tar.gz only for linux
         if ("${{ target.rid }}".Contains("linux")){
-          tar -cvzf "$($destinationPathSegment).tar.gz" "$sourcePath"
+          # tar on powershell in linux has some weirdness. For instance, this is a proper call to tar when we don't want to include the relative path to the target folder
+          # tar -cvzf -C tools/test-proxy/linux-arm64 blah.tar.gz tools/test-proxy/linux-arm64 
+          # however when we use this, we actually get an error. To avoid this, we simply CD into the target directory before tar-ing it.
+          Push-Location "$sourcePath"
+          tar -cvzf "$($destinationPathSegment).tar.gz" .
+          Pop-Location
         }
         else {
           Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"

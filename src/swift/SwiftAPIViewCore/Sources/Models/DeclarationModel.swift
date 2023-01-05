@@ -29,7 +29,7 @@ import SwiftSyntax
 
 
 
-class DeclarationModel: Tokenizable, Linkable {
+class DeclarationModel: Tokenizable, Linkable, Equatable {
 
     var accessLevel: AccessLevel
     var name: String
@@ -212,6 +212,20 @@ class DeclarationModel: Tokenizable, Linkable {
             return publicModifiers.contains(self.accessLevel) || publicModifiers.contains(parentAccess)
         } else {
             return publicModifiers.contains(self.accessLevel)
+        }
+    }
+
+    static func == (lhs: DeclarationModel, rhs: DeclarationModel) -> Bool {
+        if lhs.name == rhs.name &&
+            lhs.definitionId == rhs.definitionId &&
+            lhs.kind == rhs.kind &&
+            lhs.accessLevel == rhs.accessLevel &&
+            lhs.lineId == rhs.lineId &&
+            lhs.extensions.count == rhs.extensions.count &&
+            lhs.childNodes.count == rhs.childNodes.count {
+            return true
+        } else {
+            return false
         }
     }
 }

@@ -43,6 +43,7 @@ class PackageModel: Tokenizable, Linkable {
         self.members = [DeclarationModel]()
         self.extensions = []
         process(statements: statements)
+        resolveDuplicateMembers()
         processExtensions()
     }
 
@@ -152,6 +153,21 @@ class PackageModel: Tokenizable, Linkable {
             }
             member.extensions = member.extensions.resolveDuplicates()
         }
+    }
+
+    /// Ensure members are not duplicated (may happen with framework files)
+    func resolveDuplicateMembers() {
+        var uniqueMembers = [String: DeclarationModel]()
+        for member in members {
+            if let match = uniqueMembers[member.definitionId!] {
+                if match != member {
+                    SharedLogger.warn("Member \(member.name) differs for what already exists and will be ignored. Swift APIView may not display correctly.")
+                }
+            } else {
+                uniqueMembers[member.definitionId!] = member
+            }
+        }
+        members = Array(uniqueMembers.values)
     }
 
     func appendIfVisible(_ decl: DeclarationModel) {

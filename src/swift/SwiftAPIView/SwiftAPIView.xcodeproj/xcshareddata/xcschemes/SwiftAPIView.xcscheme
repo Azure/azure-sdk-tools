@@ -68,7 +68,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--package-name=SwiftAPIViewTests"
+            argument = "--package-name=AzureCommunicationCallingTEST"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

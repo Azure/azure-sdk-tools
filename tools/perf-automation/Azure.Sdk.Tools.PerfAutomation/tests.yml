@@ -1,4 +1,4 @@
-﻿Languages:
+Languages:
   Net:
     DefaultVersions:
     - netcoreapp3.1
@@ -483,6 +483,15 @@ Services:
         azure-keyvault-secrets: 4.3.0
       - azure-core: source
         azure-keyvault-secrets: source
+    Cpp:
+      Project: azure-security-keyvault-secrets-perf
+      PrimaryPackage: azure-security-keyvault-secrets-cpp
+      PackageVersions:
+      - azure-security-keyvault-secrets-cpp: 4.1.0
+        azure-core-cpp: 1.7.1
+      - azure-security-keyvault-secrets-cpp: source
+        azure-core-cpp: source
+
   Tests:
   - Test: get-secret
     Arguments:
@@ -493,6 +502,7 @@ Services:
       Java: getsecret
       JS: GetSecretTest
       Python: GetSecretTest
+      Cpp: GetSecret
 
   - Test: list-secrets
     Arguments: &keyvault-counts
@@ -504,6 +514,7 @@ Services:
       Java: listsecrets
       JS: ListSecretsTest
       Python: ListSecretsTest
+      Cpp: GetSecret
 
 - Service: eventhubs
   Languages:

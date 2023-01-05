@@ -197,9 +197,9 @@ class DeclarationModel: Tokenizable, Linkable {
         }
     }
 
-    func navigationTokenize(apiview a: APIViewModel) {
-        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: kind.navigationSymbol))
-        // FIXME: Restore nested links
+    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+        let navigationId = parent != nil ? "\(parent!.name).\(name)" : name
+        a.add(token: NavigationToken(name: name, navigationId: navigationId, typeKind: kind.navigationSymbol, members: []))
     }
 
     func shouldShow() -> Bool {

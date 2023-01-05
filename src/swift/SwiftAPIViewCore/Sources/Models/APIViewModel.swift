@@ -81,7 +81,7 @@ class APIViewModel: Tokenizable, Encodable {
         tokens = [Token]()
         model = PackageModel(name: packageName, statements: statements)
         self.tokenize(apiview: self, parent: nil)
-        model.navigationTokenize(apiview: self)
+        model.navigationTokenize(apiview: self, parent: nil)
     }
 
     // MARK: Codable

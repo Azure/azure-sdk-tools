@@ -37,14 +37,29 @@ class NavigationToken: Codable {
     /// Tags which determine the type of icon displayed in the navigation pane of APIView
     var tags: NavigationTags
 
-    init(name: String, prefix: String?, typeKind: NavigationTypeKind) {
+    init(name: String, navigationId: String, typeKind: NavigationTypeKind, members: [DeclarationModel]) {
         self.name = name
-        if let prefix = prefix {
-            self.navigationId = "\(prefix).\(name)"
-        } else {
-            self.navigationId = name
-        }
+        self.navigationId = navigationId
         tags = NavigationTags(typeKind: typeKind)
+        for member in members {
+            let memberNavId = "\(navigationId).\(member.name)"
+            let memberNav = NavigationToken(name: member.name, navigationId: memberNavId, typeKind: member.kind.navigationSymbol, members: [])
+            childItems.append(memberNav)
+        }
+        // sort the navigation elements by name
+        childItems.sort { $0.name < $1.name }
+    }
+
+    init(name: String, navigationId: String, typeKind: NavigationTypeKind, extensions: [ExtensionModel]) {
+        self.name = name
+        self.navigationId = navigationId
+        tags = NavigationTags(typeKind: typeKind)
+        for ext in extensions {
+            let extNav = NavigationToken(name: ext.extendedType, navigationId: ext.definitionId, typeKind: .class, members: [])
+            childItems.append(extNav)
+        }
+        // sort the navigation elements by name
+        childItems.sort { $0.name < $1.name }
     }
 
     // MARK: Codable

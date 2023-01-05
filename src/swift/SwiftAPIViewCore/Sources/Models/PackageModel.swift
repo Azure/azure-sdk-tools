@@ -115,10 +115,12 @@ class PackageModel: Tokenizable, Linkable {
             if !extensions.isEmpty {
                 a.comment("Non-package extensions")
                 a.newline()
-                for ext in extensions {
+                let endIdx = extensions.count - 1
+                for (idx, ext) in extensions.enumerated() {
                     ext.tokenize(apiview: a, parent: nil)
-                    a.lineIdMarker(definitionId: ext.definitionId)
-                    a.blankLines(set: 1)
+                    if idx != endIdx {
+                        a.blankLines(set: 1)
+                    }
                 }
             }
         }
@@ -168,11 +170,12 @@ class PackageModel: Tokenizable, Linkable {
         return result.first
     }
 
-    func navigationTokenize(apiview a: APIViewModel) {
-        for member in members {
-            member.navigationTokenize(apiview: a)
+    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+        let packageToken = NavigationToken(name: name, navigationId: name, typeKind: .assembly, members: members)
+        a.add(token: packageToken)
+        if !extensions.isEmpty {
+            let extensionsToken = NavigationToken(name: "Other Extensions", navigationId: "", typeKind: .assembly, extensions: extensions)
+            a.add(token: extensionsToken)
         }
-        // sort the root navigation elements by name
-        a.navigation.sort { $0.name < $1.name }
     }
 }

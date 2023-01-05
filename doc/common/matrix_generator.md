@@ -31,7 +31,7 @@ for a job matrix definition](https://docs.microsoft.com/azure/devops/pipelines/p
 
 In order to use these scripts in a pipeline, you must provide a config file and call the matrix creation script within a powershell job.
 
-For a single matrix, you can include the `/eng/common/pipelines/templates/jobs/archetype-sdk-tests-generate.yml` template in a pipeline (see /eng/common/scripts/job-matrix/samples/matrix-test.yml for a full working example):
+For a single matrix, you can include the `/eng/common/pipelines/templates/jobs/archetype-sdk-tests-generate.yml` template in a pipeline (see /eng/common-tests/matrix-generator/samples/matrix-test.yml for a full working example):
 
 ```
 jobs:
@@ -39,16 +39,16 @@ jobs:
     parameters:
       MatrixConfigs:
         - Name: base_product_matrix
-          Path: eng/common/scripts/job-matrix/samples/matrix.json
+          Path: eng/common-tests/matrix-generator/samples/matrix.json
           Selection: all
           NonSparseParameters:
             - framework
           GenerateVMJobs: true
         - Name: sparse_product_matrix
-          Path: eng/common/scripts/job-matrix/samples/matrix.json
+          Path: eng/common-tests/matrix-generator/samples/matrix.json
           Selection: sparse
           GenerateVMJobs: true
-      JobTemplatePath: /eng/common/scripts/job-matrix/samples/matrix-job-sample.yml
+      JobTemplatePath: /eng/common-tests/matrix-generator/samples/matrix-job-sample.yml
       AdditionalParameters: []
       CloudConfig:
         SubscriptionConfiguration: $(sub-config-azure-cloud-test-resources)

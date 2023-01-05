@@ -15,10 +15,9 @@ variables:
   - template: /eng/pipelines/templates/variables/globals.yml
 
 stages:
-  - stage: 'Test'
+  - stage: 'eng_script_tests'
     jobs:
       - job: 'Test'
-
         strategy:
           matrix:
             Windows:
@@ -36,7 +35,7 @@ stages:
           vmImage: $(Image)
 
         steps:
-          - template: /eng/pipelines/templates/steps/run-pester-tests.yml
+          - template: /eng/common/pipelines/templates/steps/run-pester-tests.yml
             parameters:
               TargetDirectory: ${{ parameters.TargetDirectory }}
               CustomTestSteps: ${{ parameters.CustomTestSteps }}

@@ -127,6 +127,7 @@ class PackageModel: Tokenizable, Linkable {
         }
         a.punctuation("}", spacing: SwiftSyntax.TokenKind.rightBrace.spacing)
         a.newline()
+        resolveTypeReferences(apiview: a)
     }
 
     /// Move extensions into the model representations for declared package types
@@ -168,6 +169,15 @@ class PackageModel: Tokenizable, Linkable {
             }
         }
         members = Array(uniqueMembers.values)
+    }
+
+    /// attempt to resolve type references that are declared after they are used
+    func resolveTypeReferences(apiview a: APIViewModel) {
+        for (idx, token) in a.tokens.enumerated() {
+            guard token.navigateToId == APIViewModel.unresolved else { continue }
+            a.tokens[idx].navigateToId = a.definitionId(for: token.value!, withParent: nil)
+            assert (a.tokens[idx].navigateToId != APIViewModel.unresolved)
+        }
     }
 
     func appendIfVisible(_ decl: DeclarationModel) {

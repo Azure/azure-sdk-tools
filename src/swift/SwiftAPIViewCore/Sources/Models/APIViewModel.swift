@@ -63,6 +63,9 @@ class APIViewModel: Tokenizable, Encodable {
     /// Access modifier to expose via APIView
     static let publicModifiers: [AccessLevel] = [.public, .open]
 
+    /// sentinel value for unresolved type references
+    static let unresolved = "__UNRESOLVED__"
+
     /// Tracks assigned definition IDs so they can be linked
     private var definitionIds = Set<String>()
 
@@ -252,7 +255,16 @@ class APIViewModel: Tokenizable, Encodable {
     /// Link to a registered type
     func typeReference(name: String, parent: DeclarationModel?) {
         checkIndent()
-        var matchVal = name
+        if name == "IncomingAudioStream" {
+            let test = "best"
+        }
+        let linkId = definitionId(for: name, withParent: parent) ?? APIViewModel.unresolved
+        let item = Token(definitionId: nil, navigateToId: linkId, value: name, kind: .typeName)
+        add(token: item)
+    }
+
+    func definitionId(for val: String, withParent parent: DeclarationModel?) -> String? {
+        var matchVal = val
         if !matchVal.contains("."), let parentObject = findNonFunctionParent(from: parent), let parentDefId = parentObject.definitionId {
             // if a plain, undotted name is provided, try to append the parent prefix
             matchVal = "\(parentDefId).\(matchVal)"
@@ -263,14 +275,12 @@ class APIViewModel: Tokenizable, Encodable {
         } else {
             // if type does not contain a dot, then suffix is insufficient
             // we must completely match the final segment of the type name
-            matches = definitionIds.filter { $0.split(separator: ".").last! == name }
+            matches = definitionIds.filter { $0.split(separator: ".").last! == matchVal }
         }
         if matches.count > 1 {
-            SharedLogger.warn("Found \(matches.count) matches for \(name). Using \(matches.first!). Swift APIView may not link correctly.")
+            SharedLogger.warn("Found \(matches.count) matches for \(matchVal). Using \(matches.first!). Swift APIView may not link correctly.")
         }
-        let linkId = matches.first
-        let item = Token(definitionId: nil, navigateToId: linkId, value: name, kind: .typeName)
-        add(token: item)
+        return matches.first
     }
 
     func member(name: String, definitionId: String? = nil) {

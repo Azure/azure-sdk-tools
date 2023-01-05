@@ -2,11 +2,12 @@
 # Misc
 ################
 /*                               @azure/azure-sdk-eng
-/.azure-pipelines/               @azure/azure-sdk-eng
 /.devcontainer/                  @azure/azure-sdk-eng
-/artifacts/                      @azure/azure-sdk-eng
-/config/                         @azure/azure-sdk-eng
 /doc/                            @azure/azure-sdk-eng
+# Note: directories below are scheduled to be reorganizeed.
+# For details, see: https://github.com/Azure/azure-sdk-tools/issues/5056
+/.azure-pipelines/               @azure/azure-sdk-eng
+/config/                         @azure/azure-sdk-eng
 /scripts/                        @azure/azure-sdk-eng
 /src/                            @azure/azure-sdk-eng
 /web/                            @azure/azure-sdk-eng

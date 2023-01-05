@@ -1,9 +1,9 @@
 ﻿Languages:
   Net:
     DefaultVersions:
-    - net6.0
+    - netcoreapp3.1
     OptionalVersions:
-    - net7.0
+    - net6.0
 
   Java:
     DefaultVersions:

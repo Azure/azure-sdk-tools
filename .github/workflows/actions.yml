@@ -29,10 +29,11 @@ jobs:
       - uses: actions/checkout@v3
       - name: Process Action Event
         # Underneath/instead of the echo statement is where we'd call our application
+        # JRS - dotnet install GithubEventProcessor once we publish it as a package
         run: |
           echo $GITHUB_PAYLOAD > payload.json
           dotnet run -- ${{ github.event_name }} payload.json
-        shell: pwsh
+        shell: bash
         working-directory: tools/github-event-processor/Azure.Sdk.Tools.GithubActions
         env:
           GITHUB_PAYLOAD: ${{ toJson(github.event) }}

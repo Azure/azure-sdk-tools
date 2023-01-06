@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.WebSockets;
 using System.Text;
 using Octokit;
 
@@ -16,5 +17,11 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.GitHubPayload
         public int Number { get; private set; }
         public PullRequest PullRequest { get; private set; }
         public Label Label { get; private set; }
+
+        // The actions event payload for a pull_request has a class on the pull request that
+        // the OctoKit.PullRequest class does not have. If the user has enabled Auto-Merge
+        // through the pull request UI.
+        public bool AutoMergeEnabled { get; set; }
+        
     }
 }

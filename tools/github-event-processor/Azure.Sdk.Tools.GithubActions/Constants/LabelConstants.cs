@@ -8,6 +8,7 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.Constants
     // Common Label constants. No repository specific team labels belong in here.
     public class LabelConstants
     {
+        public static readonly string CommunityContribution = "Community Contribution";
         public static readonly string CustomerReported = "customer-reported";
         public static readonly string CXPAttention = "CXP Attention";
         public static readonly string IssueAddressed = "issue-addressed";

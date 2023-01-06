@@ -8,6 +8,8 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
 {
     public class AuthUtils
     {
+        private static readonly string NotAUserPartial = "is not a user";
+
         /// <summary>
         /// Check to see if a given user is a Collaborator
         /// </summary>
@@ -42,6 +44,26 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
             return await DoesUserHavePermissions(gitHubClient, repositoryId, user, permissionList);
         }
 
+        /// <summary>
+        /// There are a lot of checks to see if user has Write Collaborator permissions however permissions however
+        /// Collaborator permissions levels are Admin, Write, Read and None. Checking to see if a user has Write
+        /// permissions translates to does the user have Admin or Write.
+        /// </summary>
+        /// <param name="gitHubClient">Authenticated GitHubClient</param>
+        /// <param name="repositoryId">The Id of the Repository</param>
+        /// <param name="user">The User.Login for the event object from the action payload</param>
+        /// <returns></returns>
+        public static async Task<bool> DoesUserHaveAdminOrWritePermission(GitHubClient gitHubClient, long repositoryId, string user)
+        {
+            List<PermissionLevel> permissionList = new List<PermissionLevel>
+            {
+                PermissionLevel.Admin,
+                PermissionLevel.Write
+            };
+            return await DoesUserHavePermissions(gitHubClient, repositoryId, user, permissionList);
+        }
+
+
         // There are several checks that look to see if a user's permission is NOT Admin or Write which
         // means both need to be checked but making multiple calls is not necessary
         public static async Task<bool> DoesUserHavePermissions(GitHubClient gitHubClient, long repositoryId, string user, List<PermissionLevel> permissionList)
@@ -58,9 +80,14 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // If this throws it's because it's being checked for a non-user (bot) and we need to return false
+                // If this throws it's because it's being checked for a non-user (bot) or the user somehow doesn't exist.
+                // If that's not the case, rethrow the exception, otherwise let processing return false
+                if (!ex.Message.Contains(NotAUserPartial, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw ex;
+                }
             }
             return false;
         }

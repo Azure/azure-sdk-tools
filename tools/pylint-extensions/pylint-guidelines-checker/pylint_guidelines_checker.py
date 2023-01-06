@@ -905,7 +905,6 @@ class ClientListMethodsUseCorePaging(BaseChecker):
         :return: None
         """
         try:
-            # if async should only be returning async ItemPaged if sync should return sync itemPaged 
             if node.parent.parent.name.endswith("Client") and node.parent.parent.name not in self.ignore_clients and node.parent.is_method():
                 if node.parent.name.startswith("list"):
                     paging_class = False

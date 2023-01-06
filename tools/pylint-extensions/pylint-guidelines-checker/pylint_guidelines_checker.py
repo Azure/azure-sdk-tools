@@ -2061,13 +2061,6 @@ class DeleteOperationReturnStatement(BaseChecker):
         ),
     }
 
-    def lro_poller_detected(self, return_type, return_node):
-        if return_type.name == "LROPoller" or return_type.name == "AsyncLROPoller":
-            if isinstance(return_node, astroid.Const):
-                if return_node.value == None: 
-                    return True
-        return False
-
     def visit_functiondef(self,node):
         """Visits all delete functions and checks that their return types
         are LROPoller or None. """

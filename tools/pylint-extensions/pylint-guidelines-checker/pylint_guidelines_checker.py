@@ -2072,14 +2072,14 @@ class DeleteOperationReturnStatement(BaseChecker):
             if node.name.startswith("delete") and node.parent.name.endswith("Client"):
                 if node.returns.as_string() != "None":
                     self.add_message(
-                        msgid=f"delete-operation-wrong-return-type",
+                        msgid="delete-operation-wrong-return-type",
                         node=node,
                         confidence=None,
                     )   
             if node.name.startswith("begin_delete") and node.parent.name.endswith("Client"):
                 if node.returns.as_string() != "LROPoller[None]" and node.returns.as_string() != "AsyncLROPoller[None]":
                     self.add_message(
-                        msgid=f"delete-operation-wrong-return-type",
+                        msgid="delete-operation-wrong-return-type",
                         node=node,
                         confidence=None,
                     )   
@@ -2127,7 +2127,7 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
 
         if name.startswith("raise_with_traceback"):
             self.add_message(
-                msgid=f"no-raise-with-traceback", node=node, confidence=None
+                msgid="no-raise-with-traceback", node=node, confidence=None
             )
 
 

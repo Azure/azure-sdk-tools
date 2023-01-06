@@ -3232,17 +3232,18 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
         """
             from azure.core.polling import LROPoller 
             from typing import Any
-            def delete_some_function(self, **kwargs): #@
-                return LROPoller[Any] 
+            class MyClient():
+                def delete_some_function(self, **kwargs): #@
+                    return LROPoller[Any] 
         """
         )
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="delete-operation-wrong-return-type",
-                    line=4,
+                    line=5,
                     node=node,
-                    col_offset=0, 
-                    end_line=4, 
+                    col_offset=4, 
+                    end_line=5, 
                     end_col_offset=24
                 )
         ):

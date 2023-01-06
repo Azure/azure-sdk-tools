@@ -6,6 +6,7 @@
 """
 Pylint custom checkers for SDK guidelines: C4717 - C4749
 """
+
 import logging
 import astroid
 from pylint.checkers import BaseChecker
@@ -358,7 +359,6 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
     ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
     ignore_functions = ["send_request"]
     ignore_decorators = {"typing.overload", "builtins.classmethod"} 
-    ignore_internal = False
 
     def __init__(self, linter=None):
         super(ClientMethodsHaveTracingDecorators, self).__init__(linter)
@@ -2069,21 +2069,25 @@ class DeleteOperationReturnStatement(BaseChecker):
         """Visits all delete functions and checks that their return types
         are LROPoller or None. """
         try:
+            return_node = False
             if (node.name.startswith("delete") or node.name.startswith("begin_delete")) and node.parent.name.endswith("Client") : 
                 for n in node.body:
                     if isinstance(n, astroid.Return):
+                        return_node = True
                         if n.value == None:
                             return
                         else:
                             for return_type in n.value.infer():
                                 if str(return_type) == "Uninferable" or return_type == None or self.lro_poller_detected(return_type, n):
                                     return
+                if not return_node:
+                    return
 
-                    self.add_message(
-                        msgid=f"delete-operation-wrong-return-type",
-                        node=node,
-                        confidence=None,
-                    )   
+                self.add_message(
+                    msgid=f"delete-operation-wrong-return-type",
+                    node=node,
+                    confidence=None,
+                )   
         except:
             pass
     

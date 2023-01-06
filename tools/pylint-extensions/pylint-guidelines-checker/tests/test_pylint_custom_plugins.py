@@ -1950,7 +1950,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
             async def list_thing(self): #@
                 return AsyncItemPaged()
             @distributed_trace
-            def list_thing2(self): #@
+            async def list_thing2(self): #@
                 return AsyncItemPaged(
                     command, prefix=name_starts_with, results_per_page=results_per_page,
                     page_iterator_class=BlobPropertiesPaged)
@@ -2044,12 +2044,46 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         node = astroid.parse(file.read())
         file.close()
 
-        function_node = node.body[2].body[0]
+        function_node = node.body[2].body[1]
 
    
         with self.assertNoMessages():
             self.checker.visit_return(function_node.body[0])
-          
+
+    def test_async_return_async_page_acceptable(self):
+        function_node, return_node = astroid.extract_node(
+        """
+            from azure.core.async_paging import AsyncItemPaged
+            class MyClient():
+                async def list_something(self, **kwargs): #@
+                    return AsyncItemPaged[None] #@
+        """
+        )
+
+        with self.assertNoMessages():
+            self.checker.visit_return(return_node)
+
+    def test_async_return_async_page_violation(self):
+        function_node, return_node = astroid.extract_node(
+        """
+            from azure.core.paging import ItemPaged
+            class MyClient():
+                async def list_something(self, **kwargs): #@
+                    return ItemPaged[None] #@
+        """
+        )
+
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="async-return-async-iterable",
+                    line=4,
+                    node=function_node,
+                    col_offset=4, 
+                    end_line=4, 
+                    end_col_offset=25
+                )
+        ):
+            self.checker.visit_return(return_node)          
 
     def test_guidelines_link_active(self):
         url = "https://azure.github.io/azure-sdk/python_design.html#response-formats"
@@ -2059,6 +2093,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
 
+    
 
 class TestClientLROMethodsUseCorePolling(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientLROMethodsUseCorePolling
@@ -3115,6 +3150,7 @@ class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
+
 class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
     """Test that we are checking the type and property name lengths"""
     CHECKER_CLASS = checker.TypePropertyNameTooLong
@@ -3139,7 +3175,7 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_variable_name_too_long(self):
+    def test_function_name_too_long(self):
         class_node, function_node = astroid.extract_node(
         """
             class ClassNameGoodClient(): #@
@@ -3162,7 +3198,7 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_function_name_too_long(self):
+    def test_variable_name_too_long(self):
         class_node, function_node, property_node = astroid.extract_node(
         """
             class ClassNameGoodClient(): #@
@@ -3177,7 +3213,7 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
                 pylint.testutils.MessageTest(
                     msg_id="name-too-long",
                     line=4,
-                    node=property_node,
+                    node=property_node.targets[0],
                     col_offset=8, 
                     end_line=4, 
                     end_col_offset=65
@@ -3192,71 +3228,26 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.DeleteOperationReturnStatement
 
     def test_delete_operation(self):
-        function_node, return_node = astroid.extract_node(
+        node = astroid.extract_node(
         """
+            from azure.core.polling import LROPoller 
+            from typing import Any
             def delete_some_function(self, **kwargs): #@
-                return "this is not nothing" #@
+                return LROPoller[Any] 
         """
         )
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="delete-operation-wrong-return-type",
-                    line=2,
-                    node=function_node,
+                    line=4,
+                    node=node,
                     col_offset=0, 
-                    end_line=2, 
+                    end_line=4, 
                     end_col_offset=24
                 )
         ):
-            self.checker.visit_functiondef(function_node)
+            self.checker.visit_functiondef(node)
 
-
-class TestAsyncFunctionReturnsIterable(pylint.testutils.CheckerTestCase):
-    """Test that async functions return async iterable"""
-    CHECKER_CLASS = checker.AsyncMethodsReturnAsyncIterables
-
-    def test_delete_operation(self):
-        function_node, return_node = astroid.extract_node(
-        """
-            class MyClient():
-                async def gen(self):
-                    num = 1
-                    yield num
-                async def my_function(self, **kwargs): #@
-                    var = ["one","two"]
-                    for i in var:
-                        print(i)
-                    return await self.gen.__next__() #@
-        """
-        )
-
-        with self.assertNoMessages():
-            self.checker.visit_asyncfunctiondef(function_node)
-
-    def test_delete_operation_sync(self):
-        function_node, return_node = astroid.extract_node(
-        """
-            from azure.core.polling import LROPoller
-            class MyClient():
-                async def my_function(self, **kwargs): #@
-                    var = ["one","two"]
-                    for i in var:
-                        print(i)
-                    return LROPoller() #@
-        """
-        )
-
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="async-return-async-iterable",
-                    line=4,
-                    node=function_node,
-                    col_offset=4, 
-                    end_line=4, 
-                    end_col_offset=25
-                )
-        ):
-            self.checker.visit_asyncfunctiondef(function_node)
 
 class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
     """Test that we don't use raise with traceback"""

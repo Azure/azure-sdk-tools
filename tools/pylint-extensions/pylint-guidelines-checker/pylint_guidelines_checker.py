@@ -357,8 +357,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
     )
     ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
     ignore_functions = ["send_request"]
-    ignore_decorators = ["typing.overload", "builtins.classmethod", "azure.core.tracing.decorator.distributed_trace", 
-        "azure.core.tracing.decorator_async.distributed_trace_async"]
+    ignore_decorators = {"typing.overload", "builtins.classmethod"} 
     ignore_internal = False
 
     def __init__(self, linter=None):
@@ -382,10 +381,9 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
             if new_path.count("_") == 0:
                 if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                         node.parent.name not in self.ignore_clients:
-                    if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client"):
-                        if self.ignore_decorators[0] not in node.decoratornames() \
-                            and self.ignore_decorators[1] not in node.decoratornames() \
-                                and self.ignore_decorators[2] not in node.decoratornames():
+                    if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
+                        and len(self.ignore_decorators.intersection(node.decoratornames())) == 0 and \
+                            "azure.core.tracing.decorator.distributed_trace" not in node.decoratornames():
                         
                                     self.add_message(
                                         msgid="client-method-missing-tracing-decorator", node=node, confidence=None
@@ -411,9 +409,8 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
                 if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                         node.parent.name not in self.ignore_clients:
                     if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
-                        and self.ignore_decorators[0] not in node.decoratornames() \
-                            and self.ignore_decorators[1] not in node.decoratornames() \
-                                and self.ignore_decorators[3] not in node.decoratornames():
+                        and len(self.ignore_decorators.intersection(node.decoratornames())) == 0 and \
+                            "azure.core.tracing.decorator_async.distributed_trace_async" not in node.decoratornames():
                         
                         self.add_message(
                             msgid="client-method-missing-tracing-decorator-async", node=node, confidence=None
@@ -877,6 +874,11 @@ class ClientListMethodsUseCorePaging(BaseChecker):
             "client-list-methods-use-paging",
             "Client methods that return collections should use the Paging protocol.",
         ),
+        "C4753" : (
+            "async method returns sync ItemPaged, should return AsyncItemPaged.",
+            "async-return-async-iterable",
+            "async methods should return async iterables."
+        ),
     }
     options = (
         (
@@ -903,13 +905,25 @@ class ClientListMethodsUseCorePaging(BaseChecker):
         :return: None
         """
         try:
+            # if async should only be returning async ItemPaged if sync should return sync itemPaged 
             if node.parent.parent.name.endswith("Client") and node.parent.parent.name not in self.ignore_clients and node.parent.is_method():
                 if node.parent.name.startswith("list"):
                     paging_class = False
+                    async_itempage_return = False
 
                     try:
-                        if any(v for v in node.value.infer() if "def by_page" in v.as_string()):
-                            paging_class = True
+                        for value in node.value.infer():
+                            if str(value) == "Uninferable":
+                                logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
+                                return
+                            elif value.name == "ItemPaged" and isinstance(node.parent, astroid.FunctionDef):
+                                paging_class = True
+                            elif value.name == "AsyncItemPaged" and isinstance(node.parent, astroid.AsyncFunctionDef):
+                                paging_class = True
+                                async_itempage_return = True
+                            elif "def by_page" in value.as_string():
+                                # If it is a custom paging class
+                                paging_class = True
                     except (astroid.exceptions.InferenceError, AttributeError, TypeError): # astroid can't always infer the return
                         logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
                         return 
@@ -918,6 +932,9 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                         self.add_message(
                             msgid="client-list-methods-use-paging", node=node.parent, confidence=None
                         )
+                    if isinstance(node.parent, astroid.AsyncFunctionDef) and not async_itempage_return and paging_class:
+                        self.add_message(msgid="async-return-async-iterable", node=node.parent, confidence=None)
+
         except (AttributeError, TypeError):
             logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
             pass
@@ -2018,7 +2035,7 @@ class TypePropertyNameTooLong(BaseChecker):
                         if len(j.name) > self.STANDARD_CHARACTER_LENGTH:
                             self.add_message(
                                 msgid=f"name-too-long",
-                                node=i,
+                                node=j,
                                 confidence=None,
                             )          
         except:
@@ -2041,75 +2058,51 @@ class DeleteOperationReturnStatement(BaseChecker):
         ),
     }
 
+    def lro_poller_detected(self, return_type, return_node):
+        if return_type.name == "LROPoller" or return_type.name == "AsyncLROPoller":
+            if isinstance(return_node, astroid.Const):
+                if return_node.value == None: 
+                    return True
+        return False
+
     def visit_functiondef(self,node):
         """Visits all delete functions and checks that their return types
         are LROPoller or None. """
         try:
-            if node.name.startswith("delete") or node.name.startswith("begin_delete"):
-                inferred = node.infer_call_result()
-                for x in inferred:
-                    if str(x)=="Uninferable" or x == None or x.value == None or \
-                        x.name == "LROPoller" or x.name == "AsyncLROPoller":
+            if node.name.startswith("delete") or node.name.startswith("begin_delete"): 
+                for n in node.body:
+                    if isinstance(n, astroid.Return):
+                        if n.value == None:
                             return
-                self.add_message(
-                    msgid=f"delete-operation-wrong-return-type",
-                    node=node,
-                    confidence=None,
-                )   
+                        else:
+                            for return_type in n.value.infer():
+                                if str(return_type) == "Uninferable" or return_type == None or self.lro_poller_detected(return_type, n):
+                                    return
+
+                    self.add_message(
+                        msgid=f"delete-operation-wrong-return-type",
+                        node=node,
+                        confidence=None,
+                    )   
         except:
             pass
     
     visit_asyncfunctiondef = visit_functiondef
 
 
-class AsyncMethodsReturnAsyncIterables(BaseChecker):
-    __implements__ = IAstroidChecker
-
-    """Rule to check that an async method returns an async iterable."""
-    name = "async-return-async-iterable"
-    priority = -1
-    msgs = {
-        "C4753": (
-            "async method returns sync iterable.",
-            "async-return-async-iterable",
-            "async methods should return async iterables."
-        ),
-    }
-
-    def visit_asyncfunctiondef(self, node):
-        """Checks all async functions, if there is a return statement, checks that it is preceded by an await. 
-        If it is a call to a function, it checks that the function is async. i.e AsyncLROPoller"""
-        try:
-            if "Client" in node.parent.name:
-                for n in node.body:
-                    if isinstance(n, astroid.Return):
-                        if isinstance(n.value, astroid.Await):
-                            return 
-                        if isinstance(n.value, astroid.Call) and "async" not in n.value.func.as_string():
-                            self.add_message(
-                                msgid=f"async-return-async-iterable",
-                                node=node,
-                                confidence=None,
-                            )   
-                            
-        except:
-            pass
-
-
 class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
     __implements__ = IAstroidChecker
 
-    """Rule to check that we don't use raise_with_traceback in azure core."""
+    """Rule to check that we don't use raise_with_traceback from azure core."""
     name = "no-raise-with-traceback"
     priority = -1
     msgs = {
         "C4754": (
-            "Don't use raise_with_traceback, use python 3 raise from syntax.",
+            "Don't use raise_with_traceback, use python 3 'raise from' syntax.",
             "no-raise-with-traceback",
-            "Don't use raise_with_traceback instead use python 3 raise from syntax."
+            "Don't use raise_with_traceback instead use python 3 'raise from' syntax."
         ),
     }
-    AZURE_CORE= "azure.core.exceptions"
 
     def visit_import(self, node):
         """Checks all imports to make sure we are 
@@ -2175,4 +2168,3 @@ def register(linter):
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
-    # linter.register_checker(AsyncMethodsReturnAsyncIterables(linter))

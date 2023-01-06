@@ -1910,7 +1910,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
             def _list_thing(self): #@
                 pass
         """)
-
+        
         with self.assertNoMessages():
             self.checker.visit_return(function_node.body[0])
 
@@ -1920,7 +1920,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
             def list_things(self): #@
                 pass
         """)
-
+        
         with self.assertNoMessages():
             self.checker.visit_return(function_node.body[0])
 
@@ -1947,10 +1947,10 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         from azure.core.async_paging import AsyncItemPaged
         
         class SomeClient(): #@
-            async def list_thing(self): #@
+            def list_thing(self): #@
                 return AsyncItemPaged()
             @distributed_trace
-            async def list_thing2(self): #@
+            def list_thing2(self): #@
                 return AsyncItemPaged(
                     command, prefix=name_starts_with, results_per_page=results_per_page,
                     page_iterator_class=BlobPropertiesPaged)
@@ -2055,11 +2055,11 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         """
             from azure.core.async_paging import AsyncItemPaged
             class MyClient():
-                async def list_something(self, **kwargs): #@
+                def list_something(self, **kwargs): #@
                     return AsyncItemPaged[None] #@
         """
         )
-
+        return_node.parent.root().name = "some-package.some.aio.file.py"
         with self.assertNoMessages():
             self.checker.visit_return(return_node)
 
@@ -2068,11 +2068,11 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         """
             from azure.core.paging import ItemPaged
             class MyClient():
-                async def list_something(self, **kwargs): #@
+                def list_something(self, **kwargs): #@
                     return ItemPaged[None] #@
         """
         )
-
+        return_node.parent.root().name = "some-package.some.aio.file.py"
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="async-return-async-iterable",
@@ -3233,8 +3233,8 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
             from azure.core.polling import LROPoller 
             from typing import Any
             class MyClient():
-                def delete_some_function(self, **kwargs): #@
-                    return LROPoller[Any] 
+                def begin_delete_some_function(self, **kwargs)  -> LROPoller[Any]: #@
+                    return LROPoller[Any]
         """
         )
         with self.assertAddsMessages(

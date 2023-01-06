@@ -909,21 +909,24 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                     paging_class = False
                     async_itempaged_return = False
 
+                    path = node.parent.root().name
+                    async_client = ".aio." in path
+                   
                     try:
                         for value in node.value.infer():
                             if str(value) == "Uninferable":
                                 logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
                                 return
-                            elif value.name == "ItemPaged" and isinstance(node.parent, astroid.FunctionDef):
+                            elif value.name == "ItemPaged":
                                 paging_class = True
-                            elif value.name == "AsyncItemPaged" and isinstance(node.parent, astroid.AsyncFunctionDef):
+                                async_itempaged_return = False if async_client else True
+                            elif value.name == "AsyncItemPaged":
                                 paging_class = True
                                 async_itempaged_return = True
                             elif "def by_page" in value.as_string():
                                 # If it is a custom paging class
                                 paging_class = True
-                                if "async" in value.as_string():
-                                    async_itempaged_return = True
+                                async_itempaged_return = async_client
                     except: # astroid can't always infer the return
                         logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
                         return 
@@ -932,7 +935,7 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                         self.add_message(
                             msgid="client-list-methods-use-paging", node=node.parent, confidence=None
                         )
-                    if paging_class and not async_itempaged_return and isinstance(node.parent, astroid.AsyncFunctionDef):
+                    if paging_class and not async_itempaged_return and async_client:
                         self.add_message(msgid="async-return-async-iterable", node=node.parent, confidence=None)
 
         except (AttributeError, TypeError):
@@ -2001,7 +2004,7 @@ class TypePropertyNameTooLong(BaseChecker):
         try:
             if len(node.name) > self.STANDARD_CHARACTER_LENGTH:
                 self.add_message(
-                    msgid=f"name-too-long",
+                    msgid="name-too-long",
                     node=node,
                     confidence=None,
                 )
@@ -2016,7 +2019,7 @@ class TypePropertyNameTooLong(BaseChecker):
         try:
             if len(node.name) > self.STANDARD_CHARACTER_LENGTH:
                 self.add_message(
-                    msgid=f"name-too-long",
+                    msgid="name-too-long",
                     node=node,
                     confidence=None,
                 )
@@ -2025,7 +2028,7 @@ class TypePropertyNameTooLong(BaseChecker):
                 try:
                     if len(i.name) > self.STANDARD_CHARACTER_LENGTH:
                         self.add_message(
-                            msgid=f"name-too-long",
+                            msgid="name-too-long",
                             node=i,
                             confidence=None,
                         )        
@@ -2034,7 +2037,7 @@ class TypePropertyNameTooLong(BaseChecker):
                     for j in i.targets:
                         if len(j.name) > self.STANDARD_CHARACTER_LENGTH:
                             self.add_message(
-                                msgid=f"name-too-long",
+                                msgid="name-too-long",
                                 node=j,
                                 confidence=None,
                             )          
@@ -2069,25 +2072,24 @@ class DeleteOperationReturnStatement(BaseChecker):
         """Visits all delete functions and checks that their return types
         are LROPoller or None. """
         try:
-            return_node = False
-            if (node.name.startswith("delete") or node.name.startswith("begin_delete")) and node.parent.name.endswith("Client") : 
-                for n in node.body:
-                    if isinstance(n, astroid.Return):
-                        return_node = True
-                        if n.value == None:
-                            return
-                        else:
-                            for return_type in n.value.infer():
-                                if str(return_type) == "Uninferable" or return_type == None or self.lro_poller_detected(return_type, n):
-                                    return
-                if not return_node:
-                    return
-
-                self.add_message(
-                    msgid=f"delete-operation-wrong-return-type",
-                    node=node,
-                    confidence=None,
-                )   
+            if node.returns.as_string() == "None":
+                # If there are residual comment typehints or no return value,
+                # we dont want to throw an error
+                return
+            if node.name.startswith("delete") and node.parent.name.endswith("Client"):
+                if node.returns.as_string() != "None":
+                    self.add_message(
+                        msgid=f"delete-operation-wrong-return-type",
+                        node=node,
+                        confidence=None,
+                    )   
+            if node.name.startswith("begin_delete") and node.parent.name.endswith("Client"):
+                if node.returns.as_string() != "LROPoller[None]" and node.returns.as_string() != "AsyncLROPoller[None]":
+                    self.add_message(
+                        msgid=f"delete-operation-wrong-return-type",
+                        node=node,
+                        confidence=None,
+                    )   
         except:
             pass
     

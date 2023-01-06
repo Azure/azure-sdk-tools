@@ -2069,7 +2069,7 @@ class DeleteOperationReturnStatement(BaseChecker):
         """Visits all delete functions and checks that their return types
         are LROPoller or None. """
         try:
-            if node.name.startswith("delete") or node.name.startswith("begin_delete"): 
+            if (node.name.startswith("delete") or node.name.startswith("begin_delete")) and node.parent.name.endswith("Client") : 
                 for n in node.body:
                     if isinstance(n, astroid.Return):
                         if n.value == None:

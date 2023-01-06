@@ -923,7 +923,8 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                             elif "def by_page" in value.as_string():
                                 # If it is a custom paging class
                                 paging_class = True
-                                async_itempaged_return = True
+                                if "async" in value.as_string():
+                                    async_itempaged_return = True
                     except: # astroid can't always infer the return
                         logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
                         return 

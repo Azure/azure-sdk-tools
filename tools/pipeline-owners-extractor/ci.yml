@@ -25,4 +25,3 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/pipeline-owners-extractor
-    DotNetCoreVersion: 6.x

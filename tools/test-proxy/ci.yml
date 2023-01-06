@@ -25,7 +25,6 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/test-proxy
-    DotNetCoreVersion: "6.x"
     DockerTagPrefix: '1.0.0-dev.'
     DockerDeployments:
     - name: test_proxy_linux

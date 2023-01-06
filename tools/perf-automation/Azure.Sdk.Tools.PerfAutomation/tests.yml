@@ -514,7 +514,6 @@ Services:
       Java: listsecrets
       JS: ListSecretsTest
       Python: ListSecretsTest
-      Cpp: GetSecret
 
 - Service: eventhubs
   Languages:
@@ -617,3 +616,41 @@ Services:
     - --parallel 512
     TestNames:
       Net: BatchUpload
+
+- Service: keyvault-keys
+  Languages:
+    Cpp:
+      Project: azure-security-keyvault-keys-perf
+      PrimaryPackage: azure-security-keyvault-keys-cpp
+      PackageVersions:
+      - azure-security-keyvault-keys-cpp: 4.3.0
+        azure-core-cpp: 1.7.1
+      - azure-security-keyvault-keys-cpp: source
+        azure-core-cpp: source
+
+  Tests:
+  - Test: get-key
+    Arguments:
+    - --warmup 0 --duration 1
+    - --parallel 64
+    TestNames:
+      Cpp: GetKey
+
+- Service: keyvault-certificates
+  Languages:
+    Cpp:
+      Project: azure-security-keyvault-certificates-perf
+      PrimaryPackage: azure-security-keyvault-certificates-cpp
+      PackageVersions:
+      - azure-security-keyvault-certificates-cpp: 4.1.0
+        azure-core-cpp: 1.7.1
+      - azure-security-keyvault-certificates-cpp: source
+        azure-core-cpp: source
+
+  Tests:
+  - Test: get-certificate
+    Arguments:
+    - --warmup 0 --duration 1
+    - --parallel 64
+    TestNames:
+      Cpp: GetCertificate

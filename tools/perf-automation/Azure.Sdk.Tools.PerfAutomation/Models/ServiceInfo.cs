@@ -18,6 +18,10 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
                 {
                     return _primaryPackage;
                 }
+                else if (!PackageVersions.Any())
+                {
+                    return string.Empty;
+                }
                 else if (PackageVersions.First().Count == 1)
                 {
                     return PackageVersions.First().First().Key;

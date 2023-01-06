@@ -137,7 +137,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var selectedPackageVersions = serviceInfo.PackageVersions.Where(d =>
                 String.IsNullOrEmpty(options.PackageVersions) ||
-                Regex.IsMatch(serviceInfo.PrimaryPackage, options.PackageVersions, RegexOptions.IgnoreCase));
+                Regex.IsMatch(d[serviceInfo.PrimaryPackage], options.PackageVersions, RegexOptions.IgnoreCase));
 
             var selectedTests = serviceInfo.Tests
                 .Where(t =>

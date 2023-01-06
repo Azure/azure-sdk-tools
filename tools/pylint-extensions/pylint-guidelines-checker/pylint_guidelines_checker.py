@@ -382,9 +382,8 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
                 if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                         node.parent.name not in self.ignore_clients:
                     if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
-                        and len(self.ignore_decorators.intersection(node.decoratornames())) == 0 and \
+                        and not self.ignore_decorators.intersection(node.decoratornames()) and \
                             "azure.core.tracing.decorator.distributed_trace" not in node.decoratornames():
-                        
                                     self.add_message(
                                         msgid="client-method-missing-tracing-decorator", node=node, confidence=None
                                     )
@@ -409,7 +408,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
                 if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
                         node.parent.name not in self.ignore_clients:
                     if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
-                        and len(self.ignore_decorators.intersection(node.decoratornames())) == 0 and \
+                        and not self.ignore_decorators.intersection(node.decoratornames()) and \
                             "azure.core.tracing.decorator_async.distributed_trace_async" not in node.decoratornames():
                         
                         self.add_message(

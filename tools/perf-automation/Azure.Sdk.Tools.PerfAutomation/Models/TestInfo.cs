@@ -2,7 +2,7 @@
 
 namespace Azure.Sdk.Tools.PerfAutomation.Models
 {
-    public class LanguageServiceTestInfo
+    public class TestInfo
     {
         public string Test { get; set; }
         public string Class { get; set; }

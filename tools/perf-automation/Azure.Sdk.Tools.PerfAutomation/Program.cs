@@ -133,30 +133,25 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private static async Task Run(Options options)
         {
-                //                PackageVersions = p.Value.PackageVersions.Where(d =>
-                //                    String.IsNullOrEmpty(options.PackageVersions) || Regex.IsMatch(d[p.Value.PrimaryPackage], options.PackageVersions)),
-                //                PrimaryPackage = p.Value.PrimaryPackage,
-                //            }),
-                //        Tests = s.Tests
-                //            .Where(t => String.IsNullOrEmpty(options.Tests) || Regex.IsMatch(t.Test, options.Tests, RegexOptions.IgnoreCase))
-                //            .Select(t => new TestInfo
-                //            {
-                //                Test = t.Test,
-                //                Arguments = t.Arguments.Where(a =>
-                //                    String.IsNullOrEmpty(options.Arguments) || Regex.IsMatch(a, options.Arguments, RegexOptions.IgnoreCase)),
-                //                TestNames = t.TestNames.Where(n => !options.Languages.Any() || options.Languages.Contains(n.Key))
-                //                            .ToDictionary(p => p.Key, p => p.Value)
-                //            })
-                //            .Where(t => t.TestNames.Any())
-                //            .Where(t => t.Arguments.Any()),
-                //    })
-                //    .Where(s => s.Tests.Any());
+            var serviceInfo = DeserializeYaml<ServiceInfo>(options.TestsFile);
 
-            var input = DeserializeYaml<LanguageServiceInput>(options.TestsFile);
+            var selectedPackageVersions = serviceInfo.PackageVersions.Where(d =>
+                String.IsNullOrEmpty(options.PackageVersions) ||
+                Regex.IsMatch(serviceInfo.PrimaryPackage, options.PackageVersions, RegexOptions.IgnoreCase));
 
-            // TODO: Filter package versions and tests based on options
-            var selectedPackageVersions = input.PackageVersions;
-            var selectedTests = input.Tests;
+            var selectedTests = serviceInfo.Tests
+                .Where(t =>
+                    String.IsNullOrEmpty(options.Tests) ||
+                    Regex.IsMatch(t.Test, options.Tests, RegexOptions.IgnoreCase))
+                .Select(t => new TestInfo
+                {
+                    Test = t.Test,
+                    Class = t.Class,
+                    Arguments = t.Arguments.Where(a =>
+                        String.IsNullOrEmpty(options.Arguments) ||
+                        Regex.IsMatch(a, options.Arguments, RegexOptions.IgnoreCase))
+                })
+                .Where(t => t.Arguments.Any());
 
             var serializer = new Serializer();
             Console.WriteLine("=== Options ===");
@@ -165,9 +160,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Console.WriteLine();
 
             Console.WriteLine("=== Test Plan ===");
-            serializer.Serialize(Console.Out, new LanguageServiceInput() {
-                Service = input.Service,
-                Project = input.Project,
+            serializer.Serialize(Console.Out, new ServiceInfo()
+            {
+                Service = serviceInfo.Service,
+                Project = serviceInfo.Project,
                 PackageVersions = selectedPackageVersions,
                 Tests = selectedTests,
             });
@@ -218,11 +214,23 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             foreach (var packageVersions in selectedPackageVersions)
             {
-                await RunPackageVersion(options, outputJson, outputCsv, outputTxt, outputMd, results, input.Service,
-                    language, input, options.LanguageVersion, packageVersions);
+                await RunPackageVersion(
+                    language,
+                    options.LanguageVersion,
+                    serviceInfo.Service,
+                    serviceInfo.Project,
+                    serviceInfo.PrimaryPackage,
+                    packageVersions,
+                    selectedTests,
+                    options,
+                    outputJson,
+                    outputCsv,
+                    outputTxt,
+                    outputMd,
+                    results);
             }
 
-            if (options.Profile) 
+            if (options.Profile)
             {
                 // For each language that ran create a ZIP file containing all profiling data collected.
                 // This can be retained for in-depth performance analysis.
@@ -233,13 +241,24 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static async Task RunPackageVersion(Options options, string outputJson, string outputCsv, string outputTxt,
-            string outputMd, List<Result> results, string service, Language language, LanguageServiceInput languageServiceInput,
-            string languageVersion, IDictionary<string, string> packageVersions)
+        private static async Task RunPackageVersion(
+            Language language,
+            string languageVersion,
+            string service,
+            string project,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            IEnumerable<TestInfo> tests,
+            Options options,
+            string outputJson,
+            string outputCsv,
+            string outputTxt,
+            string outputMd,
+            List<Result> results)
         {
             try
             {
-                Console.WriteLine($"SetupAsync({languageServiceInput.Project}, {languageVersion}, " +
+                Console.WriteLine($"SetupAsync({project}, {languageVersion}, " +
                     $"{JsonSerializer.Serialize(packageVersions)})");
                 Console.WriteLine();
 
@@ -251,7 +270,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 try
                 {
                     (setupOutput, setupError, context) = await _languages[language].SetupAsync(
-                        languageServiceInput.Project, languageVersion, languageServiceInput.PrimaryPackage, packageVersions);
+                        project, languageVersion, primaryPackage, packageVersions);
                 }
                 catch (Exception e)
                 {
@@ -261,7 +280,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     Console.WriteLine();
                 }
 
-                foreach (var test in languageServiceInput.Tests)
+                foreach (var test in tests)
                 {
                     IEnumerable<string> selectedArguments;
                     if (!options.NoAsync && !options.NoSync)
@@ -307,10 +326,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             Start = DateTime.Now,
                             Language = language,
                             LanguageVersion = languageVersion,
-                            Project = languageServiceInput.Project,
+                            Project = project,
                             LanguageTestName = test.Class,
                             Arguments = allArguments,
-                            PrimaryPackage = languageServiceInput.PrimaryPackage,
+                            PrimaryPackage = primaryPackage,
                             PackageVersions = packageVersions,
                             SetupStandardOutput = setupOutput,
                             SetupStandardError = setupError,
@@ -327,14 +346,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 IterationResult iterationResult;
                                 try
                                 {
-                                    Console.WriteLine($"RunAsync({languageServiceInput.Project}, {languageVersion}, " +
+                                    Console.WriteLine($"RunAsync({project}, {languageVersion}, " +
                                         $"{test.Class}, {allArguments}, {context}, {options.Profile})");
                                     Console.WriteLine();
 
                                     iterationResult = await _languages[language].RunAsync(
-                                        languageServiceInput.Project,
+                                        project,
                                         languageVersion,
-                                        languageServiceInput.PrimaryPackage,
+                                        primaryPackage,
                                         packageVersions,
                                         test.Class,
                                         allArguments,
@@ -375,12 +394,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 if (!options.NoCleanup)
                 {
-                    Console.WriteLine($"CleanupAsync({languageServiceInput.Project})");
+                    Console.WriteLine($"CleanupAsync({project})");
                     Console.WriteLine();
 
                     try
                     {
-                        await _languages[language].CleanupAsync(languageServiceInput.Project);
+                        await _languages[language].CleanupAsync(project);
                     }
                     catch (Exception e)
                     {

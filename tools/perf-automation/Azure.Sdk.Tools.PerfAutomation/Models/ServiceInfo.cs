@@ -4,12 +4,10 @@ using System.Linq;
 
 namespace Azure.Sdk.Tools.PerfAutomation.Models
 {
-    public class LanguageServiceInput
+    public class ServiceInfo
     {
         public string Service { get; set; }
         public string Project { get; set; }
-        public IEnumerable<IDictionary<string, string>> PackageVersions { get; set; }
-        public IEnumerable<LanguageServiceTestInfo> Tests { get; set; }
 
         private string _primaryPackage;
         public string PrimaryPackage
@@ -35,5 +33,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
                 _primaryPackage = value;
             }
         }
+
+        public IEnumerable<IDictionary<string, string>> PackageVersions { get; set; }
+        public IEnumerable<TestInfo> Tests { get; set; }
     }
 }

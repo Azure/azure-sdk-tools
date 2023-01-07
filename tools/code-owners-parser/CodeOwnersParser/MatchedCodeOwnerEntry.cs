@@ -27,20 +27,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         public readonly CodeOwnerEntry Value;
 
         /// <summary>
-        /// The entry is valid if it obeys following conditions:
-        /// - The Value was obtained with a call to Azure.Sdk.Tools.CodeOwnersParser.CodeOwnersFile.ParseContent().
-        ///   - As a consequence, in the case of no match, the entry is not valid.
-        /// - the Value.PathExpression starts with "/".
-        ///
-        /// Once the validation described in the following issue is implemented:
-        /// https://github.com/Azure/azure-sdk-tools/issues/4859
-        /// To be valid, the entry will also have to obey following conditions:
-        /// - if the Value.PathExpression ends with "/", at least one corresponding
-        /// directory exists in the repository
-        /// - if the Value.PathExpression does not end with "/", at least one corresponding
-        /// file exists in the repository.
+        /// See comment on IsCodeOwnersPathValid
         /// </summary>
-        public bool IsValid => this.Value.PathExpression.StartsWith("/");
+        public bool IsValid => IsCodeOwnersPathValid(this.Value.PathExpression);
 
         /// <summary>
         /// Any CODEOWNERS path with these characters will be skipped.
@@ -132,12 +121,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         private static Regex ConvertToRegex(string codeownersPath)
         {
-            // CODEOWNERS paths that do not start with "/" are relative and considered invalid.
-            // However, here we handle such cases to accomodate for parsing CODEOWNERS file
-            // paths that somehow slipped through validation. We do so by instead treating
-            // such paths as if they were absolute to repository root, i.e. starting with "/".
-            if (!codeownersPath.StartsWith("/"))
-                codeownersPath = "/" + codeownersPath;
+            codeownersPath = ConvertPathIfInvalid(codeownersPath);
 
             string pattern = codeownersPath;
 
@@ -148,20 +132,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
             pattern = Regex.Escape(pattern);
 
-            // Denote that all paths are absolute by prepending "beginning of string" symbol.
-            pattern = "^" + pattern;
-
-            // Lack of slash at the end denotes the path is a path to a file,
-            // per our validation logic.
-            // Note we assume this is the case even if the path is invalid,
-            // even though in such case it might not necessarily be true.
-            if (!(pattern.EndsWith("/") 
-                  || pattern.EndsWith("_DOUBLE_STAR_")))
-            {
-                // Append "end of string", symbol, denoting the match has to be exact,
-                // not a substring, as we are dealing with a file.
-                pattern += "$";
-            }
+            pattern = AddStringAnchors(pattern);
 
             // Note that the "/**/" case is implicitly covered by "**/".
             pattern = pattern.Replace("_DOUBLE_STAR_/", "(.*)");
@@ -172,5 +143,53 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             pattern = pattern.Replace("_SINGLE_STAR_", "([^/]*)");
             return new Regex(pattern);
         }
+
+        private static string ConvertPathIfInvalid(string codeownersPath)
+        {
+            // CODEOWNERS paths that do not start with "/" are relative and considered invalid.
+            // However, here we handle such cases to accomodate for parsing CODEOWNERS file
+            // paths that somehow slipped through validation. We do so by instead treating
+            // such paths as if they were absolute to repository root, i.e. starting with "/".
+            if (!IsCodeOwnersPathValid(codeownersPath))
+                codeownersPath = "/" + codeownersPath;
+            return codeownersPath;
+        }
+
+        private static string AddStringAnchors(string pattern)
+        {
+            // Denote that all paths are absolute by pre-pending "beginning of string" symbol.
+            pattern = "^" + pattern;
+
+            // Lack of slash at the end denotes the path is a path to a file,
+            // per our validation logic.
+            // Note we assume this is path to a file even if the path is invalid,
+            // even though in such case the path might be a path to a directory.
+            if (!pattern.EndsWith("/"))
+            {
+                // Append "end of string", symbol, denoting the match has to be exact,
+                // not a substring, as we are dealing with a file.
+                pattern += "$";
+            }
+
+            return pattern;
+        }
+
+        /// <summary>
+        /// The entry is valid if it obeys following conditions:
+        /// - The Value was obtained with a call to
+        ///   Azure.Sdk.Tools.CodeOwnersParser.CodeOwnersFile.ParseContent().
+        ///   - As a consequence, in the case of no match, the entry is not valid.
+        /// - the Value.PathExpression starts with "/".
+        ///
+        /// Once the validation described in the following issue is implemented:
+        /// https://github.com/Azure/azure-sdk-tools/issues/4859
+        /// To be valid, the entry will also have to obey following conditions:
+        /// - if the Value.PathExpression ends with "/", at least one corresponding
+        /// directory exists in the repository
+        /// - if the Value.PathExpression does not end with "/", at least one corresponding
+        /// file exists in the repository.
+        /// </summary>
+        private static bool IsCodeOwnersPathValid(string codeownersPath)
+            => codeownersPath.StartsWith("/");
     }
 }

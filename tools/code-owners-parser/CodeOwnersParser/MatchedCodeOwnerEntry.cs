@@ -89,37 +89,11 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         {
             string codeownersPath = entry.PathExpression;
 
-            targetPath = NormalizeTargetPath(targetPath, codeownersPath);
-
-            Regex regex = ConvertToRegex(codeownersPath);
+            Regex regex = ConvertToRegex(targetPath, codeownersPath);
             return regex.IsMatch(targetPath);
         }
 
-        private static string NormalizeTargetPath(string targetPath, string codeownersPath)
-        {
-            // If the considered CODEOWNERS path ends with "/", it means we can
-            // assume targetPath also is a path to directory.
-            //
-            // This works in all 3 cases, which are:
-            //
-            // 1. The targetPath is the same as the CODEOWNERS path, except
-            // the targetPath doesn't have "/" at the end. If so,
-            // it might be a path to a file or directory,
-            // but the exact path match with CODEOWNERS path and our validation
-            // guarantees it is an existing directory, hence we can append "/".
-            //
-            // 2. The targetPath is a prefix path of CODEOWNERS path. In such case
-            // there won't be a match, and appending "/" won't change that.
-            //
-            // 3. The CODEOWNERS path is a prefix path of targetPath. In such case
-            // there will be a match, and appending "/" won't change that.
-            if (codeownersPath.EndsWith("/") && !targetPath.EndsWith("/"))
-                targetPath += "/";
-
-            return targetPath;
-        }
-
-        private static Regex ConvertToRegex(string codeownersPath)
+        private static Regex ConvertToRegex(string targetPath, string codeownersPath)
         {
             codeownersPath = ConvertPathIfInvalid(codeownersPath);
 
@@ -132,7 +106,10 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
             pattern = Regex.Escape(pattern);
 
-            pattern = AddStringAnchors(pattern);
+            // Denote that all paths are absolute by pre-pending "beginning of string" symbol.
+            pattern = "^" + pattern;
+
+            pattern = SetPatternSuffix(targetPath, pattern);
 
             // Note that the "/**/" case is implicitly covered by "**/".
             pattern = pattern.Replace("_DOUBLE_STAR_/", "(.*)");
@@ -141,7 +118,47 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // This case is necessary to cover inline **, e.g. "/a**b/".
             pattern = pattern.Replace("_DOUBLE_STAR_", "(.*)");
             pattern = pattern.Replace("_SINGLE_STAR_", "([^/]*)");
+
             return new Regex(pattern);
+        }
+
+        private static string SetPatternSuffix(string targetPath, string pattern)
+        {
+            // Lack of slash at the end denotes the path is a path to a file,
+            // per our validation logic.
+            // Note we assume this is path to a file even if the path is invalid,
+            // even though in such case the path might be a path to a directory.
+            if (!pattern.EndsWith("/"))
+            {
+                // Append "end of string" symbol, denoting the match has to be exact,
+                // not a substring, as we are dealing with a file.
+                pattern += "$";
+            }
+            // If the CODEOWNERS pattern is matching only against directories,
+            // but the targetPath may not be a directory, we need to trim
+            // the "/" from the pattern to ensure match is present.
+            //
+            // To illustrate this, consider following cases:
+            //
+            //   targetPath: /a   ,  /a*/
+            //      pattern: /a/  ,  /abc
+            //
+            // Without trimming pattern to be "/a" and "/a*" respectively,
+            // these wouldn't match, but they should.
+            //
+            // On the other hand, trimming the suffix "/" when it is not
+            // necessary won't lead to issues. E.g.:
+            //
+            //   targetPath: /a/b
+            //      pattern: /a/
+            //
+            // Here we still have a prefix match even if we trim pattern to "/a".
+            else if (pattern.EndsWith("/") && !targetPath.EndsWith("/"))
+            {
+                pattern = pattern.TrimEnd('/');
+            }
+
+            return pattern;
         }
 
         private static string ConvertPathIfInvalid(string codeownersPath)
@@ -155,25 +172,6 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             return codeownersPath;
         }
 
-        private static string AddStringAnchors(string pattern)
-        {
-            // Denote that all paths are absolute by pre-pending "beginning of string" symbol.
-            pattern = "^" + pattern;
-
-            // Lack of slash at the end denotes the path is a path to a file,
-            // per our validation logic.
-            // Note we assume this is path to a file even if the path is invalid,
-            // even though in such case the path might be a path to a directory.
-            if (!pattern.EndsWith("/"))
-            {
-                // Append "end of string", symbol, denoting the match has to be exact,
-                // not a substring, as we are dealing with a file.
-                pattern += "$";
-            }
-
-            return pattern;
-        }
-
         /// <summary>
         /// The entry is valid if it obeys following conditions:
         /// - The Value was obtained with a call to
@@ -183,7 +181,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         ///
         /// Once the validation described in the following issue is implemented:
         /// https://github.com/Azure/azure-sdk-tools/issues/4859
-        /// To be valid, the entry will also have to obey following conditions:
+        /// to be valid, the entry will also have to obey following conditions:
         /// - if the Value.PathExpression ends with "/", at least one corresponding
         /// directory exists in the repository
         /// - if the Value.PathExpression does not end with "/", at least one corresponding

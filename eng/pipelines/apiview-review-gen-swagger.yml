@@ -23,8 +23,6 @@ jobs:
     displayName: Setup working directory for Swagger Parser.
 
   - template: /eng/pipelines/templates/steps/install-dotnet.yml
-    parameters:
-      DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
 
   - script: >
       dotnet tool install

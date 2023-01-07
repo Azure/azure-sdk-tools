@@ -27,8 +27,6 @@ stages:
 
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
-            parameters:
-              DotNetCoreVersion: $(DotNetCoreVersion)
 
           - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
             displayName: 'Build and Package'

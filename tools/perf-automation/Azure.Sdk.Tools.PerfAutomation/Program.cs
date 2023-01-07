@@ -194,20 +194,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputMd = outputFiles[3];
 
             var results = new List<Result>();
-            var profileDirectories = new List<DirectoryInfo>();
+            DirectoryInfo profileDirectory = null;
 
             var language = options.Language;
 
             if (options.Profile)
             {
-                // For each language create a directory name "{language name}-profile" that will be used to contain
-                // all profiling data for a performance run by that language.
-                // Later this directory will be zipped to create ZIP file that can be retained with the name "{language name}-profile.zip".
-                string profileDirectory = Path.Combine(Program.Config.WorkingDirectories[language], language + "-profile");
-                if (!Directory.Exists(profileDirectory))
-                {
-                    profileDirectories.Add(Directory.CreateDirectory(profileDirectory));
-                }
+                profileDirectory = Directory.CreateDirectory(Path.Combine(options.RepoRoot, "profile"));
             }
 
             foreach (var packageVersions in selectedPackageVersions)
@@ -230,12 +223,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             if (options.Profile)
             {
-                // For each language that ran create a ZIP file containing all profiling data collected.
-                // This can be retained for in-depth performance analysis.
-                foreach (var profileDirectory in profileDirectories)
-                {
-                    ZipFile.CreateFromDirectory(profileDirectory.FullName, Path.Combine(profileDirectory.Parent.FullName, profileDirectory.Name + ".zip"));
-                }
+                ZipFile.CreateFromDirectory(profileDirectory.FullName, Path.Combine(profileDirectory.Parent.FullName, profileDirectory.Name + ".zip"));
             }
         }
 
@@ -254,6 +242,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string outputMd,
             List<Result> results)
         {
+            _languages[language].WorkingDirectory = options.RepoRoot;
+
             try
             {
                 Console.WriteLine($"SetupAsync({project}, {languageVersion}, " +

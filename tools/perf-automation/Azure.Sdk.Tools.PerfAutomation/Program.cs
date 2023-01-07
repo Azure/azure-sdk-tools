@@ -131,6 +131,22 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private static async Task Run(Options options)
         {
+            if (string.IsNullOrEmpty(options.LanguageVersion))
+            {
+                options.LanguageVersion = options.Language switch {
+                    Language.Net => "netcoreapp3.1",
+                    Language.Java => "1.8.0_345",
+                    Language.JS => "14.20.0",
+                    Language.Python => "3.7.3",
+                    Language.Cpp => "3.20.0",
+                    _ => throw new InvalidOperationException("Unknown language")
+                };
+            }
+
+            if (options.Language == Language.JS) {
+                options.NoSync = true;
+            }
+
             var serviceInfo = DeserializeYaml<ServiceInfo>(options.TestsFile);
 
             var selectedPackageVersions = serviceInfo.PackageVersions.Where(d =>
@@ -197,21 +213,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var results = new List<Result>();
             DirectoryInfo profileDirectory = null;
 
-            var language = options.Language;
-
-            var languageVersion = options.LanguageVersion;
-            if (string.IsNullOrEmpty(languageVersion))
-            {
-                languageVersion = language switch {
-                    Language.Net => "netcoreapp3.1",
-                    Language.Java => "1.8.0_345",
-                    Language.JS => "14.20.0",
-                    Language.Python => "3.7.3",
-                    Language.Cpp => "3.20.0",
-                    _ => throw new InvalidOperationException("Unknown language")
-                };
-            }
-
             if (options.Profile)
             {
                 profileDirectory = Directory.CreateDirectory(Path.Combine(options.RepoRoot, "profile"));
@@ -220,14 +221,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
             foreach (var packageVersions in selectedPackageVersions)
             {
                 await RunPackageVersion(
-                    language,
-                    languageVersion,
+                    options,
                     serviceInfo.Service,
                     serviceInfo.Project,
                     serviceInfo.PrimaryPackage,
                     packageVersions,
                     selectedTests,
-                    options,
                     outputJson,
                     outputCsv,
                     outputTxt,
@@ -242,20 +241,21 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         private static async Task RunPackageVersion(
-            Language language,
-            string languageVersion,
+            Options options,
             string service,
             string project,
             string primaryPackage,
             IDictionary<string, string> packageVersions,
             IEnumerable<TestInfo> tests,
-            Options options,
             string outputJson,
             string outputCsv,
             string outputTxt,
             string outputMd,
             List<Result> results)
         {
+            var language = options.Language;
+            var languageVersion = options.LanguageVersion;
+
             _languages[language].WorkingDirectory = options.RepoRoot;
 
             try

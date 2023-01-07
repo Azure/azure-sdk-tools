@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option("profile", HelpText = "Enables capture of profiling data")]
             public bool Profile { get; set; }
 
-            [Option("repo-root", HelpText = "Path to root of repository in which to run tests")]
+            [Option("repo-root", Required = true, HelpText = "Path to root of repository in which to run tests")]
             public string RepoRoot { get; set; }
 
             // TODO: Configure YAML serialization to print URI values

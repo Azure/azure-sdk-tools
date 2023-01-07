@@ -8,6 +8,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// Represents a CODEOWNERS file entry that matched to targetPath from
     /// the list of entries, assumed to have been parsed from CODEOWNERS file.
     ///
+    /// This is a new matcher, compared to the old one, located in:
+    /// CodeOwnersFile.FindOwnersForClosestMatchLegacyImpl()
+    /// This new matcher supports matching against wildcards, while the old one doesn't.
+    /// This new matcher is designed to work with CODEOWNERS file validation:
+    /// https://github.com/Azure/azure-sdk-tools/issues/4859
+    ///
     /// To use this class, construct it.
     /// 
     /// To obtain the value of the matched entry, reference "Value" member.
@@ -39,7 +45,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// <summary>
         /// Any CODEOWNERS path with these characters will be skipped.
         /// Note these are valid parts of file paths, but we are not supporting
-        /// them to simplify the parser logic.
+        /// them to simplify the matcher logic.
         /// </summary>
         private static readonly char[] unsupportedChars = { '[', ']', '!', '?' };
 
@@ -157,8 +163,11 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 pattern += "$";
             }
 
+            // Note that the "/**/" case is implicitly covered by "**/".
             pattern = pattern.Replace("_DOUBLE_STAR_/", "(.*)");
+            // This case is necessary to cover suffix case, e.g. "/foo/bar/**".
             pattern = pattern.Replace("/_DOUBLE_STAR_", "(.*)");
+            // This case is necessary to cover inline **, e.g. "/a**b/".
             pattern = pattern.Replace("_DOUBLE_STAR_", "(.*)");
             pattern = pattern.Replace("_SINGLE_STAR_", "([^/]*)");
             return new Regex(pattern);

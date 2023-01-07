@@ -8,18 +8,18 @@ public class CodeOwnersFileTests
 {
     /// <summary>
     /// A battery of test cases specifying behavior of new logic matching target
-    /// path to CODEOWNERS entries , and comparing it to existing, legacy logic.
+    /// path to CODEOWNERS entries, and comparing it to existing, legacy logic.
     ///
-    /// The logic that has changed lives in CodeOwnersFile.FindOwnersForClosestMatch.
-    ///
-    /// The new logic supports matching against wildcards, while the old one doesn't.
+    /// The logic that has changed is located in CodeOwnersFile.FindOwnersForClosestMatch.
     ///
     /// In the test case table below, any discrepancy between legacy and new
-    /// parser expected matches that doesn't pertain to wildcard matching denotes
-    /// a potential backward compatibility and/or existing defect in the legacy parser.
-    /// 
+    /// matcher expected matches that doesn't pertain to wildcard matching denotes
+    /// a potential backward compatibility and/or existing defect in the legacy matcher.
+    ///
     /// For further details, please see:
-    /// https://github.com/Azure/azure-sdk-tools/issues/2770
+    /// - Class comment for Azure.Sdk.Tools.CodeOwnersParser.MatchedCodeOwnerEntry
+    /// - https://github.com/Azure/azure-sdk-tools/issues/2770
+    /// - https://github.com/Azure/azure-sdk-tools/issues/4859
     /// </summary>
     private static readonly TestCase[] testCases =
     {
@@ -96,6 +96,7 @@ public class CodeOwnersFileTests
         new(   "/a/*/b/" , "a/x/b/c"     ,  false , true  ),
         new(   "/a/*/b/" , "a/x/c"       ,  false , false ),
         new(   "/a/*/b/" , "a/x/y/b"     ,  false , false ),
+        new(    "/a**b/" , "a/x/y/b"     ,  false , true  ),
         new(  "/a/**/b/" , "a/b"         ,  false , true  ),
         new(  "/a/**/b/" , "a/x/b"       ,  false , true  ),
         new(  "/a/**/b/" , "a/x/y/b"     ,  false , true  ),

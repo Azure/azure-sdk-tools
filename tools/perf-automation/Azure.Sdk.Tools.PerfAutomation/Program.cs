@@ -198,6 +198,19 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var language = options.Language;
 
+            var languageVersion = options.LanguageVersion;
+            if (string.IsNullOrEmpty(languageVersion))
+            {
+                languageVersion = language switch {
+                    Language.Net => "netcoreapp3.1",
+                    Language.Java => "1.8.0_345",
+                    Language.JS => "14.20.0",
+                    Language.Python => "3.7.3",
+                    Language.Cpp => "3.20.0",
+                    _ => throw new InvalidOperationException("Unknown language")
+                };
+            }
+
             if (options.Profile)
             {
                 profileDirectory = Directory.CreateDirectory(Path.Combine(options.RepoRoot, "profile"));
@@ -207,7 +220,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 await RunPackageVersion(
                     language,
-                    options.LanguageVersion,
+                    languageVersion,
                     serviceInfo.Service,
                     serviceInfo.Project,
                     serviceInfo.PrimaryPackage,

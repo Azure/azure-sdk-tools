@@ -162,6 +162,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 Service = serviceInfo.Service,
                 Project = serviceInfo.Project,
+                PrimaryPackage = serviceInfo.PrimaryPackage,
                 PackageVersions = selectedPackageVersions,
                 Tests = selectedTests,
             });

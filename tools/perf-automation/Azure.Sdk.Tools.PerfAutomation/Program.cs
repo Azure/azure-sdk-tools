@@ -20,8 +20,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         public const string PackageVersionSource = "source";
 
-        public static Config Config { get; set; }
-
         private static readonly Dictionary<Language, ILanguage> _languages = new Dictionary<Language, ILanguage>
         {
             { Language.Java, new Java() },

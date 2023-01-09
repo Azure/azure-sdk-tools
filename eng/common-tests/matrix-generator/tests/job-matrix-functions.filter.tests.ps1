@@ -15,7 +15,7 @@ BeforeAll {
     $config = GetMatrixConfigFromJson $matrixConfig
 }
 
-Describe "Matrix Filter" -Tag "filter" {
+Describe "Matrix Filter" -Tag "UnitTest", "filter" {
     It "Should filter by matrix display name" -TestCases @(
         @{ regex = "windows.*"; expectedFirst = "windows2022_net461"; length = 4 }
         @{ regex = "windows2022_netcoreapp21_modetest"; expectedFirst = "windows2022_netcoreapp21_modetest"; length = 1 }

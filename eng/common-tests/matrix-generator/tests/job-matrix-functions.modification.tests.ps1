@@ -18,7 +18,7 @@ BeforeAll {
     }
 }
 
-Describe "Platform Matrix nonSparse" -Tag "nonsparse" {
+Describe "Platform Matrix nonSparse" -Tag "UnitTest", "nonsparse" {
     BeforeEach {
         $matrixJson = @'
 {
@@ -125,7 +125,7 @@ Describe "Platform Matrix nonSparse" -Tag "nonsparse" {
     }
 }
 
-Describe "Platform Matrix Import" -Tag "import" {
+Describe "Platform Matrix Import" -Tag "UnitTest", "import" {
     It "Should generate a sparse matrix where the entire base matrix is imported" {
         $matrixJson = @'
 {
@@ -376,7 +376,7 @@ Describe "Platform Matrix Import" -Tag "import" {
 
 }
 
-Describe "Platform Matrix Replace" -Tag "replace" {
+Describe "Platform Matrix Replace" -Tag "UnitTest", "replace" {
     It "Should parse replacement syntax" -TestCases @(
          @{ query = 'foo=bar/baz'; key = '^foo$'; value = '^bar$'; replace = 'baz' },
          @{ query = 'foo=\/p:bar/\/p:baz'; key = '^foo$'; value = '^\/p:bar$'; replace = '/p:baz' },

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
@@ -26,6 +27,17 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// </summary>
     internal class MatchedCodeOwnerEntry
     {
+        /// <summary>
+        /// Token for temporarily substituting "**" in regex, to avoid it being escaped when
+        /// Regex.Escape is called.
+        /// </summary>
+        private const string DoubleStar = "_DOUBLE_STAR_";
+        /// <summary>
+        /// Token for temporarily substituting "*" in regex, to avoid it being escaped when
+        /// Regex.Escape is called.
+        /// </summary>
+        private const string SingleStar = "_SINGLE_STAR_";
+
         public readonly CodeOwnerEntry Value;
 
         /// <summary>
@@ -40,9 +52,18 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// </summary>
         private static readonly char[] unsupportedChars = { '[', ']', '!', '?' };
 
+        private readonly ILogger<MatchedCodeOwnerEntry> log;
+
         public MatchedCodeOwnerEntry(List<CodeOwnerEntry> entries, string targetPath)
         {
+            this.log = CreateLog();
             this.Value = FindOwnersForClosestMatch(entries, targetPath);
+        }
+
+        private ILogger<MatchedCodeOwnerEntry> CreateLog()
+        {
+            var loggerFactory = LoggerFactory.Create(builder => { builder.AddSimpleConsole(); });
+            return loggerFactory.CreateLogger<MatchedCodeOwnerEntry>();
         }
 
         /// <summary>
@@ -52,7 +73,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         ///
         /// If there is no match, returns "new CodeOwnerEntry()".
         /// </summary>
-        private static CodeOwnerEntry FindOwnersForClosestMatch(
+        private CodeOwnerEntry FindOwnersForClosestMatch(
             List<CodeOwnerEntry> codeownersEntries,
             string targetPath)
         {
@@ -65,7 +86,6 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // Slash at the end of target path denotes it is a directory, not a file,
             // so it can not match against a CODEOWNERS entry that is guaranteed to be a file,
             // by the virtue of not ending with "/".
-
             
             CodeOwnerEntry matchedEntry = codeownersEntries
                 .Where(entry => !ContainsUnsupportedCharacters(entry.PathExpression))
@@ -87,14 +107,24 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// <summary>
         /// See the comment on unsupportedChars.
         /// </summary>
-        private static bool ContainsUnsupportedCharacters(string codeownersPath)
-            => unsupportedChars.Any(codeownersPath.Contains);
+        private bool ContainsUnsupportedCharacters(string codeownersPath)
+        {
+            var contains = unsupportedChars.Any(codeownersPath.Contains);
+            if (contains)
+            {
+                log.LogWarning(
+                    $"CODEOWNERS path \"{codeownersPath}\" contains unsupported characters: " +
+                    string.Join(' ', unsupportedChars) +
+                    " Because of that this path will never match.");
+            }
+            return contains;
+        }
 
         /// <summary>
         /// Returns true if the regex expression representing the PathExpression
         /// of CODEOWNERS entry matches a prefix of targetPath.
         /// </summary>
-        private static bool Matches(string targetPath, CodeOwnerEntry entry)
+        private bool Matches(string targetPath, CodeOwnerEntry entry)
         {
             string codeownersPath = entry.PathExpression;
 
@@ -104,16 +134,21 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             return regex.IsMatch(targetPath);
         }
 
-        private static Regex ConvertToRegex(string targetPath, string codeownersPath)
+        private Regex ConvertToRegex(string targetPath, string codeownersPath)
         {
-            codeownersPath = ConvertPathIfInvalid(codeownersPath);
+            codeownersPath = NormalizePath(codeownersPath);
 
             string pattern = codeownersPath;
 
-            // Kind of hoping here that the CODEOWNERS paths will never have
-            // "_DOUBLE_STAR_" or "_SINGLE_STAR_" strings in it.
-            pattern = pattern.Replace("**", "_DOUBLE_STAR_");
-            pattern = pattern.Replace("*", "_SINGLE_STAR_");
+            if (codeownersPath.Contains(DoubleStar) || pattern.Contains(SingleStar))
+            {
+                log.LogWarning(
+                    $"CODEOWNERS path \"{codeownersPath}\" contains reserved phrases: " +
+                    $"\"{DoubleStar}\" or \"{SingleStar}\"");
+            }
+
+            pattern = pattern.Replace("**", DoubleStar);
+            pattern = pattern.Replace("*", SingleStar);
 
             pattern = Regex.Escape(pattern);
 
@@ -123,12 +158,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             pattern = SetPatternSuffix(targetPath, pattern);
 
             // Note that the "/**/" case is implicitly covered by "**/".
-            pattern = pattern.Replace("_DOUBLE_STAR_/", "(.*)");
+            pattern = pattern.Replace($"{DoubleStar}/", "(.*)");
             // This case is necessary to cover suffix case, e.g. "/foo/bar/**".
-            pattern = pattern.Replace("/_DOUBLE_STAR_", "(.*)");
+            pattern = pattern.Replace($"/{DoubleStar}", "(.*)");
             // This case is necessary to cover inline **, e.g. "/a**b/".
-            pattern = pattern.Replace("_DOUBLE_STAR_", "(.*)");
-            pattern = pattern.Replace("_SINGLE_STAR_", "([^/]*)");
+            pattern = pattern.Replace(DoubleStar, "(.*)");
+            pattern = pattern.Replace(SingleStar, "([^/]*)");
 
             return new Regex(pattern);
         }
@@ -181,9 +216,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// paths that somehow slipped through that validation. We do so by instead treating
         /// such paths as if they were absolute to repository root, i.e. starting with "/".
         /// </summary>
-        private static string ConvertPathIfInvalid(string codeownersPath)
+        private string NormalizePath(string codeownersPath)
         {
-            if (!IsCodeOwnersPathValid(codeownersPath))
+            if (!codeownersPath.StartsWith("/"))
                 codeownersPath = "/" + codeownersPath;
             return codeownersPath;
         }
@@ -193,17 +228,18 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// - The Value was obtained with a call to
         ///   Azure.Sdk.Tools.CodeOwnersParser.CodeOwnersFile.ParseContent().
         ///   - As a consequence, in the case of no match, the entry is not valid.
+        /// - It does not contain unsupported characters (see "unsupportedChars").
         /// - the Value.PathExpression starts with "/".
         ///
         /// Once the validation described in the following issue is implemented:
         /// https://github.com/Azure/azure-sdk-tools/issues/4859
         /// to be valid, the entry will also have to obey following conditions:
         /// - if the Value.PathExpression ends with "/", at least one corresponding
-        /// directory exists in the repository
+        /// directory exists in the repository.
         /// - if the Value.PathExpression does not end with "/", at least one corresponding
         /// file exists in the repository.
         /// </summary>
-        private static bool IsCodeOwnersPathValid(string codeownersPath)
-            => codeownersPath.StartsWith("/");
+        private bool IsCodeOwnersPathValid(string codeownersPath)
+            => codeownersPath.StartsWith("/") && !ContainsUnsupportedCharacters(codeownersPath);
     }
 }

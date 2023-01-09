@@ -73,9 +73,15 @@ public class CodeOwnersFileTests
         new(        "/*" , "a"           ,  false , true  ),
         new(        "/*" , "a/"          ,  false , false ),
         new(        "/*" , "a/b"         ,  false , false ),
+        new(        "/*" , "["           ,  false , true  ),
+        new(        "/*" , "]"           ,  false , true  ),
+        new(        "/*" , "!"           ,  false , true  ),
         new(       "/**" , "a"           ,  false , true  ),
         new(       "/**" , "a/"          ,  false , true  ),
         new(       "/**" , "a/b"         ,  false , true  ),
+        new(       "/**" , "["           ,  false , true  ),
+        new(       "/**" , "]"           ,  false , true  ),
+        new(       "/**" , "!"           ,  false , true  ),
         new(      "/a/*" , "a"           ,  false , false ), // Not sure if this should not match.
         new(      "/a/*" , "a/"          ,  false , true  ),
         new(      "/a/*" , "a/b"         ,  false , true  ),
@@ -123,7 +129,7 @@ public class CodeOwnersFileTests
         new(    "/**/*x*/AB/*/CD" , "a/b/cxy/AB/fff/CD"     , false, true  ),
         new(    "/**/*x*/AB/*/CD" , "a/b/cxy/AB/ff/ff/CD"   , false, false ),
         new( "/**/*x*/AB/**/CD/*" , "a/b/cxy/AB/ff/ff/CD"   , false, false ),
-        new( "/**/*x*/AB/**/CD/*" , "a/b/cxy/AB/ff/ff/CD/h" , false, true  ),
+        new( "/**/*x*/AB/**/CD/*" , "a/b/cxy/AB/[]/!!/CD/h" , false, true  ),
 
         // @formatter:on
     };

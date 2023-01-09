@@ -9,7 +9,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// the list of entries, assumed to have been parsed from CODEOWNERS file.
     ///
     /// This is a new matcher, compared to the old one, located in:
-    /// CodeOwnersFile.FindOwnersForClosestMatchLegacyImpl()
+    ///
+    ///   CodeOwnersFile.FindOwnersForClosestMatchLegacyImpl()
+    /// 
     /// This new matcher supports matching against wildcards, while the old one doesn't.
     /// This new matcher is designed to work with CODEOWNERS file validation:
     /// https://github.com/Azure/azure-sdk-tools/issues/4859
@@ -82,14 +84,23 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             return matchedEntry;
         }
 
+        /// <summary>
+        /// See the comment on unsupportedChars.
+        /// </summary>
         private static bool ContainsUnsupportedCharacters(string codeownersPath)
             => unsupportedChars.Any(codeownersPath.Contains);
 
+        /// <summary>
+        /// Returns true if the regex expression representing the PathExpression
+        /// of CODEOWNERS entry matches a prefix of targetPath.
+        /// </summary>
         private static bool Matches(string targetPath, CodeOwnerEntry entry)
         {
             string codeownersPath = entry.PathExpression;
 
             Regex regex = ConvertToRegex(targetPath, codeownersPath);
+            // Is prefix match. I.e. it will return true if the regex matches
+            // a prefix of targetPath.
             return regex.IsMatch(targetPath);
         }
 
@@ -99,7 +110,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
             string pattern = codeownersPath;
 
-            // Kind of hoping here that the CODEOWNERS path will never have
+            // Kind of hoping here that the CODEOWNERS paths will never have
             // "_DOUBLE_STAR_" or "_SINGLE_STAR_" strings in it.
             pattern = pattern.Replace("**", "_DOUBLE_STAR_");
             pattern = pattern.Replace("*", "_SINGLE_STAR_");
@@ -135,11 +146,13 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 pattern += "$";
             }
             // If the CODEOWNERS pattern is matching only against directories,
-            // but the targetPath may not be a directory, we need to trim
+            // but the targetPath may not be a directory
+            // (as it doesn't have "/" at the end), we need to trim
             // the "/" from the pattern to ensure match is present.
             //
             // To illustrate this, consider following cases:
             //
+            //               1.      2.
             //   targetPath: /a   ,  /a*/
             //      pattern: /a/  ,  /abc
             //
@@ -161,12 +174,15 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             return pattern;
         }
 
+        /// <summary>
+        /// CODEOWNERS paths that do not start with "/" are relative and considered invalid,
+        /// See comment on "IsCodeOwnersPathValid" for definition of "valid".
+        /// However, here we handle such cases to accomodate for parsing CODEOWNERS file
+        /// paths that somehow slipped through that validation. We do so by instead treating
+        /// such paths as if they were absolute to repository root, i.e. starting with "/".
+        /// </summary>
         private static string ConvertPathIfInvalid(string codeownersPath)
         {
-            // CODEOWNERS paths that do not start with "/" are relative and considered invalid.
-            // However, here we handle such cases to accomodate for parsing CODEOWNERS file
-            // paths that somehow slipped through validation. We do so by instead treating
-            // such paths as if they were absolute to repository root, i.e. starting with "/".
             if (!IsCodeOwnersPathValid(codeownersPath))
                 codeownersPath = "/" + codeownersPath;
             return codeownersPath;

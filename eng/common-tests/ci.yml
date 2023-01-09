@@ -8,7 +8,8 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/asset-sync
+      - eng/common/scripts/*
+      - eng/common-tests/*
 
 pr:
   branches:
@@ -19,10 +20,11 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/asset-sync
+      - eng/common/scripts/*
+      - eng/common-tests/*
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
   parameters:
-    TargetDirectory: tools/asset-sync/
-    TargetTags: 'Unit'
+    TargetDirectory: eng/common-tests/
+    TargetTags: 'UnitTest'

@@ -29,7 +29,6 @@ pr:
       - tools/apiview/parsers/js-api-parser
 
 variables:
-  DotNetRuntimeVersion: '6.x'
   PythonVersion: '3.10.5'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
@@ -166,8 +165,6 @@ stages:
             displayName: 'Start Azurite'
 
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
-            parameters:
-              DotNetCoreVersion: $(DotNetRuntimeVersion)
 
           - pwsh: |
               dotnet --list-runtimes
@@ -203,6 +200,6 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: 'Windows DotNet $(DotNetRuntimeVersion)'
+              testRunTitle: 'Tests against Windows .NET, version defined in /global.json'
               testResultsFormat: 'VSTest'
               mergeTestResults: true

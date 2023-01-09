@@ -1,7 +1,3 @@
-# As of 12/20/2022 this is work in progress.
-# Please see:
-# https://github.com/Azure/azure-sdk-tools/issues/5009
-# and linked PRs.
 parameters:
   # Use this parameter if you want to override the .NET SDK set by global.json
   - name: DotNetCoreVersion
@@ -18,3 +14,6 @@ steps:
         useGlobalJson: true
       ${{ else }}:
         version: ${{ parameters.DotNetCoreVersion }}
+
+# Future work: add NuGet packages caching. See:
+# https://github.com/Azure/azure-sdk-tools/issues/5086

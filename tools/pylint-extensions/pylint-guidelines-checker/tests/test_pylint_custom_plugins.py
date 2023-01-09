@@ -3115,3 +3115,29 @@ class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
+class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
+
+    """Test that we are checking the return type of delete functions is correct"""
+    CHECKER_CLASS = checker.DeleteOperationReturnStatement
+
+    def test_delete_operation(self):
+        node = astroid.extract_node(
+        """
+            from azure.core.polling import LROPoller 
+            from typing import Any
+            class MyClient():
+                def begin_delete_some_function(self, **kwargs)  -> LROPoller[Any]: #@
+                    return LROPoller[Any]
+        """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="delete-operation-wrong-return-type",
+                    line=5,
+                    node=node,
+                    col_offset=4, 
+                    end_line=5, 
+                    end_col_offset=24
+                )
+        ):
+            self.checker.visit_functiondef(node)

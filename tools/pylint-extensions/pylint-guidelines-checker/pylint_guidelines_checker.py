@@ -1985,6 +1985,47 @@ class NonAbstractTransportImport(BaseChecker):
                         confidence=None,
                     )
 
+class DeleteOperationReturnStatement(BaseChecker):
+    __implements__ = IAstroidChecker
+
+    """Rule to check that a delete* or begin_delete* returns None or LROPoller[None]."""
+    name = "delete-operation-wrong-return-type"
+    priority = -1
+    msgs = {
+        "C4752": (
+            "delete* or begin_delete* does not return None or LROPoller[None].",
+            "delete-operation-wrong-return-type",
+            "delete* or begin_delete* functions should return None or LROPoller[None]."
+        ),
+    }
+
+    def visit_functiondef(self,node):
+        """Visits all delete functions and checks that their return types
+        are LROPoller or None. """
+        try:
+            if node.returns.as_string() == "None":
+                # If there are residual comment typehints or no return value,
+                # we dont want to throw an error
+                return
+            if node.name.startswith("delete") and node.parent.name.endswith("Client"):
+                if node.returns.as_string() != "None":
+                    self.add_message(
+                        msgid="delete-operation-wrong-return-type",
+                        node=node,
+                        confidence=None,
+                    )   
+            if node.name.startswith("begin_delete") and node.parent.name.endswith("Client"):
+                if node.returns.as_string() != "LROPoller[None]" and node.returns.as_string() != "AsyncLROPoller[None]":
+                    self.add_message(
+                        msgid="delete-operation-wrong-return-type",
+                        node=node,
+                        confidence=None,
+                    )   
+        except:
+            pass
+
+    visit_asyncfunctiondef = visit_functiondef    
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2008,6 +2049,7 @@ def register(linter):
     linter.register_checker(NonCoreNetworkImport(linter))
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
     linter.register_checker(NonAbstractTransportImport(linter))
+    linter.register_checker(DeleteOperationReturnStatement(linter))
 
 
 

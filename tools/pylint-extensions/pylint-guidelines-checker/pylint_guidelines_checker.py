@@ -1985,6 +1985,71 @@ class NonAbstractTransportImport(BaseChecker):
                         confidence=None,
                     )
 
+class TypePropertyNameTooLong(BaseChecker):
+    __implements__ = IAstroidChecker
+
+    """Rule to check that the character length of type and property names are not over X characters."""
+    name = "name-too-long"
+    priority = -1
+    msgs = {
+        "C4751": (
+            "Name is over standard character length of 40.",
+            "name-too-long",
+            "Only use names that are less than 40 characters."
+        ),
+    }
+
+    STANDARD_CHARACTER_LENGTH = 40
+
+    def visit_classdef(self,node):
+        """Visit every class and check that the
+         class name is within the character length limit."""
+
+        try:
+            if len(node.name) > self.STANDARD_CHARACTER_LENGTH:
+                self.add_message(
+                    msgid="name-too-long",
+                    node=node,
+                    confidence=None,
+                )
+        except:
+            pass
+
+
+    def visit_functiondef(self, node):
+        """Visit every function and check that the function and 
+        its variable names are within the character length limit."""
+
+        try:
+            if len(node.name) > self.STANDARD_CHARACTER_LENGTH:
+                self.add_message(
+                    msgid="name-too-long",
+                    node=node,
+                    confidence=None,
+                )
+
+            for i in node.body:
+                try:
+                    if len(i.name) > self.STANDARD_CHARACTER_LENGTH:
+                        self.add_message(
+                            msgid="name-too-long",
+                            node=i,
+                            confidence=None,
+                        )        
+                except:
+                    # Gets the names of ast.Assign statements
+                    for j in i.targets:
+                        if len(j.name) > self.STANDARD_CHARACTER_LENGTH:
+                            self.add_message(
+                                msgid="name-too-long",
+                                node=j,
+                                confidence=None,
+                            )          
+        except:
+            pass      
+
+    visit_asyncfunctiondef = visit_functiondef    
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2008,7 +2073,7 @@ def register(linter):
     linter.register_checker(NonCoreNetworkImport(linter))
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
     linter.register_checker(NonAbstractTransportImport(linter))
-
+    linter.register_checker(TypePropertyNameTooLong(linter))
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

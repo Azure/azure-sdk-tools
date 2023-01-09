@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
             bool filterOutNonUserAliases = false
             )
         {
-            var target = targetDirectory.ToLower().Trim();
+            var target = targetDirectory.Trim();
             try {
                 var codeOwnerEntry = CodeOwnersFile.ParseAndFindOwnersForClosestMatch(codeOwnerFilePath, target);
                 if (filterOutNonUserAliases)

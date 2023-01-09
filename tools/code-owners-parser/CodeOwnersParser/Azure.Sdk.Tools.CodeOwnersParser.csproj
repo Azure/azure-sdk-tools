@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLine.Net" Version="2.3.0" />
-    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
   </ItemGroup>
 
 </Project>

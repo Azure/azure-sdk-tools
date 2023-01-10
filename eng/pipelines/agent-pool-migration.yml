@@ -86,7 +86,6 @@ parameters:
   default: ''
 # The value here is github alias: e.g. sima-zhu
 # Users to assign to the PR after opening. Users should be a comma-separated list. e.g. "user1,usertwo,user3"
-with no preceeding `@` symbol (e.g. "user1,usertwo,user3")
 - name: GithubAssignessAlias
   type: string
   default: ''

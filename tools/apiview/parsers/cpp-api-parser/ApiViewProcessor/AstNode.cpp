@@ -452,10 +452,14 @@ public:
   }
 };
 
-template <typename T, class Function>
-void DumpList(T start, T end, AstDumper* dumper, Function function)
+template <typename T>
+void DumpList(
+    T start,
+    T end,
+    AstDumper* dumper,
+    std::function<void(AstDumper*, decltype(*start)&)> function)
 {
-  bool firstArg = true;
+  bool firstArg{true};
   for (T& it = start; it != end; ++it)
   {
     if (!firstArg)

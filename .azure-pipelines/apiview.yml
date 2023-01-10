@@ -200,6 +200,6 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: 'Tests against Windows .NET, version defined in /global.json'
+              testRunTitle: 'Tests against Windows .NET'
               testResultsFormat: 'VSTest'
               mergeTestResults: true

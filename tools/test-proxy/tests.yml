@@ -41,7 +41,7 @@ stages:
           condition: succeededOrFailed()
           inputs:
             testResultsFiles: '**/*.trx'
-            testRunTitle: '$(OS) AssetSync Tests against .NET, version defined in /global.json'
+            testRunTitle: '$(OS) AssetSync tests against .NET'
             testResultsFormat: 'VSTest'
             mergeTestResults: true
 

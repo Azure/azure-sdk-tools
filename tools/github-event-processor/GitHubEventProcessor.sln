@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.GithubEventProcessor", "Azure.Sdk.Tools.GithubActions\Azure.Sdk.Tools.GithubEventProcessor.csproj", "{CF5AED50-110D-401B-9557-DD7EFE095BD1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.GitHubEventProcessor", "Azure.Sdk.Tools.GithubActions\Azure.Sdk.Tools.GitHubEventProcessor.csproj", "{CF5AED50-110D-401B-9557-DD7EFE095BD1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeOwnersParser", "..\code-owners-parser\CodeOwnersParser\Azure.Sdk.Tools.CodeOwnersParser.csproj", "{D4B02A7A-425E-4BC7-8820-924AC6BB181F}"
 EndProject

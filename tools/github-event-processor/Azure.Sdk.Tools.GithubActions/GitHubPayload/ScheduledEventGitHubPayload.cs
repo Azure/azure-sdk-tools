@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Text;
 using Octokit;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.GitHubPayload
+namespace Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload
 {
 
     public class ScheduledEventGitHubPayload

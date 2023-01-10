@@ -4,7 +4,7 @@ using System.Text;
 using Octokit;
 using System.Threading.Tasks;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
+namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
     public class SearchUtil
     {
@@ -12,8 +12,8 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
         /// 
         /// </summary>
         /// <param name="gitHubClient"></param>
-        /// <param name="repoOwner"></param>
-        /// <param name="repoName"></param>
+        /// <param name="repoOwner">Should be the repository.Owner.Login from the cron payload</param>
+        /// <param name="repoName">Should be repository.Name from the cron payload</param>
         /// <param name="issueType">IssueTypeQualifier of Issue or PullRequest</param>
         /// <param name="itemState">ItemState of Open or Closed</param>
         /// <param name="issueIsQualifiers">Optional: List of IssueIsQualifier (ex. locked/unlocked) to include, null if none</param>
@@ -33,8 +33,7 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
         {
             var request = new SearchIssuesRequest();
 
-            // Hopefully we're able to get the owner/repo from whatever github response is sent
-            // to the cron job
+            // The repo owner 
             request.Repos.Add(repoOwner, repoName);
 
             // Can only search for opened or closed

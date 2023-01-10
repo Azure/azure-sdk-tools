@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Azure.Sdk.Tools.GithubEventProcessor.Constants;
-using Azure.Sdk.Tools.GithubEventProcessor.GitHubPayload;
-using Azure.Sdk.Tools.GithubEventProcessor.Utils;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Octokit;
 using Octokit.Internal;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
+namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     internal class ScheduledEventProcessing
     {
@@ -17,9 +17,9 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
             var serializer = new SimpleJsonSerializer();
             ScheduledEventGitHubPayload scheduledEventPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
             // 6 hour cron tasks
-            // await IdentifyStaleIssues(gitHubClient, scheduledEventPayload);
-            // await CloseStalePullRequests(gitHubClient, scheduledEventPayload);
-            // await CloseAddressedIssues(gitHubClient, scheduledEventPayload);
+            // await IdentifyStaleIssues(_gitHubClient, scheduledEventPayload);
+            // await CloseStalePullRequests(_gitHubClient, scheduledEventPayload);
+            // await CloseAddressedIssues(_gitHubClient, scheduledEventPayload);
             await LockClosedIssues(gitHubClient, scheduledEventPayload);
         }
 

@@ -1,19 +1,19 @@
 using System;
 using System.IO;
 using Octokit;
-using Azure.Sdk.Tools.GithubEventProcessor.GitHubPayload;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using System.Text.Json;
 using System.Dynamic;
 using Octokit.Internal;
 using System.Threading.Tasks;
-using Azure.Sdk.Tools.GithubEventProcessor.EventProcessing;
-using Azure.Sdk.Tools.GithubEventProcessor.GitHubAuth;
-using Azure.Sdk.Tools.GithubEventProcessor.Utils;
-using Azure.Sdk.Tools.GithubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubAuth;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor
+namespace Azure.Sdk.Tools.GitHubEventProcessor
 {
     internal class Program
     {
@@ -34,8 +34,6 @@ namespace Azure.Sdk.Tools.GithubEventProcessor
 
             RulesConfiguration rc = new RulesConfiguration();
             rc.TestIt();
-            RulesConfiguration2 rc2 = new RulesConfiguration2();
-            rc2.TestIt();
             if (true)
             {
                 Environment.Exit(0);
@@ -44,6 +42,8 @@ namespace Azure.Sdk.Tools.GithubEventProcessor
             string eventName = args[0];
             var serializer = new SimpleJsonSerializer();
             string rawJson = File.ReadAllText(args[1]);
+            // JRS - need to plumb this through
+            GitHubEventClient gitHubEventClient = new GitHubEventClient(OrgConstants.ProductHeaderName);
             GitHubClient gitHubClient = GitHubClientCreator.createClientWithGitHubEnvToken("azure-sdk-github-event-processor");
 
             // JRS-Remove this override once I figure out where codeowners is coming from
@@ -96,25 +96,25 @@ namespace Azure.Sdk.Tools.GithubEventProcessor
                     }
             }
 
-            // await ScheduledEventProcessing.ProcessScheduledEvent(gitHubClient, rawJson);
-            // await IssueProcessing.ProcessIssueEvent(gitHubClient, rawJson);
+            // await ScheduledEventProcessing.ProcessScheduledEvent(_gitHubClient, rawJson);
+            // await IssueProcessing.ProcessIssueEvent(_gitHubClient, rawJson);
             // Actual event processing
-            // await IssueProcessing.ProcessIssueEvent(gitHubClient, rawJson);
-            // await IssueCommentProcessing.ProcessIssueComment(gitHubClient, rawJson);
-            // await PullRequestProcessing.ProcessPullRequestEvent(gitHubClient, rawJson);
+            // await IssueProcessing.ProcessIssueEvent(_gitHubClient, rawJson);
+            // await IssueCommentProcessing.ProcessIssueComment(_gitHubClient, rawJson);
+            // await PullRequestProcessing.ProcessPullRequestEvent(_gitHubClient, rawJson);
 
             // JRS - processing to test rate limit changes based upon different actions
             // JRS - test to see how fetching files affects limit count
-            //await PullRequestProcessing.TestFunctionToGetPRLablesForFiles(gitHubClient);
-            // await IssueProcessing.TestFunctionToCheckRatesForRemovingLabels(gitHubClient, rawJson);
-            // await IssueProcessing.TestFunctionToCheckRatesForAddingLabels(gitHubClient, rawJson);
-            // await IssueProcessing.TestFunctionToCheckRatesForAddingAndRemovingLabels(gitHubClient, rawJson);
-            // await PullRequestProcessing.UpdatePRLabel(gitHubClient, rawJson);
-            // await SearchUtil.SearchIssuesTest(gitHubClient);
-            //await PullRequestProcessing.DismissPullRequestApprovals(gitHubClient, rawJson);
+            //await PullRequestProcessing.TestFunctionToGetPRLablesForFiles(_gitHubClient);
+            // await IssueProcessing.TestFunctionToCheckRatesForRemovingLabels(_gitHubClient, rawJson);
+            // await IssueProcessing.TestFunctionToCheckRatesForAddingLabels(_gitHubClient, rawJson);
+            // await IssueProcessing.TestFunctionToCheckRatesForAddingAndRemovingLabels(_gitHubClient, rawJson);
+            // await PullRequestProcessing.UpdatePRLabel(_gitHubClient, rawJson);
+            // await SearchUtil.SearchIssuesTest(_gitHubClient);
+            //await PullRequestProcessing.DismissPullRequestApprovals(_gitHubClient, rawJson);
             //var serializer = new SimpleJsonSerializer();
             //ScheduledEventGitHubPayload scheduledEventGitHubPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
-            //await ScheduledEventProcessing.LockClosedIssues(gitHubClient, scheduledEventGitHubPayload);
+            //await ScheduledEventProcessing.LockClosedIssues(_gitHubClient, scheduledEventGitHubPayload);
             await RateLimitUtil.writeRateLimits(gitHubClient, "RateLimit at end of execution:");
         }
     }

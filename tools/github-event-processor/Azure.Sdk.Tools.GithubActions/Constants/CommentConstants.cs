@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.Constants
+namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
 {
     public class CommentConstants
     {

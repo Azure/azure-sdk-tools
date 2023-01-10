@@ -1,20 +1,46 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using static Azure.Sdk.Tools.GithubEventProcessor.Program;
+using static Azure.Sdk.Tools.GitHubEventProcessor.Program;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
+namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    // These would be enum names that match the rule names
-    public enum RuleEnum
+    public class RulesConstants
     {
-        Rule1,
-        Rule2,
-        Rule3,
-        Rule4
+        // issue rules
+        public const string InitialIssueTriage = "InitialIssueTriage";
+        public const string ManualIssueTriage = "ManualIssueTriage";
+        public const string ServiceAttention = "ServiceAttention";
+        public const string CXPAttention = "CXPAttention";
+        public const string ManualTriageAfterExternalAssignment = "ManualTriageAfterExternalAssignment";
+        public const string RequireAttentionForNonMilestone = "RequireAttentionForNonMilestone";
+        public const string AuthorFeedbackNeeded = "AuthorFeedbackNeeded";
+        public const string IssueAddressed = "IssueAddressed";
+        public const string IssueAddressedReset = "IssueAddressedReset";
+
+        // issue_comment rules
+        public const string AuthorFeedback = "AuthorFeedback";
+        public const string ReopenIssue = "ReopenIssue";
+        public const string DeclineToReopenIssue = "DeclineToReopenIssue";
+        public const string IssueAddressedCommands = "IssueAddressedCommands";
+
+        // pull_request rules
+        public const string PullRequestTriage = "PullRequestTriage";
+        public const string ResetApprovalsForUntrustedChanges = "ResetApprovalsForUntrustedChanges";
+
+        // pull_request_comment rules
+        public const string ReopenPullRequest = "ReopenPullRequest";
+
+        // Rules that apply to multiple events
+        // ResetIssueActivity applies to issue and issue_comment
+        public const string ResetIssueActivity = "ResetIssueActivity";
+        // ResetPullRequestActivity applies to pull_request, pull_request_comment and pull_request_review
+        public const string ResetPullRequestActivity = "ResetPullRequestActivity";
+
     }
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum RuleState
@@ -23,63 +49,44 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
         Off
     }
 
-    public class Rule
-    {
-        public Rule() { }
-
-        public Rule(RuleEnum ruleName, RuleState state)
-        {
-            RuleName = ruleName;
-            State = state;
-        }
-
-        public RuleEnum RuleName { get; set; }
-        public RuleState State { get; set; }
-    }
     public class RulesConfiguration
     {
-        List<Rule> Rules { get; set; }
-        public RulesConfiguration() 
+        public Dictionary<string, RuleState> Rules { get; set; }
+        public RulesConfiguration()
         {
-            Rules = new List<Rule>();
+            Rules = new Dictionary<string, RuleState>();
         }
         public void TestIt()
         {
-            Rules.Add(new Rule(RuleEnum.Rule1, RuleState.On));
-            Rules.Add(new Rule(RuleEnum.Rule2, RuleState.Off));
-            Rules.Add(new Rule(RuleEnum.Rule3, RuleState.On));
-            Rules.Add(new Rule(RuleEnum.Rule4, RuleState.Off));
+            Rules.Add(RulesConstants.InitialIssueTriage, RuleState.On);
+            Rules.Add(RulesConstants.ManualIssueTriage, RuleState.Off);
+            Rules.Add(RulesConstants.ServiceAttention, RuleState.On);
+            Rules.Add(RulesConstants.CXPAttention, RuleState.Off);
             var options = new JsonSerializerOptions { WriteIndented = true };
             string jsonString = JsonSerializer.Serialize(Rules, options);
             Console.WriteLine(jsonString);
 
-            List<Rule> Rules2 = JsonSerializer.Deserialize<List<Rule>>(jsonString);
-            Console.WriteLine(Rules2);
+            Dictionary<string, RuleState> Rules2 = JsonSerializer.Deserialize<Dictionary<string, RuleState>>(jsonString);
+            Console.WriteLine(Rules2[RulesConstants.InitialIssueTriage]);
+            ReportMissingRulesFromConfig();
         }
-    }
 
-
-    // JRS - This does not work, it won't serialize, it'll throw the following exception
-    // The collection type 'System.Collections.Generic.Dictionary`2[Azure.Sdk.Tools.GithubEventProcessor.Utils.RuleEnum,Azure.Sdk.Tools.GithubEventProcessor.Utils.RuleState]' is not supported.
-    public class RulesConfiguration2
-    {
-        public Dictionary<RuleEnum, RuleState> Rules { get; set; }
-        public RulesConfiguration2()
+        public void ReportMissingRulesFromConfig()
         {
-            Rules = new Dictionary<RuleEnum, RuleState>();
-        }
-        public void TestIt()
-        {
-            Rules.Add(RuleEnum.Rule1, RuleState.On);
-            Rules.Add(RuleEnum.Rule2, RuleState.Off);
-            Rules.Add(RuleEnum.Rule3, RuleState.On);
-            Rules.Add(RuleEnum.Rule4, RuleState.Off);
-            var options = new JsonSerializerOptions { WriteIndented = true };
-            string jsonString = JsonSerializer.Serialize(Rules, options);
-            Console.WriteLine(jsonString);
-
-            Dictionary<RuleEnum, RuleState> Rules2 = JsonSerializer.Deserialize<Dictionary<RuleEnum, RuleState>>(jsonString);
-            Console.WriteLine(Rules2);
+            // Load up the RulesConstants into a list
+            var rules = typeof(RulesConstants)
+                .GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(field => field.IsLiteral)
+                .Where(field => field.FieldType == typeof(String))
+                .Select(field => field.GetValue(null) as String);
+            string configFilename = "JRS-Remove";
+            foreach (string rule in rules)
+            {
+                if (!Rules.ContainsKey(rule))
+                {
+                    Console.WriteLine($"{rule} was not in the rules config file {configFilename}, defaulting rule to off");
+                }
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Octokit;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.GitHubAuth
+namespace Azure.Sdk.Tools.GitHubEventProcessor.GitHubAuth
 {
     public class GitHubClientCreator
     {

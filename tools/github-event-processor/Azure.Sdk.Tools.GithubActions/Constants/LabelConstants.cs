@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.Constants
+namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
 {
 
     // Common Label constants. No repository specific team labels belong in here.

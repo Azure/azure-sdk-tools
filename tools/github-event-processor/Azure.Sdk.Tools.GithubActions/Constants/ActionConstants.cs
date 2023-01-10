@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.Constants
+namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
 {
     // In theory, we should be using Octokit's EventInfoState however it seems to lack
     // the opened state...no, really.

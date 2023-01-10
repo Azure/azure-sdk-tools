@@ -2,17 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Azure.Sdk.Tools.GithubEventProcessor.GitHubAuth;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubAuth;
 using Octokit.Internal;
 using Octokit;
 using System.Threading.Tasks;
-using Azure.Sdk.Tools.GithubEventProcessor.GitHubPayload;
-using Azure.Sdk.Tools.GithubEventProcessor.Utils;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using System.Reflection.Emit;
 using System.Linq;
-using Azure.Sdk.Tools.GithubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
+namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     internal class PullRequestProcessing
     {
@@ -22,8 +22,9 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
 
             issueUpdate = await PullRequestTriage(gitHubClient, prEventPayload, issueUpdate);
             ResetPullRequestActivity(gitHubClient, prEventPayload, ref issueUpdate);
+            await ResetApprovalsForUntrustedChanges(gitHubClient, prEventPayload);
 
-            // If any of the rules have made issueUpdate changes, it needs to be updated
+            // If any of the rules have made _issueUpdate changes, it needs to be updated
             if (null != issueUpdate)
             {
                 await EventUtils.UpdateIssueOrPullRequest(gitHubClient, prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, issueUpdate);
@@ -103,11 +104,12 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
         /// <summary>
         /// Reset Pull Request Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-pull-request-activity
         /// This action has triggers from 3 different events: pull_request and pull_request_review and issue_comment
-        /// Note: issue_comment, for a pull request, will have a non-null github.event.issue.pull_request in the payload
+        /// Note: issue_comment, had to be a different function. While the issue_comment does have a PullRequest on
+        /// the issue, it's not a complete PullRequest like what comes in with a pull_request or pull_request_review event.
+        /// This function only covers pull_request and pull_request_review
         /// Trigger: 
         ///     pull_request reopened, synchronize (changes pushed), review_requested, merged
         ///     pull_request_review submitted
-        ///     issue_comment created
         /// Conditions for all triggers
         ///     Pull request has "no-recent-activity" label
         ///     User modifying the pull request is not a bot
@@ -143,7 +145,7 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
                 LabelUtils.HasLabel(pullRequest.Labels, LabelConstants.NoRecentActivity))
             {
                 bool removeLabel = false;
-                // Conditions if the event is a pull request event
+                // Pull request conditions AND the pull request needs to be in an opened state
                 if ((action == ActionConstants.Reopened ||
                      action == ActionConstants.Synchronize ||
                      action == ActionConstants.ReviewRequested) &&
@@ -151,7 +153,7 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
                 {
                     removeLabel = true;
                 }
-                // Conditions for pull request merged
+                // Pull reqeust merged conditions, the merged flag would be true and the PR would be closed
                 else if (action == ActionConstants.Closed &&
                          pullRequest.Merged)
                 {
@@ -214,47 +216,6 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
                         string prComment = $"Hi @{prEventPayload.PullRequest.User.Login}. We've noticed that new changes have been pushed to this pull request.  Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.";
                         await EventUtils.CreateComment(gitHubClient, prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
                     }
-                }
-            }
-            return;
-        }
-
-        // JRS - everything below here was here for experimental purposes and will be removed
-
-        internal static async Task TestFunctionToGetLimitCountsForPRFileFetching(GitHubClient gitHubClient)
-        {
-            // Azure/azure-sdk-for-net repo Id = 2928944
-            // https://github.com/Azure/azure-sdk-for-net/pull/32301 - PR has 30 files
-            // Azure/azure-sdk-for-java repo Id = 2928948
-            // https://github.com/Azure/azure-sdk-for-java/pull/31960 has 318 files
-            await RateLimitUtil.writeRateLimits(gitHubClient, "RateLimit before fetching pull request:");
-            // https://github.com/Azure/azure-sdk-for-java/pull/31960 has 318 files
-            var pullRequest = await gitHubClient.PullRequest.Get(2928948, 31960);
-            await RateLimitUtil.writeRateLimits(gitHubClient, "RateLimit after fetching PR, before fetching PR files:");
-            var prFileList1 = await gitHubClient.PullRequest.Files(2928948, pullRequest.Number);
-            await RateLimitUtil.writeRateLimits(gitHubClient, "RateLimit after fetching PR files with PageSize 30 (default):");
-
-            ApiOptions apiOptions = new ApiOptions();
-            apiOptions.PageSize = 100;
-            var prFileList = await gitHubClient.PullRequest.Files(2928948, pullRequest.Number, apiOptions);
-            await RateLimitUtil.writeRateLimits(gitHubClient, "RateLimit after fetching PR files with PageSize 100:");
-        }
-
-        internal static async Task DismissPullRequestApprovals(GitHubClient gitHubClient, string rawJson)
-        {
-            // Get all of the reviews for a given PR. In this case 507980610 is the JimSuplizio/azure-sdk-tools
-            // and 8 is the Issue/PR number
-            // Java repo ID=2928948
-            // Java repo test PR=https://github.com/Azure/azure-sdk-for-java/pull/32108
-            var reviews = await gitHubClient.PullRequest.Review.GetAll(2928948, 32108);
-            foreach(var review in reviews)
-            {
-                if (review.State == PullRequestReviewState.Approved)
-                {
-                    // JRS - *sigh* every dismiss needs a dismiss message
-                    var prReview = new PullRequestReviewDismiss();
-                    prReview.Message = $"Hi @alzimmermsft.  We've noticed that new changes have been pushed to this pull request.  Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.";
-                    await gitHubClient.PullRequest.Review.Dismiss(2928948, 32108, review.Id, prReview);
                 }
             }
             return;

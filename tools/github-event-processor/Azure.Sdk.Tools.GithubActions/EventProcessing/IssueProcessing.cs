@@ -4,15 +4,15 @@ using System.Collections.Generic;
 using System.Text;
 using Octokit.Internal;
 using Octokit;
-using Azure.Sdk.Tools.GithubEventProcessor.GitHubAuth;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubAuth;
 using System.Threading.Tasks;
-using Azure.Sdk.Tools.GithubEventProcessor.GitHubPayload;
-using Azure.Sdk.Tools.GithubEventProcessor.Constants;
-using Azure.Sdk.Tools.GithubEventProcessor.Utils;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using static System.Collections.Specialized.BitVector32;
 using System.Reflection.Emit;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
+namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     internal class IssueProcessing
     {
@@ -27,20 +27,21 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
         {
             IssueUpdate issueUpdate = null;
 
-            // Tasks cannot have a ref or out parameter, it needs to return the issueUpdate which will be whatever
+            // Tasks cannot have a ref or out parameter, it needs to return the _issueUpdate which will be whatever
             // was passed in, if there were no changes, or a created/updated one if there were.
             issueUpdate = await InitialIssueTriage(gitHubClient, issueEventPayload, issueUpdate);
             ManualIssueTriage(gitHubClient, issueEventPayload, ref issueUpdate);
-            // adds a comment to the issue and doesn't use an issueUpdate
+            // adds a comment to the issue and doesn't use an _issueUpdate
             await ServiceAttention(gitHubClient, issueEventPayload);
-            // adds a comment to the issue and doesn't use an issueUpdate
+            // adds a comment to the issue and doesn't use an _issueUpdate
             await CXPAttention(gitHubClient, issueEventPayload);
             ManualTriageAfterExternalAssignment(gitHubClient, issueEventPayload, ref issueUpdate);
             RequireAttentionForNonMilestone(gitHubClient, issueEventPayload, ref issueUpdate);
             AuthorFeedbackNeeded(gitHubClient, issueEventPayload, ref issueUpdate);
             issueUpdate = await IssueAddressed(gitHubClient, issueEventPayload, issueUpdate);
+            IssueAddressedReset(gitHubClient, issueEventPayload, ref issueUpdate);
 
-            // If any of the rules have made issueUpdate changes, it needs to be updated
+            // If any of the rules have made _issueUpdate changes, it needs to be updated
             if (null != issueUpdate)
             {
                 await EventUtils.UpdateIssueOrPullRequest(gitHubClient, issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueUpdate);
@@ -241,10 +242,10 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
         /// Resulting Action: Add "needs-team-triage" label
         /// </summary>
         /// </summary>
-        /// <param name="gitHubClient">Authenticated GitHubClient</param>
+        /// <param name="_gitHubClient">Authenticated GitHubClient</param>
         /// <param name="action">The action being performed, from the payload object</param>
         /// <param name="user">Octokit.User object from the respective payload.</param>
-        /// <param name="issueUpdate">The issue update object</param>
+        /// <param name="_issueUpdate">The issue update object</param>
         public static void Common_ResetIssueActivity(GitHubClient gitHubClient, string action, Issue issue, User sender, ref IssueUpdate issueUpdate)
         {
             // Is this enabled?
@@ -350,6 +351,45 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
                 }
             }
             return issueUpdate;
+        }
+
+        /// <summary>
+        /// Issue Addressed Reset https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#issue-addressed-reset
+        /// Trigger: issue labeled
+        /// Conditions: Issue is open
+        ///             Issue has label "issue-addressed"
+        ///             Label added is any one of:
+        ///                 "needs-team-attention"
+        ///                 "needs-author-feedback"
+        ///                 "Service Attention"
+        ///                 "CXP Attention"
+        ///                 "needs-triage"
+        ///                 "needs-team-triage"
+        /// Resulting Action: 
+        ///     Remove "issue-addressed" label
+        /// </summary>
+        /// <param name="gitHubClient"></param>
+        /// <param name="issueEventPayload"></param>
+        /// <param name="issueUpdate"></param>
+        internal static void IssueAddressedReset(GitHubClient gitHubClient, IssueEventGitHubPayload issueEventPayload, ref IssueUpdate issueUpdate)
+        {
+            if (issueEventPayload.Action == ActionConstants.Labeled)
+            {
+                if (issueEventPayload.Issue.State == ItemState.Open &&
+                    LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.IssueAddressed))
+                {
+                    if (issueEventPayload.Label.Name == LabelConstants.NeedsTeamAttention ||
+                        issueEventPayload.Label.Name == LabelConstants.NeedsAuthorFeedback ||
+                        issueEventPayload.Label.Name == LabelConstants.ServiceAttention ||
+                        issueEventPayload.Label.Name == LabelConstants.CXPAttention ||
+                        issueEventPayload.Label.Name == LabelConstants.NeedsTriage ||
+                        issueEventPayload.Label.Name == LabelConstants.NeedsTeamTriage)
+                    {
+                        issueUpdate = EventUtils.GetIssueUpdate(issueEventPayload.Issue, issueUpdate);
+                        issueUpdate.RemoveLabel(LabelConstants.IssueAddressed);
+                    }
+                }
+            }
         }
     }
 }

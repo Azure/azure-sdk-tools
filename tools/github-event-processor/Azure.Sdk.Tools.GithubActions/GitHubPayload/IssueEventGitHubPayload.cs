@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Text;
 using Octokit;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.GitHubPayload
+namespace Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload
 {
     // In theory, we should be using deserializing the GitHubAction Payload Event into
     // Octokit's IssueEventPayload but it's missing the Label which we need for the

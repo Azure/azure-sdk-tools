@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Azure.Sdk.Tools.GithubEventProcessor.Utils;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Octokit.Internal;
 using Octokit;
 using System.Threading.Tasks;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
+namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     internal class PullRequestReviewProcessing
     {
@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
             IssueUpdate issueUpdate = null;
 
             ResetPullRequestActivity(gitHubClient, prReviewEventPayload, ref issueUpdate);
-            // If any of the rules have made issueUpdate changes, it needs to be updated
+            // If any of the rules have made _issueUpdate changes, it needs to be updated
             if (null != issueUpdate)
             {
                 await EventUtils.UpdateIssueOrPullRequest(gitHubClient, prReviewEventPayload.Repository.Id, prReviewEventPayload.PullRequest.Number, issueUpdate);

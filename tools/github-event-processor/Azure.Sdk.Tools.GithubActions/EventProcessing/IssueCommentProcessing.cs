@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Azure.Sdk.Tools.GithubEventProcessor.GitHubAuth;
-using Azure.Sdk.Tools.GithubEventProcessor.GitHubPayload;
-using Azure.Sdk.Tools.GithubEventProcessor.Utils;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubAuth;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Octokit.Internal;
 using System.Threading.Tasks;
 using Octokit;
-using Azure.Sdk.Tools.GithubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using System.Security;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
+namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     // Issue Comment Processing also includes PR comments. The guidance for pull_request_comment
     // say to use the issue comment event
@@ -37,11 +37,11 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.EventProcessing
             issueUpdate = await AuthorFeedback(gitHubClient, issueCommentPayload, issueUpdate);
             ResetIssueActivity(gitHubClient, issueCommentPayload, ref issueUpdate);
             ReopenIssue(gitHubClient, issueCommentPayload, ref issueUpdate);
-            // DeclineToReopenIssue creates a comment and does not use issueUpdate
+            // DeclineToReopenIssue creates a comment and does not use _issueUpdate
             await DeclineToReopenIssue(gitHubClient, issueCommentPayload);
             issueUpdate = await IssueAddressedCommands(gitHubClient, issueCommentPayload, issueUpdate);
 
-            // If any of the rules have made issueUpdate changes, it needs to be updated
+            // If any of the rules have made _issueUpdate changes, it needs to be updated
             if (null != issueUpdate)
             {
                 await EventUtils.UpdateIssueOrPullRequest(gitHubClient, issueCommentPayload.Repository.Id, issueCommentPayload.Issue.Number, issueUpdate);

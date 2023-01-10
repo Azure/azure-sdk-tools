@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Octokit;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
+namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
     public class RateLimitUtil
     {

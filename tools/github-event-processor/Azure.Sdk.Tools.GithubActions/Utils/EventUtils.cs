@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Azure.Sdk.Tools.GithubEventProcessor.GitHubPayload;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Octokit;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
+namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
     public class EventUtils
     {

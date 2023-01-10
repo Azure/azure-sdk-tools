@@ -5,7 +5,7 @@ using System.Text;
 using Azure.Sdk.Tools.CodeOwnersParser;
 using Octokit;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
+namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
     public class CodeOwnerUtils
     {

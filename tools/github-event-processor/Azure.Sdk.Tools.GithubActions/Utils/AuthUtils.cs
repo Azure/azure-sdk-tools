@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Octokit;
 
-namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
+namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
     public class AuthUtils
     {
@@ -86,7 +86,7 @@ namespace Azure.Sdk.Tools.GithubEventProcessor.Utils
                 // If that's not the case, rethrow the exception, otherwise let processing return false
                 if (!ex.Message.Contains(NotAUserPartial, StringComparison.OrdinalIgnoreCase))
                 {
-                    throw ex;
+                    throw;
                 }
             }
             return false;

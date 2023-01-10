@@ -27,14 +27,9 @@ parameters:
   default:
     - RepoOwner: Azure
       RepoName: azure-sdk-tools
-      ExcludePaths: "^.\\sdk\\|^.\\eng\\common\\|\\tests\\resources\\session-records\\"
-      IncludePaths: "^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$"
-      Branch: 'main'
     - RepoOwner: Azure
       RepoName: azure-sdk
       ExcludePaths: "^.\\eng\\common\\*"
-      ExcludePaths: "^.\\sdk\\|^.\\eng\\common\\|\\tests\\resources\\session-records\\"
-      IncludePaths: "^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$"
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
       ExcludePaths: "^.\\sdk\\|^.\\eng\\common\\|\\tests\\resources\\session-records\\"

@@ -26,11 +26,7 @@ stages:
           vmImage: 'windows-2022'
 
         steps:
-          - task: UseDotNet@2
-            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
-            inputs:
-              packageType: sdk
-              version: $(DotNetCoreVersion)
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
           - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
             displayName: 'Build and Package'

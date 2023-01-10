@@ -1,11 +1,12 @@
 # The pipeline is mainly used to migrate our agent pool from one version to another version. 
-# Here are how we use the pipeline:
+# Here is how we use the pipeline:
 # 1. What repos are you going to work on for your migration? Put your repos in Parameter 'Repos'. Follow the format in default.
 # 2. The replacement map, e.g We will search all occurrences of the strings in Parameter 'MigrateFrom' and replace to the value in 'MigrateTo'. This is regex map, and you can define multiple replacement rules here.
 # 3. The Parameter 'WhatIfPreference' boolean flag allows you to check your changed files before open a PR. Check the box if you don't want to create a PR.
 # 4. The pipeline will generate PRs in specified repos, Parameter 'ShortForMigrateFrom' and 'ShortForMigrateTo' are the short descriptions of the PR purpose.
 #    The PR title will in the format of "Migrate from ${{parameters.ShortForMigrateFrom}} to ${{parameters.ShortForMigrateTo}}"
 #    You can also specify who triggers the changes in Paramter 'GithubAssigneeAlias'. Then your PR will request review from the specified person.
+#    If you want to create PR from your own fork, you can specify the Parameters 'PRForkOwner'
 # 5. Go to the PR link in 'Create pull request' step. Review and merge the PR. Note, the pipeline intented to be aggressive, so take a closer look at the changes.
 #    The PR also has a link pointed back to the pipeline, so people will learn where it comes from and the purpose of the PR.
 trigger: none
@@ -14,8 +15,9 @@ pr: none
 # Notes on ExcludePaths and IncludePaths:
 # 1. ExcludePaths is used to exclude the file pattern you don't want to scan against.
 # 2. IncludePaths is used to add back the files you don't want to exclude. It is supposed to be a subset of ExcludePaths.
-# 3. Both excludePaths and includePaths support standard regex. 
+# 3. Both excludePaths and includePaths support standard powershell regex. 
 # 4. The paths here are relative to the repo folder. 
+#    E.g.
 #    In win agent pool, the path is like ".\eng\scripts\Repo-File-Content-Replacements.ps1", so the regex path can be like "^.\\eng\\"
 #    In linux agent pool, the path is like "./eng/scripts/Repo-File-Content-Replacements.ps1", so the regex path can be like "^./eng/"
 #    To compitable with both cases, you can also specify your regex path like "^./|\\eng/|\\"
@@ -90,7 +92,7 @@ parameters:
 - name: GithubAssigneeAlias
   type: string
   default: ''
-- name: PRForkName
+- name: PRForkOwner
   type: string
   default: 'azure-sdk'
 - name: WhatIfPreference
@@ -137,7 +139,7 @@ jobs:
             parameters:
               BaseBranchName: $(DefaultBranch)
               PRBranchName: migration
-              PROwner: ${{ parameters.PRForkName }}
+              PROwner: ${{ parameters.PRForkOwner }}
               CommitMsg: "Migrate from ${{parameters.ShortForMigrateFrom}} to ${{parameters.ShortForMigrateTo}}"
               RepoOwner: ${{ repo.RepoOwner }}
               RepoName: ${{ repo.RepoName }}

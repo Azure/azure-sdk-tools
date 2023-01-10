@@ -172,7 +172,7 @@ Example:
 ``` json
 "matrix": {
   "operatingSystem": [
-    "windows-2022",
+    "windows-2019",
     "ubuntu-22.04",
     "macos-11"
   ],
@@ -526,14 +526,14 @@ In the matrix job output that azure pipelines consumes, the format is a map of m
     "framework": "net6.0",
     "operatingSystem": "ubuntu-22.04"
   },
-  "netcoreapp21_windows2022": {
+  "netcoreapp21_windows2019": {
     "framework": "netcoreapp2.1",
-    "operatingSystem": "windows-2022"
+    "operatingSystem": "windows-2019"
   },
-  "UseProjectRef_net461_windows2022": {
+  "UseProjectRef_net461_windows2019": {
     "additionalTestArguments": "/p:UseProjectReferenceToAzureClients=true",
     "framework": "net461",
-    "operatingSystem": "windows-2022"
+    "operatingSystem": "windows-2019"
   }
 }
 ```
@@ -671,7 +671,7 @@ Given a matrix like below with `JavaTestVersion` marked as a non-sparse paramete
 {
   "matrix": {
     "Agent": {
-      "windows-2022": { "OSVmImage": "MMS2022", "Pool": "azsdk-pool-mms-win-2022-general" },
+      "windows-2019": { "OSVmImage": "MMS2019", "Pool": "azsdk-pool-mms-win-2019-general" },
       "ubuntu-2204": { "OSVmImage": "MMSUbuntu22.04", "Pool": "azsdk-pool-mms-ubuntu-2204-general" },
       "macos-11": { "OSVmImage": "macos-11", "Pool": "Azure Pipelines" }
     },

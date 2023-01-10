@@ -31,8 +31,8 @@ stages:
       - job: 'Build'
         timeoutInMinutes: 300
         pool:
-          name: azsdk-pool-mms-win-2022-general
-          vmImage: MMS2022
+          name: azsdk-pool-mms-win-2019-general
+          vmImage: MMS2019
 
         steps:
           - pwsh: |
@@ -104,8 +104,8 @@ stages:
           # Use GitHub environment as it's used for other C++ releases
           environment: github
           pool:
-            name: azsdk-pool-mms-win-2022-general
-            vmImage: MMS2022
+            name: azsdk-pool-mms-win-2019-general
+            vmImage: MMS2019
           
           strategy: 
             runOnce: 

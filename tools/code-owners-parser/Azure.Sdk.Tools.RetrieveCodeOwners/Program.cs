@@ -5,36 +5,40 @@ using Azure.Sdk.Tools.CodeOwnersParser;
 namespace Azure.Sdk.Tools.RetrieveCodeOwners
 {
     /// <summary>
-    /// The tool command to retrieve code owners.
+    /// See Program.Main comment.
     /// </summary>
     public static class Program
     {
         /// <summary>
-        /// Retrieves CODEOWNERS information for specific section of the repo
+        /// Given targetPath and CODEOWNERS file codeownersFilePath,
+        /// prints out to stdout owners of the targetPath as determined by the CODEOWNERS file.
         /// </summary>
-        /// <param name="codeOwnerFilePath">The path of CODEOWNERS file in repo</param>
-        /// <param name="targetDirectory">The directory whose information is to be retrieved</param>
-        /// <param name="filterOutNonUserAliases">The option to filter out code owner team alias.</param>
+        /// <param name="targetPath">The path whose owners are to be determined.</param>
+        /// <param name="codeownersFilePath">The path to the CODEOWNERS file with ownership information.</param>
+        /// <param name="excludeNonUserAliases">Whether owners that aren't users should be excluded from the returned owners.</param>
         /// <returns>Exit code</returns>
-
         public static int Main(
-            string codeOwnerFilePath,
-            string targetDirectory,
-            bool filterOutNonUserAliases = false
-            )
+            string targetPath,
+            string codeownersFilePath,
+            bool excludeNonUserAliases = false)
         {
-            var target = targetDirectory.Trim();
-            try {
-                var codeOwnerEntry = CodeOwnersFile.ParseAndFindOwnersForClosestMatch(codeOwnerFilePath, target);
-                if (filterOutNonUserAliases)
+            targetPath = targetPath.Trim();
+            try 
+            {
+                var codeownersEntry = CodeownersFile.GetMatchingCodeownersEntry(targetPath, codeownersFilePath);
+                if (excludeNonUserAliases)
                 {
-                    codeOwnerEntry.FilterOutNonUserAliases();
+                    codeownersEntry.ExcludeNonUserAliases();
                 }
-                var codeOwnerJson = JsonSerializer.Serialize<CodeOwnerEntry>(codeOwnerEntry, new JsonSerializerOptions { WriteIndented = true });
-                Console.WriteLine(codeOwnerJson);
+
+                string codeownersJson = JsonSerializer.Serialize<CodeownersEntry>(codeownersEntry,
+                    new JsonSerializerOptions { WriteIndented = true });
+
+                Console.WriteLine(codeownersJson);
                 return 0;
             }
-            catch (Exception e) {
+            catch (Exception e) 
+            {
                 Console.Error.WriteLine(e.Message);
                 return 1;
             }

@@ -28,7 +28,7 @@ insert_final_newline = true
 # Organize usings
 dotnet_sort_system_directives_first = true
 # this. preferences
-dotnet_style_qualification_for_field = true:suggestion
+dotnet_style_qualification_for_field = false:suggestion
 dotnet_style_qualification_for_property = false:silent
 dotnet_style_qualification_for_method = false:silent
 dotnet_style_qualification_for_event = false:silent

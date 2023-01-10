@@ -44,7 +44,8 @@ variables:
 jobs:
 - job: SetupTutorialBranch
   pool:
-    vmImage: 'ubuntu-latest'
+    name: azsdk-pool-mms-ubuntu-2004-general
+    vmImage: MMSUbuntu22.04
   steps:
     - task: PowerShell@2
       displayName: 'Setup Tutorial Branch'

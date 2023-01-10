@@ -1,7 +1,7 @@
 Import-Module Pester
 
 BeforeAll {
-    . $PSScriptRoot/../job-matrix-functions.ps1
+    . $PSScriptRoot/../../../common/scripts/job-matrix/job-matrix-functions.ps1
 
     $matrixConfig = @"
 {
@@ -48,7 +48,7 @@ BeforeAll {
 "@
 }
 
-Describe "Matrix-Lookup" -Tag "lookup" {
+Describe "Matrix-Lookup" -Tag "UnitTest", "lookup" {
     It "Should navigate a 2d matrix: <row> <col>" -TestCases @(
          @{ row = 0; col = 0; expected = 1 },
          @{ row = 0; col = 1; expected = 2 },
@@ -148,7 +148,7 @@ Describe "Matrix-Lookup" -Tag "lookup" {
     }
 }
 
-Describe "Matrix-Reverse-Lookup" -Tag "lookup" {
+Describe "Matrix-Reverse-Lookup" -Tag "UnitTest", "lookup" {
     It "Should lookup a 2d matrix index: <index>" -TestCases @(
          @{ index = 0; expected = @(0,0) }
          @{ index = 1; expected = @(0,1) }
@@ -251,7 +251,7 @@ Describe "Matrix-Reverse-Lookup" -Tag "lookup" {
     }
 }
 
-Describe 'Matrix-Set' -Tag "set" {
+Describe 'Matrix-Set' -Tag "UnitTest", "set" {
     It "Should set a matrix element" -TestCases @(
         @{ value = "set"; index = @(0,0,0,0); arrayIndex = 0 }
         @{ value = "ones"; index = @(0,1,1,1); arrayIndex = 13 }
@@ -264,7 +264,7 @@ Describe 'Matrix-Set' -Tag "set" {
     }
 }
 
-Describe "Platform Matrix Generation" -Tag "generate" {
+Describe "Platform Matrix Generation" -Tag "UnitTest", "generate" {
     BeforeEach {
         $matrixConfigForGenerate = @"
 {
@@ -373,7 +373,7 @@ Describe "Platform Matrix Generation" -Tag "generate" {
     }
 }
 
-Describe "Config File Object Conversion" -Tag "convert" {
+Describe "Config File Object Conversion" -Tag "UnitTest", "convert" {
     BeforeEach {
         $config = GetMatrixConfigFromJson $matrixConfig
     }
@@ -390,7 +390,7 @@ Describe "Config File Object Conversion" -Tag "convert" {
     }
 }
 
-Describe "Platform Matrix Post Transformation" -Tag "transform" {
+Describe "Platform Matrix Post Transformation" -Tag "UnitTest", "transform" {
     BeforeEach {
         $config = GetMatrixConfigFromJson $matrixConfig
     }
@@ -486,7 +486,7 @@ Describe "Platform Matrix Post Transformation" -Tag "transform" {
     }
 }
 
-Describe "Platform Matrix Generation With Object Fields" -Tag "objectfields" {
+Describe "Platform Matrix Generation With Object Fields" -Tag "UnitTest", "objectfields" {
     BeforeEach {
         $matrixConfigForObject = @"
 {
@@ -572,7 +572,7 @@ Describe "Platform Matrix Generation With Object Fields" -Tag "objectfields" {
     }
 }
 
-Describe "Platform Matrix Job and Display Names" -Tag "displaynames" {
+Describe "Platform Matrix Job and Display Names" -Tag "UnitTest", "displaynames" {
     BeforeEach {
         $matrixConfigForGenerate = @"
 {

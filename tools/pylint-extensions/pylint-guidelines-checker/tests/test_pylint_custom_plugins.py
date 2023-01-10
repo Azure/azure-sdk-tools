@@ -2008,6 +2008,41 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
    
         with self.assertNoMessages():
             self.checker.visit_return(function_node.body[0])
+
+    def test_async_return_async_page_acceptable(self):
+        function_node, return_node = astroid.extract_node(
+        """
+            from azure.core.async_paging import AsyncItemPaged
+            class MyClient():
+                def list_something(self, **kwargs): #@
+                    return AsyncItemPaged[None] #@
+        """
+        )
+        return_node.parent.root().name = "some-package.some.aio.file.py"
+        with self.assertNoMessages():
+            self.checker.visit_return(return_node)
+
+    def test_async_return_async_page_violation(self):
+        function_node, return_node = astroid.extract_node(
+        """
+            from azure.core.paging import ItemPaged
+            class MyClient():
+                def list_something(self, **kwargs): #@
+                    return ItemPaged[None] #@
+        """
+        )
+        return_node.parent.root().name = "some-package.some.aio.file.py"
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="async-return-async-iterable",
+                    line=4,
+                    node=function_node,
+                    col_offset=4, 
+                    end_line=4, 
+                    end_col_offset=25
+                )
+        ):
+            self.checker.visit_return(return_node)       
           
 
     def test_guidelines_link_active(self):

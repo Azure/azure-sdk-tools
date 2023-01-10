@@ -1,0 +1,14 @@
+[
+  {
+    "MigrateFrom": "azsdk-pool-mms-win-2022-general",
+    "MigrateTo": "azsdk-pool-mms-win-2022-general"
+  },
+  {
+    "MigrateFrom": "windows-2022",
+    "MigrateTo": "windows-2022"
+  },
+  {
+    "MigrateFrom": "windows2022",
+    "MigrateTo": "windows2022"
+  }
+]

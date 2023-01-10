@@ -66,9 +66,6 @@ $files = Get-ChildItem -LiteralPath $ScannedDirectory -Recurse -File
 $newFileCollection = @()
 foreach ($file in $files) {
   $relativePath = Resolve-Path -LiteralPath $file.FullName -Relative
-  Write-Host "$relativePath"
-  Write-Host "$ExcludePathsRegex"
-  Write-Host "$IncludePathsRegex"
   if ($relativePath -notmatch $ExcludePathsRegex) {
     $newFileCollection += $file
   }

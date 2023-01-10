@@ -1121,13 +1121,115 @@ public:
       dumper->InsertPunctuation('.');
       dumper->InsertPunctuation('.');
     }
+    if (!m_paramName.empty())
+    {
+      dumper->InsertWhitespace();
+      dumper->InsertMemberName(m_paramName);
+      if (m_defaultValue)
+      {
+        dumper->InsertWhitespace();
+        dumper->InsertPunctuation('=');
+        m_defaultValue->Dump(dumper, dumpOptions);
+      }
+    }
+  }
+};
+
+// Template parameters which are template declarations. For example:
+//   template <typename T, template <typename> class U = UniqueHandleHelper>
+//   using UniqueHandle = typename U<T>::type;
+// Also "T" in
+//   @code
+//       template <template <typename> class T> class container { };
+//   @endcode
+class AstTemplateTemplateParameter : public AstNamedNode {
+  bool m_isParameterPack{};
+  std::string m_paramName;
+  std::list<std::unique_ptr<AstNode>> m_parameters;
+  std::unique_ptr<AstNode> m_templateBody;
+  std::string m_defaultTypeName;
+
+public:
+  AstTemplateTemplateParameter(
+      TemplateTemplateParmDecl const* templateParam,
+      AzureClassesDatabase* const database,
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
+      : AstNamedNode(templateParam, database, parentNode),
+        m_paramName{templateParam->getNameAsString()}, m_isParameterPack{
+                                                           templateParam->isParameterPack()}
+  {
+    templateParam->dump(llvm::outs());
+    for (auto attr : templateParam->attrs())
+    {
+      llvm::outs() << "Attribute: " << attr->getSpelling() << "\n";
+    }
+
+    for (auto& param : templateParam->getTemplateParameters()->asArray())
+    {
+      m_parameters.push_back(AstNode::Create(param, database, parentNode));
+    }
+
+    if (templateParam->hasDefaultArgument())
+    {
+      auto defaultArg = templateParam->getDefaultArgument().getArgument();
+      switch (defaultArg.getKind())
+      {
+
+        case TemplateArgument::Template: {
+          llvm::raw_string_ostream os(m_defaultTypeName);
+          clang::PrintingPolicy pp{LangOptions{}};
+          pp.adjustForCPlusPlus();
+
+          defaultArg.getAsTemplate().print(os, pp);
+        }
+        break;
+        default:
+          llvm::errs() << "Unknown TemplateTemplate parameter default argument type: "
+                       << defaultArg.getKind() << "\n";
+          break;
+      }
+    }
+  }
+  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  {
+    dumper->InsertKeyword("template");
+    dumper->InsertWhitespace();
+    dumper->InsertPunctuation('<');
+    bool firstParam{true};
+    for (const auto& param : m_parameters)
+    {
+      if (!firstParam)
+      {
+        dumper->InsertPunctuation(',');
+        dumper->InsertWhitespace();
+      }
+      firstParam = false;
+      {
+        DumpNodeOptions innerOptions{dumpOptions};
+
+        innerOptions.NeedsLeftAlign = false;
+        innerOptions.NeedsTrailingNewline = false;
+        innerOptions.NeedsTrailingSemi = false;
+        param->DumpNode(dumper, innerOptions);
+      }
+    }
+    dumper->InsertPunctuation('>');
+    if (m_isParameterPack)
+    {
+      dumper->InsertPunctuation('.');
+      dumper->InsertPunctuation('.');
+      dumper->InsertPunctuation('.');
+    }
+    dumper->InsertWhitespace();
+    dumper->InsertKeyword("class");
     dumper->InsertWhitespace();
     dumper->InsertMemberName(m_paramName);
-    if (m_defaultValue)
+    if (!m_defaultTypeName.empty())
     {
       dumper->InsertWhitespace();
       dumper->InsertPunctuation('=');
-      m_defaultValue->Dump(dumper, dumpOptions);
+      dumper->InsertWhitespace();
+      dumper->InsertMemberName(m_defaultTypeName);
     }
   }
 };
@@ -1490,10 +1592,13 @@ public:
       llvm::outs() << "?? Defaulted deleted constructor?";
     }
     // Noisy diagnostic. Consider making it less noisy in the future.
-    // if (!m_isExplicit)
-    //{
-    //  database->CreateApiViewMessage(ApiViewMessages::ImplicitConstructor, m_navigationId);
-    //}
+    if (!m_isExplicit)
+    {
+      if (!ctor->getParent()->isEffectivelyFinal())
+      {
+        database->CreateApiViewMessage(ApiViewMessages::ImplicitConstructor, m_navigationId);
+      }
+    }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
   {
@@ -1688,7 +1793,6 @@ public:
     }
     m_templateBody
         = AstNode::Create(templateDecl->getTemplatedDecl(), azureClassesDatabase, parentNode);
-    //    m_namespace = static_cast<AstNamedNode*>(m_templateBody.get())->m_namespace;
   }
 
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
@@ -1797,6 +1901,10 @@ public:
     for (auto param : typeAliasTemplate->getTemplateParameters()->asArray())
     {
       m_parameters.push_back(AstNode::Create(param, azureClassesDatabase, parentNode));
+      if (!m_parameters.back())
+      {
+        param->dump(llvm::outs());
+      }
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
@@ -2586,6 +2694,11 @@ std::unique_ptr<AstNode> AstNode::Create(
       return std::make_unique<AstTemplateParameter>(
           cast<TemplateTypeParmDecl>(decl), azureClassesDatabase, parentNode);
 
+    case Decl::Kind::TemplateTemplateParm:
+      decl->dump(llvm::outs());
+      return std::make_unique<AstTemplateTemplateParameter>(
+          cast<TemplateTemplateParmDecl>(decl), azureClassesDatabase, parentNode);
+
     case Decl::Kind::NonTypeTemplateParm:
       return std::make_unique<AstNonTypeTemplateParam>(
           cast<NonTypeTemplateParmDecl>(decl), azureClassesDatabase, parentNode);
@@ -2662,7 +2775,8 @@ bool AzureClassesDatabase::IsMemberOfObject(NamedDecl const* decl)
 
   // Method or template parameters or enumerators are by definition members of an object.
   if (decl->getKind() == Decl::ParmVar || decl->getKind() == Decl::EnumConstant
-      || decl->getKind() == Decl::TemplateTypeParm || decl->getKind() == Decl::NonTypeTemplateParm)
+      || decl->getKind() == Decl::TemplateTypeParm || decl->getKind() == Decl::NonTypeTemplateParm
+      || decl->getKind() == Decl::TemplateTemplateParm)
   {
     return true;
   }

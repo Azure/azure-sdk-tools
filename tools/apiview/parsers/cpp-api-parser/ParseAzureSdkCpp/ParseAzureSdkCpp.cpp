@@ -24,7 +24,10 @@ int main(int argc, char** argv)
 {
   try
   {
-    TCLAP::CmdLine commandLine("C++ ApiView Parser", ' ');
+    TCLAP::CmdLine commandLine(R"(C++ ApiView Parser
+
+ApiReview.json file contents:
+)", ' ');
 
     TCLAP::UnlabeledValueArg<std::string> inputDirectory(
         "input", "Input Directory", true, ".", "string", commandLine);

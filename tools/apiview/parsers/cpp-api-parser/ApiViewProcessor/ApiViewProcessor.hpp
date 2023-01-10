@@ -91,7 +91,7 @@ public:
   const std::vector<std::unique_ptr<AstNode>>& GetAstNodeMap() const { return m_typeList; }
 };
 
-// Isolation class to isolate clang implemetnation and headers from consumers of the
+// Isolation class to isolate clang implementation and headers from consumers of the
 // ApiViewProcessor. Forwards all methods to ApiViewProcessorImpl class.
 class ApiViewProcessor {
 

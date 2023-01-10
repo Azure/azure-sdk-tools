@@ -3,8 +3,11 @@
 
 #include "ProcessorImpl.hpp"
 #include "ApiViewProcessor.hpp"
+#include <clang/Basic/Diagnostic.h>
+#include <clang/Frontend/TextDiagnosticPrinter.h>
 #include <clang/Tooling/CompilationDatabase.h>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <ostream>
@@ -91,6 +94,19 @@ public:
   ~CurrentDirectorySetter() { std::filesystem::current_path(m_oldPath); }
 };
 
+const std::vector<std::string_view> KnownSettings{
+    "allowInternal",
+    "includeDetail",
+    "includePrivate",
+    "filterNamespace",
+    "additionalCompilerSwitches",
+    "additionalIncludeDirectories",
+    "reviewName",
+    "serviceName",
+    "packageName",
+    "sourceFilesToProcess",
+    "sourceFilesToSkip"};
+
 ApiViewProcessorImpl::ApiViewProcessorImpl(
     std::string_view directoryToProcess,
     nlohmann::json const& configurationJson)
@@ -99,9 +115,21 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
 {
   // CHDIR to the directory to process so relative paths in the configuration are properly resolved.
   CurrentDirectorySetter currentDirectory{directoryToProcess};
-  if (configurationJson.contains("includeInternal"))
+
+  // Let's make sure we understand all the values passed in.
+  for (auto nodeName : configurationJson.items())
   {
-    m_includeInternal = configurationJson["includeInternal"];
+    if (std::find(KnownSettings.begin(), KnownSettings.end(), nodeName.key())
+        == KnownSettings.end())
+    {
+      std::cerr << "Unknown setting found in ApiViewSettings.json file: " << nodeName.key()
+                << std::endl;
+    }
+  }
+
+  if (configurationJson.contains("allowInternal"))
+  {
+    m_allowInternal = configurationJson["allowInternal"];
   }
   if (configurationJson.contains("includeDetail"))
   {
@@ -224,7 +252,7 @@ AzureClassesDatabase::AzureClassesDatabase(ApiViewProcessorImpl* processor) : m_
 AzureClassesDatabase::~AzureClassesDatabase() {}
 
 std::unique_ptr<clang::ASTConsumer> ApiViewProcessorImpl::AstVisitorAction::CreateASTConsumer(
-    clang::CompilerInstance& compiler,
+    clang::CompilerInstance&,
     llvm::StringRef /* inFile*/)
 {
   return std::make_unique<ExtractCppClassConsumer>(m_processorImpl);
@@ -258,17 +286,10 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
   }
   if (shouldCollect)
   {
+    const std::string typeName{namedDecl->getQualifiedNameAsString()};
     // If we don't have a filter namespace, include all the types.
     if (m_processorImpl->FilterNamespaces().empty())
     {
-      std::string typeName{namedDecl->getQualifiedNameAsString()};
-      // However if the type is in the _internal namespace, then we want to exclude it if
-      // we're excluding internal types.
-      if ((typeName.find("::_internal") != std::string::npos)
-          && !m_processorImpl->IncludeInternal())
-      {
-        shouldCollect = false;
-      }
       // However if the type is in the _detail namespace, then we want to exclude it if we're
       // excluding detail types.
       if ((typeName.find("::_detail") != std::string::npos) && !m_processorImpl->IncludeDetail())
@@ -279,9 +300,8 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
     else
     {
       // We have a namespace filter set. Look at all types whose names start with the filter
-      // namespace name. We don't want to consider namespaces, since they're not descrete entries in
+      // namespace name. We don't want to consider namespaces, since they're not discrete entries in
       // our resulting output.
-      const std::string typeName{namedDecl->getQualifiedNameAsString()};
       if (namedDecl->getKind() != Decl::Namespace)
       {
         if (std::find_if(
@@ -306,55 +326,49 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
           }
         }
       }
-      if (shouldCollect)
+    }
+    if (shouldCollect && namedDecl->getKind() != Decl::Namespace)
+    {
+      // However if the type is in the _internal namespace, then we want to exclude it if we're
+      // excluding internal types.
+      if (typeName.find("::_internal") != std::string::npos)
       {
-        // However if the type is in the _internal namespace, then we want to exclude it if we're
-        // excluding internal types.
-        if (typeName.find("::_internal") != std::string::npos)
+        if (!m_processorImpl->AllowInternal())
         {
-          if (!m_processorImpl->IncludeInternal())
-          {
-            shouldCollect = false;
-          }
-          // If this _internal type is not in a namespace starting with "Azure::Core", then
-          // we want to flag it as an error and include the type.
-          if (typeName.find("Azure::Core") != 0)
-          {
-            m_processorImpl->GetClassesDatabase()->CreateApiViewMessage(
-                ApiViewMessages::InternalTypesInNonCorePackage, typeName);
-            shouldCollect = true;
-          }
-        }
-        // If the type is in the _detail namespace, then we want to exclude it if we're
-        // excluding detail types.
-        if ((typeName.find("::_detail") != std::string::npos) && !m_processorImpl->IncludeDetail())
-        {
-          // There is an exception for Azure::_detail::Clock to the "exclude _detail" rule.
-          if (typeName.find("Azure::_detail::Clock") != 0)
-          {
-            shouldCollect = false;
-          }
+          m_processorImpl->GetClassesDatabase()->CreateApiViewMessage(
+              ApiViewMessages::InternalTypesInNonCorePackage, typeName);
         }
       }
-      else
+      // If the type is in the _detail namespace, then we want to exclude it if we're
+      // excluding detail types.
+      if ((typeName.find("::_detail") != std::string::npos) && !m_processorImpl->IncludeDetail())
       {
-        // We want to include any free types within the set of headers because they will result in
-        // a diagnostic.
-        PrintingPolicy pp{LangOptions{}};
-        pp.adjustForCPlusPlus();
-        std::string namespaceName;
-        llvm::raw_string_ostream osNamespace(namespaceName);
-        namedDecl->printQualifiedName(osNamespace, pp);
-        std::string typeName;
-        llvm::raw_string_ostream osType(typeName);
-        namedDecl->printName(osType);
-        if (typeName == namespaceName)
+        // There is an exception for Azure::_detail::Clock to the "exclude _detail" rule.
+        if (typeName.find("Azure::_detail::Clock") != 0)
         {
-          shouldCollect = true;
+          shouldCollect = false;
         }
       }
     }
+    else
+    {
+      // We want to include any free types within the set of headers because they will result in
+      // a diagnostic.
+      PrintingPolicy pp{LangOptions{}};
+      pp.adjustForCPlusPlus();
+      std::string namespaceName;
+      llvm::raw_string_ostream osNamespace(namespaceName);
+      namedDecl->printQualifiedName(osNamespace, pp);
+      std::string typeName;
+      llvm::raw_string_ostream osType(typeName);
+      namedDecl->printName(osType);
+      if (typeName == namespaceName)
+      {
+        shouldCollect = true;
+      }
+    }
   }
+
   return shouldCollect;
 }
 
@@ -368,8 +382,14 @@ class ApiViewCompilationDatabase : public CompilationDatabase {
   // handed to the clang tooling. And specifically the 1st entry tells clang that it should treat
   // the command line arguments as if they were arguments to clang (if it was "cl.exe", it would
   // treat the command line arguments as if they were from MSVC.
-  std::vector<std::string>
-      defaultCommandLine{"clang++.exe", "-DAZ_RTTI", "-fcxx-exceptions", "-c", "-std=c++14"};
+  std::vector<std::string> defaultCommandLine{
+      "clang++.exe",
+      "-DAZ_RTTI",
+      "-fcxx-exceptions",
+      "-c",
+      "-std=c++14",
+      "-Wall",
+      "-Werror"};
 
 public:
   ApiViewCompilationDatabase(
@@ -424,6 +444,20 @@ public:
   }
 };
 
+class AzureClassesDiagnostics : public clang::TextDiagnosticPrinter {
+  std::vector<std::string> m_errors;
+  std::vector<std::string> m_warnings;
+
+public:
+  AzureClassesDiagnostics() = default;
+
+  void HandleDiagnostic(clang::DiagnosticsEngine::Level diagLevel, const clang::Diagnostic& info)
+      override
+  {
+    DiagnosticConsumer::HandleDiagnostic(diagLevel, info);
+  }
+};
+
 int ApiViewProcessorImpl::ProcessApiView()
 {
   // clang::tooling::ClangTool.run changes the current directory to the directory returned by the
@@ -461,9 +495,27 @@ int ApiViewProcessorImpl::ProcessApiView()
       std::string(stringFromU8string(std::filesystem::absolute(tempFile).u8string())));
 
   ClangTool tool(compileDb, sourceFiles);
+  //  AzureClassesDiagnostics diagnosticsConsumer;
+  //  tool.setDiagnosticConsumer(&diagnosticsConsumer);
+  //
+  clang::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOptions
+      = std::make_unique<clang::DiagnosticOptions>();
+  clang::TextDiagnosticPrinter diagnosticsConsumer(llvm::errs(), diagOptions.get());
+  tool.setDiagnosticConsumer(&diagnosticsConsumer);
 
   auto frontEndActionFactory{std::make_unique<AstVisitorActionFactory>(this)};
   auto rv = tool.run(frontEndActionFactory.get());
+
+  if (diagnosticsConsumer.getNumErrors() > 0)
+  {
+    std::cerr << "Aborting due to errors." << std::endl;
+    return 1;
+  }
+  if (diagnosticsConsumer.getNumWarnings() > 0)
+  {
+    std::cerr << "Aborting due to warnings." << std::endl;
+    return 1;
+  }
 
   // Insert a terminal node into the classes database, which ensures that all opened namespaces
   // are closed.

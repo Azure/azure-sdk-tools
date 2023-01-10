@@ -4,13 +4,13 @@ using NUnit.Framework;
 namespace Azure.Sdk.Tools.CodeOwnersParser.Tests;
 
 [TestFixture]
-public class CodeOwnersFileTests
+public class CodeownersFileTests
 {
     /// <summary>
     /// A battery of test cases specifying behavior of new logic matching target
     /// path to CODEOWNERS entries, and comparing it to existing, legacy logic.
     ///
-    /// The logic that has changed is located in CodeOwnersFile.FindOwnersForClosestMatch.
+    /// The logic that has changed is located in CodeownersFile.GetMatchingCodeownersEntry.
     ///
     /// In the test case table below, any discrepancy between legacy and new
     /// matcher expected matches that doesn't pertain to wildcard matching denotes
@@ -143,33 +143,31 @@ public class CodeOwnersFileTests
     };
 
     /// <summary>
-    /// Exercises Azure.Sdk.Tools.CodeOwnersParser.Tests.CodeOwnersFileTests.testCases.
+    /// Exercises Azure.Sdk.Tools.CodeOwnersParser.Tests.CodeownersFileTests.testCases.
     /// See comment on that member for details.
     /// </summary>
     [TestCaseSource(nameof(testCases))]
-    public void TestParseAndFindOwnersForClosestMatch(TestCase testCase)
+    public void TestGetMatchingCodeownersEntry(TestCase testCase)
     {
-        List<CodeOwnerEntry>? codeownersEntries =
-            CodeOwnersFile.ParseContent(testCase.CodeownersPath + "@owner");
+        List<CodeownersEntry>? codeownersEntries =
+            CodeownersFile.GetCodeownersEntries(testCase.CodeownersPath + "@owner");
 
-        VerifyFindOwnersForClosestMatch(testCase, codeownersEntries, useNewImpl: false, testCase.ExpectedLegacyMatch);
-        VerifyFindOwnersForClosestMatch(testCase, codeownersEntries, useNewImpl: true, testCase.ExpectedNewMatch);
+        VerifyGetMatchingCodeownersEntry(testCase, codeownersEntries, useNewImpl: false, testCase.ExpectedLegacyMatch);
+        VerifyGetMatchingCodeownersEntry(testCase, codeownersEntries, useNewImpl: true, testCase.ExpectedNewMatch);
     }
 
-    private static void VerifyFindOwnersForClosestMatch(
+    private static void VerifyGetMatchingCodeownersEntry(
         TestCase testCase,
-        List<CodeOwnerEntry> codeownersEntries,
+        List<CodeownersEntry> codeownersEntries,
         bool useNewImpl,
         bool expectedMatch)
     {
-        CodeOwnerEntry? entryLegacy =
+        CodeownersEntry? entryLegacy =
             // Act
-            CodeOwnersFile.FindOwnersForClosestMatch(
-                codeownersEntries,
-                testCase.TargetPath,
-                useNewFindOwnersForClosestMatchImpl: useNewImpl);
+            CodeownersFile.GetMatchingCodeownersEntry(testCase.TargetPath,
+                codeownersEntries, useNewImpl: useNewImpl);
 
-        Assert.That(entryLegacy.Owners.Count, Is.EqualTo(expectedMatch ? 1 : 0));
+        Assert.That(entryLegacy.Owners, Has.Count.EqualTo(expectedMatch ? 1 : 0));
     }
 
     public record TestCase(

@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     ///
     /// This is a new matcher, compared to the old one, located in:
     ///
-    ///   CodeOwnersFile.FindOwnersForClosestMatchLegacyImpl()
+    ///   CodeownersFile.GetMatchingCodeownersEntryLegacyImpl()
     /// 
     /// This new matcher supports matching against wildcards, while the old one doesn't.
     /// This new matcher is designed to work with CODEOWNERS file validation:
@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
     /// https://git-scm.com/docs/gitignore#_pattern_format
     /// </summary>
-    internal class MatchedCodeOwnerEntry
+    internal class MatchedCodeownersEntry
     {
         /// <summary>
         /// Token for temporarily substituting "**" in regex, to avoid it being escaped when
@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// </summary>
         private const string SingleStar = "_SINGLE_STAR_";
 
-        public readonly CodeOwnerEntry Value;
+        public readonly CodeownersEntry Value;
 
         /// <summary>
         /// See comment on IsCodeOwnersPathValid
@@ -52,30 +52,30 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// </summary>
         private static readonly char[] unsupportedChars = { '[', ']', '!', '?' };
 
-        private readonly ILogger<MatchedCodeOwnerEntry> log;
+        private readonly ILogger<MatchedCodeownersEntry> log;
 
-        public MatchedCodeOwnerEntry(List<CodeOwnerEntry> entries, string targetPath)
+        public MatchedCodeownersEntry(string targetPath, List<CodeownersEntry> codeownersEntries)
         {
             this.log = CreateLog();
-            this.Value = FindOwnersForClosestMatch(entries, targetPath);
+            this.Value = GetMatchingCodeownersEntry(targetPath, codeownersEntries);
         }
 
-        private ILogger<MatchedCodeOwnerEntry> CreateLog()
+        private ILogger<MatchedCodeownersEntry> CreateLog()
         {
             var loggerFactory = LoggerFactory.Create(builder => { builder.AddSimpleConsole(); });
-            return loggerFactory.CreateLogger<MatchedCodeOwnerEntry>();
+            return loggerFactory.CreateLogger<MatchedCodeownersEntry>();
         }
 
         /// <summary>
-        /// Returns a CodeOwnerEntry from codeOwnerEntries that matches targetPath
+        /// Returns a CodeownersEntry from codeOwnerEntries that matches targetPath
         /// per algorithm described in the GitHub CODEOWNERS reference,
         /// as linked to in this class comment.
         ///
-        /// If there is no match, returns "new CodeOwnerEntry()".
+        /// If there is no match, returns "new CodeownersEntry()".
         /// </summary>
-        private CodeOwnerEntry FindOwnersForClosestMatch(
-            List<CodeOwnerEntry> codeownersEntries,
-            string targetPath)
+        private CodeownersEntry GetMatchingCodeownersEntry(
+            string targetPath,
+            List<CodeownersEntry> codeownersEntries)
         {
             // targetPath is assumed to be absolute w.r.t. repository root, hence we ensure
             // it starts with "/" to denote that.
@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // so it can not match against a CODEOWNERS entry that is guaranteed to be a file,
             // by the virtue of not ending with "/".
             
-            CodeOwnerEntry matchedEntry = codeownersEntries
+            CodeownersEntry matchedEntry = codeownersEntries
                 .Where(entry => !ContainsUnsupportedCharacters(entry.PathExpression))
                 // Entries listed in CODEOWNERS file below take precedence, hence we read the file from the bottom up.
                 // By convention, entries in CODEOWNERS should be sorted top-down in the order of:
@@ -99,7 +99,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 .FirstOrDefault(
                     entry => Matches(targetPath, entry), 
                     // assert: none of the codeownersEntries matched targetPath
-                    new CodeOwnerEntry());
+                    new CodeownersEntry());
 
             return matchedEntry;
         }
@@ -124,7 +124,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// Returns true if the regex expression representing the PathExpression
         /// of CODEOWNERS entry matches a prefix of targetPath.
         /// </summary>
-        private bool Matches(string targetPath, CodeOwnerEntry entry)
+        private bool Matches(string targetPath, CodeownersEntry entry)
         {
             string codeownersPath = entry.PathExpression;
 
@@ -226,7 +226,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// <summary>
         /// The entry is valid if it obeys following conditions:
         /// - The Value was obtained with a call to
-        ///   Azure.Sdk.Tools.CodeOwnersParser.CodeOwnersFile.ParseContent().
+        ///   Azure.Sdk.Tools.CodeOwnersParser.CodeownersFile.GetCodeownersEntries().
         ///   - As a consequence, in the case of no match, the entry is not valid.
         /// - It does not contain unsupported characters (see "unsupportedChars").
         /// - the Value.PathExpression starts with "/".

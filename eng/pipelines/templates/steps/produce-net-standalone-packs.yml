@@ -41,6 +41,8 @@ steps:
           # tar -cvzf -C tools/test-proxy/linux-arm64 blah.tar.gz tools/test-proxy/linux-arm64 
           # however when we use this, we actually get an error. To avoid this, we simply CD into the target directory before tar-ing it.
           Push-Location "$sourcePath"
+          $binaryFile = (Get-ChildItem -Path . | Where-Object { !([System.IO.Path]::hasExtension($_)) } | Select-Object -First 1).ToString().Replace("`\","/")
+          bash -c "chmod +x $binaryFile"
           tar -cvzf "$($destinationPathSegment).tar.gz" .
           Pop-Location
         }

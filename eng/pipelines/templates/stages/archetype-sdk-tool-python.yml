@@ -1,7 +1,7 @@
 parameters:
 - name: PythonVersion
   type: string
-  default: '3.10.2'
+  default: '3.10.9'
 - name: PackagePath
   type: string
   default: ''

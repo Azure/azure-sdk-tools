@@ -452,6 +452,22 @@ public:
   }
 };
 
+template <typename T, class Function>
+void DumpList(T start, T end, AstDumper* dumper, Function function)
+{
+  bool firstArg = true;
+  for (T& it = start; it != end; ++it)
+  {
+    if (!firstArg)
+    {
+      dumper->InsertPunctuation(',');
+      dumper->InsertWhitespace();
+    }
+    firstArg = false;
+    function(dumper, *it);
+  }
+}
+
 class AstCtorExpr : public AstExpr {
   std::vector<std::unique_ptr<AstExpr>> m_args;
 
@@ -492,17 +508,13 @@ public:
       m_type.Dump(dumper, dumpOptions);
       dumper->InsertPunctuation('(');
     }
-    bool firstArg = true;
-    for (auto const& arg : m_args)
-    {
-      if (!firstArg)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      firstArg = false;
-      arg->Dump(dumper, dumpOptions);
-    }
+    DumpList(
+        m_args.begin(),
+        m_args.end(),
+        dumper,
+        [&](AstDumper* dumper, std::unique_ptr<AstExpr> const& expr) {
+          expr->Dump(dumper, dumpOptions);
+        });
     if (dumpOptions.DumpListInitializer)
     {
       dumper->InsertPunctuation('}');
@@ -643,17 +655,13 @@ public:
     }
     dumper->InsertMemberName(m_methodToCall);
     dumper->InsertPunctuation('(');
-    bool firstArg = true;
-    for (const auto& arg : m_arguments)
-    {
-      if (!firstArg)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      firstArg = false;
-      arg->Dump(dumper, dumpOptions);
-    }
+    DumpList(
+        m_arguments.begin(),
+        m_arguments.end(),
+        dumper,
+        [&](AstDumper* dumper, std::unique_ptr<AstExpr> const& expr) {
+          expr->Dump(dumper, dumpOptions);
+        });
 
     dumper->InsertPunctuation(')');
     if (dumpOptions.DumpListInitializer)
@@ -852,7 +860,9 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
           return Create(*actualExpr->child_begin(), context);
 
         default:
-          llvm::outs() << "Unknown expression type : " << actualExpr->getStmtClassName() << "\n ";
+          llvm::errs() << raw_ostream::Colors::RED
+                       << "Unknown expression type : " << actualExpr->getStmtClassName()
+                       << raw_ostream::Colors::RESET << "\n ";
           actualExpr->dump(llvm::outs(), context);
           return nullptr;
       }
@@ -868,7 +878,9 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
     else
     {
       assert(isa<Stmt>(statement));
-      llvm::outs() << "Unknown statement type : " << statement->getStmtClassName() << "\n ";
+      llvm::errs() << raw_ostream::Colors::RED
+                   << "Unknown statement type : " << statement->getStmtClassName()
+                   << raw_ostream::Colors::RESET << "\n ";
       statement->dump(llvm::outs(), context);
       return nullptr;
     }
@@ -1158,7 +1170,6 @@ public:
         m_paramName{templateParam->getNameAsString()}, m_isParameterPack{
                                                            templateParam->isParameterPack()}
   {
-    templateParam->dump(llvm::outs());
     for (auto attr : templateParam->attrs())
     {
       llvm::outs() << "Attribute: " << attr->getSpelling() << "\n";
@@ -1195,24 +1206,20 @@ public:
     dumper->InsertKeyword("template");
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('<');
-    bool firstParam{true};
-    for (const auto& param : m_parameters)
-    {
-      if (!firstParam)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      firstParam = false;
-      {
-        DumpNodeOptions innerOptions{dumpOptions};
 
-        innerOptions.NeedsLeftAlign = false;
-        innerOptions.NeedsTrailingNewline = false;
-        innerOptions.NeedsTrailingSemi = false;
-        param->DumpNode(dumper, innerOptions);
-      }
-    }
+    DumpList(
+        m_parameters.begin(),
+        m_parameters.end(),
+        dumper,
+        [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+          DumpNodeOptions innerOptions{dumpOptions};
+
+          innerOptions.NeedsLeftAlign = false;
+          innerOptions.NeedsTrailingNewline = false;
+          innerOptions.NeedsTrailingSemi = false;
+          param->DumpNode(dumper, innerOptions);
+        });
+
     dumper->InsertPunctuation('>');
     if (m_isParameterPack)
     {
@@ -1462,24 +1469,19 @@ public:
     }
     dumper->InsertTypeName(m_name, m_navigationId);
     dumper->InsertPunctuation('(');
-    bool firstParam{true};
-    for (const auto& param : m_parameters)
-    {
-      if (!firstParam)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      firstParam = false;
-      {
-        DumpNodeOptions innerOptions{dumpOptions};
+    DumpList(
+        m_parameters.begin(),
+        m_parameters.end(),
+        dumper,
+        [&](AstDumper* dumper, std::unique_ptr<AstNode>& node) {
+          DumpNodeOptions innerOptions{dumpOptions};
 
-        innerOptions.NeedsLeftAlign = false;
-        innerOptions.NeedsTrailingNewline = false;
-        innerOptions.NeedsTrailingSemi = false;
-        param->DumpNode(dumper, innerOptions);
-      }
-    }
+          innerOptions.NeedsLeftAlign = false;
+          innerOptions.NeedsTrailingNewline = false;
+          innerOptions.NeedsTrailingSemi = false;
+          node->DumpNode(dumper, innerOptions);
+        });
+
     dumper->InsertPunctuation(')');
     if (!m_isMemberOfClass)
     {
@@ -1809,17 +1811,14 @@ public:
     dumper->InsertKeyword("template");
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('<');
-    bool isFirstParam = true;
-    for (const auto& param : m_parameters)
-    {
-      if (!isFirstParam)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      isFirstParam = false;
-      param->DumpNode(dumper, dumpOptions);
-    }
+    DumpList(
+        m_parameters.begin(),
+        m_parameters.end(),
+        dumper,
+        [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+          param->DumpNode(dumper, dumpOptions);
+        });
+
     dumper->InsertPunctuation('>');
     dumper->Newline();
     {
@@ -1866,17 +1865,13 @@ public:
     dumper->InsertKeyword("template");
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('<');
-    bool isFirstParam = true;
-    for (const auto& param : m_parameters)
-    {
-      if (!isFirstParam)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      isFirstParam = false;
-      param->DumpNode(dumper, dumpOptions);
-    }
+    DumpList(
+        m_parameters.begin(),
+        m_parameters.end(),
+        dumper,
+        [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+          param->DumpNode(dumper, dumpOptions);
+        });
     dumper->InsertPunctuation('>');
     dumper->Newline();
     m_functionNode->DumpNode(dumper, dumpOptions);
@@ -1903,6 +1898,8 @@ public:
       m_parameters.push_back(AstNode::Create(param, azureClassesDatabase, parentNode));
       if (!m_parameters.back())
       {
+        llvm::outs() << raw_ostream::Colors::CYAN << "Unknown or unsupported AST node type."
+                     << raw_ostream::Colors::RESET << "\n";
         param->dump(llvm::outs());
       }
     }
@@ -1924,17 +1921,13 @@ public:
     dumper->InsertKeyword("template");
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('<');
-    bool isFirstParam = true;
-    for (const auto& param : m_parameters)
-    {
-      if (!isFirstParam)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      isFirstParam = false;
-      param->DumpNode(dumper, dumpOptions);
-    }
+    DumpList(
+        m_parameters.begin(),
+        m_parameters.end(),
+        dumper,
+        [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+          param->DumpNode(dumper, dumpOptions);
+        });
     dumper->InsertPunctuation('>');
     dumper->Newline();
     m_typeAliasNode->DumpNode(dumper, dumpOptions);
@@ -2356,8 +2349,9 @@ AstClassLike::AstClassLike(
             break;
           }
           default: {
-            llvm::outs() << "Unhandled Decl Type: " << std::string(child->getDeclKindName())
-                         << "\n";
+            llvm::errs() << raw_ostream::Colors::RED
+                         << "Unhandled Decl Type: " << std::string(child->getDeclKindName())
+                         << raw_ostream::Colors::RESET << "\n";
           }
         }
         if (m_isFinal && child->getAccess() == AS_protected)
@@ -2414,17 +2408,13 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
         dumper->InsertPunctuation(':');
         dumper->InsertWhitespace();
         // Enumerate the base classes, dumping each of them.
-        bool firstType = true;
-        for (auto const& base : m_baseClasses)
-        {
-          if (!firstType)
-          {
-            dumper->InsertPunctuation(',');
-            dumper->InsertWhitespace();
-          }
-          firstType = false;
-          base->DumpNode(dumper, dumpOptions);
-        }
+        DumpList(
+            m_baseClasses.begin(),
+            m_baseClasses.end(),
+            dumper,
+            [&](AstDumper* dumper, std::unique_ptr<AstBaseClass>& base) {
+              base->DumpNode(dumper, dumpOptions);
+            });
       }
 
       dumper->Newline();
@@ -2499,17 +2489,14 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   dumper->InsertPunctuation('{');
   dumper->AdjustIndent(2);
   dumper->Newline();
-  bool firstEnumerator = true;
-  for (auto const& enumerator : m_enumerators)
-  {
-    if (!firstEnumerator)
-    {
-      dumper->InsertPunctuation(',');
-      dumper->Newline();
-    }
-    firstEnumerator = false;
-    enumerator->DumpNode(dumper, dumpOptions);
-  }
+
+  DumpList(
+      m_enumerators.begin(),
+      m_enumerators.end(),
+      dumper,
+      [&](AstDumper* dumper, std::unique_ptr<AstNode>& enumerator) {
+        enumerator->DumpNode(dumper, dumpOptions);
+      });
   dumper->Newline();
   dumper->AdjustIndent(-2);
   dumper->LeftAlign();
@@ -2609,20 +2596,16 @@ void AstInitializerList::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) co
       if (m_initializerValues.size() != 1)
       {
         dumper->InsertPunctuation('{');
-        bool firstInitializer = true;
         dumper->AdjustIndent(4);
-        for (const auto& initializer : m_initializerValues)
-        {
-          if (!firstInitializer)
-          {
-            dumper->InsertPunctuation(',');
-            dumper->InsertWhitespace();
-          }
-          firstInitializer = false;
-          dumper->Newline();
-          dumper->LeftAlign();
-          initializer->Dump(dumper, dumpOptions);
-        }
+        DumpList(
+            m_initializerValues.begin(),
+            m_initializerValues.end(),
+            dumper,
+            [&](AstDumper* dumper, std::unique_ptr<AstExpr> const& initializer) {
+              dumper->Newline();
+              dumper->LeftAlign();
+              initializer->Dump(dumper, dumpOptions);
+            });
         dumper->AdjustIndent(-4);
         dumper->InsertPunctuation('}');
       }
@@ -2695,7 +2678,6 @@ std::unique_ptr<AstNode> AstNode::Create(
           cast<TemplateTypeParmDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::TemplateTemplateParm:
-      decl->dump(llvm::outs());
       return std::make_unique<AstTemplateTemplateParameter>(
           cast<TemplateTemplateParmDecl>(decl), azureClassesDatabase, parentNode);
 
@@ -2728,13 +2710,15 @@ std::unique_ptr<AstNode> AstNode::Create(
 
     case Decl::Kind::Namespace:
       return nullptr;
-      //    return std::make_unique<AstNamespace>(cast<NamespaceDecl>(decl, azureClassesDatabase));
+      //    return std::make_unique<AstNamespace>(cast<NamespaceDecl>(decl,
+      //    azureClassesDatabase));
     case Decl::Kind::Using:
       return nullptr;
       //   return std::make_unique<AstUsing>(cast<UsingDecl>(decl));
     default: {
-      llvm::outs() << "Unknown DECL node " << cast<NamedDecl>(decl)->getNameAsString()
-                   << " type : " << decl->getDeclKindName() << "\n ";
+      llvm::errs() << raw_ostream::Colors::RED << "Unknown DECL node "
+                   << cast<NamedDecl>(decl)->getNameAsString()
+                   << " type : " << decl->getDeclKindName() << raw_ostream::Colors::RESET << "\n ";
       return nullptr;
     }
   }

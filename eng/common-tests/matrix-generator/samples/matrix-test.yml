@@ -6,7 +6,7 @@ variables:
 jobs:
   - template: /eng/common/pipelines/templates/jobs/archetype-sdk-tests-generate.yml
     parameters:
-      JobTemplatePath: /eng/common/scripts/job-matrix/samples/matrix-job-sample.yml
+      JobTemplatePath: /eng/common-tests/matrix-generator/samples/matrix-job-sample.yml
       AdditionalParameters: {}
       Pool: Azure Pipelines
       OsVmImage: ubuntu-18.04
@@ -22,11 +22,11 @@ jobs:
         - .*Framework.*=net5.0/net5.1
       MatrixConfigs:
         - Name: base_product_matrix
-          Path: eng/common/scripts/job-matrix/samples/matrix.json
+          Path: eng/common-tests/matrix-generator/samples/matrix.json
           Selection: all
           GenerateVMJobs: true
         - Name: sparse_product_matrix
-          Path: eng/common/scripts/job-matrix/samples/matrix.json
+          Path: eng/common-tests/matrix-generator/samples/matrix.json
           Selection: sparse
           NonSparseParameters:
             - framework

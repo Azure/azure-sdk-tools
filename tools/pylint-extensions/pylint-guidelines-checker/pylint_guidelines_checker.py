@@ -2003,8 +2003,9 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
         """Checks all imports to make sure we are 
         not using raise_with_traceback from azure core."""
         try:
-            for import_, _ in node.names:
-                self._check_import(import_, node)
+            if node.modname == "azure.core.exceptions":
+                for import_, _ in node.names:
+                    self._check_import(import_, node)
         except:
             pass
 
@@ -2013,8 +2014,9 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
         not using raise_with_traceback from azure core."""
 
         try:
-            for import_, _ in node.names:
-                self._check_import(import_, node)
+            if node.modname == "azure.core.exceptions":
+                for import_, _ in node.names:
+                    self._check_import(import_, node)
         except:
             pass 
 

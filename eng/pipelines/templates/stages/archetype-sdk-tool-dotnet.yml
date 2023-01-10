@@ -18,9 +18,6 @@ parameters:
   - name: DotNetCoreVersion
     type: string
     default: ''
-  - name: SkipDotNetInstall
-    type: boolean
-    default: false
   - name: NoWarn
     type: boolean
     default: false
@@ -114,11 +111,9 @@ stages:
       - job: Test
 
         steps:
-          - task: UseDotNet@2
-            condition: eq(${{ parameters.SkipDotNetInstall }}, false)
-            displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-            inputs:
-              version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
 
           - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
             displayName: 'Test'

@@ -114,6 +114,10 @@ stages:
           vmImage: $(imageName)
 
         steps:
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
+
           - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
             parameters:
               StagingDirectory: $(Build.ArtifactStagingDirectory)

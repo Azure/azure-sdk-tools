@@ -3,7 +3,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20221212.1
+      ref: refs/heads/feature/platform-specific-binaries
 
 parameters:
   - name: ToolDirectory
@@ -103,11 +103,11 @@ stages:
             linux:
               imageName: 'ubuntu-22.04'
               poolName: 'azsdk-pool-mms-ubuntu-2204-general'
-              filter: '!mac'
+              artifactName: 'linux_windows'
             mac:
               imageName: 'macos-11'
               poolName: 'Azure Pipelines'
-              filter: 'mac'
+              artifactName: 'mac'
 
         pool:
           name: $(poolName)
@@ -127,7 +127,7 @@ stages:
           - ${{ if gt(length(parameters.StandaloneExeMatrix), 0) }}:
               - publish: $(Build.ArtifactStagingDirectory)/binaries
                 displayName: Publish executables to binaries artifact
-                artifact: binaries_$(poolName)
+                artifact: binaries_$(artifactName)
                 condition: succeededOrFailed()
 
       - job: Test

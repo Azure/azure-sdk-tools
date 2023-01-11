@@ -27,11 +27,14 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         // Type 2 maps to a pipeline YAML file in the repository
         private const int PipelineYamlProcessType = 2;
         // A cache on the code owners github identity to owner descriptor.
-        private readonly Dictionary<string, string> codeOwnerCache = new Dictionary<string, string>();
-        // A cache on the team member to member discriptor.
+        private readonly Dictionary<string, string> codeownersCache = new Dictionary<string, string>();
+        // A cache on the team member to member descriptor.
         private readonly Dictionary<string, string> teamMemberCache = new Dictionary<string, string>();
 
-        public NotificationConfigurator(AzureDevOpsService service, GitHubService gitHubService, ILogger<NotificationConfigurator> logger)
+        public NotificationConfigurator(
+            AzureDevOpsService service,
+            GitHubService gitHubService,
+            ILogger<NotificationConfigurator> logger)
         {
             this.service = service;
             this.gitHubService = gitHubService;
@@ -46,19 +49,26 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             PipelineSelectionStrategy strategy = PipelineSelectionStrategy.Scheduled)
         {
             var pipelines = await GetPipelinesAsync(projectName, projectPath, strategy);
-            var teams = await service.GetAllTeamsAsync(projectName);
+            var teams = (await service.GetAllTeamsAsync(projectName)).ToList();
 
             foreach (var pipeline in pipelines)
             {
-                using (logger.BeginScope("Evaluate Pipeline: Name = {0}, Path = {1}, Id = {2}", pipeline.Name, pipeline.Path, pipeline.Id))
+                using (logger.BeginScope(
+                           "Evaluate Pipeline: Name = {pipelineName}, Path = {pipelinePath}, Id = {pipelineId}",
+                           pipeline.Name, pipeline.Path, pipeline.Id))
                 {
-                    var parentTeam = await EnsureTeamExists(pipeline, TeamPurpose.ParentNotificationTeam, teams, gitHubToAADConverter, persistChanges);
-                    var childTeam = await EnsureTeamExists(pipeline, TeamPurpose.SynchronizedNotificationTeam, teams, gitHubToAADConverter, persistChanges);
+                    var parentTeam = await EnsureTeamExists(pipeline,
+                        TeamPurpose.ParentNotificationTeam, teams, gitHubToAADConverter,
+                        persistChanges);
+                    var childTeam = await EnsureTeamExists(pipeline,
+                        TeamPurpose.SynchronizedNotificationTeam, teams, gitHubToAADConverter,
+                        persistChanges);
 
                     if (!persistChanges && (parentTeam == default || childTeam == default))
                     {
-                        // Skip team nesting and notification work if
-                        logger.LogInformation("Skipping Teams and Notifications because parent or child team does not exist");
+                        // Skip team nesting and notification work
+                        logger.LogInformation(
+                            "Skipping Teams and Notifications because parent or child team does not exist");
                         continue;
                     }
                     await EnsureSynchronizedNotificationTeamIsChild(parentTeam, childTeam, persistChanges);
@@ -83,49 +93,29 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 teamName = StringHelper.MaxLength(fullTeamName, MaxTeamNameLength);
                 if (fullTeamName.Length > teamName.Length)
                 {
-                    logger.LogWarning($"Notification team name (length {fullTeamName.Length}) will be truncated to {teamName}");
+                    logger.LogWarning(
+                        "Notification team name (length {fullTeamNameLength}) will be truncated to {teamName}",
+                        fullTeamName.Length, teamName);
                 }
             }
             else if (purpose == TeamPurpose.SynchronizedNotificationTeam)
             {
-                teamName += $"Code owners sync notifications";
+                teamName += "Code owners sync notifications";
+            }
+            else
+            {
+                logger.LogWarning(
+                    "Unsupported team purpose. TeamName: {teamName}, Purpose: {purpose}", teamName,
+                    purpose);
             }
 
             bool updateMetadataAndName = false;
-            var result = teams.FirstOrDefault(
-                team =>
-                {
-                    // Swallowing exceptions because parse errors on
-                    // free form text fields which might be non-yaml text
-                    // are not exceptional
-                    var metadata = YamlHelper.Deserialize<TeamMetadata>(team.Description, swallowExceptions: true);
-                    bool metadataMatches = (metadata?.PipelineId == pipeline.Id && metadata?.Purpose == purpose);
-                    bool nameMatches = (team.Name == teamName);
+            WebApiTeam webApiTeam = teams.FirstOrDefault(
+                team => TeamMatchesPipelineMetadata(team, pipeline, purpose, teamName, out updateMetadataAndName));
 
-                    if (metadataMatches && nameMatches)
-                    {
-                        return true;
-                    }
-
-                    if (metadataMatches)
-                    {
-                        logger.LogInformation("Found team with matching pipeline id {0} but different name '{1}', expected '{2}'. Purpose = '{3}'", metadata?.PipelineId, team.Name, teamName, metadata?.Purpose);
-                        updateMetadataAndName = true;
-                        return true;
-                    }
-
-                    if (nameMatches)
-                    {
-                        logger.LogInformation("Found team with matching name {0} but different pipeline id {1}, expected {2}. Purpose = '{3}'", team.Name, metadata?.PipelineId, pipeline.Id, metadata?.Purpose);
-                        updateMetadataAndName = true;
-                        return true;
-                    }
-
-                    return false;
-                });
-            if (result == default)
+            if (webApiTeam == default)
             {
-                logger.LogInformation("Team Not Found purpose = {0}", purpose);
+                logger.LogInformation("Team Not Found purpose = {purpose}", purpose);
                 var teamMetadata = new TeamMetadata
                 {
                     PipelineId = pipeline.Id,
@@ -138,13 +128,15 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     Name = teamName
                 };
 
-                logger.LogInformation("Create Team for Pipeline PipelineId = {0} Purpose = {1} Name = '{2}'", pipeline.Id, purpose, teamName);
+                logger.LogInformation(
+                    "Create Team for Pipeline PipelineId = {pipelineId} Name = '{teamName}' Purpose = {purpose}",
+                    pipeline.Id, teamName, purpose);
                 if (persistChanges)
                 {
-                    result = await service.CreateTeamForProjectAsync(pipeline.Project.Id.ToString(), newTeam);
+                    webApiTeam = await service.CreateTeamForProjectAsync(pipeline.Project.Id.ToString(), newTeam);
                     if (purpose == TeamPurpose.ParentNotificationTeam)
                     {
-                        await EnsureScheduledBuildFailSubscriptionExists(pipeline, result, true);
+                        await EnsureScheduledBuildFailSubscriptionExists(pipeline, webApiTeam, true);
                     }
                 }
             }
@@ -155,30 +147,83 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     PipelineId = pipeline.Id,
                     Purpose = purpose,
                 };
-                result.Description = YamlHelper.Serialize(teamMetadata);
-                result.Name = teamName;
+                webApiTeam.Description = YamlHelper.Serialize(teamMetadata);
+                webApiTeam.Name = teamName;
 
-                logger.LogInformation("Update Team for Pipeline PipelineId = {0} Purpose = {1} Name = '{2}'", pipeline.Id, purpose, teamName);
+                logger.LogInformation(
+                    "Update Team for Pipeline PipelineId = {pipelineId} Name = '{teamName}' Purpose = {purpose}",
+                    pipeline.Id, teamName, purpose);
                 if (persistChanges)
                 {
-                    result = await service.UpdateTeamForProjectAsync(pipeline.Project.Id.ToString(), result);
+                    webApiTeam = await service.UpdateTeamForProjectAsync(pipeline.Project.Id.ToString(), webApiTeam);
                     if (purpose == TeamPurpose.ParentNotificationTeam)
                     {
-                        await EnsureScheduledBuildFailSubscriptionExists(pipeline, result, true);
+                        await EnsureScheduledBuildFailSubscriptionExists(pipeline, webApiTeam, persistChanges: true);
                     }
                 }
+            }
+            else
+            {
+                // Found the team, and the metadata and team name match. Hence, nothing to do.
             }
 
             if (purpose == TeamPurpose.SynchronizedNotificationTeam)
             {
-                await SyncTeamWithCodeOwnerFile(pipeline, result, gitHubToAADConverter, gitHubService, persistChanges);
+                await SyncTeamWithCodeownersFile(pipeline, webApiTeam, gitHubToAADConverter, persistChanges);
             }
-            return result;
+            return webApiTeam;
         }
 
-        private async Task SyncTeamWithCodeOwnerFile(BuildDefinition pipeline, WebApiTeam team, GitHubToAADConverter gitHubToAADConverter, GitHubService gitHubService, bool persistChanges)
+        private bool TeamMatchesPipelineMetadata(
+            WebApiTeam team,
+            BuildDefinition pipeline,
+            TeamPurpose purpose,
+            string teamName,
+            out bool updateMetadataAndName)
         {
-            using (logger.BeginScope("Team Name = {0}", team.Name))
+            updateMetadataAndName = false;
+
+            // "swallowExceptions" is set to "true" because parse errors on
+            // free-form text fields which might be non-yaml text are not exceptional.
+            var metadata = YamlHelper.Deserialize<TeamMetadata>(team.Description, swallowExceptions: true);
+            bool metadataMatches = (metadata?.PipelineId == pipeline.Id && metadata?.Purpose == purpose);
+            bool nameMatches = (team.Name == teamName);
+
+            if (metadataMatches && nameMatches)
+            {
+                return true;
+            }
+
+            if (metadataMatches)
+            {
+                logger.LogInformation(
+                    "Found team with matching pipeline id {pipelineId} but different name " +
+                    "'{teamName}', expected '{expectedTeamName}'. Purpose = '{purpose}'",
+                    metadata.PipelineId, team.Name, teamName, metadata.Purpose);
+                updateMetadataAndName = true;
+                return true;
+            }
+
+            if (nameMatches)
+            {
+                logger.LogInformation(
+                    "Found team with matching name {teamName} but different pipeline id " +
+                    "{pipelineId}, expected {expectedPipelineId}. Purpose = '{purpose}'",
+                    team.Name, metadata?.PipelineId, pipeline.Id, metadata?.Purpose);
+                updateMetadataAndName = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        private async Task SyncTeamWithCodeownersFile(
+            BuildDefinition pipeline,
+            WebApiTeam team,
+            GitHubToAADConverter gitHubToAADConverter,
+            bool persistChanges)
+        {
+            using (logger.BeginScope("Team Name = {teamName}", team.Name))
             {
                 if (pipeline.Process.Type != PipelineYamlProcessType)
                 {
@@ -195,110 +240,155 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 }
                 else
                 {
-                    logger.LogError("No repository url returned from pipeline. Repo id: {0}", pipeline.Repository.Id);
+                    logger.LogError("No repository url returned from pipeline. Repo id: {repoId}",
+                        pipeline.Repository.Id);
                     return;
                 }
-                var codeOwnerEntries = await gitHubService.GetCodeownersFile(repoUrl);
+                List<CodeownersEntry> codeownersEntries = await gitHubService.GetCodeownersFile(repoUrl);
 
-                if (codeOwnerEntries == default)
+                if (codeownersEntries == default)
                 {
                     logger.LogInformation("CODEOWNERS file not found, skipping sync");
                     return;
                 }
                 var process = pipeline.Process as YamlProcess;
 
-                logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
+                logger.LogInformation("Searching CODEOWNERS for matching path for {yamlPath}", process?.YamlFilename);
 
-                var codeOwnerEntry = CodeOwnersFile.FindOwnersForClosestMatch(codeOwnerEntries, process.YamlFilename);
-                codeOwnerEntry.FilterOutNonUserAliases();
+                CodeownersEntry codeownersEntry =
+                    CodeownersFile.GetMatchingCodeownersEntry(process?.YamlFilename,
+                        codeownersEntries);
+                codeownersEntry.ExcludeNonUserAliases();
 
-                logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, codeOwnerEntry.Owners.Count);
+                logger.LogInformation(
+                    "Matching Contacts Path = {yamlPath}, NumContacts = {ownersCount}",
+                    process?.YamlFilename, codeownersEntry.Owners.Count);
 
                 // Get set of team members in the CODEOWNERS file
                 var codeownersDescriptors = new List<String>();
-                foreach (var contact in codeOwnerEntry.Owners)
+                foreach (var contact in codeownersEntry.Owners)
                 {
-                    if (!codeOwnerCache.ContainsKey(contact))
-                    {
-                        // TODO: Better to have retry if no success on this call.
-                        var userPrincipal = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
-                        if (!string.IsNullOrEmpty(userPrincipal))
-                        {
-                            codeOwnerCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
-                        }
-                        else
-                        {
-                            logger.LogInformation("Cannot find the user principal for github {0}", contact);
-                            codeOwnerCache[contact] = null;
-                        }
-                    }
-                    codeownersDescriptors.Add(codeOwnerCache[contact]);
+                    await AddContactToCodeownersDescriptors(gitHubToAADConverter, contact, codeownersDescriptors);
                 }
-
 
                 var codeownersSet = new HashSet<string>(codeownersDescriptors);
                 // Get set of team members in the DevOps teams
                 var teamMembers = await service.GetMembersAsync(team);
                 var teamDescriptors = new List<String>();
-                foreach (var member in teamMembers)
+                foreach (TeamMember teamMember in teamMembers)
                 {
-                    if (!teamMemberCache.ContainsKey(member.Identity.Id))
-                    {
-                        var teamMemberDescriptor = (await service.GetUserFromId(new Guid(member.Identity.Id))).SubjectDescriptor.ToString();
-                        teamMemberCache[member.Identity.Id] = teamMemberDescriptor;
-                    }
-                    teamDescriptors.Add(teamMemberCache[member.Identity.Id]);
+                    await AddTeamMemberToTeamDescriptors(teamMember, teamDescriptors);
                 }
                 var teamSet = new HashSet<string>(teamDescriptors);
                 var contactsToRemove = teamSet.Except(codeownersSet);
                 var contactsToAdd = codeownersSet.Except(teamSet);
 
-                foreach (var descriptor in contactsToRemove)
+                foreach (string contactToRemove in contactsToRemove)
                 {
-                    if (persistChanges && descriptor != null)
-                    {
-                        var teamDescriptor = await service.GetDescriptorAsync(team.Id);
-                        logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                        await service.RemoveMember(teamDescriptor, descriptor);
-                    }
+                    await RemoveContactIfApplicable(team, persistChanges, contactToRemove);
                 }
 
-                foreach (var descriptor in contactsToAdd)
+                foreach (string contactToAdd in contactsToAdd)
                 {
-                    if (persistChanges && descriptor != null)
-                    {
-                        var teamDescriptor = await service.GetDescriptorAsync(team.Id);
-                        logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                        await service.AddToTeamAsync(teamDescriptor, descriptor);
-                    }
+                    await AddContactIfApplicable(team, persistChanges, contactToAdd);
                 }
             }
         }
 
-        private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string projectPath, PipelineSelectionStrategy strategy)
+        private async Task AddContactIfApplicable(WebApiTeam team, bool persistChanges, string descriptor)
+        {
+            if (persistChanges && descriptor != null)
+            {
+                var teamDescriptor = await service.GetDescriptorAsync(team.Id);
+                logger.LogInformation(
+                    "Add Contact TeamDescriptor = {teamDescriptor}, ContactDescriptor = {contactDescriptor}",
+                    teamDescriptor, descriptor);
+                await service.AddToTeamAsync(teamDescriptor, descriptor);
+            }
+        }
+
+        private async Task RemoveContactIfApplicable(
+            WebApiTeam team,
+            bool persistChanges,
+            string descriptor)
+        {
+            if (persistChanges && descriptor != null)
+            {
+                var teamDescriptor = await service.GetDescriptorAsync(team.Id);
+                logger.LogInformation(
+                    "Remove Contact TeamDescriptor = {teamDescriptor}, ContactDescriptor = {contactDescriptor}",
+                    teamDescriptor, descriptor);
+                await service.RemoveMember(teamDescriptor, descriptor);
+            }
+        }
+
+        private async Task AddTeamMemberToTeamDescriptors(TeamMember member, List<string> teamDescriptors)
+        {
+            if (!teamMemberCache.ContainsKey(member.Identity.Id))
+            {
+                var userIdentityFromId = await service.GetUserFromId(new Guid(member.Identity.Id));
+                var teamMemberDescriptor = userIdentityFromId.SubjectDescriptor.ToString();
+                teamMemberCache[member.Identity.Id] = teamMemberDescriptor;
+            }
+
+            teamDescriptors.Add(teamMemberCache[member.Identity.Id]);
+        }
+
+        private async Task AddContactToCodeownersDescriptors(
+            GitHubToAADConverter gitHubToAADConverter,
+            string contact,
+            List<string> codeownersDescriptors)
+        {
+            if (!codeownersCache.ContainsKey(contact))
+            {
+                // TODO: Better to have retry if no success on this call.
+                // TODO: use async overload
+                var userPrincipal = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
+                if (!string.IsNullOrEmpty(userPrincipal))
+                {
+                    codeownersCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
+                }
+                else
+                {
+                    logger.LogInformation(
+                        "Cannot find the user principal for github contact '{contact}'",
+                        contact);
+                    codeownersCache[contact] = null;
+                }
+            }
+
+            codeownersDescriptors.Add(codeownersCache[contact]);
+        }
+
+        private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(
+            string projectName,
+            string projectPath,
+            PipelineSelectionStrategy strategy)
         {
             var definitions = await service.GetPipelinesAsync(projectName, projectPath);
 
-            switch (strategy)
+            return strategy switch
             {
-                case PipelineSelectionStrategy.All:
-                    return definitions;
-                case PipelineSelectionStrategy.Scheduled:
-                default:
-                    return definitions.Where(
-                        def => def.Triggers.Any(
-                            trigger => trigger.TriggerType == DefinitionTriggerType.Schedule));
-            }
+                PipelineSelectionStrategy.All => definitions,
+                _ => definitions.Where(
+                    def => def.Triggers.Any(
+                        trigger => trigger.TriggerType == DefinitionTriggerType.Schedule)),
+            };
         }
 
-        private async Task EnsureSynchronizedNotificationTeamIsChild(WebApiTeam parent, WebApiTeam child, bool persistChanges)
+        private async Task EnsureSynchronizedNotificationTeamIsChild(
+            WebApiTeam parent,
+            WebApiTeam child,
+            bool persistChanges)
         {
             var parentDescriptor = await service.GetDescriptorAsync(parent.Id);
             var childDescriptor = await service.GetDescriptorAsync(child.Id);
 
             var isInTeam = await service.CheckMembershipAsync(parentDescriptor, childDescriptor);
 
-            logger.LogInformation("Child In Parent ParentId = {0}, ChildId = {1}, IsInTeam = {2}", parent.Id, child.Id, isInTeam);
+            logger.LogInformation(
+                "Child In Parent ParentId = {parentId}, ChildId = {childId}, IsInTeam = {isInTeam}",
+                parent.Id, child.Id, isInTeam);
 
             if (!isInTeam)
             {
@@ -311,14 +401,20 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             }
         }
 
-        private async Task EnsureScheduledBuildFailSubscriptionExists(BuildDefinition pipeline, WebApiTeam team, bool persistChanges)
+        private async Task EnsureScheduledBuildFailSubscriptionExists(
+            BuildDefinition pipeline,
+            WebApiTeam team,
+            bool persistChanges)
         {
-            const string BuildFailureNotificationTag = "#AutomaticBuildFailureNotification";
+            const string buildFailureNotificationTag = "#AutomaticBuildFailureNotification";
             var subscriptions = await service.GetSubscriptionsAsync(team.Id);
 
-            var subscription = subscriptions.FirstOrDefault(sub => sub.Description.Contains(BuildFailureNotificationTag));
+            var subscription = subscriptions.FirstOrDefault(sub
+                => sub.Description.Contains(buildFailureNotificationTag));
 
-            logger.LogInformation("Team Is Subscribed TeamName = {0} PipelineId = {1}", team.Name, pipeline.Id);
+            logger.LogInformation(
+                "Team Is Subscribed TeamName = {teamName} PipelineId = {pipelineId}", team.Name,
+                pipeline.Id);
 
             string definitionName = $"\\{pipeline.Project.Name}\\{pipeline.Name}";
             if (subscription == default)
@@ -343,13 +439,15 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 var newSubscription = new NotificationSubscriptionCreateParameters
                 {
                     Channel = new UserSubscriptionChannel { UseCustomAddress = false },
-                    Description = $"A build fails {BuildFailureNotificationTag}",
+                    Description = $"A build fails {buildFailureNotificationTag}",
                     Filter = filter,
                     Scope = new SubscriptionScope { Type = "none", Id = pipeline.Project.Id },
                     Subscriber = identity,
                 };
 
-                logger.LogInformation("Creating Subscription PipelineId = {0}, TeamId = {1}", pipeline.Id, team.Id);
+                logger.LogInformation(
+                    "Creating Subscription PipelineId = {pipelineId}, TeamId = {teamId}",
+                    pipeline.Id, team.Id);
                 if (persistChanges)
                 {
                     subscription = await service.CreateSubscriptionAsync(newSubscription);
@@ -357,10 +455,9 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             }
             else
             {
-                var filter = subscription.Filter as ExpressionFilter;
-                if (filter == null)
+                if (!(subscription.Filter is ExpressionFilter filter))
                 {
-                    logger.LogWarning("Subscription expression is not correct for of team {0}", team.Name);
+                    logger.LogWarning("Subscription expression is not correct for of team {teamName}", team.Name);
                     return;
                 }
 
@@ -368,7 +465,9 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 if (definitionClause == null)
                 {
-                    logger.LogWarning("Subscription doesn't have correct expression filters for of team {0}", team.Name);
+                    logger.LogWarning(
+                        "Subscription doesn't have correct expression filters for of team {teamName}",
+                        team.Name);
                     return;
                 }
 
@@ -385,8 +484,11 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                             Filter = subscription.Filter,
                             Scope = subscription.Scope,
                         };
-                        logger.LogInformation("Updating Subscription expression for team {0} with correct definition name {1}", team.Name, definitionName);
-                        subscription = await service.UpdatedSubscriptionAsync(updateParameters, subscription.Id.ToString());
+                        logger.LogInformation(
+                            "Updating Subscription expression for team {teamName} " +
+                            "with correct definition name {definitionName}",
+                            team.Name, definitionName);
+                        subscription = await service.UpdatedSubscriptionAsync(updateParameters, subscription.Id);
                     }
                 }
             }

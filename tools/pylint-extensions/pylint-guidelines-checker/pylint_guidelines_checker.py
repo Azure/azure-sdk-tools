@@ -888,7 +888,7 @@ class ClientListMethodsUseCorePaging(BaseChecker):
             if node.parent.parent.name.endswith("Client") and node.parent.parent.name not in self.ignore_clients and node.parent.is_method():
                 if node.parent.name.startswith("list"):
                     paging_class = False
-                    async_itempaged_return = False
+                    returns_async = False
 
                     path = node.parent.root().name
                     async_client = ".aio." in path
@@ -900,14 +900,14 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                                 return
                             elif value.name == "ItemPaged":
                                 paging_class = True
-                                async_itempaged_return = False if async_client else True
+                                returns_async = False
                             elif value.name == "AsyncItemPaged":
                                 paging_class = True
-                                async_itempaged_return = True
+                                returns_async = True
                             elif "def by_page" in value.as_string():
                                 # If it is a custom paging class
                                 paging_class = True
-                                async_itempaged_return = async_client
+                                returns_async = async_client
                     except: # astroid can't always infer the return
                         logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
                         return 
@@ -916,7 +916,7 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                         self.add_message(
                             msgid="client-list-methods-use-paging", node=node.parent, confidence=None
                         )
-                    if paging_class and not async_itempaged_return and async_client:
+                    if paging_class and not returns_async and async_client:
                         self.add_message(msgid="async-return-async-iterable", node=node.parent, confidence=None)
         except:
             logger.debug("Pylint custom checker failed to check if client list method uses core paging.")

@@ -457,6 +457,7 @@ void DumpList(
     T start,
     T end,
     AstDumper* dumper,
+    DumpNodeOptions dumpOptions,
     std::function<void(AstDumper*, decltype(*start)&)> function)
 {
   bool firstArg{true};
@@ -465,7 +466,14 @@ void DumpList(
     if (!firstArg)
     {
       dumper->InsertPunctuation(',');
-      dumper->InsertWhitespace();
+      if (dumpOptions.NeedsLeadingNewline)
+      {
+        dumper->Newline();
+      }
+      else
+      {
+        dumper->InsertWhitespace();
+      }
     }
     firstArg = false;
     function(dumper, *it);
@@ -516,6 +524,7 @@ public:
         m_args.begin(),
         m_args.end(),
         dumper,
+        dumpOptions,
         [&](AstDumper* dumper, std::unique_ptr<AstExpr> const& expr) {
           expr->Dump(dumper, dumpOptions);
         });
@@ -663,6 +672,7 @@ public:
         m_arguments.begin(),
         m_arguments.end(),
         dumper,
+        dumpOptions,
         [&](AstDumper* dumper, std::unique_ptr<AstExpr> const& expr) {
           expr->Dump(dumper, dumpOptions);
         });
@@ -1211,19 +1221,21 @@ public:
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('<');
 
-    DumpList(
-        m_parameters.begin(),
-        m_parameters.end(),
-        dumper,
-        [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
-          DumpNodeOptions innerOptions{dumpOptions};
-
-          innerOptions.NeedsLeftAlign = false;
-          innerOptions.NeedsTrailingNewline = false;
-          innerOptions.NeedsTrailingSemi = false;
-          param->DumpNode(dumper, innerOptions);
-        });
-
+    {
+      DumpNodeOptions innerOptions{dumpOptions};
+      innerOptions.NeedsLeftAlign = false;
+      innerOptions.NeedsTrailingNewline = false;
+      innerOptions.NeedsTrailingSemi = false;
+      innerOptions.NeedsLeadingNewline = false;
+      DumpList(
+          m_parameters.begin(),
+          m_parameters.end(),
+          dumper,
+          innerOptions,
+          [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+            param->DumpNode(dumper, innerOptions);
+          });
+    }
     dumper->InsertPunctuation('>');
     if (m_isParameterPack)
     {
@@ -1473,19 +1485,23 @@ public:
     }
     dumper->InsertTypeName(m_name, m_navigationId);
     dumper->InsertPunctuation('(');
-    DumpList(
-        m_parameters.begin(),
-        m_parameters.end(),
-        dumper,
-        [&](AstDumper* dumper, std::unique_ptr<AstNode>& node) {
-          DumpNodeOptions innerOptions{dumpOptions};
+    {
+      DumpNodeOptions innerOptions{dumpOptions};
 
-          innerOptions.NeedsLeftAlign = false;
-          innerOptions.NeedsTrailingNewline = false;
-          innerOptions.NeedsTrailingSemi = false;
-          node->DumpNode(dumper, innerOptions);
-        });
+      innerOptions.NeedsLeftAlign = false;
+      innerOptions.NeedsTrailingNewline = false;
+      innerOptions.NeedsTrailingSemi = false;
+      innerOptions.NeedsLeadingNewline = false;
 
+      DumpList(
+          m_parameters.begin(),
+          m_parameters.end(),
+          dumper,
+          innerOptions,
+          [&](AstDumper* dumper, std::unique_ptr<AstNode>& node) {
+            node->DumpNode(dumper, innerOptions);
+          });
+    }
     dumper->InsertPunctuation(')');
     if (!m_isMemberOfClass)
     {
@@ -1815,13 +1831,19 @@ public:
     dumper->InsertKeyword("template");
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('<');
-    DumpList(
-        m_parameters.begin(),
-        m_parameters.end(),
-        dumper,
-        [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
-          param->DumpNode(dumper, dumpOptions);
-        });
+    {
+      DumpNodeOptions innerOptions{dumpOptions};
+      innerOptions.NeedsLeadingNewline = false;
+
+      DumpList(
+          m_parameters.begin(),
+          m_parameters.end(),
+          dumper,
+          innerOptions,
+          [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+            param->DumpNode(dumper, innerOptions);
+          });
+    }
 
     dumper->InsertPunctuation('>');
     dumper->Newline();
@@ -1873,6 +1895,7 @@ public:
         m_parameters.begin(),
         m_parameters.end(),
         dumper,
+        dumpOptions,
         [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
           param->DumpNode(dumper, dumpOptions);
         });
@@ -1925,13 +1948,19 @@ public:
     dumper->InsertKeyword("template");
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('<');
-    DumpList(
-        m_parameters.begin(),
-        m_parameters.end(),
-        dumper,
-        [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
-          param->DumpNode(dumper, dumpOptions);
-        });
+    {
+      DumpNodeOptions innerOptions{dumpOptions};
+      innerOptions.NeedsLeadingNewline = false;
+
+      DumpList(
+          m_parameters.begin(),
+          m_parameters.end(),
+          dumper,
+          innerOptions,
+          [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+            param->DumpNode(dumper, innerOptions);
+          });
+    }
     dumper->InsertPunctuation('>');
     dumper->Newline();
     m_typeAliasNode->DumpNode(dumper, dumpOptions);
@@ -2416,6 +2445,7 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
             m_baseClasses.begin(),
             m_baseClasses.end(),
             dumper,
+            dumpOptions,
             [&](AstDumper* dumper, std::unique_ptr<AstBaseClass>& base) {
               base->DumpNode(dumper, dumpOptions);
             });
@@ -2494,13 +2524,18 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   dumper->AdjustIndent(2);
   dumper->Newline();
 
-  DumpList(
-      m_enumerators.begin(),
-      m_enumerators.end(),
-      dumper,
-      [&](AstDumper* dumper, std::unique_ptr<AstNode>& enumerator) {
-        enumerator->DumpNode(dumper, dumpOptions);
-      });
+  {
+    DumpNodeOptions innerOptions{dumpOptions};
+    innerOptions.NeedsLeadingNewline = true;
+    DumpList(
+        m_enumerators.begin(),
+        m_enumerators.end(),
+        dumper,
+        innerOptions,
+        [&](AstDumper* dumper, std::unique_ptr<AstNode>& enumerator) {
+          enumerator->DumpNode(dumper, dumpOptions);
+        });
+  }
   dumper->Newline();
   dumper->AdjustIndent(-2);
   dumper->LeftAlign();
@@ -2605,6 +2640,7 @@ void AstInitializerList::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) co
             m_initializerValues.begin(),
             m_initializerValues.end(),
             dumper,
+            dumpOptions,
             [&](AstDumper* dumper, std::unique_ptr<AstExpr> const& initializer) {
               dumper->Newline();
               dumper->LeftAlign();

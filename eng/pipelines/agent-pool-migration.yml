@@ -20,7 +20,7 @@ pr: none
 #    E.g.
 #    In win agent pool, the path is like ".\eng\scripts\Repo-File-Content-Replacements.ps1", so the regex path can be like "^.\\eng\\"
 #    In linux agent pool, the path is like "./eng/scripts/Repo-File-Content-Replacements.ps1", so the regex path can be like "^./eng/"
-#    To compitable with both cases, you can also specify your regex path like "^./|\\eng/|\\"
+#    To be compatible with both cases, you can also specify your regex path like "^./|\\eng/|\\"
 parameters:
 - name: Repos
   type: object

@@ -266,13 +266,8 @@ ApiViewProcessorImpl::AstVisitorAction::AstVisitorAction(ApiViewProcessorImpl* p
 bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
     clang::NamedDecl* namedDecl)
 {
-  // We don't even want to consider any types which are a member of a class.
-  if (AzureClassesDatabase::IsMemberOfObject(namedDecl))
-  {
-    return false;
-  }
   bool shouldCollect = false;
-  // By default, we consider any types within desired set of input files.
+  // By default, we only want to consider types within desired set of input files.
   auto fileId = namedDecl->getASTContext().getSourceManager().getFileID(namedDecl->getLocation());
   auto fileEntry = namedDecl->getASTContext().getSourceManager().getFileEntryForID(fileId);
   if (fileEntry)
@@ -284,87 +279,27 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
       shouldCollect = true;
     }
   }
+
+  // We don't even want to consider any types which are a member of a class.
+  if (shouldCollect)
+  {
+    if (AzureClassesDatabase::IsMemberOfObject(namedDecl))
+    {
+      shouldCollect = false;
+    }
+  }
+
   if (shouldCollect)
   {
     const std::string typeName{namedDecl->getQualifiedNameAsString()};
-    // If we don't have a filter namespace, include all the types.
-    if (m_processorImpl->FilterNamespaces().empty())
+    // If the type is in the _detail namespace, then we want to exclude it if we're
+    // excluding detail types.
+    if ((typeName.find("::_detail") != std::string::npos) && !m_processorImpl->IncludeDetail())
     {
-      // However if the type is in the _detail namespace, then we want to exclude it if we're
-      // excluding detail types.
-      if ((typeName.find("::_detail") != std::string::npos) && !m_processorImpl->IncludeDetail())
+      // There is an exception for Azure::_detail::Clock to the "exclude _detail" rule.
+      if (typeName.find("Azure::_detail::Clock") != 0)
       {
         shouldCollect = false;
-      }
-    }
-    else
-    {
-      // We have a namespace filter set. Look at all types whose names start with the filter
-      // namespace name. We don't want to consider namespaces, since they're not discrete entries in
-      // our resulting output.
-      if (namedDecl->getKind() != Decl::Namespace)
-      {
-        if (std::find_if(
-                std::begin(m_processorImpl->FilterNamespaces()),
-                std::end(m_processorImpl->FilterNamespaces()),
-                [&typeName](std::string const& ns) { return typeName.find(ns) == 0; })
-            == std::end(m_processorImpl->FilterNamespaces()))
-        {
-          shouldCollect = true;
-          bool generateError = true;
-          // Don't flag "using" declarations or forward declarations.
-          if ((namedDecl->getKind() == Decl::Using) || (namedDecl->getKind() == Decl::TypeAlias)
-              || (namedDecl->getKind() == Decl::CXXRecord
-                  && cast<CXXRecordDecl>(namedDecl)->getDefinition() != namedDecl))
-          {
-            generateError = false;
-          }
-          if (generateError)
-          {
-            m_processorImpl->GetClassesDatabase()->CreateApiViewMessage(
-                ApiViewMessages::TypeDeclaredInNamespaceOutsideFilter, typeName);
-          }
-        }
-      }
-    }
-    if (shouldCollect && namedDecl->getKind() != Decl::Namespace)
-    {
-      // However if the type is in the _internal namespace, then we want to exclude it if we're
-      // excluding internal types.
-      if (typeName.find("::_internal") != std::string::npos)
-      {
-        if (!m_processorImpl->AllowInternal())
-        {
-          m_processorImpl->GetClassesDatabase()->CreateApiViewMessage(
-              ApiViewMessages::InternalTypesInNonCorePackage, typeName);
-        }
-      }
-      // If the type is in the _detail namespace, then we want to exclude it if we're
-      // excluding detail types.
-      if ((typeName.find("::_detail") != std::string::npos) && !m_processorImpl->IncludeDetail())
-      {
-        // There is an exception for Azure::_detail::Clock to the "exclude _detail" rule.
-        if (typeName.find("Azure::_detail::Clock") != 0)
-        {
-          shouldCollect = false;
-        }
-      }
-    }
-    else
-    {
-      // We want to include any free types within the set of headers because they will result in
-      // a diagnostic.
-      PrintingPolicy pp{LangOptions{}};
-      pp.adjustForCPlusPlus();
-      std::string namespaceName;
-      llvm::raw_string_ostream osNamespace(namespaceName);
-      namedDecl->printQualifiedName(osNamespace, pp);
-      std::string typeName;
-      llvm::raw_string_ostream osType(typeName);
-      namedDecl->printName(osType);
-      if (typeName == namespaceName)
-      {
-        shouldCollect = true;
       }
     }
   }

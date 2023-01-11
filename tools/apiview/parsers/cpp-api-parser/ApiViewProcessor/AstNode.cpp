@@ -2812,6 +2812,14 @@ bool AzureClassesDatabase::IsMemberOfObject(NamedDecl const* decl)
       return true;
     }
   }
+
+  // If this node has a parent function or method, it's a member of something.
+  auto parent = decl->getParentFunctionOrMethod();
+  if (parent)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -2825,16 +2833,64 @@ void AzureClassesDatabase::CreateAstNode(clang::NamedDecl* namedDecl)
 {
   if (m_processor->IncludePrivate() || namedDecl->getAccess() != AS_private)
   {
-    if (!IsMemberOfObject(namedDecl))
+    // Perform a couple of verification checks that should apply to every type we add to the API
+    // Review, regardless of the type of object:
+    //
+    // 1) If there's a namespace filter specified, flag all types outside the namespace filter.
+    // 2) If the type is in the _internal namespace, flag it if we're not allowed to have _internal
+    // types.
+    //
+    // We don't want to consider namespaces in these checks, since they're not discrete entries in
+    // our resulting output.
+    if (namedDecl->getKind() != Decl::Namespace)
     {
-      auto node = AstNode::Create(
-          namedDecl,
-          this,
-          m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(namedDecl)));
-      if (node)
+      const std::string typeName{namedDecl->getQualifiedNameAsString()};
+      if (!m_processor->FilterNamespaces().empty())
       {
-        m_typeList.push_back(std::move(node));
+        // We have a namespace filter set. Verify that the type name starts with one of the filter
+        // namespaces.
+        if (std::find_if(
+                std::begin(m_processor->FilterNamespaces()),
+                std::end(m_processor->FilterNamespaces()),
+                [&typeName](std::string const& ns) { return typeName.find(ns) == 0; })
+            == std::end(m_processor->FilterNamespaces()))
+        {
+          bool generateError = true;
+          // Don't flag "using" declarations or forward declarations, because they don't introduce
+          // new types.
+          if ((namedDecl->getKind() == Decl::Using) || (namedDecl->getKind() == Decl::TypeAlias)
+              || (namedDecl->getKind() == Decl::CXXRecord
+                  && cast<CXXRecordDecl>(namedDecl)->getDefinition() != namedDecl))
+          {
+            generateError = false;
+          }
+          if (generateError)
+          {
+            m_processor->GetClassesDatabase()->CreateApiViewMessage(
+                ApiViewMessages::TypeDeclaredInNamespaceOutsideFilter, typeName);
+          }
+        }
       }
+
+      // If the type is in the _internal namespace, then we want to flag it unless we are
+      // allowing internal types.
+      if (typeName.find("::_internal") != std::string::npos)
+      {
+        if (!m_processor->AllowInternal())
+        {
+          m_processor->GetClassesDatabase()->CreateApiViewMessage(
+              ApiViewMessages::InternalTypesInNonCorePackage, typeName);
+        }
+      }
+    }
+
+    // Now create the node. Note that for some types AstNode::Create will return null, so we skip
+    // adding them before we add them.
+    auto node = AstNode::Create(
+        namedDecl, this, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(namedDecl)));
+    if (node)
+    {
+      m_typeList.push_back(std::move(node));
     }
   }
 }

@@ -144,7 +144,13 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
 
             if (options.Language == Language.JS) {
+                // JS is async-only
                 options.NoSync = true;
+            }
+            else if (options.Language == Language.Cpp)
+            {
+                // Cpp is sync-only
+                options.NoAsync = true;
             }
 
             var serviceInfo = DeserializeYaml<ServiceInfo>(options.TestsFile);

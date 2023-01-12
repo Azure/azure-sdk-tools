@@ -6,11 +6,14 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 {
     /// <summary>
     /// The entry for CODEOWNERS has the following structure:
-    /// # PRLabel: %Label
-    /// # ServiceLabel: %Label
-    /// path @owner @owner
+    ///
+    /// <code>
+    ///   # PRLabel: %Label
+    ///   # ServiceLabel: %Label
+    ///   path @owner @owner
+    /// </code>
     /// </summary>
-    public class CodeOwnerEntry
+    public class CodeownersEntry
     {
         const char LabelSeparator = '%';
         const char OwnerSeparator = '@';
@@ -20,7 +23,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
        
         public string PathExpression { get; set; } = "";
 
-        public bool ContainsWildcard => PathExpression.Contains("*");
+        public bool ContainsWildcard => PathExpression.Contains('*');
 
         public List<string> Owners { get; set; } = new List<string>();
 
@@ -28,32 +31,24 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         public List<string> ServiceLabels { get; set; } = new List<string>();
 
-        public bool IsValid
-        {
-            get
-            {
-                return !string.IsNullOrEmpty(PathExpression);
-            }
-        }
+        public bool IsValid => !string.IsNullOrWhiteSpace(PathExpression);
 
         private static string[] SplitLine(string line, char splitOn)
-        {
-            return line.Split(new char[] { splitOn }, StringSplitOptions.RemoveEmptyEntries);
-        }
+            => line.Split(new char[] { splitOn }, StringSplitOptions.RemoveEmptyEntries);
 
         public override string ToString()
-        {
-            return $"HasWildcard:{ContainsWildcard} Expression:{PathExpression} Owners:{string.Join(",", Owners)}  PRLabels:{string.Join(",", PRLabels)}   ServiceLabels:{string.Join(",", ServiceLabels)}";
-        }
+            => $"HasWildcard:{ContainsWildcard} Expression:{PathExpression} " +
+               $"Owners:{string.Join(",", Owners)}  PRLabels:{string.Join(",", PRLabels)}   " +
+               $"ServiceLabels:{string.Join(",", ServiceLabels)}";
 
         public bool ProcessLabelsOnLine(string line)
         {
-            if (line.IndexOf(PRLabelMoniker, StringComparison.OrdinalIgnoreCase) >= 0)
+            if (line.Contains(PRLabelMoniker, StringComparison.OrdinalIgnoreCase))
             {
                 PRLabels.AddRange(ParseLabels(line, PRLabelMoniker));
                 return true;
             }
-            else if (line.IndexOf(ServiceLabelMoniker, StringComparison.OrdinalIgnoreCase) >= 0)
+            else if (line.Contains(ServiceLabelMoniker, StringComparison.OrdinalIgnoreCase))
             {
                 ServiceLabels.AddRange(ParseLabels(line, ServiceLabelMoniker));
                 return true;
@@ -61,10 +56,10 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             return false;
         }
 
-        private IEnumerable<string> ParseLabels(string line, string moniker)
+        private static IEnumerable<string> ParseLabels(string line, string moniker)
         {
             // Parse a line that looks like # PRLabel: %Label, %Label
-            if (line.IndexOf(moniker, StringComparison.OrdinalIgnoreCase) == -1)
+            if (!line.Contains(moniker, StringComparison.OrdinalIgnoreCase))
             {
                 yield break;
             }
@@ -76,7 +71,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 yield break;
             }
 
-            line = line.Substring(colonPosition + 1).Trim();
+            line = line[(colonPosition + 1)..].Trim();
             foreach (string label in SplitLine(line, LabelSeparator).ToList())
             {
                 if (!string.IsNullOrWhiteSpace(label))
@@ -88,30 +83,38 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         public void ParseOwnersAndPath(string line)
         {
-            if (string.IsNullOrEmpty(line) ||
-               (line.StartsWith("#") && !(line.IndexOf(CodeOwnerEntry.MissingFolder, StringComparison.OrdinalIgnoreCase) >= 0)))
+            if (
+                string.IsNullOrEmpty(line)
+                || (IsComment(line)
+                    && !line.Contains(
+                        CodeownersEntry.MissingFolder, StringComparison.OrdinalIgnoreCase)))
             {
                 return;
             }
 
             line = ParsePath(line);
-
-            //remove any comments from the line, if any.
-            // this is the case when we have something like @user #comment
-            int commentIndex = line.IndexOf("#");
-
-            if (commentIndex >= 0)
-            {
-                line = line.Substring(0, commentIndex).Trim();
-            }
+            line = RemoveCommentIfAny(line);
 
             foreach (string author in SplitLine(line, OwnerSeparator).ToList())
             {
                 if (!string.IsNullOrWhiteSpace(author))
-                {
                     Owners.Add(author.Trim());
-                }
             }
+        }
+
+        private static bool IsComment(string line)
+            => line.StartsWith("#");
+
+        private static string RemoveCommentIfAny(string line)
+        {
+            // this is the case when we have something like @user #comment
+
+            int commentIndex = line.IndexOf("#", StringComparison.OrdinalIgnoreCase);
+
+            if (commentIndex >= 0)
+                line = line[..commentIndex].Trim();
+
+            return line;
         }
 
         private string ParsePath(string line)
@@ -123,22 +126,19 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 return line;
             }
 
-            string path = line.Substring(0, ownerStartPosition).Trim();
+            string path = line[..ownerStartPosition].Trim();
             // the first entry is the path/regex
             PathExpression = path;
 
             // remove the path from the string.
-            return line.Substring(ownerStartPosition);
+            return line[ownerStartPosition..];
         }
 
         /// <summary>
         /// Remove all code owners which are not github alias.
         /// </summary>
-        public void FilterOutNonUserAliases()
-        {
-            Owners.RemoveAll(r => !IsGitHubUserAlias(r));
-        }
-
+        public void ExcludeNonUserAliases()
+            => Owners.RemoveAll(r => !IsGitHubUserAlias(r));
 
         /// <summary>
         /// Helper method to check if it is valid github alias.

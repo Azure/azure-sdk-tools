@@ -21,13 +21,13 @@ BeforeAll {
     function Reset-Folder($backupFolder, $targetFolder) {
         if (Test-Path $backupFolder) {
             Copy-Item -Path "$backupFolder/*" -Destination $targetFolder -Recurse -Force
-            Remove-Item $backupFolder -Recurse
+            Remove-Item $backupFolder -Recurse -Force
         }
     }
 }
 AfterAll {
     if (Test-Path "$PSScriptRoot/inputs/backup") {
-        Remove-Item "$PSScriptRoot/inputs/backup" -Recurse
+        Remove-Item "$PSScriptRoot/inputs/backup" -Recurse -Force
     }
 }
 # Test cases:

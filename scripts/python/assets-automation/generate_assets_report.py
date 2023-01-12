@@ -8,9 +8,37 @@ from ci_tools.functions import (
     discover_targeted_packages,
 )  # azure-sdk-tools from azure-sdk-for-python
 
-generated_folder = os.path.abspath(
-    os.path.join(os.path.abspath(__file__), "..", "generated")
-)
+generated_folder = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "generated"))
+
+TABLE_HEADER: str = """| Package | Using Proxy | Externalized Recordings |
+|---|---|---|
+"""
+
+TABLE_LAYER: str = "|{}|{}|{}|"
+
+DOCUMENT: str = """
+<table>
+<tr>
+<td>
+
+{}
+
+</td>
+<td>
+
+{}
+
+</td>
+<td>
+
+{}
+
+</td>
+</tr>
+</table>
+"""
+
+TABLE_HEIGHT: int = 10
 
 
 class ScanResult:
@@ -19,21 +47,6 @@ class ScanResult:
         self.packages: List[str] = []
         self.packages_using_proxy: List[str] = []
         self.packages_using_external: List[str] = []
-
-
-LANGUAGES = {
-    "Net": "https://github.com/azure/azure-sdk-for-net",
-    "Java": "https://github.com/azure/azure-sdk-for-java",
-    "Python": "https://github.com/azure/azure-sdk-for-python",
-    "Java": "https://github.com/azure/azure-sdk-for-java",
-    "C++": "https://github.com/azure/azure-sdk-for-cpp",
-    "C": "https://github.com/azure/azure-sdk-for-c",
-    "iOS": "https://github.com/azure/azure-sdk-for-ios",
-    "Android": "https://github.com/azure/azure-sdk-for-android",
-    "JS": "https://github.com/azure/azure-sdk-for-js",
-}
-
-LANGUAGE_FUNCTIONS = {}
 
 
 def get_repo(language: str) -> str:
@@ -85,6 +98,7 @@ def evaluate_python_package(package_path: str) -> int:
 def generate_go_report() -> ScanResult:
     pass
 
+
 def generate_net_report() -> ScanResult:
     pass
 
@@ -122,6 +136,14 @@ def generate_js_report() -> ScanResult:
     return result
 
 
+def write_output(result: ScanResult) -> None:
+    pass
+
+
+def write_summary(results: List[ScanResult]) -> None:
+    pass
+
+
 def generate_python_report() -> ScanResult:
     repo = get_repo("Python")
 
@@ -147,8 +169,15 @@ if __name__ == "__main__":
     parser.parse_args()
 
     python = generate_python_report()
-    js = generate_js_report()
+    write_output(python)
 
-    breakpoint()
+    js = generate_js_report()
+    write_output(js)
+
     go = generate_go_report()
+    write_output(go)
+
     net = generate_net_report()
+    write_output(go)
+
+    write_summary([python, js, go, net])

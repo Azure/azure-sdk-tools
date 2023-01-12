@@ -3,7 +3,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/heats/feature/upload-zip
+      ref: refs/heads/feature/upload-zip
 
 parameters:
   - name: ToolDirectory

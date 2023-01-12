@@ -8,9 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - eng/common/scripts/Service-Level-Readme-Automation.ps1
-      - eng/common/scripts/Service-Level-Readme-Automation-Functions.ps1
-      - eng/common/scripts/Helpers/Metadata-Helpers.ps1
+      - eng/scripts-tests/*
 
 pr:
   branches:
@@ -21,12 +19,10 @@ pr:
       - hotfix/*
   paths:
     include:
-      - eng/common/scripts/Service-Level-Readme-Automation.ps1
-      - eng/common/scripts/Service-Level-Readme-Automation-Functions.ps1
-      - eng/common/scripts/Helpers/Metadata-Helpers.ps1
+      - eng/scripts-tests/*
 
 extends:
-  template: /eng/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
+  template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
   parameters:
-    TargetDirectory: eng/common-tests/doc-automation/service-readme-generation
+    TargetDirectory: eng/scripts/
     TargetTags: 'UnitTest'

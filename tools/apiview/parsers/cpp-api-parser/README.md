@@ -26,6 +26,7 @@ The `ParseAzureSdkCpp` tool has the following command line switches:
 - `-o`, `--output` - Specifies the output file for the API review.
 - `--version` - Prints the version of the ParseAzureSdkCpp tool.
 - `-h`, `--help` - Prints help text about the tool.
+- `-c`, `--console` - Prints the ApiView output to the console as well as the output JSON file.
 
 ### ApiViewSettings.json
 
@@ -93,20 +94,11 @@ Note that the _actual_ parsing implementation is in the `ProcessorImpl.cpp` and
 `ProcessorImpl.hpp` files - this is done to isolate the clang/LLVM implementation
 details from the rest of the implementation.
 
-The tool then calls `apiViewProcessor.ProcessApiView()` which will invoke the clang tooling to parse
-the input files and create an `AzureClassesDatabase`.
+Once the ApiView processor is created, the tool calls `apiViewProcessor.ProcessApiView()` which will invoke the clang tooling to parse
+the input files and create an `AzureClassesDatabase` which contains the types and constructs to be included in the API review.
 
-The tool then instantiates an instance of an 'ASTDumper' object to dump the package. THe primary `ASTDumper` is named
-`JsonDumper` which takes an `AzureClassesDatabase` and creates an ApiView compatible
-JSON output file. There is also a `TextDumper` which will dump the API review as text to a `std::ostream`
-object.
-
-### ApiView tool inputs
-
-The ApiView tool accepts as input a JSON file which is a tokenized representation of the source file to be presented.
-An example of the schema for the JSON file can be found [here](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/apiview_token_gist.json), this JSON file when parsed by the API View tool
-will create the following ApiView:
-![API View snippet defining `ClassLibrary1.dll`](https://i.imgur.com/ikfRmLM.png)
+Finally, after collecting the types in the `AzureClassesDatabase`, the ParseAzureSdkCpp tool instantiates an instance of a 'JsonDumper' 
+object to dump the package.
 
 ### Source Layout
 
@@ -160,3 +152,17 @@ All other methods are implemented in the AstDumper class and use the `Insert<xxx
 and `Add<xxx>` methods. This allows the AST dumping to maintain a set of high
 level constructs such as soft line breaks (to handle intelligent line wrapping),
 Newline processing, indentation processing, etc.
+
+There are two AstDumper objects in the `ApiViewProcessor` directory - `TextDumper` and `JsonDumper`. 
+The `TextDumper` object will dump the output of the ApiView as text to a `std::ostream` object, 
+while the `JsonDumper` object will dump the output of the ApiView as JSON to a `std::ostream` object (the `TextDumper`
+object is primarily used for test purposes).
+
+##### ApiView tool inputs
+
+When the `JsonDumper` class emits an API View JSON file, it emits a tokenized representation of the source file to be
+displayed in the ApiView tool.
+
+This tokenized representation is modeled in the following example JSON document found [here](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/apiview_token_gist.json)
+When this JSON file is parsed by the API View tool, it will create the following text in the ApiView:
+![API View snippet defining `ClassLibrary1.dll`](https://i.imgur.com/ikfRmLM.png)

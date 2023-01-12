@@ -3140,7 +3140,7 @@ class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
 
 class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
     """Test that we are checking the type and property name lengths"""
-    CHECKER_CLASS = checker.TypePropertyNameTooLong
+    CHECKER_CLASS = checker.NameExceedsStandardCharacterLength
 
     def test_class_name_too_long(self):
         class_node = astroid.extract_node(

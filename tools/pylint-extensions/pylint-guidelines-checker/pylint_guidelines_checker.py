@@ -2028,7 +2028,7 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
                 msgid="no-raise-with-traceback", node=node, confidence=None
             )
 
-class TypePropertyNameTooLong(BaseChecker):
+class NameExceedsStandardCharacterLength(BaseChecker):
     __implements__ = IAstroidChecker
 
     """Rule to check that the character length of type and property names are not over X characters."""
@@ -2117,7 +2117,7 @@ def register(linter):
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
     linter.register_checker(NonAbstractTransportImport(linter))
     linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
-    linter.register_checker(TypePropertyNameTooLong(linter))
+    linter.register_checker(NameExceedsStandardCharacterLength(linter))
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

@@ -31,7 +31,7 @@ struct DumpNodeOptions
 
 struct AstNode
 {
-  virtual void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) = 0;
+  virtual void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) = 0;
   AstNode(clang::Decl const* decl);
 
   // AstNode's don't have namespaces or names, so return something that would make callers happy.
@@ -61,7 +61,7 @@ public:
       clang::NamedDecl const* decl,
       AzureClassesDatabase* const classDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode);
-  virtual void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+  virtual void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     assert(!"Pure virtual base - missing implementation of DumpNode in derived class.");
   };

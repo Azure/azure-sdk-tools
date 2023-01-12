@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - eng/scripts-tests/*
+      - eng/scripts/*
 
 pr:
   branches:
@@ -19,7 +19,7 @@ pr:
       - hotfix/*
   paths:
     include:
-      - eng/scripts-tests/*
+      - eng/scripts/*
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml

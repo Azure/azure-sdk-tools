@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
     // at the end of processing instead of only the IssueUpdate being at the end
     public class GitHubEventClient
     {
+        private static readonly string NotAUserPartial = "is not a user";
         internal class GitHubComment
         {
             private long _repositoryId;
@@ -65,8 +66,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         }
         public GitHubEventClient(string productHeaderName, string rulesConfigLocation = null)
         {
-            _gitHubClient = createClientWithGitHubEnvToken(productHeaderName);
-            _rulesConfiguration = loadRulesConfiguration(rulesConfigLocation);
+            _gitHubClient = CreateClientWithGitHubEnvToken(productHeaderName);
+            _rulesConfiguration = LoadRulesConfiguration(rulesConfigLocation);
         }
 
         /// <summary>
@@ -134,6 +135,22 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return numUpdates;
         }
 
+        public async Task WriteRateLimits(string prependMessage = null)
+        {
+            var miscRateLimit = await GetRateLimits();
+            string rateLimitMessage = $"Limit={miscRateLimit.Resources.Core.Limit}, Remaining={miscRateLimit.Resources.Core.Remaining}";
+            if (prependMessage != null)
+            {
+                rateLimitMessage = $"{prependMessage} {rateLimitMessage}";
+            }
+            Console.WriteLine(rateLimitMessage);
+        }
+
+        public async Task<MiscellaneousRateLimit> GetRateLimits()
+        {
+            return await this._gitHubClient.RateLimit.GetRateLimits();
+        }
+
         /// <summary>
         /// Overloaded convenience function that'll return the existing IssueUpdate, if non-null, and
         /// create one to return, if null. This prevents the same code from being in every function
@@ -142,13 +159,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="issue">Octokit.Issue from the event payload</param>
         /// <param name="issueUpdate">Octokit.IssueUpdate that'll be returned if non-null</param>
         /// <returns>Octokit.IssueUpdate</returns>
-        public IssueUpdate GetIssueUpdate(Issue issue, IssueUpdate issueUpdate)
+        public IssueUpdate GetIssueUpdate(Issue issue)
         {
-            if (null == issueUpdate)
+            if (null == this._issueUpdate)
             {
-                _issueUpdate = issue.ToUpdate();
+                this._issueUpdate = issue.ToUpdate();
             }
-            return _issueUpdate;
+            return this._issueUpdate;
         }
 
         /// <summary>
@@ -159,13 +176,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="pullRequest">Octokit.PullRequest from the event payload</param>
         /// <param name="issueUpdate">Octokit.IssueUpdate that'll be returned if non-null</param>
         /// <returns>Octokit.IssueUpdate</returns>
-        public IssueUpdate GetIssueUpdate(PullRequest pullRequest, IssueUpdate issueUpdate)
+        public IssueUpdate GetIssueUpdate(PullRequest pullRequest)
         {
-            if (null == issueUpdate)
+            if (null == this._issueUpdate)
             {
-                _issueUpdate = CreateIssueUpdateForPR(pullRequest);
+                this._issueUpdate = CreateIssueUpdateForPR(pullRequest);
             }
-            return _issueUpdate;
+            return this._issueUpdate;
         }
 
         /// <summary>
@@ -222,6 +239,40 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         }
 
         /// <summary>
+        /// Create a comment that will be added to the PR with the pending updates
+        /// </summary>
+        /// <param name="repositoryId">The Id of the repository</param>
+        /// <param name="issueOrPullRequestNumber">The Issue or PullRequest number</param>
+        /// <param name="comment">The comment being created.</param>
+        /// <returns></returns>
+        public void CreateComment(long repositoryId, int issueOrPullRequestNumber, string comment)
+        {
+            GitHubComment gitHubComment = new GitHubComment(repositoryId, issueOrPullRequestNumber, comment);
+            this._gitHubComments.Add(gitHubComment);
+        }
+
+        /// <summary>
+        /// Get all the reviews for a given pull request.
+        /// </summary>
+        /// <param name="repositoryId">The Id of the repository</param>
+        /// <param name="pullRequestNumber">The pull request number</param>
+        /// <returns></returns>
+        public async Task<IReadOnlyList<PullRequestReview>> GetReviewsForPullRequest(long repositoryId, int pullRequestNumber)
+        {
+            return await this._gitHubClient.PullRequest.Review.GetAll(repositoryId, pullRequestNumber);
+        }
+
+        public void DismissReview(long repositoryId, int pullRequestNumber, long reviewId, string dismissalMessage)
+        {
+            GitHubReviewDismissal gitHubReviewDismissal = new GitHubReviewDismissal(repositoryId, 
+                                                                                    pullRequestNumber, 
+                                                                                    reviewId, 
+                                                                                    dismissalMessage);
+            this._gitHubReviewDismissals.Add(gitHubReviewDismissal);
+        }
+
+
+        /// <summary>
         /// Common function to get files for a pull request. The default page size for the API is 30
         /// and needs to be set to 100 to minimize calls, do that here.
         /// </summary>
@@ -229,7 +280,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="repositoryId"></param>
         /// <param name="pullRequestNumber"></param>
         /// <returns></returns>
-        internal async Task<IReadOnlyList<PullRequestFile>> GetFilesForPullRequest(long repositoryId, int pullRequestNumber)
+        public async Task<IReadOnlyList<PullRequestFile>> GetFilesForPullRequest(long repositoryId, int pullRequestNumber)
         {
             // For whatever reason the default page size
             ApiOptions apiOptions = new ApiOptions();
@@ -237,6 +288,157 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return await this._gitHubClient.PullRequest.Files(repositoryId, pullRequestNumber, apiOptions);
         }
 
+        /// <summary>
+        /// Check to see if a given user is a Collaborator
+        /// </summary>
+        /// <param name="gitHubClient"></param>
+        /// <param name="repositoryId"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public async Task<bool> IsUserCollaborator(long repositoryId, string user)
+        {
+            return await this._gitHubClient.Repository.Collaborator.IsCollaborator(repositoryId, user);
+        }
+
+        /// <summary>
+        /// Check to see if the user is a member of the given Org
+        /// </summary>
+        /// <param name="gitHubClient"></param>
+        /// <param name="orgName">chances are this is going to only ever be "Azure"</param>
+        /// <param name="user">the github login for the user</param>
+        /// <returns></returns>
+        public async Task<bool> IsUserMemberOfOrg(string orgName, string user)
+        {
+            // Chances are the orgname is only going to be "Azure"
+            return await this._gitHubClient.Organization.Member.CheckMember(orgName, user);
+        }
+
+        /// <summary>
+        /// Check whether or not a user has a specific collaborator permission
+        /// </summary>
+        /// <param name="repositoryId">The Id of the Repository</param>
+        /// <param name="user">The User.Login for the event object from the action payload</param>
+        /// <param name="permission">OctoKit.PermissionLevel to check</param>
+        /// <returns></returns>
+        public async Task<bool> DoesUserHavePermission(long repositoryId, string user, PermissionLevel permission)
+        {
+            List<PermissionLevel> permissionList = new List<PermissionLevel>
+            {
+                permission
+            };
+            return await DoesUserHavePermissions(repositoryId, user, permissionList);
+        }
+
+        /// <summary>
+        /// There are a lot of checks to see if user has Write Collaborator permissions however permissions however
+        /// Collaborator permissions levels are Admin, Write, Read and None. Checking to see if a user has Write
+        /// permissions translates to does the user have Admin or Write.
+        /// </summary>
+        /// <param name="repositoryId">The Id of the Repository</param>
+        /// <param name="user">The User.Login for the event object from the action payload</param>
+        /// <returns></returns>
+        public async Task<bool> DoesUserHaveAdminOrWritePermission(long repositoryId, string user)
+        {
+            List<PermissionLevel> permissionList = new List<PermissionLevel>
+            {
+                PermissionLevel.Admin,
+                PermissionLevel.Write
+            };
+            return await DoesUserHavePermissions(repositoryId, user, permissionList);
+        }
+
+
+        // There are several checks that look to see if a user's permission is NOT Admin or Write which
+        // means both need to be checked but making multiple calls is not necessary
+        public async Task<bool> DoesUserHavePermissions(long repositoryId, string user, List<PermissionLevel> permissionList)
+        {
+            try
+            {
+                CollaboratorPermission collaboratorPermission = await this._gitHubClient.Repository.Collaborator.ReviewPermission(repositoryId, user);
+                // If the user has one of the permissions on the list return true
+                foreach (var permission in permissionList)
+                {
+                    if (collaboratorPermission.Permission == permission)
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // If this throws it's because it's being checked for a non-user (bot) or the user somehow doesn't exist.
+                // If that's not the case, rethrow the exception, otherwise let processing return false
+                if (!ex.Message.Contains(NotAUserPartial, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="repoOwner">Should be the repository.Owner.Login from the cron payload</param>
+        /// <param name="repoName">Should be repository.Name from the cron payload</param>
+        /// <param name="issueType">IssueTypeQualifier of Issue or PullRequest</param>
+        /// <param name="itemState">ItemState of Open or Closed</param>
+        /// <param name="issueIsQualifiers">Optional: List of IssueIsQualifier (ex. locked/unlocked) to include, null if none</param>
+        /// <param name="labelsToInclude">Optional: List of labels to include, null if none</param>
+        /// <param name="labelsToExclude">Optional: List of labels to exclude, null if none</param>
+        /// <param name="daysSinceLastUpdate">Optional: Number of days since last updated </param>
+        /// <returns></returns>
+        public async Task<SearchIssuesResult> QueryIssues(string repoOwner,
+                                                          string repoName,
+                                                          IssueTypeQualifier issueType,
+                                                          ItemState itemState,
+                                                          int daysSinceLastUpdate = 0,
+                                                          List<IssueIsQualifier> issueIsQualifiers = null,
+                                                          List<string> labelsToInclude = null,
+                                                          List<string> labelsToExclude = null)
+        {
+            var request = new SearchIssuesRequest();
+
+            // The repo owner 
+            request.Repos.Add(repoOwner, repoName);
+
+            // Can only search for opened or closed
+            request.State = itemState;
+            if (null != issueIsQualifiers)
+            {
+                request.Is = issueIsQualifiers;
+            }
+
+            // restrict the search to issues (IssueTypeQualifier.Issue)
+            // or pull requests (IssueTypeQualifier.PullRequest)
+            request.Type = issueType;
+
+            if (daysSinceLastUpdate > 0)
+            {
+                // Octokit's DateRange wants a DateTimeOffset as other constructors are depricated
+                // AddDays of 0-days to effectively subtract them.
+                DateTime daysAgo = DateTime.UtcNow.AddDays(0 - daysSinceLastUpdate);
+                DateTimeOffset daysAgoOffset = new DateTimeOffset(daysAgo);
+                request.Updated = new DateRange(daysAgoOffset, SearchQualifierOperator.LessThan);
+            }
+
+            if (null != labelsToInclude)
+            {
+                request.Labels = labelsToInclude;
+            }
+
+            if (null != labelsToExclude)
+            {
+                // This is how things would get exluded. Anything that needs to be an exclusion
+                // for the query needs added to a SearchIssuesRequestExclusions and then
+                // the Exclusions on the request needs to be set to that.
+                var exclusions = new SearchIssuesRequestExclusions();
+                exclusions.Labels = labelsToExclude;
+                request.Exclusions = exclusions;
+            }
+            var searchIssueResult = await this._gitHubClient.Search.SearchIssues(request);
+            return searchIssueResult;
+        }
 
         /// <summary>
         /// This method creates a GitHubClient using the GITHUB_TOKEN from the environment for authentication
@@ -245,7 +447,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="ApplicationException"></exception>
-        internal GitHubClient createClientWithGitHubEnvToken(string productHeaderName)
+        internal GitHubClient CreateClientWithGitHubEnvToken(string productHeaderName)
         {
             if (string.IsNullOrEmpty(productHeaderName))
             {
@@ -268,7 +470,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// </summary>
         /// <param name="rulesConfigLocation">Optional path to the rules config location. If not set it'll check for the rules configuration in its well known location.</param>
         /// <returns></returns>
-        internal RulesConfiguration loadRulesConfiguration(string rulesConfigLocation = null)
+        internal RulesConfiguration LoadRulesConfiguration(string rulesConfigLocation = null)
         {
             // if the rulesConfigLocation is set, try and load the rules from there, otherwise
             // use the directory climber to find the root of the repository and pull it from

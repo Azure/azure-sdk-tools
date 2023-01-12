@@ -10,16 +10,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     internal class PullRequestReviewProcessing
     {
-        internal static async Task ProcessPullRequestReviewEvent(GitHubClient gitHubClient, PullRequestReviewEventPayload prReviewEventPayload)
+        internal static async Task ProcessPullRequestReviewEvent(GitHubEventClient gitHubEventClient, PullRequestReviewEventPayload prReviewEventPayload)
         {
-            IssueUpdate issueUpdate = null;
+            ResetPullRequestActivity(gitHubEventClient, prReviewEventPayload);
 
-            ResetPullRequestActivity(gitHubClient, prReviewEventPayload, ref issueUpdate);
-            // If any of the rules have made _issueUpdate changes, it needs to be updated
-            if (null != issueUpdate)
-            {
-                await EventUtils.UpdateIssueOrPullRequest(gitHubClient, prReviewEventPayload.Repository.Id, prReviewEventPayload.PullRequest.Number, issueUpdate);
-            }
+            // After all of the rules have been processed, call to process pending updates
+            int numUpdates = await gitHubEventClient.ProcessPendingUpdates(prReviewEventPayload.Repository.Id, prReviewEventPayload.PullRequest.Number);
         }
         /// <summary>
         /// Reset Pull Request Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-pull-request-activity
@@ -29,16 +25,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="prReviewEventPayload">Pull Request Review event payload</param>
         /// <param name="issueUpdate">The issue update object</param>
         /// <returns></returns>
-        internal static void ResetPullRequestActivity(GitHubClient gitHubClient,
-                                                      PullRequestReviewEventPayload prReviewEventPayload,
-                                                      ref IssueUpdate issueUpdate)
+        internal static void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
+                                                      PullRequestReviewEventPayload prReviewEventPayload)
         {
-            PullRequestProcessing.Common_ResetPullRequestActivity(gitHubClient, 
+            PullRequestProcessing.Common_ResetPullRequestActivity(gitHubEventClient, 
                                                                   prReviewEventPayload.Action, 
                                                                   prReviewEventPayload.PullRequest, 
                                                                   prReviewEventPayload.Repository, 
-                                                                  prReviewEventPayload.Sender, 
-                                                                  ref issueUpdate);
+                                                                  prReviewEventPayload.Sender);
         }
     }
 }

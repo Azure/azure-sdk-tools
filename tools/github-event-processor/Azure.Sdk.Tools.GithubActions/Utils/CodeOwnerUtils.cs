@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         static List<CodeOwnerEntry> _codeOwnerEntries = null;
         public static string codeOwnersFilePathOverride = null;
 
-        internal static string getCodeOwnersFilePath()
+        internal static string GetCodeOwnersFilePath()
         {
             if (null != codeOwnersFilePathOverride)
             {
@@ -30,13 +30,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         /// Wrapper function so don't end having to load the CODEOWNERS file multiple
         /// times if there's more than one call to get CodeOwnerEntries for information.
         /// </summary>
-        /// <param name="codeOwnersFilePath">The path to the local CODEOWNERS files</param>
         /// <returns></returns>
-        public static List<CodeOwnerEntry> getCodeOwnerEntries()
+        public static List<CodeOwnerEntry> GetCodeOwnerEntries()
         {
             if (_codeOwnerEntries == null)
             {
-                _codeOwnerEntries = CodeOwnersFile.ParseFile(getCodeOwnersFilePath());
+                _codeOwnerEntries = CodeOwnersFile.ParseFile(GetCodeOwnersFilePath());
             }
             return _codeOwnerEntries;
         }
@@ -45,14 +44,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         /// Given a list of files from a pull request, return the list of PR labels that
         /// that need to get added to the PR.
         /// </summary>
-        /// <param name="codeOwnersFilePath">path to the CODEOWNERS file</param>
         /// <param name="prLabels">the list of labels on the PR</param>
         /// <param name="prFiles">the list of files in the PR</param>
         /// <returns>unique list of PR labels that need to get added to the PR</returns>
-        public static List<string> getPRAutoLabelsForFilePaths(IReadOnlyList<Label> prLabels, IReadOnlyList<PullRequestFile> prFiles)
+        public static List<string> GetPRAutoLabelsForFilePaths(IReadOnlyList<Label> prLabels, IReadOnlyList<PullRequestFile> prFiles)
         {
             List<string> labelsToAdd = new List<string>();
-            var codeOwnerEntries = getCodeOwnerEntries();
+            var codeOwnerEntries = GetCodeOwnerEntries();
 
             foreach (var prFile in prFiles)
             {
@@ -74,13 +72,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         /// @mentioned based upon the labels in the issue. Given the list of labels on the issue,
         /// retrieve the list of individuals or teams to @mention.
         /// </summary>
-        /// <param name="codeOwnersFilePath">path to the CODEOWNERS file</param>
         /// <param name="labels">the list of labels on the PR</param>
         /// <returns>unique list of individuals/teams to @mention</returns>
-        public static string getPartiesToMentionForServiceAttention(IReadOnlyList<Label> labels)
+        public static string GetPartiesToMentionForServiceAttention(IReadOnlyList<Label> labels)
         {
             List<string> partiesToMentionList = new List<string>();
-            var codeOwnerEntries = getCodeOwnerEntries();
+            var codeOwnerEntries = GetCodeOwnerEntries();
             foreach(var codeOwnerEntry in codeOwnerEntries)
             {
                 foreach (var serviceLabel in codeOwnerEntry.ServiceLabels)

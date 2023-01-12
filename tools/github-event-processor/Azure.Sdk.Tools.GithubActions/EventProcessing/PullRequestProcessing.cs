@@ -16,19 +16,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     internal class PullRequestProcessing
     {
-        internal static async Task ProcessPullRequestEvent(GitHubClient gitHubClient, PullRequestEventGitHubPayload prEventPayload)
+        internal static async Task ProcessPullRequestEvent(GitHubEventClient gitHubEventClient, PullRequestEventGitHubPayload prEventPayload)
         {
-            IssueUpdate issueUpdate = null;
+            await PullRequestTriage(gitHubEventClient, prEventPayload);
+            ResetPullRequestActivity(gitHubEventClient, prEventPayload);
+            await ResetApprovalsForUntrustedChanges(gitHubEventClient, prEventPayload);
 
-            issueUpdate = await PullRequestTriage(gitHubClient, prEventPayload, issueUpdate);
-            ResetPullRequestActivity(gitHubClient, prEventPayload, ref issueUpdate);
-            await ResetApprovalsForUntrustedChanges(gitHubClient, prEventPayload);
-
-            // If any of the rules have made _issueUpdate changes, it needs to be updated
-            if (null != issueUpdate)
-            {
-                await EventUtils.UpdateIssueOrPullRequest(gitHubClient, prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, issueUpdate);
-            }
+            // After all of the rules have been processed, call to process pending updates
+            int numUpdates = await gitHubEventClient.ProcessPendingUpdates(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
         }
 
 
@@ -47,38 +42,36 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="prEventPayload">Pull Request event payload</param>
         /// <param name="issueUpdate">The issue update object</param>
         /// <returns></returns>
-        internal static async Task<IssueUpdate> PullRequestTriage(GitHubClient gitHubClient,
-                                                                  PullRequestEventGitHubPayload prEventPayload,
-                                                                  IssueUpdate issueUpdate)
+        internal static async Task PullRequestTriage(GitHubEventClient gitHubEventClient,
+                                                                  PullRequestEventGitHubPayload prEventPayload)
         {
             if (prEventPayload.Action == ActionConstants.Opened)
             {
                 if (prEventPayload.PullRequest.Labels.Count == 0)
                 {
-                    var prFileList = await EventUtils.GetFilesForPullRequest(gitHubClient, prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
-                    var prLabels = CodeOwnerUtils.getPRAutoLabelsForFilePaths(prEventPayload.PullRequest.Labels, prFileList);
+                    var prFileList = await gitHubEventClient.GetFilesForPullRequest(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
+                    var prLabels = CodeOwnerUtils.GetPRAutoLabelsForFilePaths(prEventPayload.PullRequest.Labels, prFileList);
                     if (prLabels.Count > 0)
                     {
-                        issueUpdate = EventUtils.GetIssueUpdate(prEventPayload.PullRequest, issueUpdate);
+                        var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
                         foreach (var prLabel in prLabels)
                         {
                             issueUpdate.AddLabel(prLabel);
                         }
                     }
 
-                    bool hasAdminOrWritePermission = await AuthUtils.DoesUserHaveAdminOrWritePermission(gitHubClient, prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
+                    bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
                     // The sender will only have Write or Admin permssion if they are a collaborator
                     if (hasAdminOrWritePermission)
                     {
-                        issueUpdate = EventUtils.GetIssueUpdate(prEventPayload.PullRequest, issueUpdate);
+                        var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
                         issueUpdate.AddLabel(LabelConstants.CustomerReported);
                         issueUpdate.AddLabel(LabelConstants.CommunityContribution);
                         string prComment = $"Thank you for your contribution @{prEventPayload.PullRequest.User.Login}! We will review the pull request and get back to you soon.";
-                        await EventUtils.CreateComment(gitHubClient, prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
+                        gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
                     }
                 }
             }
-            return issueUpdate;
         }
 
         /// <summary>
@@ -89,16 +82,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="prEventPayload">Pull Request event payload</param>
         /// <param name="issueUpdate">The issue update object</param>
         /// <returns></returns>
-        internal static void ResetPullRequestActivity(GitHubClient gitHubClient,
-                                                      PullRequestEventGitHubPayload prEventPayload,
-                                                      ref IssueUpdate issueUpdate)
+        internal static void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
+                                                      PullRequestEventGitHubPayload prEventPayload)
         {
-            Common_ResetPullRequestActivity(gitHubClient, 
+            Common_ResetPullRequestActivity(gitHubEventClient, 
                                             prEventPayload.Action, 
                                             prEventPayload.PullRequest, 
                                             prEventPayload.Repository, 
-                                            prEventPayload.Sender, 
-                                            ref issueUpdate);
+                                            prEventPayload.Sender);
         }
 
         /// <summary>
@@ -129,12 +120,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="sender">Octokit.User object from the respective payload. This will be the Sender that initiated the event.</param>
         /// <param name="comment">The comment, if triggered by comment, null otherwise</param>
         /// <param name="issueUpdate">The issue update object</param>
-        public static void Common_ResetPullRequestActivity(GitHubClient gitHubClient,
+        public static void Common_ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
                                                            string action,
                                                            PullRequest pullRequest,
                                                            Repository repository,
-                                                           User sender,
-                                                           ref IssueUpdate issueUpdate)
+                                                           User sender)
         {
             // Normally the action would be checked first but the various events and their conditions
             // all have two checks in common which are quick and would alleviate the need to check anything
@@ -161,7 +151,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 }
                 if (removeLabel)
                 {
-                    issueUpdate = EventUtils.GetIssueUpdate(pullRequest, issueUpdate);
+                    var issueUpdate = gitHubEventClient.GetIssueUpdate(pullRequest);
                     issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
                     issueUpdate.State = ItemState.Open;
                 }
@@ -184,7 +174,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="gitHubClient"></param>
         /// <param name="prEventPayload"></param>
         /// <returns></returns>
-        internal static async Task ResetApprovalsForUntrustedChanges(GitHubClient gitHubClient,
+        internal static async Task ResetApprovalsForUntrustedChanges(GitHubEventClient gitHubEventClient,
                                                                      PullRequestEventGitHubPayload prEventPayload)
         {
             if (prEventPayload.Action == ActionConstants.Synchronize)
@@ -192,29 +182,28 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (prEventPayload.PullRequest.State== ItemState.Open &&
                     prEventPayload.AutoMergeEnabled)
                 {
-                    bool hasAdminOrWritePermission = await AuthUtils.DoesUserHaveAdminOrWritePermission(gitHubClient, prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
+                    bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
                     // The sender will only have Write or Admin permssion if they are a collaborator
                     if (!hasAdminOrWritePermission)
                     {
                         // In this case, get all of the reviews 
-                        var reviews = await gitHubClient.PullRequest.Review.GetAll(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
+                        var reviews = await gitHubEventClient.GetReviewsForPullRequest(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
                         foreach (var review in reviews)
                         {
                             // For each review that has approved the pull_request, dismiss it
                             if (review.State == PullRequestReviewState.Approved)
                             {
                                 // Every dismiss needs a dismiss message. Might as well make it personalized.
-                                var prReview = new PullRequestReviewDismiss();
-                                prReview.Message = $"Hi @{review.User.Login}.  We've noticed that new changes have been pushed to this pull request.  Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.";
-                                await gitHubClient.PullRequest.Review.Dismiss(prEventPayload.Repository.Id, 
-                                                                              prEventPayload.PullRequest.Number,
-                                                                              review.Id, 
-                                                                              prReview);
+                                string dismissalMessage = $"Hi @{review.User.Login}.  We've noticed that new changes have been pushed to this pull request.  Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.";
+                                gitHubEventClient.DismissReview(prEventPayload.Repository.Id,
+                                                                prEventPayload.PullRequest.Number,
+                                                                review.Id,
+                                                                dismissalMessage);
                             }
                         }
 
                         string prComment = $"Hi @{prEventPayload.PullRequest.User.Login}. We've noticed that new changes have been pushed to this pull request.  Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.";
-                        await EventUtils.CreateComment(gitHubClient, prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
+                        gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
                     }
                 }
             }

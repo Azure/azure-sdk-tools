@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     internal class ScheduledEventProcessing
     {
-        internal static async Task ProcessScheduledEvent(GitHubClient gitHubClient, string rawJson)
+        internal static async Task ProcessScheduledEvent(GitHubEventClient gitHubEventClient, string rawJson)
         {
             var serializer = new SimpleJsonSerializer();
             ScheduledEventGitHubPayload scheduledEventPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
@@ -20,10 +20,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             // await IdentifyStaleIssues(_gitHubClient, scheduledEventPayload);
             // await CloseStalePullRequests(_gitHubClient, scheduledEventPayload);
             // await CloseAddressedIssues(_gitHubClient, scheduledEventPayload);
-            await LockClosedIssues(gitHubClient, scheduledEventPayload);
+            await LockClosedIssues(gitHubEventClient, scheduledEventPayload);
         }
 
-        internal static async Task IdentifyStaleIssues(GitHubClient gitHubClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        internal static async Task IdentifyStaleIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             List<string> includeLabels = new List<string>
             {
@@ -33,77 +33,72 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 LabelConstants.NoRecentActivity
             };
-            var result = await SearchUtil.QueryIssues(gitHubClient,
-                "Azure",
-                "azure-sdk-for-net",
-                IssueTypeQualifier.Issue,
-                ItemState.Open,
-                14,
-                null,
-                includeLabels,
-                excludeLabels);
+            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+                                                             scheduledEventPayload.Repository.Name,
+                                                             IssueTypeQualifier.Issue,
+                                                             ItemState.Open,
+                                                             14,
+                                                             null,
+                                                             includeLabels,
+                                                             excludeLabels);
             Console.WriteLine(result.TotalCount);
         }
-        internal static async Task CloseStalePullRequests(GitHubClient gitHubClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        internal static async Task CloseStalePullRequests(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             List<string> includeLabels = new List<string>
             {
                 LabelConstants.NoRecentActivity
             };
-            var result = await SearchUtil.QueryIssues(gitHubClient,
-                "Azure",
-                "azure-sdk-for-net",
-                IssueTypeQualifier.PullRequest,
-                ItemState.Open,
-                7,
-                null,
-                includeLabels);
+            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+                                                             scheduledEventPayload.Repository.Name,
+                                                             IssueTypeQualifier.PullRequest,
+                                                             ItemState.Open,
+                                                             7,
+                                                             null,
+                                                             includeLabels);
             Console.WriteLine(result.TotalCount);
         }
 
-        internal static async Task CloseAddressedIssues(GitHubClient gitHubClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        internal static async Task CloseAddressedIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             List<string> includeLabels = new List<string>
             {
                 LabelConstants.IssueAddressed
             };
-            var result = await SearchUtil.QueryIssues(gitHubClient,
-                "Azure",
-                "azure-sdk-for-net",
-                IssueTypeQualifier.Issue,
-                ItemState.Open,
-                7,
-                null,
-                includeLabels);
+            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+                                                             scheduledEventPayload.Repository.Name,
+                                                             IssueTypeQualifier.Issue,
+                                                             ItemState.Open,
+                                                             7,
+                                                             null,
+                                                             includeLabels);
             Console.WriteLine(result.TotalCount);
         }
 
-        internal static async Task LockClosedIssues(GitHubClient gitHubClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        internal static async Task LockClosedIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
-            var result = await SearchUtil.QueryIssues(gitHubClient,
-                scheduledEventPayload.Repository.Owner.Login,
-                scheduledEventPayload.Repository.Name,
-                IssueTypeQualifier.Issue,
-                ItemState.Closed,
-                0,
-                new List<IssueIsQualifier> { IssueIsQualifier.Unlocked });
+            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+                                                             scheduledEventPayload.Repository.Name,
+                                                             IssueTypeQualifier.Issue,
+                                                             ItemState.Closed,
+                                                             0,
+                                                             new List<IssueIsQualifier> { IssueIsQualifier.Unlocked });
 
             foreach (Issue issue in result.Items)
             {
-                await gitHubClient.Issue.LockUnlock.Lock(scheduledEventPayload.Repository.Id, issue.Number, LockReason.Resolved);
+                //await gitHubClient.Issue.LockUnlock.Lock(scheduledEventPayload.Repository.Id, issue.Number, LockReason.Resolved);
             }
             Console.WriteLine(result.TotalCount);
         }
 
-        internal static async Task TestSearchForLockedIssues(GitHubClient gitHubClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        internal static async Task TestSearchForLockedIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
-            var result = await SearchUtil.QueryIssues(gitHubClient,
-                "JimSuplizio",
-                "azure-sdk-tools",
-                IssueTypeQualifier.Issue,
-                ItemState.Closed,
-                0,
-                new List<IssueIsQualifier> { IssueIsQualifier.Locked });
+            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+                                                             scheduledEventPayload.Repository.Name,
+                                                             IssueTypeQualifier.Issue,
+                                                             ItemState.Closed,
+                                                             0,
+                                                             new List<IssueIsQualifier> { IssueIsQualifier.Locked });
             Console.WriteLine(result.TotalCount);
         }
     }

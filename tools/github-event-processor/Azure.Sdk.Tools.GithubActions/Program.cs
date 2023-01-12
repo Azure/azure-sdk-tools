@@ -42,25 +42,33 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             string eventName = args[0];
             var serializer = new SimpleJsonSerializer();
             string rawJson = File.ReadAllText(args[1]);
-            // JRS - need to plumb this through
             GitHubEventClient gitHubEventClient = new GitHubEventClient(OrgConstants.ProductHeaderName);
-            GitHubClient gitHubClient = GitHubClientCreator.createClientWithGitHubEnvToken("azure-sdk-github-event-processor");
 
             // JRS-Remove this override once I figure out where codeowners is coming from
             CodeOwnerUtils.codeOwnersFilePathOverride = @"C:\src\azure-sdk-for-java\.github\CODEOWNERS";
-            await RateLimitUtil.writeRateLimits(gitHubClient, "RateLimit at start of execution:");
+            await gitHubEventClient.WriteRateLimits("RateLimit at start of execution:");
             switch (eventName)
             {
                 case EventConstants.issue:
                     {
                         IssueEventGitHubPayload issueEventPayload = serializer.Deserialize<IssueEventGitHubPayload>(rawJson);
-                        await IssueProcessing.ProcessIssueEvent(gitHubClient, issueEventPayload);
+                        await IssueProcessing.ProcessIssueEvent(gitHubEventClient, issueEventPayload);
                         break;
                     }
                 case EventConstants.issue_comment:
                     {
                         IssueCommentPayload issueCommentPayload = serializer.Deserialize<IssueCommentPayload>(rawJson);
-                        await IssueCommentProcessing.ProcessIssueCommentEvent(gitHubClient, issueCommentPayload);
+                        // IssueComment events are for both issues and pull requests. If the comment is on a pull request,
+                        // then Issue's PullRequest object in the payload will be non-null
+                        if (issueCommentPayload.Issue.PullRequest != null)
+                        {
+                            await PullRequestCommentProcessing.ProcessPullRequestCommentEvent(gitHubEventClient, issueCommentPayload);
+                        }
+                        else
+                        {
+                            await IssueCommentProcessing.ProcessIssueCommentEvent(gitHubEventClient, issueCommentPayload);
+                        }
+
                         break;
                     }
                 case EventConstants.pull_request_target:
@@ -68,25 +76,25 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         PullRequestEventGitHubPayload prEventPayload = serializer.Deserialize<PullRequestEventGitHubPayload>(rawJson);
                         using var doc = JsonDocument.Parse(rawJson);
                         // The actions event payload for a pull_request has a class on the pull request that
-                        // the OctoKit.PullRequest class does not have. This will be null if the user the user does
-                        // not have Auto-Merge enabled through the pull request UI and will be non-null if the
-                        // user enabled it through the UI. An AutoMergeEnabled was added to the root of the
-                        // PullRequestEventGitHubPayload class, which defaults to false. The information in the
-                        // auto_merge is nothing we'd act on but there are a couple of rules that require knowing
-                        // whether or not it's been set.
+                        // the OctoKit.PullRequest class does not have. This will be null if the user the user
+                        // does not have Auto-Merge enabled through the pull request UI and will be non-null if
+                        // the user enabled it through the UI. An AutoMergeEnabled was added to the root of the
+                        // PullRequestEventGitHubPayload class, which defaults to false. The actual information
+                        // in the auto_merge is not necessary for any rules processing other than knowing whether
+                        // or not it's been set.
                         var autoMergeProp = doc.RootElement.GetProperty("pull_request").GetProperty("auto_merge");
                         if (JsonValueKind.Object == autoMergeProp.ValueKind)
                         {
                             prEventPayload.AutoMergeEnabled = true;
                         }
 
-                        await PullRequestProcessing.ProcessPullRequestEvent(gitHubClient, prEventPayload);
+                        await PullRequestProcessing.ProcessPullRequestEvent(gitHubEventClient, prEventPayload);
                         break;
                     }
                 case EventConstants.pull_request_review:
                     {
                         PullRequestReviewEventPayload prReviewEventPayload = serializer.Deserialize<PullRequestReviewEventPayload>(rawJson);
-                        await PullRequestReviewProcessing.ProcessPullRequestReviewEvent(gitHubClient, prReviewEventPayload);
+                        await PullRequestReviewProcessing.ProcessPullRequestReviewEvent(gitHubEventClient, prReviewEventPayload);
                         break;
                     }
                 // Need to add cases for Cron jobs
@@ -115,7 +123,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             //var serializer = new SimpleJsonSerializer();
             //ScheduledEventGitHubPayload scheduledEventGitHubPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
             //await ScheduledEventProcessing.LockClosedIssues(_gitHubClient, scheduledEventGitHubPayload);
-            await RateLimitUtil.writeRateLimits(gitHubClient, "RateLimit at end of execution:");
+            await gitHubEventClient.WriteRateLimits("RateLimit at end of execution:");
         }
     }
 }

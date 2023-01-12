@@ -15,7 +15,7 @@ namespace APIViewWeb
         public override string Name { get; } = "Go";
         public override string Extension { get; } = ".gosource";
         public override string ProcessName { get; } = "apiviewgo";
-        public override string VersionString { get; } = "1";
+        public override string VersionString { get; } = "2";
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonFilePath)
         {

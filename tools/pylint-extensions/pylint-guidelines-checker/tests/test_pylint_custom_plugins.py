@@ -3115,3 +3115,25 @@ class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
+class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
+    """Test that we don't use raise with traceback"""
+    CHECKER_CLASS = checker.NoAzureCoreTracebackUseRaiseFrom
+
+    def test_raise_traceback(self):
+        node = astroid.extract_node(
+        """
+        from azure.core.exceptions import DeserializationError, SerializationError, raise_with_traceback
+        """
+        )
+
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="no-raise-with-traceback",
+                    line=2,
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=96
+                )
+        ):
+            self.checker.visit_importfrom(node)

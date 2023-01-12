@@ -399,6 +399,7 @@ int ApiViewProcessorImpl::ProcessApiView()
   // compilation database. Use the CurrentDirectorySetter to preserve and restore the current
   // directory across calls into the clang tooling.
   CurrentDirectorySetter currentDirectory{std::filesystem::current_path()};
+  
   // clang really likes all input paths to be absolute paths, so use the fiilesystem to
   // canonicalize the input filename and source location.
   std::filesystem::path tempFile = std::filesystem::temp_directory_path();
@@ -443,12 +444,12 @@ int ApiViewProcessorImpl::ProcessApiView()
 
   if (diagnosticsConsumer.getNumErrors() > 0)
   {
-    std::cerr << "Aborting due to errors." << std::endl;
+    std::cerr << "Aborting due to compilation errors while parsing API Review." << std::endl;
     return 1;
   }
   if (diagnosticsConsumer.getNumWarnings() > 0)
   {
-    std::cerr << "Aborting due to warnings." << std::endl;
+    std::cerr << "Aborting due to compilation warnings while parsing API Review." << std::endl;
     return 1;
   }
 

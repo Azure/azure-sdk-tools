@@ -910,8 +910,8 @@ AstNamedNode::AstNamedNode(
     AzureClassesDatabase* const database,
     std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
     : AstNode(namedDecl),
-      m_classDatabase(database), m_namespace{AstNode::GetNamespaceForDecl(namedDecl)},
-      m_name{namedDecl->getNameAsString()}, m_navigationId{namedDecl->getQualifiedNameAsString()},
+      m_namespace{AstNode::GetNamespaceForDecl(namedDecl)}, m_name{namedDecl->getNameAsString()},
+      m_classDatabase(database), m_navigationId{namedDecl->getQualifiedNameAsString()},
       m_nodeDocumentation{AstNode::GetCommentForNode(namedDecl->getASTContext(), namedDecl)},
       m_nodeAccess{namedDecl->getAccess()}
 {
@@ -991,7 +991,7 @@ public:
     }
     dumper->InsertLiteral(m_typeAsString);
     dumper->InsertWhitespace();
-    dumper->InsertMemberName(m_name);
+    dumper->InsertMemberName(Name());
     if (m_isArray)
     {
       dumper->InsertPunctuation('[');
@@ -1081,7 +1081,7 @@ public:
     }
     dumper->InsertLiteral(m_typeAsString);
     dumper->InsertWhitespace();
-    dumper->InsertMemberName(m_name);
+    dumper->InsertMemberName(Name());
     if (m_isArray)
     {
       dumper->InsertPunctuation('[');
@@ -1310,7 +1310,7 @@ public:
   {
     if (dumpOptions.NeedsNamespaceAdjustment)
     {
-      dumper->SetNamespace(m_namespace);
+      dumper->SetNamespace(Namespace());
     }
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1318,7 +1318,7 @@ public:
     }
     dumper->InsertKeyword("using");
     dumper->InsertWhitespace();
-    dumper->InsertMemberName(m_name);
+    dumper->InsertMemberName(Name());
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('=');
     dumper->InsertWhitespace();
@@ -1432,7 +1432,7 @@ public:
       m_parameters.push_back(AstNode::Create(param, database, parentNode));
     }
 
-    if (m_namespace.empty())
+    if (Namespace().empty())
     {
       database->CreateApiViewMessage(
           ApiViewMessages::TypeDeclaredInGlobalNamespace, m_navigationId);
@@ -1442,7 +1442,7 @@ public:
   {
     if (dumpOptions.NeedsNamespaceAdjustment)
     {
-      dumper->SetNamespace(m_namespace);
+      dumper->SetNamespace(Namespace());
     }
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1483,7 +1483,7 @@ public:
       dumper->InsertPunctuation(':');
       dumper->InsertPunctuation(':');
     }
-    dumper->InsertTypeName(m_name, m_navigationId);
+    dumper->InsertTypeName(Name(), m_navigationId);
     dumper->InsertPunctuation('(');
     {
       DumpNodeOptions innerOptions{dumpOptions};
@@ -1823,9 +1823,9 @@ public:
 
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
-    if (!m_namespace.empty())
+    if (!Namespace().empty())
     {
-      dumper->SetNamespace(m_namespace);
+      dumper->SetNamespace(Namespace());
     }
 
     if (dumpOptions.NeedsLeftAlign)
@@ -1880,11 +1880,11 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
-    if (!m_namespace.empty())
+    if (!Namespace().empty())
     {
       if (dumpOptions.NeedsNamespaceAdjustment)
       {
-        dumper->SetNamespace(m_namespace);
+        dumper->SetNamespace(Namespace());
       }
     }
 
@@ -1937,11 +1937,11 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
-    if (!m_namespace.empty())
+    if (!Namespace().empty())
     {
       if (dumpOptions.NeedsNamespaceAdjustment)
       {
-        dumper->SetNamespace(m_namespace);
+        dumper->SetNamespace(Namespace());
       }
     }
 
@@ -2002,11 +2002,11 @@ public:
 
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
-    if (!m_namespace.empty())
+    if (!Namespace().empty())
     {
       if (dumpOptions.NeedsNamespaceAdjustment)
       {
-        dumper->SetNamespace(m_namespace);
+        dumper->SetNamespace(Namespace());
       }
     }
 
@@ -2166,7 +2166,7 @@ public:
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     dumper->LeftAlign();
-    dumper->InsertMemberName(m_name);
+    dumper->InsertMemberName(Name());
     if (m_initializer)
     {
       dumper->InsertWhitespace();
@@ -2204,7 +2204,7 @@ public:
     if (parentNode)
     {
       parentNode = parentNode->InsertChildNode(
-          m_name, m_navigationId, TypeHierarchy::TypeHierarchyClass::Enum);
+          Name(), m_navigationId, TypeHierarchy::TypeHierarchyClass::Enum);
     }
     for (auto enumerator : enumDecl->enumerators())
     {
@@ -2256,7 +2256,7 @@ AstClassLike::AstClassLike(
   //
   // This is parsed as an anonymous struct containing a single field named "InnerField1"
   // followed by a field declaration referencing the anonymous struct.
-  if (m_name.empty() && decl->isEmbeddedInDeclarator()
+  if (Name().empty() && decl->isEmbeddedInDeclarator()
       && decl->getNextDeclInContext()->getKind() == Decl::Kind::Field)
   {
     m_isAnonymousNamedStruct = true;
@@ -2265,7 +2265,7 @@ AstClassLike::AstClassLike(
   if (parentNode)
   {
     parentNode = parentNode->InsertChildNode(
-        !m_isAnonymousNamedStruct ? m_name : m_anonymousNamedStructName, m_navigationId, classType);
+        !m_isAnonymousNamedStruct ? Name() : m_anonymousNamedStructName, m_navigationId, classType);
   }
 
   for (auto& attr : decl->attrs())
@@ -2409,11 +2409,11 @@ AstClassLike::AstClassLike(
 
 void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
 {
-  if (!m_namespace.empty())
+  if (!Namespace().empty())
   {
     if (dumpOptions.NeedsNamespaceAdjustment)
     {
-      dumper->SetNamespace(m_namespace);
+      dumper->SetNamespace(Namespace());
     }
   }
 
@@ -2429,7 +2429,7 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
   }
   DumpTag(dumper, dumpOptions);
   dumper->InsertWhitespace();
-  dumper->InsertTypeName(m_name, m_navigationId);
+  dumper->InsertTypeName(Name(), m_navigationId);
   DumpTemplateSpecializationArguments(dumper, dumpOptions);
   if (!m_isForwardDeclaration)
   {
@@ -2490,11 +2490,11 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
 
 void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
 {
-  if (!m_namespace.empty())
+  if (!Namespace().empty())
   {
     if (dumpOptions.NeedsNamespaceAdjustment)
     {
-      dumper->SetNamespace(m_namespace);
+      dumper->SetNamespace(Namespace());
     }
   }
   if (dumpOptions.NeedsLeftAlign)
@@ -2515,7 +2515,7 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
     }
   }
   dumper->InsertWhitespace();
-  dumper->InsertTypeName(m_name, m_navigationId);
+  dumper->InsertTypeName(Name(), m_navigationId);
   if (m_isFixed)
   {
     dumper->InsertWhitespace();
@@ -2563,7 +2563,7 @@ void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
   }
   m_fieldType.Dump(dumper, dumpOptions);
   dumper->InsertWhitespace();
-  dumper->InsertMemberName(m_name);
+  dumper->InsertMemberName(Name());
   // if (m_initializer)
   //{
   //   DumpNodeOptions innerOptions{dumpOptions};

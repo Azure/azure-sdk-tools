@@ -14,7 +14,7 @@
 #include <vector>
 
 class ApiViewProcessorImpl;
-struct AstNode;
+class AstNode;
 
 namespace clang {
 class NamedDecl;

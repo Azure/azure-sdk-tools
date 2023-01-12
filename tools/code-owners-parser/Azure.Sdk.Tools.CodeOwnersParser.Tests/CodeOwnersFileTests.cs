@@ -26,6 +26,12 @@ public class CodeOwnersFileTests
         // @formatter:off
         //    Path:               Expected match:
         //    Codeowners , Target        , Legacy , New
+        new(        "/"  , "a"           ,   true , true  ),
+        new(        "/"  , "A"           ,   true , true  ),
+        new(        "/"  , "/a"          ,   true , true  ),
+        new(        "/"  , "a/"          ,   true , true  ),
+        new(        "/"  , "/a/"         ,   true , true  ),
+        new(        "/"  , "/a/b"        ,   true , true  ),
         new(        "/a" , "a"           ,   true , true  ),
         new(        "/a" , "A"           ,   true , false ),
         new(        "/a" , "/a"          ,   true , true  ),
@@ -33,6 +39,7 @@ public class CodeOwnersFileTests
         new(        "/a" , "/a/"         ,   true , false ),
         new(        "/a" , "/a/b"        ,   true , false ),
         new(        "/a" , "/a/b/"       ,   true , false ),
+        new(        "/a" , "/a\\ b"      ,   true , false ),
         new(        "/a" , "/x/a/b"      ,  false , false ),
         new(         "a" , "a"           ,   true , true  ),
         new(         "a" , "A"           ,   true , false ),
@@ -47,6 +54,7 @@ public class CodeOwnersFileTests
         new(       "/a/" , "a/"          ,   true , true  ),
         new(       "/a/" , "/a/"         ,   true , true  ),
         new(       "/a/" , "/a/b"        ,   true , true  ),
+        new(       "/a/" , "/a\\ b"      ,   true , true  ),
         new(       "/a/" , "/a/b/"       ,   true , true  ),
         new(       "/a/" , "/A/b/"       ,   true , false ),
         new(       "/a/" , "/x/a/b"      ,  false , false ),

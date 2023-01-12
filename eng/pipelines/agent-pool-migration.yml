@@ -14,7 +14,7 @@ pr: none
 
 # Notes on ExcludePaths and IncludeFromExcludedPaths:
 # 1. ExcludePaths is used to exclude the file pattern you don't want to scan against.
-# 2. IncludeFromExcludedPaths is used to add back the files you don't want to exclude. It is supposed to be a subset of ExcludePaths.
+# 2. IncludeFromExcludedPaths is used to add back the files you don't want to exclude. It is supposed to be a subset of ExcludePaths. Pass empty if you only want exclude paths.
 # 3. Both excludePaths and IncludeFromExcludedPaths support standard powershell regex. 
 # 4. The paths here are relative to the repo folder. 
 #    E.g.
@@ -30,6 +30,7 @@ parameters:
     - RepoOwner: Azure
       RepoName: azure-sdk
       ExcludePaths: '^\.\\eng\\common\\'
+      IncludeFromExcludedPaths: ""
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
       ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\|\\tests\\resources\\session-records\\'

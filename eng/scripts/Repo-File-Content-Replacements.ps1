@@ -67,7 +67,7 @@ $newFileCollection = @()
 foreach ($file in $files) {
   $relativePath = Resolve-Path -LiteralPath $file.FullName -Relative
   $checkIncludes = $IncludeFromExcludedPathsRegex
-  if ($relativePath -notmatch $ExcludePathsRegex) {
+  if (!$ExcludePathsRegex -or $relativePath -notmatch $ExcludePathsRegex) {
     $newFileCollection += $file
     $checkIncludes = $false
   }

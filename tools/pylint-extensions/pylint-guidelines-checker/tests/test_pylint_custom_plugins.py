@@ -3183,3 +3183,14 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_functiondef(function_node)
 
+    def test_private_name_too_long(self):
+        class_node, function_node, property_node = astroid.extract_node(
+        """
+            class ClassNameGoodClient(): #@
+                def _this_function_is_private_but_over_length_reqs(self, **kwargs): #@
+                    this_lists_name = [] #@
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+            self.checker.visit_functiondef(function_node)

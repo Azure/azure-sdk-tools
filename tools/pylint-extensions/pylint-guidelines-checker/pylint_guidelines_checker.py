@@ -2006,7 +2006,7 @@ class TypePropertyNameTooLong(BaseChecker):
          class name is within the character length limit."""
 
         try:
-            if len(node.name) > self.STANDARD_CHARACTER_LENGTH:
+            if len(node.name) > self.STANDARD_CHARACTER_LENGTH and not node.name.startswith("_"):
                 self.add_message(
                     msgid="name-too-long",
                     node=node,
@@ -2021,7 +2021,7 @@ class TypePropertyNameTooLong(BaseChecker):
         its variable names are within the character length limit."""
 
         try:
-            if len(node.name) > self.STANDARD_CHARACTER_LENGTH:
+            if len(node.name) > self.STANDARD_CHARACTER_LENGTH and not node.name.startswith("_"):
                 self.add_message(
                     msgid="name-too-long",
                     node=node,
@@ -2030,7 +2030,7 @@ class TypePropertyNameTooLong(BaseChecker):
 
             for i in node.body:
                 try:
-                    if len(i.name) > self.STANDARD_CHARACTER_LENGTH:
+                    if len(i.name) > self.STANDARD_CHARACTER_LENGTH and not i.name.startswith("_"):
                         self.add_message(
                             msgid="name-too-long",
                             node=i,
@@ -2039,7 +2039,7 @@ class TypePropertyNameTooLong(BaseChecker):
                 except:
                     # Gets the names of ast.Assign statements
                     for j in i.targets:
-                        if len(j.name) > self.STANDARD_CHARACTER_LENGTH:
+                        if len(j.name) > self.STANDARD_CHARACTER_LENGTH and not j.name.startswith("_"):
                             self.add_message(
                                 msgid="name-too-long",
                                 node=j,

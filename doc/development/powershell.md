@@ -111,7 +111,7 @@ Unit tests should be written for all scripts, and should utilize [Pester](https:
 
 - Tests can be located alongside scripts in a directory called `tests`.
 - Example pester test suites: [job matrix tests](https://github.com/Azure/azure-sdk-tools/tree/main/eng/common/scripts/job-matrix/tests), [asset sync tests](https://github.com/Azure/azure-sdk-tools/blob/main/tools/asset-sync/assets.Tests.ps1)
-- A CI pipeline should be defined to run scripts unit tests at the very least. See [archetype-sdk-tool-pwsh](https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml) for how to do this.
+- A CI pipeline should be defined to run scripts unit tests at the very least. See [archetype-sdk-tool-pwsh](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml) for how to do this.
 - Script code should always be written so as much of the surface area as possible can be run via unit tests. Move code that calls out to external dependencies into modular functions, and simplify context/data structures passed to functions as much as possible to it can be easily mocked.
 
 #### Running Pester Tests

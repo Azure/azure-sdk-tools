@@ -47,7 +47,6 @@ export class NamespaceModel {
   >();
   models = new Map<
     string,
-    | AliasStatementNode
     | ModelStatementNode
     | ModelExpressionNode
     | IntersectionExpressionNode
@@ -57,6 +56,7 @@ export class NamespaceModel {
     | UnionStatementNode
     | UnionExpressionNode
   >();
+  aliases = new Map<string, AliasStatementNode>;
   augmentDecorators = new Array<AugmentDecoratorStatementNode>();
 
   constructor(name: string, ns: Namespace, program: Program) {
@@ -99,8 +99,10 @@ export class NamespaceModel {
     for (const [scalarName, sc] of ns.scalars) {
       this.models.set(scalarName, sc.node);
     }
+
+    // Gather aliases
     for (const alias of findNodes(SyntaxKind.AliasStatement, program, ns)) {
-      this.models.set(alias.id.sv, alias);
+      this.aliases.set(alias.id.sv, alias);
     }
 
     // collect augment decorators
@@ -109,9 +111,10 @@ export class NamespaceModel {
     }
 
     // sort operations and models
-    this.operations = new Map([...this.operations].sort(caseInsenstiveSort));
-    this.resources = new Map([...this.resources].sort(caseInsenstiveSort));
-    this.models = new Map([...this.models].sort(caseInsenstiveSort));
+    this.operations = new Map([...this.operations].sort(caseInsensitiveSort));
+    this.resources = new Map([...this.resources].sort(caseInsensitiveSort));
+    this.models = new Map([...this.models].sort(caseInsensitiveSort));
+    this.aliases = new Map([...this.aliases].sort(caseInsensitiveSort));
   }
 
   /**
@@ -270,7 +273,7 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
   }
 }
 
-function caseInsenstiveSort(a: [string, any], b: [string, any]): number {
+function caseInsensitiveSort(a: [string, any], b: [string, any]): number {
   const aLower = a[0].toLowerCase();
   const bLower = b[0].toLowerCase();
   return aLower > bLower ? 1 : (aLower < bLower ? -1 : 0);

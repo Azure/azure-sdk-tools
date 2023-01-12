@@ -46,7 +46,21 @@
                             }
                             else
                             {
-                                <div class="form-group package-selector">
+                                <div class="form-group">
+                                    <span>
+                                        <select asp-for="Language" class="selectpicker show-menu-arrow shadow-sm mr-20 ml-20" data-style="btn-light btn-sm border" data-selected-text-format="value" id="revision-language-select">
+                                            <option selected value="Cadl">Cadl</option>
+                                            <option value="Json" data-content="Json">Json</option>
+                                        </select>
+                                    </span>
+                                </div>
+                                <div class="form-group package-file-selector hidden-row">
+                                    <div class="custom-file">
+                                        <input name="upload" type="file" class="custom-file-input">
+                                        <label for="upload" class="custom-file-label">Select file to add</label>
+                                    </div>
+                                </div>
+                                <div class="form-group package-file-selector">
                                     <input asp-for="FilePath" class="form-control" type="text" placeholder="Enter URL to package root source. For e.g. URL to CADL file">
                                 </div>
                             }

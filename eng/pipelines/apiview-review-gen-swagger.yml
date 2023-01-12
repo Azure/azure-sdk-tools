@@ -22,10 +22,7 @@ jobs:
     workingDirectory: $(Pipeline.Workspace)
     displayName: Setup working directory for Swagger Parser.
 
-  - task: UseDotNet@2
-    displayName: 'Use .NET Core sdk 6.x'
-    inputs:
-      version: '6.x'
+  - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
   - script: >
       dotnet tool install

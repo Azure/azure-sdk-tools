@@ -6,12 +6,12 @@ using NUnit.Framework;
 namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
 {
     /// <summary>
-    /// This is test of console app Azure.Sdk.Tools.RetrieveCodeOwners.
+    /// Test class for Azure.Sdk.Tools.RetrieveCodeOwners.Program.
     /// </summary>
     [TestFixture]
-    public class MainTests
+    public class ProgramTests
     {
-        private const string CodeOwnersFilePath = "CODEOWNERS";
+        private const string CodeownersFilePath = "CODEOWNERS";
 
         private static readonly object[] sourceLists =
         {
@@ -25,33 +25,33 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
         };
 
         [TestCaseSource(nameof(sourceLists))]
-        public void TestOnNormalOutput(string targetDirectory, bool includeUserAliasesOnly, List<string> expectedReturn)
+        public void TestOnNormalOutput(string targetPath, bool excludeNonUserAliases, List<string> expectedOwners)
         {
-            using (var consoleOutput = new ConsoleOutput())
-            {
-                Program.Main(CodeOwnersFilePath, targetDirectory, includeUserAliasesOnly);
-                var output = consoleOutput.GetOutput();
-                TestExpectResult(expectedReturn, output);
-                consoleOutput.Dispose();
-            }
+            using var consoleOutput = new ConsoleOutput();
+
+            // Act
+            Program.Main(targetPath, CodeownersFilePath, excludeNonUserAliases);
+
+            string actualOutput = consoleOutput.GetOutput();
+            AssertOwners(actualOutput, expectedOwners);
         }
 
         [TestCase("PathNotExist")]
         [TestCase("http://testLink")]
         [TestCase("https://testLink")]
-        public void TestOnError(string codeOwnerPath)
+        public void TestOnError(string codeownersPath)
         {
-            Assert.AreEqual(1, Program.Main(codeOwnerPath, "sdk"));
+            Assert.That(Program.Main("sdk", codeownersPath), Is.EqualTo(1));
         }
 
-        private static void TestExpectResult(List<string> expectReturn, string output)
+        private static void AssertOwners(string actualOutput, List<string> expectedOwners)
         {
-            CodeOwnerEntry codeOwnerEntry = JsonSerializer.Deserialize<CodeOwnerEntry>(output);
-            List<string> actualReturn = codeOwnerEntry!.Owners;
-            Assert.AreEqual(expectReturn.Count, actualReturn.Count);
-            for (int i = 0; i < actualReturn.Count; i++)
+            CodeownersEntry? actualEntry = JsonSerializer.Deserialize<CodeownersEntry>(actualOutput);
+            List<string> actualOwners = actualEntry!.Owners;
+            Assert.That(actualOwners, Has.Count.EqualTo(expectedOwners.Count));
+            for (int i = 0; i < actualOwners.Count; i++)
             {
-                Assert.AreEqual(expectReturn[i], actualReturn[i]);
+                Assert.That(actualOwners[i], Is.EqualTo(expectedOwners[i]));
             }
         }
     }

@@ -29,8 +29,7 @@ pr:
       - tools/apiview/parsers/js-api-parser
 
 variables:
-  DotNetRuntimeVersion: '6.x'
-  PythonVersion: '3.10.5'
+  PythonVersion: '3.10.9'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   NodeVersion: '12.x'
@@ -48,8 +47,8 @@ stages:
       - job: 'Build'
 
         pool:
-          name: azsdk-pool-mms-win-2019-general
-          vmImage: MMS2019
+          name: azsdk-pool-mms-win-2022-general
+          vmImage: MMS2022
 
         steps:
           - task: NodeTool@0
@@ -143,7 +142,7 @@ stages:
 
         pool:
           name: azsdk-pool-mms-win-2022-general
-          vmImage: MMS2019
+          vmImage: MMS2022
 
         steps:
           - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
@@ -165,11 +164,8 @@ stages:
               pwsh: true
             displayName: 'Start Azurite'
 
-          - task: UseDotNet@2
-            displayName: 'Install .NET'
-            inputs:
-              version: '$(DotNetRuntimeVersion)'
-          
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
           - pwsh: |
               dotnet --list-runtimes
               dotnet --version
@@ -204,6 +200,6 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: 'Windows DotNet $(DotNetRuntimeVersion)'
+              testRunTitle: 'Tests against Windows .NET'
               testResultsFormat: 'VSTest'
               mergeTestResults: true

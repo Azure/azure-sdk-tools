@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Common;
@@ -39,12 +39,10 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             var devOpsCreds = new VssBasicCredential("nobody", devOpsToken);
             var devOpsConnection = new VssConnection(new Uri($"https://dev.azure.com/{organization}/"), devOpsCreds);
 
-#pragma warning disable CS0618 // Type or member is obsolete
             var loggerFactory = LoggerFactory.Create(builder =>
             {
-                builder.AddConsole(config => { config.IncludeScopes = true; });
+                builder.AddSimpleConsole(config => { config.IncludeScopes = true; });
             });
-#pragma warning restore CS0618 // Type or member is obsolete
             var devOpsServiceLogger = loggerFactory.CreateLogger<AzureDevOpsService>();
             var notificationConfiguratorLogger = loggerFactory.CreateLogger<NotificationConfigurator>();
 

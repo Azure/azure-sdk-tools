@@ -33,8 +33,8 @@ stages:
       - job: 'Build'
 
         pool:
-          name: azsdk-pool-mms-ubuntu-2004-general
-          vmImage: MMSUbuntu20.04
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: MMSUbuntu22.04
 
         steps:
           - task: NodeTool@0
@@ -74,8 +74,8 @@ stages:
       - job: PublishPackage
         displayName: 'Publish ts-genapi package to devops feed'
         pool:
-          name: azsdk-pool-mms-ubuntu-2004-general
-          vmImage: MMSUbuntu20.04
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: MMSUbuntu22.04
         steps:
         - checkout: none
         - download: current

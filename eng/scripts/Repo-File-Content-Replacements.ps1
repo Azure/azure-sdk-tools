@@ -14,8 +14,8 @@ To compitable with both cases, you can also specify your regex path like "^./|\\
 e.g we can specified multiple paths using '(^./sdk/)|(^./eng/common/)'
 The script will exclude the specified paths from scanned file list first. 
 
-.PARAMETER IncludePathsRegex
-The regex of file pattern which is used to add back the files you don't want to exclude. The IncludePathsRegex is supposed to match a subset of ExcludePathsRegex
+.PARAMETER IncludeFromExcludedPathsRegex
+The regex of file pattern which is used to add back the files you don't want to exclude. The IncludeFromExcludedPathsRegex is supposed to match a subset of ExcludePathsRegex
 It is standard regex applied to the file path of the agent. The file path is relative to repo folder. 
 In win agent, the path is like ".\eng\scripts\Repo-File-Content-Replacements.ps1", so the regex path can be like "^.\\eng\\"
 In linux agent, the path is like "./eng/scripts/Repo-File-Content-Replacements.ps1", so the regex path can be like "^./eng/"
@@ -55,7 +55,7 @@ param (
   [Parameter(Mandatory = $false)]
   [string]$ExcludePathsRegex = '',
   [Parameter(Mandatory = $false)]
-  [string]$IncludePathsRegex = '',
+  [string]$IncludeFromExcludedPathsRegex = '.*',
   [Parameter(Mandatory = $true)]
   [string]$MigrationMapJson,
   [Parameter(Mandatory = $false)]
@@ -66,13 +66,10 @@ $files = Get-ChildItem -LiteralPath $ScannedDirectory -Recurse -File
 $newFileCollection = @()
 foreach ($file in $files) {
   $relativePath = Resolve-Path -LiteralPath $file.FullName -Relative
-  Write-Host "$relativePath"
-  Write-Host "$ExcludePathsRegex"
-  Write-Host "$IncludePathsRegex"
   if ($relativePath -notmatch $ExcludePathsRegex) {
     $newFileCollection += $file
   }
-  elseif ($relativePath -match $ExcludePathsRegex -and $relativePath -match $IncludePathsRegex) {
+  if ($IncludeFromExcludedPathsRegex -and ($relativePath -match $IncludeFromExcludedPathsRegex)) {
     $newFileCollection += $file
   }
 }

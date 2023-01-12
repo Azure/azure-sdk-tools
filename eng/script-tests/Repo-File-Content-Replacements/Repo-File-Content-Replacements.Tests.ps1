@@ -41,10 +41,16 @@ Describe "repo-file-content-replacement" -Tag "UnitTest" {
     # Passed cases
     It "Test on the files have matching content" -TestCases @(
         @{ 
-          exludePaths = "(/|\\)excludes(/|\\)|(/|\\)eng(/|\\)scripts-tests(/|\\)Repo-File-Content-Replacements(/|\\)inputs(/|\\)test1(/|\\)jsonFiles(/|\\)1.json";
-          includePaths = "(/|\\)excludes(/|\\)includes(/|\\)";
-          migrationMapFile = "$PSScriptRoot/inputs/test1/jsonFiles/1.json";
-          scannedDirectory = "$PSScriptRoot/inputs/test1";
+            exludePaths = "(/|\\)excludes(/|\\)|(/|\\)eng(/|\\)scripts-tests(/|\\)Repo-File-Content-Replacements(/|\\)inputs(/|\\)test1(/|\\)jsonFiles(/|\\)1.json";
+            includeFromExcludedPaths = "(/|\\)excludes(/|\\)includes(/|\\)";
+            migrationMapFile = "$PSScriptRoot/inputs/test1/jsonFiles/1.json";
+            scannedDirectory = "$PSScriptRoot/inputs/test1";
+        }
+        @{
+            exludePaths = "(/|\\)excludes(/|\\)";
+            includeFromExcludedPaths = "";
+            migrationMapFile = "$PSScriptRoot/inputs/test1/jsonFiles/1.json";
+            scannedDirectory = "$PSScriptRoot/inputs/test2";
         }
     ) {
         $backupFolder = "$PSScriptRoot/inputs/backup"
@@ -52,7 +58,32 @@ Describe "repo-file-content-replacement" -Tag "UnitTest" {
         $migrationMap = Get-Content $migrationMapFile -Raw
         . $PSScriptRoot/../../scripts/Repo-File-Content-Replacements.ps1 `
             -ExcludePathsRegex $exludePaths `
-            -IncludePathsRegex $includePaths `
+            -IncludeFromExcludedPathsRegex $includeFromExcludedPaths `
+            -MigrationMapJson $migrationMap `
+            -ScannedDirectory $ScannedDirectory 
+        $files = Get-ChildItem "$scannedDirectory/*" -Recurse -File -Include *.txt
+        foreach ($file in $files) {
+            $expectPath = $file.FullName -replace 'inputs', 'expected'
+            (Get-Content $file) | Should -Be (Get-Content $expectPath)
+        }
+        Reset-Folder -backupFolder $backupFolder -targetFolder $ScannedDirectory
+    }
+}
+
+Describe "repo-file-content-replacement" -Tag "UnitTest" {
+    # Passed cases
+    It "Test on the files with no includePaths" -TestCases @(
+        @{ 
+            exludePaths = "(/|\\)excludes(/|\\)";
+            migrationMapFile = "$PSScriptRoot/inputs/test1/jsonFiles/1.json";
+            scannedDirectory = "$PSScriptRoot/inputs/test3";
+        }
+    ) {
+        $backupFolder = "$PSScriptRoot/inputs/backup"
+        Backup-Folder -targetFolder $ScannedDirectory -backupFolder $backupFolder
+        $migrationMap = Get-Content $migrationMapFile -Raw
+        . $PSScriptRoot/../../scripts/Repo-File-Content-Replacements.ps1 `
+            -ExcludePathsRegex $exludePaths `
             -MigrationMapJson $migrationMap `
             -ScannedDirectory $ScannedDirectory 
         $files = Get-ChildItem "$scannedDirectory/*" -Recurse -File -Include *.txt

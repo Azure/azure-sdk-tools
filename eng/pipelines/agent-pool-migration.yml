@@ -12,10 +12,10 @@
 trigger: none
 pr: none
 
-# Notes on ExcludePaths and IncludePaths:
+# Notes on ExcludePaths and IncludeFromExcludedPaths:
 # 1. ExcludePaths is used to exclude the file pattern you don't want to scan against.
-# 2. IncludePaths is used to add back the files you don't want to exclude. It is supposed to be a subset of ExcludePaths.
-# 3. Both excludePaths and includePaths support standard powershell regex. 
+# 2. IncludeFromExcludedPaths is used to add back the files you don't want to exclude. It is supposed to be a subset of ExcludePaths.
+# 3. Both excludePaths and IncludeFromExcludedPaths support standard powershell regex. 
 # 4. The paths here are relative to the repo folder. 
 #    E.g.
 #    In win agent pool, the path is like ".\eng\scripts\Repo-File-Content-Replacements.ps1", so the regex path can be like "^.\\eng\\"
@@ -33,39 +33,39 @@ parameters:
     - RepoOwner: Azure
       RepoName: azure-sdk-for-android
       ExcludePaths: '^.\\sdk\\|^.\\eng\\common\\|\\tests\\resources\\session-records\\'
-      IncludePaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
+      IncludeFromExcludedPaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-c
       ExcludePaths: '^.\\sdk\\|^.\\eng\\common\\'
-      IncludePaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
+      IncludeFromExcludedPaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-cpp
       ExcludePaths: '^.\\sdk\\|^.\\eng\\common\\'
-      IncludePaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
+      IncludeFromExcludedPaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-go
       ExcludePaths: '^.\\sdk\\|^.\\eng\\common\\'
-      IncludePaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
+      IncludeFromExcludedPaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-ios
       ExcludePaths: '^.\\sdk\\|^.\\eng\\common\\'
-      IncludePaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
+      IncludeFromExcludedPaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-java
       ExcludePaths: '^.\\sdk\\|^.\\eng\\common\\|\\resources\\session-records\\'
-      IncludePaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
+      IncludeFromExcludedPaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-js
       ExcludePaths: '^.\\sdk\\|^.\\eng\\common\\|\\recordings\\node\\'
-      IncludePaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
+      IncludeFromExcludedPaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-net
       ExcludePaths: '^.\\sdk\\|^.\\eng\\common\\|\\tests\\SessionRecords\\'
-      IncludePaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
+      IncludeFromExcludedPaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
     - RepoOwner: Azure
       RepoName: azure-sdk-for-python
       ExcludePaths: '^.\\sdk\\|^.\\eng\\common\\|\\tests\\recordings\\'
-      IncludePaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
+      IncludeFromExcludedPaths: '^.\\sdk\\.*-matrix.*.json$|^.\\sdk\\.*\\.*yml$'
 # Default setting is an example of the map looks like:
 - name: MigrationMap
   type: object
@@ -120,7 +120,7 @@ jobs:
             $migrationMap = '${{ convertToJson(parameters.MigrationMap) }}'
             $(Build.SourcesDirectory)/eng/scripts/Repo-File-Content-Replacements.ps1 `
               -ExcludePathsRegex '${{ repo.ExcludePaths }}' `
-              -IncludePathsRegex '${{ repo.IncludePaths }}' `
+              -IncludeFromExcludedPathsRegex '${{ repo.IncludeFromExcludedPaths }}' `
               -MigrationMap $migrationMap
           displayName: Migration for "${{ repo.RepoName }}"
           workingDirectory: $(Build.SourcesDirectory)/repos/${{ repo.RepoName }}

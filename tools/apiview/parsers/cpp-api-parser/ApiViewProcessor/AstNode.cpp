@@ -458,7 +458,7 @@ void DumpList(
     T end,
     AstDumper* dumper,
     DumpNodeOptions const& dumpOptions,
-    std::function<void(AstDumper*, decltype(*start)&)> function)
+    std::function<void(AstDumper* dumper, decltype(*start)& item)> dumpItemFunction)
 {
   bool firstArg{true};
   for (T& it = start; it != end; ++it)
@@ -476,7 +476,7 @@ void DumpList(
       }
     }
     firstArg = false;
-    function(dumper, *it);
+    dumpItemFunction(dumper, *it);
   }
 }
 

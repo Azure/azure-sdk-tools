@@ -5,7 +5,7 @@
   "additionalIncludeDirectories": [
   ],
   "additionalCompilerSwitches": [],
-  "includeInternal": false,
+  "allowInternal": false,
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": null

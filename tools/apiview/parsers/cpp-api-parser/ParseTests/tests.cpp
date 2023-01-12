@@ -209,13 +209,36 @@ TEST_F(TestParser, CompileSimple)
   {
     ApiViewProcessor processor("tests", std::string_view("SimpleTest.json"));
 
-    processor.ProcessApiView();
+    EXPECT_EQ(processor.ProcessApiView(), 0);
     auto& db = processor.GetClassesDatabase();
     EXPECT_EQ(8ul, db->GetAstNodeMap().size());
 
     EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated.cpp"));
   }
 }
+
+TEST_F(TestParser, CompileWithErrors)
+{
+  {
+    ApiViewProcessor processor("tests", R"({
+  "sourceFilesToProcess": [
+    "CompileError1.cpp"
+  ],
+  "additionalIncludeDirectories": [
+  ],
+  "additionalCompilerSwitches": [],
+  "allowInternal": false,
+  "includeDetail": false,
+  "includePrivate": false,
+  "filterNamespace": null
+  }
+  )"_json);
+
+    EXPECT_NE(processor.ProcessApiView(), 0);
+  }
+}
+
+
 struct NsDumper : AstDumper
 {
   // Inherited via AstDumper
@@ -266,7 +289,7 @@ TEST_F(TestParser, NamespaceFilter1)
   ],
   "additionalIncludeDirectories": [],
   "additionalCompilerSwitches": ["-Qunused-arguments"],
-  "includeInternal": false,
+  "allowInternal": false,
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": "Test"
@@ -274,7 +297,7 @@ TEST_F(TestParser, NamespaceFilter1)
 )"_json);
 
   NsDumper dumper;
-  processor.ProcessApiView();
+  EXPECT_EQ(processor.ProcessApiView(), 0);
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(8ul, db->GetAstNodeMap().size());
   db->DumpClassDatabase(&dumper);
@@ -300,14 +323,14 @@ TEST_F(TestParser, NamespaceFilter2)
   ],
   "additionalIncludeDirectories": [],
   "additionalCompilerSwitches": ["-Qunused-arguments"],
-  "includeInternal": false,
+  "allowInternal": false,
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": "Test::Inner"
 }
 )"_json);
 
-  processor.ProcessApiView();
+  EXPECT_EQ(processor.ProcessApiView(), 0);
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(8ul, db->GetAstNodeMap().size());
 
@@ -340,13 +363,13 @@ TEST_F(TestParser, NamespaceFilter3)
   ],
   "additionalIncludeDirectories": [],
   "additionalCompilerSwitches": ["-Qunused-arguments"],
-  "includeInternal": false,
+  "allowInternal": false,
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": "Axxx"
 }
 )"_json);
-  processor.ProcessApiView();
+  EXPECT_EQ(processor.ProcessApiView(), 0);
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(8ul, db->GetAstNodeMap().size());
@@ -383,13 +406,13 @@ TEST_F(TestParser, NamespaceFilter4)
   ],
   "additionalIncludeDirectories": [],
   "additionalCompilerSwitches": null,
-  "includeInternal": false,
+  "allowInternal": false,
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": ["Test::Inner", "A::AB"]
 }
 )"_json);
-  processor.ProcessApiView();
+  EXPECT_EQ(processor.ProcessApiView(), 0);
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(8ul, db->GetAstNodeMap().size());
@@ -406,7 +429,7 @@ TEST_F(TestParser, NamespaceFilter4)
   EXPECT_EQ("GlobalFunction4", dumper.Messages[2].FailingId);
   EXPECT_EQ("CPA0002", dumper.Messages[3].DiagnosticId);
   EXPECT_EQ("GlobalFunction4", dumper.Messages[3].FailingId);
-  
+
   EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated4.cpp"));
 }
 
@@ -418,7 +441,7 @@ TEST_F(TestParser, Class1)
   ],
   "additionalIncludeDirectories": [],
   "additionalCompilerSwitches": ["-Qunused-arguments"],
-  "includeInternal": false,
+  "allowInternal": false,
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": null
@@ -427,7 +450,22 @@ TEST_F(TestParser, Class1)
   processor.ProcessApiView();
 
   auto& db = processor.GetClassesDatabase();
-  EXPECT_EQ(8ul, db->GetAstNodeMap().size());
+  EXPECT_EQ(16ul, db->GetAstNodeMap().size());
+  
+  NsDumper dumper;
+  db->DumpClassDatabase(&dumper);
+  EXPECT_EQ(31ul, dumper.Messages.size());
+  
+  size_t internalTypes = 0;
+  for (const auto& msg : dumper.Messages)
+  {
+    if (msg.DiagnosticId == "CPA0007")
+    {
+      internalTypes += 1;
+    }
+  }
+  EXPECT_EQ(internalTypes, 8ul);
+  
   EXPECT_TRUE(SyntaxCheckClassDb(db, "Classes1.cpp"));
 }
 TEST_F(TestParser, Class2)
@@ -438,13 +476,13 @@ TEST_F(TestParser, Class2)
   ],
   "additionalIncludeDirectories": [],
   "additionalCompilerSwitches": ["-Qunused-arguments"],
-  "includeInternal": true,
+  "allowInternal": true,
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": null
 }
 )"_json);
-  processor.ProcessApiView();
+  EXPECT_EQ(processor.ProcessApiView(), 0);
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(16ul, db->GetAstNodeMap().size());
@@ -459,18 +497,41 @@ TEST_F(TestParser, Expressions)
   ],
   "additionalIncludeDirectories": [],
   "additionalCompilerSwitches": ["-Qunused-arguments"],
-  "includeInternal": true,
+  "allowInternal": true,
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": null
 }
 )"_json);
 
-  processor.ProcessApiView();
+  EXPECT_EQ(processor.ProcessApiView(), 0);
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_TRUE(SyntaxCheckClassDb(db, "Expression1.cpp"));
 }
+
+TEST_F(TestParser, Templates)
+{
+  ApiViewProcessor processor("tests", R"({
+  "sourceFilesToProcess": [
+    "TemplateTests.cpp"
+  ],
+  "additionalIncludeDirectories": [],
+  "additionalCompilerSwitches": null,
+  "allowInternal": true,
+  "includeDetail": false,
+  "includePrivate": false,
+  "filterNamespace": null
+}
+)"_json);
+
+  EXPECT_EQ(processor.ProcessApiView(), 0);
+
+  auto& db = processor.GetClassesDatabase();
+  // Until we get parsing types working correctly, we can't do the syntax check tests.
+//  EXPECT_TRUE(SyntaxCheckClassDb(db, "Template1.cpp"));
+}
+
 #if 0
 TEST_F(TestParser, AzureCore1)
 {
@@ -480,14 +541,14 @@ TEST_F(TestParser, AzureCore1)
   ],
   "additionalIncludeDirectories": ["core/azure-core/inc"],
   "additionalCompilerSwitches": ["-Qunused-arguments"],
-  "includeInternal": true,
+  "allowInternal": true,
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": "Azure::"
 }
 )"_json);
 
-  processor.ProcessApiView();
+    EXPECT_EQ(processor.ProcessApiView(), 0);
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_LT(1ul, db->GetAstNodeMap().size());
@@ -498,7 +559,7 @@ TEST_F(TestParser, AzureCore2)
 {
   ApiViewProcessor processor(R"(tests\\core\azure-core)");
 
-  processor.ProcessApiView();
+    EXPECT_EQ(processor.ProcessApiView(), 0);
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_LT(1ul, db->GetAstNodeMap().size());
@@ -511,13 +572,13 @@ TEST_F(TestParser, AzureAttestation)
   "sourceFilesToProcess": null,
   "additionalIncludeDirectories": ["../../core/azure-core/inc", "inc"],
   "additionalCompilerSwitches": [],
-  "includeInternal": false,
+  "allowInternal": false,
   "includeDetail": false,
   "includePrivate": false,
   "filterNamespace": "Azure::Security::Attestation"
 }
 )"_json);
-  processor.ProcessApiView();
+    EXPECT_EQ(processor.ProcessApiView(), 0);
   auto& db = processor.GetClassesDatabase();
   EXPECT_TRUE(SyntaxCheckClassDb(db, "Attestation1.cpp", true, false));
 }

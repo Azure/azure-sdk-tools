@@ -58,7 +58,7 @@ func NewModule(dir string) (*Module, error) {
 	//Package name can still be empty when generating API review using uploaded zip folder of a specific package in which case parent directory will not be sdk
 	if packageName == "" {
 		modulePath := mf.Module.Mod.Path
-		packageName := path.Base(modulePath)
+		packageName = path.Base(modulePath)
 		fmt.Printf("Module path: %s\n", modulePath)
 		// Set relative path as package name for internal package to avoid collision
 		if packageName == "internal" {

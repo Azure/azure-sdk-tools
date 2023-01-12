@@ -30,13 +30,11 @@ AfterAll {
         Remove-Item "$PSScriptRoot/inputs/backup" -Recurse
     }
 }
-# Test plan:
-# 1. Tests on the path does not match exclude nor include.
-# 1. Tests on the path matching exclude paths.
-# 2. Tests on the path matching include paths.
-# 3. Tests on the path matching both exclude and include.
-# 4. Tests on the file match the migration map.
-# 5. Tests on the file does not match the migration map.
+# Test cases:
+# 1. Tests on specify valid both include and exclude paths
+# 1. Tests on specify exclude paths and pass empty to include paths.
+# 2. Tests on specify exclude paths only and no include paths.
+
 Describe "repo-file-content-replacement" -Tag "UnitTest" {
     # Passed cases
     It "Test on the files have matching content" -TestCases @(

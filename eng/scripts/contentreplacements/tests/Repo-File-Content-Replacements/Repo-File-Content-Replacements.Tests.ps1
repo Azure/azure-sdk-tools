@@ -54,7 +54,7 @@ Describe "repo-file-content-replacement" -Tag "UnitTest" {
         $backupFolder = "$PSScriptRoot/inputs/backup"
         Backup-Folder -targetFolder $ScannedDirectory -backupFolder $backupFolder
         $migrationMap = Get-Content $migrationMapFile -Raw
-        . $PSScriptRoot/../../scripts/Repo-File-Content-Replacements.ps1 `
+        . $PSScriptRoot/../../Repo-File-Content-Replacements.ps1 `
             -ExcludePathsRegex $exludePaths `
             -IncludeFromExcludedPathsRegex $includeFromExcludedPaths `
             -MigrationMapJson $migrationMap `
@@ -80,7 +80,7 @@ Describe "repo-file-content-replacement" -Tag "UnitTest" {
         $backupFolder = "$PSScriptRoot/inputs/backup"
         Backup-Folder -targetFolder $ScannedDirectory -backupFolder $backupFolder
         $migrationMap = Get-Content $migrationMapFile -Raw
-        . $PSScriptRoot/../../scripts/Repo-File-Content-Replacements.ps1 `
+        . $PSScriptRoot/../../Repo-File-Content-Replacements.ps1 `
             -ExcludePathsRegex $exludePaths `
             -MigrationMapJson $migrationMap `
             -ScannedDirectory $ScannedDirectory 

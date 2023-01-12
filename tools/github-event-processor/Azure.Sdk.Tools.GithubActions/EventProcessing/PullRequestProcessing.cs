@@ -1,15 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using Azure.Sdk.Tools.GitHubEventProcessor.GitHubAuth;
-using Octokit.Internal;
 using Octokit;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
-using System.Reflection.Emit;
-using System.Linq;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
@@ -43,32 +35,35 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="issueUpdate">The issue update object</param>
         /// <returns></returns>
         internal static async Task PullRequestTriage(GitHubEventClient gitHubEventClient,
-                                                                  PullRequestEventGitHubPayload prEventPayload)
+                                                     PullRequestEventGitHubPayload prEventPayload)
         {
-            if (prEventPayload.Action == ActionConstants.Opened)
+            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.PullRequestTriage))
             {
-                if (prEventPayload.PullRequest.Labels.Count == 0)
+                if (prEventPayload.Action == ActionConstants.Opened)
                 {
-                    var prFileList = await gitHubEventClient.GetFilesForPullRequest(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
-                    var prLabels = CodeOwnerUtils.GetPRAutoLabelsForFilePaths(prEventPayload.PullRequest.Labels, prFileList);
-                    if (prLabels.Count > 0)
+                    if (prEventPayload.PullRequest.Labels.Count == 0)
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
-                        foreach (var prLabel in prLabels)
+                        var prFileList = await gitHubEventClient.GetFilesForPullRequest(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
+                        var prLabels = CodeOwnerUtils.GetPRAutoLabelsForFilePaths(prEventPayload.PullRequest.Labels, prFileList);
+                        if (prLabels.Count > 0)
                         {
-                            issueUpdate.AddLabel(prLabel);
+                            var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
+                            foreach (var prLabel in prLabels)
+                            {
+                                issueUpdate.AddLabel(prLabel);
+                            }
                         }
-                    }
 
-                    bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
-                    // The sender will only have Write or Admin permssion if they are a collaborator
-                    if (hasAdminOrWritePermission)
-                    {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
-                        issueUpdate.AddLabel(LabelConstants.CustomerReported);
-                        issueUpdate.AddLabel(LabelConstants.CommunityContribution);
-                        string prComment = $"Thank you for your contribution @{prEventPayload.PullRequest.User.Login}! We will review the pull request and get back to you soon.";
-                        gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
+                        bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
+                        // The sender will only have Write or Admin permssion if they are a collaborator
+                        if (hasAdminOrWritePermission)
+                        {
+                            var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
+                            issueUpdate.AddLabel(LabelConstants.CustomerReported);
+                            issueUpdate.AddLabel(LabelConstants.CommunityContribution);
+                            string prComment = $"Thank you for your contribution @{prEventPayload.PullRequest.User.Login}! We will review the pull request and get back to you soon.";
+                            gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
+                        }
                     }
                 }
             }
@@ -126,34 +121,36 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                            Repository repository,
                                                            User sender)
         {
-            // Normally the action would be checked first but the various events and their conditions
-            // all have two checks in common which are quick and would alleviate the need to check anything
-            // else.
-            // 1. The sender is not a bot.
-            // 2. The Pull request has "no-recent-activity" label
-            if (sender.Type != AccountType.Bot && 
-                LabelUtils.HasLabel(pullRequest.Labels, LabelConstants.NoRecentActivity))
+            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetPullRequestActivity))
             {
-                bool removeLabel = false;
-                // Pull request conditions AND the pull request needs to be in an opened state
-                if ((action == ActionConstants.Reopened ||
-                     action == ActionConstants.Synchronize ||
-                     action == ActionConstants.ReviewRequested) &&
-                     pullRequest.State == ItemState.Open)
+                // Normally the action would be checked first but the various events and their conditions
+                // all have two checks in common which are quick and would alleviate the need to check anything
+                // else.
+                // 1. The sender is not a bot.
+                // 2. The Pull request has "no-recent-activity" label
+                if (sender.Type != AccountType.Bot &&
+                LabelUtils.HasLabel(pullRequest.Labels, LabelConstants.NoRecentActivity))
                 {
-                    removeLabel = true;
-                }
-                // Pull reqeust merged conditions, the merged flag would be true and the PR would be closed
-                else if (action == ActionConstants.Closed &&
-                         pullRequest.Merged)
-                {
-                    removeLabel = true;
-                }
-                if (removeLabel)
-                {
-                    var issueUpdate = gitHubEventClient.GetIssueUpdate(pullRequest);
-                    issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
-                    issueUpdate.State = ItemState.Open;
+                    bool removeLabel = false;
+                    // Pull request conditions AND the pull request needs to be in an opened state
+                    if ((action == ActionConstants.Reopened ||
+                         action == ActionConstants.Synchronize ||
+                         action == ActionConstants.ReviewRequested) &&
+                         pullRequest.State == ItemState.Open)
+                    {
+                        removeLabel = true;
+                    }
+                    // Pull request merged conditions, the merged flag would be true and the PR would be closed
+                    else if (action == ActionConstants.Closed &&
+                             pullRequest.Merged)
+                    {
+                        removeLabel = true;
+                    }
+                    if (removeLabel)
+                    {
+                        var issueUpdate = gitHubEventClient.GetIssueUpdate(pullRequest);
+                        issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                    }
                 }
             }
         }
@@ -177,37 +174,38 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         internal static async Task ResetApprovalsForUntrustedChanges(GitHubEventClient gitHubEventClient,
                                                                      PullRequestEventGitHubPayload prEventPayload)
         {
-            if (prEventPayload.Action == ActionConstants.Synchronize)
+            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetApprovalsForUntrustedChanges))
             {
-                if (prEventPayload.PullRequest.State== ItemState.Open &&
-                    prEventPayload.AutoMergeEnabled)
+                if (prEventPayload.Action == ActionConstants.Synchronize)
                 {
-                    bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
-                    // The sender will only have Write or Admin permssion if they are a collaborator
-                    if (!hasAdminOrWritePermission)
+                    if (prEventPayload.PullRequest.State == ItemState.Open &&
+                        prEventPayload.AutoMergeEnabled)
                     {
-                        // In this case, get all of the reviews 
-                        var reviews = await gitHubEventClient.GetReviewsForPullRequest(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
-                        foreach (var review in reviews)
+                        bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
+                        // The sender will only have Write or Admin permssion if they are a collaborator
+                        if (!hasAdminOrWritePermission)
                         {
-                            // For each review that has approved the pull_request, dismiss it
-                            if (review.State == PullRequestReviewState.Approved)
+                            // In this case, get all of the reviews 
+                            var reviews = await gitHubEventClient.GetReviewsForPullRequest(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
+                            foreach (var review in reviews)
                             {
-                                // Every dismiss needs a dismiss message. Might as well make it personalized.
-                                string dismissalMessage = $"Hi @{review.User.Login}.  We've noticed that new changes have been pushed to this pull request.  Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.";
-                                gitHubEventClient.DismissReview(prEventPayload.Repository.Id,
-                                                                prEventPayload.PullRequest.Number,
-                                                                review.Id,
-                                                                dismissalMessage);
+                                // For each review that has approved the pull_request, dismiss it
+                                if (review.State == PullRequestReviewState.Approved)
+                                {
+                                    // Every dismiss needs a dismiss message. Might as well make it personalized.
+                                    string dismissalMessage = $"Hi @{review.User.Login}.  We've noticed that new changes have been pushed to this pull request.  Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.";
+                                    gitHubEventClient.DismissReview(prEventPayload.Repository.Id,
+                                                                    prEventPayload.PullRequest.Number,
+                                                                    review.Id,
+                                                                    dismissalMessage);
+                                }
                             }
+                            string prComment = $"Hi @{prEventPayload.PullRequest.User.Login}. We've noticed that new changes have been pushed to this pull request.  Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.";
+                            gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
                         }
-
-                        string prComment = $"Hi @{prEventPayload.PullRequest.User.Login}. We've noticed that new changes have been pushed to this pull request.  Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.";
-                        gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
                     }
                 }
             }
-            return;
         }
     }
 }

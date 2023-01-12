@@ -2,46 +2,25 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using static Azure.Sdk.Tools.GitHubEventProcessor.Program;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
-    public class RulesConstants
-    {
-        // issue rules
-        public const string InitialIssueTriage = "InitialIssueTriage";
-        public const string ManualIssueTriage = "ManualIssueTriage";
-        public const string ServiceAttention = "ServiceAttention";
-        public const string CXPAttention = "CXPAttention";
-        public const string ManualTriageAfterExternalAssignment = "ManualTriageAfterExternalAssignment";
-        public const string RequireAttentionForNonMilestone = "RequireAttentionForNonMilestone";
-        public const string AuthorFeedbackNeeded = "AuthorFeedbackNeeded";
-        public const string IssueAddressed = "IssueAddressed";
-        public const string IssueAddressedReset = "IssueAddressedReset";
+    /* The rules configuration is effectively a Dictionary<string, enum> with the
+     * Rules constants being the strings, and the RuleState enumeration. 
+     * {
+          "Rule1": "On",
+          "Rule2": "Off",
+          "Rule3": "On",
+          "Rule4": "Off"
+       }
+     */
 
-        // issue_comment rules
-        public const string AuthorFeedback = "AuthorFeedback";
-        public const string ReopenIssue = "ReopenIssue";
-        public const string DeclineToReopenIssue = "DeclineToReopenIssue";
-        public const string IssueAddressedCommands = "IssueAddressedCommands";
 
-        // pull_request rules
-        public const string PullRequestTriage = "PullRequestTriage";
-        public const string ResetApprovalsForUntrustedChanges = "ResetApprovalsForUntrustedChanges";
-
-        // pull_request_comment rules
-        public const string ReopenPullRequest = "ReopenPullRequest";
-
-        // Rules that apply to multiple events
-        // ResetIssueActivity applies to issue and issue_comment
-        public const string ResetIssueActivity = "ResetIssueActivity";
-        // ResetPullRequestActivity applies to pull_request, pull_request_comment and pull_request_review
-        public const string ResetPullRequestActivity = "ResetPullRequestActivity";
-
-    }
+    // The JsonStringEnumConverter is necessary so the rules, when stored in the file, show On/Off instead
+    // of 0/1 which makes things more readable.
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum RuleState
     {
@@ -52,9 +31,19 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
     public class RulesConfiguration
     {
         public Dictionary<string, RuleState> Rules { get; set; }
-        public RulesConfiguration()
+        public string RulesConfigFile { get; set; } = null;
+        public RulesConfiguration(string configurationFile = null)
         {
             Rules = new Dictionary<string, RuleState>();
+            string configLoc = configurationFile;
+            if (configLoc != null)
+            {
+                // Load the config from the well known location, somewhere under the .github directory
+                // which is in the root of the repository
+                configLoc = DirectoryUtils.FindFileInRepository("actions_config.json", ".github");
+            }
+            RulesConfigFile = configLoc;
+            LoadRulesFromConfig();
         }
         public void TestIt()
         {
@@ -69,6 +58,49 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
             Dictionary<string, RuleState> Rules2 = JsonSerializer.Deserialize<Dictionary<string, RuleState>>(jsonString);
             Console.WriteLine(Rules2[RulesConstants.InitialIssueTriage]);
             ReportMissingRulesFromConfig();
+
+            string fullFilePath = DirectoryUtils.FindFileInRepository("CODEOWNERS", ".github");
+            Console.WriteLine(fullFilePath);
+        }
+
+        public void LoadRulesFromConfig()
+        {
+            // JRS - Remove - there are no config files anywhere yet, just load up all the current rules
+            // and set them to On for the moment
+            if (null == RulesConfigFile)
+            {
+                var rules = typeof(RulesConstants)
+                    .GetFields(BindingFlags.Public | BindingFlags.Static)
+                    .Where(field => field.IsLiteral)
+                    .Where(field => field.FieldType == typeof(String))
+                    .Select(field => field.GetValue(null) as String);
+                foreach (string rule in rules)
+                {
+                    Rules.Add(rule, RuleState.On);
+                }
+            }
+        }
+
+        public bool RuleEnabled(string rule)
+        {
+            if (Rules.ContainsKey(rule))
+            {
+                if (Rules[rule] == RuleState.On)
+                {
+                    Console.WriteLine($"Rule '{rule}' is enabled and will run.");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine($"Rule '{rule}' is not enabled and will not run.");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Rule '{rule}' is not in the repository config file and will not run.");
+            }
+            // If we're reporting missing rules somewhere else, 
+            return false;
         }
 
         public void ReportMissingRulesFromConfig()
@@ -79,12 +111,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
                 .Where(field => field.IsLiteral)
                 .Where(field => field.FieldType == typeof(String))
                 .Select(field => field.GetValue(null) as String);
-            string configFilename = "JRS-Remove";
             foreach (string rule in rules)
             {
                 if (!Rules.ContainsKey(rule))
                 {
-                    Console.WriteLine($"{rule} was not in the rules config file {configFilename}, defaulting rule to off");
+                    Console.WriteLine($"{rule} was not in the rules config file {RulesConfigFile}, defaulting rule to off");
                 }
             }
         }

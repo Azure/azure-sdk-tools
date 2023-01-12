@@ -49,20 +49,23 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         internal static async Task ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
                                                             IssueCommentPayload prCommentPayload)
         {
-            if (prCommentPayload.Sender.Type != AccountType.Bot &&
-                LabelUtils.HasLabel(prCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity))
+            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetPullRequestActivity))
             {
-                if (prCommentPayload.Action == ActionConstants.Created &&
-                    prCommentPayload.Issue.User.Login != prCommentPayload.Sender.Login &&
-                    !CommentUtils.CommentContainsText(prCommentPayload.Comment.Body, CommentConstants.CheckEnforcer) &&
-                    !CommentUtils.CommentContainsText(prCommentPayload.Comment.Body, CommentConstants.Azp) &&
-                    !CommentUtils.CommentContainsText(prCommentPayload.Comment.Body, CommentConstants.ScheduledCloseFragment))
+                if (prCommentPayload.Sender.Type != AccountType.Bot &&
+                LabelUtils.HasLabel(prCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity))
                 {
-                    bool hasWriteOrAdminPermissions = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prCommentPayload.Repository.Id, prCommentPayload.Sender.Login);
-                    if (!hasWriteOrAdminPermissions)
+                    if (prCommentPayload.Action == ActionConstants.Created &&
+                        prCommentPayload.Issue.User.Login != prCommentPayload.Sender.Login &&
+                        !CommentUtils.CommentContainsText(prCommentPayload.Comment.Body, CommentConstants.CheckEnforcer) &&
+                        !CommentUtils.CommentContainsText(prCommentPayload.Comment.Body, CommentConstants.Azp) &&
+                        !CommentUtils.CommentContainsText(prCommentPayload.Comment.Body, CommentConstants.ScheduledCloseFragment))
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(prCommentPayload.Issue);
-                        issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                        bool hasWriteOrAdminPermissions = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prCommentPayload.Repository.Id, prCommentPayload.Sender.Login);
+                        if (!hasWriteOrAdminPermissions)
+                        {
+                            var issueUpdate = gitHubEventClient.GetIssueUpdate(prCommentPayload.Issue);
+                            issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                        }
                     }
                 }
             }
@@ -85,18 +88,21 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="issueUpdate"></param>
         internal static async Task ReopenPullRequest(GitHubEventClient gitHubEventClient, IssueCommentPayload prCommentPayload)
         {
-            if (prCommentPayload.Action == ActionConstants.Created)
+            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ReopenPullRequest))
             {
-                if (prCommentPayload.Issue.PullRequest.State == ItemState.Closed &&
-                    LabelUtils.HasLabel(prCommentPayload.Issue.PullRequest.Labels, LabelConstants.NoRecentActivity) &&
-                    CommentUtils.CommentContainsText(prCommentPayload.Comment.Body, CommentConstants.Reopen) &&
-                    prCommentPayload.Sender.Login != prCommentPayload.Issue.PullRequest.User.Login)
+                if (prCommentPayload.Action == ActionConstants.Created)
                 {
-                    bool hasWriteOrAdminPermissions = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prCommentPayload.Repository.Id, prCommentPayload.Sender.Login);
-                    if (!hasWriteOrAdminPermissions)
+                    if (prCommentPayload.Issue.PullRequest.State == ItemState.Closed &&
+                        LabelUtils.HasLabel(prCommentPayload.Issue.PullRequest.Labels, LabelConstants.NoRecentActivity) &&
+                        CommentUtils.CommentContainsText(prCommentPayload.Comment.Body, CommentConstants.Reopen) &&
+                        prCommentPayload.Sender.Login != prCommentPayload.Issue.PullRequest.User.Login)
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(prCommentPayload.Issue);
-                        issueUpdate.State = ItemState.Open;
+                        bool hasWriteOrAdminPermissions = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prCommentPayload.Repository.Id, prCommentPayload.Sender.Login);
+                        if (!hasWriteOrAdminPermissions)
+                        {
+                            var issueUpdate = gitHubEventClient.GetIssueUpdate(prCommentPayload.Issue);
+                            issueUpdate.State = ItemState.Open;
+                        }
                     }
                 }
             }

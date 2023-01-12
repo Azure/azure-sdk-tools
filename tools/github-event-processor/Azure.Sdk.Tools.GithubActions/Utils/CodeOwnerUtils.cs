@@ -21,8 +21,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
             }
             else
             {
-                // Else use location from the root of the github repository
-                return Path.Combine(Directory.GetCurrentDirectory(), ".github", "CODEOWNERS");
+                return DirectoryUtils.FindFileInRepository("CODEOWNERS", ".github");
             }
         }
 

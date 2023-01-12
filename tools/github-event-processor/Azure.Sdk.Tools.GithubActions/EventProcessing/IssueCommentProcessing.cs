@@ -1,15 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using Azure.Sdk.Tools.GitHubEventProcessor.GitHubAuth;
-using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
-using Octokit.Internal;
 using System.Threading.Tasks;
 using Octokit;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
-using System.Security;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
@@ -56,21 +49,24 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="issueCommentPayload">issue_comment event payload</param>
         internal static void AuthorFeedback(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
-            if (String.Equals(issueCommentPayload.Action, ActionConstants.Created))
+            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.AuthorFeedback))
             {
-                if (issueCommentPayload.Issue.State == ItemState.Open &&
-                    LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback) &&
-                    issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login)
+                if (issueCommentPayload.Action == ActionConstants.Created)
                 {
-                    var issueUpdate = gitHubEventClient.GetIssueUpdate(issueCommentPayload.Issue);
-                    issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
-                    issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
-                    string issueComment =
-                        @$"Hi @{issueCommentPayload.Sender.Login}. Thank you for opening this issue and giving us the opportunity 
+                    if (issueCommentPayload.Issue.State == ItemState.Open &&
+                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback) &&
+                        issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login)
+                    {
+                        var issueUpdate = gitHubEventClient.GetIssueUpdate(issueCommentPayload.Issue);
+                        issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
+                        issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
+                        string issueComment =
+                            @$"Hi @{issueCommentPayload.Sender.Login}. Thank you for opening this issue and giving us the opportunity 
 to assist. To help our team better understand your issue and the details of your scenario please provide a 
 response to the question asked above or the information requested above. This will help us more accurately 
 address your issue.";
-                    gitHubEventClient.CreateComment(issueCommentPayload.Repository.Id, issueCommentPayload.Issue.Number, issueComment);
+                        gitHubEventClient.CreateComment(issueCommentPayload.Repository.Id, issueCommentPayload.Issue.Number, issueComment);
+                    }
                 }
             }
         }
@@ -104,22 +100,25 @@ address your issue.";
         /// <param name="issueCommentPayload">issue_comment event payload</param>
         internal static void ReopenIssue(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
-            if (issueCommentPayload.Action == ActionConstants.Created)
+            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ReopenIssue))
             {
-                if (issueCommentPayload.Issue.State == ItemState.Closed &&
-                    LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity) &&
-                    LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback) &&
-                    issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login &&
-                    issueCommentPayload.Comment.CreatedAt == issueCommentPayload.Issue.ClosedAt.Value &&
-                    // Ensure both times are in UTC so timezones don't get tripped up. ClosedAt is nullable
-                    // but being that the issue is closed is part of the criteria, this will be set
-                    issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7) >= DateTime.UtcNow)
+                if (issueCommentPayload.Action == ActionConstants.Created)
                 {
-                    var issueUpdate = gitHubEventClient.GetIssueUpdate(issueCommentPayload.Issue);
-                    issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
-                    issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
-                    issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
-                    issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
+                    if (issueCommentPayload.Issue.State == ItemState.Closed &&
+                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity) &&
+                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback) &&
+                        issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login &&
+                        issueCommentPayload.Comment.CreatedAt == issueCommentPayload.Issue.ClosedAt.Value &&
+                        // Ensure both times are in UTC so timezones don't get tripped up. ClosedAt is nullable
+                        // but being that the issue is closed is part of the criteria, this will be set
+                        issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7) >= DateTime.UtcNow)
+                    {
+                        var issueUpdate = gitHubEventClient.GetIssueUpdate(issueCommentPayload.Issue);
+                        issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
+                        issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                        issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
+                        issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
+                    }
                 }
             }
         }
@@ -140,19 +139,22 @@ address your issue.";
         /// <param name="issueCommentPayload">issue_comment event payload</param>
         internal static async Task DeclineToReopenIssue(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
-            if (issueCommentPayload.Action == ActionConstants.Created)
+            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.DeclineToReopenIssue))
             {
-                if (issueCommentPayload.Issue.State == ItemState.Closed &&
-                    // Ensure both times are in UTC so timezones don't get tripped up. ClosedAt is nullable
-                    // but being that the issue is closed is part of the criteria, this will be set.
-                    issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7) < DateTime.UtcNow &&
-                    issueCommentPayload.Comment.CreatedAt == issueCommentPayload.Issue.ClosedAt.Value)
+                if (issueCommentPayload.Action == ActionConstants.Created)
                 {
-                    bool hasPermissionOfNone = await gitHubEventClient.DoesUserHavePermission(issueCommentPayload.Repository.Id, issueCommentPayload.Sender.Login, PermissionLevel.None);
-                    if (hasPermissionOfNone)
+                    if (issueCommentPayload.Issue.State == ItemState.Closed &&
+                        // Ensure both times are in UTC so timezones don't get tripped up. ClosedAt is nullable
+                        // but being that the issue is closed is part of the criteria, this will be set.
+                        issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7) < DateTime.UtcNow &&
+                        issueCommentPayload.Comment.CreatedAt == issueCommentPayload.Issue.ClosedAt.Value)
                     {
-                        string issueComment = "Thank you for your interest in this issue! Because it has been closed for a period of time, we strongly advise that you open a new issue linking to this to ensure better visibility of your comment.";
-                        gitHubEventClient.CreateComment(issueCommentPayload.Repository.Id, issueCommentPayload.Issue.Number, issueComment);
+                        bool hasPermissionOfNone = await gitHubEventClient.DoesUserHavePermission(issueCommentPayload.Repository.Id, issueCommentPayload.Sender.Login, PermissionLevel.None);
+                        if (hasPermissionOfNone)
+                        {
+                            string issueComment = "Thank you for your interest in this issue! Because it has been closed for a period of time, we strongly advise that you open a new issue linking to this to ensure better visibility of your comment.";
+                            gitHubEventClient.CreateComment(issueCommentPayload.Repository.Id, issueCommentPayload.Issue.Number, issueComment);
+                        }
                     }
                 }
             }
@@ -176,29 +178,32 @@ address your issue.";
         /// <param name="issueCommentPayload">issue_comment event payload</param>
         internal static async Task IssueAddressedCommands(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
-            if (issueCommentPayload.Action == ActionConstants.Created)
+            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.IssueAddressedCommands))
             {
-                if (CommentUtils.CommentContainsText(issueCommentPayload.Comment.Body, CommentConstants.Unresolve) &&
-                    LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.IssueAddressed))
+                if (issueCommentPayload.Action == ActionConstants.Created)
                 {
-                    bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(issueCommentPayload.Repository.Id, issueCommentPayload.Sender.Login);
+                    if (CommentUtils.CommentContainsText(issueCommentPayload.Comment.Body, CommentConstants.Unresolve) &&
+                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.IssueAddressed))
+                    {
+                        bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(issueCommentPayload.Repository.Id, issueCommentPayload.Sender.Login);
 
-                    // if the user who created the comment is the issue author OR the user has write or admin permission
-                    if (issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login ||
-                        hasAdminOrWritePermission)
-                    {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(issueCommentPayload.Issue);
-                        issueUpdate.State = ItemState.Open;
-                        issueUpdate.RemoveLabel(LabelConstants.IssueAddressed);
-                        issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
-                    }
-                    // else the user is not the original author AND they don't have admin or write permission
-                    else
-                    {
-                        if (!hasAdminOrWritePermission)
+                        // if the user who created the comment is the issue author OR the user has write or admin permission
+                        if (issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login ||
+                            hasAdminOrWritePermission)
                         {
-                            string issueComment = $"Hi ${issueCommentPayload.Sender.Login}, only the original author of the issue can ask that it be unresolved.  Please open a new issue with your scenario and details if you would like to discuss this topic with the team.";
-                            gitHubEventClient.CreateComment(issueCommentPayload.Repository.Id, issueCommentPayload.Issue.Number, issueComment);
+                            var issueUpdate = gitHubEventClient.GetIssueUpdate(issueCommentPayload.Issue);
+                            issueUpdate.State = ItemState.Open;
+                            issueUpdate.RemoveLabel(LabelConstants.IssueAddressed);
+                            issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
+                        }
+                        // else the user is not the original author AND they don't have admin or write permission
+                        else
+                        {
+                            if (!hasAdminOrWritePermission)
+                            {
+                                string issueComment = $"Hi ${issueCommentPayload.Sender.Login}, only the original author of the issue can ask that it be unresolved.  Please open a new issue with your scenario and details if you would like to discuss this topic with the team.";
+                                gitHubEventClient.CreateComment(issueCommentPayload.Repository.Id, issueCommentPayload.Issue.Number, issueComment);
+                            }
                         }
                     }
                 }

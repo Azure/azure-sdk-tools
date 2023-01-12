@@ -23,6 +23,36 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             await LockClosedIssues(gitHubEventClient, scheduledEventPayload);
         }
 
+        /// <summary>
+        /// Trigger: Daily 1am
+        /// Query Criteria
+        ///     Issue is open
+        ///     Issue has "needs-author-feedback" label
+        ///     Issue has "no-recent-activity" label
+        ///     Issue was last modified more than 14 days ago
+        /// Resulting Action: 
+        ///     Close the issue
+        /// </summary>
+        /// <param name="gitHubEventClient"></param>
+        /// <param name="scheduledEventPayload"></param>
+        /// <returns></returns>
+        internal static async Task CloseStaleIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        {
+            List<string> includeLabels = new List<string>
+            {
+                LabelConstants.NeedsAuthorFeedback,
+                LabelConstants.NoRecentActivity
+            };
+            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+                                                             scheduledEventPayload.Repository.Name,
+                                                             IssueTypeQualifier.Issue,
+                                                             ItemState.Open,
+                                                             14, // more than 14 days old
+                                                             null,
+                                                             includeLabels);
+
+        }
+
         internal static async Task IdentifyStaleIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             List<string> includeLabels = new List<string>
@@ -37,7 +67,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                              scheduledEventPayload.Repository.Name,
                                                              IssueTypeQualifier.Issue,
                                                              ItemState.Open,
-                                                             14,
+                                                             14, // more than 14 days old
                                                              null,
                                                              includeLabels,
                                                              excludeLabels);

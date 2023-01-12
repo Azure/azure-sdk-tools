@@ -3,15 +3,11 @@ using System.IO;
 using Octokit;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using System.Text.Json;
-using System.Dynamic;
 using Octokit.Internal;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
-using Azure.Sdk.Tools.GitHubEventProcessor.GitHubAuth;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor
 {
@@ -32,20 +28,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 Environment.Exit(1);
             }
 
-            RulesConfiguration rc = new RulesConfiguration();
-            rc.TestIt();
-            if (true)
-            {
-                Environment.Exit(0);
-            }
-
             string eventName = args[0];
             var serializer = new SimpleJsonSerializer();
             string rawJson = File.ReadAllText(args[1]);
             GitHubEventClient gitHubEventClient = new GitHubEventClient(OrgConstants.ProductHeaderName);
-
-            // JRS-Remove this override once I figure out where codeowners is coming from
-            CodeOwnerUtils.codeOwnersFilePathOverride = @"C:\src\azure-sdk-for-java\.github\CODEOWNERS";
             await gitHubEventClient.WriteRateLimits("RateLimit at start of execution:");
             switch (eventName)
             {

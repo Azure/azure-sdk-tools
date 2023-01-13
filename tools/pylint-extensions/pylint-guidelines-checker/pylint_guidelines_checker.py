@@ -2049,29 +2049,30 @@ class NameExceedsStandardCharacterLength(BaseChecker):
          class name is within the character length limit."""
 
         try:
-            if len(node.name) > self.STANDARD_CHARACTER_LENGTH and not node.name.startswith("_"):
-                self.add_message(
-                    msgid="name-too-long",
-                    node=node,
-                    confidence=None,
-                )
+            self.iterate_through_names(node, True)    
         except:
-            pass
+            pass   
 
 
     def visit_functiondef(self, node):
         """Visit every function and check that the function and 
         its variable names are within the character length limit."""
-
         try:
-            if len(node.name) > self.STANDARD_CHARACTER_LENGTH and not node.name.startswith("_"):
-                self.add_message(
-                    msgid="name-too-long",
-                    node=node,
-                    confidence=None,
-                )
+            self.iterate_through_names(node, False)    
+        except:
+            pass      
 
-            for i in node.body:
+    def iterate_through_names(self, node, ignore_function):
+        """Helper function to iterate through names."""
+        if len(node.name) > self.STANDARD_CHARACTER_LENGTH and not node.name.startswith("_"):
+            self.add_message(
+                msgid="name-too-long",
+                node=node,
+                confidence=None,
+            )
+
+        for i in node.body:
+            if not (isinstance(i, astroid.FunctionDef) or isinstance(i, astroid.AsyncFunctionDef)) and not ignore_function:
                 try:
                     if len(i.name) > self.STANDARD_CHARACTER_LENGTH and not i.name.startswith("_"):
                         self.add_message(
@@ -2087,9 +2088,7 @@ class NameExceedsStandardCharacterLength(BaseChecker):
                                 msgid="name-too-long",
                                 node=j,
                                 confidence=None,
-                            )          
-        except:
-            pass      
+                            )  
 
     visit_asyncfunctiondef = visit_functiondef    
 

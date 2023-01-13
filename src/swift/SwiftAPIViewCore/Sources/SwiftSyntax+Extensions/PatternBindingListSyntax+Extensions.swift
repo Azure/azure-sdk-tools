@@ -24,37 +24,30 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
+import SwiftSyntax
 
-class GenericWhereModel: Tokenizable {
-
-    var requirementsList: [Tokenizable]
-
-    init?(from clause: GenericWhereClause?) {
-        guard let clause = clause else { return nil }
-        self.requirementsList = [Tokenizable]()
-        clause.requirementList.forEach { item in
-            switch item {
-            case let .protocolConformance(type1, protocol2):
-                requirementsList.append(GenericRequirementModel(key: type1, value: protocol2, mode: .conformance))
-            case let .typeConformance(type1, type2):
-                requirementsList.append(GenericRequirementModel(key: type1, value: type2, mode: .conformance))
-            case let .sameType(type1, type2):
-                requirementsList.append(GenericRequirementModel(key: type1, value: type2, mode: .equality))
+extension PatternBindingListSyntax {
+    var names: [String] {
+        var values = [String]()
+        for binding in self {
+            switch binding.kind {
+            case .patternBinding:
+                let pattern = PatternBindingSyntax(binding)!.pattern
+                let patternKind = pattern.kind
+                switch patternKind {
+                case .identifierPattern:
+                    let name = IdentifierPatternSyntax(pattern)!.identifier.withoutTrivia().text
+                    values.append(name)
+                default:
+                    SharedLogger.warn("Unsupported pattern kind: \(patternKind). APIView may not display correctly.")
+                    return []
+                }
+            default:
+                SharedLogger.warn("Unsupported binding kind: \(binding.kind). APIView may not display correctly.")
+                return []
             }
         }
-    }
-
-    func tokenize(apiview a: APIViewModel) {
-        a.keyword("where", prefixSpace: true, postfixSpace: true)
-        let stopIdx = requirementsList.count - 1
-        for (idx, item) in requirementsList.enumerated() {
-            item.tokenize(apiview: a)
-            if idx != stopIdx {
-                a.punctuation(",", postfixSpace: true)
-            }
-        }
-        a.whitespace()
+        return values
     }
 }

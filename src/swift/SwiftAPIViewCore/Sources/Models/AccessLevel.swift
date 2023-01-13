@@ -25,8 +25,27 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
 
-protocol AccessLevelProtocol: Tokenizable {
-    var accessLevel: AccessLevelModifier { get set }
+enum AccessLevel {
+    case `open`
+    case `public`
+    case `private`
+    case `internal`
+    case unspecified
+
+    init(text: String) {
+        switch text {
+        case "open":
+            self = .open
+        case "public":
+            self = .public
+        case "private":
+            self = .private
+        case "internal":
+            self = .internal
+        default:
+            self = .unspecified
+        }
+    }
 }

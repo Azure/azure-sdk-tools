@@ -24,39 +24,46 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
+import SwiftSyntax
 
+enum SpacingKind {
+    /// Leading space
+    case Leading
+    /// Trailing space
+    case Trailing
+    /// Leading and trailing space
+    case Both
+    /// No spacing
+    case Neither
+    /// chomps any leading whitespace to the left
+    case TrimLeft
+}
 
-class GenericParameterModel: Tokenizable {
-
-    /// The list of type or protocol conformances
-    var typeList: [Tokenizable]
-
-    init?(from clause: GenericParameterClause?) {
-        guard let clause = clause else { return nil }
-        self.typeList = [Tokenizable]()
-        clause.parameterList.forEach { param in
-            switch param {
-            case let .identifier(type1):
-                typeList.append(TypeIdentifierModel(name: type1.textDescription))
-            case let .protocolConformance(type1, protocol2):
-                typeList.append(GenericRequirementModel(key: type1, value: protocol2, mode: .conformance))
-            case let .typeConformance(type1, type2):
-                typeList.append(GenericRequirementModel(key: type1, value: type2, mode: .conformance))
+extension SwiftSyntax.TokenKind {
+    var spacing: SpacingKind {
+        switch self {
+        case .anyKeyword: return .Neither
+        case .nilKeyword: return .Neither
+        case .prefixPeriod: return .Leading
+        case .comma: return .Trailing
+        case .colon: return .Trailing
+        case .semicolon: return .Trailing
+        case .equal: return .Both
+        case .arrow: return .Both
+        case .postfixQuestionMark: return .TrimLeft
+        case .leftBrace: return .Leading
+        case .initKeyword: return .Leading
+        case .wildcardKeyword: return .Neither
+        case let .contextualKeyword(val):
+            switch val {
+            case "objc": return .TrimLeft
+            case "lowerThan", "higherThan", "associativity": return .Neither
+            case "available", "unavailable", "introduced", "deprecated", "obsoleted", "message", "renamed": return .Neither
+            default: return .Both
             }
+        default:
+            return self.isKeyword ? .Both : .Neither
         }
-    }
-
-    func tokenize(apiview a: APIViewModel) {
-        a.punctuation("<")
-        let stopIdx = typeList.count - 1
-        for (idx, param) in typeList.enumerated() {
-            param.tokenize(apiview: a)
-            if idx != stopIdx {
-                a.punctuation(",", postfixSpace: true)
-            }
-        }
-        a.punctuation(">")
     }
 }

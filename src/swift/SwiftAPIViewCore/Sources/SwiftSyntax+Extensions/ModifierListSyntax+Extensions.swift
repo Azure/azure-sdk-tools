@@ -24,36 +24,30 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
+import SwiftSyntax
 
-class TypeInheritanceModel: Tokenizable {
 
-    var isClassRequirement: Bool
-    var typeList: [TypeModel]
-
-    init?(from clause: TypeInheritanceClause?) {
-        guard let clause = clause else { return nil }
-        self.isClassRequirement = clause.classRequirement
-        self.typeList = [TypeModel]()
-        clause.typeInheritanceList.forEach { item in
-            typeList.append(TypeIdentifierModel(from: item))
+private func level(for modifiers: ModifierListSyntax) -> AccessLevel {
+    for child in modifiers.children(viewMode: .sourceAccurate) {
+        let accessLevel = AccessLevel(text: child.withoutTrivia().description)
+        if accessLevel != .unspecified {
+            return accessLevel
         }
     }
+    return .unspecified
+}
 
-    func tokenize(apiview a: APIViewModel) {
-        a.punctuation(":", postfixSpace: true)
-        if isClassRequirement {
-            a.keyword("class")
-            if typeList.count > 0 { a.punctuation(",", postfixSpace: true) }
-        }
-        let stopIdx = typeList.count - 1
-        for (idx, item) in typeList.enumerated() {
-            item.tokenize(apiview: a)
-            if idx != stopIdx {
-                a.punctuation(",", postfixSpace: true)
-            }
-        }
-        a.whitespace()
+extension ModifierListSyntax? {
+    var accessLevel: AccessLevel {
+        guard let modifiers = self else { return .unspecified }
+        return level(for: modifiers)
+    }
+}
+
+extension ModifierListSyntax {
+    var accessLevel: AccessLevel {
+        let modifiers = self
+        return level(for: modifiers)
     }
 }

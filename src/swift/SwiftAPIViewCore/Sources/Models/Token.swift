@@ -62,6 +62,28 @@ enum TokenKind: Int, Codable {
     case skipDiffRangeStart = 15
     /// End range to skip APIView diff
     case skippDiffRangeEnd = 16
+
+    public var isVisible: Bool {
+        switch self {
+        case .text: return true
+        case .newline: return true
+        case .whitespace: return true
+        case .punctuation: return true
+        case .keyword: return true
+        case .lineIdMarker: return false
+        case .typeName: return true
+        case .memberName: return true
+        case .stringLiteral: return true
+        case .literal: return true
+        case .comment: return true
+        case .documentRangeStart: return false
+        case .documentRangeEnd: return false
+        case .deprecatedRangeStart: return false
+        case .deprecatedRangeEnd: return false
+        case .skipDiffRangeStart: return false
+        case .skippDiffRangeEnd: return false
+        }
+    }
 }
 
 /// An individual token item
@@ -101,5 +123,17 @@ struct Token: Codable {
         default:
             return value!
         }
+    }
+}
+
+extension Array<Token> {
+    var lastVisible: TokenKind? {
+        var values = self
+        while !values.isEmpty {
+            if let item = values.popLast(), item.kind.isVisible {
+                return item.kind
+            }
+        }
+        return nil
     }
 }

@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- This library is fixed to netstandard2.0 as we target the lowest common framework for shared libraries 
-    to allow them to be used in the widest possible set of applications. -->
+    <!-- This library is fixed to netstandard2.0 due to:
+    https://github.com/Azure/azure-sdk-tools/pull/5048#issuecomment-1382298227
+    -->
     <TargetFramework>netstandard2.0</TargetFramework>
     <BuildOutputTargetFolder>analyzers/dotnet/cs/</BuildOutputTargetFolder>
     <VersionPrefix>0.1.1</VersionPrefix>

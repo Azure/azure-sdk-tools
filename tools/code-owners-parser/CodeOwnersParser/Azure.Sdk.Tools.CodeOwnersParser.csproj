@@ -2,9 +2,7 @@
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
-    <!-- This library is fixed to netstandard2.0 as we target the lowest common framework for shared libraries 
-    to allow them to be used in the widest possible set of applications. -->
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>

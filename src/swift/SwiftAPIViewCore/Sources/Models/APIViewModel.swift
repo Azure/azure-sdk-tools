@@ -342,7 +342,7 @@ class APIViewModel: Tokenizable, Encodable {
         return defId
     }
 
-    /// Trime whitespace tokens
+    /// Trims whitespace tokens
     func trim(removeNewlines: Bool = false) {
         var lineIds = [Token]()
         while (!tokens.isEmpty) {

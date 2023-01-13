@@ -10,6 +10,7 @@ using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json;
 using System.Collections.Generic;
+using Azure.Core;
 
 namespace Azure.Sdk.Tools.TestProxy.TestExample
 {
@@ -17,7 +18,9 @@ namespace Azure.Sdk.Tools.TestProxy.TestExample
     /// This class is an example integration with the test proxy. This particular implementation assumes that the test-proxy is already running
     /// for brevity. A user's test framework would likely spin up and spin down the test-proxy process as the .NET team does.
     /// 
-    /// Reference https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core.TestFramework/src/TestProxy.cs#L63 for the full implementation.
+    /// 
+    /// 
+    /// Reference https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core.TestFramework/src/TestProxy.cs#L63 for a full implementation in a complex environment.
     /// </summary>
     public class SampleTestBaseClass
     {
@@ -120,4 +123,6 @@ namespace Azure.Sdk.Tools.TestProxy.TestExample
             await _httpClient.SendAsync(message);
         }
     }
+
+    public class TestClientOptions : ClientOptions { };
 }

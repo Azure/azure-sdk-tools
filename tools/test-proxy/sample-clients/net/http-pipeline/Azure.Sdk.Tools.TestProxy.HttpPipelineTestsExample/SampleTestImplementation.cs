@@ -1,12 +1,10 @@
-using System.Net.Http;
 using NUnit.Framework;
-using Azure.Sdk.Tools.TestProxy.HttpPipelineSample;
-using Azure.Core.Pipeline;
 using System;
 using System.IO;
 using System.Threading;
 using Azure.Core;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.TestProxy.HttpPipelineSample;
 
 namespace Azure.Sdk.Tools.TestProxy.TestExample
 {
@@ -18,23 +16,14 @@ namespace Azure.Sdk.Tools.TestProxy.TestExample
     /// </summary>
     public class SampleTestImplementation : SampleTestBaseClass
     {
-        private HttpMessage CreateSampleRequest()
-        {
-            var message = RequestPipeline.CreateMessage();
-            message.Request.Uri.Reset(new Uri("https://example.org"));
-            return message;
-        }
 
-        [Test]
+        [Test] // we decorate with [Test] so that the requisite Test-Proxy start/stop post commands are fired (to get a recording id)
         public async Task BasicTest()
         {
-            var message = CreateSampleRequest();
-
-            await RequestPipeline.SendAsync(message, CancellationToken.None);
-
-            var body = (new StreamReader(message.Response.ContentStream)).ReadToEnd();
-
-            Assert.NotNull(body);
+            MyImplementerClass classForTesting = new MyImplementerClass(RequestPipeline);
+            var recordedResult = await classForTesting.SendRequest(new Uri("https://example.org"));
+            
+            Assert.IsNotNull(recordedResult);
         }
     }
 }

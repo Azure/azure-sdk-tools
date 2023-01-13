@@ -1,4 +1,4 @@
-import os, argparse, glob, json
+import os, argparse, glob, json, datetime
 
 from subprocess import run
 from typing import List, Dict, Any
@@ -10,11 +10,15 @@ from ci_tools.functions import (
 
 generated_folder = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "generated"))
 
-TABLE_HEADER: str = """| Package | Using Proxy | Externalized Recordings |
+TABLE_HEADER: str = """| Package | Using Proxy | External Recordings |
 |---|---|---|
 """
 
-TABLE_LAYER: str = "|{}|{}|{}|"
+TABLE_LAYER: str = """|{}|{}|{}|
+"""
+
+YES = "✅"
+NO = "❌"
 
 DOCUMENT: str = """
 <table>
@@ -29,13 +33,9 @@ DOCUMENT: str = """
 {}
 
 </td>
-<td>
-
-{}
-
-</td>
 </tr>
 </table>
+
 """
 
 TABLE_HEIGHT: int = 10
@@ -124,38 +124,67 @@ def generate_js_report() -> ScanResult:
     target_folder = os.path.join(repo, "sdk", "**", "package.json")
     result = ScanResult("JS")
 
-    result.packages = glob.glob(target_folder, recursive=True)
+    results = glob.glob(target_folder, recursive=True)
+    result.packages = [os.path.basename(os.path.dirname(pkg)) for pkg in results]
 
-    for pkg in result.packages:
+    for pkg in results:
         evaluation = evaluate_js_package(pkg)
         if evaluation == 1:
-            result.packages_using_proxy.append(pkg)
+            result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
         elif evaluation == 2:
-            result.packages_using_external.append(pkg)
+            result.packages_using_external.append(os.path.basename(os.path.dirname(pkg)))
+
+    return result
+
+
+def generate_detailed_table(origin: ScanResult, package_set: List[str]):
+    result = TABLE_HEADER
+    for package in package_set:
+        transitioned = YES if package in origin.packages_using_proxy else NO
+        externalized = YES if package in origin.packages_using_external else NO
+
+        table_row = TABLE_LAYER.format(package, transitioned, externalized)
+        result += table_row
 
     return result
 
 
 def write_output(result: ScanResult) -> None:
-    pass
+    with open(result.language.lower() + ".md", "w", encoding="utf-8") as f:
+        f.writelines(f"# {result.language} Transition Details - {datetime.date.today()}")
+
+        # batch by sets of 20
+        for i in range(0, len(result.packages), 20):
+            packages = result.packages[i : i + 20]
+            table_set_1 = packages[0:TABLE_HEIGHT]
+            table_set_2 = packages[TABLE_HEIGHT:]
+
+            document_addition = DOCUMENT.format(
+                generate_detailed_table(result, table_set_1), generate_detailed_table(result, table_set_2)
+            )
+
+            f.write(document_addition)
 
 
 def write_summary(results: List[ScanResult]) -> None:
-    pass
+    with open("summary.md", "w", encoding="utf-8") as f:
+        f.writelines(f"# Test Proxy Transition Summary - {datetime.date.today()}")
 
 
 def generate_python_report() -> ScanResult:
     repo = get_repo("Python")
 
     result = ScanResult("Python")
-    result.packages = discover_targeted_packages("azure*", repo)
 
-    for pkg in result.packages:
+    results = discover_targeted_packages("azure*", repo)
+    result.packages = [os.path.basename(pkg) for pkg in results]
+
+    for pkg in results:
         evaluation = evaluate_python_package(pkg)
         if evaluation == 1:
-            result.packages_using_proxy.append(pkg)
+            result.packages_using_proxy.append(os.path.basename(pkg))
         elif evaluation == 2:
-            result.packages_using_external.append(pkg)
+            result.packages_using_external.append(os.path.basename(pkg))
 
     return result
 

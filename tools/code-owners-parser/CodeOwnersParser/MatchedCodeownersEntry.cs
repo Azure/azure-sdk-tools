@@ -1,7 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
@@ -41,9 +41,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         public readonly CodeownersEntry Value;
 
         /// <summary>
-        /// See comment on IsCodeOwnersPathValid
+        /// See comment on IsCodeownersPathValid
         /// </summary>
-        public bool IsValid => IsCodeOwnersPathValid(this.Value.PathExpression);
+        public bool IsValid => IsCodeownersPathValid(this.Value.PathExpression);
 
         /// <summary>
         /// Any CODEOWNERS path with these characters will be skipped.
@@ -52,18 +52,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// </summary>
         private static readonly char[] unsupportedChars = { '[', ']', '!', '?' };
 
-        private readonly ILogger<MatchedCodeownersEntry> log;
-
         public MatchedCodeownersEntry(string targetPath, List<CodeownersEntry> codeownersEntries)
         {
-            this.log = CreateLog();
             this.Value = GetMatchingCodeownersEntry(targetPath, codeownersEntries);
-        }
-
-        private ILogger<MatchedCodeownersEntry> CreateLog()
-        {
-            var loggerFactory = LoggerFactory.Create(builder => { builder.AddSimpleConsole(); });
-            return loggerFactory.CreateLogger<MatchedCodeownersEntry>();
         }
 
         /// <summary>
@@ -77,6 +68,14 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             string targetPath,
             List<CodeownersEntry> codeownersEntries)
         {
+            if (targetPath.Contains('*'))
+            {
+                Console.Error.WriteLine(
+                    $"Target path \"{targetPath}\" contains star ('*') which is not supported. " 
+                    + "Returning no match without checking for ownership.");
+                return NoMatchCodeownersEntry;
+            }
+
             // targetPath is assumed to be absolute w.r.t. repository root, hence we ensure
             // it starts with "/" to denote that.
             if (!targetPath.StartsWith("/"))
@@ -99,10 +98,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 .FirstOrDefault(
                     entry => Matches(targetPath, entry), 
                     // assert: none of the codeownersEntries matched targetPath
-                    new CodeownersEntry());
+                    NoMatchCodeownersEntry);
 
             return matchedEntry;
         }
+
+        private CodeownersEntry NoMatchCodeownersEntry { get; } = new CodeownersEntry();
 
         /// <summary>
         /// See the comment on unsupportedChars.
@@ -112,7 +113,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             var contains = unsupportedChars.Any(codeownersPath.Contains);
             if (contains)
             {
-                log.LogWarning(
+                Console.Error.WriteLine(
                     $"CODEOWNERS path \"{codeownersPath}\" contains unsupported characters: " +
                     string.Join(' ', unsupportedChars) +
                     " Because of that this path will never match.");
@@ -142,7 +143,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
             if (codeownersPath.Contains(DoubleStar) || pattern.Contains(SingleStar))
             {
-                log.LogWarning(
+                Console.Error.WriteLine(
                     $"CODEOWNERS path \"{codeownersPath}\" contains reserved phrases: " +
                     $"\"{DoubleStar}\" or \"{SingleStar}\"");
             }
@@ -211,7 +212,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         /// <summary>
         /// CODEOWNERS paths that do not start with "/" are relative and considered invalid,
-        /// See comment on "IsCodeOwnersPathValid" for definition of "valid".
+        /// See comment on "IsCodeownersPathValid" for definition of "valid".
         /// However, here we handle such cases to accomodate for parsing CODEOWNERS file
         /// paths that somehow slipped through that validation. We do so by instead treating
         /// such paths as if they were absolute to repository root, i.e. starting with "/".
@@ -239,7 +240,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// - if the Value.PathExpression does not end with "/", at least one corresponding
         /// file exists in the repository.
         /// </summary>
-        private bool IsCodeOwnersPathValid(string codeownersPath)
+        private bool IsCodeownersPathValid(string codeownersPath)
             => codeownersPath.StartsWith("/") && !ContainsUnsupportedCharacters(codeownersPath);
     }
 }

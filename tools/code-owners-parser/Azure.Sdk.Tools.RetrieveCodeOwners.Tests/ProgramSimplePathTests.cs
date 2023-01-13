@@ -6,12 +6,14 @@ using NUnit.Framework;
 namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
 {
     /// <summary>
-    /// Test class for Azure.Sdk.Tools.RetrieveCodeOwners.Program.
+    /// Test class for Azure.Sdk.Tools.RetrieveCodeOwners.Program.Main(),
+    /// for scenario in which targetPath is a simple path, i.e.
+    /// targetPath.IsGlobPath() returns false.
     /// </summary>
     [TestFixture]
-    public class ProgramTests
+    public class ProgramSimplePathTests
     {
-        private const string CodeownersFilePath = "CODEOWNERS";
+        private const string CodeownersFilePath = "./TestData/simple_path_CODEOWNERS";
 
         private static readonly object[] sourceLists =
         {
@@ -25,21 +27,24 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
         };
 
         [TestCaseSource(nameof(sourceLists))]
-        public void TestOnNormalOutput(string targetPath, bool excludeNonUserAliases, List<string> expectedOwners)
+        public void OutputsCodeownersForSimplePath(
+            string targetPath,
+            bool excludeNonUserAliases,
+            List<string> expectedOwners)
         {
             using var consoleOutput = new ConsoleOutput();
 
             // Act
             Program.Main(targetPath, CodeownersFilePath, excludeNonUserAliases);
 
-            string actualOutput = consoleOutput.GetOutput();
+            string actualOutput = consoleOutput.GetStdout();
             AssertOwners(actualOutput, expectedOwners);
         }
 
         [TestCase("PathNotExist")]
         [TestCase("http://testLink")]
         [TestCase("https://testLink")]
-        public void TestOnError(string codeownersPath)
+        public void ErrorsOutOnInvalidInputs(string codeownersPath)
         {
             Assert.That(Program.Main("sdk", codeownersPath), Is.EqualTo(1));
         }

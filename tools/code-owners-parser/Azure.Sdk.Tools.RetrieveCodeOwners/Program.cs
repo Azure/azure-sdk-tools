@@ -41,16 +41,17 @@ public static class Program
         string? targetDir = null,
         bool useRegexMatcher = false)
     {
-        targetPath = targetPath.Trim();
-        targetDir = targetDir?.Trim();
-        codeownersFilePathOrUrl = codeownersFilePathOrUrl.Trim();
-
-        Debug.Assert(!string.IsNullOrWhiteSpace(targetPath));
-        Debug.Assert(!string.IsNullOrWhiteSpace(codeownersFilePathOrUrl));
-        Debug.Assert(!targetPath.IsGlobFilePath() 
-                     || (targetDir != null && Directory.Exists(targetDir)));
         try 
         {
+            targetPath = targetPath.Trim();
+            targetDir = targetDir?.Trim();
+            codeownersFilePathOrUrl = codeownersFilePathOrUrl.Trim();
+
+            Trace.Assert(!string.IsNullOrWhiteSpace(targetPath));
+            Trace.Assert(!string.IsNullOrWhiteSpace(codeownersFilePathOrUrl));
+            Trace.Assert(!targetPath.IsGlobFilePath() 
+                         || (targetDir != null && Directory.Exists(targetDir)));
+
             object codeownersData = targetPath.IsGlobFilePath()
                 ? GetCodeownersForGlobPath(
                     new GlobFilePath(targetPath),

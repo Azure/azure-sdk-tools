@@ -103,8 +103,7 @@ public class ProgramGlobPathTests
             actualErr = consoleOutput.GetStderr();
         }
 
-        var actualEntries =
-            JsonSerializer.Deserialize<Dictionary<string, CodeownersEntry>>(actualOutput)!;
+        var actualEntries = TryDeserializeActualEntries(actualOutput, actualErr);
 
         Assert.Multiple(() =>
         {
@@ -112,6 +111,27 @@ public class ProgramGlobPathTests
             Assert.That(returnCode, Is.EqualTo(0));
             Assert.That(actualErr, Is.EqualTo(string.Empty));
         });
+    }
+
+    private static Dictionary<string, CodeownersEntry> TryDeserializeActualEntries(
+        string actualOutput,
+        string actualErr)
+    {
+        Dictionary<string, CodeownersEntry> actualEntries;
+        try
+        {
+            actualEntries =
+                JsonSerializer.Deserialize<Dictionary<string, CodeownersEntry>>(actualOutput)!;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            Console.WriteLine("actualOutput: " + actualOutput);
+            Console.WriteLine("actualErr: " + actualErr);
+            throw;
+        }
+
+        return actualEntries;
     }
 
     private static void AssertEntries(

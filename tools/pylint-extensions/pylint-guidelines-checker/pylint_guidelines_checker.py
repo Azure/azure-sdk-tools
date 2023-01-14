@@ -2036,7 +2036,7 @@ class DeleteOperationReturnStatement(BaseChecker):
     priority = -1
     msgs = {
         "C4752": (
-            "delete* or begin_delete* does not return None or LROPoller[None].",
+            "delete* or begin_delete* should return None or LROPoller[None], respectively.",
             "delete-operation-wrong-return-type",
             "delete* or begin_delete* functions should return None or LROPoller[None]."
         ),

@@ -2083,12 +2083,21 @@ class NameExceedsStandardCharacterLength(BaseChecker):
                 except:
                     # Gets the names of ast.Assign statements
                     for j in i.targets:
-                        if len(j.name) > self.STANDARD_CHARACTER_LENGTH and not j.name.startswith("_"):
-                            self.add_message(
-                                msgid="name-too-long",
-                                node=j,
-                                confidence=None,
-                            )  
+                        if isinstance(j, astroid.AssignName):
+                            if len(j.name) > self.STANDARD_CHARACTER_LENGTH and not j.name.startswith("_"):
+                                self.add_message(
+                                    msgid="name-too-long",
+                                    node=j,
+                                    confidence=None,
+                                )  
+                        elif isinstance(j, astroid.AssignAttr):
+                            # for self.names
+                            if len(j.attrname) > self.STANDARD_CHARACTER_LENGTH and not j.attrname.startswith("_"):
+                                self.add_message(
+                                    msgid="name-too-long",
+                                    node=j,
+                                    confidence=None,
+                                )  
 
     visit_asyncfunctiondef = visit_functiondef    
 

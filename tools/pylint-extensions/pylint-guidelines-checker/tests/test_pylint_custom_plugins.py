@@ -3217,3 +3217,48 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
             self.checker.visit_functiondef(function_node)
+
+    def test_instance_attr_name_too_long(self):
+        class_node, function_node, property_node = astroid.extract_node(
+        """
+            class ClassNameGoodClient(): #@
+                def __init__(self, this_name_is_too_long_to_use_anymore_reqs, **kwargs): #@
+                    self.this_name_is_too_long_to_use_anymore_reqs = 10 #@
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="name-too-long",
+                    line=4,
+                    node=property_node.targets[0],
+                    col_offset=8, 
+                    end_line=4, 
+                    end_col_offset=65
+                )
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_class_var_name_too_long(self):
+        class_node, class_var_node, function_node, property_node = astroid.extract_node(
+        """
+            class ClassNameGoodClient(): #@
+                this_name_is_too_long_to_use_anymore_reqs = 10 #@
+                def __init__(self, dog, **kwargs): #@
+                    self.dog=dog #@
+        """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="name-too-long",
+                    line=3,
+                    node=class_node.body[0].targets[0],
+                    col_offset=4, 
+                    end_line=3, 
+                    end_col_offset=45
+                )
+        ):
+            self.checker.visit_functiondef(class_node)
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node)

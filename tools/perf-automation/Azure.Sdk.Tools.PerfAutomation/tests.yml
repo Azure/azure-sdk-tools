@@ -1,4 +1,4 @@
-Languages:
+﻿Languages:
   Net:
     DefaultVersions:
     - netcoreapp3.1
@@ -173,7 +173,7 @@ Services:
         '@azure/logger': 1.0.3
       - '@azure/storage-blob': source
         '@azure/core-auth': source
-        '@azure/core-http': source
+        '@azure/core-http': ^3.0.0
         '@azure/core-lro': source
         '@azure/core-paging': source
         '@azure/core-rest-pipeline': source

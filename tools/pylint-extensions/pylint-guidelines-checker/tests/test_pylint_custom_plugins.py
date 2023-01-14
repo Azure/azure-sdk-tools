@@ -2034,7 +2034,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         return_node.parent.root().name = "some-package.some.aio.file.py"
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="async-return-async-iterable",
+                    msg_id="client-async-list-methods-return-async-iterable",
                     line=4,
                     node=function_node,
                     col_offset=4, 

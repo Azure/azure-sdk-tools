@@ -859,6 +859,11 @@ class ClientListMethodsUseCorePaging(BaseChecker):
             "client-list-methods-use-paging",
             "Client methods that return collections should use the Paging protocol.",
         ),
+        "C4753" : (
+            "Async operations that return collections should return an AsyncItemPaged or custom paging class.",
+            "client-async-list-methods-return-async-iterable",
+            "Async client methods should return async iterables."
+        ),
     }
     options = (
         (
@@ -917,7 +922,7 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                             msgid="client-list-methods-use-paging", node=node.parent, confidence=None
                         )
                     if paging_class and not returns_async and async_client:
-                        self.add_message(msgid="async-return-async-iterable", node=node.parent, confidence=None)
+                        self.add_message(msgid="client-async-list-methods-return-async-iterable", node=node.parent, confidence=None)
         except:
             logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
             pass

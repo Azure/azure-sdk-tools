@@ -78,6 +78,8 @@ public class CodeownersFileTests
         new(      "/a]b" , "a]b"         ,   true , false ),
         new(      "/a?b" , "a?b"         ,   true , false ),
         new(      "/a?b" , "axb"         ,  false , false ),
+        new(        "/a" , "*"           ,  false , false ),
+        new(        "/*" , "*"           ,   true , false ),
         new(        "/*" , "a"           ,  false , true  ),
         new(        "/*" , "a/"          ,  false , false ),
         new(        "/*" , "a/b"         ,  false , false ),
@@ -152,20 +154,20 @@ public class CodeownersFileTests
         List<CodeownersEntry>? codeownersEntries =
             CodeownersFile.GetCodeownersEntries(testCase.CodeownersPath + "@owner");
 
-        VerifyGetMatchingCodeownersEntry(testCase, codeownersEntries, useNewImpl: false, testCase.ExpectedLegacyMatch);
-        VerifyGetMatchingCodeownersEntry(testCase, codeownersEntries, useNewImpl: true, testCase.ExpectedNewMatch);
+        VerifyGetMatchingCodeownersEntry(testCase, codeownersEntries, useRegexMatcher: false, testCase.ExpectedLegacyMatch);
+        VerifyGetMatchingCodeownersEntry(testCase, codeownersEntries, useRegexMatcher: true, testCase.ExpectedNewMatch);
     }
 
     private static void VerifyGetMatchingCodeownersEntry(
         TestCase testCase,
         List<CodeownersEntry> codeownersEntries,
-        bool useNewImpl,
+        bool useRegexMatcher,
         bool expectedMatch)
     {
         CodeownersEntry? entryLegacy =
             // Act
             CodeownersFile.GetMatchingCodeownersEntry(testCase.TargetPath,
-                codeownersEntries, useNewImpl: useNewImpl);
+                codeownersEntries, useRegexMatcher);
 
         Assert.That(entryLegacy.Owners, Has.Count.EqualTo(expectedMatch ? 1 : 0));
     }

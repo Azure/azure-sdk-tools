@@ -3,6 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>Nullable</WarningsAsErrors>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>retrieve-codeowners</ToolCommandName>
     <VersionPrefix>1.0.0</VersionPrefix>

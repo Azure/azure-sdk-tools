@@ -2,12 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
     public static class CodeownersFile
     {
-        public static List<CodeownersEntry> GetCodeownersEntriesFromFileOrUrl(string codeownersFilePathOrUrl)
+        private const bool UseRegexMatcherDefault = false;
+
+        public static List<CodeownersEntry> GetCodeownersEntriesFromFileOrUrl(
+            string codeownersFilePathOrUrl)
         {
             string content = FileHelpers.GetFileOrUrlContents(codeownersFilePathOrUrl);
             return GetCodeownersEntries(content);
@@ -35,19 +39,38 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         public static CodeownersEntry GetMatchingCodeownersEntry(
             string targetPath,
             string codeownersFilePathOrUrl,
-            bool useNewImpl = false)
+            bool useRegexMatcher = UseRegexMatcherDefault)
         {
             var codeownersEntries = GetCodeownersEntriesFromFileOrUrl(codeownersFilePathOrUrl);
-            return GetMatchingCodeownersEntry(targetPath, codeownersEntries, useNewImpl);
+            return GetMatchingCodeownersEntry(targetPath, codeownersEntries, useRegexMatcher);
+        }
+
+        public static Dictionary<string, CodeownersEntry> GetMatchingCodeownersEntries(
+            GlobFilePath targetPath,
+            string targetDir,
+            string codeownersFilePathOrUrl,
+            bool useRegexMatcher = UseRegexMatcherDefault)
+        {
+            var codeownersEntries = GetCodeownersEntriesFromFileOrUrl(codeownersFilePathOrUrl);
+
+            Dictionary<string, CodeownersEntry> codeownersEntriesByPath = targetPath
+                .ResolveGlob(targetDir).ToDictionary(
+                    path => path,
+                    path => GetMatchingCodeownersEntry(
+                        path,
+                        codeownersEntries,
+                        useRegexMatcher));
+
+            return codeownersEntriesByPath;
         }
 
         public static CodeownersEntry GetMatchingCodeownersEntry(
             string targetPath,
             List<CodeownersEntry> codeownersEntries,
-            bool useNewImpl = false)
+            bool useRegexMatcher = UseRegexMatcherDefault)
         {
             Debug.Assert(targetPath != null);
-            return useNewImpl
+            return useRegexMatcher
                 ? new MatchedCodeownersEntry(targetPath, codeownersEntries).Value
                 : GetMatchingCodeownersEntryLegacyImpl(targetPath, codeownersEntries);
         }

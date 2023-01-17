@@ -2031,7 +2031,7 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
 class NameExceedsStandardCharacterLength(BaseChecker):
     __implements__ = IAstroidChecker
 
-    """Rule to check that the character length of type and property names are not over X characters."""
+    """Rule to check that the character length of type and property names are not over 40 characters."""
     name = "name-too-long"
     priority = -1
     msgs = {

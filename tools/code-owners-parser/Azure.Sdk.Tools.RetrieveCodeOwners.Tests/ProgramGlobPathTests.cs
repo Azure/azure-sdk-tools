@@ -97,7 +97,7 @@ public class ProgramGlobPathTests
                 codeownersFilePathOrUrl,
                 excludeNonUserAliases,
                 targetDir,
-                useRegexMatcher);
+                useRegexMatcher: useRegexMatcher);
 
             actualOutput = consoleOutput.GetStdout();
             actualErr = consoleOutput.GetStderr();
@@ -145,6 +145,6 @@ public class ProgramGlobPathTests
             Assert.That(expectedEntries[path], Is.EqualTo(actualEntry), $"path: {path}");
         }
 
-        Assert.That(actualEntries.Count, Is.EqualTo(expectedEntries.Count));
+        Assert.That(actualEntries, Has.Count.EqualTo(expectedEntries.Count));
     }
 }

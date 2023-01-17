@@ -108,7 +108,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// <summary>
         /// See the comment on unsupportedChars.
         /// </summary>
-        private bool ContainsUnsupportedCharacters(string codeownersPath)
+        private static bool ContainsUnsupportedCharacters(string codeownersPath)
         {
             var contains = unsupportedChars.Any(codeownersPath.Contains);
             if (contains)
@@ -158,10 +158,11 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
             pattern = SetPatternSuffix(targetPath, pattern);
 
-            // Note that the "/**/" case is implicitly covered by "**/".
-            pattern = pattern.Replace($"{DoubleStar}/", "(.*)");
-            // This case is necessary to cover suffix case, e.g. "/foo/bar/**".
-            pattern = pattern.Replace($"/{DoubleStar}", "(.*)");
+            pattern = pattern.Replace($"/{DoubleStar}$", "/(.*)$");
+            // Note we can assume there is "/" after "^" because we normalize
+            // the path by prepending "/" if absent.
+            pattern = pattern.Replace($"^/{DoubleStar}", "^(.*)");
+            pattern = pattern.Replace($"/{DoubleStar}/", "((/.*/)|/)");
             // This case is necessary to cover inline **, e.g. "/a**b/".
             pattern = pattern.Replace(DoubleStar, "(.*)");
             pattern = pattern.Replace(SingleStar, "([^/]*)");
@@ -217,7 +218,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// paths that somehow slipped through that validation. We do so by instead treating
         /// such paths as if they were absolute to repository root, i.e. starting with "/".
         /// </summary>
-        private string NormalizePath(string codeownersPath)
+        private static string NormalizePath(string codeownersPath)
         {
             if (!codeownersPath.StartsWith("/"))
                 codeownersPath = "/" + codeownersPath;

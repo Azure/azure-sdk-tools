@@ -49,12 +49,15 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             GlobFilePath targetPath,
             string targetDir,
             string codeownersFilePathOrUrl,
+            string[]? ignoredPathPrefixes = null,
             bool useRegexMatcher = UseRegexMatcherDefault)
         {
+            ignoredPathPrefixes ??= Array.Empty<string>();
+
             var codeownersEntries = GetCodeownersEntriesFromFileOrUrl(codeownersFilePathOrUrl);
 
             Dictionary<string, CodeownersEntry> codeownersEntriesByPath = targetPath
-                .ResolveGlob(targetDir).ToDictionary(
+                .ResolveGlob(targetDir, ignoredPathPrefixes).ToDictionary(
                     path => path,
                     path => GetMatchingCodeownersEntry(
                         path,

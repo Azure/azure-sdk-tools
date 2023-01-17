@@ -26,8 +26,10 @@ public class GlobFilePath
     public static bool IsGlobFilePath(string path)
         => path.Contains('*');
 
-    public List<string> ResolveGlob(string directoryPath)
+    public List<string> ResolveGlob(string directoryPath, string[]? ignoredPathPrefixes)
     {
+        ignoredPathPrefixes ??= Array.Empty<string>();
+
         var globMatcher = new Matcher(StringComparison.Ordinal);
         globMatcher.AddInclude(this.filePath);
         
@@ -35,6 +37,7 @@ public class GlobFilePath
         
         matchedPaths = matchedPaths
             .Select(path => Path.GetRelativePath(directoryPath, path).Replace("\\", "/"))
+            .Where(path => ignoredPathPrefixes.All(prefix => !path.StartsWith(prefix)))
             .ToList();
 
         return matchedPaths;

@@ -92,12 +92,20 @@ public class CodeownersFileTests
         new(       "/**" , "["           ,  false , true  ),
         new(       "/**" , "]"           ,  false , true  ),
         new(       "/**" , "!"           ,  false , true  ),
-        new(      "/a/*" , "a"           ,  false , false ), // Not sure if this should not match.
+        new(     "/a/**" , "a"           ,  false , false ),
+        new(     "/*/**" , "a"           ,  false , false ),
+        new(     "/*/**" , "a/"          ,  false , true  ),
+        new(     "/*/**" , "a/b"         ,  false , true  ),
+        new(     "/**/a" , "a"           ,  false , true  ),
+        new(      "**/a" , "a"           ,  false , true  ),
+        new(     "/**/a" , "x/ba"        ,  false , false ),
+        new(      "**/a" , "x/ba"        ,  false , false ),
+        new(      "/a/*" , "a"           ,  false , false ),
         new(      "/a/*" , "a/"          ,  false , true  ),
         new(      "/a/*" , "a/b"         ,  false , true  ),
         new(      "/a/*" , "a/b/"        ,  false , false ),
         new(      "/a/*" , "a/b/c"       ,  false , false ),
-        new(     "/a/**" , "a"           ,  false , true  ), // Not sure if this should match.
+        new(     "/a/**" , "a"           ,  false , false ),
         new(     "/a/**" , "a/"          ,  false , true  ),
         new(     "/a/**" , "a/b"         ,  false , true  ),
         new(     "/a/**" , "a/b/"        ,  false , true  ),
@@ -117,6 +125,7 @@ public class CodeownersFileTests
         new(  "/a/**/b/" , "a/x/b"       ,  false , true  ),
         new(  "/a/**/b/" , "a/x/y/b"     ,  false , true  ),
         new(  "/a/**/b/" , "a/x/y/c"     ,  false , false ),
+        new(  "/a/**/b/" , "a-b"         ,  false , false ),
         new(     "a/*/*" , "a/b"         ,  false , false ),
         new(  "/a/*/*/d" , "a/b/c/d"     ,  false , true  ),
         new(  "/a/*/*/d" , "a/b/x/c/d"   ,  false , false ),
@@ -151,7 +160,7 @@ public class CodeownersFileTests
     [TestCaseSource(nameof(testCases))]
     public void TestGetMatchingCodeownersEntry(TestCase testCase)
     {
-        List<CodeownersEntry>? codeownersEntries =
+        List<CodeownersEntry> codeownersEntries =
             CodeownersFile.GetCodeownersEntries(testCase.CodeownersPath + "@owner");
 
         VerifyGetMatchingCodeownersEntry(testCase, codeownersEntries, useRegexMatcher: false, testCase.ExpectedLegacyMatch);
@@ -164,12 +173,12 @@ public class CodeownersFileTests
         bool useRegexMatcher,
         bool expectedMatch)
     {
-        CodeownersEntry? entryLegacy =
+        CodeownersEntry entry =
             // Act
             CodeownersFile.GetMatchingCodeownersEntry(testCase.TargetPath,
                 codeownersEntries, useRegexMatcher);
 
-        Assert.That(entryLegacy.Owners, Has.Count.EqualTo(expectedMatch ? 1 : 0));
+        Assert.That(entry.Owners, Has.Count.EqualTo(expectedMatch ? 1 : 0));
     }
 
     public record TestCase(

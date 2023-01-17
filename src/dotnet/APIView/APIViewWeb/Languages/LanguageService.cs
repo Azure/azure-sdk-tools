@@ -4,6 +4,9 @@ using System.IO;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
+using APIViewWeb.Models;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb
 {
@@ -25,5 +28,12 @@ namespace APIViewWeb
             Tokens = new CodeFileToken[] {new CodeFileToken("", CodeFileTokenKind.Newline), ReviewNotReadyCodeFile, new CodeFileToken("", CodeFileTokenKind.Newline) },
             Navigation = new NavigationItem[] { new NavigationItem() { Text = fileName } }
         };
+
+        public static string[] SupportedLanguages = new string[] { "C", "C++", "C#", "Cadl", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Swagger", "Swift", "Xml" };
+
+        public virtual bool GeneratePipelineRunParams(ReviewGenPipelineParamModel param) => true;
+
+
+        public static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
     }
 }

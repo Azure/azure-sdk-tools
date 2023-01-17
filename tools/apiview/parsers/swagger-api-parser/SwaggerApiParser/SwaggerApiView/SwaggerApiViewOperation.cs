@@ -42,7 +42,6 @@ public class SwaggerApiViewOperation : ITokenSerializable
         
         if (this.description != null)
         {
-            // ret.Add(TokenSerializer.Intent(context.intent));
             ret.Add(TokenSerializer.NavigableToken("description", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("description")));
             ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken(this.description, CodeFileTokenKind.Literal));
@@ -51,14 +50,12 @@ public class SwaggerApiViewOperation : ITokenSerializable
         
         if (this.summary != null)
         {
-            // ret.Add(TokenSerializer.Intent(context.intent));
             ret.Add(TokenSerializer.NavigableToken("summary", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("summary")));
             ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken(this.summary, CodeFileTokenKind.Literal));
             ret.Add(TokenSerializer.NewLine());
         }
 
-        // ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(TokenSerializer.NavigableToken("operationId", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
         ret.Add(TokenSerializer.Colon());
         ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
@@ -74,7 +71,6 @@ public class SwaggerApiViewOperation : ITokenSerializable
     
         if (this.xMsLongRunningOperation)
         {
-            // ret.Add(TokenSerializer.Intent(context.intent));
             ret.Add(TokenSerializer.NavigableToken("x-ms-long-running-operation", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-long-running-operation")));
             ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken("true", CodeFileTokenKind.Literal));
@@ -102,32 +98,23 @@ public class SwaggerApiViewOperation : ITokenSerializable
         // new line for `Parameters` section.
         ret.Add(TokenSerializer.NewLine());
 
-        // ret.Add(TokenSerializer.Intent(context.intent));
-        // ret.Add(TokenSerializer.NavigableToken("Parameters", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
-        // ret.Add(TokenSerializer.Colon());
-        // ret.Add(TokenSerializer.NewLine());
-
-        // ret.Add(TokenSerializer.FoldableContentStart());
         ret.AddRange(PathParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         ret.AddRange(QueryParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         ret.AddRange(BodyParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
-        // ret.Add(TokenSerializer.FoldableContentEnd());
+        
         // new line for `Response` section.
         ret.Add(TokenSerializer.NewLine());
 
-        // ret.Add(TokenSerializer.Intent(context.intent));
 
         ret.Add(TokenSerializer.NavigableToken("Responses", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Responses")));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
 
-        // ret.Add(TokenSerializer.FoldableContentStart());
         context.IteratorPath.Add("Responses");
         foreach (var response in Responses)
         {
             ret.AddRange(response.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         }
-        // ret.Add(TokenSerializer.FoldableContentEnd());
         context.IteratorPath.Pop();
 
         ret.Add(TokenSerializer.NewLine());

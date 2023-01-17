@@ -1,4 +1,7 @@
-# Mirror the eng/common folder to all subscribed langauge repos.
+# Mirror the eng/common folder to all subscribed language repos.
+#
+# For more information on this file, please see:
+# doc/common/common_engsys.md
 parameters:
 - name: PRDataFileName
   type: string
@@ -36,8 +39,8 @@ pr:
       - eng/common
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2004-general
-  vmImage: MMSUbuntu20.04
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: MMSUbuntu22.04
 
 stages:
   - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
@@ -89,7 +92,7 @@ stages:
           environment: githubmerges
 
           pool:
-            vmImage: windows-2019
+            vmImage: windows-2022
 
           strategy:
             runOnce:
@@ -158,7 +161,7 @@ stages:
           environment: githubmerges
 
           pool:
-            vmImage: windows-2019
+            vmImage: windows-2022
 
           strategy:
             runOnce:

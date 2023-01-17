@@ -29,8 +29,7 @@ pr:
       - tools/apiview/parsers/js-api-parser
 
 variables:
-  DotNetRuntimeVersion: '3.1.x'
-  PythonVersion: '3.10.5'
+  PythonVersion: '3.10.9'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   NodeVersion: '12.x'
@@ -48,8 +47,8 @@ stages:
       - job: 'Build'
 
         pool:
-          name: azsdk-pool-mms-win-2019-general
-          vmImage: MMS2019
+          name: azsdk-pool-mms-win-2022-general
+          vmImage: MMS2022
 
         steps:
           - task: NodeTool@0
@@ -141,12 +140,9 @@ stages:
 
       - job: 'Test'
 
-        dependsOn:
-          - 'Build'
-
         pool:
-          name: azsdk-pool-mms-win-2019-general
-          vmImage: MMS2019
+          name: azsdk-pool-mms-win-2022-general
+          vmImage: MMS2022
 
         steps:
           - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
@@ -168,36 +164,12 @@ stages:
               pwsh: true
             displayName: 'Start Azurite'
 
-          - script: |
-              npm install -g azurite
-            displayName: 'Install Azurite'
-          
-          - task: Powershell@2
-            inputs:
-              workingDirectory: $(Agent.TempDirectory)
-              filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
-              arguments: >
-                -Process "azurite.cmd"
-                -ArgumentList "--silent"
-                -Port "10000"
-              pwsh: true
-            displayName: 'Start Azurite'
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core sdk 3.1.x'
-            inputs:
-              version: '3.1.x'
-          
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core sdk 5.x'
-            inputs:
-              version: '5.x'
-
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core $(DotNetRuntimeVersion)'
-            inputs:
-              packageType: runtime
-              version: '$(DotNetRuntimeVersion)'
+          - pwsh: |
+              dotnet --list-runtimes
+              dotnet --version
+            displayName: 'List .Net run times'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
@@ -228,6 +200,6 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: 'Windows DotNet $(DotNetRuntimeVersion)'
+              testRunTitle: 'Tests against Windows .NET'
               testResultsFormat: 'VSTest'
               mergeTestResults: true

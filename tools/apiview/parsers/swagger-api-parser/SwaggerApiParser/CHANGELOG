@@ -1,5 +1,11 @@
 # Release History
 
+## 1.0.4 (11-28-2022)
+
++ Fix expand array reference issues in definition section. Do not expand array reference in definitions.
++ To keep APIView revision consistent. Json serialization use alwaysMultiline option.
++ Remove unused code and comments.
+
 ## 1.0.3 (11-17-2022)
 
 + Remove trailing colon from API path

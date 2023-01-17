@@ -25,4 +25,3 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: src/dotnet/Azure.ClientSdk.Analyzers
-    SkipDotNetInstall: true

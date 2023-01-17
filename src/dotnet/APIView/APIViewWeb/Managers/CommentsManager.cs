@@ -12,9 +12,7 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Options;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace APIViewWeb.Managers
 {

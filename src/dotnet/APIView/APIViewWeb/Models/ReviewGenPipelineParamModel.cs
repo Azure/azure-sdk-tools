@@ -1,4 +1,4 @@
-﻿namespace APIViewWeb.Models
+namespace APIViewWeb.Models
 {
     public class ReviewGenPipelineParamModel
     {
@@ -6,5 +6,7 @@
         public string RevisionID { get; set; }
         public string FileID { get; set; }
         public string FileName { get; set; }
+        public string SourceRepoName { get; set; }
+        public string SourceBranchName { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,8 +14,10 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
     /// </summary>
     public class GitHubService
     {
-        private static HttpClient httpClient = new HttpClient();
-        private static ConcurrentDictionary<string, List<CodeOwnerEntry>> codeownersFileCache = new ConcurrentDictionary<string, List<CodeOwnerEntry>>();
+        private static readonly HttpClient httpClient = new HttpClient();
+
+        private static readonly ConcurrentDictionary<string, List<CodeownersEntry>>
+            codeownersFileCache = new ConcurrentDictionary<string, List<CodeownersEntry>>();
 
         private readonly ILogger<GitHubService> logger;
 
@@ -33,9 +35,9 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         /// </summary>
         /// <param name="repoUrl">GitHub repository URL</param>
         /// <returns>Contents fo the located CODEOWNERS file</returns>
-        public async Task<List<CodeOwnerEntry>> GetCodeownersFile(Uri repoUrl)
+        public async Task<List<CodeownersEntry>> GetCodeownersFile(Uri repoUrl)
         {
-            List<CodeOwnerEntry> result;
+            List<CodeownersEntry> result;
             if (codeownersFileCache.TryGetValue(repoUrl.ToString(), out result))
             {
                 return result;
@@ -51,7 +53,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         /// </summary>
         /// <param name="repoUrl"></param>
         /// <returns></returns>
-        private async Task<List<CodeOwnerEntry>> GetCodeownersFileImpl(Uri repoUrl)
+        private async Task<List<CodeownersEntry>> GetCodeownersFileImpl(Uri repoUrl)
         {
             // Gets the repo path from the URL
             var relevantPathParts = repoUrl.Segments.Skip(1).Take(2);
@@ -62,7 +64,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             if (result.IsSuccessStatusCode)
             {
                 logger.LogInformation("Retrieved CODEOWNERS file URL = {0}", codeOwnersUrl);
-                return CodeOwnersFile.ParseContent(await result.Content.ReadAsStringAsync());
+                return CodeownersFile.GetCodeownersEntries(await result.Content.ReadAsStringAsync());
             }
 
             logger.LogWarning("Could not retrieve CODEOWNERS file URL = {0} ResponseCode = {1}", codeOwnersUrl, result.StatusCode);

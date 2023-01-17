@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json.schemastore.org/component-detection-manifest.json",
+  "Registrations": [
+    {
+      "Component": {
+        "Type": "other",
+        "Other": {
+          "Name": "llvm",
+          "Version": "14.0.4",
+          "DownloadUrl": "https://github.com/llvm/llvm-project/archive/llvmorg-14.0.4.tar.gz"
+        }
+      },
+      "DevelopmentDependency": false
+    },
+    {
+      "Component": {
+        "Type": "git",
+        "git": {
+          "RepositoryUrl": "https://github.com/madler/zlib",
+          "CommitHash": "04f42ceca40f73e2978b50e93806c2a18c1281fc"
+        }
+      },
+      "DevelopmentDependency": true
+    },
+    {
+      "Component": {
+        "Type": "git",
+        "git": {
+          "RepositoryUrl": "https://github.com/nlohmann/json",
+          "CommitHash": "bc889afb4c5bf1c0d8ee29ef35eaaf4c8bef8a5d"
+        }
+      },
+      "DevelopmentDependency": false
+    },
+    {
+      "Component": {
+        "Type": "git",
+        "git": {
+          "RepositoryUrl": "https://github.com/google/googletest",
+          "CommitHash": "58d77fa8070e8cec2dc1ed015d66b454c8d78850"
+        }
+      },
+      "DevelopmentDependency": true
+    },
+    {
+      "Component": {
+        "Type": "other",
+        "Other": {
+          "Name": "tclap",
+          "Version": "1.2.5",
+          "DownloadUrl": " https://sourceforge.net/projects/tclap//files/tclap-1.2.5.tar.gz/download"
+        }
+      },
+      "DevelopmentDependency": true
+    },
+    {
+      "Component": {
+        "Type": "other",
+        "Other": {
+          "Name": "7zip",
+          "Version": "21.7.0",
+          "DownloadUrl": " https://www.7-zip.org/a/7z2107-extra.7z"
+        }
+      },
+      "DevelopmentDependency": true
+    }
+  ]
+}

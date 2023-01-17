@@ -2046,7 +2046,12 @@ class NameExceedsStandardCharacterLength(BaseChecker):
 
     def visit_classdef(self,node):
         """Visit every class and check that the
-         class name is within the character length limit."""
+         class name is within the character length limit.
+
+        :param node: node
+        :type node: ast.ClassDef
+         
+         """
 
         try:
             self.iterate_through_names(node, True)    
@@ -2056,14 +2061,28 @@ class NameExceedsStandardCharacterLength(BaseChecker):
 
     def visit_functiondef(self, node):
         """Visit every function and check that the function and 
-        its variable names are within the character length limit."""
+        its variable names are within the character length limit.
+        
+        :param node: node
+        :type node: ast.FunctionDef
+        
+        """
         try:
             self.iterate_through_names(node, False)    
         except:
             pass      
 
     def iterate_through_names(self, node, ignore_function):
-        """Helper function to iterate through names."""
+        """Helper function to iterate through names.
+
+            :param node: node
+            :type node: ast.ClassDef or ast.FunctionDef
+            :param ignore_function: Whether the function is being called 
+             from `visit_classdef` or not. If it is called from `visit_classdef`
+             ignore_function should be `True` to avoid repeat warnings on functions. 
+            :type ignore_function: bool
+            :return: None
+        """
         if len(node.name) > self.STANDARD_CHARACTER_LENGTH and not node.name.startswith("_"):
             self.add_message(
                 msgid="name-too-long",

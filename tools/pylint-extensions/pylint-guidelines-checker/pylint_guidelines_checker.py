@@ -2028,6 +2028,98 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
                 msgid="no-raise-with-traceback", node=node, confidence=None
             )
 
+class NameExceedsStandardCharacterLength(BaseChecker):
+    __implements__ = IAstroidChecker
+
+    """Rule to check that the character length of type and property names are not over 40 characters."""
+    name = "name-too-long"
+    priority = -1
+    msgs = {
+        "C4751": (
+            "Name is over standard character length of 40.",
+            "name-too-long",
+            "Only use names that are less than 40 characters."
+        ),
+    }
+
+    STANDARD_CHARACTER_LENGTH = 40
+
+    def visit_classdef(self,node):
+        """Visit every class and check that the
+         class name is within the character length limit.
+
+        :param node: node
+        :type node: ast.ClassDef
+         
+         """
+
+        try:
+            self.iterate_through_names(node, True)    
+        except:
+            pass   
+
+
+    def visit_functiondef(self, node):
+        """Visit every function and check that the function and 
+        its variable names are within the character length limit.
+        
+        :param node: node
+        :type node: ast.FunctionDef
+        
+        """
+        try:
+            self.iterate_through_names(node, False)    
+        except:
+            pass      
+
+    def iterate_through_names(self, node, ignore_function):
+        """Helper function to iterate through names.
+
+            :param node: node
+            :type node: ast.ClassDef or ast.FunctionDef
+            :param ignore_function: Whether the function is being called 
+             from `visit_classdef` or not. If it is called from `visit_classdef`
+             ignore_function should be `True` to avoid repeat warnings on functions. 
+            :type ignore_function: bool
+            :return: None
+        """
+        if len(node.name) > self.STANDARD_CHARACTER_LENGTH and not node.name.startswith("_"):
+            self.add_message(
+                msgid="name-too-long",
+                node=node,
+                confidence=None,
+            )
+
+        for i in node.body:
+            if not (isinstance(i, astroid.FunctionDef) or isinstance(i, astroid.AsyncFunctionDef)) and not ignore_function:
+                try:
+                    if len(i.name) > self.STANDARD_CHARACTER_LENGTH and not i.name.startswith("_"):
+                        self.add_message(
+                            msgid="name-too-long",
+                            node=i,
+                            confidence=None,
+                        )        
+                except:
+                    # Gets the names of ast.Assign statements
+                    for j in i.targets:
+                        if isinstance(j, astroid.AssignName):
+                            if len(j.name) > self.STANDARD_CHARACTER_LENGTH and not j.name.startswith("_"):
+                                self.add_message(
+                                    msgid="name-too-long",
+                                    node=j,
+                                    confidence=None,
+                                )  
+                        elif isinstance(j, astroid.AssignAttr):
+                            # for self.names
+                            if len(j.attrname) > self.STANDARD_CHARACTER_LENGTH and not j.attrname.startswith("_"):
+                                self.add_message(
+                                    msgid="name-too-long",
+                                    node=j,
+                                    confidence=None,
+                                )  
+
+    visit_asyncfunctiondef = visit_functiondef    
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2052,6 +2144,7 @@ def register(linter):
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
     linter.register_checker(NonAbstractTransportImport(linter))
     linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
+    linter.register_checker(NameExceedsStandardCharacterLength(linter))
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

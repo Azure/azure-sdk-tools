@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
-using APIViewWeb.Repositories;
 using Newtonsoft.Json;
 
 namespace APIViewWeb
@@ -129,8 +129,8 @@ namespace APIViewWeb
         public DateTime ApprovalRequestedOn;
 
         public DateTime ApprovalDate;
-        public bool IsPackageNameApproved { get; set; }
-        public string PackageNameApprovedBy { get; set; }
-        public DateTime PackageNameApprovedOn { get; set; }
+        public bool IsApprovedForFirstRelease { get; set; }
+        public string ApprovedForFirstReleaseBy { get; set; }
+        public DateTime ApprovedForFirstReleaseOn { get; set; }
     }
 }

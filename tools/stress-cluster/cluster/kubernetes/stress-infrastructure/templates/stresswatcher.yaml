@@ -1,4 +1,4 @@
-{{ $ctx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list . "watcher" )) }}
+{{ $ctx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list . (dict "Scenario" "watcher") )) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

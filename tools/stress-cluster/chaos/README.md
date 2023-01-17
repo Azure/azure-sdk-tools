@@ -41,7 +41,7 @@ You will need the following tools to create and run tests:
 1. [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
 1. [Helm](https://helm.sh/docs/intro/install/)
 1. [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)
-1. [Powershell Core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) (if using Linux)
+1. [Powershell Core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1) (if using Linux)
 
 ## Deploying a Stress Test
 
@@ -50,7 +50,7 @@ script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/st
 This script handles: cluster and container registry access, building the stress test helm package, installing helm
 package dependencies, and building and pushing docker images. The script must be run via powershell or powershell core.
 
-If using bash or another linux terminal, a [powershell core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) shell can be invoked via `pwsh`.
+If using bash or another linux terminal, a [powershell core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1) shell can be invoked via `pwsh`.
 
 The first invocation of the script must be run with the `-Login` flag to set up cluster and container registry access.
 
@@ -469,6 +469,13 @@ generate-scenario-matrix.ps1 -matrixFilePath <path-to>/scenarios-matrix.yaml -Se
 Stress test owners can also reference the custom config values they put in the scenarios matrix as shown below:
 ```
 {{ .Stress.<custom_config_key> }}
+```
+
+All of the custom configuration values will also be passed to the docker image as build-args during build stage.
+Users can reference the values by first defining the build arg in the dockerfile (multiple args will require multiple lines), then referencing the args with a dollar sign and curly braces
+```
+ARG VERSION
+FROM python:${VERSION}
 ```
 
 A more detailed information on the logic behind the matrix generation can be found in the [README for job-matrix](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/job-matrix/README.md).

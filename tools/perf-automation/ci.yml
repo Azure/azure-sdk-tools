@@ -25,4 +25,3 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/perf-automation
-    DotNetCoreVersion: "6.x"

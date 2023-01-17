@@ -64,16 +64,19 @@ parameters:
 - name: Iterations
   type: number
   default: 1
+- name: Profile
+  type: boolean
+  default: false
 - name: OperatingSystems
   type: string
   default: 'Linux'
   # Use general pools instead of perf pools for faster startup due to more warm agents
 - name: LinuxPool
   type: string
-  default: 'azsdk-pool-mms-ubuntu-2004-general'
+  default: azsdk-pool-mms-ubuntu-2204-general
 - name: WindowsPool
   type: string
-  default: 'azsdk-pool-mms-win-2019-general'
+  default: 'azsdk-pool-mms-win-2022-general'
 
 resources:
   repositories:
@@ -104,8 +107,8 @@ resources:
     ref: main
 
 variables:
-  LinuxVmImage: 'MMSUbuntu20.04'
-  WindowsVmImage: 'MMS2019'
+  LinuxVmImage: MMSUbuntu22.04
+  WindowsVmImage: 'MMS2022'
   ToolsRepoCommitish: $(Build.SourceVersion)
 
 stages:
@@ -137,6 +140,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeJava }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -170,6 +174,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeJS }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -196,6 +201,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludePython }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -225,6 +231,7 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
   - ${{ if parameters.IncludeCpp }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
@@ -251,12 +258,13 @@ stages:
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
 
 - stage: Print_Results
   displayName: Print Results
   pool:
-    name: 'azsdk-pool-mms-ubuntu-2004-general'
-    vmImage: 'MMSUbuntu20.04'
+    name: azsdk-pool-mms-ubuntu-2204-general
+    vmImage: MMSUbuntu22.04
   condition: succeededOrFailed()
   variables:
   - template: /eng/pipelines/templates/variables/globals.yml

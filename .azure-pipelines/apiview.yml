@@ -29,8 +29,7 @@ pr:
       - tools/apiview/parsers/js-api-parser
 
 variables:
-  DotNetRuntimeVersion: '3.1.x'
-  PythonVersion: '3.10.5'
+  PythonVersion: '3.10.9'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   NodeVersion: '12.x'
@@ -39,6 +38,8 @@ variables:
   GoParserPackagePath: 'src/go'
   GoVersion: '1.18'
   NugetSecurityAnalysisWarningLevel: 'none'
+  AzuriteConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1"
+  CosmosEmulatorConnectionString: "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
 
 stages:
   - stage: 'Main'
@@ -46,8 +47,8 @@ stages:
       - job: 'Build'
 
         pool:
-          name: azsdk-pool-mms-win-2019-general
-          vmImage: MMS2019
+          name: azsdk-pool-mms-win-2022-general
+          vmImage: MMS2022
 
         steps:
           - task: NodeTool@0
@@ -139,63 +140,36 @@ stages:
 
       - job: 'Test'
 
-        dependsOn:
-          - 'Build'
-
         pool:
-          name: azsdk-pool-mms-win-2019-general
-          vmImage: MMS2019
+          name: azsdk-pool-mms-win-2022-general
+          vmImage: MMS2022
 
         steps:
           - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
             parameters:
               StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
-
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core sdk 3.1.x'
-            inputs:
-              version: '3.1.x'
           
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core sdk 5.x'
+          - script: |
+              npm install -g azurite
+            displayName: 'Install Azurite'
+
+          - task: Powershell@2
             inputs:
-              version: '5.x'
+              workingDirectory: $(Agent.TempDirectory)
+              filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
+              arguments: >
+                -Process "azurite.cmd"
+                -ArgumentList "--silent"
+                -Port "10000"
+              pwsh: true
+            displayName: 'Start Azurite'
 
-          - task: DotNetCoreInstaller@2
-            displayName: 'Use .NET Core $(DotNetRuntimeVersion)'
-            inputs:
-              packageType: runtime
-              version: '$(DotNetRuntimeVersion)'
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-          - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-            - task: Powershell@2
-              inputs:
-                filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
-                arguments: >
-                  -Process "dotnet"
-                  -ArgumentList "run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj"
-                  -Port "5000"
-                pwsh: true
-              displayName: 'Start APIView Application'
-              env:
-                APIVIEW_BLOB__CONNECTIONSTRING: $(apiview-blob-connectionstring)
-                APIVIEW_COSMOS__CONNECTIONSTRING: $(apiview-cosmos-connectionstring)
-                APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
-                APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientid)
-                APIVIEW_AUTHENTICATIONSCHEME: "Test"
-                APIVIEW_SENDGRID__KEY: "Test"
-
-            - task: DotNetCoreCLI@2
-              displayName: 'Build & Test'
-              env:
-                DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-                DOTNET_CLI_TELEMETRY_OPTOUT: 1
-                DOTNET_MULTILEVEL_LOOKUP: 0
-              inputs:
-                command: test
-                projects: src/dotnet/APIView/**/APIViewUITests.csproj
-                arguments: --logger trx
-                publishTestResults: false
+          - pwsh: |
+              dotnet --list-runtimes
+              dotnet --version
+            displayName: 'List .Net run times'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build & Test'
@@ -203,6 +177,9 @@ stages:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
+              APIVIEW_ENDPOINT: "http://localhost:5000"
+              APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
+              APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
             inputs:
               command: test
               projects: |
@@ -210,11 +187,19 @@ stages:
                 src/dotnet/APIView/**/APIViewIntegrationTests.csproj
               arguments: --logger trx
               publishTestResults: false
+          
+          - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
+            - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml
+              parameters:
+                NodeVersion: $(NodeVersion)
+                WebClientProjectDirectory: $(WebClientProjectDirectory)
+                AzuriteConnectionString: $(AzuriteConnectionString)
+                CosmosEmulatorConnectionString: $(CosmosEmulatorConnectionString)
 
           - task: PublishTestResults@2
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: 'Windows DotNet $(DotNetRuntimeVersion)'
+              testRunTitle: 'Tests against Windows .NET'
               testResultsFormat: 'VSTest'
               mergeTestResults: true

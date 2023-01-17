@@ -25,7 +25,7 @@ public class ReadmeParserTest
     [Fact]
     public void TestGetSwaggerFileFromReadmeForAppConfiguration()
     {
-        const string readmeFilePath = "./fixtures/appconfiguration/readme.md";
+        const string readmeFilePath = "./fixtures/appconfigurationreadme.md";
         var inputFile = ReadmeParser.GetSwaggerFilesFromReadme(readmeFilePath, "default");
         var enumerable = inputFile as string[] ?? inputFile.ToArray();
         Assert.Equal("Microsoft.AppConfiguration/stable/2022-05-01/appconfiguration.json", enumerable.ToArray()[0]);

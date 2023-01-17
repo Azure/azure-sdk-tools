@@ -17,7 +17,7 @@ ENV M2_HOME /usr/maven
 ENV MAVEN_HOME=/usr/maven
 ENV PATH $M2_HOME/bin:$PATH
 RUN mkdir -p "$MAVEN_HOME"
-RUN curl -fL -o maven.tgz https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz
+RUN curl -fL -o maven.tgz https://dlcdn.apache.org/maven/maven-3/3.8.7/binaries/apache-maven-3.8.7-bin.tar.gz
 RUN tar --extract --file maven.tgz --directory "$MAVEN_HOME" --strip-components 1 --no-same-owner
 RUN rm maven.tgz
 
@@ -26,10 +26,11 @@ RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt -y install nodejs
 
 # install python
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wget apt-transport-https software-properties-common
 RUN apt install python3-pip -y && apt install python3-venv -y && pip3 install --upgrade pip
+RUN add-apt-repository ppa:deadsnakes/ppa -y && apt-get install python3.10 -y && apt-get install python3.10-venv -y
 
 # install powershell
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wget apt-transport-https software-properties-common
 RUN wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
 RUN dpkg -i packages-microsoft-prod.deb
 RUN apt-get update && apt-get install -y powershell
@@ -39,9 +40,9 @@ RUN rm packages-microsoft-prod.deb
 RUN wget https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh && chmod 777 ./dotnet-install.sh
 RUN bash ./dotnet-install.sh
 RUN bash ./dotnet-install.sh -c 3.1
-ENV DOTNET_ROOT=/root/.dotnet PATH=$PATH:/root/.dotnet
+RUN bash ./dotnet-install.sh --version 7.0.101
+ENV DOTNET_ROOT=/root/.dotnet PATH=/root/.dotnet:$PATH
 RUN rm /dotnet-install.sh
-RUN apt-get install -y dotnet-sdk-6.0
 
 # install git
 RUN add-apt-repository ppa:git-core/ppa -y && apt update && apt upgrade -y && apt install git -y

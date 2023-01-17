@@ -1,31 +1,72 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using PipelineGenerator.Conventions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CommandLine;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using PipelineGenerator.Conventions;
+using PipelineGenerator.CommandParserOptions;
 
 namespace PipelineGenerator
 {
     public class Program
     {
-
-        public static int Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            
             var cancellationTokenSource = new CancellationTokenSource();
             Console.CancelKeyPress += (sender, e) =>
             {
                 cancellationTokenSource.Cancel();
             };
 
-            var app = PrepareApplication(cancellationTokenSource);
-            return app.Execute(args);
+            await Parser.Default
+                .ParseArguments<DefaultOptions, GenerateOptions>(args)
+                .WithNotParsed(_ => { Environment.Exit((int)ExitCondition.InvalidArguments); })
+                .WithParsedAsync(async o => { await Run(o, cancellationTokenSource); });
+        }
+
+        public static async Task Run(object commandObj, CancellationTokenSource cancellationTokenSource)
+        {
+            ExitCondition code = ExitCondition.Exception;
+
+            switch (commandObj)
+            {
+                case GenerateOptions g:
+                    var serviceProvider = GetServiceProvider(g.Debug);
+                    var program = serviceProvider.GetService<Program>();
+                    code = await program.RunAsync(
+                        g.Organization,
+                        g.Project,
+                        g.Prefix,
+                        g.Path,
+                        g.Patvar,
+                        g.Endpoint,
+                        g.Repository,
+                        g.Branch,
+                        g.Agentpool,
+                        g.Convention,
+                        g.VariableGroups.ToArray(),
+                        g.DevOpsPath,
+                        g.WhatIf,
+                        g.Open,
+                        g.Destroy,
+                        g.NoSchedule,
+                        g.SetManagedVariables,
+                        g.OverwriteTriggers,
+                        cancellationTokenSource.Token
+                    );
+
+                    break;
+                default:
+                    code = ExitCondition.InvalidArguments;
+                    break;
+            }
+
+            Environment.Exit((int)code);
         }
 
         private static IServiceProvider GetServiceProvider(bool debug)
@@ -38,62 +79,6 @@ namespace PipelineGenerator
                 .AddTransient<IntegrationTestingPipelineConvention>();
 
             return serviceCollection.BuildServiceProvider();
-        }
-
-        private static CommandLineApplication PrepareApplication(CancellationTokenSource cancellationTokenSource)
-        {
-            var app = new CommandLineApplication();
-            app.HelpOption();
-            var organizationOption = app.Option("--organization <url>", "The URL of the Azure DevOps organization.", CommandOptionType.SingleValue).IsRequired();
-            var projectOption = app.Option("--project <project>", "The name of the Azure DevOps project.", CommandOptionType.SingleValue).IsRequired();
-            var prefixOption = app.Option("--prefix <prefix>", "The prefix to append to the pipeline name.", CommandOptionType.SingleValue).IsRequired();
-            var pathOption = app.Option("--path <path>", "The directory from which to scan for components", CommandOptionType.SingleValue).IsRequired();
-            var devOpsPathOption = app.Option("--devopspath <path>", "The DevOps directory for created pipelines", CommandOptionType.SingleValue);
-            var patvarOption = app.Option("--patvar <env>", "Name of an environment variable which contains a PAT.", CommandOptionType.SingleValue);
-            var endpointOption = app.Option("--endpoint <endpoint>", "Name of the service endpoint to configure repositories with.", CommandOptionType.SingleValue).IsRequired();
-            var repositoryOption = app.Option("--repository <repository>", "Name of the GitHub repo in the form [org]/[repo].", CommandOptionType.SingleValue).IsRequired();
-            var branchOption = app.Option("--branch <branch>", "Typically refs/heads/main.", CommandOptionType.SingleValue).IsRequired();
-            var agentpoolOption = app.Option("--agentpool <agentpool>", "Name of the agent pool to use when pool isn't specified.", CommandOptionType.SingleValue).IsRequired();
-            var conventionOption = app.Option("--convention <convention>", "What convention are you building pipelines for?", CommandOptionType.SingleValue).IsRequired();
-            var variablegroupsOption = app.Option("--variablegroup <variablegroup>", "Variable groups. May specify multiple (e.g. --variablegroup 1 --variablegroup 2)", CommandOptionType.MultipleValue);
-            var whatifOption = app.Option("--whatif", "Use this to understand what will happen, but don't change anything.", CommandOptionType.NoValue);
-            var openOption = app.Option("--open", "Open a browser window to the definitions that are created.", CommandOptionType.NoValue);
-            var destroyOption = app.Option("--destroy", "Use this switch to delete the pipelines instead (DANGER!)", CommandOptionType.NoValue);
-            var debugOption = app.Option("--debug", "Turn on debug level logging.", CommandOptionType.NoValue);
-            var noScheduleOption = app.Option("--no-schedule", "Don't create any scheduled triggers.", CommandOptionType.NoValue);
-            var setManagedVariables = app.Option("--set-managed-variables", "Set managed meta.* variable values", CommandOptionType.NoValue);
-            var overwriteTriggersOption = app.Option("--overwrite-triggers", "Overwrite existing pipeline triggers (triggers may be manually modified, use with caution).", CommandOptionType.NoValue);
-
-            app.OnExecute(() =>
-            {
-                var serviceProvider = GetServiceProvider(debugOption.HasValue());
-                var program = serviceProvider.GetService<Program>();
-                var exitCondition = program.RunAsync(
-                    organizationOption.Value(),
-                    projectOption.Value(),
-                    prefixOption.Value(),
-                    pathOption.Value(),
-                    patvarOption.Value(),
-                    endpointOption.Value(),
-                    repositoryOption.Value(),
-                    branchOption.Value(),
-                    agentpoolOption.Value(),
-                    conventionOption.Value(),
-                    variablegroupsOption.Values.ToArray(),
-                    devOpsPathOption.Value(),
-                    whatifOption.HasValue(),
-                    openOption.HasValue(),
-                    destroyOption.HasValue(),
-                    noScheduleOption.HasValue(),
-                    setManagedVariables.HasValue(),
-                    overwriteTriggersOption.HasValue(),
-                    cancellationTokenSource.Token
-                    ).Result;
-
-                return (int)exitCondition;
-            });
-
-            return app;
         }
 
         public Program(IServiceProvider serviceProvider, ILogger<Program> logger)
@@ -148,7 +133,7 @@ namespace PipelineGenerator
             string branch,
             string agentPool,
             string convention,
-            string[] variableGroups,
+            int[] variableGroups,
             string devOpsPath,
             bool whatIf,
             bool open,

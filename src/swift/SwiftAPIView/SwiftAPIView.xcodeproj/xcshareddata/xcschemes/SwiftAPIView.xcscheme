@@ -56,6 +56,10 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "--source=/Users/travisprescott/Documents/AzureCommunicationCalling.xcframework"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/communication-ui-library-ios/AzureCommunicationUI"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -64,12 +68,12 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--package-name=SwiftAPIViewTests"
+            argument = "--package-name=AzureCommunicationCallingTEST"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewTests/Sources"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
       <LocationScenarioReference

@@ -3,16 +3,17 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using System.Threading.Tasks;
+using APIViewWeb.Managers;
 
 namespace APIViewWeb.Pages.Assemblies
 {
     public class ProfileModel : PageModel
     {
-        private readonly UserProfileManager _manager;
+        private readonly IUserProfileManager _manager;
         public readonly UserPreferenceCache _preferenceCache;
 
         public UserProfileModel userProfile;
-        public ProfileModel(UserProfileManager manager, UserPreferenceCache preferenceCache)
+        public ProfileModel(IUserProfileManager manager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _preferenceCache = preferenceCache;
@@ -23,11 +24,11 @@ namespace APIViewWeb.Pages.Assemblies
             UserProfileModel profile;
             if(UserName == null || User.GetGitHubLogin().Equals(UserName))
             {
-                profile = await this._manager.tryGetUserProfileAsync(User);
+                profile = await this._manager.TryGetUserProfileAsync(User);
             }
             else
             {
-                profile = await this._manager.tryGetUserProfileByNameAsync(UserName);
+                profile = await this._manager.TryGetUserProfileByNameAsync(UserName);
             }
 
             userProfile = profile;

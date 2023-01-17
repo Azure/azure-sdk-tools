@@ -1,4 +1,4 @@
-import { resolvePath } from "@cadl-lang/compiler";
+import { Diagnostic, logDiagnostics, resolvePath } from "@cadl-lang/compiler";
 import { expectDiagnosticEmpty } from "@cadl-lang/compiler/testing";
 import assert, { fail, strictEqual } from "assert";
 import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
@@ -9,11 +9,11 @@ describe("apiview: tests", () => {
   async function apiViewFor(code: string, options: ApiViewEmitterOptions): Promise<ApiViewDocument> {
     const runner = await createApiViewTestRunner({withVersioning: true});
     const outPath = resolvePath("/apiview.json");
-    const diagnostics = await runner.diagnose(code, {
+    await runner.compile(code, {
       noEmit: false,
       emitters: { "@azure-tools/cadl-apiview": { ...options, "output-file": outPath } },
+      miscOptions: { "disable-linter": true },
     });
-    expectDiagnosticEmpty(diagnostics);
 
     const jsonText = runner.fs.get(outPath)!;
     const apiview = JSON.parse(jsonText) as ApiViewDocument;
@@ -142,6 +142,85 @@ describe("apiview: tests", () => {
     compare(expect, actual, 9);
     validateDefinitionIds(apiview);
   });
+
+  it("describes scalar", async () => {
+    const input = `
+    @Cadl.service( { title: "Test", version: "1" } )
+    namespace Azure.Test {
+      scalar Password extends string;
+
+      scalar ternary;
+
+      @doc(T)
+      scalar Unreal<T extends string>;
+    }
+    `;
+    const expect = `
+    namespace Azure.Test {
+      scalar Password extends string
+
+      scalar ternary
+      @doc(T)
+      scalar Unreal<T extends string>
+    }
+    `;
+    const apiview = await apiViewFor(input, {});
+    const actual = apiViewText(apiview);
+    compare(expect, actual, 9);
+    validateDefinitionIds(apiview);
+  });
+
+  it("describes alias", async () => {
+    const input = `
+    @Cadl.service( { title: "Test", version: "1" } )
+    namespace Azure.Test {
+      model Animal {
+        species: string;
+      }
+
+      alias Creature = Animal;
+    }
+    `;
+    const expect = `
+    namespace Azure.Test {
+      model Animal {
+        species: string;
+      }
+
+      alias Creature = Animal
+    `;
+    const apiview = await apiViewFor(input, {});
+    const actual = apiViewText(apiview);
+    compare(expect, actual, 9);
+    validateDefinitionIds(apiview);
+  });
+
+  it("describes augment decorator", async () => {
+    const input = `
+    @Cadl.service( { title: "Test", version: "1" } )
+    namespace Azure.Test {
+      model Animal {
+        species: string;
+      }
+
+      @@doc(Animal, "My doc")
+    }
+    `;
+    const expect = `
+    namespace Azure.Test {
+      @@doc(Animal, "My doc")
+
+      model Animal {
+        species: string;
+      }
+    }
+    `;
+    const apiview = await apiViewFor(input, {});
+    const actual = apiViewText(apiview);
+    compare(expect, actual, 9);
+    validateDefinitionIds(apiview);
+  });
+
 
   it("describes templated model", async () => {
     const input = `

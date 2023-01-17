@@ -40,7 +40,9 @@
                                             <tr class="code-line"><td class="code p-2" style="word-break: break-all;"><a class="comment-url" asp-page="Review"
                                                 asp-route-id=@Model.Review.ReviewId
                                                 asp-route-revisionId=@revision.Key.RevisionId
-                                                asp-fragment=@Uri.EscapeUriString(elementId)>@elementId</a></td></tr>
+                                                asp-fragment=@Uri.EscapeDataString(elementId)>@elementId</a>
+                                                </td>
+                                            </tr>
                                             <partial name="_CommentThreadPartial" model="@thread" />
                                         }
                                     </table>
@@ -81,7 +83,7 @@
                                                         <a class="comment-url" asp-page="Samples"
                                                            asp-route-id=@Model.Review.ReviewId
                                                            asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
-                                                           asp-fragment=@Uri.EscapeUriString(elementId)>@Html.Raw(Model.SampleLines.ElementAt(revision.Key.RevisionNumber-skipped).ElementAt(int.Parse(thread.Comments.First().ElementId.Split("-").Last())-1))
+                                                           asp-fragment=@Uri.EscapeDataString(elementId)>@Html.Raw(Model.SampleLines.ElementAt(revision.Key.RevisionNumber-skipped).ElementAt(int.Parse(thread.Comments.First().ElementId.Split("-").Last())-1))
                                                         </a>
                                                     </td>
                                                 </tr>

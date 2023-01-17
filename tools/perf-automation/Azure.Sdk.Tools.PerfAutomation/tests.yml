@@ -539,8 +539,8 @@ Services:
       - '@azure/event-hubs': 5.8.0
         '@azure/core-amqp': 3.2.0
         '@azure/core-auth': 1.4.0
-        '@azure/core-http': 2.2.7
-        '@azure/core-rest-pipeline': 1.9.2
+        '@azure/core-http': 2.3.1
+        '@azure/core-rest-pipeline': 1.10.0
         '@azure/core-tracing': 1.0.1
         '@azure/core-util': 1.1.1
         '@azure/abort-controller': 1.1.0

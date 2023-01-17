@@ -13,7 +13,8 @@ include(GoogleTest)
 # Unit Tests
 add_executable(parseTests 
     tests.cpp 
-    TestCases/SimpleTest.cpp 
+    TestCases/SimpleTest.cpp
+    TestCases/TemplateTests.cpp
     TestCases/ClassesWithInternalAndDetail.cpp 
     TestCases/ExpressionTests.cpp
     )

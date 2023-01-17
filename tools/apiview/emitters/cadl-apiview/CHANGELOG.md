@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.4 (01-13-2023)
+Support latest release of Cadl compiler.
+
 ## Version 0.3.3 (01-03-2023)
 Fixed issue where some type references were not navigable.
 

@@ -2031,7 +2031,7 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
 class DeleteOperationReturnStatement(BaseChecker):
     __implements__ = IAstroidChecker
 
-    """Rule to check that a delete* or begin_delete* returns None or LROPoller[None]."""
+    """Rule to check that delete* or begin_delete* return None or LROPoller[None], respectively."""
     name = "delete-operation-wrong-return-type"
     priority = -1
     msgs = {

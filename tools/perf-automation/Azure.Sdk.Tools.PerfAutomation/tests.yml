@@ -532,6 +532,28 @@ Services:
         azure-eventhub: 5.10.1
       - azure-core: source
         azure-eventhub: source
+    JS:
+      Project: sdk/eventhub/perf-tests/event-hubs
+      PrimaryPackage: '@azure/event-hubs'
+      PackageVersions:
+      - '@azure/event-hubs': 5.8.0
+        '@azure/core-amqp': 3.2.0
+        '@azure/core-auth': 1.4.0
+        '@azure/core-http': 2.3.1
+        '@azure/core-rest-pipeline': 1.10.0
+        '@azure/core-tracing': 1.0.1
+        '@azure/core-util': 1.1.1
+        '@azure/abort-controller': 1.1.0
+        '@azure/logger': 1.0.3
+      - '@azure/event-hubs': source
+        '@azure/core-amqp': source
+        '@azure/core-auth': source
+        '@azure/core-http': source
+        '@azure/core-rest-pipeline': source
+        '@azure/core-tracing': source
+        '@azure/core-util': source
+        '@azure/abort-controller': source
+        '@azure/logger': source
   Tests:
   - Test: publish-batches-to-gateway
     Arguments:
@@ -563,6 +585,16 @@ Services:
     - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1 --uamqp-transport --sync --warmup 30
     TestNames:
       Python: ProcessEventsBatchTest
+  - Test: send
+    Arguments:
+    - --event-size 1024 --batch-size 100 --parallel 64
+    TestNames:
+      JS: SendTest
+  - Test: subscribe
+    Arguments:
+    - --event-size 1024 --max-batch-size 100 --events 1000000
+    TestNames:
+      JS: SubscribeTest
 
 - Service: eventhubs-processor
   Languages:

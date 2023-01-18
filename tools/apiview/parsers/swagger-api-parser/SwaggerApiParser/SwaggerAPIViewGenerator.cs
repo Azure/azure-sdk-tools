@@ -125,7 +125,8 @@ namespace SwaggerApiParser
                         if (response.schema != null)
                         {
                             // The initial refChain is the root level schema.
-                            // There is some scenario that the property of the root level schema is a ref to the root level itself (circular reference). Like "errorDetail" schema
+                            // There are some scenarios that the property of the root level schema is a ref to the root level itself (circular reference).
+                            // Like "errorDetail" schema in common types.
                             LinkedList<string> refChain = new LinkedList<string>();
                             if (schema.Ref != null)
                             {

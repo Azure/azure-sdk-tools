@@ -158,12 +158,13 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
             pattern = SetPatternSuffix(targetPath, pattern);
 
-            pattern = pattern.Replace($"/{DoubleStar}$", "/(.*)$");
             // Note we can assume there is "/" after "^" because we normalize
             // the path by prepending "/" if absent.
             pattern = pattern.Replace($"^/{DoubleStar}", "^(.*)");
             pattern = pattern.Replace($"/{DoubleStar}/", "((/.*/)|/)");
-            // This case is necessary to cover inline **, e.g. "/a**b/".
+            // This case is necessary to cover:
+            // - inline **, e.g. "/a**b/";
+            // - suffix **, e.g. "/a/**".
             pattern = pattern.Replace(DoubleStar, "(.*)");
             pattern = pattern.Replace(SingleStar, "([^/]*)");
 

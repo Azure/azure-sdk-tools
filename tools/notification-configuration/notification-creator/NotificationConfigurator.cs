@@ -186,8 +186,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 }
 
                 // Get contents of CODEOWNERS
-                logger.LogInformation("Fetching CODEOWNERS file");
                 Uri repoUrl = pipeline.Repository.Url;
+                logger.LogInformation("Fetching CODEOWNERS file from repo url '{repoUrl}'", repoUrl);
 
                 if (repoUrl != null)
                 {

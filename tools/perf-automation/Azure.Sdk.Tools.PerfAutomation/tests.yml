@@ -1,7 +1,7 @@
-Languages:
+﻿Languages:
   Net:
     DefaultVersions:
-    - netcoreapp3.1
+    - net7.0
     OptionalVersions:
     - net6.0
 

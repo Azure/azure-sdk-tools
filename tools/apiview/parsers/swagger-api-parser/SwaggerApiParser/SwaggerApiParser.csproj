@@ -6,7 +6,6 @@
     <ToolCommandName>swaggerAPIParser</ToolCommandName>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>swagger_api_parser</RootNamespace>
-    <LangVersion>Latest</LangVersion>
     <VersionPrefix>1.0.5</VersionPrefix>
     <AssemblyName>Azure.Sdk.Tools.SwaggerApiParser</AssemblyName>
     <SignAssembly>True</SignAssembly>

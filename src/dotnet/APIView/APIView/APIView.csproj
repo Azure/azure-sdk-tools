@@ -5,7 +5,6 @@
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
     <StartupObject />
-    <LangVersion>Latest</LangVersion>
     <SignAssembly>True</SignAssembly>
   </PropertyGroup>
 

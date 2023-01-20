@@ -16,10 +16,10 @@
     - 14.20.0
     OptionalVersions:
     - 16.14.0
-  
+
   Python:
     DefaultVersions:
-    - 3.7.13
+    - 3.11.0
     OptionalVersions:
     - 3.10.0
 
@@ -126,7 +126,7 @@ Services:
     - -e 1
     TestNames:
       Cpp: extendedOptions
-       
+
 - Service: storage-blob
   Languages:
     Net:
@@ -216,7 +216,7 @@ Services:
       JS: StorageBlobDownloadTest
       Python: DownloadTest
       Cpp: DownloadBlob
-      
+
   - Test: download-file
     Arguments:
     - --size 10485760 --parallel 32
@@ -562,7 +562,7 @@ Services:
     TestNames:
       Net: PublishBatchesToGateway
   - Test: send-event-batch
-    Arguments: 
+    Arguments:
     - --event-size 1024 --batch-size 100 --parallel 64
     - --event-size 1024 --batch-size 100 --parallel 64 --uamqp-transport
     - --event-size 1024 --batch-size 100 --parallel 64 --transport-type 1
@@ -574,7 +574,7 @@ Services:
     TestNames:
       Python: SendEventBatchTest
   - Test: process-events-batch
-    Arguments: 
+    Arguments:
     - --event-size 1024 --max-batch-size 100 --preload 1000000
     - --event-size 1024 --max-batch-size 100 --preload 1000000 --uamqp-transport
     - --event-size 1024 --max-batch-size 100 --preload 1000000 --transport-type 1

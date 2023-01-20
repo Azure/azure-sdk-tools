@@ -3262,3 +3262,78 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(class_node)
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
+
+class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
+
+    """Test that we are checking the return type of delete functions is correct"""
+    CHECKER_CLASS = checker.DeleteOperationReturnStatement
+
+    def test_begin_delete_operation_incorrect_return(self):
+        node = astroid.extract_node(
+        """
+            from azure.core.polling import LROPoller 
+            from typing import Any
+            class MyClient():
+                def begin_delete_some_function(self, **kwargs)  -> LROPoller[Any]: #@
+                    return LROPoller[Any]
+        """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="delete-operation-wrong-return-type",
+                    line=5,
+                    node=node,
+                    col_offset=4, 
+                    end_line=5, 
+                    end_col_offset=24
+                )
+        ):
+            self.checker.visit_functiondef(node)
+
+    def test_delete_operation_incorrect_return(self):
+        node = astroid.extract_node(
+        """
+            from azure.core.polling import LROPoller 
+            from typing import Any
+            class MyClient():
+                def delete_some_function(self, **kwargs)  -> str: #@
+                    return "hello"
+        """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="delete-operation-wrong-return-type",
+                    line=5,
+                    node=node,
+                    col_offset=4, 
+                    end_line=5, 
+                    end_col_offset=24
+                )
+        ):
+            self.checker.visit_functiondef(node)
+
+    def test_delete_operation_correct_return(self):
+        node = astroid.extract_node(
+        """
+            from azure.core.polling import LROPoller 
+            from typing import Any
+            class MyClient():
+                def delete_some_function(self, **kwargs)  -> None: #@
+                    return None
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_begin_delete_operation_correct_return(self):
+        node = astroid.extract_node(
+        """
+            from azure.core.polling import LROPoller 
+            from typing import Any
+            class MyClient():
+                def begin_delete_some_function(self, **kwargs)  -> LROPoller[None]: #@
+                    return LROPoller[None]
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)

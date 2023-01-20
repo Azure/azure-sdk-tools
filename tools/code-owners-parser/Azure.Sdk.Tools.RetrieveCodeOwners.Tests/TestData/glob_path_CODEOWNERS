@@ -3,7 +3,7 @@
 #   Azure.Sdk.Tools.RetrieveCodeOwners.Tests.WildcardTests.TestWildcard
 #
 
-/** @2star
+/ @slash
 /* @star
 /foo/**/a.txt @foo_2star_a
 /foo/*/a.txt @foo_star_a_1 @foo_star_a_2

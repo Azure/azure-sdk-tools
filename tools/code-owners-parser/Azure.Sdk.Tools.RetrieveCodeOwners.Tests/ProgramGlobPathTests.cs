@@ -81,9 +81,9 @@ public class ProgramGlobPathTests
             ["a.txt"]         = new CodeownersEntry("/*",            new List<string> { "star" }),
             ["b.txt"]         = new CodeownersEntry("/*",            new List<string> { "star" }),
             ["foo/a.txt"]     = new CodeownersEntry("/foo/**/a.txt", new List<string> { "foo_2star_a" }),
-            ["foo/b.txt"]     = new CodeownersEntry("/**",           new List<string> { "2star" }),
+            ["foo/b.txt"]     = new CodeownersEntry("/",             new List<string> { "slash" }),
             ["foo/bar/a.txt"] = new CodeownersEntry("/foo/*/a.txt",  new List<string> { "foo_star_a_1", "foo_star_a_2" }),
-            ["foo/bar/b.txt"] = new CodeownersEntry("/**",           new List<string> { "2star" }),
+            ["foo/bar/b.txt"] = new CodeownersEntry("/",             new List<string> { "slash" }),
             // @formatter:on
         };
         

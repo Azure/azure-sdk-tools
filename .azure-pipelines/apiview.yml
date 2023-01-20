@@ -40,6 +40,10 @@ variables:
   NugetSecurityAnalysisWarningLevel: 'none'
   AzuriteConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1"
   CosmosEmulatorConnectionString: "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+  ${{ if ne(variables['System.TeamProject'], 'internal') }}:
+    CollectCoverage: false
+  ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+    CollectCoverage: true
 
 stages:
   - stage: 'Main'
@@ -171,8 +175,36 @@ stages:
               dotnet --version
             displayName: 'List .Net run times'
 
-          - task: DotNetCoreCLI@2
-            displayName: 'Build & Test'
+          - script: >-
+              dotnet test src/dotnet/APIView/APIViewUnitTests/APIViewUnitTests.csproj
+              --logger trx --collect:"XPlat Code Coverage"
+            displayName: "Build & Test (Unit)"
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+
+          - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
+            condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
+            displayName: Generate Code Coverage Reports
+            inputs:
+              reports: $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewUnitTests\**\coverage.cobertura.xml
+              targetdir: $(Build.ArtifactStagingDirectory)\coverage
+              reporttypes: Cobertura
+              filefilters: +$(Build.SourcesDirectory)\src\dotnet\APIView\**
+              verbosity: Verbose
+
+          - task: PublishCodeCoverageResults@1
+            condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
+            displayName: Publish Code Coverage Reports
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
+
+          - script: >-
+              dotnet test src/dotnet/APIView/APIViewIntegrationTests/APIViewIntegrationTests.csproj
+              --logger trx
+            displayName: "Build & Test (Integration)"
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
@@ -180,14 +212,7 @@ stages:
               APIVIEW_ENDPOINT: "http://localhost:5000"
               APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
               APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
-            inputs:
-              command: test
-              projects: |
-                src/dotnet/APIView/**/APIViewUnitTests.csproj
-                src/dotnet/APIView/**/APIViewIntegrationTests.csproj
-              arguments: --logger trx
-              publishTestResults: false
-          
+  
           - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
             - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml
               parameters:

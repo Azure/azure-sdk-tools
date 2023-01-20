@@ -6,6 +6,10 @@
     ViewData["Title"] = "Delete";
     TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
 }
+@section Styles
+{
+    <link rel="stylesheet" href="~/delete.css" asp-append-version="true">
+}
 <div class="container-fluid">
     <div class="mx-5 mt-2">
         <h3>Are you sure you want to delete @Model.AssemblyName?</h3>

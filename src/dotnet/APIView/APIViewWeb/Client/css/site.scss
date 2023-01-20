@@ -509,10 +509,6 @@ code {
 
 /*---------------------------------------------------------------------*/
 
-.apiview-logo {
-    width: 30px;
-}
-
 .bootstraps-select-label {
     padding: 4px 5px 3px 2px;
 }
@@ -555,23 +551,7 @@ code {
     border-color: var(--btn-outline-dark);
 }
 
-.btn-circle {
-    width: 45px;
-    height: 45px;
-    line-height: 45px;
-    text-align: center;
-    padding: 0;
-    border-radius: 50%;
-}
 
-.btn-circle-xl {
-    width: 100px;
-    height: 100px;
-    line-height: 1.2rem;
-    font-weight: bold;
-    font-size: 1.0rem;
-    box-shadow: 0 4px 8px 0 var(--monochrome-2), 0 6px 20px 0 var(--monochrome-19);
-}
 
 .btn-xs {
     height: 25px !important;

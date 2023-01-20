@@ -6,6 +6,10 @@
     ViewData["Title"] = "Legacy Review";
     TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
 }
+@section Styles
+{
+    <link rel="stylesheet" href="~/legacy-review.css" asp-append-version="true">
+}
 
 <h2>This review can not be viewed anymore but here are the comments:</h2>
 

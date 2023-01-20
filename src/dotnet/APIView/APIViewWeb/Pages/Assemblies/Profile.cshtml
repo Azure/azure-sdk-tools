@@ -27,6 +27,10 @@
 {
     <script type="text/javascript" src="@Url.Content("~/userProfile.js")" asp-append-version="true"></script>
 }
+@section Styles
+{
+    <link rel="stylesheet" href="~/profile.css" asp-append-version="true">
+}
 <div class="container-fluid py-2">
     @if(Model.userProfile == null) 
     {

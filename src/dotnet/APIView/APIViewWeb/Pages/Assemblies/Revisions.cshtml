@@ -7,6 +7,15 @@
     ViewData["Title"] = "Revisions";
     TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
 }
+@section Scripts
+{
+    <script type="text/javascript" src="@Url.Content("~/revisions.js")" asp-append-version="true"></script>
+    <script type="text/javascript" src="@Url.Content("~/fileInput.js")" asp-append-version="true"></script>
+}
+@section Styles
+{
+    <link rel="stylesheet" href="~/revisions.css" asp-append-version="true">
+}
 <div class="container-fluid">
     <div class="mx-5">
         <div class="row py-2 border-bottom">
@@ -17,8 +26,8 @@
         @if (Model.Review.FilterType == ReviewType.Manual)
         {
             <div class="row" asp-resource="@Model.Review" asp-requirement="@AutoReviewModifierRequirement.Instance">
-                <div class="bottom-right-floating">
-                         <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>REVISION</small></button>
+                <div id="add-revision-button">
+                    <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>REVISION</small></button>
                 </div>
              </div>
         }

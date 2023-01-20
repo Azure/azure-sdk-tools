@@ -11,8 +11,12 @@
 }
 @section Scripts
 {
-    <script type="text/javascript" src="@Url.Content("~/reviews.js")" asp-append-version="true"></script>
+    <script type="text/javascript" src="@Url.Content("~/index.js")" asp-append-version="true"></script>
     <script type="text/javascript" src="@Url.Content("~/fileInput.js")" asp-append-version="true"></script>
+}
+@section Styles
+{
+    <link rel="stylesheet" href="~/index.css" asp-append-version="true">
 }
 <nav class="navbar-light shadow-sm bg-light sticky-top">
     <div class="container-fluid">
@@ -265,9 +269,7 @@
         </div>
     </div>
 
-    <div class="bottom-right-floating">
-        <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
-    </div>
+    <button type="button" class="btn btn-primary" id="create-review-button" data-toggle="modal" data-target="#uploadModel"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
 
     <div class="mx-5 row">
         <div class="col-md-12" id="reviews-filter-partial">

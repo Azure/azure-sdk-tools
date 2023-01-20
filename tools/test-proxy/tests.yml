@@ -70,7 +70,7 @@ stages:
             runProxy: false
             rootFolder: $(Build.SourcesDirectory)
 
-        - template: /eng/pipelines/templates/steps/run-pester-tests.yml
+        - template: /eng/common/pipelines/templates/steps/run-pester-tests.yml
           parameters:
             TargetTags: "Integration"
             TargetDirectory: tools/test-proxy/scripts/test-scripts/
@@ -97,7 +97,7 @@ stages:
           workingDirectory: tools/test-proxy/docker/
           displayName: "Prepare and Build local docker image"
 
-        - template: /eng/pipelines/templates/steps/run-pester-tests.yml
+        - template: /eng/common/pipelines/templates/steps/run-pester-tests.yml
           parameters:
             TargetTags: "Integration"
             TargetDirectory: tools/test-proxy/scripts/test-scripts/

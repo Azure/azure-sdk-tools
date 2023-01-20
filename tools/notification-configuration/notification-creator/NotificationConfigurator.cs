@@ -186,8 +186,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 }
 
                 // Get contents of CODEOWNERS
-                logger.LogInformation("Fetching CODEOWNERS file");
                 Uri repoUrl = pipeline.Repository.Url;
+                logger.LogInformation("Fetching CODEOWNERS file from repo url '{repoUrl}'", repoUrl);
 
                 if (repoUrl != null)
                 {
@@ -209,8 +209,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
 
-                var codeOwnerEntry = CodeOwnersFile.FindOwnersForClosestMatch(codeOwnerEntries, process.YamlFilename);
-                codeOwnerEntry.FilterOutNonUserAliases();
+                var codeOwnerEntry = CodeownersFile.GetMatchingCodeownersEntry(process.YamlFilename, codeOwnerEntries);
+                codeOwnerEntry.ExcludeNonUserAliases();
 
                 logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, codeOwnerEntry.Owners.Count);
 

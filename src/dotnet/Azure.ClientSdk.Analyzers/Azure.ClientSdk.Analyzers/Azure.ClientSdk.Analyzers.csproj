@@ -5,9 +5,13 @@
     https://github.com/Azure/azure-sdk-tools/pull/5048
     -->
     <TargetFramework>netstandard2.0</TargetFramework>
+    <!--
+    Need to set LangVersion manually as netstandard2.0 targets 7.3 by default.
+    https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version
+    -->
+    <LangVersion>10.0</LangVersion>
     <BuildOutputTargetFolder>analyzers/dotnet/cs/</BuildOutputTargetFolder>
     <VersionPrefix>0.1.1</VersionPrefix>
-    <LangVersion>8</LangVersion>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
 

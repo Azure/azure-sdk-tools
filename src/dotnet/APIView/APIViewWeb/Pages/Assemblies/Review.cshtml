@@ -317,23 +317,23 @@
             *@
             <div class="form-group col-md-6 mb-0">
                 <label class="mb-0 ml-1"><small>Revision:</small></label>
-                <select class="selectpicker show-tick show-menu-arrow shadow-sm" data-style="btn-light btn-sm border" data-selected-text-format="value" data-live-search="true" data-size="10" data-width="100%" data-container="body" id="revisions-bootstraps-select" data-tick-icon="fa-solid fa-check">
+                <select class="custom-select shadow-sm custom-select-sm" id="revisions-bootstraps-select">
                     @foreach (var revision in Model.Review.Revisions.Reverse())
                     {
-                        var approvedBadge = "<i class='fas fa-check-circle text-success ml-2'></i>";
-                        var optionName = revision.IsApproved ? $"{@revision.DisplayName} {@approvedBadge}" : @revision.DisplayName;
-                        var urlValue = @Url.ActionLink("Review", "Assemblies", new {
+                        var optionName = revision.IsApproved ? $"{@revision.DisplayName} (APPROVED)" : @revision.DisplayName;
+                        var urlValue = @Url.ActionLink("Review", "Assemblies", new
+                        {
                             id = @Model.Review.ReviewId,
                             revisionId = @revision.RevisionId,
                             doc = @Model.ShowDocumentation
                         });
                         if (@revision.DisplayName == @Model.Revision.DisplayName)
                         {
-                            <option selected style="font-size: 0.8em;" value="@urlValue" data-content="@optionName"></option>
+                            <option selected value="@urlValue">@optionName</option>
                         }
                         else
                         {
-                            <option style="font-size: 0.8em;" value="@urlValue" data-content="@optionName"></option>
+                            <option value="@urlValue">@optionName</option>
                         }
                     }
                 </select>
@@ -364,15 +364,14 @@
                         });
                         <label class="mb-0 ml-1"><a href="@urlValue"><small>Diff:</small></a></label>
                     }
-                    <select class="selectpicker show-tick show-menu-arrow shadow-sm" data-style="btn-light btn-sm border border-left" data-size="10" data-width="100%" data-live-search="true" data-container="body" aria-label="Diff Review" id="diff-bootstraps-select" data-tick-icon="fa-solid fa-check">
+                        <select class="custom-select shadow-sm custom-select-sm" id="diff-bootstraps-select">
                         if (@Model.DiffRevisionId == null)
                         {
-                            <option style="font-size: 0.8em;" value="" selected></option>
+                            <option value="" selected></option>
                         }
                         @foreach (var revision in Model.PreviousRevisions.Reverse())
                         {
-                            var approvedBadge = "<i class='fas fa-check-circle text-success ml-2'></i>";
-                            var optionName = revision.IsApproved ? $"{@revision.DisplayName} {@approvedBadge}" : @revision.DisplayName;
+                            var optionName = revision.IsApproved ? $"{@revision.DisplayName} (APPROVED)" : @revision.DisplayName;
                             var urlValue = @Url.ActionLink("Review", "Assemblies", new {
                                 id = @Model.Review.ReviewId,
                                 diffRevisionId = @revision.RevisionId,
@@ -384,18 +383,18 @@
                             {
                                 if (@Model.DiffRevisionId == @revision.RevisionId)
                                 {
-                                    <option style="font-size: 0.8em;" value="@urlValue" selected data-content="@optionName"></option>
+                                    <option value="@urlValue" selected>@optionName</option>
                                 }
                                 else
                                 {
-                                    <option style="font-size: 0.8em;" value="@urlValue" data-content="@optionName"></option>
+                                    <option value="@urlValue">@optionName</option>
                                 }
                             }
                             else
                             {
                                 if (@Model.DiffRevisionId != @revision.RevisionId)
                                 {
-                                    <option style="font-size: 0.8em;" value="@urlValue" data-content="@optionName"></option>
+                                    <option value="@urlValue">@optionName</option>
                                 }
                             }
                         }

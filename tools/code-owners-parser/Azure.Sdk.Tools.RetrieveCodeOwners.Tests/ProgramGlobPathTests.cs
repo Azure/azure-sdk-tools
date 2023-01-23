@@ -21,7 +21,7 @@ public class ProgramGlobPathTests
     /// codeownersFilePathOrUrl contents of:
     /// <code>
     /// 
-    ///   /** @2star
+    ///   / @slash
     ///   /* @star
     ///   /foo/**/a.txt @foo_2star_a
     ///   /foo/*/a.txt @foo_star_a_1 @foo_star_a_2
@@ -45,7 +45,7 @@ public class ProgramGlobPathTests
     /// 
     /// <code>
     /// 
-    ///   /foo/**
+    ///   /**
     /// 
     /// </code>
     ///
@@ -61,9 +61,9 @@ public class ProgramGlobPathTests
     ///   /a.txt @star
     ///   /b.txt @star
     ///   /foo/a.txt @foo_2star_a
-    ///   /foo/b.txt @2star
+    ///   /foo/b.txt @slash
     ///   /foo/bar/a.txt @foo_star_a_1 @foo_star_a_2
-    ///   /foo/bar/b.txt @2star
+    ///   /foo/bar/b.txt @slash
     /// </code>
     /// </summary>
     [Test]

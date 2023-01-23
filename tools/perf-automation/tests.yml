@@ -194,7 +194,7 @@ stages:
         InstallLanguageSteps:
         - template: /eng/pipelines/templates/steps/use-node-version.yml@azure-sdk-for-js
           parameters:
-            NodeVersion: 14.x
+            NodeVersion: 18.x
         ServiceDirectory: ${{ parameters.JSServiceDirectory }}
         Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}

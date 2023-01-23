@@ -20,6 +20,8 @@ steps:
   displayName: (MacOS) Grant access to ~/.Azure
   condition: contains(variables['OSVmImage'], 'mac')
 
+- bash: dotnet --info
+
 - pwsh: |
     eng/common/TestResources/Import-AzModules.ps1
     Get-Module -List

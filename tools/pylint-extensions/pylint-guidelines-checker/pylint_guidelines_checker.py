@@ -324,13 +324,15 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
     priority = -1
     msgs = {
         "C4723": (
-            "Client method is missing the distributed tracing decorator - `distributed_trace`. See details:"
+            "Client method is missing the distributed tracing decorator - `distributed_trace`.",
+            " Methods that make network calls should have distributed tracing. See details:",
             " https://azure.github.io/azure-sdk/python_implementation.html#distributed-tracing",
             "client-method-missing-tracing-decorator",
             "Client method should support distributed tracing.",
         ),
         "C4724": (
-            "Client async method is missing the distributed tracing decorator - `distributed_trace_async`. "
+            "Client async method is missing the distributed tracing decorator - `distributed_trace_async`.",
+            " Methods that make network calls should have distributed tracing.",
             " See details: https://azure.github.io/azure-sdk/python_implementation.html#distributed-tracing",
             "client-method-missing-tracing-decorator-async",
             "Client method should support distributed tracing.",
@@ -357,6 +359,8 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         ),
     )
     ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
+    ignore_functions = ["send_request"]
+    ignore_decorators = {"typing.overload", "builtins.classmethod"} 
 
     def __init__(self, linter=None):
         super(ClientMethodsHaveTracingDecorators, self).__init__(linter)
@@ -372,14 +376,19 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         :return: None
         """
         try:
-            if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
-                    node.parent.name not in self.ignore_clients:
-                if node.args.kwarg and "azure.core.tracing.decorator.distributed_trace" not in node.decoratornames() \
-                        and "builtins.classmethod" not in node.decoratornames():
-                    self.add_message(
-                        msgid="client-method-missing-tracing-decorator", node=node, confidence=None
-                    )
-        except AttributeError:
+            path = node.root().name
+            split_path = path.split(".")
+            new_path = ".".join(split_path[:len(split_path)-1])
+            if new_path.count("_") == 0:
+                if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
+                        node.parent.name not in self.ignore_clients:
+                    if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
+                        and not self.ignore_decorators.intersection(node.decoratornames()) and \
+                            "azure.core.tracing.decorator.distributed_trace" not in node.decoratornames():
+                                    self.add_message(
+                                        msgid="client-method-missing-tracing-decorator", node=node, confidence=None
+                                    )
+        except:
             pass
 
     def visit_asyncfunctiondef(self, node):
@@ -389,18 +398,24 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         node.decoratornames() returns a set of the method's decorator names.
 
         :param node: function node
-        :type node: ast.FunctionDef
+        :type node: ast.AsyncFunctionDef
         :return: None
         """
         try:
-            if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
-                    node.parent.name not in self.ignore_clients:
-                if node.args.kwarg and "azure.core.tracing.decorator_async.distributed_trace_async" not in \
-                        node.decoratornames() and "builtins.classmethod" not in node.decoratornames():
-                    self.add_message(
-                        msgid="client-method-missing-tracing-decorator-async", node=node, confidence=None
-                    )
-        except AttributeError:
+            path = node.root().name
+            split_path = path.split(".")
+            new_path = ".".join(split_path[:len(split_path)-1])
+            if new_path.count("_") == 0:
+                if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
+                        node.parent.name not in self.ignore_clients:
+                    if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
+                        and not self.ignore_decorators.intersection(node.decoratornames()) and \
+                            "azure.core.tracing.decorator_async.distributed_trace_async" not in node.decoratornames():
+
+                        self.add_message(
+                            msgid="client-method-missing-tracing-decorator-async", node=node, confidence=None
+                        )
+        except:
             pass
 
 
@@ -2185,7 +2200,7 @@ def register(linter):
     linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
     linter.register_checker(NameExceedsStandardCharacterLength(linter))
     linter.register_checker(DeleteOperationReturnStatement(linter))
-
+    linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
@@ -2193,7 +2208,7 @@ def register(linter):
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))
     # linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
-    # linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
+    
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))

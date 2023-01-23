@@ -6,13 +6,26 @@ strategy:
   maxParallel: 3
   matrix:
     Linux:
-      OSVmImage: ubuntu-18.04
+      Pool: Azure Pipelines
+      OSVmImage: ubuntu-latest
     Windows:
-      OSVmImage: windows-2019
+      Pool: Azure Pipelines
+      OSVmImage: windows-latest
     MacOS:
-      OSVmImage: macOS-10.15
+      Pool: Azure Pipelines
+      OSVmImage: macOS-latest
+    CustomLinux:
+      Pool: azsdk-pool-mms-ubuntu-2004-general
+      OSVmImage: MMSUbuntu20.04
+    CustomWindows:
+      Pool: azsdk-pool-mms-win-2022-general
+      OSVmImage: MMS2022
+    CustomMacOS:
+      Pool: Azure Pipelines
+      OSVmImage: macos-11
 
 pool:
+  name: $(Pool)
   vmImage: $(OSVmImage)
 
 steps:

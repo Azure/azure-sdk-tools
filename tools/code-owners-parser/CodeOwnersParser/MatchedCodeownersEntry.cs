@@ -18,9 +18,11 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// This new matcher is designed to work with CODEOWNERS file validation:
     /// https://github.com/Azure/azure-sdk-tools/issues/4859
     ///
-    /// To use this class, construct it.
-    /// 
-    /// To obtain the value of the matched entry, reference "Value" member.
+    /// The validation spec is given in this comment:
+    /// https://github.com/Azure/azure-sdk-tools/issues/4859#issuecomment-1370360622
+    ///
+    /// To use this class, construct it, passing as input relevant paths.
+    /// Then, to obtain the value of the matched entry, reference "Value" member.
     ///
     /// Reference:
     /// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
@@ -64,11 +66,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// as linked to in this class comment.
         ///
         /// Paths that are not valid after normalization are skipped from matching.
+        ///
+        /// If there is no match, this method returns "new CodeownersEntry()".
         /// 
         /// For definition of "normalization", see NormalizePath().
         /// For definition of "validation", see IsCodeownersPathValid().
-        ///
-        /// If there is no match, this method returns "new CodeownersEntry()".
+        /// You can also refer to the validation spec linked from this class comment.
         /// </summary>
         private CodeownersEntry GetMatchingCodeownersEntry(
             string targetPath,

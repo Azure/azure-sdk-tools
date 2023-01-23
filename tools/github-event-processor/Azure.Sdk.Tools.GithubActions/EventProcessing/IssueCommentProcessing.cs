@@ -14,9 +14,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
     // function inside of IssueProcessing that both will call. 
     // It's also worth noting that the Octokit's IssueCommentPayload has parity to the GitHub Payload
     // which means it can be used as-is for deserialization.
-    internal class IssueCommentProcessing
+    public class IssueCommentProcessing
     {
-        internal static async Task ProcessIssueCommentEvent(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public static async Task ProcessIssueCommentEvent(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
 
             // If the Issue Comment a PullRequest Comment
@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated gitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
-        internal static void AuthorFeedback(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public static void AuthorFeedback(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.AuthorFeedback))
             {
@@ -72,13 +72,17 @@ address your issue.";
         }
         /// <summary>
         /// Reset Issue Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-issue-activity
+        /// For issue_comments, the trigger Action is created 
         /// See Common_ResetIssueActivity comments
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated gitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
-        internal static void ResetIssueActivity(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public static void ResetIssueActivity(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
-            IssueProcessing.Common_ResetIssueActivity(gitHubEventClient, issueCommentPayload.Action, issueCommentPayload.Issue, issueCommentPayload.Sender);
+            if (issueCommentPayload.Action == ActionConstants.Created)
+            {
+                IssueProcessing.Common_ResetIssueActivity(gitHubEventClient, issueCommentPayload.Action, issueCommentPayload.Issue, issueCommentPayload.Sender);
+            }
         }
 
         /// <summary>
@@ -98,7 +102,7 @@ address your issue.";
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated gitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
-        internal static void ReopenIssue(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public static void ReopenIssue(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ReopenIssue))
             {
@@ -108,15 +112,14 @@ address your issue.";
                         LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity) &&
                         LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback) &&
                         issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login &&
-                        issueCommentPayload.Comment.CreatedAt == issueCommentPayload.Issue.ClosedAt.Value &&
+                        issueCommentPayload.Comment.CreatedAt != issueCommentPayload.Issue.ClosedAt.Value &&
                         // Ensure both times are in UTC so timezones don't get tripped up. ClosedAt is nullable
                         // but being that the issue is closed is part of the criteria, this will be set
-                        issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7) >= DateTime.UtcNow)
+                        DateTime.UtcNow >= issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7))
                     {
                         var issueUpdate = gitHubEventClient.GetIssueUpdate(issueCommentPayload.Issue);
                         issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
                         issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
-                        issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
                         issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
                     }
                 }
@@ -137,7 +140,7 @@ address your issue.";
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated gitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
-        internal static async Task DeclineToReopenIssue(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public static async Task DeclineToReopenIssue(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.DeclineToReopenIssue))
             {
@@ -176,7 +179,7 @@ address your issue.";
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated gitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
-        internal static async Task IssueAddressedCommands(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public static async Task IssueAddressedCommands(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.IssueAddressedCommands))
             {

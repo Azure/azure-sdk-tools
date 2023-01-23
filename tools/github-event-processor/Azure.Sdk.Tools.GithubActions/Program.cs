@@ -83,6 +83,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         await PullRequestReviewProcessing.ProcessPullRequestReviewEvent(gitHubEventClient, prReviewEventPayload);
                         break;
                     }
+                case EventConstants.schedule:
+                    {
+                        ScheduledEventGitHubPayload scheduledEventPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
+                        await ScheduledEventProcessing.ProcessScheduledEvent(gitHubEventClient, scheduledEventPayload);
+                        break;
+                    }
                 // Need to add cases for Cron jobs
                 default:
                     {

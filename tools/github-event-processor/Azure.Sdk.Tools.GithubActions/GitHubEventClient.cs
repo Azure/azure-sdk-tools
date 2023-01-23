@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Octokit;
+using Octokit.Internal;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor
 {
@@ -15,7 +16,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
     public class GitHubEventClient
     {
         private static readonly string NotAUserPartial = "is not a user";
-        internal class GitHubComment
+        public class GitHubComment
         {
             private long _repositoryId;
             private int _issueOrPullRequestNumber;
@@ -33,7 +34,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             }
         }
 
-        internal class GitHubReviewDismissal
+        public class GitHubReviewDismissal
         {
             private long _repositoryId;
             private int _pullRequestNumber;
@@ -56,14 +57,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
 
         private GitHubClient _gitHubClient = null;
         private RulesConfiguration _rulesConfiguration = null;
-        private IssueUpdate _issueUpdate = null;
-        private List<GitHubComment> _gitHubComments = new List<GitHubComment>();
-        private List<GitHubReviewDismissal> _gitHubReviewDismissals = new List<GitHubReviewDismissal>();
+        protected IssueUpdate _issueUpdate = null;
+        protected List<GitHubComment> _gitHubComments = new List<GitHubComment>();
+        protected List<GitHubReviewDismissal> _gitHubReviewDismissals = new List<GitHubReviewDismissal>();
 
-        public virtual RulesConfiguration RulesConfiguration
+        public RulesConfiguration RulesConfiguration
         {
             get { return _rulesConfiguration; }
         }
+
         public GitHubEventClient(string productHeaderName, string rulesConfigLocation = null)
         {
             _gitHubClient = CreateClientWithGitHubEnvToken(productHeaderName);
@@ -76,6 +78,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// 2. Added Comments
         /// 3. Removed Dismissals
         /// </summary>
+        /// <param name="repositoryId">The Id of the repository</param>
+        /// <param name="issueOrPullRequestNumber">The Issue or PullRequest number</param>
         /// <returns>Integer, the number of update calls made</returns>
         public virtual async Task<int> ProcessPendingUpdates(long repositoryId, int issueOrPullRequestNumber)
         {
@@ -135,6 +139,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return numUpdates;
         }
 
+        /// <summary>
+        /// Write the current rate limit and remaining number of transactions.
+        /// </summary>
+        /// <param name="prependMessage">Optional message to prepend to the rate limit message.</param>
+        /// <returns></returns>
         public async Task WriteRateLimits(string prependMessage = null)
         {
             var miscRateLimit = await GetRateLimits();
@@ -146,6 +155,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             Console.WriteLine(rateLimitMessage);
         }
 
+        /// <summary>
+        /// Using the authenticated GitHubClient, call the RateLimit API to get the rate limits.
+        /// </summary>
+        /// <returns>Octokit.MiscellaneousRateLimit which contains the rate limit information.</returns>
         public async Task<MiscellaneousRateLimit> GetRateLimits()
         {
             return await this._gitHubClient.RateLimit.GetRateLimits();
@@ -257,7 +270,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="repositoryId">The Id of the repository</param>
         /// <param name="pullRequestNumber">The pull request number</param>
         /// <returns></returns>
-        public async Task<IReadOnlyList<PullRequestReview>> GetReviewsForPullRequest(long repositoryId, int pullRequestNumber)
+        public virtual async Task<IReadOnlyList<PullRequestReview>> GetReviewsForPullRequest(long repositoryId, int pullRequestNumber)
         {
             return await this._gitHubClient.PullRequest.Review.GetAll(repositoryId, pullRequestNumber);
         }
@@ -276,13 +289,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// Common function to get files for a pull request. The default page size for the API is 30
         /// and needs to be set to 100 to minimize calls, do that here.
         /// </summary>
-        /// <param name="gitHubClient"></param>
-        /// <param name="repositoryId"></param>
-        /// <param name="pullRequestNumber"></param>
+        /// <param name="repositoryId">The Id of the repository</param>
+        /// <param name="pullRequestNumber">The pull request number</param>
         /// <returns></returns>
-        public async Task<IReadOnlyList<PullRequestFile>> GetFilesForPullRequest(long repositoryId, int pullRequestNumber)
+        public virtual async Task<IReadOnlyList<PullRequestFile>> GetFilesForPullRequest(long repositoryId, int pullRequestNumber)
         {
-            // For whatever reason the default page size
+            // For whatever reason the default page size is 30 instead of 100.
             ApiOptions apiOptions = new ApiOptions();
             apiOptions.PageSize = 100;
             return await this._gitHubClient.PullRequest.Files(repositoryId, pullRequestNumber, apiOptions);
@@ -291,11 +303,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <summary>
         /// Check to see if a given user is a Collaborator
         /// </summary>
-        /// <param name="gitHubClient"></param>
-        /// <param name="repositoryId"></param>
-        /// <param name="user"></param>
+        /// <param name="repositoryId">The Id of the repository</param>
+        /// <param name="user">The User.Login for the event object from the action payload</param>
         /// <returns></returns>
-        public async Task<bool> IsUserCollaborator(long repositoryId, string user)
+        public virtual async Task<bool> IsUserCollaborator(long repositoryId, string user)
         {
             return await this._gitHubClient.Repository.Collaborator.IsCollaborator(repositoryId, user);
         }
@@ -303,11 +314,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <summary>
         /// Check to see if the user is a member of the given Org
         /// </summary>
-        /// <param name="gitHubClient"></param>
-        /// <param name="orgName">chances are this is going to only ever be "Azure"</param>
-        /// <param name="user">the github login for the user</param>
+        /// <param name="orgName">Organization name. Chances are this will only ever be "Azure"</param>
+        /// <param name="user">The User.Login for the event object from the action payload</param>
         /// <returns></returns>
-        public async Task<bool> IsUserMemberOfOrg(string orgName, string user)
+        public virtual async Task<bool> IsUserMemberOfOrg(string orgName, string user)
         {
             // Chances are the orgname is only going to be "Azure"
             return await this._gitHubClient.Organization.Member.CheckMember(orgName, user);
@@ -350,7 +360,16 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
 
         // There are several checks that look to see if a user's permission is NOT Admin or Write which
         // means both need to be checked but making multiple calls is not necessary
-        public async Task<bool> DoesUserHavePermissions(long repositoryId, string user, List<PermissionLevel> permissionList)
+        /// <summary>
+        /// Check whether or not the user has one of the permissions in the list. There's no concept of a permission
+        /// hierarchy when checking permissions. For example, if something requires a user have Write permission
+        /// then the check needs to look for Write or Admin permission.
+        /// </summary>
+        /// <param name="repositoryId">The Id of the Repository</param>
+        /// <param name="user">The User.Login for the event object from the action payload</param>
+        /// <param name="permissionList">List of Octokit.PermissionLevels</param>
+        /// <returns></returns>
+        public virtual async Task<bool> DoesUserHavePermissions(long repositoryId, string user, List<PermissionLevel> permissionList)
         {
             try
             {
@@ -377,7 +396,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         }
 
         /// <summary>
-        /// 
+        /// Create a SearchIssuesRequest with the information passed in.
         /// </summary>
         /// <param name="repoOwner">Should be the repository.Owner.Login from the cron payload</param>
         /// <param name="repoName">Should be repository.Name from the cron payload</param>
@@ -387,15 +406,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="labelsToInclude">Optional: List of labels to include, null if none</param>
         /// <param name="labelsToExclude">Optional: List of labels to exclude, null if none</param>
         /// <param name="daysSinceLastUpdate">Optional: Number of days since last updated </param>
-        /// <returns></returns>
-        public async Task<SearchIssuesResult> QueryIssues(string repoOwner,
-                                                          string repoName,
-                                                          IssueTypeQualifier issueType,
-                                                          ItemState itemState,
-                                                          int daysSinceLastUpdate = 0,
-                                                          List<IssueIsQualifier> issueIsQualifiers = null,
-                                                          List<string> labelsToInclude = null,
-                                                          List<string> labelsToExclude = null)
+        /// <returns>SearchIssuesRequest with the information passed in.</returns>
+        public SearchIssuesRequest CreateSearchRequest(string repoOwner,
+                                                       string repoName,
+                                                       IssueTypeQualifier issueType,
+                                                       ItemState itemState,
+                                                       int daysSinceLastUpdate = 0,
+                                                       List<IssueIsQualifier> issueIsQualifiers = null,
+                                                       List<string> labelsToInclude = null,
+                                                       List<string> labelsToExclude = null)
         {
             var request = new SearchIssuesRequest();
 
@@ -436,7 +455,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 exclusions.Labels = labelsToExclude;
                 request.Exclusions = exclusions;
             }
-            var searchIssueResult = await this._gitHubClient.Search.SearchIssues(request);
+            return request;
+        }
+
+        /// <summary>
+        /// Execute the query for a given SearchIssuesRequest. It was necessary to break up the SearchIssuesRequest
+        /// and the query due to pagination. The SearchIssuesResult will only contain to up the first 100 results.
+        /// Subsequent results need to be requeried with the SearchIssuesRequest.Page incremented to get the next 100
+        /// results and so on.
+        /// </summary>
+        /// <param name="searchIssuesRequest">SearchIssuesRequest objected which contains the search criteria.</param>
+        /// <returns></returns>
+        public virtual async Task<SearchIssuesResult> QueryIssues(SearchIssuesRequest searchIssuesRequest)
+        {
+            var searchIssueResult = await this._gitHubClient.Search.SearchIssues(searchIssuesRequest);
             return searchIssueResult;
         }
 
@@ -447,7 +479,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="ApplicationException"></exception>
-        internal GitHubClient CreateClientWithGitHubEnvToken(string productHeaderName)
+        public virtual GitHubClient CreateClientWithGitHubEnvToken(string productHeaderName)
         {
             if (string.IsNullOrEmpty(productHeaderName))
             {
@@ -470,12 +502,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// </summary>
         /// <param name="rulesConfigLocation">Optional path to the rules config location. If not set it'll check for the rules configuration in its well known location.</param>
         /// <returns></returns>
-        internal RulesConfiguration LoadRulesConfiguration(string rulesConfigLocation = null)
+        public virtual RulesConfiguration LoadRulesConfiguration(string rulesConfigLocation = null)
         {
             // if the rulesConfigLocation is set, try and load the rules from there, otherwise
             // use the directory climber to find the root of the repository and pull it from
             // the .github or .github/workflows directory
-            var rulesConfiguration = new RulesConfiguration();
+            var rulesConfiguration = new RulesConfiguration(rulesConfigLocation);
             return rulesConfiguration;
         }
     }

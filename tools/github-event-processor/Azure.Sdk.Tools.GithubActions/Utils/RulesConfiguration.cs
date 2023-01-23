@@ -8,17 +8,6 @@ using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
-    /* The rules configuration is effectively a Dictionary<string, enum> with the
-     * Rules constants being the strings, and the RuleState enumeration. 
-     * {
-          "Rule1": "On",
-          "Rule2": "Off",
-          "Rule3": "On",
-          "Rule4": "Off"
-       }
-     */
-
-
     // The JsonStringEnumConverter is necessary so the rules, when stored in the file, show On/Off instead
     // of 0/1 which makes things more readable.
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -32,6 +21,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
     {
         public Dictionary<string, RuleState> Rules { get; set; }
         public string RulesConfigFile { get; set; } = null;
+        public RulesConfiguration() 
+        {
+            Rules = new Dictionary<string, RuleState>();
+        }
         public RulesConfiguration(string configurationFile = null)
         {
             Rules = new Dictionary<string, RuleState>();
@@ -40,29 +33,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
             {
                 // Load the config from the well known location, somewhere under the .github directory
                 // which is in the root of the repository
-                configLoc = DirectoryUtils.FindFileInRepository("actions_config.json", ".github");
+                configLoc = DirectoryUtils.FindFileInRepository("rules_config.json", ".github");
             }
             RulesConfigFile = configLoc;
             LoadRulesFromConfig();
         }
-        public void TestIt()
-        {
-            Rules.Add(RulesConstants.InitialIssueTriage, RuleState.On);
-            Rules.Add(RulesConstants.ManualIssueTriage, RuleState.Off);
-            Rules.Add(RulesConstants.ServiceAttention, RuleState.On);
-            Rules.Add(RulesConstants.CXPAttention, RuleState.Off);
-            var options = new JsonSerializerOptions { WriteIndented = true };
-            string jsonString = JsonSerializer.Serialize(Rules, options);
-            Console.WriteLine(jsonString);
-
-            Dictionary<string, RuleState> Rules2 = JsonSerializer.Deserialize<Dictionary<string, RuleState>>(jsonString);
-            Console.WriteLine(Rules2[RulesConstants.InitialIssueTriage]);
-            ReportMissingRulesFromConfig();
-
-            string fullFilePath = DirectoryUtils.FindFileInRepository("CODEOWNERS", ".github");
-            Console.WriteLine(fullFilePath);
-        }
-
         public void LoadRulesFromConfig()
         {
             // JRS - Remove - there are no config files anywhere yet, just load up all the current rules
@@ -85,21 +60,16 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         {
             if (Rules.ContainsKey(rule))
             {
+                Console.WriteLine($"Rule, {rule}, is {Rules[rule]}.");
                 if (Rules[rule] == RuleState.On)
                 {
-                    Console.WriteLine($"Rule '{rule}' is enabled and will run.");
                     return true;
-                }
-                else
-                {
-                    Console.WriteLine($"Rule '{rule}' is not enabled and will not run.");
                 }
             }
             else
             {
-                Console.WriteLine($"Rule '{rule}' is not in the repository config file and will not run.");
+                Console.WriteLine($"Rule, {rule}, is not in the repository config file and will not run.");
             }
-            // If we're reporting missing rules somewhere else, 
             return false;
         }
 
@@ -118,6 +88,43 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
                     Console.WriteLine($"{rule} was not in the rules config file {RulesConfigFile}, defaulting rule to off");
                 }
             }
+        }
+
+        /// <summary>
+        /// Creates a default configuration, in memory, with all rule values set to the defaultState which
+        /// defaults to RuleState.On
+        /// </summary>
+        /// <param name="defaultState">RuleState enum, default to on</param>
+        public void CreateDefaultConfig(RuleState defaultState = RuleState.On)
+        {
+            var rules = typeof(RulesConstants)
+                .GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(field => field.IsLiteral)
+                .Where(field => field.FieldType == typeof(String))
+                .Select(field => field.GetValue(null) as String);
+            foreach (string rule in rules)
+            {
+                Rules.Add(rule, RuleState.On);
+            }
+        }
+
+        // JRS-Remove
+        public void TestIt()
+        {
+            Rules.Add(RulesConstants.InitialIssueTriage, RuleState.On);
+            Rules.Add(RulesConstants.ManualIssueTriage, RuleState.Off);
+            Rules.Add(RulesConstants.ServiceAttention, RuleState.On);
+            Rules.Add(RulesConstants.CXPAttention, RuleState.Off);
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string jsonString = JsonSerializer.Serialize(Rules, options);
+            Console.WriteLine(jsonString);
+
+            Dictionary<string, RuleState> Rules2 = JsonSerializer.Deserialize<Dictionary<string, RuleState>>(jsonString);
+            Console.WriteLine(Rules2[RulesConstants.InitialIssueTriage]);
+            ReportMissingRulesFromConfig();
+
+            string fullFilePath = DirectoryUtils.FindFileInRepository("CODEOWNERS", ".github");
+            Console.WriteLine(fullFilePath);
         }
     }
 }

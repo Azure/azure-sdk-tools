@@ -12,5 +12,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
         public const string issue_comment = "issue_comment";
         public const string pull_request_review = "pull_request_review";
         public const string pull_request_target = "pull_request_target";
+        public const string schedule = "schedule";
     }
 }

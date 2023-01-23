@@ -135,9 +135,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 if (issueEventPayload.Action == ActionConstants.Labeled)
                 {
-                    // JRS - what to do if ServiceAttention is the only label, there will be no
-                    // CodeOwnerEntries found?
-                    // if the issue is open, and the label being added is ServiceAttention
+                    // If the issue is open, and the label being added is ServiceAttention
                     if (issueEventPayload.Issue.State == ItemState.Open &&
                         issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention))
                     {
@@ -217,14 +215,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
         /// <summary>
         /// Reset Issue Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-issue-activity
+        /// For Issues, the trigger is Edited or Reopened
         /// See Common_ResetIssueActivity comments
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated gitHubEventClient</param>
         /// <param name="issueEventPayload">Issue event payload</param>
         internal static void ResetIssueActivity(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
-            // The rules check is in the common function
-            Common_ResetIssueActivity(gitHubEventClient, issueEventPayload.Action, issueEventPayload.Issue, issueEventPayload.Sender);
+            if (issueEventPayload.Action == ActionConstants.Edited || issueEventPayload.Action == ActionConstants.Reopened)
+            {
+                // The rules check is in the common function
+                Common_ResetIssueActivity(gitHubEventClient, issueEventPayload.Action, issueEventPayload.Issue, issueEventPayload.Sender);
+            }
         }
 
         /// <summary>
@@ -233,7 +235,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Conditions: Issue is open OR Issue is being reopened
         ///             Issue has "no-recent-activity" label
         ///             User modifying the issue is NOT a known bot 
-        /// Resulting Action: Add "needs-team-triage" label
+        /// Resulting Action: Remove "no-recent-activity" label
         /// </summary>
         /// </summary>
         /// <param name="_gitHubEventClient">Authenticated gitHubEventClient</param>
@@ -249,7 +251,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     sender.Type != AccountType.Bot)
                 {
                     var issueUpdate = gitHubEventClient.GetIssueUpdate(issue);
-                    issueUpdate.AddLabel(LabelConstants.NeedsTeamTriage);
+                    issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
                 }
             }
         }

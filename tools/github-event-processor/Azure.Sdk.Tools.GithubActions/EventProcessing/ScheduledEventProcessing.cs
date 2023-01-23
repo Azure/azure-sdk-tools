@@ -12,10 +12,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     internal class ScheduledEventProcessing
     {
-        internal static async Task ProcessScheduledEvent(GitHubEventClient gitHubEventClient, string rawJson)
+        internal static async Task ProcessScheduledEvent(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
-            var serializer = new SimpleJsonSerializer();
-            ScheduledEventGitHubPayload scheduledEventPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
             // 6 hour cron tasks
             // await IdentifyStaleIssues(_gitHubClient, scheduledEventPayload);
             // await CloseStalePullRequests(_gitHubClient, scheduledEventPayload);
@@ -43,13 +41,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 LabelConstants.NeedsAuthorFeedback,
                 LabelConstants.NoRecentActivity
             };
-            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+            SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                              scheduledEventPayload.Repository.Name,
                                                              IssueTypeQualifier.Issue,
                                                              ItemState.Open,
                                                              14, // more than 14 days old
                                                              null,
                                                              includeLabels);
+            SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
+            foreach (var issue in result.Items)
+            {
+
+            }
 
         }
 
@@ -63,7 +66,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 LabelConstants.NoRecentActivity
             };
-            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+            SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                              scheduledEventPayload.Repository.Name,
                                                              IssueTypeQualifier.Issue,
                                                              ItemState.Open,
@@ -71,6 +74,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                              null,
                                                              includeLabels,
                                                              excludeLabels);
+            SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
+
             Console.WriteLine(result.TotalCount);
         }
         internal static async Task CloseStalePullRequests(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
@@ -79,13 +84,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 LabelConstants.NoRecentActivity
             };
-            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+            SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                              scheduledEventPayload.Repository.Name,
                                                              IssueTypeQualifier.PullRequest,
                                                              ItemState.Open,
                                                              7,
                                                              null,
                                                              includeLabels);
+            SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
+
             Console.WriteLine(result.TotalCount);
         }
 
@@ -95,40 +102,66 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 LabelConstants.IssueAddressed
             };
-            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+            SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                              scheduledEventPayload.Repository.Name,
                                                              IssueTypeQualifier.Issue,
                                                              ItemState.Open,
                                                              7,
                                                              null,
                                                              includeLabels);
+            SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
+
             Console.WriteLine(result.TotalCount);
         }
 
         internal static async Task LockClosedIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
-            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
-                                                             scheduledEventPayload.Repository.Name,
+            //var result = await gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
+            //                                                 scheduledEventPayload.Repository.Name,
+            //                                                 IssueTypeQualifier.Issue,
+            //                                                 ItemState.Closed,
+            //                                                 0,
+            //                                                 new List<IssueIsQualifier> { IssueIsQualifier.Unlocked });
+
+            SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest("JimSuplizio",
+                                                             "azure-sdk-tools",
                                                              IssueTypeQualifier.Issue,
                                                              ItemState.Closed,
                                                              0,
                                                              new List<IssueIsQualifier> { IssueIsQualifier.Unlocked });
-
-            foreach (Issue issue in result.Items)
-            {
-                //await gitHubClient.Issue.LockUnlock.Lock(scheduledEventPayload.Repository.Id, issue.Number, LockReason.Resolved);
-            }
+            // Grab the first 100 issues
+            SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
             Console.WriteLine(result.TotalCount);
+            for (int i = 0; i < result.TotalCount;i+=100)
+            {
+                //foreach (Issue issue in result.Items)
+                //{
+                //    Console.WriteLine(issue.Number);
+                //    //await gitHubClient.Issue.LockUnlock.Lock(scheduledEventPayload.Repository.Id, issue.Number, LockReason.Resolved);
+                //}
+                request.Page++;
+                if (request.Page < 10)
+                {
+                    Console.WriteLine($"grabbing next page, {request.Page}");
+                    result = await gitHubEventClient.QueryIssues(request);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            Console.WriteLine("done");
         }
 
         internal static async Task TestSearchForLockedIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
-            var result = await gitHubEventClient.QueryIssues(scheduledEventPayload.Repository.Owner.Login,
+            SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                              scheduledEventPayload.Repository.Name,
                                                              IssueTypeQualifier.Issue,
                                                              ItemState.Closed,
                                                              0,
                                                              new List<IssueIsQualifier> { IssueIsQualifier.Locked });
+            SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
             Console.WriteLine(result.TotalCount);
         }
     }

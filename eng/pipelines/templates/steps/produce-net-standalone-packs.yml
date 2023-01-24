@@ -48,6 +48,24 @@ steps:
           tar -cvzf "$($destinationPathSegment).tar.gz" .
           Pop-Location
         }
+        elseif("${{ target.rid }}".Contains("osx")){
+          # need to update the orchestration to make this doable. For now skipping mac only commands if not on a mac.
+          if ($IsMacOS) {
+            $binaryFile = Get-ChildItem -Path $sourcePath | Where-Object { !([System.IO.Path]::hasExtension($_)) } | Select-Object -First 1
+            $binaryFileBash = $binaryFile.ToString().Replace("`\","/")
+            $formattedTarget = "${{ parameters.TargetDirectory }}".Replace("`\,"/")
+
+
+            Write-Host $binaryFile
+            Write-Host $binaryFileBash
+            Write-Host $formattedTarget
+
+            bash -c "codesign --deep -s - -f --options runtime --entitlements $($formattedTarget)/test-proxy-entitlements.plist $($binaryFileBash)"
+            bash -c "codesign -d --entitlements :- $($binaryFileBash)"
+          }
+
+          Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
+        }
         else {
           Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
         }

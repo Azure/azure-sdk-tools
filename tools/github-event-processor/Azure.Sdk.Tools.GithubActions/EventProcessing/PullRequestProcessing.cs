@@ -129,11 +129,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 // 1. The sender is not a bot.
                 // 2. The Pull request has "no-recent-activity" label
                 if (sender.Type != AccountType.Bot &&
-                LabelUtils.HasLabel(pullRequest.Labels, LabelConstants.NoRecentActivity))
+                    LabelUtils.HasLabel(pullRequest.Labels, LabelConstants.NoRecentActivity))
                 {
                     bool removeLabel = false;
                     // Pull request conditions AND the pull request needs to be in an opened state
-                    if ((action == ActionConstants.Reopened ||
+                    if ((action == ActionConstants.Reopened || 
                          action == ActionConstants.Synchronize ||
                          action == ActionConstants.ReviewRequested) &&
                          pullRequest.State == ItemState.Open)
@@ -143,6 +143,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     // Pull request merged conditions, the merged flag would be true and the PR would be closed
                     else if (action == ActionConstants.Closed &&
                              pullRequest.Merged)
+                    {
+                        removeLabel = true;
+                    }
+                    // Pull request reviewed conditions. Submitted is only a pull_request_review event.
+                    else if (action == ActionConstants.Submitted)
                     {
                         removeLabel = true;
                     }

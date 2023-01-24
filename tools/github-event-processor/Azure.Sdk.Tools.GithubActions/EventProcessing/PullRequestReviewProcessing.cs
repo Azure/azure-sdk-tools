@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
-    internal class PullRequestReviewProcessing
+    public class PullRequestReviewProcessing
     {
-        internal static async Task ProcessPullRequestReviewEvent(GitHubEventClient gitHubEventClient, PullRequestReviewEventPayload prReviewEventPayload)
+        public static async Task ProcessPullRequestReviewEvent(GitHubEventClient gitHubEventClient, PullRequestReviewEventPayload prReviewEventPayload)
         {
             ResetPullRequestActivity(gitHubEventClient, prReviewEventPayload);
 
@@ -21,12 +21,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Reset Pull Request Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-pull-request-activity
         /// See Common_ResetPullRequestActivity function for details
         /// </summary>
-        /// <param name="gitHubClient">Authenticated GitHubClient</param>
+        /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="prReviewEventPayload">Pull Request Review event payload</param>
-        /// <param name="issueUpdate">The issue update object</param>
         /// <returns></returns>
-        internal static void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
-                                                      PullRequestReviewEventPayload prReviewEventPayload)
+        public static void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
+                                                    PullRequestReviewEventPayload prReviewEventPayload)
         {
             PullRequestProcessing.Common_ResetPullRequestActivity(gitHubEventClient, 
                                                                   prReviewEventPayload.Action, 

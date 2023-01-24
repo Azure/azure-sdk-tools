@@ -10,9 +10,9 @@ using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
-    internal class PullRequestCommentProcessing
+    public class PullRequestCommentProcessing
     {
-        internal static async Task ProcessPullRequestCommentEvent(GitHubEventClient gitHubEventClient, IssueCommentPayload prCommentPayload)
+        public static async Task ProcessPullRequestCommentEvent(GitHubEventClient gitHubEventClient, IssueCommentPayload prCommentPayload)
         {
             // If the Issue Comment isn't a PullRequest Comment
             if (prCommentPayload.Issue.PullRequest == null) 
@@ -46,13 +46,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="prCommentPayload">Pull Request Comment event payload</param>
         /// <param name="issueUpdate">The issue update object</param>
         /// <returns></returns>
-        internal static async Task ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
+        public static async Task ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
                                                             IssueCommentPayload prCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetPullRequestActivity))
             {
                 if (prCommentPayload.Sender.Type != AccountType.Bot &&
-                LabelUtils.HasLabel(prCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity))
+                    LabelUtils.HasLabel(prCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity))
                 {
                     if (prCommentPayload.Action == ActionConstants.Created &&
                         prCommentPayload.Issue.User.Login != prCommentPayload.Sender.Login &&
@@ -78,7 +78,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     Pull request is closed
         ///     Pull request has "no-recent-activity" label
         ///     Comment text contains the string "/reopen"
-        ///     Commenter does not have write permissions AND is NOT the pull request author
+        ///     Commenter does not have write or admin permissions AND is NOT the pull request author
         /// Resulting Action:
         ///     Remove "no-recent-activity" label
         ///     Reopen pull request
@@ -86,22 +86,23 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="gitHubEventClient"></param>
         /// <param name="prCommentPayload"></param>
         /// <param name="issueUpdate"></param>
-        internal static async Task ReopenPullRequest(GitHubEventClient gitHubEventClient, IssueCommentPayload prCommentPayload)
+        public static async Task ReopenPullRequest(GitHubEventClient gitHubEventClient, IssueCommentPayload prCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ReopenPullRequest))
             {
                 if (prCommentPayload.Action == ActionConstants.Created)
                 {
-                    if (prCommentPayload.Issue.PullRequest.State == ItemState.Closed &&
-                        LabelUtils.HasLabel(prCommentPayload.Issue.PullRequest.Labels, LabelConstants.NoRecentActivity) &&
+                    if (prCommentPayload.Issue.State == ItemState.Closed &&
+                        LabelUtils.HasLabel(prCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity) &&
                         CommentUtils.CommentContainsText(prCommentPayload.Comment.Body, CommentConstants.Reopen) &&
-                        prCommentPayload.Sender.Login != prCommentPayload.Issue.PullRequest.User.Login)
+                        prCommentPayload.Sender.Login != prCommentPayload.Issue.User.Login)
                     {
                         bool hasWriteOrAdminPermissions = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prCommentPayload.Repository.Id, prCommentPayload.Sender.Login);
                         if (!hasWriteOrAdminPermissions)
                         {
                             var issueUpdate = gitHubEventClient.GetIssueUpdate(prCommentPayload.Issue);
                             issueUpdate.State = ItemState.Open;
+                            issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
                         }
                     }
                 }

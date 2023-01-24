@@ -136,7 +136,6 @@ address your issue.";
         ///             Action is not "comment and close"
         /// Resulting Action: 
         ///     Add issue comment
-        ///     Add "needs-team-attention" label
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated gitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
@@ -147,10 +146,10 @@ address your issue.";
                 if (issueCommentPayload.Action == ActionConstants.Created)
                 {
                     if (issueCommentPayload.Issue.State == ItemState.Closed &&
+                        issueCommentPayload.Comment.CreatedAt != issueCommentPayload.Issue.ClosedAt.Value &&
                         // Ensure both times are in UTC so timezones don't get tripped up. ClosedAt is nullable
                         // but being that the issue is closed is part of the criteria, this will be set.
-                        issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7) < DateTime.UtcNow &&
-                        issueCommentPayload.Comment.CreatedAt == issueCommentPayload.Issue.ClosedAt.Value)
+                        DateTime.UtcNow >= issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7))
                     {
                         bool hasPermissionOfNone = await gitHubEventClient.DoesUserHavePermission(issueCommentPayload.Repository.Id, issueCommentPayload.Sender.Login, PermissionLevel.None);
                         if (hasPermissionOfNone)
@@ -175,7 +174,9 @@ address your issue.";
         ///         Remove label "issue-addressed"
         ///         Add label "needs-team-attention"
         ///     else
-        ///         Add issue comment
+        ///         Add issue comment: 
+        ///         "Hi ${contextualAuthor}, only the original author of the issue can ask that it be unresolved.  
+        ///         Please open a new issue with your scenario and details if you would like to discuss this topic with the team."
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated gitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>

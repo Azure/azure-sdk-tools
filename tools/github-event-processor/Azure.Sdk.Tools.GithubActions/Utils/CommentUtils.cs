@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
             // Also, the strings being looked for will always be in English, matching what's in the
             // CommentConstants class which is why OrdinalIgnoreCase instead of the cultural string
             // comparisons.
-            if (comment.IndexOf(textToLookFor, StringComparison.OrdinalIgnoreCase) > 0)
+            if (comment.IndexOf(textToLookFor, StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return true;
             }

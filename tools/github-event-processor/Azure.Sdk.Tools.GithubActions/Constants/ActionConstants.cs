@@ -13,6 +13,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
         public static readonly string Closed = "closed";
         public static readonly string Deleted = "deleted";
         public static readonly string Demilestoned = "demilestoned";
+        public static readonly string Dismissed = "dismissed";
         public static readonly string Edited = "edited";
         public static readonly string Labeled = "labeled";
         public static readonly string Locked = "locked";
@@ -21,6 +22,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
         public static readonly string Pinned = "pinned";
         public static readonly string Reopened = "reopened";
         public static readonly string ReviewRequested = "review_requested";
+        public static readonly string Submitted = "submitted";
         public static readonly string Synchronize = "synchronize";
         public static readonly string Transferred = "transferred";
         public static readonly string Unassigned = "unassigned";

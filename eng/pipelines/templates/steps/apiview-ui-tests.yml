@@ -71,7 +71,7 @@ steps:
     AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
 
 - task: DotNetCoreCLI@2
-  displayName: 'Build & Test'
+  displayName: 'Build & Test (UI)'
   env:
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
     DOTNET_CLI_TELEMETRY_OPTOUT: 1

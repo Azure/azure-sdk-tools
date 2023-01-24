@@ -3,7 +3,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20221212.1
+      ref: refs/tags/azure-sdk-build-tools_20230112.1
 
 parameters:
   - name: ToolDirectory
@@ -18,9 +18,6 @@ parameters:
   - name: DotNetCoreVersion
     type: string
     default: ''
-  - name: SkipDotNetInstall
-    type: boolean
-    default: false
   - name: NoWarn
     type: boolean
     default: false
@@ -98,7 +95,7 @@ stages:
                 Write-Host "Directory ""$(packagesToPublishDir)"" contents:"
                 Get-ChildItem $(packagesToPublishDir) | ForEach-Object { Write-Host $_ }
               }
-            displayName: Create XOR list contents of directory of packages to publish
+            displayName: Create dir for packages to publish or list its contents
 
           - publish: $(packagesToPublishDir)
             displayName: Publish to packages artifact
@@ -113,12 +110,26 @@ stages:
 
       - job: Test
 
+        strategy:
+          matrix:
+            Windows:
+              Pool: azsdk-pool-mms-win-2022-general
+              Image: MMS2022
+            Linux:
+              Pool: azsdk-pool-mms-ubuntu-2204-general
+              Image: MMSUbuntu22.04
+            Mac:
+              Pool: Azure Pipelines
+              Image: macos-11
+
+        pool:
+          name: $(Pool)
+          vmImage: $(Image)
+
         steps:
-          - task: UseDotNet@2
-            condition: eq(${{ parameters.SkipDotNetInstall }}, false)
-            displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-            inputs:
-              version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
 
           - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
             displayName: 'Test'
@@ -134,7 +145,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
+              testRunTitle: $(System.JobDisplayName) ${{ parameters.DotNetCoreVersion }}
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 

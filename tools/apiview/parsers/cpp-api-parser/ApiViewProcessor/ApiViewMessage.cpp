@@ -56,7 +56,7 @@ void AzureClassesDatabase::CreateApiViewMessage(
     case ApiViewMessages::InternalTypesInNonCorePackage: {
       newMessage.DiagnosticId = "CPA0007";
       newMessage.DiagnosticText
-          = "'internal' types declared in a class which is not in Azure::Core.";
+          = "'internal' types declared in a non-common package. Consider putting the type in the '_detail' namespace.";
       newMessage.Level = ApiViewMessage::MessageLevel::Warning;
       break;
     }

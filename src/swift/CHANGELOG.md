@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.2.0 (Unreleased)
+- Switch from SwiftAST dependency to SwiftSyntax.
+- Overhaul to how extensions are displayed.
+
 ## Version 0.1.4 (Unreleased)
 - Allow attributes inside function signatures.
 

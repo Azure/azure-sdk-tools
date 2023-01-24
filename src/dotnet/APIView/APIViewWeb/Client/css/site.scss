@@ -307,6 +307,11 @@ input[type="search"]::-webkit-search-cancel-button {
     background-color: var(--bg-light);
 }
 
+.custom-select {
+    color: var(--text-color);
+    background-color: var(--background-color);
+}
+
 .close {
     color: var(--text-color);
 }

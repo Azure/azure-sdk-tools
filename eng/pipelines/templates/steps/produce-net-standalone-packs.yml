@@ -41,6 +41,10 @@ steps:
           # tar -cvzf -C tools/test-proxy/linux-arm64 blah.tar.gz tools/test-proxy/linux-arm64 
           # however when we use this, we actually get an error. To avoid this, we simply CD into the target directory before tar-ing it.
           Push-Location "$sourcePath"
+          # The sum contents within this folder will be: `appSettings.json`, `test-proxy.pdb`, `test-proxy` (the binary), and a certificate.
+          # This statement grabs the first extensionless file within the produced binary folder, which will always be the binary we need to set the executable bit on.
+          $binaryFile = (Get-ChildItem -Path . | Where-Object { !([System.IO.Path]::HasExtension($_)) } | Select-Object -First 1).ToString().Replace("`\","/")
+          bash -c "chmod +x $binaryFile"
           tar -cvzf "$($destinationPathSegment).tar.gz" .
           Pop-Location
         }

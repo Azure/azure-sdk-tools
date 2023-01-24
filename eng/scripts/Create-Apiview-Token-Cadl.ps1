@@ -31,6 +31,7 @@ function Generate-Apiview-File($packagePath)
     try
     {
         npm install
+        npm list
         cadl compile . --emit=@azure-tools/cadl-apiview
     }
     finally

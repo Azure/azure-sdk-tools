@@ -44,8 +44,8 @@ jobs:
     condition: eq(variables['APIViewURL'], '')
 
   - pwsh: |
-      npm install -g @cadl-lang/compiler@0.37.0
-      npm install -g @azure-tools/cadl-apiview@0.3.0
+      npm install -g @cadl-lang/compiler
+      npm install -g @azure-tools/cadl-apiview
       npm list -g
     displayName: "Install npm packages"
 

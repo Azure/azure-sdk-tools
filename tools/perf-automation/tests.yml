@@ -48,7 +48,7 @@ parameters:
   default: 'main'
 - name: CppServiceDirectory
   type: string
-  default: 'storage'
+  default: 'storage/azure-storage-blobs'
 - name: PackageVersions
   type: string
   default: '12|source'

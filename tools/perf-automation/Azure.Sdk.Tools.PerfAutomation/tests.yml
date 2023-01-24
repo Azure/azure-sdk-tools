@@ -1,33 +1,33 @@
 ﻿Languages:
   Net:
     DefaultVersions:
-    - net7.0
+    - 7
     OptionalVersions:
-    - net6.0
+    - 6
 
   Java:
     DefaultVersions:
-    - 17.0.5
+    - 17
     OptionalVersions:
-    - 1.8.0_352
+    - 8
 
   JS:
     DefaultVersions:
-    - 18.12.1
+    - 18
     OptionalVersions:
-    - 16.14.0
+    - 16
 
   Python:
     DefaultVersions:
-    - 3.11.0
+    - 3.11
     OptionalVersions:
-    - 3.10.0
+    - 3.10
 
   Cpp:
     DefaultVersions:
-    - 3.20.0
+    - 3.20
     OptionalVersions:
-    - 3.13.0
+    - 3.13
 
 Services:
 - Service: sample

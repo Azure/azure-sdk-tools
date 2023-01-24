@@ -130,10 +130,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var profileOutputPath = Path.GetFullPath(Path.Combine(ProfileDirectory, $"{testName}_{profileCount++}.jfr"));
                 profilingConfig = $"-XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";
 
-                // '--version' was introduced after Java 8, given that use '--version' to determine whether '-XX:+UnlockCommercialFeatures' needs to be added to the profile command.
-                // '-XX:+UnlockCommercialFeatures' is required when profiling in Java 8 but in later versions of Java this is an unrecognized JVM option which results in a failure. 
-                var javaVersionCheck = await Util.RunAsync("java", "--version", WorkingDirectory);
-                if (javaVersionCheck.ExitCode != 0) 
+                // If Java 8 is the version of Java being used add '-XX:+UnlockCommercialFeatures' as that is required to run Java Flight Recording in Java 8.
+                // Don't add '-XX:+UnlockCommercialFeatures' if it is any other version as this causes the JVM to crash on an unrecognized VM options.
+                if (int.TryParse(languageVersion, out var res) && res == 8) 
                 {
                     profilingConfig = "-XX:+UnlockCommercialFeatures " + profilingConfig;
                 }

@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('t', "tests", HelpText = "Regex of tests to run")]
             public string Tests { get; set; }
 
-            [Option("tests-file", Required = true)]
+            [Option("tests-file", Required = true, HelpText = "Path to test definition file (absolute or relative to RepoRoot)")]
             public string TestsFile { get; set; }
         }
 
@@ -153,7 +153,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 options.NoAsync = true;
             }
 
-            var serviceInfo = DeserializeYaml<ServiceInfo>(options.TestsFile);
+            var serviceInfo = DeserializeYaml<ServiceInfo>(Path.Combine(options.RepoRoot, options.TestsFile));
 
             var selectedPackageVersions = serviceInfo.PackageVersions.Where(d =>
                 String.IsNullOrEmpty(options.PackageVersions) ||

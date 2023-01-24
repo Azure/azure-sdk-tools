@@ -134,10 +134,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             if (string.IsNullOrEmpty(options.LanguageVersion))
             {
                 options.LanguageVersion = options.Language switch {
-                    Language.Net => "netcoreapp3.1",
-                    Language.Java => "1.8.0_345",
-                    Language.JS => "14.20.0",
-                    Language.Python => "3.7.3",
+                    Language.Net => "net7.0",
+                    Language.Java => "17.0.6",
+                    Language.JS => "18.13.0",
+                    Language.Python => "3.11.1",
                     Language.Cpp => "3.20.0",
                     _ => throw new InvalidOperationException("Unknown language")
                 };

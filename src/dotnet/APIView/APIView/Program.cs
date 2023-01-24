@@ -1,17 +1,15 @@
-﻿using System;
+using System;
+using System.Threading.Tasks;
 
 namespace ApiView
 {
     class Program
     {
-        static void Main(string[] args)
+        async static Task Main(string[] args)
         {
             try
             {
-                var assemblySymbol = CompilationFactory.GetCompilation(args[0]);
-                var renderer = new CodeFileRenderer();
-                var codeNode = new CodeFileBuilder().Build(assemblySymbol, false, null);
-                Console.WriteLine(renderer.Render(codeNode));
+                await App.RunAsync(args);
             }
             catch (Exception e)
             {

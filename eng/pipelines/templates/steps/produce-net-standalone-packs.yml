@@ -53,7 +53,7 @@ steps:
           if ($IsMacOS) {
             $binaryFile = Get-ChildItem -Path $sourcePath | Where-Object { !([System.IO.Path]::hasExtension($_)) } | Select-Object -First 1
             $binaryFileBash = $binaryFile.ToString().Replace("`\","/")
-            $formattedTarget = "${{ parameters.TargetDirectory }}".Replace("`\,"/")
+            $formattedTarget = "${{ parameters.TargetDirectory }}".Replace("`\","/")
 
 
             Write-Host $binaryFile

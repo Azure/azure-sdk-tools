@@ -123,7 +123,7 @@ function LogVsoCommand([string]$message)
     Write-Host $message
 }
 
-function Retry([scriptblock] $Action, [int] $Attempts = 5)
+function Retry([scriptblock] $Action, [int] $Attempts = 1)
 {
     $attempt = 0
     $sleep = 5

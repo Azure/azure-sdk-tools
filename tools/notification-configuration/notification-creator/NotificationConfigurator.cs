@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using System;
+using System.IO;
 using Azure.Sdk.Tools.CodeOwnersParser;
 using System.Text.RegularExpressions;
 
@@ -26,9 +27,25 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         private const int MaxTeamNameLength = 64;
         // Type 2 maps to a pipeline YAML file in the repository
         private const int PipelineYamlProcessType = 2;
+
+        /// <summary>
+        /// Name of the file for given build definition for which we search its owners in CODEOWNERS file.
+        /// This file is a sibling of the build definition .yml file, like ci.yml or tests.yml.
+        ///
+        /// We do look up owners of this synthetic file instead of the build definition .yml file itself
+        /// to be able to separate build definition reviewers from recipients of build failure
+        /// notifications of builds originating from given build definition.
+        ///
+        /// Note the implicit assumption here there is no file with such path in the repository.
+        /// 
+        /// For more information, please see:
+        /// https://github.com/Azure/azure-sdk-tools/issues/5181
+        /// </summary>
+        private const string PipelineOwnerSyntheticFileName = "__PipelineOwner__";
+
         // A cache on the code owners github identity to owner descriptor.
         private readonly Dictionary<string, string> codeOwnerCache = new Dictionary<string, string>();
-        // A cache on the team member to member discriptor.
+        // A cache on the team member to member descriptor.
         private readonly Dictionary<string, string> teamMemberCache = new Dictionary<string, string>();
 
         public NotificationConfigurator(AzureDevOpsService service, GitHubService gitHubService, ILogger<NotificationConfigurator> logger)
@@ -171,12 +188,17 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
             if (purpose == TeamPurpose.SynchronizedNotificationTeam)
             {
-                await SyncTeamWithCodeOwnerFile(pipeline, result, gitHubToAADConverter, gitHubService, persistChanges);
+                await SyncTeamWithCodeownersFile(pipeline, result, gitHubToAADConverter, gitHubService, persistChanges);
             }
             return result;
         }
 
-        private async Task SyncTeamWithCodeOwnerFile(BuildDefinition pipeline, WebApiTeam team, GitHubToAADConverter gitHubToAADConverter, GitHubService gitHubService, bool persistChanges)
+        private async Task SyncTeamWithCodeownersFile(
+            BuildDefinition pipeline,
+            WebApiTeam team,
+            GitHubToAADConverter gitHubToAADConverter,
+            GitHubService gitHubService,
+            bool persistChanges)
         {
             using (logger.BeginScope("Team Name = {0}", team.Name))
             {
@@ -198,25 +220,20 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     logger.LogError("No repository url returned from pipeline. Repo id: {0}", pipeline.Repository.Id);
                     return;
                 }
-                var codeOwnerEntries = await gitHubService.GetCodeownersFile(repoUrl);
+                List<CodeownersEntry> codeownersEntries = await gitHubService.GetCodeownersFile(repoUrl);
 
-                if (codeOwnerEntries == default)
+                if (codeownersEntries == default)
                 {
                     logger.LogInformation("CODEOWNERS file not found, skipping sync");
                     return;
                 }
-                var process = pipeline.Process as YamlProcess;
+                YamlProcess process = pipeline.Process as YamlProcess;
 
-                logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
-
-                var codeOwnerEntry = CodeownersFile.GetMatchingCodeownersEntry(process.YamlFilename, codeOwnerEntries);
-                codeOwnerEntry.ExcludeNonUserAliases();
-
-                logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, codeOwnerEntry.Owners.Count);
+                CodeownersEntry codeownersEntry = GetMatchingCodeownersEntry(process, codeownersEntries);
 
                 // Get set of team members in the CODEOWNERS file
                 var codeownersDescriptors = new List<String>();
-                foreach (var contact in codeOwnerEntry.Owners)
+                foreach (string contact in codeownersEntry.Owners)
                 {
                     if (!codeOwnerCache.ContainsKey(contact))
                     {
@@ -273,6 +290,39 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     }
                 }
             }
+        }
+
+        private CodeownersEntry GetMatchingCodeownersEntry(YamlProcess process, List<CodeownersEntry> codeownersEntries)
+        {
+            // See comment on PipelineOwnerSyntheticFileName to understand why the pipelineOwnerFile
+            // is not simply process.YamlFilename.
+            string pipelineOwnerFile = GetSiblingFilePath(
+                targetPath: process.YamlFilename,
+                siblingFileName: PipelineOwnerSyntheticFileName);
+
+            this.logger.LogInformation(
+                "Searching CODEOWNERS for matching path for {pipelineOwnerFile}, " +
+                "originating from {processYamlFilename}",
+                pipelineOwnerFile,
+                process.YamlFilename);
+
+            CodeownersEntry codeownersEntry =
+                CodeownersFile.GetMatchingCodeownersEntry(pipelineOwnerFile, codeownersEntries);
+
+            codeownersEntry.ExcludeNonUserAliases();
+
+            this.logger.LogInformation(
+                "Matching Contacts Path = {pipelineOwnerFile}, Contacts = {ownersCount}",
+                pipelineOwnerFile,
+                codeownersEntry.Owners.Count);
+            return codeownersEntry;
+        }
+
+        private string GetSiblingFilePath(string targetPath, string siblingFileName)
+        {
+            var fileNameToReplace = Path.GetFileName(targetPath);
+            var siblingPath = targetPath.Replace(fileNameToReplace, siblingFileName);
+            return siblingPath;
         }
 
         private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string projectPath, PipelineSelectionStrategy strategy)

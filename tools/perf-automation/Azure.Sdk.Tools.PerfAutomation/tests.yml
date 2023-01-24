@@ -7,9 +7,9 @@
 
   Java:
     DefaultVersions:
-    - 1.8.0_345
+    - 17.0.5
     OptionalVersions:
-    - 17+35
+    - 1.8.0_352
 
   JS:
     DefaultVersions:

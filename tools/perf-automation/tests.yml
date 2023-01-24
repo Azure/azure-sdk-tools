@@ -49,9 +49,6 @@ parameters:
 - name: CppServiceDirectory
   type: string
   default: 'storage'
-- name: Services
-  type: string
-  default: '^storage-blob$'
 - name: PackageVersions
   type: string
   default: '12|source'
@@ -135,7 +132,6 @@ stages:
           parameters:
             EnableNuGetCache: false
         ServiceDirectory: ${{ parameters.NetServiceDirectory }}
-        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
@@ -169,7 +165,6 @@ stages:
             mvn --version
           displayName: Print Java Versions
         ServiceDirectory: ${{ parameters.JavaServiceDirectory }}
-        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
@@ -196,7 +191,6 @@ stages:
           parameters:
             NodeVersion: 18.x
         ServiceDirectory: ${{ parameters.JSServiceDirectory }}
-        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
@@ -226,7 +220,6 @@ stages:
           inputs:
             versionSpec: $(PythonVersion)
         ServiceDirectory: ${{ parameters.PythonServiceDirectory }}
-        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
@@ -253,7 +246,6 @@ stages:
           parameters:
             RepoOwner: Microsoft
         ServiceDirectory: ${{ parameters.CppServiceDirectory }}
-        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}

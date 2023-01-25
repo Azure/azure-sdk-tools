@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.2.1 (Unreleased)
+- Fix issue where framework-generated APIViews had an
+  unstable order.
+
 ## Version 0.2.0 (Unreleased)
 - Switch from SwiftAST dependency to SwiftSyntax.
 - Overhaul to how extensions are displayed.

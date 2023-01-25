@@ -169,6 +169,7 @@ class PackageModel: Tokenizable, Linkable {
             }
         }
         members = Array(uniqueMembers.values)
+        members = members.sorted(by: { $0.definitionId! < $1.definitionId! })
     }
 
     /// attempt to resolve type references that are declared after they are used

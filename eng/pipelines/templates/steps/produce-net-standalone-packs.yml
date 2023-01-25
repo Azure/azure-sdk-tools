@@ -24,6 +24,11 @@ steps:
         Write-Host "$(Agent.OS)"
         Write-Host "${{ target.rid }}"
 
+        Write-Host "Breakdown of mac expressions is as follows"
+        Write-Host "${{ startsWith(target.rid, 'osx') }}"
+        Write-Host "${{ eq(variables['Agent.OS'], 'Darwin')) }}"
+      displayName: Dump Expression Outputs
+
     # ensure that we only build the mac standalone executables on a mac agent, everything else on not mac
     - ${{ if and(startsWith(target.rid, 'osx'), eq(variables['Agent.OS'], 'Darwin')) }}:
       - task: Powershell@2

@@ -31,21 +31,21 @@ param(
 )
 
 # resolves to <artifactfolder>/win-x64
-$destinationArtifactFolder = Join-Path $($ArtifactStagingDirectory) $($Rid)
+$destinationArtifactFolder = Join-Path $ArtifactStagingDirectory $Rid
 
 # resolves to <artifactfolder>/win-x64/test-proxy-standalone-win-x64 (.zip or .tar.gz will be added as appropriate for platform)
-$destinationPathSegment = Join-Path $destinationArtifactFolder "$((Split-Path -Leaf "$($Target)"))-standalone-$Rid"
+$destinationPathSegment = Join-Path $destinationArtifactFolder "$(Split-Path -Leaf "$Target")-standalone-$Rid"
 
 # resolves to tools/test-proxy/win-x64
-$outputPath = Join-Path $($Target) $($Rid)
+$outputPath = Join-Path $Target $Rid
 
 # ensure the destination artifact directory exists
 if (!(Test-Path $destinationArtifactFolder)){
    New-Item -Force -Path $destinationArtifactFolder -ItemType directory
 }
 
-Write-Host "dotnet publish -f $($Framework) -c Release -r $($Rid) -p:PublishSingleFile=true --self-contained --output $outputPath $Target"
-dotnet publish -f $($Framework) -c Release -r $($Rid) -p:PublishSingleFile=true --self-contained --output $outputPath $Target
+Write-Host "dotnet publish -f $Framework -c Release -r $Rid -p:PublishSingleFile=true --self-contained --output $outputPath $Target"
+dotnet publish -f $Framework -c Release -r $Rid -p:PublishSingleFile=true --self-contained --output $outputPath $Target
 
 if ($LASTEXITCODE -ne 0) {
    Write-Error "dotnet publish failed with exit code $LASTEXITCODE."

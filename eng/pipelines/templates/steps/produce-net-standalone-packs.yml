@@ -28,7 +28,7 @@ steps:
             -Rid "${{ target.rid }}"
             -Target "${{ parameters.TargetDirectory }}"
             -ArtifactStagingDirectory "$(Build.ArtifactStagingDirectory)"
-            -Framework = "${{ target.framework }}"
+            -Framework "${{ target.framework }}"
           pwsh: true
         displayName: 'Produce Executable for ${{ target.rid }}'
         env:
@@ -50,7 +50,7 @@ steps:
             -Rid "${{ target.rid }}"
             -Target "${{ parameters.TargetDirectory }}"
             -ArtifactStagingDirectory "$(Build.ArtifactStagingDirectory)"
-            -Framework = "${{ target.framework }}"
+            -Framework "${{ target.framework }}"
           pwsh: true
         displayName: 'Produce Executable for ${{ target.rid }}'
         env:

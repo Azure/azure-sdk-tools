@@ -18,13 +18,14 @@ parameters:
 
 steps:
   - ${{ each target in parameters.BuildMatrix }}:
+    - pwsh: |
+        Write-Host "${{ and(not(startswith(target.rid, 'osx')), not(eq(variables['Agent.OS'], 'Darwin'))) }}"
+        Write-Host "${{ and(startsWith(target.rid, 'osx'), eq(variables['Agent.OS'], 'Darwin')) }}"
+        Write-Host "$(Agent.OS)"
+        Write-Host "${{ target.rid }}"
+
     # ensure that we only build the mac standalone executables on a mac agent, everything else on not mac
     - ${{ if and(startsWith(target.rid, 'osx'), eq(variables['Agent.OS'], 'Darwin')) }}:
-      - pwsh: |
-          Write-Host "$(Agent.OS)"
-          Write-Host "${{ target.rid }}"
-          Write-Host "${{ and(not(startswith(target.rid, 'osx')), not(eq(variables['Agent.OS'], 'Darwin'))) }}"
-
       - task: Powershell@2
         inputs:
           workingDirectory: "$(Build.SourcesDirectory)"
@@ -47,11 +48,6 @@ steps:
           ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
 
     - ${{ if and(not(startswith(target.rid, 'osx')), not(eq(variables['Agent.OS'], 'Darwin'))) }}:
-      - pwsh: |
-          Write-Host "$(Agent.OS)"
-          Write-Host "${{ target.rid }}"
-          Write-Host "${{ and(not(startswith(target.rid, 'osx')), not(eq(variables['Agent.OS'], 'Darwin'))) }}"
-
       - task: Powershell@2
         inputs:
           workingDirectory: "$(Build.SourcesDirectory)"

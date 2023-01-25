@@ -46,7 +46,7 @@ steps:
           ArtifactName: "standalone-${{ target.rid }}"
           ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
 
-    - ${{ if and(not(startswith(target.rid, 'osx')), not(eq(variables['Agent.OS'], 'Darwin')) }}:
+    - ${{ if and(not(startswith(target.rid, 'osx')), not(eq(variables['Agent.OS'], 'Darwin'))) }}:
       - task: Powershell@2
         inputs:
           workingDirectory: "$(Build.SourcesDirectory)"

@@ -31,7 +31,7 @@ steps:
       displayName: Dump Expression Outputs
 
     # ensure that we only build the mac standalone executables on a mac agent, everything else on not mac
-    - ${{ if and(startsWith(target.rid, 'osx'), eq(variables['Agent.OS'], 'Darwin')) }}:
+    - ${{ if startsWith(target.rid, 'osx') }}:
       - task: Powershell@2
         inputs:
           workingDirectory: "$(Build.SourcesDirectory)"
@@ -43,6 +43,7 @@ steps:
             -Framework "${{ target.framework }}"
           pwsh: true
         displayName: 'Produce Executable for ${{ target.rid }}'
+        condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
         env:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
@@ -52,8 +53,9 @@ steps:
         parameters:
           ArtifactName: "standalone-${{ target.rid }}"
           ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
+          customCondition: eq(variables['Agent.OS'], 'Darwin')
 
-    - ${{ if and(not(startswith(target.rid, 'osx')), not(eq(variables['Agent.OS'], 'Darwin'))) }}:
+    - ${{ if not(startswith(target.rid, 'osx')) }}:
       - task: Powershell@2
         inputs:
           workingDirectory: "$(Build.SourcesDirectory)"
@@ -65,6 +67,7 @@ steps:
             -Framework "${{ target.framework }}"
           pwsh: true
         displayName: 'Produce Executable for ${{ target.rid }}'
+        condition: and(succeeded(), not(eq(variables['Agent.OS'], 'Darwin')))
         env:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
@@ -74,4 +77,5 @@ steps:
         parameters:
           ArtifactName: "standalone-${{ target.rid }}"
           ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
+          CustomCondition: not(eq(variables['Agent.OS'], 'Darwin'))
 

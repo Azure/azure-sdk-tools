@@ -23,60 +23,120 @@ steps:
     displayName: Create .NET standalone packs destination directory
 
   - ${{ each target in parameters.BuildMatrix }}:
-    - pwsh: |
-        $destinationPathSegment = "$(Build.ArtifactStagingDirectory)/${{ target.rid }}/$((Split-Path -Leaf "${{ parameters.TargetDirectory }}"))-standalone-${{ target.rid }}"
-        $sourcePath = "${{ parameters.TargetDirectory }}/${{ target.rid }}"
+    # ensure that we only build the mac standalone executables on a mac agent, everything else on not mac
+    - ${{ if and(startswith(target.rid, 'osx'), eq(variables['Agent.OS'], 'Darwin'))) }}:
+      - pwsh: |
+          $destinationPathSegment = "$(Build.ArtifactStagingDirectory)/${{ target.rid }}/$((Split-Path -Leaf "${{ parameters.TargetDirectory }}"))-standalone-${{ target.rid }}"
+          $sourcePath = "${{ parameters.TargetDirectory }}/${{ target.rid }}"
 
-        Write-Host "dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} -p:PublishSingleFile=true --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}"
-        dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} -p:PublishSingleFile=true --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}
+          Write-Host "dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} -p:PublishSingleFile=true --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}"
+          dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} -p:PublishSingleFile=true --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}
 
-        if ($LASTEXITCODE -ne 0) {
-          Write-Error "dotnet publish failed with exit code $LASTEXITCODE."
-          exit $LASTEXITCODE
-        }
-
-        # produce a tar.gz only for linux
-        if ("${{ target.rid }}".Contains("linux")){
-          # tar on powershell in linux has some weirdness. For instance, this is a proper call to tar when we don't want to include the relative path to the target folder
-          # tar -cvzf -C tools/test-proxy/linux-arm64 blah.tar.gz tools/test-proxy/linux-arm64 
-          # however when we use this, we actually get an error. To avoid this, we simply CD into the target directory before tar-ing it.
-          Push-Location "$sourcePath"
-          # The sum contents within this folder will be: `appSettings.json`, `test-proxy.pdb`, `test-proxy` (the binary), and a certificate.
-          # This statement grabs the first extensionless file within the produced binary folder, which will always be the binary we need to set the executable bit on.
-          $binaryFile = (Get-ChildItem -Path . | Where-Object { !([System.IO.Path]::HasExtension($_)) } | Select-Object -First 1).ToString().Replace("`\","/")
-          bash -c "chmod +x $binaryFile"
-          tar -cvzf "$($destinationPathSegment).tar.gz" .
-          Pop-Location
-        }
-        elseif("${{ target.rid }}".Contains("osx")){
-          # need to codesign the binary with an entitlements file such that the signed and notarized binary will properly invoke on
-          # a mac system. However, the `codesign` command is only available on a MacOS agent. With that being the case, we simply special case
-          # this function here to ensure that the script does not fail outside of a MacOS agent.
-          if ($IsMacOS) {
-            $binaryFile = Get-ChildItem -Path $sourcePath | Where-Object { !([System.IO.Path]::hasExtension($_)) } | Select-Object -First 1
-            $binaryFileBash = $binaryFile.ToString().Replace("`\","/")
-            $formattedTarget = "$(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}".Replace("`\","/")
-
-            bash -c "codesign --deep -s - -f --options runtime --entitlements $($formattedTarget)/test-proxy-entitlements.plist $($binaryFileBash)"
-            bash -c "codesign -d --entitlements :- $($binaryFileBash)"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "dotnet publish failed with exit code $LASTEXITCODE."
+            exit $LASTEXITCODE
           }
 
-          Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
-        }
-        else {
-          Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
-        }
+          # produce a tar.gz only for linux
+          if ("${{ target.rid }}".Contains("linux")){
+            # tar on powershell in linux has some weirdness. For instance, this is a proper call to tar when we don't want to include the relative path to the target folder
+            # tar -cvzf -C tools/test-proxy/linux-arm64 blah.tar.gz tools/test-proxy/linux-arm64 
+            # however when we use this, we actually get an error. To avoid this, we simply CD into the target directory before tar-ing it.
+            Push-Location "$sourcePath"
+            # The sum contents within this folder will be: `appSettings.json`, `test-proxy.pdb`, `test-proxy` (the binary), and a certificate.
+            # This statement grabs the first extensionless file within the produced binary folder, which will always be the binary we need to set the executable bit on.
+            $binaryFile = (Get-ChildItem -Path . | Where-Object { !([System.IO.Path]::HasExtension($_)) } | Select-Object -First 1).ToString().Replace("`\","/")
+            bash -c "chmod +x $binaryFile"
+            tar -cvzf "$($destinationPathSegment).tar.gz" .
+            Pop-Location
+          }
+          elseif("${{ target.rid }}".Contains("osx")){
+            # need to codesign the binary with an entitlements file such that the signed and notarized binary will properly invoke on
+            # a mac system. However, the `codesign` command is only available on a MacOS agent. With that being the case, we simply special case
+            # this function here to ensure that the script does not fail outside of a MacOS agent.
+            if ($IsMacOS) {
+              $binaryFile = Get-ChildItem -Path $sourcePath | Where-Object { !([System.IO.Path]::hasExtension($_)) } | Select-Object -First 1
+              $binaryFileBash = $binaryFile.ToString().Replace("`\","/")
+              $formattedTarget = "$(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}".Replace("`\","/")
 
-        # clean up the uncompressed artifact directory
-        Remove-Item -Recurse -Force -Path $sourcePath
-      displayName: 'Produce Executable for ${{ target.rid }}'
-      workingDirectory: "${{ parameters.TargetDirectory }}"
-      env:
-        DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-        DOTNET_CLI_TELEMETRY_OPTOUT: 1
-        DOTNET_MULTILEVEL_LOOKUP: 0
+              bash -c "codesign --deep -s - -f --options runtime --entitlements $($formattedTarget)/test-proxy-entitlements.plist $($binaryFileBash)"
+              bash -c "codesign -d --entitlements :- $($binaryFileBash)"
+            }
 
-    - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
-      parameters:
-        ArtifactName: "standalone-${{ target.rid }}"
-        ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
+            Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
+          }
+          else {
+            Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
+          }
+
+          # clean up the uncompressed artifact directory
+          Remove-Item -Recurse -Force -Path $sourcePath
+        displayName: 'Produce Executable for ${{ target.rid }}'
+        workingDirectory: "${{ parameters.TargetDirectory }}"
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          DOTNET_MULTILEVEL_LOOKUP: 0
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          ArtifactName: "standalone-${{ target.rid }}"
+          ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
+
+    - ${{ if and(not(startswith(target.rid, 'osx')), not(eq(variables['Agent.OS'], 'Darwin'))) }}:
+      - pwsh: |
+            $destinationPathSegment = "$(Build.ArtifactStagingDirectory)/${{ target.rid }}/$((Split-Path -Leaf "${{ parameters.TargetDirectory }}"))-standalone-${{ target.rid }}"
+            $sourcePath = "${{ parameters.TargetDirectory }}/${{ target.rid }}"
+
+            Write-Host "dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} -p:PublishSingleFile=true --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}"
+            dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} -p:PublishSingleFile=true --self-contained --output ${{ parameters.TargetDirectory }}/${{ target.rid }}
+
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "dotnet publish failed with exit code $LASTEXITCODE."
+              exit $LASTEXITCODE
+            }
+
+            # produce a tar.gz only for linux
+            if ("${{ target.rid }}".Contains("linux")){
+              # tar on powershell in linux has some weirdness. For instance, this is a proper call to tar when we don't want to include the relative path to the target folder
+              # tar -cvzf -C tools/test-proxy/linux-arm64 blah.tar.gz tools/test-proxy/linux-arm64 
+              # however when we use this, we actually get an error. To avoid this, we simply CD into the target directory before tar-ing it.
+              Push-Location "$sourcePath"
+              # The sum contents within this folder will be: `appSettings.json`, `test-proxy.pdb`, `test-proxy` (the binary), and a certificate.
+              # This statement grabs the first extensionless file within the produced binary folder, which will always be the binary we need to set the executable bit on.
+              $binaryFile = (Get-ChildItem -Path . | Where-Object { !([System.IO.Path]::HasExtension($_)) } | Select-Object -First 1).ToString().Replace("`\","/")
+              bash -c "chmod +x $binaryFile"
+              tar -cvzf "$($destinationPathSegment).tar.gz" .
+              Pop-Location
+            }
+            elseif("${{ target.rid }}".Contains("osx")){
+              # need to codesign the binary with an entitlements file such that the signed and notarized binary will properly invoke on
+              # a mac system. However, the `codesign` command is only available on a MacOS agent. With that being the case, we simply special case
+              # this function here to ensure that the script does not fail outside of a MacOS agent.
+              if ($IsMacOS) {
+                $binaryFile = Get-ChildItem -Path $sourcePath | Where-Object { !([System.IO.Path]::hasExtension($_)) } | Select-Object -First 1
+                $binaryFileBash = $binaryFile.ToString().Replace("`\","/")
+                $formattedTarget = "$(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}".Replace("`\","/")
+
+                bash -c "codesign --deep -s - -f --options runtime --entitlements $($formattedTarget)/test-proxy-entitlements.plist $($binaryFileBash)"
+                bash -c "codesign -d --entitlements :- $($binaryFileBash)"
+              }
+
+              Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
+            }
+            else {
+              Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
+            }
+
+            # clean up the uncompressed artifact directory
+            Remove-Item -Recurse -Force -Path $sourcePath
+          displayName: 'Produce Executable for ${{ target.rid }}'
+          workingDirectory: "${{ parameters.TargetDirectory }}"
+          env:
+            DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+            DOTNET_CLI_TELEMETRY_OPTOUT: 1
+            DOTNET_MULTILEVEL_LOOKUP: 0
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          ArtifactName: "standalone-${{ target.rid }}"
+          ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
+

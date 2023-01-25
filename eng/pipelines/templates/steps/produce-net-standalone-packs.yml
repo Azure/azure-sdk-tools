@@ -23,7 +23,7 @@ steps:
       - task: Powershell@2
         inputs:
           workingDirectory: "$(Build.SourcesDirectory)"
-          filePath: $(Build.SourcesDirectory)/eng/scripts/assemble-dotnet-standalone-exe.ps1
+          filePath: $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/assemble-dotnet-standalone-exe.ps1
           arguments: >
             -Rid "${{ target.rid }}"
             -Target "${{ parameters.TargetDirectory }}"
@@ -45,7 +45,7 @@ steps:
       - task: Powershell@2
         inputs:
           workingDirectory: "$(Build.SourcesDirectory)"
-          filePath: $(Build.SourcesDirectory)/eng/scripts/assemble-dotnet-standalone-exe.ps1
+          filePath: $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/assemble-dotnet-standalone-exe.ps1
           arguments: >
             -Rid "${{ target.rid }}"
             -Target "${{ parameters.TargetDirectory }}"

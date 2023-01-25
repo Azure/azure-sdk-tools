@@ -8,16 +8,6 @@
     var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
     TempData["UserPreference"] = userPreference;
 }
-@section Scripts
-{
-    <script type="text/javascript" src="@Url.Content("~/comments.js")" asp-append-version="true"></script>
-    <script type="text/javascript" src="@Url.Content("~/fileInput.js")" asp-append-version="true"></script>
-}
-@section Styles
-{
-    <link rel="stylesheet" href="~/samples.css" asp-append-version="true">
-}
-
 @if (Model.Samples == null || Model.Sample.FileId == "Bad Deployment" || Model.Sample.FileId == "File Content Missing") // If the samples container does not exist
 {
     <div class="container-fluid">

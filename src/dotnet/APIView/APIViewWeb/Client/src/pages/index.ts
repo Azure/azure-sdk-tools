@@ -1,10 +1,10 @@
 $(() => {
   const defaultPageSize = 50;
   const reviewsFilterPartial = $( '#reviews-filter-partial' );
-  const languageFilter = $( '#language-filter-bootstraps-select' );
-  const stateFilter = $( '#state-filter-bootstraps-select' );
-  const statusFilter = $( '#status-filter-bootstraps-select' );
-  const typeFilter = $( '#type-filter-bootstraps-select' );
+  const languageFilter = $( '#language-filter-select' );
+  const stateFilter = $( '#state-filter-select' );
+  const statusFilter = $( '#status-filter-select' );
+  const typeFilter = $( '#type-filter-select' );
   const searchBox = $( '#reviews-table-search-box' );
   const searchButton = $( '#reviews-search-button' );
   const resetButton = $('#reset-filter-button');
@@ -15,6 +15,11 @@ $(() => {
 
   // Enable tooltip
   (<any>$('[data-toggle="tooltip"]')).tooltip();
+
+  // Soma Select Options
+  var selectOptions = {
+    selectAll: true,
+  }
 
   // Computes the uri string using the values of search, pagination and various filters
   // Invokes partial page update to list of reviews using ajax
@@ -92,19 +97,22 @@ $(() => {
       url: uri
     }).done(function(partialViewResult) {
       filter.html(partialViewResult);
-      (<any>filter).selectpicker('refresh');
+      (<any>filter).SumoSelect(selectOptions);
     });
   }
 
   // Fetch content of dropdown on page load
   $(document).ready(function() {
     updateFilterDropDown(languageFilter, "languages"); // Pulls languages data from DB
+    (<any>stateFilter).SumoSelect(selectOptions);
+    (<any>statusFilter).SumoSelect(selectOptions);
+    (<any>typeFilter).SumoSelect(selectOptions);
     addPaginationEventHandlers();
   });
 
   // Update list of reviews when any dropdown is changed
   [languageFilter, stateFilter, statusFilter, typeFilter].forEach(function(value, index) {
-    value.on('hidden.bs.select', function() {
+    value.on('sumo:closed', function() {
       updateListedReviews();
     });
   });
@@ -119,11 +127,11 @@ $(() => {
   });
 
   // Reset list of reviews as well as filters
-  resetButton.on('click', function(e) {
-    (<any>languageFilter).selectpicker('deselectAll');
-    (<any>stateFilter).selectpicker('deselectAll').selectpicker('val', 'Open');
-    (<any>statusFilter).selectpicker('deselectAll');
-    (<any>typeFilter).selectpicker('deselectAll');
+  resetButton.on('click', function (e) {
+    (<any>$('#language-dselect')[0]).sumo.unSelectAll();
+    (<any>$('#state-dselect')[0]).sumo.unSelectAll().selectItem('Open');
+    (<any>$('#status-dselect')[0]).sumo.unSelectAll();
+    (<any>$('#type-dselect')[0]).sumo.unSelectAll();
     searchBox.val('');
     updateListedReviews();
   });

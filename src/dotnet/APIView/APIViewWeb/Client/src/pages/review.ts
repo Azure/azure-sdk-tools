@@ -1,5 +1,5 @@
 import Split from "split.js";
-import { updatePageSettings } from "./helpers";
+import { updatePageSettings } from "../shared/helpers";
 
 $(() => {  
   const SEL_DOC_CLASS = ".documentation";

@@ -9,16 +9,6 @@
     TempData["UserPreference"] = userPreference;
     ViewBag.HasSections = (Model.CodeFile.LeafSections?.Count > 0) ? true : false;
 }
-@section Scripts
-{
-    <script type="text/javascript" src="@Url.Content("~/review.js")" asp-append-version="true"></script>
-    <script type="text/javascript" src="@Url.Content("~/comments.js")" asp-append-version="true"></script>
-}
-@section Styles
-{
-    <link rel="stylesheet" href="~/review.css" asp-append-version="true">
-}
-
 <div class="container-fluid">
     <div class="row mx-1 px-0 py-2 border-bottom">
         <div class="col-lg-12 d-flex px-0">

@@ -7,14 +7,6 @@
     ViewData["Title"] = "Conversation";
     TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
 }
-@section Scripts
-{
-    <script type="text/javascript" src="@Url.Content("~/comments.js")" asp-append-version="true"></script>
-}
-@section Styles
-{
-    <link rel="stylesheet" href="~/conversation.css" asp-append-version="true">
-}
 <div class="container-fluid">
     <div class="mx-5">
         <div class="row py-2 border-bottom">

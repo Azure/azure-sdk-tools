@@ -1,4 +1,4 @@
-import { updatePageSettings } from "./helpers";
+import { updatePageSettings } from "../shared/helpers";
 
 $(() => {
   const themeSelector = $( '#theme-selector' );

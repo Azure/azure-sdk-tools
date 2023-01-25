@@ -7,10 +7,6 @@
     var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User) ?? new UserPreferenceModel();
     TempData["UserPreference"] = userPreference;
 }
-@section Styles
-{
-    <link rel="stylesheet" href="~/requested-reviews.css" asp-append-version="true">
-}
 <div class="mx-5 row">
     <div class="col-md-12" id="reviews-filter-partial">
         <div class="mt-3 row">

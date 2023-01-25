@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.5 (01-25-2023)
+Convert dependencies to peerDependencies.
+
 ## Version 0.3.4 (01-13-2023)
 Support latest release of Cadl compiler.
 

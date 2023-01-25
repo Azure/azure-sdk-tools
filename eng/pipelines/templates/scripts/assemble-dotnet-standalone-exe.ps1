@@ -73,9 +73,9 @@ elseif("$($Rid)".Contains("osx")){
       $binaryFile = Get-ChildItem -Path $outputPath | Where-Object { !([System.IO.Path]::hasExtension($_)) } | Select-Object -First 1
       $binaryFileBash = $binaryFile.ToString().Replace("`\","/")
 
-      $formattedTarget = (Resolve-Path $($Target)).ToString().Replace("`\","/")
+      $entitlements = (Resolve-Path -Path (Join-Path $PSScriptRoot ".." ".." ".." "dotnet-executable-entitlements.plist")).ToString().Replace("`\", "/")
 
-      bash -c "codesign --deep -s - -f --options runtime --entitlements $($formattedTarget)/test-proxy-entitlements.plist $($binaryFileBash)"
+      bash -c "codesign --deep -s - -f --options runtime --entitlements $($entitlements) $($binaryFileBash)"
       bash -c "codesign -d --entitlements :- $($binaryFileBash)"
    }
 

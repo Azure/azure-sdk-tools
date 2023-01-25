@@ -2,6 +2,18 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "2.4.1",
+      "tag": "@autorest/testmodeler_v2.4.1",
+      "date": "Wed, 25 Jan 2023 20:23:19 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Update dependency semver ranges"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.4.0",
       "tag": "@autorest/testmodeler_v2.4.0",
       "date": "Mon, 12 Dec 2022 06:18:04 GMT",

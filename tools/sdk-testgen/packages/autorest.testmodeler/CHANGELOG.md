@@ -1,6 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Mon, 12 Dec 2022 06:18:04 GMT and should not be manually modified.
+This log was last generated on Wed, 25 Jan 2023 20:23:19 GMT and should not be manually modified.
+
+## 2.4.1
+Wed, 25 Jan 2023 20:23:19 GMT
+
+### Patches
+
+- Update dependency semver ranges
 
 ## 2.4.0
 Mon, 12 Dec 2022 06:18:04 GMT

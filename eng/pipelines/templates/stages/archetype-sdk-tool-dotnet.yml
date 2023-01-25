@@ -124,12 +124,6 @@ stages:
               BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
               TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
-          - ${{ if gt(length(parameters.StandaloneExeMatrix), 0) }}:
-              - publish: $(Build.ArtifactStagingDirectory)/binaries
-                displayName: Publish executables to binaries artifact
-                artifact: binaries_$(artifactName)
-                condition: succeededOrFailed()
-
       - job: Test
 
         steps:

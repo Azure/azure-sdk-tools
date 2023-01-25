@@ -24,7 +24,7 @@ steps:
 
   - ${{ each target in parameters.BuildMatrix }}:
     # ensure that we only build the mac standalone executables on a mac agent, everything else on not mac
-    - ${{ if and(startswith(target.rid, 'osx'), eq(variables['Agent.OS'], 'Darwin'))) }}:
+    - ${{ if and(startsWith(target.rid, 'osx'), eq(variables['Agent.OS'], 'Darwin')) }}:
       - task: Powershell@2
         inputs:
           workingDirectory: "$(Build.SourcesDirectory)"
@@ -46,7 +46,7 @@ steps:
           ArtifactName: "standalone-${{ target.rid }}"
           ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
 
-    - ${{ if and(not(startswith(target.rid, 'osx')), not(eq(variables['Agent.OS'], 'Darwin'))) }}:
+    - ${{ if and(not(startswith(target.rid, 'osx')), not(eq(variables['Agent.OS'], 'Darwin')) }}:
       - task: Powershell@2
         inputs:
           workingDirectory: "$(Build.SourcesDirectory)"

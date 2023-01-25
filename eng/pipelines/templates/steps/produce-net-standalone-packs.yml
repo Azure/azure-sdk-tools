@@ -17,11 +17,6 @@ parameters:
   #   framework: net6.0
 
 steps:
-  - pwsh: |
-      New-Item -ItemType Directory -Path "$(Build.ArtifactStagingDirectory)/${{ target.rid }}" -Force
-      Write-Host "Created directory ""$(Build.ArtifactStagingDirectory)/${{ target.rid }}"""
-    displayName: Create .NET standalone packs destination directory
-
   - ${{ each target in parameters.BuildMatrix }}:
     # ensure that we only build the mac standalone executables on a mac agent, everything else on not mac
     - ${{ if and(startsWith(target.rid, 'osx'), eq(variables['Agent.OS'], 'Darwin')) }}:

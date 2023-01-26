@@ -42,9 +42,14 @@ public class CodeownersDiffTests
     // <commonParent>/azure-sdk-for-.../
     // ...
     private const string AzureSdkForNetTargetDirPathSuffix = "/../azure-sdk-for-net";
-    private const string AzureSdkForNetCodeownersPathSuffix = AzureSdkForNetTargetDirPathSuffix + "/.github/CODEOWNERS";
+    private const string AzureSdkForPythonTargetDirPathSuffix = "/../azure-sdk-for-python";
     // TODO: add more repos here.
 
+    private const string CodeownersFilePathSuffix = "/.github/CODEOWNERS";
+
+    // Current dir, ".", is "/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0".
+    private const string CurrentDir = "/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0";
+    
     #region Owners diff
 
     [Test]
@@ -52,7 +57,7 @@ public class CodeownersDiffTests
     {
         // Empty string here means to just use the root directory of the local "azure-sdk-tools" clone.
         var targetDirPathSuffix = ""; 
-        var codeownersPathSuffix = "/.github/CODEOWNERS";
+        var codeownersPathSuffix = CodeownersFilePathSuffix;
         var ignoredPrefixes = ".git|artifacts";
         WriteToFileOwnersDiff(new[]
         {
@@ -67,12 +72,31 @@ public class CodeownersDiffTests
         WriteToFileOwnersDiff(
             new[]
             {
-                (AzureSdkForNetTargetDirPathSuffix, AzureSdkForNetCodeownersPathSuffix,
+                (AzureSdkForNetTargetDirPathSuffix, CodeownersFilePathSuffix,
                     DefaultIgnoredPathPrefixes, useRegexMatcher: false),
-                (AzureSdkForNetTargetDirPathSuffix, AzureSdkForNetCodeownersPathSuffix,
+                (AzureSdkForNetTargetDirPathSuffix, CodeownersFilePathSuffix,
                     DefaultIgnoredPathPrefixes, useRegexMatcher: true)
             },
             outputFilePrefix: "azure-sdk-for-net");
+    }
+
+    [Test]
+    public void WriteToFileWildcardRemovalDiffForAzureSdkForPython()
+    {
+        string codeownersCopyPathSuffix = CreateCodeownersCopyWithPathDeletion(
+            AzureSdkForPythonTargetDirPathSuffix,
+            CodeownersFilePathSuffix,
+            pathsToDelete: new[] {"/**/tests.yml", "/**/ci.yml"});
+
+        WriteToFileOwnersDiff(
+            new[]
+            {
+                (AzureSdkForPythonTargetDirPathSuffix, CodeownersFilePathSuffix,
+                    DefaultIgnoredPathPrefixes, useRegexMatcher: true),
+                (AzureSdkForPythonTargetDirPathSuffix, codeownersCopyPathSuffix,
+                    DefaultIgnoredPathPrefixes, useRegexMatcher: true)
+            },
+            outputFilePrefix: "azure-sdk-for-python");
     }
 
     #endregion
@@ -98,7 +122,7 @@ public class CodeownersDiffTests
     public void WriteToFileRegexMatcherCodeownersForAzureSdkForNet()
         => WriteToFileOwnersData(
             AzureSdkForNetTargetDirPathSuffix,
-            AzureSdkForNetCodeownersPathSuffix,
+            CodeownersFilePathSuffix,
             DefaultIgnoredPathPrefixes,
             useRegexMatcher: true,
             outputFilePrefix: "azure-sdk-for-net");
@@ -139,6 +163,24 @@ public class CodeownersDiffTests
                           $"Time taken: {stopwatch.Elapsed}.");
     }
 
+    private string CreateCodeownersCopyWithPathDeletion(
+        string targetDirPathSuffix,
+        string codeownersFilePathSuffix,
+        string[] pathsToDelete)
+    {
+        string rootDir = PathNavigatingToRootDir(CurrentDir);
+        string targetDir = rootDir + targetDirPathSuffix;
+        string codeownersPath = targetDir + codeownersFilePathSuffix;
+
+        var codeownersLines = File.ReadAllLines(codeownersPath);
+        codeownersLines = codeownersLines
+            .Where(line => !pathsToDelete.Any(line.Contains)).ToArray();
+
+        var codeownersCopyPath = codeownersPath + "-copy";
+        File.WriteAllLines(codeownersCopyPath, codeownersLines);
+        return codeownersFilePathSuffix + "-copy";
+    }
+
     private static void WriteToFileOwnersDiff((
         string targetDirPathSuffix, 
         string codeownersPathSuffix, 
@@ -174,9 +216,8 @@ public class CodeownersDiffTests
         string ignoredPathPrefixes,
         bool useRegexMatcher)
     {
-        // Current dir, ".", is "/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0".
-        const string currentDir = "/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0";
-        string rootDir = PathNavigatingToRootDir(currentDir);
+        string rootDir = PathNavigatingToRootDir(CurrentDir);
+        string targetDir = rootDir + targetDirPathSuffix;
 
         string actualOutput, actualErr;
         int returnCode;
@@ -185,9 +226,9 @@ public class CodeownersDiffTests
             // Act
             returnCode = Program.Main(
                 targetPath: "/**",
-                codeownersFilePathOrUrl: rootDir + codeownersPathSuffixToRootDir,
-                excludeNonUserAliases: false,
-                targetDir: rootDir + targetDirPathSuffix,
+                codeownersFilePathOrUrl: targetDir + codeownersPathSuffixToRootDir,
+                excludeNonUserAliases: true, // true because of Contacts.GetMatchingCodeownersEntry() calls ExcludeNonUserAliases().
+                targetDir,
                 ignoredPathPrefixes,
                 useRegexMatcher);
 

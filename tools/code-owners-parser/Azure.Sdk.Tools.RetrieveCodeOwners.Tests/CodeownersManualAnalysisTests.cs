@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests;
 /// selecting "|" as column separator.
 /// </summary>
 [TestFixture(Ignore = "Tools to be used manually")]
-public class CodeownersDiffTests
+public class CodeownersManualAnalysisTests
 {
     private const string DefaultIgnoredPathPrefixes = Program.DefaultIgnoredPrefixes;
     private const string OwnersDiffOutputPathSuffix = "_owners_diff.csv";

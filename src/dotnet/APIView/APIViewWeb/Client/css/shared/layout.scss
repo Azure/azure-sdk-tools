@@ -3,30 +3,37 @@
 }
 
 body {
-    background-color: var(--color-a);
-    text-decoration-color: var(--color-b);
+    background-color: var(--base-bg-color);
+    color: var(--base-text-color);
 }
 
 a:link {
-    color: var(--primary-color);
+    color: var(--link-color);
+}
+
+a:hover, a:active {
+    color: var(--link-active);
 }
 
 a:visited {
-    color: var(--primary-color-600);
+    color: var(--link-visited);
 }
 
-a:hover {
-    color: var(--secondary-color-700);
+.nav-cst-theme {
+    background-color: var(--navbar-bg);
+    color: var(--navbar-text);
 }
 
-a:active {
-    color: var(--primary-color-800);
-}
+.main-nav-cst-theme {
+    @extend .nav-cst-theme;
 
-.bg-color-c {
-    background-color: var(--color-c);
-}
+    a:link, a:visited {
+        color: var(--navbar-text);
+    }
 
-.brd-color-a-400 {
-    border-color: var(--color-a-400);
+    a:hover, a:active {
+        color: var(--navbar-link-active);
+    }
+
+    border-bottom: 1px solid var(--navbar-border);
 }

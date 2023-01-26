@@ -6,45 +6,27 @@
     --box-shadow-sm: 0 .125rem .25rem rgba(#{$black}, .075);
     --box-shadow-lg: 0 1rem 3rem rgba(#{$black}, .175);
     --box-shadow-inset: inset 0 1px 2px rgba(#{$black}, .075);
-    $color-a: #fbfaff;
-    --color-a: #{$color-a}; /* This is the Base background color and  its near white so create shade variations */
-    --color-a-100: #{shade-color($color-a, 20%)};
-    --color-a-200: #{shade-color($color-a, 40%)};
-    --color-a-300: #{shade-color($color-a, 60%)};
-    --color-a-400: #{shade-color($color-a, 80%)};
-    $color-b: #212529;
-    --color-b: #{$color-b}; /* This is the Base text color and its near black so create tint variations */
-    --color-b-100: #{tint-color($color-b, 20%)};
-    --color-b-200: #{tint-color($color-b, 40%)};
-    --color-b-300: #{tint-color($color-b, 60%)};
-    --color-b-400: #{tint-color($color-b, 80%)};
-    --color-c: #ffffff;
+
+
+    $base-bg-color: #fbfaff;
+    --base-bg-color: #{$base-bg-color};
+    $base-text-color: #212529;
+    --base-text-color: #{$base-text-color};
     --primary-color: #{$primary};
-    --primary-color-100: #{tint-color($primary, 80%)};
-    --primary-color-200: #{tint-color($primary, 60%)};
-    --primary-color-300: #{tint-color($primary, 40%)};
-    --primary-color-400: #{tint-color($primary, 20%)};
-    --primary-color-600: #{shade-color($primary, 20%)};
-    --primary-color-700: #{shade-color($primary, 40%)};
-    --primary-color-800: #{shade-color($primary, 60%)};
-    --primary-color-900: #{shade-color($primary, 80%)};
     --secondary-color: #{$secondary};
-    --secondary-color-300: #{tint-color($secondary, 40%)};
-    --secondary-color-400: #{tint-color($secondary, 20%)};
-    --secondary-color-600: #{shade-color($secondary, 20%)};
-    --secondary-color-700: #{shade-color($secondary, 40%)};
     --success-color: #{$success};
-    --success-color-400: #{tint-color($success, 20%)};
-    --success-color-600: #{shade-color($success, 20%)};
     --info-color: #{$info};
-    --info-color-400: #{tint-color($info, 20%)};
-    --info-color-600: #{shade-color($info, 20%)};
     --warning-color: #{$warning};
-    --warning-color-400: #{tint-color($warning, 20%)};
-    --warning-color-600: #{shade-color($warning, 20%)};
     --danger-color: #{$danger};
-    --danger-color-400: #{tint-color($danger, 20%)};
-    --danger-color-600: #{shade-color($danger, 20%)};
+
+
+    --link-color: #{$primary};
+    --link-active: #{shade-color($primary, 20%)};
+    --link-visited: #{shade-color($primary, 40%)};
+    --navbar-bg: #{tint-color($base-bg-color, 100%)};
+    --navbar-text: #{$primary};
+    --navbar-link-active: #{shade-color($primary, 20%)};
+    --navbar-border: #{shade-color($base-bg-color, 20%)}
 }
 
 .dark-theme {
@@ -52,48 +34,31 @@
     --box-shadow-sm: 0 .125rem .25rem rgba(#{$white}, .075);
     --box-shadow-lg: 0 1rem 3rem rgba(#{$white}, .175);
     --box-shadow-inset: inset 0 1px 2px rgba(#{$white}, .075);
-    $color-a: #010409;
-    --color-a: #{$color-a}; /* This is the Base background color and  its near black so create tint variations */
-    --color-a-100: #{tint-color($color-a, 20%)};
-    --color-a-200: #{tint-color($color-a, 40%)};
-    --color-a-300: #{tint-color($color-a, 60%)};
-    --color-a-400: #{tint-color($color-a, 80%)};
-    $color-b: #c9d1d9;
-    --color-b: #{$color-b}; /* This is the Base text color and its near white so create shade variations */
-    --color-b-100: #{shade-color($color-b, 20%)};
-    --color-b-200: #{shade-color($color-b, 40%)};
-    --color-b-300: #{shade-color($color-b, 60%)};
-    --color-b-400: #{shade-color($color-b, 80%)};
-    --color-c: #1a2332;
-    --primary-color: #{$primary};
-    --primary-color-100: #{tint-color($primary, 80%)};
-    --primary-color-200: #{tint-color($primary, 60%)};
-    --primary-color-300: #{tint-color($primary, 40%)};
-    --primary-color-400: #{tint-color($primary, 20%)};
-    --primary-color-600: #{shade-color($primary, 20%)};
-    --primary-color-700: #{shade-color($primary, 40%)};
-    --primary-color-800: #{shade-color($primary, 60%)};
-    --primary-color-900: #{shade-color($primary, 80%)};
+
+
+    $base-bg-color: #010409;
+    --base-bg-color: #{$base-bg-color};
+    $base-text-color: #c9d1d9;
+    --base-text-color: #{$base-text-color};
+    $primary-color: #0084ff;
+    --primary-color: #{$primary-color};
     $secondary-color: #6F8594;
     --secondary-color: #{$secondary-color};
-    --secondary-color-300: #{tint-color($secondary-color, 40%)};
-    --secondary-color-400: #{tint-color($secondary-color, 20%)};
-    --secondary-color-600: #{shade-color($secondary-color, 20%)};
-    --secondary-color-700: #{shade-color($secondary-color, 40%)};
     $success-color: #078C03;
     --success-color: #{$success-color};
-    --success-color-400: #{tint-color($success-color, 20%)};
-    --success-color-600: #{shade-color($success-color, 20%)};
     $info-color: #05DBF2;
     --info-color: #{$info-color};
-    --info-color-400: #{tint-color($info-color, 20%)};
-    --info-color-600: #{shade-color($info-color, 20%)};
     --warning-color: #{$orange};
-    --warning-color-400: #{tint-color($orange, 20%)};
-    --warning-color-600: #{shade-color($orange, 20%)};
     --danger-color: #{$danger};
-    --danger-color-400: #{tint-color($danger, 20%)};
-    --danger-color-600: #{shade-color($danger, 20%)};
+
+
+    --link-color: #{$primary-color};
+    --link-active: #{tint-color($primary-color, 20%)};
+    --link-visited: #{tint-color($primary-color, 40%)};
+    --navbar-bg: #{tint-color($base-bg-color, 20%)};
+    --navbar-text: #{tint-color($base-text-color, 40%)};
+    --navbar-link-active: #{shade-color($base-text-color, 20%)};
+    --navbar-border: #{tint-color($base-bg-color, 30%)}
 }
 
 .dark-solarized-theme {
@@ -101,50 +66,31 @@
     --box-shadow-sm: 0 .125rem .25rem rgba($gray-100, .075);
     --box-shadow-lg: 0 1rem 3rem rgba($gray-100, .175);
     --box-shadow-inset: inset 0 1px 2px rgba($gray-100, .075);
-    $color-a: #2b2b2b;
-    --color-a: #{$color-a}; /* This is the Base background color and  its near black so create tint variations */
-    --color-a-100: #{tint-color($color-a, 20%)};
-    --color-a-200: #{tint-color($color-a, 40%)};
-    --color-a-300: #{tint-color($color-a, 60%)};
-    --color-a-400: #{tint-color($color-a, 80%)};
-    $color-b: white;
-    --color-b: #{$color-b}; /* This is the Base text color and its near white so create shade variations */
-    --color-b-100: #{shade-color($color-b, 20%)};
-    --color-b-200: #{shade-color($color-b, 40%)};
-    --color-b-300: #{shade-color($color-b, 60%)};
-    --color-b-400: #{shade-color($color-b, 80%)};
-    $color-c: #5c5c5c;
-    --color-c: #5c5c5c;
+
+    $base-bg-color: #2b2b2b;
+    --base-bg-color: #{$base-bg-color};
+    $base-text-color: white;
+    --base-text-color: #{$base-text-color};
     $primary-color: #FFBD00;
     --primary-color: $primary-color;
-    --primary-color-100: #{tint-color($primary-color, 80%)};
-    --primary-color-200: #{tint-color($primary-color, 60%)};
-    --primary-color-300: #{tint-color($primary-color, 40%)};
-    --primary-color-400: #{tint-color($primary-color, 20%)};
-    --primary-color-600: #{shade-color($primary-color, 20%)};
-    --primary-color-700: #{shade-color($primary-color, 40%)};
-    --primary-color-800: #{shade-color($primary-color, 60%)};
-    --primary-color-900: #{shade-color($primary-color, 80%)};
     $secondary-color: #B7B6B7;
     --secondary-color: $secondary-color;
-    --secondary-color-300: #{tint-color($secondary-color, 40%)};
-    --secondary-color-400: #{tint-color($secondary-color, 20%)};
-    --secondary-color-600: #{shade-color($secondary-color, 20%)};
-    --secondary-color-700: #{shade-color($secondary-color, 40%)};
     $success-color: #16A69C;
     --success-color: $success-color;
-    --success-color-400: #{tint-color($success-color, 20%)};
-    --success-color-600: #{shade-color($success-color, 20%)};
     $info-color: #87B0E6;
     --info-color: #{$info-color};
-    --info-color-400: #{tint-color($info-color, 20%)};
-    --info-color-600: #{shade-color($info-color, 20%)};
     $warning-color: #D97904;
     --warning-color: #{$warning-color};
-    --warning-color-400: #{tint-color($warning-color, 20%)};
-    --warning-color-600: #{shade-color($warning-color, 20%)};
     $danger-color: #C80C07;
     --danger-color: #{$danger-color};
-    --danger-color-400: #{tint-color($danger-color, 20%)};
-    --danger-color-600: #{shade-color($danger-color, 20%)};
+
+
+
+    --link-color: #{$primary-color};
+    --link-active: #{tint-color($primary-color, 10%)};
+    --link-visited: #{tint-color($primary-color, 20%)};
+    --navbar-bg: #{tint-color($base-bg-color, 20%)};
+    --navbar-text: #{tint-color($base-text-color, 40%)};
+    --navbar-link-active: #{shade-color($base-text-color, 20%)};
+    --navbar-border: #{tint-color($base-bg-color, 30%)}
 }

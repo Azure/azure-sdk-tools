@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var errorBuilder = new StringBuilder();
 
             // On Windows, always use "python".  On Unix-like systems, specify the major and minor versions, e.g "python3.7".
-            var systemPython = Util.IsWindows ? "python" : "python" + Regex.Match(languageVersion, @"^\d+\.\d+").Value;
+            var systemPython = Util.IsWindows ? "python" : "python" + languageVersion;
 
             // Create venv
             await Util.RunAsync(systemPython, $"-m venv {_env}", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);

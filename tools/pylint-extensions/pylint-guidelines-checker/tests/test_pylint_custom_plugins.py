@@ -3115,3 +3115,225 @@ class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
+class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
+    """Test that we don't use raise with traceback"""
+    CHECKER_CLASS = checker.NoAzureCoreTracebackUseRaiseFrom
+
+    def test_raise_traceback(self):
+        node = astroid.extract_node(
+        """
+        from azure.core.exceptions import DeserializationError, SerializationError, raise_with_traceback
+        """
+        )
+
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="no-raise-with-traceback",
+                    line=2,
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=96
+                )
+        ):
+            self.checker.visit_importfrom(node)
+
+class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
+    """Test that we are checking the type and property name lengths"""
+    CHECKER_CLASS = checker.NameExceedsStandardCharacterLength
+
+    def test_class_name_too_long(self):
+        class_node = astroid.extract_node(
+        """
+            class ThisClassNameShouldEndUpBeingTooLongForAClient():
+                def __init__(self, **kwargs):
+                    pass
+        """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="name-too-long",
+                    line=2,
+                    node=class_node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=52
+                )
+        ):
+            self.checker.visit_classdef(class_node)
+
+    def test_function_name_too_long(self):
+        class_node, function_node = astroid.extract_node(
+        """
+            class ClassNameGoodClient(): #@
+                def this_function_name_should_be_too_long_for_rule(self, **kwargs): #@
+                    pass
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="name-too-long",
+                    line=3,
+                    node=function_node,
+                    col_offset=4, 
+                    end_line=3, 
+                    end_col_offset=54
+                )
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_variable_name_too_long(self):
+        class_node, function_node, property_node = astroid.extract_node(
+        """
+            class ClassNameGoodClient(): #@
+                def this_function_good(self, **kwargs): #@
+                    this_lists_name_is_too_long_to_work_with_linter_rule = [] #@
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="name-too-long",
+                    line=4,
+                    node=property_node.targets[0],
+                    col_offset=8, 
+                    end_line=4, 
+                    end_col_offset=65
+                )
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_private_name_too_long(self):
+        class_node, function_node, property_node = astroid.extract_node(
+        """
+            class ClassNameGoodClient(): #@
+                def _this_function_is_private_but_over_length_reqs(self, **kwargs): #@
+                    this_lists_name = [] #@
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+            self.checker.visit_functiondef(function_node)
+
+    def test_instance_attr_name_too_long(self):
+        class_node, function_node, property_node = astroid.extract_node(
+        """
+            class ClassNameGoodClient(): #@
+                def __init__(self, this_name_is_too_long_to_use_anymore_reqs, **kwargs): #@
+                    self.this_name_is_too_long_to_use_anymore_reqs = 10 #@
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="name-too-long",
+                    line=4,
+                    node=property_node.targets[0],
+                    col_offset=8, 
+                    end_line=4, 
+                    end_col_offset=65
+                )
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_class_var_name_too_long(self):
+        class_node, class_var_node, function_node, property_node = astroid.extract_node(
+        """
+            class ClassNameGoodClient(): #@
+                this_name_is_too_long_to_use_anymore_reqs = 10 #@
+                def __init__(self, dog, **kwargs): #@
+                    self.dog=dog #@
+        """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="name-too-long",
+                    line=3,
+                    node=class_node.body[0].targets[0],
+                    col_offset=4, 
+                    end_line=3, 
+                    end_col_offset=45
+                )
+        ):
+            self.checker.visit_functiondef(class_node)
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node)
+
+class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
+
+    """Test that we are checking the return type of delete functions is correct"""
+    CHECKER_CLASS = checker.DeleteOperationReturnStatement
+
+    def test_begin_delete_operation_incorrect_return(self):
+        node = astroid.extract_node(
+        """
+            from azure.core.polling import LROPoller 
+            from typing import Any
+            class MyClient():
+                def begin_delete_some_function(self, **kwargs)  -> LROPoller[Any]: #@
+                    return LROPoller[Any]
+        """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="delete-operation-wrong-return-type",
+                    line=5,
+                    node=node,
+                    col_offset=4, 
+                    end_line=5, 
+                    end_col_offset=24
+                )
+        ):
+            self.checker.visit_functiondef(node)
+
+    def test_delete_operation_incorrect_return(self):
+        node = astroid.extract_node(
+        """
+            from azure.core.polling import LROPoller 
+            from typing import Any
+            class MyClient():
+                def delete_some_function(self, **kwargs)  -> str: #@
+                    return "hello"
+        """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="delete-operation-wrong-return-type",
+                    line=5,
+                    node=node,
+                    col_offset=4, 
+                    end_line=5, 
+                    end_col_offset=24
+                )
+        ):
+            self.checker.visit_functiondef(node)
+
+    def test_delete_operation_correct_return(self):
+        node = astroid.extract_node(
+        """
+            from azure.core.polling import LROPoller 
+            from typing import Any
+            class MyClient():
+                def delete_some_function(self, **kwargs)  -> None: #@
+                    return None
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_begin_delete_operation_correct_return(self):
+        node = astroid.extract_node(
+        """
+            from azure.core.polling import LROPoller 
+            from typing import Any
+            class MyClient():
+                def begin_delete_some_function(self, **kwargs)  -> LROPoller[None]: #@
+                    return LROPoller[None]
+        """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)

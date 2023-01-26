@@ -3,11 +3,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-<<<<<<< feature/try-405-proxy
       ref: refs/heads/feature/platform-specific-binaries
-=======
-      ref: refs/tags/azure-sdk-build-tools_20230112.1
->>>>>>> main
 
 parameters:
   - name: ToolDirectory

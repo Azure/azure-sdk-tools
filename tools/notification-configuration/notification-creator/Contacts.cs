@@ -12,18 +12,21 @@ namespace Azure.Sdk.Tools.NotificationConfiguration;
 
 /// <summary>
 /// This class represents a set of contacts obtained from CODEOWNERS file
-/// located in repository attached to given build definition.
+/// located in repository attached to given build definition [1].
 ///
 /// The contacts are the CODEOWNERS path owners of path that matches the build definition file path.
 ///
 /// To obtain the contacts, construct this class and then call GetFromBuildDefinitionRepoCodeowners(buildDefinition).
+///
+/// [1] https://learn.microsoft.com/en-us/rest/api/azure/devops/build/definitions/get?view=azure-devops-rest-7.0#builddefinition
 /// </summary>
 internal class Contacts
 {
     private readonly ILogger log;
     private readonly GitHubService gitHubService;
 
-    // Type 2 maps to a build definition YAML file in the repository
+    // Type 2 maps to a build definition YAML file in the repository.
+    // You can confirm it by decompiling Microsoft.TeamFoundation.Build.WebApi.YamlProcess..ctor.
     private const int BuildDefinitionYamlProcessType = 2;
 
     internal Contacts(GitHubService gitHubService, ILogger log)
@@ -40,15 +43,17 @@ internal class Contacts
         if (buildDefinition.Process.Type != BuildDefinitionYamlProcessType)
         {
             this.log.LogDebug(
-                "buildDefinition.Process.Type for buildDefinition.Name = '{buildDefinitionName}' " +
-                "is not BuildDefinitionYamlProcessType = {BuildDefinitionYamlProcessType}.",
+                "buildDefinition.Process.Type: '{buildDefinitionProcessType}' " + 
+                "for buildDefinition.Name: '{buildDefinitionName}' " +
+                "must be '{BuildDefinitionYamlProcessType}'.",
+                buildDefinition.Process.Type,
                 buildDefinition.Name,
                 BuildDefinitionYamlProcessType);
             return null;
         }
+        YamlProcess yamlProcess = (YamlProcess)buildDefinition.Process;
 
         Uri repoUrl = GetCodeownersRepoUrl(buildDefinition);
-
         if (repoUrl == null)
         {
             // assert: the reason why repoUrl is null has been already logged.
@@ -56,35 +61,26 @@ internal class Contacts
         }
 
         List<CodeownersEntry> codeownersEntries = await gitHubService.GetCodeownersFileEntries(repoUrl);
-
-        if (codeownersEntries == default)
+        if (codeownersEntries == null)
         {
-            this.log.LogInformation("CODEOWNERS file in '{repoUrl}' not found, skipping sync.", repoUrl);
+            this.log.LogInformation("CODEOWNERS file in '{repoUrl}' not found. Skipping sync.", repoUrl);
             return null;
         }
 
-        if (buildDefinition.Process is not YamlProcess process)
-        {
-            this.log.LogError(
-                "buildDefinition.Process as YamlProcess is null. buildDefinition.Name: '{buildDefinitionName}'",
-                buildDefinition.Name);
-            return null;
-        }
-
-        // process.YamlFilename is misleading here. It is actually a file path, not file name.
+        // yamlProcess.YamlFilename is misleading here. It is actually a file path, not file name.
         // E.g. it is "sdk/foo_service/ci.yml".
-        string buildDefinitionFilePath = process.YamlFilename; 
+        string buildDefinitionFilePath = yamlProcess.YamlFilename; 
 
         this.log.LogInformation(
             "Searching CODEOWNERS for matching path for '{buildDefinitionFilePath}'",
             buildDefinitionFilePath);
 
-        CodeownersEntry matchingCodeownersEntry = GetMatchingCodeownersEntry(process, codeownersEntries);
+        CodeownersEntry matchingCodeownersEntry = GetMatchingCodeownersEntry(yamlProcess, codeownersEntries);
         List<string> contacts = matchingCodeownersEntry.Owners;
 
         this.log.LogInformation(
             "Found matching contacts (owners) in CODEOWNERS. " +
-            "Searched path = '{buildDefinitionOwnerFile}', Contacts# = {contactsCount}",
+            "Searched path '{buildDefinitionOwnerFile}', Contacts#: {contactsCount}",
             buildDefinitionFilePath,
             contacts.Count);
 
@@ -96,7 +92,7 @@ internal class Contacts
         Uri repoUrl = buildDefinition.Repository.Url;
         this.log.LogInformation("Fetching CODEOWNERS file from repoUrl: '{repoUrl}'", repoUrl);
 
-        if (repoUrl != null)
+        if (!string.IsNullOrEmpty(repoUrl?.ToString()))
         {
             repoUrl = new Uri(Regex.Replace(repoUrl.ToString(), @"\.git$", String.Empty));
         }

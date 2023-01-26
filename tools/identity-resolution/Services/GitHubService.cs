@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             }
 
             logger.LogWarning("Could not retrieve CODEOWNERS file URL = {0} ResponseCode = {1}", codeOwnersUrl, result.StatusCode);
-            return default;
+            return null;
         }
 
     }

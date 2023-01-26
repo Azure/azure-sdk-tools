@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 response.Headers.Add("x-request-exception", "true");
                 response.Headers.Add("x-request-exception-error", Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message)));
 
-                DebugLogger.LogError(unexpectedStatusCode.ToString() + Environment.NewLine + e.Message + Environment.NewLine + e.StackTrace);
+                DebugLogger.LogError(unexpectedStatusCode, e);
 
                 var bodyObj = new
                 {

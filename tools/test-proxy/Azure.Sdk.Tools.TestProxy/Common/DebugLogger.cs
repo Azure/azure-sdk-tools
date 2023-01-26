@@ -78,9 +78,21 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-
         public static void LogError(string details)
         {
+            if (null != logger)
+            {
+                logger.LogError(details);
+            }
+            else
+            {
+                System.Console.WriteLine(details);
+            }
+        }
+
+        public static void LogError(int statusCode, Exception e)
+        {
+            var details = statusCode.ToString() + Environment.NewLine + e.Message + Environment.NewLine + e.StackTrace;
             if (null != logger)
             {
                 logger.LogError(details);

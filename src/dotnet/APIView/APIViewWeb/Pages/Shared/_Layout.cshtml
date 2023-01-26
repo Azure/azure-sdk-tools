@@ -19,9 +19,9 @@
     </environment>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <link rel="stylesheet" href="~/main.css" asp-append-version="true">
     <!-- Soma Select -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.1.6/sumoselect.min.css">
+    <link rel="stylesheet" href="~/main.css" asp-append-version="true">
     @{
         var modelType = ViewData.ModelMetadata.ModelType.Name;
         if (modelType == "ReviewPageModel")
@@ -45,7 +45,7 @@
 }
 <body class="@theme">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom bg-color-c brd-color-a-400">
             <div class="container-fluid">
                 <a href="/" class="navbar-brand"><img id="apiview-logo" alt="apiview-logo" src="~/icons/apiview.png" />apiview.dev</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"

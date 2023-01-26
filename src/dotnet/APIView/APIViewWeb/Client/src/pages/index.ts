@@ -18,8 +18,8 @@ $(() => {
 
   // Soma Select Options
   var selectOptions = {
-    selectAll: true,
-  }
+    selectAll: true
+  };
 
   // Computes the uri string using the values of search, pagination and various filters
   // Invokes partial page update to list of reviews using ajax
@@ -128,10 +128,10 @@ $(() => {
 
   // Reset list of reviews as well as filters
   resetButton.on('click', function (e) {
-    (<any>$('#language-dselect')[0]).sumo.unSelectAll();
-    (<any>$('#state-dselect')[0]).sumo.unSelectAll().selectItem('Open');
-    (<any>$('#status-dselect')[0]).sumo.unSelectAll();
-    (<any>$('#type-dselect')[0]).sumo.unSelectAll();
+    (<any>$('#language-filter-select')[0]).sumo.unSelectAll();
+    (<any>$('#state-filter-select')[0]).sumo.unSelectAll().selectItem('Open');
+    (<any>$('#status-filter-select')[0]).sumo.unSelectAll();
+    (<any>$('#type-filter-select')[0]).sumo.unSelectAll();
     searchBox.val('');
     updateListedReviews();
   });

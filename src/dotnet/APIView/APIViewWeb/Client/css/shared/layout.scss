@@ -1,3 +1,32 @@
 #apiview-logo {
     width: 30px;
 }
+
+body {
+    background-color: var(--color-a);
+    text-decoration-color: var(--color-b);
+}
+
+a:link {
+    color: var(--primary-color);
+}
+
+a:visited {
+    color: var(--primary-color-600);
+}
+
+a:hover {
+    color: var(--secondary-color-700);
+}
+
+a:active {
+    color: var(--primary-color-800);
+}
+
+.bg-color-c {
+    background-color: var(--color-c);
+}
+
+.brd-color-a-400 {
+    border-color: var(--color-a-400);
+}

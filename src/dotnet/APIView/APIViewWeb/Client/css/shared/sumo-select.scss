@@ -1,0 +1,7 @@
+.SumoSelect .select-all {
+    height: 40px;
+}
+
+.SumoSelect .select-all.partial > span i, .SumoSelect .select-all.selected > span i, .SumoSelect > .optWrapper.multiple > .options li.opt.selected span i {
+    background-color: var(--primary-color);
+}

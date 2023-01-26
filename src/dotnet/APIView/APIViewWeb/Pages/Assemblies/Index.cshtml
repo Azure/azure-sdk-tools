@@ -9,35 +9,38 @@
     ViewData["Title"] = "Reviews";
     TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
 }
-<nav class="navbar-light shadow-sm bg-light sticky-top">
+<nav class="navbar shadow-sm sticky-top bg-color-c">
     <div class="container-fluid">
         <div class="row mx-5">
             <div class="col-md-10 px-0 d-sm-flex flex-row justify-content-sm-start">
-                <div class="input-group py-2 mr-2" id="reviews-table-search-container">
+                <div class="input-group me-2" id="reviews-table-search-container">
                     <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search.."/>
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" id="reviews-search-button" aria-labelledby="reviews-table-search-box" type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
-                    </div>
+                    <button class="btn btn-outline-secondary" id="reviews-search-button" aria-labelledby="reviews-table-search-box" type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
                 </div>
 
+                <div class="me-2">
+                    <select multiple class="mr-2" id="language-filter-select" aria-label="Language Filter">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Languages" />
+                    </select>
                 </div>
-                <select multiple class="mr-2" id="language-filter-select" aria-label="Language Filter">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Languages" />
-                </select>
-                <div class="input-group py-2 mr-2">
+                <div class=" me-2">
                     <select multiple id="state-filter-select" aria-label="State Filter">
                         <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
                     </select>
                 </div>
-                <select multiple class="mr-2" id="status-filter-select" aria-label="Status Filter">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
-                </select>
-                <select multiple class="mr-2" id="type-filter-select" aria-label="Type Filter">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
-                </select>
+                <div class="me-2">
+                    <select multiple class="mr-2" id="status-filter-select" aria-label="Status Filter">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
+                    </select>
+                </div>
+                <div class="me-2">
+                    <select multiple class="mr-2" id="type-filter-select" aria-label="Type Filter">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
+                    </select>
+                </div>
 
-            </div>
-            <div class="col-md-2 px-0 py-2 d-sm-flex flex-row justify-content-sm-end">
+        </div>
+            <div class="col-md-2 px-0 d-sm-flex flex-row justify-content-sm-end">
                 <button type="button" class="btn btn-outline-primary btn-sm" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset</button>
             </div>
         </div>

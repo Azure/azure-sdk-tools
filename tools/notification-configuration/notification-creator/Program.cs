@@ -47,7 +47,7 @@ public static class Program
         });
         var logger = loggerFactory.CreateLogger(nameof(Program));
         logger.LogInformation(
-            "Executing Main with following arguments: "
+            "Executing Azure.Sdk.Tools.NotificationConfiguration.Program.Main with following arguments: "
             + "organization: '{organization}' "
             + "project: '{project}' "
             + "pathPrefix: '{pathPrefix}' "

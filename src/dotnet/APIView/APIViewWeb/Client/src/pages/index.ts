@@ -101,6 +101,17 @@ $(() => {
     });
   }
 
+  // Functions to Control left OffCanvas Menu
+  function openLeftOffCanvasNav() {
+    document.getElementById("left-offcanvas-menu")!.style.width = "300px";
+    document.getElementById("main")!.style.marginLeft = "300px";
+  }
+
+  function closeLeftOffCanvasNav() {
+    document.getElementById("left-offcanvas-menu")!.style.width = "0";
+    document.getElementById("main")!.style.marginLeft= "0";
+  }
+
   // Fetch content of dropdown on page load
   $(document).ready(function() {
     updateFilterDropDown(languageFilter, "languages"); // Pulls languages data from DB
@@ -151,5 +162,14 @@ $(() => {
       }
     }
     prevLanguageValue = val;
-   });
+  });
+
+  // Open / Close left Offcanvas Menu
+  $("#left-nav-offcanvas-open").on('click', function () {
+    openLeftOffCanvasNav();
+  });
+
+  $("#left-nav-offcanvas-close").on('click', function () {
+    closeLeftOffCanvasNav();
+  });
 });

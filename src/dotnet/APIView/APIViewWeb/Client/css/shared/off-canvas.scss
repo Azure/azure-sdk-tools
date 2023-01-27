@@ -1,0 +1,24 @@
+.left-offcanvas {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: var(--base-fg-color);
+    color: var(--base-text-color);
+    overflow-x: hidden;
+    transition: 0.5s;
+}
+
+.left-offcanvas .closebtn {
+    position: absolute;
+    top: 60px;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+}
+
+.left-offcanvas-menu-content {
+    padding: 59px 10px 10px 10px;
+}

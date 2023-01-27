@@ -34,3 +34,9 @@
     box-shadow: var(--box-shadow-sm);
     background-color: var(--base-fg-color);
 }
+
+#reviews-table-search-container {
+    min-width: 100px;
+    max-width: 90vw;
+    width: 40vw;
+}

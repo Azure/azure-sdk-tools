@@ -8,7 +8,7 @@
     border-color: var(--link-color);
 }
 
-.btn-primary:hover {
+.btn-primary:hover, .btn-primary:active {
     color: var(--base-text-color);
     background-color: var(--link-active);
     border-color: var(--link-active);
@@ -19,7 +19,7 @@
     border-color: var(--link-color);
 }
 
-.btn-outline-primary:hover, .btn-outline-primary:hover {
+.btn-outline-primary:hover, .btn-outline-primary:active {
     background-color: var(--link-active);
     border-color: var(--link-active);
 }
@@ -54,4 +54,8 @@
 
 .border {
     border: 1px solid var(--border-color);
+}
+
+.border-top {
+    border-top: 1px solid var(--border-color);
 }

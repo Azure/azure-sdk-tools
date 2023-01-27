@@ -41,13 +41,17 @@ a:visited {
     }
 
     border-bottom: 1px solid var(--border-color);
+    z-index: 2;
 }
 
 .footer {
-    position: absolute;
     bottom: 0;
     width: 100%;
     white-space: nowrap;
     height: 60px;
     line-height: 60px;
+}
+
+main {
+    transition: margin-left .5s;
 }

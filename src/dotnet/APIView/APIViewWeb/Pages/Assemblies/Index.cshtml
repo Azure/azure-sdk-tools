@@ -12,40 +12,50 @@
 <nav class="navbar shadow-sm sticky-top nav-cst-theme">
     <div class="container-fluid">
         <div class="row mx-5">
-            <div class="col-md-10 px-0 d-sm-flex flex-row justify-content-sm-start">
-                <div class="input-group me-2" id="reviews-table-search-container">
-                    <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search.."/>
-                    <button class="btn btn-outline-secondary" id="reviews-search-button" aria-labelledby="reviews-table-search-box" type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <div class="col-md-12 px-0 d-sm-flex flex-row justify-content-sm-start">
+                <button type="button" class="btn btn-outline-primary btn-sm me-2" id="left-nav-offcanvas-open"><i class="fa-solid fa-arrow-left-long"></i>&nbsp;&nbsp;Options</button>
+                <div class="input-group" id="reviews-table-search-container">
+                    <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search.." />
+                    <button class="btn btn-outline-primary" id="reviews-search-button" aria-labelledby="reviews-table-search-box" type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
                 </div>
-
-                <div class="me-2">
-                    <select multiple class="mr-2" id="language-filter-select" aria-label="Language Filter">
-                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Languages" />
-                    </select>
-                </div>
-                <div class=" me-2">
-                    <select multiple id="state-filter-select" aria-label="State Filter">
-                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
-                    </select>
-                </div>
-                <div class="me-2">
-                    <select multiple class="mr-2" id="status-filter-select" aria-label="Status Filter">
-                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
-                    </select>
-                </div>
-                <div class="me-2">
-                    <select multiple class="mr-2" id="type-filter-select" aria-label="Type Filter">
-                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
-                    </select>
-                </div>
-
-        </div>
-            <div class="col-md-2 px-0 d-sm-flex flex-row justify-content-sm-end">
-                <button type="button" class="btn btn-outline-primary btn-sm" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset</button>
             </div>
         </div>
     </div>
 </nav>
+
+<div id="left-offcanvas-menu" class="left-offcanvas">
+    <div class="left-offcanvas-menu-content">
+        <a id="left-nav-offcanvas-close" class="closebtn">&times;</a>
+        <h1 class="display-6">Filters</h1>
+        <hr class="border">
+        <div class="my-1">
+            <p>Language</p>
+            <select multiple class="mr-2" id="language-filter-select" aria-label="Language Filter">
+                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Languages" />
+            </select>
+        </div>
+        <div class="my-2">
+            <p>State</p>
+            <select multiple id="state-filter-select" aria-label="State Filter">
+                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
+            </select>
+        </div>
+        <div class="my-2">
+                <p>Filter</p>
+            <select multiple class="mr-2" id="status-filter-select" aria-label="Status Filter">
+                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
+            </select>
+        </div>
+        <div class="my-2">
+            <p>Type</p>
+            <select multiple class="mr-2" id="type-filter-select" aria-label="Type Filter">
+                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
+            </select>
+        </div>
+
+        <button type="button" class="btn btn-outline-primary btn-sm" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset</button>
+    </div>
+</div>
 
 <div class="container-fluid">
     <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">

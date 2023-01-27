@@ -3,12 +3,14 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using System.Text.Json;
+using Octokit.Internal;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
-    internal class PullRequestProcessing
+    public class PullRequestProcessing
     {
-        internal static async Task ProcessPullRequestEvent(GitHubEventClient gitHubEventClient, PullRequestEventGitHubPayload prEventPayload)
+        public static async Task ProcessPullRequestEvent(GitHubEventClient gitHubEventClient, PullRequestEventGitHubPayload prEventPayload)
         {
             await PullRequestTriage(gitHubEventClient, prEventPayload);
             ResetPullRequestActivity(gitHubEventClient, prEventPayload);
@@ -30,12 +32,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///         Add "Community Contribution" label
         ///         Create issue comment: "Thank you for your contribution @{issueAuthor} ! We will review the pull request and get back to you soon."
         /// </summary>
-        /// <param name="gitHubClient">Authenticated GitHubClient</param>
+        /// <param name="gitHubEventClient">Authenticated GitHubClient</param>
         /// <param name="prEventPayload">Pull Request event payload</param>
-        /// <param name="issueUpdate">The issue update object</param>
         /// <returns></returns>
-        internal static async Task PullRequestTriage(GitHubEventClient gitHubEventClient,
-                                                     PullRequestEventGitHubPayload prEventPayload)
+        public static async Task PullRequestTriage(GitHubEventClient gitHubEventClient,
+                                                   PullRequestEventGitHubPayload prEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.PullRequestTriage))
             {
@@ -54,9 +55,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             }
                         }
 
-                        bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
                         // The sender will only have Write or Admin permssion if they are a collaborator
-                        if (hasAdminOrWritePermission)
+                        bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
+                        // If the user doesn't have Write or Admin permissions
+                        if (!hasAdminOrWritePermission)
                         {
                             var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
                             issueUpdate.AddLabel(LabelConstants.CustomerReported);
@@ -73,12 +75,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Reset Pull Request Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-pull-request-activity
         /// See Common_ResetPullRequestActivity function for details
         /// </summary>
-        /// <param name="gitHubClient">Authenticated GitHubClient</param>
+        /// <param name="gitHubEventClient">Authenticated GitHubClient</param>
         /// <param name="prEventPayload">Pull Request event payload</param>
-        /// <param name="issueUpdate">The issue update object</param>
         /// <returns></returns>
-        internal static void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
-                                                      PullRequestEventGitHubPayload prEventPayload)
+        public static void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
+                                                    PullRequestEventGitHubPayload prEventPayload)
         {
             Common_ResetPullRequestActivity(gitHubEventClient, 
                                             prEventPayload.Action, 
@@ -101,7 +102,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     User modifying the pull request is not a bot
         /// Conditions for pull request triggers, except for merge
         ///     Pull request is open.
-        ///     Action is reopen, synchronize or review requested
+        ///     Action is reopen, synchronize (changed pushed) or review requested
         /// Conditions for pull request merged
         ///     Pull request is closed
         ///     Pull request payload, github.event.pull_request.merged, will be true
@@ -109,12 +110,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     Remove "no-recent-activity" label
         ///     Reopen pull request
         /// </summary>
-        /// <param name="gitHubClient">Authenticated GitHubClient</param>
+        /// <param name="gitHubEventClient">Authenticated GitHubClient</param>
         /// <param name="action">The action being performed, from the payload object</param>
         /// <param name="pullRequest">Octokit.PullRequest object from the respective payload</param>
         /// <param name="sender">Octokit.User object from the respective payload. This will be the Sender that initiated the event.</param>
-        /// <param name="comment">The comment, if triggered by comment, null otherwise</param>
-        /// <param name="issueUpdate">The issue update object</param>
         public static void Common_ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
                                                            string action,
                                                            PullRequest pullRequest,
@@ -173,11 +172,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     Reset all approvals
         ///     Create issue comment: "Hi @{issueAuthor}.  We've noticed that new changes have been pushed to this pull request.  Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates."
         /// </summary>
-        /// <param name="gitHubClient"></param>
+        /// <param name="gitHubEventClient"></param>
         /// <param name="prEventPayload"></param>
         /// <returns></returns>
-        internal static async Task ResetApprovalsForUntrustedChanges(GitHubEventClient gitHubEventClient,
-                                                                     PullRequestEventGitHubPayload prEventPayload)
+        public static async Task ResetApprovalsForUntrustedChanges(GitHubEventClient gitHubEventClient,
+                                                                   PullRequestEventGitHubPayload prEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetApprovalsForUntrustedChanges))
             {
@@ -211,6 +210,33 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     }
                 }
             }
+        }
+        /// <summary>
+        /// The pull_request, because of the auto_merge processing, requires more than just deserialization of the
+        /// the rawJson, it also needs to set whether or not the auto_merge has been enabled. Because this is also
+        /// by the static tests it needed to be in a common function.
+        /// </summary>
+        /// <param name="rawJson">The rawJson to deserialize</param>
+        /// <param name="serializer">The serializer used to deserialize.</param>
+        /// <returns></returns>
+        public static PullRequestEventGitHubPayload DeserializePullRequest(string rawJson, SimpleJsonSerializer serializer)
+        {
+            PullRequestEventGitHubPayload prEventPayload = serializer.Deserialize<PullRequestEventGitHubPayload>(rawJson);
+            using var doc = JsonDocument.Parse(rawJson);
+            // The actions event payload for a pull_request has a class on the pull request that
+            // the OctoKit.PullRequest class does not have. This will be null if the user the user
+            // does not have Auto-Merge enabled through the pull request UI and will be non-null if
+            // the user enabled it through the UI. An AutoMergeEnabled was added to the root of the
+            // PullRequestEventGitHubPayload class, which defaults to false. The actual information
+            // in the auto_merge is not necessary for any rules processing other than knowing whether
+            // or not it's been set.
+            var autoMergeProp = doc.RootElement.GetProperty("pull_request").GetProperty("auto_merge");
+            if (JsonValueKind.Object == autoMergeProp.ValueKind)
+            {
+                prEventPayload.AutoMergeEnabled = true;
+            }
+
+            return prEventPayload;
         }
     }
 }

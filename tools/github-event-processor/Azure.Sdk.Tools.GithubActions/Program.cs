@@ -59,21 +59,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                     }
                 case EventConstants.pull_request_target:
                     {
-                        PullRequestEventGitHubPayload prEventPayload = serializer.Deserialize<PullRequestEventGitHubPayload>(rawJson);
-                        using var doc = JsonDocument.Parse(rawJson);
-                        // The actions event payload for a pull_request has a class on the pull request that
-                        // the OctoKit.PullRequest class does not have. This will be null if the user the user
-                        // does not have Auto-Merge enabled through the pull request UI and will be non-null if
-                        // the user enabled it through the UI. An AutoMergeEnabled was added to the root of the
-                        // PullRequestEventGitHubPayload class, which defaults to false. The actual information
-                        // in the auto_merge is not necessary for any rules processing other than knowing whether
-                        // or not it's been set.
-                        var autoMergeProp = doc.RootElement.GetProperty("pull_request").GetProperty("auto_merge");
-                        if (JsonValueKind.Object == autoMergeProp.ValueKind)
-                        {
-                            prEventPayload.AutoMergeEnabled = true;
-                        }
-
+                        // The pull_request, because of the auto_merge processing, requires more than just deserialization of the
+                        // the rawJson.
+                        PullRequestEventGitHubPayload prEventPayload = PullRequestProcessing.DeserializePullRequest(rawJson, serializer);
                         await PullRequestProcessing.ProcessPullRequestEvent(gitHubEventClient, prEventPayload);
                         break;
                     }

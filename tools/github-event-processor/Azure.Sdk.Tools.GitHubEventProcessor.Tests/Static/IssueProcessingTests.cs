@@ -5,41 +5,29 @@ using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using NUnit.Framework;
-using Octokit.Internal;
-using Octokit;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
 {
     [TestFixture]
     [Parallelizable(ParallelScope.Children)]
-    public class PullRequestReviewProcessingTests : ProcessingTestBase
+    public class IssueProcessingTests : ProcessingTestBase
     {
-        /// <summary>
-        /// Test ResetPullRequestActivity rule enabled/disabled, with a payload that would cause updates when enabled.
-        /// Verify all the expected updates when enabled and no updates when disabled.
-        /// This rule has a pull_request_review trigger
-        /// </summary>
-        /// <param name="rule">String, RulesConstants for the rule being tested</param>
-        /// <param name="payloadFile">JSon payload file for the event being tested</param>
-        /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
-        [Category("static")]
-        [TestCase(RulesConstants.ResetPullRequestActivity, "Tests.JsonEventPayloads/ResetPullRequestActivity_pr_reviewed.json", RuleState.On)]
-        [TestCase(RulesConstants.ResetPullRequestActivity, "Tests.JsonEventPayloads/ResetPullRequestActivity_pr_reviewed.json", RuleState.Off)]
-        public async Task TestResetPullRequestActivity(string rule, string payloadFile, RuleState ruleState)
+        [TestCase(RulesConstants.ResetPullRequestActivity, "Tests.JsonEventPayloads/ResetPullRequestActivity_pr_closed_merged.json", RuleState.On)]
+        public async Task TestManualIssueTriage(string rule, string payloadFile, RuleState ruleState)
         {
             var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
             mockGitHubEventClient.RulesConfiguration.Rules[rule] = ruleState;
             var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
-            var prReviewEventPayload = SimpleJsonSerializer.Deserialize<PullRequestReviewEventPayload>(rawJson);
-            PullRequestReviewProcessing.ResetPullRequestActivity(mockGitHubEventClient, prReviewEventPayload);
+            var prEventPayload = SimpleJsonSerializer.Deserialize<PullRequestEventGitHubPayload>(rawJson);
+            PullRequestProcessing.ResetPullRequestActivity(mockGitHubEventClient, prEventPayload);
 
             // Verify the RuleCheck 
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
-            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(prReviewEventPayload.Repository.Id, prReviewEventPayload.PullRequest.Number);
+            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
             if (RuleState.On == ruleState)
             {
                 // There should be one update, an IssueUpdate with the NoRecentActivity label removed

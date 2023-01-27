@@ -173,6 +173,6 @@ extension Array<ExtensionModel> {
                 resolved[ext.definitionId] = ext
             }
         }
-        return Array(resolved.values)
+        return Array(resolved.values).sorted(by: {$0.definitionId < $1.definitionId })
     }
 }

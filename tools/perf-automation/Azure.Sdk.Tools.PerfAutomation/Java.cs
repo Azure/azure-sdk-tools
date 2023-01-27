@@ -124,12 +124,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             var runtimePackageVersions = GetRuntimePackageVersions(dependencyListResult.StandardOutput);
 
-            // '-XX:+UnlockCommercialFeatures' isn't required and fails when used in a version higher than Java 8, need to inspect the Java version to determine if it should be added.
             var profilingConfig = "";
             if (profile)
             {
                 var profileOutputPath = Path.GetFullPath(Path.Combine(ProfileDirectory, $"{testName}_{profileCount++}.jfr"));
-                profilingConfig = $"-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";
+                profilingConfig = $"-XX:+FlightRecorder -XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";
+
+                // If Java 8 is the version of Java being used add '-XX:+UnlockCommercialFeatures' as that is required to run Java Flight Recording in Java 8.
+                // Don't add '-XX:+UnlockCommercialFeatures' if it is any other version as this causes the JVM to crash on an unrecognized VM options.
+                if (int.TryParse(languageVersion, out var res) && res == 8) 
+                {
+                    profilingConfig = "-XX:+UnlockCommercialFeatures " + profilingConfig;
+                }
 
                 var jfrConfigurationFile = Path.Combine(WorkingDirectory, "eng", "PerfAutomation.jfc");
                 if (File.Exists(jfrConfigurationFile))

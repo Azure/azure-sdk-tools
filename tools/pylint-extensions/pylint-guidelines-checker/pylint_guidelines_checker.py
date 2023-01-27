@@ -324,15 +324,15 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
     priority = -1
     msgs = {
         "C4723": (
-            "Client method is missing the distributed tracing decorator - `distributed_trace`.",
-            " Methods that make network calls should have distributed tracing. See details:",
+            "Client method is missing the distributed tracing decorator - `distributed_trace`."
+            " Methods that make network calls should have distributed tracing. See details:"
             " https://azure.github.io/azure-sdk/python_implementation.html#distributed-tracing",
             "client-method-missing-tracing-decorator",
             "Client method should support distributed tracing.",
         ),
         "C4724": (
-            "Client async method is missing the distributed tracing decorator - `distributed_trace_async`.",
-            " Methods that make network calls should have distributed tracing.",
+            "Client async method is missing the distributed tracing decorator - `distributed_trace_async`."
+            " Methods that make network calls should have distributed tracing."
             " See details: https://azure.github.io/azure-sdk/python_implementation.html#distributed-tracing",
             "client-method-missing-tracing-decorator-async",
             "Client method should support distributed tracing.",

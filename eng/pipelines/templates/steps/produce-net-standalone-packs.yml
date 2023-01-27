@@ -8,7 +8,7 @@ parameters:
     type: object
     default: []
 
-# A `BuildMatrix` is merely a list of possible targeted platforms. .NET 6 can build for any target from any other target.
+# A `BuildMatrix` is merely a list of possible targeted platforms. .NET 6+ can build for any target from any other target.
   # - rid: win-x64
   #   framework: net6.0
   # - rid: linux-x64
@@ -17,48 +17,53 @@ parameters:
   #   framework: net6.0
 
 steps:
-  - pwsh: |
-      New-Item -ItemType Directory -Path "$(Build.ArtifactStagingDirectory)/binaries" -Force
-      Write-Host "Created directory ""$(Build.ArtifactStagingDirectory)/binaries"""
-    displayName: Create .NET standalone packs destination directory
-
   - ${{ each target in parameters.BuildMatrix }}:
-    - pwsh: |
-        $destinationPathSegment = "$(Build.ArtifactStagingDirectory)/binaries/$((Split-Path -Leaf "${{ parameters.TargetDirectory }}"))-standalone-${{ target.rid }}"
-        $sourcePath = "${{ parameters.TargetDirectory }}/${{ target.rid }}"
+    # ensure that we only build the mac standalone executables on a mac agent, everything else on not mac
+    - ${{ if startsWith(target.rid, 'osx') }}:
+      - task: Powershell@2
+        inputs:
+          workingDirectory: "$(Build.SourcesDirectory)"
+          filePath: $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/assemble-dotnet-standalone-exe.ps1
+          arguments: >
+            -Rid "${{ target.rid }}"
+            -Target "${{ parameters.TargetDirectory }}"
+            -ArtifactStagingDirectory "$(Build.ArtifactStagingDirectory)"
+            -Framework "${{ target.framework }}"
+          pwsh: true
+        displayName: 'Produce Executable for ${{ target.rid }}'
+        condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          DOTNET_MULTILEVEL_LOOKUP: 0
 
-        Write-Host "dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained -p:PublishSingleFile=true --output ${{ parameters.TargetDirectory }}/${{ target.rid }}"
-        dotnet publish -f ${{ target.framework }} -c Release -r ${{ target.rid }} --self-contained -p:PublishSingleFile=true --output ${{ parameters.TargetDirectory }}/${{ target.rid }}
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          ArtifactName: "standalone-${{ target.rid }}"
+          ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
+          customCondition: eq(variables['Agent.OS'], 'Darwin')
 
-        if ($LASTEXITCODE -ne 0) {
-          Write-Error "dotnet publish failed with exit code $LASTEXITCODE."
-          exit $LASTEXITCODE
-        }
-
-        # produce a tar.gz only for linux
-        if ("${{ target.rid }}".Contains("linux")){
-          # tar on powershell in linux has some weirdness. For instance, this is a proper call to tar when we don't want to include the relative path to the target folder
-          # tar -cvzf -C tools/test-proxy/linux-arm64 blah.tar.gz tools/test-proxy/linux-arm64 
-          # however when we use this, we actually get an error. To avoid this, we simply CD into the target directory before tar-ing it.
-          Push-Location "$sourcePath"
-          # The sum contents within this folder will be: `appSettings.json`, `test-proxy.pdb`, `test-proxy` (the binary), and a certificate.
-          # This statement grabs the first extensionless file within the produced binary folder, which will always be the binary we need to set the executable bit on.
-          $binaryFile = (Get-ChildItem -Path . | Where-Object { !([System.IO.Path]::HasExtension($_)) } | Select-Object -First 1).ToString().Replace("`\","/")
-          bash -c "chmod +x $binaryFile"
-          tar -cvzf "$($destinationPathSegment).tar.gz" .
-          Pop-Location
-        }
-        else {
-          Compress-Archive -Path "$($sourcePath)/*" -DestinationPath "$($destinationPathSegment).zip"
-        }
-
-        # clean up the uncompressed artifact directory
-        Remove-Item -Recurse -Force -Path $sourcePath
-      displayName: 'Produce Executable for ${{ target.rid }}'
-      workingDirectory: "${{ parameters.TargetDirectory }}"
-      env:
-        DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-        DOTNET_CLI_TELEMETRY_OPTOUT: 1
-        DOTNET_MULTILEVEL_LOOKUP: 0
-
+    - ${{ if not(startswith(target.rid, 'osx')) }}:
+      - task: Powershell@2
+        inputs:
+          workingDirectory: "$(Build.SourcesDirectory)"
+          filePath: $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/assemble-dotnet-standalone-exe.ps1
+          arguments: >
+            -Rid "${{ target.rid }}"
+            -Target "${{ parameters.TargetDirectory }}"
+            -ArtifactStagingDirectory "$(Build.ArtifactStagingDirectory)"
+            -Framework "${{ target.framework }}"
+          pwsh: true
+        displayName: 'Produce Executable for ${{ target.rid }}'
+        condition: and(succeeded(), not(eq(variables['Agent.OS'], 'Darwin')))
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          DOTNET_MULTILEVEL_LOOKUP: 0
+      
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          ArtifactName: "standalone-${{ target.rid }}"
+          ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
+          CustomCondition: not(eq(variables['Agent.OS'], 'Darwin'))
 

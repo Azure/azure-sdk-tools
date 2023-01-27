@@ -5,3 +5,15 @@
     @include btn-circle;
     @include btn-circle-xl;
 }
+
+#samples-main-container {
+    @include fixed-page-heights;
+    padding-right: 0px;
+    padding-left: 0px;
+}
+
+.samples-center {
+    overflow: auto;
+}
+
+

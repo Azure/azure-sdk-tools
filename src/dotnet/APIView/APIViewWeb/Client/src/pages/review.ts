@@ -1,5 +1,6 @@
 import Split from "split.js";
 import { updatePageSettings } from "../shared/helpers";
+import { rightOffCanvasNavToggle } from "../shared/off-canvas";
 
 $(() => {  
   const SEL_DOC_CLASS = ".documentation";
@@ -219,7 +220,7 @@ $(() => {
             if (sectionKeyB)
               uri = uri + '&sectionKeyB=' + sectionKeyB;
 
-            const loadingMarkUp = "<td class='spinner-border spinner-border-sm ml-4' role='status'><span class='sr-only'>Loading...</span></td>";
+            const loadingMarkUp = "<td class='spinner-border spinner-border-sm ms-4' role='status'><span class='sr-only'>Loading...</span></td>";
             const failedToLoadMarkUp = "<div class='alert alert-warning alert-dismissible fade show' role='alert'>Failed to load section. Refresh page and try again.</div>";
             if (sectionContent.children(".spinner-border").length == 0) {
               sectionContent.children("td").after(loadingMarkUp);
@@ -277,6 +278,12 @@ $(() => {
       }
     }
   }
+
+  // Enable SumoSelect
+  $(document).ready(function () {
+    (<any>$("#revision-select")).SumoSelect({ search: true, searchText: 'Search Revisions...' });
+    (<any>$("#diff-select")).SumoSelect({ search: true, searchText: 'Search Revisons for Diff...' });
+  });
 
   /* ADD FUNCTIONS TO LEFT NAVIGATION
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -411,7 +418,7 @@ $(() => {
 
   /* DROPDOWN FILTER FOR REVIEW, REVISIONS AND DIFF (UPDATES REVIEW PAGE ON CHANGE)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  $('#revisions-bootstraps-select, #review-bootstraps-select, #diff-bootstraps-select').each(function(index, value) {
+  $('#revision-select, #diff-select').each(function(index, value) {
     $(this).on('change', function() {
       var url = $(this).find(":selected").val();
       if (url)
@@ -463,4 +470,10 @@ $(() => {
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   (<any>$('[data-toggle="tooltip"]')).tooltip();
   (<any>$('[data-toggle="popover"]')).popover();
+
+
+  // Open / Close right Offcanvas Menu
+  $("#right-nav-offcanvas-toggle").on('click', function () {
+    rightOffCanvasNavToggle("review-main-container");
+  });
 });

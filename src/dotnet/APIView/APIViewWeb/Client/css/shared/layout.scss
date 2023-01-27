@@ -16,21 +16,32 @@ a:link {
     text-decoration: none;
 }
 
-a:hover, a:active {
+a:active {
     color: var(--link-active);
+}
+
+a:hover {
+    color: var(--link-active);
+    text-decoration: underline;
 }
 
 a:visited {
     color: var(--link-visited);
 }
 
-.nav-cst-theme {
-    background-color: var(--navbar-bg);
-    color: var(--navbar-text);
+.sub-header-content {
+    z-index: 2;
+    position: relative;
+    background-color: var(--base-bg-color);
 }
 
 .main-nav-cst-theme {
-    @extend .nav-cst-theme;
+    background-color: var(--navbar-bg);
+    color: var(--navbar-text);
+
+    a:hover {
+        text-decoration: none;
+    }
 
     a:link, a:visited {
         color: var(--navbar-text);
@@ -45,13 +56,37 @@ a:visited {
 }
 
 .footer {
+    position: fixed;
     bottom: 0;
     width: 100%;
     white-space: nowrap;
-    height: 60px;
-    line-height: 60px;
+    height: 40px;
+    line-height: 40px;
+    z-index: 3;
+    background: var(--base-bg-color);
 }
 
-main {
-    transition: margin-left .5s;
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    background-color: var(--link-color);
+}
+
+.nav-link:hover, .nav-link:focus {
+    text-decoration: none;
+    color: var(--link-active);
+}
+
+.rounded-1 {
+    border-radius: 3px !important;
+}
+
+.btn-xs {
+    height: 25px !important;
+    font-size: 15px;
+    vertical-align: middle;
+    padding: 0.01rem;
+}
+
+.fixed-page-height {
+    height: 100vh;
+    overflow: hidden;
 }

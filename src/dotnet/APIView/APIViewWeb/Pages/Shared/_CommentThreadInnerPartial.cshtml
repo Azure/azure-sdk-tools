@@ -2,31 +2,33 @@
 @model CommentModel
 
 <div id="@Model.CommentId" class="review-comment" data-comment-id="@Model.CommentId">
-    <div class="media">
-        <a username="@Model.Username" title="Github Profile of Commenter">
-            <img username="@Model.Username" size="28" class="comment-icon align-self-start mr-3" height="28" width="28" aria-label="User Avatar of Commenter"/>
-        </a>
-        <div class="media-body comment-contents">
+    <div class="d-flex">
+        <div class="flex-shrink-0">
+            <a username="@Model.Username" title="Github Profile of Commenter">
+                <img username="@Model.Username" size="28" class="comment-icon align-self-start me-3" height="28" width="28" aria-label="User Avatar of Commenter" />
+            </a>
+        </div>
+        <div class="flex-grow-1 comment-contents">
             <span>
-                <a username="@Model.Username" class="font-weight-bolder text-dark mt-0">@Model.Username</a>
+                <a username="@Model.Username" class="fw-bold mt-0">@Model.Username</a>
                 <a date="@Model.TimeStamp.ToLocalTime()" href="#@Model.CommentId" class="small"></a>
             </span>
-            <span class="float-right mr-1">
-                <form class="float-left mr-1" data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
+            <span class="float-end me-1">
+                <form class="float-start me-1" data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
                     <input type="hidden" name="commentId" value="@Model.CommentId" />
-                    <button type="submit" class="btn btn-light btn-xs btn-upvote" title="@string.Join(", ", Model.Upvotes)" active-if="@Model.Upvotes.Contains(User.GetGitHubLogin())">
+                    <button type="submit" class="btn btn-xs btn-upvote border" title="@string.Join(", ", Model.Upvotes)" active-if="@Model.Upvotes.Contains(User.GetGitHubLogin())">
                         @{
-                                <span active-if="@Model.Upvotes.Any()">👍</span>
+                             <span active-if="@Model.Upvotes.Any()">👍</span>
                             if (Model.Upvotes.Any())
                             {
-                                    <small class="mr-1">@Model.Upvotes.Count</small>
+                                <small class="me-1">@Model.Upvotes.Count</small>
                             }
                         }
                     </button>
                 </form>
 
-                <div class="dropup float-right">
-                    <a class="btn btn-xs btn-light p-1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Dropdown Menu Button">
+                <div class="dropup float-end">
+                    <a class="btn btn-xs p-1 border" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Dropdown Menu Button">
                         <i class="fa-solid fa-ellipsis"></i>
                     </a>
 

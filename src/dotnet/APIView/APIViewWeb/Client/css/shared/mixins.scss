@@ -18,7 +18,16 @@
     width: 100px;
     height: 100px;
     line-height: 1.2rem;
-    font-weight: bold;
     font-size: 1.0rem;
-    box-shadow: var(--box-shadow-lg);
+    box-shadow: var(--box-shadow-sm);
+}
+
+@mixin fixed-page-heights {
+    height: calc(100vh - 190px);
+    overflow-y: auto;
+}
+
+@mixin main-content-container {
+    transition: margin-right .5s;
+    width: auto;
 }

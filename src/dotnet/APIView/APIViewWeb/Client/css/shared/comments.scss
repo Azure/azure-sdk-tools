@@ -1,0 +1,148 @@
+.comment-thread-anchor {
+    visibility: hidden;
+}
+
+.comment-thread-contents.new-thread-comment {
+    background-color: #FFF;
+    border: 0;
+    margin: -8px -16px;
+}
+
+.comment-row {
+    border: 1px solid var(--border-color);
+    border-spacing: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--base-fg-color);
+}
+
+.comment-cancel-button {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+}
+
+.comment-cell {
+    padding: 10px;
+    vertical-align: top;
+}
+
+.comment-contents {
+    margin-bottom: 3px;
+    overflow-wrap: anywhere;
+}
+
+.comment-contents .fw-bold {
+    color: var(--base-text-color);
+}
+
+.comment-header {
+    margin-bottom: 0px;
+    line-height: 0.8 !important;
+    display: inline;
+}
+
+.comment-holder {
+    max-width: 780px;
+    position: sticky;
+    left: 10px;
+    z-index: 100; // for user suggestion box, position sticky creates new stacking order, so z-index has to be set here too
+}
+
+.comment-icon {
+    border-radius: 3px;
+    display: inline-block;
+    line-height: 1;
+    overflow: hidden;
+    vertical-align: middle;
+}
+
+.comment-submit-button {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    margin: 0 4px 0;
+}
+
+.comments-resolved {
+    display: none;
+}
+
+.new-comment-content {
+    position: relative;
+    margin: 0 4px 8px;
+}
+
+.new-thread-comment {
+    border-radius: 3px;
+    line-height: 1.5;
+    border-collapse: separate;
+    tab-size: 8;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--base-bg-color);
+}
+
+.new-thread-comment-text {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    background-color: var(--base-fg-color);
+    max-width: 758px;
+}
+
+.review-comment {
+    padding: 4px 16px;
+    position: relative;
+}
+
+.review-comment:first-child {
+    padding-top: 16px;
+}
+
+.review-comment p {
+    margin-bottom: 0;
+}
+
+.review-comment blockquote {
+    padding-left: 14px;
+    padding-right: 14px;
+    border-left-color: #E9E5E2;
+    border-left-style: solid;
+    border-left-width: 3.5px;
+    color: #6A737D;
+}
+
+.review-comment pre {
+    background-color: var(--base-bg-color);
+}
+
+.review-thread-reply {
+    background-color: var(--base-bg-color);
+    border-radius: 0 0 3px 3px;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px 16px;
+    display: table;
+    width: 100%;
+}
+
+.review-thread-reply-button {
+    cursor: text;
+    display: inline-block;
+    min-height: 28px;
+    padding: 3px 8px;
+    width: 100%;
+}
+
+.reply-cell {
+    display: table-cell;
+}
+
+.rounded-left-0 {
+    border-top-left-radius: 0px !important;
+    border-bottom-left-radius: 0px !important;
+}
+
+.rounded-1 {
+    border-radius: 3px !important;
+}
+
+form.comment {
+    padding: 12px;
+}

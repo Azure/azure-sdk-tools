@@ -1,24 +1,34 @@
-.left-offcanvas {
+.offcanvas-menu {
     height: 100%;
     width: 0;
     position: fixed;
     z-index: 1;
     top: 0;
-    left: 0;
-    background-color: var(--base-fg-color);
+    background-color: var(--base-bg-color);
     color: var(--base-text-color);
     overflow-x: hidden;
     transition: 0.5s;
 }
 
-.left-offcanvas .closebtn {
-    position: absolute;
-    top: 60px;
-    right: 25px;
-    font-size: 36px;
-    margin-left: 50px;
+.right-offcanvas {
+    @extend .offcanvas-menu;
+    right: 0;
 }
 
-.left-offcanvas-menu-content {
-    padding: 59px 10px 10px 10px;
+.offcanvas-menu-content {
+    .SumoSelect {
+        min-width: 150px;
+        width: auto;
+    }
+
+    height: 100%;
+    border-left: 1px solid var(--border-color) !important;
+}
+
+.move-main-content-container-left {
+    margin-right: 340px;
+}
+
+.show-offcanvas {
+    width: 340px;
 }

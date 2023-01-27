@@ -1,3 +1,5 @@
+import { rightOffCanvasNavToggle } from "../shared/off-canvas";
+
 $(() => {
   const defaultPageSize = 50;
   const reviewsFilterPartial = $( '#reviews-filter-partial' );
@@ -15,11 +17,6 @@ $(() => {
 
   // Enable tooltip
   (<any>$('[data-toggle="tooltip"]')).tooltip();
-
-  // Soma Select Options
-  var selectOptions = {
-    selectAll: true
-  };
 
   // Computes the uri string using the values of search, pagination and various filters
   // Invokes partial page update to list of reviews using ajax
@@ -97,28 +94,26 @@ $(() => {
       url: uri
     }).done(function(partialViewResult) {
       filter.html(partialViewResult);
-      (<any>filter).SumoSelect(selectOptions);
+      (<any>filter).SumoSelect({
+        selectAll: true,
+        captionFormat: '{0} languages Selected'
+      });
     });
-  }
-
-  // Functions to Control left OffCanvas Menu
-  function openLeftOffCanvasNav() {
-    document.getElementById("left-offcanvas-menu")!.style.width = "300px";
-    document.getElementById("main")!.style.marginLeft = "300px";
-  }
-
-  function closeLeftOffCanvasNav() {
-    document.getElementById("left-offcanvas-menu")!.style.width = "0";
-    document.getElementById("main")!.style.marginLeft= "0";
   }
 
   // Fetch content of dropdown on page load
   $(document).ready(function() {
     updateFilterDropDown(languageFilter, "languages"); // Pulls languages data from DB
-    (<any>stateFilter).SumoSelect(selectOptions);
-    (<any>statusFilter).SumoSelect(selectOptions);
-    (<any>typeFilter).SumoSelect(selectOptions);
+    (<any>stateFilter).SumoSelect({ selectAll: true });
+    (<any>statusFilter).SumoSelect({ selectAll: true });
+    (<any>typeFilter).SumoSelect({ selectAll: true });
     addPaginationEventHandlers();
+  });
+
+  $("#uploadModel").on("show.bs.modal", function () {
+    (<any>languageSelect).SumoSelect({
+      placeholder: 'Language'
+    });
   });
 
   // Update list of reviews when any dropdown is changed
@@ -140,7 +135,8 @@ $(() => {
   // Reset list of reviews as well as filters
   resetButton.on('click', function (e) {
     (<any>$('#language-filter-select')[0]).sumo.unSelectAll();
-    (<any>$('#state-filter-select')[0]).sumo.unSelectAll().selectItem('Open');
+    (<any>$('#state-filter-select')[0]).sumo.unSelectAll();
+    (<any>$('#state-filter-select')[0]).sumo.selectItem('Open');
     (<any>$('#status-filter-select')[0]).sumo.unSelectAll();
     (<any>$('#type-filter-select')[0]).sumo.unSelectAll();
     searchBox.val('');
@@ -148,28 +144,25 @@ $(() => {
   });
 
   var prevLanguageValue = languageSelect.val();
-  languageSelect.on('change', function (e) {
-    var val = $(this).val();
+  languageSelect.on('sumo:closed', function (e) {
+    var val = $(this).val() as string;
     if (val == "C++" || val == "C#") {
       val = val.replace("C++", "Cpp").replace("C#", "Csharp");
     }
-    var helpName = "#help-" + val;
-    $(helpName).click();
+    $("#uploadModel").find(".card-body > div").addClass("d-none");
+    var helpName = "#" + val.toLowerCase() + "-help";
+    $(helpName).removeClass("d-none");
     if (val == 'Cadl' || prevLanguageValue == 'Cadl') {
       const fileSelectors = $(".package-selector");
       for (var i = 0; i < fileSelectors.length; i++) {
-        $(fileSelectors[i]).toggleClass("hidden-row");
+        $(fileSelectors[i]).toggleClass("d-none");
       }
     }
     prevLanguageValue = val;
   });
 
-  // Open / Close left Offcanvas Menu
-  $("#left-nav-offcanvas-open").on('click', function () {
-    openLeftOffCanvasNav();
-  });
-
-  $("#left-nav-offcanvas-close").on('click', function () {
-    closeLeftOffCanvasNav();
+  // Open / Close right Offcanvas Menu
+  $("#right-nav-offcanvas-toggle").on('click', function () {
+    rightOffCanvasNavToggle("index-main-container");
   });
 });

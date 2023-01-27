@@ -22,28 +22,18 @@
     <!-- Soma Select -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.1.6/sumoselect.min.css">
     <link rel="stylesheet" href="~/main.css" asp-append-version="true">
-    @{
-        var modelType = ViewData.ModelMetadata.ModelType.Name;
-        if (modelType == "ReviewPageModel")
-        {
-            @functions {
-                public string getLanguage()
-                {
-                    return ViewData.Model.Review.GetLanguageCssSafeName();
-                }
-            }
-            var lang = getLanguage();
-            var hrefNew = "~/" + lang + ".css";
-            <link rel="stylesheet" href=@hrefNew asp-append-version="true"/>
-        }
-    }
     @RenderSection("Styles", required: false)
 </head>
 @{
     var userPreference = (TempData["UserPreference"] as UserPreferenceModel) ?? new UserPreferenceModel();
     var theme = userPreference.Theme;
+    var fixedPageHeightClass = String.Empty;
+    var pageName = ViewContext.RouteData.Values["page"]?.ToString();
+    if (pageName.Equals("/Assemblies/Review") || pageName.Equals("/Assemblies/Conversation") || pageName.Equals("/Assemblies/Revisions") || pageName.Equals("/Assemblies/Samples"))
+    {
+        fixedPageHeightClass = " fixed-page-height";    }
 }
-<body class="@theme">
+<body class="@theme@fixedPageHeightClass">
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm main-nav-cst-theme">
             <div class="container-fluid">
@@ -83,7 +73,7 @@
         </nav>
     </header>
 
-    <main role="main" id="main" class="pb-3">
+    <main role="main">
         @RenderBody()
     </main>
 

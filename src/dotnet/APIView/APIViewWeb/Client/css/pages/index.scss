@@ -40,3 +40,20 @@
     max-width: 90vw;
     width: 40vw;
 }
+
+#reviews-table-search-box {
+    border: 1px solid var(--primary-color);
+}
+
+#index-main-container {
+    @include main-content-container;
+}
+
+#index-offcanvas-menu-content {
+    padding: 130px 20px 10px 20px;
+}
+
+.nav-cst-theme {
+    background-color: var(--base-bg-color);
+    box-shadow: var(--box-shadow-sm);
+}

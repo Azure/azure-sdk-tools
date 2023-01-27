@@ -6,6 +6,8 @@
     @include btn-circle-xl;
 }
 
-#create-review-button {
-    color:  #000;
+#revisions-main-container {
+    @include fixed-page-heights;
+    padding-right: 0px;
+    padding-left: 0px;
 }

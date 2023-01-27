@@ -100,6 +100,19 @@ stages:
           - pwsh: Get-ChildItem -Recurse
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/ParseAzureSdkCpp
 
+          - task: ComponentGovernanceComponentDetection@0
+            displayName: Component Detection
+            inputs:
+              sourceScanPath: tools/apiview/parsers/cpp-api-parser
+            condition: succeededOrFailed()
+
+          - task: notice@0
+            displayName: Generate NOTICE.txt file
+            inputs:
+              # Output the file to the location so that it's published to release-artifacts
+              outputfile: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/ParseAzureSdkCpp/NOTICE.txt
+              outputformat: text
+
           - task: PublishPipelineArtifact@1
             inputs:
               artifactName: release-artifacts

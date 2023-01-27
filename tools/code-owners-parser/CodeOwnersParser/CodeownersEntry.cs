@@ -33,6 +33,16 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         public bool IsValid => !string.IsNullOrWhiteSpace(PathExpression);
 
+        public CodeownersEntry()
+        {
+        }
+
+        public CodeownersEntry(string pathExpression, List<string> owners)
+        {
+            PathExpression = pathExpression;
+            Owners = owners;
+        }
+
         private static string[] SplitLine(string line, char splitOn)
             => line.Split(new char[] { splitOn }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -157,5 +167,24 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             }
             return true;
         }
+
+        protected bool Equals(CodeownersEntry other)
+            => PathExpression == other.PathExpression
+               && Owners.SequenceEqual(other.Owners)
+               && PRLabels.SequenceEqual(other.PRLabels)
+               && ServiceLabels.SequenceEqual(other.ServiceLabels);
+
+        public override bool Equals(object? obj)
+        {
+            // @formatter:off
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((CodeownersEntry)obj);
+            // @formatter:on
+        }
+
+        public override int GetHashCode()
+            => HashCode.Combine(PathExpression, Owners, PRLabels, ServiceLabels);
     }
 }

@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         /// </summary>
         /// <param name="repoUrl">GitHub repository URL</param>
         /// <returns>Contents fo the located CODEOWNERS file</returns>
-        public async Task<List<CodeownersEntry>> GetCodeownersFile(Uri repoUrl)
+        public async Task<List<CodeownersEntry>> GetCodeownersFileEntries(Uri repoUrl)
         {
             List<CodeownersEntry> result;
             if (codeownersFileCache.TryGetValue(repoUrl.ToString(), out result))
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             }
 
             logger.LogWarning("Could not retrieve CODEOWNERS file URL = {0} ResponseCode = {1}", codeOwnersUrl, result.StatusCode);
-            return default;
+            return null;
         }
 
     }

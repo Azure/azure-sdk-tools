@@ -324,13 +324,15 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
     priority = -1
     msgs = {
         "C4723": (
-            "Client method is missing the distributed tracing decorator - `distributed_trace`. See details:"
+            "Client method is missing the distributed tracing decorator - `distributed_trace`."
+            " Methods that make network calls should have distributed tracing. See details:"
             " https://azure.github.io/azure-sdk/python_implementation.html#distributed-tracing",
             "client-method-missing-tracing-decorator",
             "Client method should support distributed tracing.",
         ),
         "C4724": (
-            "Client async method is missing the distributed tracing decorator - `distributed_trace_async`. "
+            "Client async method is missing the distributed tracing decorator - `distributed_trace_async`."
+            " Methods that make network calls should have distributed tracing."
             " See details: https://azure.github.io/azure-sdk/python_implementation.html#distributed-tracing",
             "client-method-missing-tracing-decorator-async",
             "Client method should support distributed tracing.",
@@ -357,6 +359,8 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         ),
     )
     ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
+    ignore_functions = ["send_request"]
+    ignore_decorators = {"typing.overload", "builtins.classmethod"} 
 
     def __init__(self, linter=None):
         super(ClientMethodsHaveTracingDecorators, self).__init__(linter)
@@ -372,14 +376,19 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         :return: None
         """
         try:
-            if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
-                    node.parent.name not in self.ignore_clients:
-                if node.args.kwarg and "azure.core.tracing.decorator.distributed_trace" not in node.decoratornames() \
-                        and "builtins.classmethod" not in node.decoratornames():
-                    self.add_message(
-                        msgid="client-method-missing-tracing-decorator", node=node, confidence=None
-                    )
-        except AttributeError:
+            path = node.root().name
+            split_path = path.split(".")
+            new_path = ".".join(split_path[:len(split_path)-1])
+            if new_path.count("_") == 0:
+                if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
+                        node.parent.name not in self.ignore_clients:
+                    if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
+                        and not self.ignore_decorators.intersection(node.decoratornames()) and \
+                            "azure.core.tracing.decorator.distributed_trace" not in node.decoratornames():
+                                    self.add_message(
+                                        msgid="client-method-missing-tracing-decorator", node=node, confidence=None
+                                    )
+        except:
             pass
 
     def visit_asyncfunctiondef(self, node):
@@ -389,18 +398,24 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         node.decoratornames() returns a set of the method's decorator names.
 
         :param node: function node
-        :type node: ast.FunctionDef
+        :type node: ast.AsyncFunctionDef
         :return: None
         """
         try:
-            if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
-                    node.parent.name not in self.ignore_clients:
-                if node.args.kwarg and "azure.core.tracing.decorator_async.distributed_trace_async" not in \
-                        node.decoratornames() and "builtins.classmethod" not in node.decoratornames():
-                    self.add_message(
-                        msgid="client-method-missing-tracing-decorator-async", node=node, confidence=None
-                    )
-        except AttributeError:
+            path = node.root().name
+            split_path = path.split(".")
+            new_path = ".".join(split_path[:len(split_path)-1])
+            if new_path.count("_") == 0:
+                if node.parent.name.endswith("Client") and node.is_method() and not node.name.startswith("_") and \
+                        node.parent.name not in self.ignore_clients:
+                    if node.args.kwarg and node.name not in self.ignore_functions and not node.name.endswith("client") \
+                        and not self.ignore_decorators.intersection(node.decoratornames()) and \
+                            "azure.core.tracing.decorator_async.distributed_trace_async" not in node.decoratornames():
+
+                        self.add_message(
+                            msgid="client-method-missing-tracing-decorator-async", node=node, confidence=None
+                        )
+        except:
             pass
 
 
@@ -2028,6 +2043,137 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
                 msgid="no-raise-with-traceback", node=node, confidence=None
             )
 
+class NameExceedsStandardCharacterLength(BaseChecker):
+    __implements__ = IAstroidChecker
+
+    """Rule to check that the character length of type and property names are not over 40 characters."""
+    name = "name-too-long"
+    priority = -1
+    msgs = {
+        "C4751": (
+            "Name is over standard character length of 40.",
+            "name-too-long",
+            "Only use names that are less than 40 characters."
+        ),
+    }
+
+    STANDARD_CHARACTER_LENGTH = 40
+
+    def visit_classdef(self,node):
+        """Visit every class and check that the
+         class name is within the character length limit.
+
+        :param node: node
+        :type node: ast.ClassDef
+         
+         """
+
+        try:
+            self.iterate_through_names(node, True)    
+        except:
+            pass   
+
+
+    def visit_functiondef(self, node):
+        """Visit every function and check that the function and 
+        its variable names are within the character length limit.
+        
+        :param node: node
+        :type node: ast.FunctionDef
+        
+        """
+        try:
+            self.iterate_through_names(node, False)    
+        except:
+            pass      
+
+    def iterate_through_names(self, node, ignore_function):
+        """Helper function to iterate through names.
+
+            :param node: node
+            :type node: ast.ClassDef or ast.FunctionDef
+            :param ignore_function: Whether the function is being called 
+             from `visit_classdef` or not. If it is called from `visit_classdef`
+             ignore_function should be `True` to avoid repeat warnings on functions. 
+            :type ignore_function: bool
+            :return: None
+        """
+        if len(node.name) > self.STANDARD_CHARACTER_LENGTH and not node.name.startswith("_"):
+            self.add_message(
+                msgid="name-too-long",
+                node=node,
+                confidence=None,
+            )
+
+        for i in node.body:
+            if not (isinstance(i, astroid.FunctionDef) or isinstance(i, astroid.AsyncFunctionDef)) and not ignore_function:
+                try:
+                    if len(i.name) > self.STANDARD_CHARACTER_LENGTH and not i.name.startswith("_"):
+                        self.add_message(
+                            msgid="name-too-long",
+                            node=i,
+                            confidence=None,
+                        )        
+                except:
+                    # Gets the names of ast.Assign statements
+                    for j in i.targets:
+                        if isinstance(j, astroid.AssignName):
+                            if len(j.name) > self.STANDARD_CHARACTER_LENGTH and not j.name.startswith("_"):
+                                self.add_message(
+                                    msgid="name-too-long",
+                                    node=j,
+                                    confidence=None,
+                                )  
+                        elif isinstance(j, astroid.AssignAttr):
+                            # for self.names
+                            if len(j.attrname) > self.STANDARD_CHARACTER_LENGTH and not j.attrname.startswith("_"):
+                                self.add_message(
+                                    msgid="name-too-long",
+                                    node=j,
+                                    confidence=None,
+                                )  
+
+    visit_asyncfunctiondef = visit_functiondef    
+
+class DeleteOperationReturnStatement(BaseChecker):
+    __implements__ = IAstroidChecker
+
+    """Rule to check that delete* or begin_delete* return None or LROPoller[None], respectively."""
+    name = "delete-operation-wrong-return-type"
+    priority = -1
+    msgs = {
+        "C4752": (
+            "delete* or begin_delete* should return None or LROPoller[None], respectively.",
+            "delete-operation-wrong-return-type",
+            "delete* or begin_delete* functions should return None or LROPoller[None]."
+        ),
+    }
+
+    def visit_functiondef(self,node):
+        """Visits all delete functions and checks that their return types
+        are LROPoller or None. """
+        try:
+            if node.returns.as_string() == "None":
+                # If there are residual comment typehints or no return value,
+                # we dont want to throw an error
+                return
+            if node.name.startswith("delete") and node.parent.name.endswith("Client"):
+                if node.returns.as_string() != "None":
+                    self.add_message(
+                        msgid="delete-operation-wrong-return-type",
+                        node=node,
+                        confidence=None,
+                    )   
+            if node.name.startswith("begin_delete") and node.parent.name.endswith("Client"):
+                if node.returns.as_string() != "LROPoller[None]" and node.returns.as_string() != "AsyncLROPoller[None]":
+                    self.add_message(
+                        msgid="delete-operation-wrong-return-type",
+                        node=node,
+                        confidence=None,
+                    )   
+        except:
+            pass
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2052,7 +2198,9 @@ def register(linter):
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
     linter.register_checker(NonAbstractTransportImport(linter))
     linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
-
+    linter.register_checker(NameExceedsStandardCharacterLength(linter))
+    linter.register_checker(DeleteOperationReturnStatement(linter))
+    linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
@@ -2060,7 +2208,7 @@ def register(linter):
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))
     # linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
-    # linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
+    
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))

@@ -249,7 +249,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             SetSafeDirectory(config);
 
-            if (!GitHandler.TryRun("status --porcelain", config.AssetsRepoLocation.ToString(), out var diffResult))
+            var a = Environment.GetEnvironmentVariable(GIT_COMMIT_OWNER_ENV_VAR);
+            var b = Environment.GetEnvironmentVariable(GIT_COMMIT_EMAIL_ENV_VAR);
+
+            var preface = "";
+            if (null != a && null != b)
+            {
+                preface = $"-c user.name =\"{a}\" -c user.email=\"{b}\" ";
+            }
+
+            var run = $"{preface}status --porcelain";
+            if (!GitHandler.TryRun($"status --porcelain", config.AssetsRepoLocation.ToString(), out var diffResult))
             {
                 throw GenerateInvokeException(diffResult);
             }

@@ -1,4 +1,2 @@
 requests
 pyyaml
-# install a python package from a repo subdirectory
-"git+https://git.repo/some_repo.git#egg=azure-sdk-tools&subdirectory=tools/azure-sdk-tools"

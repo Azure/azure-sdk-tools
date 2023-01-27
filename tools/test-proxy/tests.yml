@@ -36,6 +36,7 @@ stages:
             GIT_TOKEN: $(azuresdk-github-pat)
             GIT_COMMIT_OWNER: azure-sdk
             GIT_COMMIT_EMAIL: azuresdk@microsoft.com
+            GIT_TERMINAL_PROMPT: 1
 
         - task: PublishTestResults@2
           condition: succeededOrFailed()
@@ -78,6 +79,7 @@ stages:
               GIT_TOKEN: $(azuresdk-github-pat)
               GIT_COMMIT_OWNER: azure-sdk
               GIT_COMMIT_EMAIL: azuresdk@microsoft.com
+              GIT_TERMINAL_PROMPT: 1
 
     - job: Docker_CLI_Integration_Test
 
@@ -107,6 +109,7 @@ stages:
               GIT_COMMIT_EMAIL: azuresdk@microsoft.com
               CLI_TEST_WITH_DOCKER: true
               CLI_TEST_DOCKER_TAG: $(CLI_TEST_DOCKER_TAG)
+              GIT_TERMINAL_PROMPT: 1
               DISABLE_INTEGRATION_BRANCH_CLEANUP: true
 
   - stage: RepoUnitTests

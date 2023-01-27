@@ -10,7 +10,7 @@ using Azure.Identity;
 namespace Azure.Sdk.Tools.NotificationConfiguration;
 
 /// <summary>
-/// A tool for creating and configuring Azure DevOps groups for sending email notifications to
+/// A tool for creating and configuring Azure DevOps groups for sending email notifications
 /// on build failures to owners of relevant build definitions. The recipients are determined
 /// based on the build definition .yml file paths as given by the CODEOWNERS of given build definition
 /// source repository.

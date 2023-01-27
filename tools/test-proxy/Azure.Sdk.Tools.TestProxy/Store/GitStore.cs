@@ -97,6 +97,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 return;
             }
 
+            SetOrigin(config);
             var pendingChanges = DetectPendingChanges(config);
             var generatedTagName = config.TagPrefix;
 
@@ -121,7 +122,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     {
                         throw GenerateInvokeException(SHAResult);
                     }
-                    SetOrigin(config);
 
                     GitHandler.Run($"tag {generatedTagName}", config);
                     GitHandler.Run($"push origin {generatedTagName}", config);
@@ -173,6 +173,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 InitializeAssetsRepo(config);
             }
 
+            SetOrigin(config);
             var pendingChanges = DetectPendingChanges(config);
 
             if (pendingChanges.Length > 0)
@@ -217,6 +218,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     await BreadCrumb.Update(config);
                 }
             }
+
+            HideOrigin(config);
         }
 
         /// <summary>
@@ -249,16 +252,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             SetSafeDirectory(config);
 
-            var a = Environment.GetEnvironmentVariable(GIT_COMMIT_OWNER_ENV_VAR);
-            var b = Environment.GetEnvironmentVariable(GIT_COMMIT_EMAIL_ENV_VAR);
-
-            var preface = "";
-            if (null != a && null != b)
-            {
-                preface = $"-c user.name =\"{a}\" -c user.email=\"{b}\" ";
-            }
-
-            var run = $"{preface}status --porcelain";
             if (!GitHandler.TryRun($"status --porcelain", config.AssetsRepoLocation.ToString(), out var diffResult))
             {
                 throw GenerateInvokeException(diffResult);

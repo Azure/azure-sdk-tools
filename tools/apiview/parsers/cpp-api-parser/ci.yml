@@ -47,21 +47,25 @@ stages:
               git checkout $(VcpkgRelease)
             displayName: Clone vcpkg 
             workingDirectory: '$(Build.SourcesDirectory)'
+
           - pwsh: |
                 ./vcpkg/bootstrap-vcpkg
             displayName: Bootstrap vcpkg.
             condition: succeeded()
             workingDirectory: '$(Build.SourcesDirectory)'
+
           - pwsh: |
               $vcpkgRoot = Resolve-Path "./vcpkg"
               Write-Host "Set VCPKG_ROOT: $vcpkgRoot"
               Write-Host "##vso[task.setvariable variable=VCPKG_ROOT]$vcpkgRoot"
             displayName: Set VCPKG_ROOT
             condition: succeeded()
+
           - pwsh: mkdir build
             displayName: Create cmake build directory.
             workingDirectory: '$(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser'
             condition: succeeded()
+
           - task: PowerShell@2
             inputs:
               pwsh: true
@@ -69,6 +73,7 @@ stages:
               filePath: eng/scripts/Set-VcpkgWriteModeCache.ps1
               arguments: -StorageAccountKey '$(cpp-vcpkg-cache-storage-key)'
             displayName: Set Vcpkg Write-mode Cache
+
           - pwsh: |
               cmake.exe -G "Visual Studio 17 2022" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" ..
             displayName: Cmake Generate.
@@ -76,20 +81,25 @@ stages:
             condition: succeeded()
             env:
               VCPKG_BINARY_SOURCES: $(VCPKG_BINARY_SOURCES_SECRET)
+
           - pwsh: |
               cmake.exe --build . --parallel 8 --target ParseAzureSdkCpp --config RelWithDebInfo
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             displayName: Build ApiView Parser.
+
           - pwsh: |
               cmake.exe --build . --parallel 8 --target parseTests --config RelWithDebInfo
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             displayName: Build ApiView Tests.
+
           - pwsh: |
               RelWithDebInfo/parseTests
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/parseTests
             displayName: Run ApiView Tests.
+
           - pwsh: Get-ChildItem -Recurse
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/ParseAzureSdkCpp
+
           - task: PublishPipelineArtifact@1
             inputs:
               artifactName: release-artifacts

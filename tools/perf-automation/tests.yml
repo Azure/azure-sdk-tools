@@ -160,10 +160,10 @@ stages:
         InstallLanguageSteps:
         - task: JavaToolInstaller@0
           inputs:
-            versionSpec: '8'
+            versionSpec: '17'
             jdkArchitectureOption: 'x64'
             jdkSourceOption: 'PreInstalled'
-          displayName: Install Java 8
+          displayName: Install Java 17
         - script: |
             java -version
             mvn --version
@@ -194,7 +194,7 @@ stages:
         InstallLanguageSteps:
         - template: /eng/pipelines/templates/steps/use-node-version.yml@azure-sdk-for-js
           parameters:
-            NodeVersion: 14.x
+            NodeVersion: 18.x
         ServiceDirectory: ${{ parameters.JSServiceDirectory }}
         Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
@@ -218,7 +218,7 @@ stages:
         Variables:
         - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-python
         - name: PythonVersion
-          value: '3.7'
+          value: '3.11'
         OperatingSystems: ${{ parameters.OperatingSystems }}
         InstallLanguageSteps:
         - task: UsePythonVersion@0

@@ -20,8 +20,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="CODEOWNERS">
+    <None Update="TestData\simple_path_CODEOWNERS">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="TestData/**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="TestData\InputDir\foo\bar\" />
   </ItemGroup>
 </Project>

@@ -127,6 +127,15 @@ public class CodeownersManualAnalysisTests
             useRegexMatcher: true,
             outputFilePrefix: "azure-sdk-for-net");
 
+    [Test]
+    public void WriteToFileRegexMatcherCodeownersForAzureSdkForPython()
+        => WriteToFileOwnersData(
+            AzureSdkForPythonTargetDirPathSuffix,
+            CodeownersFilePathSuffix,
+            DefaultIgnoredPathPrefixes,
+            useRegexMatcher: true,
+            outputFilePrefix: "azure-sdk-for-python");
+
     #endregion
 
     private static void WriteToFileOwnersData(
@@ -137,6 +146,8 @@ public class CodeownersManualAnalysisTests
         string outputFilePrefix)
     {
         var stopwatch = Stopwatch.StartNew();
+        string rootDir = PathNavigatingToRootDir(CurrentDir);
+        string targetDir = rootDir + targetDirPathSuffix;
         
         Dictionary<string, CodeownersEntry> ownersData = RunMain(
             targetDirPathSuffix,
@@ -146,7 +157,7 @@ public class CodeownersManualAnalysisTests
 
         List<string> outputLines =
             new List<string> { "PATH | PATH EXPRESSION | COMMA-SEPARATED OWNERS" };
-        foreach (var kvp in ownersData)
+        foreach (KeyValuePair<string, CodeownersEntry> kvp in ownersData)
         {
             string path = kvp.Key;
             CodeownersEntry entry = kvp.Value;
@@ -156,11 +167,51 @@ public class CodeownersManualAnalysisTests
                 $"| {string.Join(",", entry.Owners)}");
         }
 
+        WriteToFileMissingSuffixSlashesForDirPaths(targetDir, codeownersPathSuffix, outputLines);
+
         var outputFilePath = outputFilePrefix + OwnersDataOutputPathSuffix;
         File.WriteAllLines(outputFilePath, outputLines);
         Console.WriteLine($"DONE writing out owners. " +
                           $"Output written out to {Path.GetFullPath(outputFilePath)}. " +
                           $"Time taken: {stopwatch.Elapsed}.");
+    }
+
+    private static void WriteToFileMissingSuffixSlashesForDirPaths(
+        string targetDir,
+        string codeownersPathSuffix,
+        List<string> outputLines)
+    {
+        List<CodeownersEntry> entries =
+            CodeownersFile.GetCodeownersEntriesFromFileOrUrl(targetDir + codeownersPathSuffix);
+
+        foreach (CodeownersEntry entry in entries.Where(entry => !entry.PathExpression.EndsWith("/")))
+        {
+            if (entry.ContainsWildcard)
+            {
+                // We do not support "the path is to file while it should be to directory" validation for paths
+                // with wildcards yet. To do that, we would first need to resolve the path and see if there exists
+                // a concrete path that includes the the CODEOWNERS paths supposed-file-name as
+                // infix dir.
+                // For example, /a/**/b could match against /a/foo/b/c, meaning
+                // the path is invalid.
+                outputLines.Add(
+                    $"{entry.PathExpression} " +
+                    $"| WILDCARD_PATH_NEEDS_MANUAL_EVAL " +
+                    $"| {string.Join(",", entry.Owners)}");
+            }
+            else
+            {
+                string pathToDir = Path.Combine(
+                    targetDir,
+                    entry.PathExpression.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+                if (Directory.Exists(pathToDir))
+                    outputLines.Add(
+                        $"{entry.PathExpression} " +
+                        $"| INVALID_PATH_SHOULD_HAVE_SUFFIX_SLASH_TO_DENOTE_DIR " +
+                        $"| {string.Join(",", entry.Owners)}");
+            }
+        }
     }
 
     private string CreateCodeownersCopyWithPathDeletion(

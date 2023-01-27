@@ -26,7 +26,8 @@
     --navbar-bg: #{tint-color($base-bg-color, 100%)};
     --navbar-text: #{$primary};
     --navbar-link-active: #{shade-color($primary, 20%)};
-    --navbar-border: #{shade-color($base-bg-color, 20%)}
+    --border-color: #{shade-color($base-bg-color, 20%)};
+    --base-fg-color: #{tint-color($base-bg-color, 100%)};
 }
 
 .dark-theme {
@@ -50,15 +51,14 @@
     --info-color: #{$info-color};
     --warning-color: #{$orange};
     --danger-color: #{$danger};
-
-
     --link-color: #{$primary-color};
     --link-active: #{tint-color($primary-color, 20%)};
     --link-visited: #{tint-color($primary-color, 40%)};
     --navbar-bg: #{tint-color($base-bg-color, 20%)};
     --navbar-text: #{tint-color($base-text-color, 40%)};
     --navbar-link-active: #{shade-color($base-text-color, 20%)};
-    --navbar-border: #{tint-color($base-bg-color, 30%)}
+    --border-color: #{tint-color($base-bg-color, 30%)};
+    --base-fg-color: #{tint-color($base-bg-color, 10%)};
 }
 
 .dark-solarized-theme {
@@ -72,11 +72,11 @@
     $base-text-color: white;
     --base-text-color: #{$base-text-color};
     $primary-color: #FFBD00;
-    --primary-color: $primary-color;
+    --primary-color: #{$primary-color};
     $secondary-color: #B7B6B7;
-    --secondary-color: $secondary-color;
+    --secondary-color: #{$secondary-color};
     $success-color: #16A69C;
-    --success-color: $success-color;
+    --success-color: #{$success-color};
     $info-color: #87B0E6;
     --info-color: #{$info-color};
     $warning-color: #D97904;
@@ -92,5 +92,6 @@
     --navbar-bg: #{tint-color($base-bg-color, 20%)};
     --navbar-text: #{tint-color($base-text-color, 40%)};
     --navbar-link-active: #{shade-color($base-text-color, 20%)};
-    --navbar-border: #{tint-color($base-bg-color, 30%)}
+    --border-color: #{tint-color($base-bg-color, 30%)};
+    --base-fg-color: #{tint-color($base-bg-color, 10%)};
 }

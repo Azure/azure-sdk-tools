@@ -1,0 +1,57 @@
+.text-success {
+    color: var(--success-color) !important;
+}
+
+.btn-primary {
+    color: var(--base-text-color);
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+}
+
+.btn-primary:hover {
+    color: var(--base-text-color);
+    background-color: var(--link-active);
+    border-color: var(--link-active);
+}
+
+.btn-outline-primary {
+    color: var(--link-color);
+    border-color: var(--link-color);
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:hover {
+    background-color: var(--link-active);
+    border-color: var(--link-active);
+}
+
+.btn-outline-primary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(var(--link-color), 50%);
+}
+
+.page-link {
+    background-color: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    color: var(--link-color);
+}
+
+.page-link:hover {
+    background-color: var(--base-bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--link-color);
+}
+
+.page-item.active .page-link {
+    background-color: var(--link-color);
+    color: var(--base-text-color);
+    border: 1px solid var(--border-color);
+}
+
+.page-item.disabled .page-link {
+    background-color: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    color: var(--link-color);
+}
+
+.border {
+    border: 1px solid var(--border-color);
+}

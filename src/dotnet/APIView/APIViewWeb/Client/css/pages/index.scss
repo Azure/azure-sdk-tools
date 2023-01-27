@@ -5,3 +5,32 @@
     @include btn-circle;
     @include btn-circle-xl;
 }
+
+#reviews-table {
+    td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    thead th {
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:hover {
+        color: var(--base-text-color);
+    }
+
+    .cst-bdr-left {
+        border-left: 1px solid var(--border-color);
+    }
+
+    color: var(--base-text-color);
+}
+
+#reviews-table-container {
+    border: 1px solid var(--border-color);
+    box-shadow: var(--box-shadow-sm);
+    background-color: var(--base-fg-color);
+}

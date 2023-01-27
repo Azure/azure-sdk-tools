@@ -320,7 +320,7 @@
                 <select class="custom-select shadow-sm custom-select-sm" id="revisions-bootstraps-select">
                     @foreach (var revision in Model.Review.Revisions.Reverse())
                     {
-                        var optionName = revision.IsApproved ? $"{@revision.DisplayName} (APPROVED)" : @revision.DisplayName;
+                        var optionName = revision.IsApproved ? $"{@revision.DisplayName} ✔" : @revision.DisplayName;
                         var urlValue = @Url.ActionLink("Review", "Assemblies", new
                         {
                             id = @Model.Review.ReviewId,
@@ -371,7 +371,7 @@
                         }
                         @foreach (var revision in Model.PreviousRevisions.Reverse())
                         {
-                            var optionName = revision.IsApproved ? $"{@revision.DisplayName} (APPROVED)" : @revision.DisplayName;
+                            var optionName = revision.IsApproved ? $"{@revision.DisplayName} ✔" : @revision.DisplayName;
                             var urlValue = @Url.ActionLink("Review", "Assemblies", new {
                                 id = @Model.Review.ReviewId,
                                 diffRevisionId = @revision.RevisionId,

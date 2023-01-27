@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests;
 /// selecting "|" as column separator.
 /// </summary>
 [TestFixture(Ignore = "Tools to be used manually")]
-public class CodeownersDiffTests
+public class CodeownersManualAnalysisTests
 {
     private const string DefaultIgnoredPathPrefixes = Program.DefaultIgnoredPrefixes;
     private const string OwnersDiffOutputPathSuffix = "_owners_diff.csv";
@@ -42,9 +42,14 @@ public class CodeownersDiffTests
     // <commonParent>/azure-sdk-for-.../
     // ...
     private const string AzureSdkForNetTargetDirPathSuffix = "/../azure-sdk-for-net";
-    private const string AzureSdkForNetCodeownersPathSuffix = AzureSdkForNetTargetDirPathSuffix + "/.github/CODEOWNERS";
+    private const string AzureSdkForPythonTargetDirPathSuffix = "/../azure-sdk-for-python";
     // TODO: add more repos here.
 
+    private const string CodeownersFilePathSuffix = "/.github/CODEOWNERS";
+
+    // Current dir, ".", is "/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0".
+    private const string CurrentDir = "/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0";
+    
     #region Owners diff
 
     [Test]
@@ -52,7 +57,7 @@ public class CodeownersDiffTests
     {
         // Empty string here means to just use the root directory of the local "azure-sdk-tools" clone.
         var targetDirPathSuffix = ""; 
-        var codeownersPathSuffix = "/.github/CODEOWNERS";
+        var codeownersPathSuffix = CodeownersFilePathSuffix;
         var ignoredPrefixes = ".git|artifacts";
         WriteToFileOwnersDiff(new[]
         {
@@ -67,12 +72,31 @@ public class CodeownersDiffTests
         WriteToFileOwnersDiff(
             new[]
             {
-                (AzureSdkForNetTargetDirPathSuffix, AzureSdkForNetCodeownersPathSuffix,
+                (AzureSdkForNetTargetDirPathSuffix, CodeownersFilePathSuffix,
                     DefaultIgnoredPathPrefixes, useRegexMatcher: false),
-                (AzureSdkForNetTargetDirPathSuffix, AzureSdkForNetCodeownersPathSuffix,
+                (AzureSdkForNetTargetDirPathSuffix, CodeownersFilePathSuffix,
                     DefaultIgnoredPathPrefixes, useRegexMatcher: true)
             },
             outputFilePrefix: "azure-sdk-for-net");
+    }
+
+    [Test]
+    public void WriteToFileWildcardRemovalDiffForAzureSdkForPython()
+    {
+        string codeownersCopyPathSuffix = CreateCodeownersCopyWithPathDeletion(
+            AzureSdkForPythonTargetDirPathSuffix,
+            CodeownersFilePathSuffix,
+            pathsToDelete: new[] {"/**/tests.yml", "/**/ci.yml"});
+
+        WriteToFileOwnersDiff(
+            new[]
+            {
+                (AzureSdkForPythonTargetDirPathSuffix, CodeownersFilePathSuffix,
+                    DefaultIgnoredPathPrefixes, useRegexMatcher: true),
+                (AzureSdkForPythonTargetDirPathSuffix, codeownersCopyPathSuffix,
+                    DefaultIgnoredPathPrefixes, useRegexMatcher: true)
+            },
+            outputFilePrefix: "azure-sdk-for-python");
     }
 
     #endregion
@@ -98,10 +122,19 @@ public class CodeownersDiffTests
     public void WriteToFileRegexMatcherCodeownersForAzureSdkForNet()
         => WriteToFileOwnersData(
             AzureSdkForNetTargetDirPathSuffix,
-            AzureSdkForNetCodeownersPathSuffix,
+            CodeownersFilePathSuffix,
             DefaultIgnoredPathPrefixes,
             useRegexMatcher: true,
             outputFilePrefix: "azure-sdk-for-net");
+
+    [Test]
+    public void WriteToFileRegexMatcherCodeownersForAzureSdkForPython()
+        => WriteToFileOwnersData(
+            AzureSdkForPythonTargetDirPathSuffix,
+            CodeownersFilePathSuffix,
+            DefaultIgnoredPathPrefixes,
+            useRegexMatcher: true,
+            outputFilePrefix: "azure-sdk-for-python");
 
     #endregion
 
@@ -113,6 +146,8 @@ public class CodeownersDiffTests
         string outputFilePrefix)
     {
         var stopwatch = Stopwatch.StartNew();
+        string rootDir = PathNavigatingToRootDir(CurrentDir);
+        string targetDir = rootDir + targetDirPathSuffix;
         
         Dictionary<string, CodeownersEntry> ownersData = RunMain(
             targetDirPathSuffix,
@@ -122,7 +157,7 @@ public class CodeownersDiffTests
 
         List<string> outputLines =
             new List<string> { "PATH | PATH EXPRESSION | COMMA-SEPARATED OWNERS" };
-        foreach (var kvp in ownersData)
+        foreach (KeyValuePair<string, CodeownersEntry> kvp in ownersData)
         {
             string path = kvp.Key;
             CodeownersEntry entry = kvp.Value;
@@ -132,11 +167,69 @@ public class CodeownersDiffTests
                 $"| {string.Join(",", entry.Owners)}");
         }
 
+        WriteToFileMissingSuffixSlashesForDirPaths(targetDir, codeownersPathSuffix, outputLines);
+
         var outputFilePath = outputFilePrefix + OwnersDataOutputPathSuffix;
         File.WriteAllLines(outputFilePath, outputLines);
         Console.WriteLine($"DONE writing out owners. " +
                           $"Output written out to {Path.GetFullPath(outputFilePath)}. " +
                           $"Time taken: {stopwatch.Elapsed}.");
+    }
+
+    private static void WriteToFileMissingSuffixSlashesForDirPaths(
+        string targetDir,
+        string codeownersPathSuffix,
+        List<string> outputLines)
+    {
+        List<CodeownersEntry> entries =
+            CodeownersFile.GetCodeownersEntriesFromFileOrUrl(targetDir + codeownersPathSuffix);
+
+        foreach (CodeownersEntry entry in entries.Where(entry => !entry.PathExpression.EndsWith("/")))
+        {
+            if (entry.ContainsWildcard)
+            {
+                // We do not support "the path is to file while it should be to directory" validation for paths
+                // with wildcards yet. To do that, we would first need to resolve the path and see if there exists
+                // a concrete path that includes the the CODEOWNERS paths supposed-file-name as
+                // infix dir.
+                // For example, /a/**/b could match against /a/foo/b/c, meaning
+                // the path is invalid.
+                outputLines.Add(
+                    $"{entry.PathExpression} " +
+                    $"| WILDCARD_PATH_NEEDS_MANUAL_EVAL " +
+                    $"| {string.Join(",", entry.Owners)}");
+            }
+            else
+            {
+                string pathToDir = Path.Combine(
+                    targetDir,
+                    entry.PathExpression.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+                if (Directory.Exists(pathToDir))
+                    outputLines.Add(
+                        $"{entry.PathExpression} " +
+                        $"| INVALID_PATH_SHOULD_HAVE_SUFFIX_SLASH_TO_DENOTE_DIR " +
+                        $"| {string.Join(",", entry.Owners)}");
+            }
+        }
+    }
+
+    private string CreateCodeownersCopyWithPathDeletion(
+        string targetDirPathSuffix,
+        string codeownersFilePathSuffix,
+        string[] pathsToDelete)
+    {
+        string rootDir = PathNavigatingToRootDir(CurrentDir);
+        string targetDir = rootDir + targetDirPathSuffix;
+        string codeownersPath = targetDir + codeownersFilePathSuffix;
+
+        var codeownersLines = File.ReadAllLines(codeownersPath);
+        codeownersLines = codeownersLines
+            .Where(line => !pathsToDelete.Any(line.Contains)).ToArray();
+
+        var codeownersCopyPath = codeownersPath + "-copy";
+        File.WriteAllLines(codeownersCopyPath, codeownersLines);
+        return codeownersFilePathSuffix + "-copy";
     }
 
     private static void WriteToFileOwnersDiff((
@@ -174,9 +267,8 @@ public class CodeownersDiffTests
         string ignoredPathPrefixes,
         bool useRegexMatcher)
     {
-        // Current dir, ".", is "/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0".
-        const string currentDir = "/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0";
-        string rootDir = PathNavigatingToRootDir(currentDir);
+        string rootDir = PathNavigatingToRootDir(CurrentDir);
+        string targetDir = rootDir + targetDirPathSuffix;
 
         string actualOutput, actualErr;
         int returnCode;
@@ -185,9 +277,9 @@ public class CodeownersDiffTests
             // Act
             returnCode = Program.Main(
                 targetPath: "/**",
-                codeownersFilePathOrUrl: rootDir + codeownersPathSuffixToRootDir,
-                excludeNonUserAliases: false,
-                targetDir: rootDir + targetDirPathSuffix,
+                codeownersFilePathOrUrl: targetDir + codeownersPathSuffixToRootDir,
+                excludeNonUserAliases: true, // true because of Contacts.GetMatchingCodeownersEntry() calls ExcludeNonUserAliases().
+                targetDir,
                 ignoredPathPrefixes,
                 useRegexMatcher);
 

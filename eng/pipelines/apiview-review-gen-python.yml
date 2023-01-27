@@ -19,7 +19,7 @@ parameters:
 
 variables:
   PythonIndexUrl: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
-  PythonVersion: '3.10.2'
+  PythonVersion: '3.10.9'
   ApiStubVersion: '0.3.5'
 
 jobs:

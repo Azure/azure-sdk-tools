@@ -38,6 +38,8 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
             Console.SetOut(this.originalOutput);
             this.stringWriter.Dispose();
             this.originalOutput.Dispose();
+            // https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1816
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

@@ -46,7 +46,10 @@ foreach ($currentRepository in $repositories)
     Write-Host "   Starting $($currentRepository)"                      -ForegroundColor Green
     Write-Host " ==================================================== " -ForegroundColor Green
 
-    dotnet ./ghcreator/GHCreator.dll CreateOrUpdate $LabelFilePath $currentRepository -token $GitHubAccessToken
+    # GHCreator has been deleted by this PR: https://github.com/Azure/azure-sdk-tools/pull/5042
+    # Hence, this script is currently broken and needs updating to use GH CLI, per:
+    # https://github.com/Azure/azure-sdk-tools/issues/4888#issuecomment-1369900827
+    # dotnet ./ghcreator/GHCreator.dll CreateOrUpdate $LabelFilePath $currentRepository -token $GitHubAccessToken
 
     Write-Host " ==================================================== " -ForegroundColor Green
     Write-Host "   $($currentRepository) complete"                      -ForegroundColor Green

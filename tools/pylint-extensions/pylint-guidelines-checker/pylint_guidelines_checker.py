@@ -1985,6 +1985,49 @@ class NonAbstractTransportImport(BaseChecker):
                         confidence=None,
                     )
 
+class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
+    __implements__ = IAstroidChecker
+
+    """Rule to check that we don't use raise_with_traceback from azure core."""
+    name = "no-raise-with-traceback"
+    priority = -1
+    msgs = {
+        "C4754": (
+            "Don't use raise_with_traceback, use python 3 'raise from' syntax.",
+            "no-raise-with-traceback",
+            "Don't use raise_with_traceback instead use python 3 'raise from' syntax."
+        ),
+    }
+
+    def visit_import(self, node):
+        """Checks all imports to make sure we are 
+        not using raise_with_traceback from azure core."""
+        try:
+            if node.modname == "azure.core.exceptions":
+                for import_, _ in node.names:
+                    self._check_import(import_, node)
+        except:
+            pass
+
+    def visit_importfrom(self, node):
+        """Checks all `from` imports to make sure we are 
+        not using raise_with_traceback from azure core."""
+
+        try:
+            if node.modname == "azure.core.exceptions":
+                for import_, _ in node.names:
+                    self._check_import(import_, node)
+        except:
+            pass 
+
+    def _check_import(self, name, node):
+        """Raises message if raise_with_traceback is found."""
+
+        if name.startswith("raise_with_traceback"):
+            self.add_message(
+                msgid="no-raise-with-traceback", node=node, confidence=None
+            )
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2008,7 +2051,7 @@ def register(linter):
     linter.register_checker(NonCoreNetworkImport(linter))
     linter.register_checker(ClientListMethodsUseCorePaging(linter))
     linter.register_checker(NonAbstractTransportImport(linter))
-
+    linter.register_checker(NoAzureCoreTracebackUseRaiseFrom(linter))
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

@@ -109,7 +109,6 @@ def generate_python_report() -> ScanResult:
 
         results = discover_targeted_packages("azure*", repo)
 
-        # filter the results here
         result.packages = [os.path.basename(pkg) for pkg in results]
 
         for pkg in results:
@@ -117,6 +116,7 @@ def generate_python_report() -> ScanResult:
             if evaluation == 1:
                 result.packages_using_proxy.append(os.path.basename(pkg))
             elif evaluation == 2:
+                result.packages_using_proxy.append(os.path.basename(pkg))
                 result.packages_using_external.append(os.path.basename(pkg))
 
         print(YES)
@@ -127,12 +127,43 @@ def generate_python_report() -> ScanResult:
 
 
 def evaluate_go_package(package_path: str) -> int:
-    pass
+    evaluation = 0
+    possible_recordings_dir = os.path.join(package_path, "testdata", "recordings")
+    possible_assets = os.path.join(package_path, "assets.json")
+
+    if os.path.exists(possible_recordings_dir):
+        evaluation = 1
+
+    if os.path.exists(possible_assets):
+        evaluation = 2
+
+    return evaluation
 
 
 # evaluate by finding a testdata/recordings
 def generate_go_report() -> ScanResult:
-    result = ScanResult("Go")
+    language = "Go"
+
+    repo_root = get_repo(language)
+    result = ScanResult(language)
+    sdk_path = os.path.join(repo_root, "sdk")
+
+    exclusions = [os.path.join("testdata", "perf", "go.mod"), "template", "samples"]
+
+    packages = glob.glob(os.path.join(repo_root, "sdk", "**", "go.mod"), recursive=True)
+    packages = [os.path.dirname(pkg) for pkg in packages if not any([x in pkg for x in exclusions])]
+
+    result.packages = [pkg.replace(sdk_path + os.sep, "") for pkg in packages]
+
+    for pkg in packages:
+        evaluation = evaluate_go_package(pkg)
+
+        if evaluation == 1:
+            result.packages_using_proxy.append(pkg.replace(sdk_path + os.sep, ""))
+        elif evaluation == 2:
+            result.packages_using_proxy.append(pkg.replace(sdk_path + os.sep, ""))
+            result.packages_using_external.append(pkg.replace(sdk_path + os.sep, ""))
+
     return result
 
 
@@ -208,7 +239,7 @@ def generate_detailed_table(origin: ScanResult, package_set: List[str]):
         transitioned = YES if package in origin.packages_using_proxy else NO
         externalized = YES if package in origin.packages_using_external else NO
 
-        table_row = TABLE_LAYER.format(package, transitioned, externalized)
+        table_row = TABLE_LAYER.format(package.replace("\\", "/"), transitioned, externalized)
         result += table_row
 
     return result
@@ -236,26 +267,6 @@ def write_output(result: ScanResult) -> None:
             f.write(document_addition)
 
 
-# original version of write-output that had two nicely batched tables
-# def write_output(result: ScanResult) -> None:
-#     with open(result.language.lower() + ".md", "w", encoding="utf-8") as f:
-#         date = datetime.date.today()
-#         time_of_day = datetime.datetime.today().strftime("%I:%M%p")
-#         f.writelines(f"# {result.language} Transition Details as of {date}@{time_of_day} {datetime.datetime.today().astimezone().tzname()}")
-
-#         # batch by sets of 20
-#         for i in range(0, len(result.packages), BATCH_SIZE):
-#             packages = result.packages[i : i + BATCH_SIZE]
-#             table_set_1 = packages[0:TABLE_HEIGHT]
-#             table_set_2 = packages[TABLE_HEIGHT:]
-
-#             document_addition = DOCUMENT.format(
-#                 generate_detailed_table(result, table_set_1), generate_detailed_table(result, table_set_2)
-#             )
-
-#             f.write(document_addition)
-
-
 def write_summary(results: List[ScanResult]) -> None:
     with open("summary.md", "w", encoding="utf-8") as f:
         f.writelines(f"# Test Proxy Transition Summary - {datetime.date.today()}")
@@ -269,11 +280,11 @@ if __name__ == "__main__":
     )
     parser.parse_args()
 
-    python = generate_python_report()
-    write_output(python)
+    # python = generate_python_report()
+    # write_output(python)
 
-    js = generate_js_report()
-    write_output(js)
+    # js = generate_js_report()
+    # write_output(js)
 
     go = generate_go_report()
     write_output(go)
@@ -284,4 +295,12 @@ if __name__ == "__main__":
     cpp = generate_cpp_report()
     write_output(cpp)
 
-    write_summary([python, js, go, net, cpp])
+    write_summary(
+        [
+            # python,
+            # js,
+            go,
+            net,
+            cpp,
+        ]
+    )

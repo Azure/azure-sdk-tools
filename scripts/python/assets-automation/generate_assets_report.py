@@ -177,11 +177,39 @@ def generate_net_report() -> ScanResult:
 
 
 def evaluate_cpp_package(package_path: str) -> int:
-    pass
+    evaluation = 0
+
+    possible_assets_json = os.path.join(package_path, "..", "assets.json")
+
+    if False:
+        evaluation = 1
+
+    if os.path.exists(possible_assets_json):
+        evaluation = 2
+
+    return evaluation
 
 
 def generate_cpp_report() -> ScanResult:
-    result = ScanResult("Cpp")
+    language = "CPP"
+    result = ScanResult(language)
+    repo_root = get_repo(language)
+
+    exclusions = [os.path.join("vcpkg", "vcpkg.json"), "template"]
+
+    packages = glob.glob(os.path.join(repo_root, "sdk", "**", "vcpkg.json"), recursive=True)
+    packages = [os.path.dirname(pkg) for pkg in packages if not any([x in pkg for x in exclusions])]
+
+    result.packages = [os.path.basename(pkg) for pkg in packages]
+    for pkg in packages:
+        evaluation = evaluate_cpp_package(pkg)
+
+        if evaluation == 1:
+            result.packages_using_proxy.append(os.path.basename(pkg))
+        elif evaluation == 2:
+            result.packages_using_proxy.append(os.path.basename(pkg))
+            result.packages_using_external.append(os.path.basename(pkg))
+
     return result
 
 

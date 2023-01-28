@@ -12,8 +12,8 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests;
 /// <summary>
 /// A class containing a set of tools, implemented as unit tests,
 /// allowing you to view and diff owners of files of locally cloned repositories,
-/// by obtaining the owners based on specified CODEOWNERS files,
-/// or using specified matching logic.
+/// by obtaining the owners based on specified CODEOWNERS files, and/or using specified
+/// matching logic: the legacy prefix-based or the new regex-based wildcard-supporting matcher.
 ///
 /// These tools are to be run manually, locally, by a developer.
 /// They do not participate in an automated regression test suite.
@@ -23,124 +23,304 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests;
 /// Then run the desired tool as a unit test, either from your IDE,
 /// or "dotnet test" command line tool.
 ///
-/// You can import the tool output into Excel, using .CSV import wizard and
-/// selecting "|" as column separator.
+/// These tools assume you have made local repo clones of relevant repositories.
+/// Ensure that the local repo clones you run these tools against are clean.
+/// This is because these tools do not support .gitignore.
+/// Hence if you do local builds you might add minutes to runtime, and get spurious results.
+///
+/// For explanation how to interpret and work with the output .csv file produced by these
+/// tools, see comment on
+///
+///   WriteOwnersDiffToCsv
+///
+/// Related work:
+/// Enable the new, regex-based, wildcard-supporting CODEOWNERS matcher
+/// https://github.com/Azure/azure-sdk-tools/pull/5088
 /// </summary>
 [TestFixture(Ignore = "Tools to be used manually")]
 public class CodeownersManualAnalysisTests
 {
-    private const string DefaultIgnoredPathPrefixes = Program.DefaultIgnoredPrefixes;
     private const string OwnersDiffOutputPathSuffix = "_owners_diff.csv";
     private const string OwnersDataOutputPathSuffix = "_owners.csv";
 
-    // All these paths assume that appropriate repositories are cloned into the same local
-    // directory as "azure-sdk-tools" repo, containing this logic.
-    // So the dir layout is like:
-    // <commonParent>/azure-sdk-tools/
-    // <commonParent>/azure-sdk-for-net/
-    // <commonParent>/azure-sdk-for-java/
-    // <commonParent>/azure-sdk-for-.../
-    // ...
-    private const string AzureSdkForNetTargetDirPathSuffix = "/../azure-sdk-for-net";
-    private const string AzureSdkForPythonTargetDirPathSuffix = "/../azure-sdk-for-python";
-    // TODO: add more repos here.
+    /// <summary>
+    /// Given name of the language langName, returns path to a local clone of "azure-sdk-for-langName"
+    /// repository.
+    ///
+    /// This method assumes you have ensured the local clone is present at appropriate path ahead of time.
+    ///
+    /// </summary>
+    private static string LangRepoTargetDirPathSuffix(string langName) => "/../azure-sdk-for-" + langName;
 
     private const string CodeownersFilePathSuffix = "/.github/CODEOWNERS";
 
-    // Current dir, ".", is "/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0".
+    // Current dir, ".", is expected to be a dir in local clone of Azure/azure-sdk-tools repo,
+    // where "." denotes "<cloneRoot>/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0".
     private const string CurrentDir = "/artifacts/bin/Azure.Sdk.Tools.CodeOwnersParser.Tests/Debug/net6.0";
     
-    #region Owners diff
+    #region Tests - Owners data
 
-    [Test]
-    public void WriteToFileCodeownersMatcherDiffForAzureSdkTools()
-    {
-        // Empty string here means to just use the root directory of the local "azure-sdk-tools" clone.
-        var targetDirPathSuffix = ""; 
-        var codeownersPathSuffix = CodeownersFilePathSuffix;
-        var ignoredPrefixes = ".git|artifacts";
-        WriteToFileOwnersDiff(new[]
-        {
-            (targetDirPathSuffix, codeownersPathSuffix, ignoredPrefixes, useRegexMatcher: false),
-            (targetDirPathSuffix, codeownersPathSuffix, ignoredPrefixes, useRegexMatcher: true)
-        }, outputFilePrefix: "azure-sdk-tools");
-    }
+    [Test] // Runtime <1s
+    public void OwnersForAzureDev()
+        => WriteOwnersToCsv(
+            targetDirPathSuffix: "/../azure-dev",
+            outputFileNamePrefix: "azure-dev",
+            ignoredPathPrefixes: ".git|artifacts");
 
-    [Test]
-    public void WriteToFileCodeownersMatcherDiffForAzureSdkForNet()
-    {
-        WriteToFileOwnersDiff(
-            new[]
-            {
-                (AzureSdkForNetTargetDirPathSuffix, CodeownersFilePathSuffix,
-                    DefaultIgnoredPathPrefixes, useRegexMatcher: false),
-                (AzureSdkForNetTargetDirPathSuffix, CodeownersFilePathSuffix,
-                    DefaultIgnoredPathPrefixes, useRegexMatcher: true)
-            },
-            outputFilePrefix: "azure-sdk-for-net");
-    }
+    // @formatter:off
+    [Test] public void OwnersForAzureSdkForAndroid() => WriteLangRepoOwnersToCsv("android"); // Runtime <1s
+    [Test] public void OwnersForAzureSdkForC()       => WriteLangRepoOwnersToCsv("c");       // Runtime <1s
+    [Test] public void OwnersForAzureSdkForCpp()     => WriteLangRepoOwnersToCsv("cpp");     // Runtime <1s
+    [Test] public void OwnersForAzureSdkForGo()      => WriteLangRepoOwnersToCsv("go");      // Runtime <1s
+    [Test] public void OwnersForAzureSdkForIos()     => WriteLangRepoOwnersToCsv("ios");     // Runtime <1s
+    [Test] public void OwnersForAzureSdkForJava()    => WriteLangRepoOwnersToCsv("java");    // Runtime ~1m 11s
+    [Test] public void OwnersForAzureSdkForJs()      => WriteLangRepoOwnersToCsv("js");      // Runtime ~1m 53s
+    [Test] public void OwnersForAzureSdkForNet()     => WriteLangRepoOwnersToCsv("net");     // Runtime ~30s
+    [Test] public void OwnersForAzureSdkForPython()  => WriteLangRepoOwnersToCsv("python");  // Runtime ~20s
+    // @formatter:on
 
-    [Test]
-    public void WriteToFileWildcardRemovalDiffForAzureSdkForPython()
-    {
-        string codeownersCopyPathSuffix = CreateCodeownersCopyWithPathDeletion(
-            AzureSdkForPythonTargetDirPathSuffix,
-            CodeownersFilePathSuffix,
-            pathsToDelete: new[] {"/**/tests.yml", "/**/ci.yml"});
-
-        WriteToFileOwnersDiff(
-            new[]
-            {
-                (AzureSdkForPythonTargetDirPathSuffix, CodeownersFilePathSuffix,
-                    DefaultIgnoredPathPrefixes, useRegexMatcher: true),
-                (AzureSdkForPythonTargetDirPathSuffix, codeownersCopyPathSuffix,
-                    DefaultIgnoredPathPrefixes, useRegexMatcher: true)
-            },
-            outputFilePrefix: "azure-sdk-for-python");
-    }
+    [Test] // Runtime <1s
+    public void OwnersForAzureSdkTools()
+        => WriteOwnersToCsv(
+            targetDirPathSuffix: "",
+            outputFileNamePrefix: "azure-sdk-tools",
+            ignoredPathPrefixes: ".git|artifacts");
 
     #endregion
-    
-    #region Owners data
+
+    #region Tests - Owners diffs for CODEOWNERS with /**/ci.yml and /**/tests.yml paths deleted
+
+    // https://github.com/Azure/azure-sdk-for-android/blob/main/.github/CODEOWNERS
+    // No build failure notifications are configured for this repo.
+    // Runtime: <1s
+    [Test] 
+    public void OwnersDiffForAzureSdkForAndroid() 
+        => WriteLangRepoOwnersDiffToCsv("android", pathsToDelete: new []{ "/**/ci.yml" });
+
+    // https://github.com/Azure/azure-sdk-for-c/blob/main/.github/CODEOWNERS
+    // Runtime: <1s
+    [Test] 
+    public void OwnersDiffForAzureSdkForC() 
+        => WriteLangRepoOwnersDiffToCsv("c", pathsToDelete: new []{ "/**/ci.yml" });
+
+    // https://github.com/Azure/azure-sdk-for-cpp/blob/main/.github/CODEOWNERS
+    // Runtime: <1s
+    [Test] 
+    public void OwnersDiffForAzureSdkForCpp() 
+        => WriteLangRepoOwnersDiffToCsv("cpp", pathsToDelete: new []{ "/**/ci.yml", "/**/tests.yml" });
+
+    // https://github.com/Azure/azure-sdk-for-go/blob/main/.github/CODEOWNERS
+    // Runtime: ~2s
+    [Test] 
+    public void OwnersDiffForAzureSdkForGo() 
+        => WriteLangRepoOwnersDiffToCsv("go", pathsToDelete: new []{ "/**/ci.yml", "/**/tests.yml" });
+
+    // https://github.com/Azure/azure-sdk-for-ios/blob/main/.github/CODEOWNERS
+    // No build failure notifications are configured for this repo.
+    // Runtime: <1s
+    [Test] 
+    public void OwnersDiffForAzureSdkForIos() 
+        => WriteLangRepoOwnersDiffToCsv("ios", pathsToDelete: new []{ "/**/ci.yml" });
+
+    // https://github.com/Azure/azure-sdk-for-java/blob/main/.github/CODEOWNERS
+    // Runtime: ~2m 32s
+    [Test] 
+    public void OwnersDiffForAzureSdkForJava() 
+        => WriteLangRepoOwnersDiffToCsv("java", pathsToDelete: new []{ "/**/ci.yml", "/**/tests.yml" });
+
+    // https://github.com/Azure/azure-sdk-for-js/blob/main/.github/CODEOWNERS
+    // Runtime: ~3m 49s
+    [Test] 
+    public void OwnersDiffForAzureSdkForJs() 
+        => WriteLangRepoOwnersDiffToCsv("js", pathsToDelete: new []{ "/**/ci.yml", "/**/tests.yml" });
+
+    // https://github.com/Azure/azure-sdk-for-net/blob/main/.github/CODEOWNERS
+    // These pathsToDelete have been since deleted by this PR:
+    // https://github.com/Azure/azure-sdk-for-net/pull/33595
+    // Runtime: ~1m 01s
+    [Test] 
+    public void OwnersDiffForAzureSdkForNet() 
+        => WriteLangRepoOwnersDiffToCsv("net", pathsToDelete: new []{ "/**/ci.yml", "/**/tests.yml" });
+
+    // https://github.com/Azure/azure-sdk-for-python/blob/main/.github/CODEOWNERS
+    // Runtime: ~45s
+    [Test]
+    public void OwnersDiffForAzureSdkForPython() 
+        => WriteLangRepoOwnersDiffToCsv("python", pathsToDelete: new []{ "/**/ci.yml", "/**/tests.yml" });
+
+    #endregion
+
+    #region Tests - Owners diffs for the prefix-based vs regex-based CODEOWNERS matchers
 
     [Test]
-    public void WriteToFileRegexMatcherCodeownersForAzureSdkTools()
-    {
-        // Empty string here means to just use the root directory of the local "azure-sdk-tools" clone.
-        var targetDirPathSuffix = ""; 
-        var codeownersPathSuffix = "/.github/CODEOWNERS";
-        var ignoredPrefixes = ".git|artifacts";
-        WriteToFileOwnersData(
+    public void MatcherDiffForAzureSdkTools()
+        => WriteMatcherDiffToCsv(
+            // Empty string here means to just use the root directory of the local "azure-sdk-tools" clone,
+            // which is supposed to contain the code you are reading right now.
+            targetDirPathSuffix: "",
+            outputFilePrefix: "azure-sdk-tools",
+            ignoredPathPrefixes: ".git|artifacts");
+
+    [Test] // Runtime: ~1m 30s
+    public void MatcherDiffForAzureSdkForNet()
+        => WriteMatcherDiffToCsv(
+            targetDirPathSuffix: LangRepoTargetDirPathSuffix("net"),
+            outputFilePrefix: "azure-sdk-for-net");
+
+    #endregion
+
+    #region Parameterized tests - Owners
+
+    private void WriteLangRepoOwnersToCsv(string langName)
+        => WriteOwnersToCsv(
+            targetDirPathSuffix: LangRepoTargetDirPathSuffix(langName),
+            outputFileNamePrefix: $"azure-sdk-for-{langName}",
+            ignoredPathPrefixes: ".git|artifacts");
+
+    private void WriteOwnersToCsv(
+        string targetDirPathSuffix,
+        string outputFileNamePrefix,
+        string ignoredPathPrefixes = Program.DefaultIgnoredPrefixes)
+        => WriteOwnersToCsv(
             targetDirPathSuffix,
-            codeownersPathSuffix,
-            ignoredPrefixes,
-            useRegexMatcher: true,
-            outputFilePrefix: "azure-sdk-tools");
-    }
-
-    [Test]
-    public void WriteToFileRegexMatcherCodeownersForAzureSdkForNet()
-        => WriteToFileOwnersData(
-            AzureSdkForNetTargetDirPathSuffix,
             CodeownersFilePathSuffix,
-            DefaultIgnoredPathPrefixes,
+            ignoredPathPrefixes,
             useRegexMatcher: true,
-            outputFilePrefix: "azure-sdk-for-net");
-
-    [Test]
-    public void WriteToFileRegexMatcherCodeownersForAzureSdkForPython()
-        => WriteToFileOwnersData(
-            AzureSdkForPythonTargetDirPathSuffix,
-            CodeownersFilePathSuffix,
-            DefaultIgnoredPathPrefixes,
-            useRegexMatcher: true,
-            outputFilePrefix: "azure-sdk-for-python");
+            outputFileNamePrefix);
 
     #endregion
 
-    private static void WriteToFileOwnersData(
+    #region Parameterized tests - Owners diff
+
+    private void WriteLangRepoOwnersDiffToCsv(string langName, params string[] pathsToDelete)
+        => WriteOwnersDiffToCsv(
+            targetDirPathSuffix: LangRepoTargetDirPathSuffix(langName),
+            outputFileNamePrefix: $"azure-sdk-for-{langName}",
+            pathsToDelete,
+            ignoredPathPrefixes: ".git|artifacts");
+
+    /// <summary>
+    /// This method is an invocation of:
+    ///
+    ///     WriteOwnersDiffToCsv
+    ///
+    /// with following meanings bound to LEFT and RIGHT:
+    ///
+    /// LEFT: RetrieveCodeowners configuration using the the new regex-based wildcard-supporting matcher,
+    /// and given input repository CODEOWNERS file.
+    ///
+    /// RIGHT: RetrieveCodeowners configuration using the the new regex-based wildcard-supporting matcher
+    /// (same as for LEFT), and given input repository CODEOWNERS file with 'pathsToDelete' paths deleted from it.
+    ///
+    /// As such, it is useful to determine how owners will change if paths like "/**/ci.yml" or "/**/tests.yml"
+    /// are deleted from the CODEOWNERS file.
+    /// Such owners change will naturally affect both auto-assigned PR reviewers,
+    /// as well as recipients of build failure notifications.
+    /// </summary>
+    private void WriteOwnersDiffToCsv(
+        string targetDirPathSuffix,
+        string outputFileNamePrefix,
+        string[] pathsToDelete,
+        string ignoredPathPrefixes = Program.DefaultIgnoredPrefixes)
+    {
+        (string codeownersCopyPath, string codeownersCopyPathSuffix) = CreateCodeownersCopyWithPathsDeleted(
+            targetDirPathSuffix,
+            CodeownersFilePathSuffix,
+            pathsToDelete);
+
+        try
+        {
+            WriteOwnersDiffToCsv(
+                new[]
+                {
+                    (targetDirPathSuffix, CodeownersFilePathSuffix, ignoredPathPrefixes, useRegexMatcher: true),
+                    (targetDirPathSuffix, codeownersCopyPathSuffix, ignoredPathPrefixes, useRegexMatcher: true)
+                },
+                outputFileNamePrefix);
+        }
+        finally
+        {
+            if (File.Exists(codeownersCopyPath))
+                File.Delete(codeownersCopyPath);
+        }
+    }
+
+    /// <summary>
+    /// This method is an invocation of:
+    ///
+    ///     WriteOwnersDiffToCsv
+    ///
+    /// with following meanings bound to LEFT and RIGHT:
+    ///
+    /// LEFT: RetrieveCodeowners configuration using given input repository CODEOWNERS file,
+    /// and using the legacy prefix-based CODEOWNERS paths matcher.
+    ///
+    /// RIGHT: RetrieveCodeowners configuration using given input repository CODEOWNERS file,
+    /// and using the new regex-based wildcard-supporting matcher.
+    /// prefix-based CODEOWNERS paths matcher.
+    ///
+    /// As such, this method is useful for determining how build failure notification
+    /// recipients will change once the new matcher is enabled.
+    /// The PR reviewers will remain unchanged, as they use the GitHub CODEOWNERS
+    /// interpreter which independent of ours and always supported wildcards.
+    /// </summary>
+    private void WriteMatcherDiffToCsv(
+        string targetDirPathSuffix,
+        string outputFilePrefix,
+        string ignoredPathPrefixes = Program.DefaultIgnoredPrefixes)
+    {
+        WriteOwnersDiffToCsv(
+            new[]
+            {
+                (targetDirPathSuffix, CodeownersFilePathSuffix, ignoredPathPrefixes, useRegexMatcher: false),
+                (targetDirPathSuffix, CodeownersFilePathSuffix, ignoredPathPrefixes, useRegexMatcher: true)
+            },
+            outputFilePrefix);
+    }
+
+    #endregion
+
+    #region private static
+
+    /// <summary>
+    /// This method is similar to:
+    ///
+    ///     WriteOwnersDiffToCsv
+    ///
+    /// Except it is not doing any diffing: it just evaluates one invocation of
+    /// Azure.Sdk.Tools.RetrieveCodeOwners.Program.Main
+    /// and returns its information, in similar, but simplified table format.
+    ///
+    /// If given path, provided in column PATH, did not match any path in CODEOWNERS file,
+    /// the column PATH EXPRESSION will have a value of _____ .
+    ///
+    /// In addition, this method also does an validation of CODEOWNERS paths
+    /// and if it find a problem with given path, it returns output lines with ISSUE column
+    /// populated and PATH column empty, as there is no path to speak of - only CODEOWNERS path,
+    /// provided in PATH EXPRESSION column, is present.
+    ///
+    /// The ISSUE column has following codes:
+    ///
+    ///   INVALID_PATH_SHOULD_START_WITH_SLASH
+    ///     All CODEOWNERS paths must start with "/", but given path doesn't.
+    ///     Such path will still be processed by our CODEOWNERS interpreter, but nevertheless it is
+    ///     invalid and should be fixed.
+    /// 
+    ///   INVALID_PATH_SHOULD_HAVE_SUFFIX_SLASH_TO_DENOTE_DIR
+    ///     CODEOWNERS file contains a simple (i.e. without wildcards) path that is expected to match against
+    ///     a file, as it does not end with "/". However, the repository contains a directory with the same
+    ///     path. This means such CODEOWNERS path will never match any input path. Usually the proper fix
+    ///     is to add the missing suffix "/" to the path to make it correctly match against the existing directory.
+    /// 
+    ///   WILDCARD_FILE_PATH_NEEDS_MANUAL_EVAL
+    ///     Same situation as above, but the CODEOWNERS path is a file path with a wildcard, hence current
+    ///     validation implementation cannot yet determine if it should be a path to directory or not.
+    ///     Hence, this needs to be checked manually by ensuring that the wildcard file path matches
+    ///     at least one file in the repository.
+    /// </summary>
+    private static void WriteOwnersToCsv(
         string targetDirPathSuffix, 
-        string codeownersPathSuffix, 
+        string codeownersFilePathSuffix, 
         string ignoredPrefixes, 
         bool useRegexMatcher,
         string outputFilePrefix)
@@ -149,14 +329,14 @@ public class CodeownersManualAnalysisTests
         string rootDir = PathNavigatingToRootDir(CurrentDir);
         string targetDir = rootDir + targetDirPathSuffix;
         
-        Dictionary<string, CodeownersEntry> ownersData = RunMain(
+        Dictionary<string, CodeownersEntry> ownersData = RetrieveCodeowners(
             targetDirPathSuffix,
-            codeownersPathSuffix,
+            codeownersFilePathSuffix,
             ignoredPrefixes,
             useRegexMatcher);
 
         List<string> outputLines =
-            new List<string> { "PATH | PATH EXPRESSION | COMMA-SEPARATED OWNERS" };
+            new List<string> { "PATH | PATH EXPRESSION | OWNERS | ISSUE" };
         foreach (KeyValuePair<string, CodeownersEntry> kvp in ownersData)
         {
             string path = kvp.Key;
@@ -167,7 +347,7 @@ public class CodeownersManualAnalysisTests
                 $"| {string.Join(",", entry.Owners)}");
         }
 
-        WriteToFileMissingSuffixSlashesForDirPaths(targetDir, codeownersPathSuffix, outputLines);
+        outputLines.AddRange(LinesWithIssues(targetDir, codeownersFilePathSuffix));
 
         var outputFilePath = outputFilePrefix + OwnersDataOutputPathSuffix;
         File.WriteAllLines(outputFilePath, outputLines);
@@ -176,13 +356,32 @@ public class CodeownersManualAnalysisTests
                           $"Time taken: {stopwatch.Elapsed}.");
     }
 
-    private static void WriteToFileMissingSuffixSlashesForDirPaths(
+    // Possible future work:
+    // instead of returning lines with issues, consider returning the  modified & fixed CODEOWNERS file. 
+    // It could work by reading all the lines, then replacing the wrong
+    // lines by using dict replacement. Need to be careful about retaining spaces to not misalign,
+    // e.g.
+    // "sdk/  @own1" --> "/sdk/ @own1" // space removed to keep alignment
+    // but also:
+    // "sdk/ @own1" --> "/sdk/ @own1" // space not removed, because it would be invalid.
+    private static List<string> LinesWithIssues(
         string targetDir,
-        string codeownersPathSuffix,
-        List<string> outputLines)
+        string codeownersPathSuffix)
     {
+        List<string> outputLines = new List<string>();
         List<CodeownersEntry> entries =
-            CodeownersFile.GetCodeownersEntriesFromFileOrUrl(targetDir + codeownersPathSuffix);
+            CodeownersFile.GetCodeownersEntriesFromFileOrUrl(targetDir + codeownersPathSuffix)
+                .Where(entry => !entry.PathExpression.StartsWith("#"))
+                .ToList();
+
+        foreach (CodeownersEntry entry in entries.Where(entry => !entry.PathExpression.StartsWith("/")))
+        {
+            outputLines.Add(
+                "|" +
+                $"{entry.PathExpression} " +
+                $"| {string.Join(",", entry.Owners)}" +
+                "| INVALID_PATH_SHOULD_START_WITH_SLASH");
+        }
 
         foreach (CodeownersEntry entry in entries.Where(entry => !entry.PathExpression.EndsWith("/")))
         {
@@ -195,9 +394,10 @@ public class CodeownersManualAnalysisTests
                 // For example, /a/**/b could match against /a/foo/b/c, meaning
                 // the path is invalid.
                 outputLines.Add(
+                    "|" +
                     $"{entry.PathExpression} " +
-                    $"| WILDCARD_PATH_NEEDS_MANUAL_EVAL " +
-                    $"| {string.Join(",", entry.Owners)}");
+                    $"| {string.Join(",", entry.Owners)}" +
+                    "| WILDCARD_FILE_PATH_NEEDS_MANUAL_EVAL");
             }
             else
             {
@@ -207,17 +407,20 @@ public class CodeownersManualAnalysisTests
 
                 if (Directory.Exists(pathToDir))
                     outputLines.Add(
+                        "|" +
                         $"{entry.PathExpression} " +
-                        $"| INVALID_PATH_SHOULD_HAVE_SUFFIX_SLASH_TO_DENOTE_DIR " +
-                        $"| {string.Join(",", entry.Owners)}");
+                        $"| {string.Join(",", entry.Owners)}" +
+                        "| INVALID_PATH_SHOULD_HAVE_SUFFIX_SLASH_TO_DENOTE_DIR");
             }
         }
+        return outputLines;
     }
 
-    private string CreateCodeownersCopyWithPathDeletion(
-        string targetDirPathSuffix,
-        string codeownersFilePathSuffix,
-        string[] pathsToDelete)
+    private static (string codeownersCopy, string codeownersCopyPathSuffix)
+        CreateCodeownersCopyWithPathsDeleted(
+            string targetDirPathSuffix,
+            string codeownersFilePathSuffix,
+            string[] pathsToDelete)
     {
         string rootDir = PathNavigatingToRootDir(CurrentDir);
         string targetDir = rootDir + targetDirPathSuffix;
@@ -229,26 +432,75 @@ public class CodeownersManualAnalysisTests
 
         var codeownersCopyPath = codeownersPath + "-copy";
         File.WriteAllLines(codeownersCopyPath, codeownersLines);
-        return codeownersFilePathSuffix + "-copy";
+        return (codeownersCopyPath, codeownersFilePathSuffix + "-copy");
     }
 
-    private static void WriteToFileOwnersDiff((
-        string targetDirPathSuffix, 
-        string codeownersPathSuffix, 
-        string ignoredPrefixes, 
-        bool useRegexMatcher)[] input,
+    /// <summary>
+    /// Writes to .csv file the difference of owners for all paths in given repository,
+    /// between two invocations of Azure.Sdk.Tools.RetrieveCodeOwners.Program.Main,
+    /// denoted as LEFT and RIGHT. RetrieveCodeOwners.Program.Main method reads
+    /// all files in given input repository, and tries to find owners for them based on
+    /// CODEOWNERS matching configuration given as its parameters.
+    ///
+    /// You can import the test output into Excel, using .csv import wizard and
+    /// selecting "|" as column separator.
+    /// 
+    /// The resulting .csv file has following headers:
+    /// 
+    /// DIFF CODE | PATH | LEFT PATH EXPRESSION | RIGHT PATH EXPRESSION | LEFT OWNERS | RIGHT OWNERS
+    ///
+    /// where LEFT  denotes the RetrieveCodeOwners.Program.Main configuration as provided by input[0].
+    /// and   RIGHT denotes the RetrieveCodeOwners.Program.Main configuration as provided by input[1].
+    /// 
+    /// The columns have following values and meanings:
+    ///
+    /// DIFF CODE:
+    ///   PATH _____-RIGHT
+    ///     A file with given path, given in the column PATH, was not matched to any CODEOWNERS
+    ///     path when using the LEFT configuration but it was matched when using the RIGHT configuration.
+    ///
+    ///   PATH LEFT -_____
+    ///     Analogous to the case described above, but LEFT configuration has matched, and RIGHT didn't.
+    ///
+    ///   PATH _____-_____
+    ///     A file with given path did not match to any CODEOWNERS path, whether using the LEFT
+    ///     configuration or RIGHT configuration.
+    ///     Such file has effectively no owners assigned, no matter which configuration is used.
+    ///
+    ///   OWNERS DIFF
+    ///     A file with given path matched both when using LEFT and RIGHT configurations, but
+    ///     the CODEOWNERS path to which it matched has different set of owners.
+    ///
+    /// PATH:
+    ///     A path to the file being matched against CODEOWNERS path to determine owners.
+    ///
+    ///  LEFT PATH EXPRESSION:
+    /// RIGHT PATH EXPRESSION:
+    ///     A CODEOWNERS path that matched to PATH when using LEFT (or RIGHT, respectively) configuration.
+    ///
+    ///  LEFT OWNERS:
+    /// RIGHT OWNERS:
+    ///     The owners assigned to given LEFT PATH EXPRESSION (or RIGHT PATH EXPRESSION, respectively).
+    /// </summary>
+    private static void WriteOwnersDiffToCsv(
+        (
+            string targetDirPathSuffix,
+            string codeownersFilePathSuffix,
+            string ignoredPrefixes,
+            bool useRegexMatcher
+            )[] input,
         string outputFilePrefix)
     {
         var stopwatch = Stopwatch.StartNew();
 
-        Dictionary<string, CodeownersEntry> leftOwners = RunMain(
+        Dictionary<string, CodeownersEntry> leftOwners = RetrieveCodeowners(
             input[0].targetDirPathSuffix,
-            input[0].codeownersPathSuffix,
+            input[0].codeownersFilePathSuffix,
             input[0].ignoredPrefixes,
             input[0].useRegexMatcher);
-        Dictionary<string, CodeownersEntry> rightOwners = RunMain(
+        Dictionary<string, CodeownersEntry> rightOwners = RetrieveCodeowners(
             input[1].targetDirPathSuffix,
-            input[1].codeownersPathSuffix,
+            input[1].codeownersFilePathSuffix,
             input[1].ignoredPrefixes,
             input[1].useRegexMatcher);
 
@@ -261,14 +513,17 @@ public class CodeownersManualAnalysisTests
                           $"Time taken: {stopwatch.Elapsed}.");
     }
 
-    private static Dictionary<string, CodeownersEntry> RunMain(
+    private static Dictionary<string, CodeownersEntry> RetrieveCodeowners(
         string targetDirPathSuffix,
-        string codeownersPathSuffixToRootDir,
+        string codeownersFilePathSuffixToRootDir,
         string ignoredPathPrefixes,
         bool useRegexMatcher)
     {
         string rootDir = PathNavigatingToRootDir(CurrentDir);
         string targetDir = rootDir + targetDirPathSuffix;
+        string codeownersFilePath = targetDir + codeownersFilePathSuffixToRootDir;
+        Debug.Assert(Directory.Exists(targetDir));
+        Debug.Assert(File.Exists(codeownersFilePath));
 
         string actualOutput, actualErr;
         int returnCode;
@@ -277,8 +532,11 @@ public class CodeownersManualAnalysisTests
             // Act
             returnCode = Program.Main(
                 targetPath: "/**",
-                codeownersFilePathOrUrl: targetDir + codeownersPathSuffixToRootDir,
-                excludeNonUserAliases: true, // true because of Contacts.GetMatchingCodeownersEntry() calls ExcludeNonUserAliases().
+                codeownersFilePath,
+                // false because we want to see the full owners diff, but observe that
+                // for the build failure notification recipients determination it should be true,
+                // because Contacts.GetMatchingCodeownersEntry() calls ExcludeNonUserAliases().
+                excludeNonUserAliases: false, 
                 targetDir,
                 ignoredPathPrefixes,
                 useRegexMatcher);
@@ -361,4 +619,6 @@ public class CodeownersManualAnalysisTests
 
         return outputLines.ToArray();
     }
+
+    #endregion
 }

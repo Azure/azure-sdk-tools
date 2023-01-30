@@ -75,7 +75,10 @@ internal class Contacts
             "Searching CODEOWNERS for matching path for '{buildDefinitionFilePath}'",
             buildDefinitionFilePath);
 
-        CodeownersEntry matchingCodeownersEntry = GetMatchingCodeownersEntry(yamlProcess, codeownersEntries);
+        CodeownersEntry matchingCodeownersEntry = GetMatchingCodeownersEntry(
+            yamlProcess,
+            codeownersEntries,
+            repoUrl.ToString());
         List<string> contacts = matchingCodeownersEntry.Owners;
 
         this.log.LogInformation(
@@ -94,7 +97,7 @@ internal class Contacts
 
         if (!string.IsNullOrEmpty(repoUrl?.ToString()))
         {
-            repoUrl = new Uri(Regex.Replace(repoUrl.ToString(), @"\.git$", String.Empty));
+            repoUrl = new Uri(Regex.Replace(repoUrl.ToString(), @"\.git$", string.Empty));
         }
         else
         {
@@ -109,14 +112,45 @@ internal class Contacts
         return repoUrl;
     }
 
-
-    private CodeownersEntry GetMatchingCodeownersEntry(YamlProcess process, List<CodeownersEntry> codeownersEntries)
+    private CodeownersEntry GetMatchingCodeownersEntry(
+        YamlProcess process,
+        List<CodeownersEntry> codeownersEntries,
+        string repoUrl)
     {
         CodeownersEntry matchingCodeownersEntry =
-            CodeownersFile.GetMatchingCodeownersEntry(process.YamlFilename, codeownersEntries);
+            CodeownersFile.GetMatchingCodeownersEntry(
+                process.YamlFilename,
+                codeownersEntries,
+                UseRegexMatcher(repoUrl));
 
         matchingCodeownersEntry.ExcludeNonUserAliases();
 
         return matchingCodeownersEntry;
+    }
+
+    /// <summary>
+    /// Whether the new regex-based CODEOWNERS matcher that supports wildcards should be used
+    /// for given repository. This method exists to allow incremental roll-out
+    /// of the new matcher [1].
+    ///
+    /// Note that enabling the new matcher will not change the reviewers assigned to
+    /// PRs, because this is handled by built-in GitHub matcher. 
+    /// But it will change who receives build failure notifications.
+    ///
+    /// [1] https://github.com/Azure/azure-sdk-tools/pull/5088
+    /// </summary>
+    private bool UseRegexMatcher(string repoUrl)
+    {
+        // Expected repoUrl: https://github.com/Azure/azure-sdk-for-net
+        if (repoUrl.Contains("azure-sdk-for-net"))
+        {
+            // Work that was done to facilitate enabling the matcher in this repo:
+            // https://github.com/Azure/azure-sdk-for-net/pull/33584 - Fix invalid paths in CODEOWNERS
+            // https://github.com/Azure/azure-sdk-for-net/pull/33595 - Remove CODEOWNERS rules /**/ci.yml and /**/tests.yml
+            // https://github.com/Azure/azure-sdk-for-net/pull/33597 - Add missing /sdk/<dir> rules
+            return true;
+        }
+
+        return false;
     }
 }

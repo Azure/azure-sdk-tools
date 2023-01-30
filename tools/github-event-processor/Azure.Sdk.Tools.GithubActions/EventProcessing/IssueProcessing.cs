@@ -120,11 +120,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
         /// <summary>
         /// Service Attention https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#service-attention
-        /// This does not use issue update, it creates a comment
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Label being added is "Service Attention"
-        /// Resulting Action: Add issue comment
+        /// Resulting Action: Add issue comment "Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc ${mentionees}."
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated gitHubEventClient</param>
         /// <param name="issueEventPayload">Issue event payload</param>
@@ -139,16 +138,25 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     if (issueEventPayload.Issue.State == ItemState.Open &&
                         issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention))
                     {
-                        string partiesToMention = CodeOwnerUtils.GetPartiesToMentionForServiceAttention(issueEventPayload.Issue.Labels);
-                        if (null != partiesToMention)
+                        // Before bothering to fetch parties to mention from the CodeOwners file, ensure that ServiceAttention
+                        // isn't the only label on the issue.
+                        if (issueEventPayload.Issue.Labels.Count > 1)
                         {
-                            string issueComment = $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc ${partiesToMention}.";
-                            gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
+                            string partiesToMention = CodeOwnerUtils.GetPartiesToMentionForServiceAttention(issueEventPayload.Issue.Labels);
+                            if (null != partiesToMention)
+                            {
+                                string issueComment = $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc ${partiesToMention}.";
+                                gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
+                            }
+                            else
+                            {
+                                // If there are no codeowners found then output the issue URL so it's in the logs for the event
+                                Console.WriteLine($"There were no parties to mention for issue: {issueEventPayload.Issue.Url}");
+                            }
                         }
                         else
                         {
-                            // If there are no codeowners found then output the issue URL so it's in the logs for the event
-                            Console.WriteLine($"There were no parties to mention for issue: {issueEventPayload.Issue.Url}");
+                            Console.WriteLine($"{LabelConstants.ServiceAttention} is the only label on the issue. Other labels are required in order to get parties to mention from the Codeowners file.");
                         }
                     }
                 }
@@ -157,12 +165,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
         /// <summary>
         /// CXP Attention https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#cxp-attention
-        /// This does not use issue update, it creates a comment.
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Label being added is "CXP-Attention"
         ///             Does not have "Service-Attention" label
-        /// Resulting Action: Add issue comment
+        /// Resulting Action: Add issue comment "Thank you for your feedback.  This has been routed to the support team for assistance."
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated gitHubEventClient</param>
         /// <param name="issueEventPayload">Issue event payload</param>
@@ -204,7 +211,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     if (issueEventPayload.Issue.State == ItemState.Open &&
                     LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.CustomerReported) &&
                     (issueEventPayload.Label.Name.Equals(LabelConstants.CXPAttention) ||
-                     issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention)))
+                     issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention)) &&
+                     !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage))
                     {
                         var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
                         issueUpdate.AddLabel(LabelConstants.NeedsTeamTriage);
@@ -310,10 +318,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (issueEventPayload.Action == ActionConstants.Labeled)
                 {
                     if (issueEventPayload.Issue.State == ItemState.Open &&
-                        issueEventPayload.Label.Name == LabelConstants.NeedsAuthorFeedback)
+                        issueEventPayload.Label.Name == LabelConstants.NeedsAuthorFeedback &&
+                        // Any of these labels will be removed if they exist on the Issue. If none exist then
+                        // there's nothing to do.
+                        (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTriage) ||
+                         LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage) ||
+                         LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamAttention)))
                     {
                         var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
-                        issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
+                        issueUpdate.RemoveLabel(LabelConstants.NeedsTriage);
+                        issueUpdate.RemoveLabel(LabelConstants.NeedsTeamTriage);
+                        issueUpdate.RemoveLabel(LabelConstants.NeedsTeamAttention);
                     }
                 }
             }
@@ -323,7 +338,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Issue Addressed https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#issue-addressed
         /// Trigger: issue labeled
         /// Conditions: Issue is open
-        ///             Label added is "needs-author-feedback"
+        ///             Label added is "issue-addressed"
         /// Resulting Action: 
         ///     Remove "needs-triage" label
         ///     Remove "needs-team-triage" label
@@ -341,13 +356,22 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (issueEventPayload.Action == ActionConstants.Labeled)
                 {
                     if (issueEventPayload.Issue.State == ItemState.Open &&
-                        issueEventPayload.Label.Name == LabelConstants.NeedsAuthorFeedback)
+                        issueEventPayload.Label.Name == LabelConstants.IssueAddressed)
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
-                        issueUpdate.RemoveLabel(LabelConstants.NeedsTriage);
-                        issueUpdate.RemoveLabel(LabelConstants.NeedsTeamAttention);
-                        issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
-                        issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                        // Don't bother creating the issue update unless at least one of the labels
+                        // to be removed exists on the issue
+                        if (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTriage) ||
+                            LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamAttention) ||
+                            LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback) ||
+                            LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NoRecentActivity))
+                        {
+                            var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
+                            issueUpdate.RemoveLabel(LabelConstants.NeedsTriage);
+                            issueUpdate.RemoveLabel(LabelConstants.NeedsTeamAttention);
+                            issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
+                            issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                        }
+                        // The comment is always created
                         string issueComment = $"Hi {issueEventPayload.Issue.User.Login}.  Thank you for opening this issue and giving us the opportunity to assist.  We believe that this has been addressed.  If you feel that further discussion is needed, please add a comment with the text \"/unresolve\" to remove the \"issue-addressed\" label and continue the conversation.";
                         gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
                     }

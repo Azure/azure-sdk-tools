@@ -76,7 +76,7 @@ public class CodeownersManualAnalysisTests
     [Test] public void OwnersForAzureSdkForJava()    => WriteLangRepoOwnersToCsv("java");    // Runtime ~1m 11s
     [Test] public void OwnersForAzureSdkForJs()      => WriteLangRepoOwnersToCsv("js");      // Runtime ~1m 53s
     [Test] public void OwnersForAzureSdkForNet()     => WriteLangRepoOwnersToCsv("net");     // Runtime ~30s
-    [Test] public void OwnersForAzureSdkForPython()  => WriteLangRepoOwnersToCsv("python");  // Runtime ~20s
+    [Test] public void OwnersForAzureSdkForPython()  => WriteLangRepoOwnersToCsv("python");  // Runtime ~30s
     // @formatter:on
 
     [Test] // Runtime <1s
@@ -301,6 +301,10 @@ public class CodeownersManualAnalysisTests
     ///
     /// The ISSUE column has following codes:
     ///
+    ///   INVALID_PATH_CONTAINS_UNSUPPORTED_FRAGMENTS
+    ///     All CODEOWNERS paths must not contain unsupported path fragments, as defined by:
+    ///       Azure.Sdk.Tools.CodeOwnersParser.MatchedCodeownersEntry.ContainsUnsupportedFragments
+    /// 
     ///   INVALID_PATH_SHOULD_START_WITH_SLASH
     ///     All CODEOWNERS paths must start with "/", but given path doesn't.
     ///     Such path will still be processed by our CODEOWNERS interpreter, but nevertheless it is
@@ -317,6 +321,9 @@ public class CodeownersManualAnalysisTests
     ///     validation implementation cannot yet determine if it should be a path to directory or not.
     ///     Hence, this needs to be checked manually by ensuring that the wildcard file path matches
     ///     at least one file in the repository.
+    ///
+    /// Known limitation:
+    ///   If given CODEOWNERS path has no owners listed on its line, this method will not report such path as invalid.
     /// </summary>
     private static void WriteOwnersToCsv(
         string targetDirPathSuffix, 
@@ -347,7 +354,7 @@ public class CodeownersManualAnalysisTests
                 $"| {string.Join(",", entry.Owners)}");
         }
 
-        outputLines.AddRange(LinesWithIssues(targetDir, codeownersFilePathSuffix));
+        outputLines.AddRange(PathsWithIssues(targetDir, codeownersFilePathSuffix));
 
         var outputFilePath = outputFilePrefix + OwnersDataOutputPathSuffix;
         File.WriteAllLines(outputFilePath, outputLines);
@@ -364,7 +371,7 @@ public class CodeownersManualAnalysisTests
     // "sdk/  @own1" --> "/sdk/ @own1" // space removed to keep alignment
     // but also:
     // "sdk/ @own1" --> "/sdk/ @own1" // space not removed, because it would be invalid.
-    private static List<string> LinesWithIssues(
+    private static List<string> PathsWithIssues(
         string targetDir,
         string codeownersPathSuffix)
     {
@@ -374,15 +381,26 @@ public class CodeownersManualAnalysisTests
                 .Where(entry => !entry.PathExpression.StartsWith("#"))
                 .ToList();
 
-        foreach (CodeownersEntry entry in entries.Where(entry => !entry.PathExpression.StartsWith("/")))
-        {
-            outputLines.Add(
+        outputLines.AddRange(PathsWithMissingPrefixSlash(entries));
+        outputLines.AddRange(PathsWithMissingSuffixSlash(targetDir, entries));
+        outputLines.AddRange(PathsWithUnsupportedFragments(entries));
+
+        return outputLines;
+    }
+
+    private static List<string> PathsWithMissingPrefixSlash(List<CodeownersEntry> entries)
+        => entries
+            .Where(entry => !entry.PathExpression.StartsWith("/"))
+            .Select(entry =>
                 "|" +
                 $"{entry.PathExpression} " +
                 $"| {string.Join(",", entry.Owners)}" +
-                "| INVALID_PATH_SHOULD_START_WITH_SLASH");
-        }
+                "| INVALID_PATH_SHOULD_START_WITH_SLASH")
+            .ToList();
 
+    private static List<string> PathsWithMissingSuffixSlash(string targetDir, List<CodeownersEntry> entries)
+    {
+        List<string> outputLines = new List<string>();
         foreach (CodeownersEntry entry in entries.Where(entry => !entry.PathExpression.EndsWith("/")))
         {
             if (entry.ContainsWildcard)
@@ -415,6 +433,17 @@ public class CodeownersManualAnalysisTests
         }
         return outputLines;
     }
+
+    private static List<string> PathsWithUnsupportedFragments(List<CodeownersEntry> entries)
+        => entries
+            .Where(entry => MatchedCodeownersEntry.ContainsUnsupportedFragments(entry.PathExpression))
+            .Select(
+                entry =>
+                    "|" +
+                    $"{entry.PathExpression} " +
+                    $"| {string.Join(",", entry.Owners)}" +
+                    "| INVALID_PATH_CONTAINS_UNSUPPORTED_FRAGMENTS")
+            .ToList();
 
     private static (string codeownersCopy, string codeownersCopyPathSuffix)
         CreateCodeownersCopyWithPathsDeleted(

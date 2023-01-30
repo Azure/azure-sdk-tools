@@ -13,7 +13,7 @@ This file should live under the project directory for each service and has the f
 
 | Property | Description | IsRequired |
 | --- | --- | --- |
-| directory | The top level directory where the main.cadl for the serivce lives.  This should be relative to the spec repo root such as `specification/cognitiveservices/OpenAI.Inference` | true |
+| directory | The top level directory where the main.cadl for the service lives.  This should be relative to the spec repo root such as `specification/cognitiveservices/OpenAI.Inference` | true |
 | additionalDirectories | Sometimes a cadl file will use a relative import that might not be under the main directory.  In this case you can specify additional directories as a list to sync so that all needed files are synced. | false: default = null |
 | commit | The commit sha for the version of the cadl files you want to generate off of.  This allows us to have idempotence on generation until we opt into pointing at a later version. | true |
 | repo | The repo this spec lives in.  This should be either `Azure/azure-rest-api-specs` or `Azure/azure-rest-api-specs-pr`.  Note that pr will work locally but not in CI until we add another change to handle token based auth. | true |

@@ -23,7 +23,7 @@ pr:
 
 variables:
   ArtifactName: 'apiview'
-  VcpkgRelease: '2022.11.14'
+  VcpkgRelease: '2023.01.09'
 
 stages:
   - stage: 'Build'

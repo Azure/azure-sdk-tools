@@ -158,14 +158,14 @@ public class CodeownersManualAnalysisTests
             // Empty string here means to just use the root directory of the local "azure-sdk-tools" clone,
             // which is supposed to contain the code you are reading right now.
             targetDirPathSuffix: "",
-            outputFilePrefix: "azure-sdk-tools",
+            outputFilePrefix: "azure-sdk-tools_matcher",
             ignoredPathPrefixes: ".git|artifacts");
 
     [Test] // Runtime: ~1m 30s
     public void MatcherDiffForAzureSdkForNet()
         => WriteMatcherDiffToCsv(
             targetDirPathSuffix: LangRepoTargetDirPathSuffix("net"),
-            outputFilePrefix: "azure-sdk-for-net");
+            outputFilePrefix: "azure-sdk-for-net_matcher");
 
     #endregion
 

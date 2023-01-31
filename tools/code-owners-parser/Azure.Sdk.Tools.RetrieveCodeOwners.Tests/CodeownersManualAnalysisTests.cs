@@ -58,7 +58,7 @@ public class CodeownersManualAnalysisTests
     /// This file is expected to be manually created by you, in your local repo clone.
     /// For details of usage of this file, see:
     ///
-    ///   WriteTwoCodeownersFilesOwnersDiffToCsv
+    ///   WriteTwoCodeownersFilesAndMatcherOwnersDiffToCsv
     /// 
     /// </summary>
     private const string SecondaryCodeownersFilePathSuffix = "/.github/CODEOWNERS2";
@@ -97,7 +97,7 @@ public class CodeownersManualAnalysisTests
 
     #endregion
 
-    #region Tests - Owners diffs for CODEOWNERS with /**/ci.yml and /**/tests.yml paths deleted
+    #region Tests - Owners diffs for the prefix-based vs regex-based CODEOWNERS matchers, plus differing contents.
 
     // https://github.com/Azure/azure-sdk-for-android/blob/main/.github/CODEOWNERS
     // No build failure notifications are configured for this repo.
@@ -141,25 +141,6 @@ public class CodeownersManualAnalysisTests
 
     #endregion
 
-    #region Tests - Owners diffs for the prefix-based vs regex-based CODEOWNERS matchers
-
-    [Test]
-    public void MatcherDiffForAzureSdkTools()
-        => WriteMatcherOwnersDiffToCsv(
-            // Empty string here means to just use the root directory of the local "azure-sdk-tools" clone,
-            // which is supposed to contain the code you are reading right now.
-            targetDirPathSuffix: "",
-            outputFilePrefix: "azure-sdk-tools_matcher",
-            ignoredPathPrefixes: ".git|artifacts");
-
-    [Test] // Runtime: ~1m 30s
-    public void MatcherDiffForAzureSdkForNet()
-        => WriteMatcherOwnersDiffToCsv(
-            targetDirPathSuffix: LangRepoTargetDirPathSuffix("net"),
-            outputFilePrefix: "azure-sdk-for-net_matcher");
-
-    #endregion
-
     #region Parameterized tests - Owners
 
     private void WriteLangRepoOwnersToCsv(string langName)
@@ -194,7 +175,7 @@ public class CodeownersManualAnalysisTests
     #region Parameterized tests - Owners diff
 
     private void WriteLangRepoOwnersDiffToCsv(string langName, params string[] pathsToDelete)
-        => WriteTwoCodeownersFilesOwnersDiffToCsv(
+        => WriteTwoCodeownersFilesAndMatcherOwnersDiffToCsv(
             targetDirPathSuffix: LangRepoTargetDirPathSuffix(langName),
             outputFileNamePrefix: $"azure-sdk-for-{langName}",
             ignoredPathPrefixes: ".git|artifacts");
@@ -206,21 +187,21 @@ public class CodeownersManualAnalysisTests
     ///
     /// with following meanings bound to LEFT and RIGHT:
     ///
-    /// LEFT: RetrieveCodeowners configuration using the new regex-based wildcard-supporting matcher,
+    /// LEFT: RetrieveCodeowners configuration using the legacy prefix-based CODEOWNERS paths matcher,
     /// and given input local repository clone CODEOWNERS file.
     ///
-    /// RIGHT: RetrieveCodeowners configuration using the new regex-based wildcard-supporting matcher
-    /// (same as for LEFT), and given input repository CODEOWNERS2 file.
+    /// RIGHT: RetrieveCodeowners configuration using the new regex-based wildcard-supporting matcher,
+    /// and given input repository CODEOWNERS2 file, located beside CODEOWNERS file.
+    ///
     /// The CODEOWNERS2 file is expected to be created manually by you. This way you can diff CODEOWNERS
     /// to whatever version of it you want to express in CODEOWNERS2. For example, CODEOWNERS2 could have
     /// contents of CODEOWNERS as seen in an open PR pending being merged.
     ///
-    /// As such, it is useful to determine how owners will change if paths like "/**/ci.yml" or "/**/tests.yml"
-    /// are deleted from the CODEOWNERS file.
-    /// Such owners change will naturally affect both auto-assigned PR reviewers,
-    /// as well as recipients of build failure notifications.
+    /// Note that modifying or reordering existing paths may always impact which PR reviewers are auto-assigned,
+    /// but the build failure notification recipients (owners) changes apply only to paths that represent
+    /// build definition .yml files.
     /// </summary>
-    private void WriteTwoCodeownersFilesOwnersDiffToCsv(
+    private void WriteTwoCodeownersFilesAndMatcherOwnersDiffToCsv(
         string targetDirPathSuffix,
         string outputFileNamePrefix,
         string ignoredPathPrefixes = Program.DefaultIgnoredPrefixes)
@@ -229,63 +210,21 @@ public class CodeownersManualAnalysisTests
         string targetDir = rootDir + targetDirPathSuffix;
         Debug.Assert(Directory.Exists(targetDir),
             $"Ensure you have cloned the repo into '{targetDir}'. " +
-            "See comments on CodeownersManualAnalysisTests and WriteTwoCodeownersFilesOwnersDiffToCsv for details.");
+            "See comments on CodeownersManualAnalysisTests and WriteTwoCodeownersFilesAndMatcherOwnersDiffToCsv for details.");
         Debug.Assert(File.Exists(targetDir + CodeownersFilePathSuffix), 
             $"Ensure you have cloned the repo into '{targetDir}'. " +
-            "See comments on CodeownersManualAnalysisTests and WriteTwoCodeownersFilesOwnersDiffToCsv for details.");
+            "See comments on CodeownersManualAnalysisTests and WriteTwoCodeownersFilesAndMatcherOwnersDiffToCsv for details.");
         Debug.Assert(File.Exists(targetDir + SecondaryCodeownersFilePathSuffix), 
             $"Ensure you have created '{Path.GetFullPath(targetDir + SecondaryCodeownersFilePathSuffix)}'. " +
-            $"See comment on WriteTwoCodeownersFilesOwnersDiffToCsv for details.");
-
-        WriteOwnersDiffToCsv(
-            new[]
-            {
-                (targetDirPathSuffix, CodeownersFilePathSuffix, ignoredPathPrefixes, useRegexMatcher: true),
-                (targetDirPathSuffix, SecondaryCodeownersFilePathSuffix, ignoredPathPrefixes, useRegexMatcher: true)
-            },
-            outputFileNamePrefix);
-    }
-
-    /// <summary>
-    /// This method is an invocation of:
-    ///
-    ///     WriteOwnersDiffToCsv
-    ///
-    /// with following meanings bound to LEFT and RIGHT:
-    ///
-    /// LEFT: RetrieveCodeowners configuration using given input local repository clone CODEOWNERS file,
-    /// and using the legacy prefix-based CODEOWNERS paths matcher.
-    ///
-    /// RIGHT: RetrieveCodeowners configuration using given input local repository clone CODEOWNERS file,
-    /// and using the new regex-based wildcard-supporting matcher.
-    /// prefix-based CODEOWNERS paths matcher.
-    ///
-    /// As such, this method is useful for determining how build failure notification
-    /// recipients will change once the new matcher is enabled.
-    /// The PR reviewers will remain unchanged, as they use the GitHub CODEOWNERS
-    /// interpreter which independent of ours and always supported wildcards.
-    /// </summary>
-    private void WriteMatcherOwnersDiffToCsv(
-        string targetDirPathSuffix,
-        string outputFilePrefix,
-        string ignoredPathPrefixes = Program.DefaultIgnoredPrefixes)
-    {
-        string rootDir = PathNavigatingToRootDir(CurrentDir);
-        string targetDir = rootDir + targetDirPathSuffix;
-        Debug.Assert(Directory.Exists(targetDir),
-            $"Ensure you have cloned the repo into '{targetDir}'. " +
-            "See comments on CodeownersManualAnalysisTests and WriteMatcherOwnersDiffToCsv for details.");
-        Debug.Assert(File.Exists(targetDir + CodeownersFilePathSuffix),
-            $"Ensure you have cloned the repo into '{targetDir}'. " +
-            "See comments on CodeownersManualAnalysisTests and WriteMatcherOwnersDiffToCsv for details.");
+            $"See comment on WriteTwoCodeownersFilesAndMatcherOwnersDiffToCsv for details.");
 
         WriteOwnersDiffToCsv(
             new[]
             {
                 (targetDirPathSuffix, CodeownersFilePathSuffix, ignoredPathPrefixes, useRegexMatcher: false),
-                (targetDirPathSuffix, CodeownersFilePathSuffix, ignoredPathPrefixes, useRegexMatcher: true)
+                (targetDirPathSuffix, SecondaryCodeownersFilePathSuffix, ignoredPathPrefixes, useRegexMatcher: true)
             },
-            outputFilePrefix);
+            outputFileNamePrefix);
     }
 
     #endregion

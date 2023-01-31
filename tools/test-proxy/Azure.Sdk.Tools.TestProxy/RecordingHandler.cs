@@ -198,6 +198,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, CompressionUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
 
+            await DebugLogger.LogRequestDetailsAsync(upstreamRequest);
+
             HttpResponseMessage upstreamResponse = null;
 
             // The experience around Content-Length is a bit weird in .NET. We're using the .NET native HttpClient class to send our requests. This comes with

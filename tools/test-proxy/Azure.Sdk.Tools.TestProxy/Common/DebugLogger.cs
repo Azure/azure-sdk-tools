@@ -160,6 +160,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
+
         /// <summary>
         /// Helper function used to evaluate an incoming httprequest and non-destructively log some information about it using a provided logger instance. When not
         /// actually logging anything, this function is entirely passthrough.
@@ -189,6 +190,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
+        /// <summary>
+        /// Helper function used to evaluate an incoming httprequest and non-destructively log some information about it using the non-DI logger instance. When not
+        /// actually logging anything, this function is entirely passthrough.
+        /// </summary>
+        /// <param name="req">The http request which needs to be detailed.</param>
+        /// <returns></returns>
+        public static async Task LogRequestDetailsAsync(HttpRequestMessage req)
+        {
+            if (CheckLogLevel(LogLevel.Debug))
+            {
+                logger.LogDebug(await _generateLogLine(req));
+            }
+        }
 
         /// <summary>
         /// Helper function used to evaluate an incoming httprequest and non-destructively log some information about it using the non-DI logger instance. When not
@@ -202,6 +216,30 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 logger.LogDebug(await _generateLogLine(resp));
             }
+        }
+
+        /// <summary>
+        /// Generate a line of data from an http request. This is non-destructive, which means it does not mess 
+        /// with the request Body stream at all.
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
+        private static async Task<string> _generateLogLine(HttpRequestMessage req)
+        {
+            StringBuilder sb = new StringBuilder();
+            string headers = string.Empty;
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                await JsonSerializer.SerializeAsync(ms, req.Headers);
+                headers = Encoding.UTF8.GetString(ms.ToArray());
+            }
+
+            sb.AppendLine("Request URI: [" + req.RequestUri+ "]");
+            sb.AppendLine("Request method: [" + req.Method + "]");
+            sb.AppendLine("Request headers: [" + headers + "]");
+
+            return sb.ToString();
         }
 
         /// <summary>

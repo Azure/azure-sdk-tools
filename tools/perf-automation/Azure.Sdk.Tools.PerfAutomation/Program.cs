@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('l', "language", Required = true)]
             public Language Language { get; set; }
 
-            [Option("language-version")]
+            [Option("language-version", HelpText = ".NET: 6|7, Java: 8|17, JS: 16|18, Python: 3.10|3.11")]
             public string LanguageVersion { get; set; }
 
             [Option("no-async")]
@@ -131,16 +131,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private static async Task Run(Options options)
         {
-            if (string.IsNullOrEmpty(options.LanguageVersion))
+            if (options.Language == Language.Net || options.Language == Language.Python)
             {
-                options.LanguageVersion = options.Language switch {
-                    Language.Net => "net7.0",
-                    Language.Java => "17.0.6",
-                    Language.JS => "18.13.0",
-                    Language.Python => "3.11.1",
-                    Language.Cpp => "3.20.0",
-                    _ => throw new InvalidOperationException("Unknown language")
-                };
+                if (string.IsNullOrEmpty(options.LanguageVersion))
+                {
+                    throw new InvalidOperationException($"LanguageVersion is required for {options.Language}");
+                }
             }
 
             if (options.Language == Language.JS) {

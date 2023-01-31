@@ -259,11 +259,24 @@ public class CodeownersManualAnalysisTests
     ///     Such path will still be processed by our CODEOWNERS interpreter, but nevertheless it is
     ///     invalid and should be fixed.
     /// 
-    ///   INVALID_PATH_SHOULD_HAVE_SUFFIX_SLASH_TO_DENOTE_DIR
+    ///   INVALID_PATH_MATCHES_DIR_EXACTLY
+    ///   INVALID_PATH_MATCHES_DIR_EXACTLY_AND_NAME_PREFIX
+    ///   INVALID_PATH_MATCHES_NAME_PREFIX
     ///     CODEOWNERS file contains a simple (i.e. without wildcards) path that is expected to match against
-    ///     a file, as it does not end with "/". However, the repository contains a directory with the same
-    ///     path. This means such CODEOWNERS path will never match any input path. Usually the proper fix
+    ///     a file, as it does not end with "/". However, the repository contains one or more of the following:
+    ///     - a directory with the same path
+    ///     - a directory with such path being its name prefix: e.g. the path is /foobar and the dir is /foobarbaz/
+    ///     - a file with such path being its name prefix: e.g. the path is /foobar and the file is /foobarbaz.txt
+    ///
+    ///     Such paths are invalid because they ambiguous and need to be disambiguated.
+    ///     If the match is only to exact directory, then such CODEOWNERS path will never match any input path.
+    ///     Usually the proper fix
     ///     is to add the missing suffix "/" to the path to make it correctly match against the existing directory.
+    ///     If the match is to directory prefix, then this can be solved by appending "*/". This will match both
+    ///     exact directories, and directory prefixes.
+    ///     If the match is to file name prefix only, this can be fixed by appending "*".
+    ///     If the match is both to directory and file name prefixes, possibly multiple paths need to be used,
+    ///     one with "*/" suffix and one with "*" suffix.
     /// 
     ///   WILDCARD_FILE_PATH_NEEDS_MANUAL_EVAL
     ///     Same situation as above, but the CODEOWNERS path is a file path with a wildcard, hence current
@@ -303,7 +316,7 @@ public class CodeownersManualAnalysisTests
                 $"| {string.Join(",", entry.Owners)}");
         }
 
-        outputLines.AddRange(PathsWithIssues(targetDir, codeownersFilePathSuffix));
+        outputLines.AddRange(PathsWithIssues(targetDir, codeownersFilePathSuffix, paths: ownersData.Keys.ToArray()));
 
         var outputFilePath = outputFilePrefix + OwnersDataOutputPathSuffix;
         File.WriteAllLines(outputFilePath, outputLines);
@@ -322,7 +335,8 @@ public class CodeownersManualAnalysisTests
     // "sdk/ @own1" --> "/sdk/ @own1" // space not removed, because it would be invalid.
     private static List<string> PathsWithIssues(
         string targetDir,
-        string codeownersPathSuffix)
+        string codeownersPathSuffix,
+        string[] paths)
     {
         List<string> outputLines = new List<string>();
         List<CodeownersEntry> entries =
@@ -331,7 +345,7 @@ public class CodeownersManualAnalysisTests
                 .ToList();
 
         outputLines.AddRange(PathsWithMissingPrefixSlash(entries));
-        outputLines.AddRange(PathsWithMissingSuffixSlash(targetDir, entries));
+        outputLines.AddRange(PathsWithMissingSuffixSlash(targetDir, entries, paths));
         outputLines.AddRange(PathsWithUnsupportedFragments(entries));
 
         return outputLines;
@@ -347,7 +361,10 @@ public class CodeownersManualAnalysisTests
                 "| INVALID_PATH_SHOULD_START_WITH_SLASH")
             .ToList();
 
-    private static List<string> PathsWithMissingSuffixSlash(string targetDir, List<CodeownersEntry> entries)
+    private static List<string> PathsWithMissingSuffixSlash(
+        string targetDir,
+        List<CodeownersEntry> entries,
+        string[] paths)
     {
         List<string> outputLines = new List<string>();
         foreach (CodeownersEntry entry in entries.Where(entry => !entry.PathExpression.EndsWith("/")))
@@ -368,19 +385,40 @@ public class CodeownersManualAnalysisTests
             }
             else
             {
-                string pathToDir = Path.Combine(
-                    targetDir,
-                    entry.PathExpression.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                var trimmedPathExpression = entry.PathExpression.TrimStart('/');
 
-                if (Directory.Exists(pathToDir))
+                bool matchesDirExactly = MatchesDirExactly(targetDir, trimmedPathExpression);
+                bool matchesNamePrefix = MatchesNamePrefix(paths, trimmedPathExpression);
+
+                if (matchesDirExactly || matchesNamePrefix)
+                {
+                    string msgCode = matchesDirExactly && matchesNamePrefix ? "MATCHES_DIR_EXACTLY_AND_NAME_PREFIX" :
+                        matchesDirExactly ? "MATCHES_DIR_EXACTLY" : "MATCHES_NAME_PREFIX";
+
                     outputLines.Add(
                         "|" +
                         $"{entry.PathExpression} " +
                         $"| {string.Join(",", entry.Owners)}" +
-                        "| INVALID_PATH_SHOULD_HAVE_SUFFIX_SLASH_TO_DENOTE_DIR");
+                        $"| INVALID_PATH_{msgCode}");
+                }
             }
         }
         return outputLines;
+    }
+
+    private static bool MatchesNamePrefix(string[] paths, string trimmedPathExpression)
+        => paths.Any(
+            path =>
+                path.TrimStart('/').StartsWith(trimmedPathExpression)
+                && path.TrimStart('/').Length != trimmedPathExpression.Length
+                && !path.TrimStart('/').Substring(trimmedPathExpression.Length).StartsWith('/'));
+
+    private static bool MatchesDirExactly(string targetDir, string trimmedPathExpression)
+    {
+        string pathToDir = Path.Combine(
+            targetDir,
+            trimmedPathExpression.Replace('/', Path.DirectorySeparatorChar));
+        return Directory.Exists(pathToDir);
     }
 
     private static List<string> PathsWithUnsupportedFragments(List<CodeownersEntry> entries)

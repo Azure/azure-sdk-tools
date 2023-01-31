@@ -9,6 +9,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
+using System.Net.Http;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -160,6 +161,21 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         }
 
         /// <summary>
+        /// Helper function used to evaluate an incoming httprequest and non-destructively log some information about it using a provided logger instance. When not
+        /// actually logging anything, this function is entirely passthrough.
+        /// </summary>
+        /// <param name="loggerInstance">Usually will be the DI-ed individual ILogger instance from a controller. However any valid ILogger instance is fine here.</param>
+        /// <param name="resp">The http request which needs to be detailed.</param>
+        /// <returns></returns>
+        public static async Task LogResponseDetailsAsync(ILogger loggerInstance, HttpResponseMessage resp)
+        {
+            if (CheckLogLevel(LogLevel.Debug))
+            {
+                loggerInstance.LogDebug(await _generateLogLine(resp));
+            }
+        }
+
+        /// <summary>
         /// Helper function used to evaluate an incoming httprequest and non-destructively log some information about it using the non-DI logger instance. When not
         /// actually logging anything, this function is entirely passthrough.
         /// </summary>
@@ -171,6 +187,44 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 logger.LogDebug(await _generateLogLine(req));
             }
+        }
+
+
+        /// <summary>
+        /// Helper function used to evaluate an incoming httprequest and non-destructively log some information about it using the non-DI logger instance. When not
+        /// actually logging anything, this function is entirely passthrough.
+        /// </summary>
+        /// <param name="resp">The http request which needs to be detailed.</param>
+        /// <returns></returns>
+        public static async Task LogResponseDetailsAsync(HttpResponseMessage resp)
+        {
+            if (CheckLogLevel(LogLevel.Debug))
+            {
+                logger.LogDebug(await _generateLogLine(resp));
+            }
+        }
+
+        /// <summary>
+        /// Generate a line of data from an http request. This is non-destructive, which means it does not mess 
+        /// with the request Body stream at all.
+        /// </summary>
+        /// <param name="resp"></param>
+        /// <returns></returns>
+        private static async Task<string> _generateLogLine(HttpResponseMessage resp)
+        {
+            StringBuilder sb = new StringBuilder();
+            string headers = string.Empty;
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                await JsonSerializer.SerializeAsync(ms, resp.Headers);
+                headers = Encoding.UTF8.GetString(ms.ToArray());
+            }
+
+            sb.AppendLine("URI: [ " + resp.StatusCode + "]");
+            sb.AppendLine("Headers: [" + headers + "]");
+
+            return sb.ToString();
         }
 
         /// <summary>
@@ -191,6 +245,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
 
             sb.AppendLine("URI: [ " + req.GetDisplayUrl() + "]");
+            sb.AppendLine("Verb: [" + req.Method + "]");
             sb.AppendLine("Headers: [" + headers + "]");
 
             return sb.ToString();

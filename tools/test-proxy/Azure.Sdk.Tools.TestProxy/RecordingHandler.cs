@@ -227,6 +227,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 upstreamResponse = await (session.Client ?? RedirectlessClient).SendAsync(upstreamRequest).ConfigureAwait(false);
             }
 
+            await DebugLogger.LogResponseDetailsAsync(upstreamResponse);
             byte[] body = Array.Empty<byte>();
 
             // HEAD requests do NOT have a body regardless of the value of the Content-Length header

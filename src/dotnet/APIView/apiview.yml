@@ -32,7 +32,7 @@ variables:
   PythonVersion: '3.10.9'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
-  NodeVersion: '12.x'
+  NodeVersion: '18.x'
   BuildConfiguration: 'Release'
   TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parser'
   GoParserPackagePath: 'src/go'
@@ -64,10 +64,6 @@ stages:
             inputs:
               version: '$(GoVersion)'
             displayName: "Use Go $(GoVersion)"
-
-          - script: |
-              npm install -g npm@6.14.6
-            displayName: "Install npm 6.14.6"
 
           - script: |
               npm install

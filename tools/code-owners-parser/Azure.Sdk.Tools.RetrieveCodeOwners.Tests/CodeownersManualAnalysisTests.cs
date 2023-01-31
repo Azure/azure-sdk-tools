@@ -99,6 +99,13 @@ public class CodeownersManualAnalysisTests
 
     #region Tests - Owners diffs for the prefix-based vs regex-based CODEOWNERS matchers, plus differing contents.
 
+    [Test] // Runtime <1s
+    public void OwnersDiffForAzureDev()
+        => WriteTwoCodeownersFilesAndMatcherOwnersDiffToCsv(
+            targetDirPathSuffix: "/../azure-dev",
+            outputFileNamePrefix: "azure-dev",
+            ignoredPathPrefixes: ".git|artifacts");
+
     // https://github.com/Azure/azure-sdk-for-android/blob/main/.github/CODEOWNERS
     // No build failure notifications are configured for this repo.
     // Runtime: <1s
@@ -130,8 +137,6 @@ public class CodeownersManualAnalysisTests
     [Test] public void OwnersDiffForAzureSdkForJs() => WriteLangRepoOwnersDiffToCsv("js");
 
     // https://github.com/Azure/azure-sdk-for-net/blob/main/.github/CODEOWNERS
-    // These pathsToDelete have been since deleted by this PR:
-    // https://github.com/Azure/azure-sdk-for-net/pull/33595
     // Runtime: ~1m 01s
     [Test] public void OwnersDiffForAzureSdkForNet() => WriteLangRepoOwnersDiffToCsv("net");
 
@@ -174,7 +179,7 @@ public class CodeownersManualAnalysisTests
 
     #region Parameterized tests - Owners diff
 
-    private void WriteLangRepoOwnersDiffToCsv(string langName, params string[] pathsToDelete)
+    private void WriteLangRepoOwnersDiffToCsv(string langName)
         => WriteTwoCodeownersFilesAndMatcherOwnersDiffToCsv(
             targetDirPathSuffix: LangRepoTargetDirPathSuffix(langName),
             outputFileNamePrefix: $"azure-sdk-for-{langName}",

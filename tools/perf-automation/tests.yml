@@ -221,6 +221,7 @@ stages:
         WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'Python'
+        LanguageVersion: ${{ parameters.PythonLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-python'
         LanguageRepoCommitish: ${{ parameters.PythonRepoCommitish }}
         ToolsRepoCommitish: $(ToolsRepoCommitish)
@@ -250,6 +251,7 @@ stages:
         WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'Cpp'
+        LanguageVersion: 'N/A'
         LanguageRepoName: 'Azure/azure-sdk-for-cpp'
         LanguageRepoCommitish: ${{ parameters.CppRepoCommitish }}
         ToolsRepoCommitish: $(ToolsRepoCommitish)

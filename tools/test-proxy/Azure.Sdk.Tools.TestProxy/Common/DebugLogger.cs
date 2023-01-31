@@ -221,8 +221,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 headers = Encoding.UTF8.GetString(ms.ToArray());
             }
 
-            sb.AppendLine("URI: [ " + resp.StatusCode + "]");
-            sb.AppendLine("Headers: [" + headers + "]");
+            sb.AppendLine("Response Statuscode: [ " + resp.StatusCode + "]");
+            sb.AppendLine("Response Headers: [" + headers + "]");
 
             return sb.ToString();
         }

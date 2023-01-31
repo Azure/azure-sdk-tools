@@ -187,7 +187,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
-            await DebugLogger.LogRequestDetailsAsync(incomingRequest);
+            //await DebugLogger.LogRequestDetailsAsync(incomingRequest);
 
             if (!RecordingSessions.TryGetValue(recordingId, out var session))
             {
@@ -477,11 +477,14 @@ namespace Azure.Sdk.Tools.TestProxy
             entry.RequestUri = GetRequestUri(request).AbsoluteUri;
             entry.RequestMethod = new RequestMethod(request.Method);
 
-            foreach (var header in request.Headers)
+            lock (request.Headers)
             {
-                if (IncludeHeader(header.Key))
+                foreach (var header in request.Headers)
                 {
-                    entry.Request.Headers.Add(header.Key, header.Value.ToArray());
+                    if (IncludeHeader(header.Key))
+                    {
+                        entry.Request.Headers.Add(header.Key, header.Value.ToArray());
+                    }
                 }
             }
 
@@ -956,14 +959,19 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            // Instead of obtaining the Path of the request from request.Path, we use this
-            // more complicated method obtaining the raw string from the httpcontext. Unfortunately,
-            // The native request functions implicitly decode the Path value. EG: "aa%27bb" is decoded into 'aa'bb'.
-            // Using the RawTarget PREVENTS this automatic decode. We still lean on the URI constructors
-            // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
-            var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
-            var hostValue = GetHeader(request, "x-recording-upstream-base-uri");
+            string rawTarget = string.Empty;
+            string hostValue = string.Empty;
 
+            lock (request)
+            {
+                // Instead of obtaining the Path of the request from request.Path, we use this
+                // more complicated method obtaining the raw string from the httpcontext. Unfortunately,
+                // The native request functions implicitly decode the Path value. EG: "aa%27bb" is decoded into 'aa'bb'.
+                // Using the RawTarget PREVENTS this automatic decode. We still lean on the URI constructors
+                // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
+                rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
+                hostValue = GetHeader(request, "x-recording-upstream-base-uri");
+            }
             // it is easy to forget the x-recording-upstream-base-uri value
             if (string.IsNullOrWhiteSpace(hostValue))
             {

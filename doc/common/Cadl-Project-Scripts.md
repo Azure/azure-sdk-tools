@@ -5,30 +5,10 @@ repo and use the remote cadl definition in the spec repo.
 
 ## One time language repo setup
 
-There are 4 things that these two scripts expect are set up in your language repo before they will run correctly.
-
-### cadl-location.yaml
-
-This file should live under the project directory for each service and has the following properties
-
-| Property | Description | IsRequired |
-| --- | --- | --- |
-| <a id="directory-anchor"></a> directory | The top level directory where the main.cadl for the service lives.  This should be relative to the spec repo root such as `specification/cognitiveservices/OpenAI.Inference` | true |
-| <a id="additionalDirectories-anchor"></a> additionalDirectories | Sometimes a cadl file will use a relative import that might not be under the main directory.  In this case a single `directory` will not be enough to pull down all necessary files.  To support this you can specify additional directories as a list to sync so that all needed files are synced. | false: default = null |
-| <a id="commit-anchor"></a> commit | The commit sha for the version of the cadl files you want to generate off of.  This allows us to have idempotence on generation until we opt into pointing at a later version. | true |
-| <a id="repo-anchor"></a> repo | The repo this spec lives in.  This should be either `Azure/azure-rest-api-specs` or `Azure/azure-rest-api-specs-pr`.  Note that pr will work locally but not in CI until we add another change to handle token based auth. | true |
-| <a id="cleanup-anchor"></a> cleanup | This will remove the TempCadlFiles directory after generation is complete if true otherwise this directory will be left to support local changes to the files to see how different changes would affect the generation. | false: default = true |
-
-Example
-
-```yml
-directory: specification/cognitiveservices/OpenAI.Inference
-additionalDirectories:
-  - specification/cognitiveservices/OpenAI.Authoring
-commit: 14f11cab735354c3e253045f7fbd2f1b9f90f7ca
-repo: Azure/azure-rest-api-specs
-cleanup: false
-```
+There are 3 things that these two scripts expect are set up in your language repo before they will run correctly.
+1. Make sure your .gitignore is ignoring the TempCadlFiles
+2. Create a common emitter-package.json for your language
+3. Write the language specific hooks in Language-Settings.ps1
 
 ### TempCadlFiles
 
@@ -96,6 +76,33 @@ Example
 function Get-dotnet-EmitterAdditionalOptions([string]$projectDirectory) {
   return "--option @azure-tools/cadl-csharp.emitter-output-dir=$projectDirectory/src"
 }
+```
+
+## Per project setup
+
+Each project will need to have a configuration file that will tell the scripts where to find the cadl spec.
+
+### cadl-location.yaml
+
+This file should live under the project directory for each service and has the following properties
+
+| Property | Description | IsRequired |
+| --- | --- | --- |
+| <a id="directory-anchor"></a> directory | The top level directory where the main.cadl for the service lives.  This should be relative to the spec repo root such as `specification/cognitiveservices/OpenAI.Inference` | true |
+| <a id="additionalDirectories-anchor"></a> additionalDirectories | Sometimes a cadl file will use a relative import that might not be under the main directory.  In this case a single `directory` will not be enough to pull down all necessary files.  To support this you can specify additional directories as a list to sync so that all needed files are synced. | false: default = null |
+| <a id="commit-anchor"></a> commit | The commit sha for the version of the cadl files you want to generate off of.  This allows us to have idempotence on generation until we opt into pointing at a later version. | true |
+| <a id="repo-anchor"></a> repo | The repo this spec lives in.  This should be either `Azure/azure-rest-api-specs` or `Azure/azure-rest-api-specs-pr`.  Note that pr will work locally but not in CI until we add another change to handle token based auth. | true |
+| <a id="cleanup-anchor"></a> cleanup | This will remove the TempCadlFiles directory after generation is complete if true otherwise this directory will be left to support local changes to the files to see how different changes would affect the generation. | false: default = true |
+
+Example
+
+```yml
+directory: specification/cognitiveservices/OpenAI.Inference
+additionalDirectories:
+  - specification/cognitiveservices/OpenAI.Authoring
+commit: 14f11cab735354c3e253045f7fbd2f1b9f90f7ca
+repo: Azure/azure-rest-api-specs
+cleanup: false
 ```
 
 ## Cadl-Project-Sync.ps1

@@ -22,7 +22,7 @@ pr:
       - tools/apiview/parsers/js-api-parser          
 
 variables:
-  NodeVersion: '16.x'
+  NodeVersion: '18.x'
   TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parser'
   ArtifactName: 'apiview'
   FeedRegistry: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'

@@ -32,7 +32,7 @@ variables:
   PythonVersion: '3.10.9'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
-  NodeVersion: '16.x'
+  NodeVersion: '18.x'
   BuildConfiguration: 'Release'
   TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parser'
   GoParserPackagePath: 'src/go'

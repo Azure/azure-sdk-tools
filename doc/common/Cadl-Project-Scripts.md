@@ -102,6 +102,10 @@ function Get-dotnet-EmitterAdditionalOptions([string]$projectDirectory) {
 
 This is the first script that should be called and can be found at `./eng/common/scripts/Cadl-Project-Sync.ps1`.  It takes in one parameter which is the root directory of the project which is typically one layer lower than the service directory.  As an example for dotnet this is `./sdk/openai/Azure.AI.OpenAI` where `openai` is the service directory and `Azure.AI.OpenAI` is the project directory.
 
+```powershell
+./eng/common/scripts/Cadl-Project-Sync.ps1 ./sdk/openai/Azure.AI.OpenAI
+```
+
 This script will create a sparse check out at the root of your current repository named after the project directory, automatically filter to only the files in the directory defined in cadl-location.yaml, and sync to the sha defined in cadl-location.yaml.
 
 If you have your language repo at `D:\git\azure-sdk-for-net` there will be a new directory `D:\git\sparse-checkout\Azure.AI.OpenAI` where the sparse checkout will live.
@@ -111,6 +115,10 @@ This is then copied over to your project directory so that you can make temporar
 ## Cadl-Project-Generate.ps1
 
 This is the second script that should be called and can be found at `./eng/common/scripts/Cadl-Project-Generate.ps1`.  It takes the exact same parameter as the sync script.
+
+```powershell
+./eng/common/scripts/Cadl-Project-Generate.ps1 ./sdk/openai/Azure.AI.OpenAI
+```
 
 The first thing this does is clean up the npm install that might exist in `./{projectDir}/TempCadlFiles`, followed by replacing the package.json with the language static one.
 

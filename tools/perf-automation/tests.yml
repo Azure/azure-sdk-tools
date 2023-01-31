@@ -6,6 +6,9 @@ parameters:
 - name: NetRepoCommitish
   type: string
   default: 'main'
+- name: NetLanguageVersion
+  type: string
+  default: '7'
 - name: NetServiceDirectory
   type: string
   default: 'storage/Azure.Storage.Blobs'
@@ -16,6 +19,9 @@ parameters:
 - name: JavaRepoCommitish
   type: string
   default: 'main'
+- name: JavaLanguageVersion
+  type: string
+  default: '17'
 - name: JavaServiceDirectory
   type: string
   default: 'storage/azure-storage-blob'
@@ -26,6 +32,9 @@ parameters:
 - name: JSRepoCommitish
   type: string
   default: 'main'
+- name: JSLanguageVersion
+  type: string
+  default: '18'
 - name: JSServiceDirectory
   type: string
   default: 'storage/storage-blob'
@@ -36,6 +45,9 @@ parameters:
 - name: PythonRepoCommitish
   type: string
   default: 'main'
+- name: PythonLanguageVersion
+  type: string
+  default: '3.11'
 - name: PythonServiceDirectory
   type: string
   default: 'storage/azure-storage-blob'
@@ -121,6 +133,7 @@ stages:
         WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'Net'
+        LanguageVersion: ${{ parameters.NetLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-net'
         LanguageRepoCommitish: ${{ parameters.NetRepoCommitish }}
         ToolsRepoCommitish: $(ToolsRepoCommitish)
@@ -147,6 +160,7 @@ stages:
         WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'Java'
+        LanguageVersion: ${{ parameters.JavaLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-java'
         LanguageRepoCommitish: ${{ parameters.JavaRepoCommitish }}
         ToolsRepoCommitish: $(ToolsRepoCommitish)
@@ -156,10 +170,10 @@ stages:
         InstallLanguageSteps:
         - task: JavaToolInstaller@0
           inputs:
-            versionSpec: '17'
+            versionSpec: ${{ parameters.JavaLanguageVersion }}
             jdkArchitectureOption: 'x64'
             jdkSourceOption: 'PreInstalled'
-          displayName: Install Java 17
+          displayName: Install Java ${{ parameters.JavaLanguageVersion }}
         - script: |
             java -version
             mvn --version
@@ -180,6 +194,7 @@ stages:
         WindowsPool: ${{ parameters.WindowsPool }}
         WindowsVmImage: $(WindowsVmImage)
         Language: 'JS'
+        LanguageVersion: ${{ parameters.JSLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-js'
         LanguageRepoCommitish: ${{ parameters.JSRepoCommitish }}
         ToolsRepoCommitish: $(ToolsRepoCommitish)
@@ -189,7 +204,7 @@ stages:
         InstallLanguageSteps:
         - template: /eng/pipelines/templates/steps/use-node-version.yml@azure-sdk-for-js
           parameters:
-            NodeVersion: 18.x
+            NodeVersion: ${{ parameters.JSLanguageVersion }}.x
         ServiceDirectory: ${{ parameters.JSServiceDirectory }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
@@ -212,7 +227,7 @@ stages:
         Variables:
         - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-python
         - name: PythonVersion
-          value: '3.11'
+          value: ${{ parameters.PythonLanguageVersion }}
         OperatingSystems: ${{ parameters.OperatingSystems }}
         InstallLanguageSteps:
         - task: UsePythonVersion@0

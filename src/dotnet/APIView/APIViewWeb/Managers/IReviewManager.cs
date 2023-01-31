@@ -30,7 +30,7 @@ namespace APIViewWeb.Managers
         public Task ApprovePackageNameAsync(ClaimsPrincipal user, string id);
         public Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile);
         public Task<ReviewRevisionModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool compareAllRevisions);
-        public Task UpdateReviewBackground();
+        public Task UpdateReviewBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount);
         public Task<CodeFile> GetCodeFile(string repoName, string buildId, string artifactName, string packageName, string originalFileName, string codeFileName,
             MemoryStream originalFileStream, string baselineCodeFileName = "", MemoryStream baselineStream = null, string project = "public");
         public Task<ReviewRevisionModel> CreateApiReview(ClaimsPrincipal user, string buildId, string artifactName, string originalFileName, string label,

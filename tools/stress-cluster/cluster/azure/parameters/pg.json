@@ -14,14 +14,11 @@
     "clusterLocation": {
       "value": "westus3"
     },
-    "staticTestSecretsKeyvaultName": {
+    "staticTestKeyvaultName": {
       "value": "stress-secrets-pg"
     },
-    "staticTestSecretsKeyvaultGroup": {
+    "staticTestKeyvaultGroup": {
       "value": "rg-stress-secrets-pg"
-    },
-    "enableHighMemAgentPool": {
-        "value": true
     },
     "tags": {
       "value": {

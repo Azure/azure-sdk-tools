@@ -484,15 +484,14 @@ The `stress-test-addons` helm library will handle a scenarios matrix automatical
 
 ### Node Size Requirements
 
-The stress test cluster is deployed with several node SKUs (see [agentPoolProfiles declaration and
+The stress test cluster may be deployed with several node SKUs (see [agentPoolProfiles declaration and
 variables](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/azure/cluster/cluster.bicep)), with tests defaulting to the SKU labeled 'default'.
 By adding the `nodeSelector` field to the job spec, you can override which nodes the test container will
 be provisioned to. For support adding a custom or dedicated node SKU, reach out to the EngSys team.
 
 Available common SKUs in stress test clusters:
 
-- 'default' - Standard\_D2\_v3
-- 'highMem' - Standard\_D4ds\_v4
+- 'default' - Standard\_D4ds\_v4
 
 To deploy a stress test to a custom node (see also
 [example](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/network-stress-example/templates/testjob.yaml)):
@@ -500,7 +499,7 @@ To deploy a stress test to a custom node (see also
 ```
 spec:
   nodeSelector:
-    sku: 'highMem'
+    sku: '<nodepool sku label>'
   containers:
     < container spec ... >
 ```

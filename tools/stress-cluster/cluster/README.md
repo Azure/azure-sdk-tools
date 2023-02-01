@@ -55,8 +55,12 @@ Cluster buildout and deployment involves three main steps which are automated in
 
 1. Provision static resources (service principal, role assignments, static keyvault).
 1. Provision cluster resources (`main.bicep` entrypoint, standard ARM subscription deployment).
+    - NOTE: if the nodepool configuration for the AKS cluster needs to be updated, it cannot be done
+      alongside a deployment to the cluster itself. In order to update the nodepool configuration only, pass
+      the `-UpdateNodes` parameter to the provision script.
 1. Provision stress infrastructures resources into the Azure Kubernetes Service cluster via helm
    (`./kubernetes/stress-infrastructure` helm chart).
+
 
 ## Dev Cluster
 

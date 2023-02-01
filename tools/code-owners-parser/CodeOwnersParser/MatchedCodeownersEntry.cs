@@ -227,9 +227,16 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // even though in such case the path might be a path to a directory.
             if (!pattern.EndsWith("/"))
             {
-                // Append "end of string" symbol, denoting the match has to be exact,
-                // not a substring, as we are dealing with a file.
-                pattern += "$";
+                // Manual experiments with how GitHub applies ownership show
+                // that a path like "/foo*" is effectively equivalent to 
+                // "Match any path with prefix of '/foo'".
+                // Hence, we are not appending "$" if this is the case.
+                if (!pattern.EndsWith(SingleStar))
+                {
+                    // Append "end of string" symbol, denoting the match has to be exact,
+                    // not a substring, as we are dealing with a file.
+                    pattern += "$";
+                }
             }
             else // The pattern ends with "/", denoting it is a directory.
             {

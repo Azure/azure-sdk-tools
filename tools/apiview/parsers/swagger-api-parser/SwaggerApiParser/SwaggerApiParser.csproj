@@ -10,6 +10,7 @@
     <AssemblyName>Azure.Sdk.Tools.SwaggerApiParser</AssemblyName>
     <SignAssembly>True</SignAssembly>
     <InformationalVersion>$(OfficialBuildId)</InformationalVersion>
+    <LangVersion>10</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -19,10 +20,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <NoWarn>$(NoWarn);NU5105;NU5119</NoWarn>
   </PropertyGroup>
-
-  <ItemGroup>
-      <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj" />    
-  </ItemGroup>
   
   <ItemGroup>
     <Compile Remove="SwaggerApiParserTest\**" />

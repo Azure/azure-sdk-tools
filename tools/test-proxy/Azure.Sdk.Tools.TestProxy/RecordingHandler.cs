@@ -477,14 +477,11 @@ namespace Azure.Sdk.Tools.TestProxy
             entry.RequestUri = GetRequestUri(request).AbsoluteUri;
             entry.RequestMethod = new RequestMethod(request.Method);
 
-            lock (request.Headers)
+            foreach (var header in request.Headers)
             {
-                foreach (var header in request.Headers)
+                if (IncludeHeader(header.Key))
                 {
-                    if (IncludeHeader(header.Key))
-                    {
-                        entry.Request.Headers.Add(header.Key, header.Value.ToArray());
-                    }
+                    entry.Request.Headers.Add(header.Key, header.Value.ToArray());
                 }
             }
 

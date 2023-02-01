@@ -73,7 +73,7 @@ elseif("$($Rid)".Contains("osx")){
    # a mac system. However, the `codesign` command is only available on a MacOS agent. With that being the case, we simply special case
    # this function here to ensure that the script does not fail outside of a MacOS agent.
    if ($IsMacOS) {
-      $binaryFile = Get-ChildItem -Path $outputPath | Where-Object { _.Name -eq $AssemblyName } | Select-Object -First 1
+      $binaryFile = Get-ChildItem -Path $outputPath | Where-Object { $_.Name -eq $AssemblyName } | Select-Object -First 1
       $binaryFileBash = $binaryFile.ToString().Replace("`\","/")
 
       $entitlements = (Resolve-Path -Path (Join-Path $PSScriptRoot ".." ".." ".." "dotnet-executable-entitlements.plist")).ToString().Replace("`\", "/")

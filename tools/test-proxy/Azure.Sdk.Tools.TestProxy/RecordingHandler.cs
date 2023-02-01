@@ -194,7 +194,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
-            var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+            var entry = await CreateEntryAsync(incomingRequest);
 
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, CompressionUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
 
@@ -222,11 +222,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (HandleRedirects)
             {
-                upstreamResponse = await (session.Client ?? RedirectableClient).SendAsync(upstreamRequest).ConfigureAwait(false);
+                upstreamResponse = await (session.Client ?? RedirectableClient).SendAsync(upstreamRequest);
             }
             else
             {
-                upstreamResponse = await (session.Client ?? RedirectlessClient).SendAsync(upstreamRequest).ConfigureAwait(false);
+                upstreamResponse = await (session.Client ?? RedirectlessClient).SendAsync(upstreamRequest);
             }
 
             await DebugLogger.LogResponseDetailsAsync(upstreamResponse);
@@ -235,7 +235,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // HEAD requests do NOT have a body regardless of the value of the Content-Length header
             if (incomingRequest.Method.ToUpperInvariant() != "HEAD")
             {
-                body = CompressionUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+                body = CompressionUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync(), upstreamResponse.Content.Headers);
             }
 
             entry.Response.Body = body.Length == 0 ? null : body;
@@ -272,7 +272,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 var bodyData = CompressionUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
                 outgoingResponse.ContentLength = bodyData.Length;
-                await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
+                await outgoingResponse.Body.WriteAsync(bodyData);
             }
         }
 

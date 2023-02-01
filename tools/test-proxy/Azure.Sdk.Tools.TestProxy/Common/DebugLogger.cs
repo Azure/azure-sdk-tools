@@ -235,9 +235,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 headers = Encoding.UTF8.GetString(ms.ToArray());
             }
 
-            sb.AppendLine("Request URI: [" + req.RequestUri+ "]");
-            sb.AppendLine("Request method: [" + req.Method + "]");
-            sb.AppendLine("Request headers: [" + headers + "]");
+            sb.AppendLine("Upstream Request URI: [" + req.RequestUri+ " ]");
+            sb.AppendLine("Upstream Request Method: [" + req.Method + " ]");
+            sb.AppendLine("Upstream Request Headers: [" + headers + " ]");
 
             return sb.ToString();
         }
@@ -259,8 +259,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 headers = Encoding.UTF8.GetString(ms.ToArray());
             }
 
-            sb.AppendLine("Response Statuscode: [ " + resp.StatusCode + "]");
-            sb.AppendLine("Response Headers: [" + headers + "]");
+            sb.AppendLine("Upstream Response Statuscode: [ " + resp.StatusCode + " ]");
+            sb.AppendLine("Upstream Response Headers: [ " + headers + " ]");
 
             return sb.ToString();
         }

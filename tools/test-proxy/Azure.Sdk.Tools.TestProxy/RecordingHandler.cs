@@ -194,10 +194,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
-            (RecordEntry entry, byte[] bytes) = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
-            var entry = entryTuple.Item1;
+            (RecordEntry entry, byte[] requestBody) = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
-            var upstreamRequest = CreateUpstreamRequest(incomingRequest, entryTuple.Item2);
+            var upstreamRequest = CreateUpstreamRequest(incomingRequest, requestBody);
 
             HttpResponseMessage upstreamResponse = null;
 
@@ -471,7 +470,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public static async Task<Tuple<RecordEntry, byte[]>> CreateEntryAsync(HttpRequest request)
+        public static async Task<(RecordEntry, byte[])> CreateEntryAsync(HttpRequest request)
         {
             var entry = new RecordEntry();
             entry.RequestUri = GetRequestUri(request).AbsoluteUri;
@@ -488,7 +487,7 @@ namespace Azure.Sdk.Tools.TestProxy
             byte[] bytes = await ReadAllBytes(request.Body).ConfigureAwait(false);
 
             entry.Request.Body = CompressionUtilities.DecompressBody(bytes, request.Headers);
-            return new Tuple<RecordEntry, byte[]>(entry, bytes);
+            return (entry, bytes);
         }
 
         #endregion

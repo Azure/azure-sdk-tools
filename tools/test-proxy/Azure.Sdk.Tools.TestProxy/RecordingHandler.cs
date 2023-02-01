@@ -194,9 +194,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
-            var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+            var entryTuple = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+            var entry = entryTuple.Item1;
 
-            var upstreamRequest = CreateUpstreamRequest(incomingRequest, CompressionUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
+            var upstreamRequest = CreateUpstreamRequest(incomingRequest, entryTuple.Item2);
 
             HttpResponseMessage upstreamResponse = null;
 
@@ -432,7 +433,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
-            var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+            var entry = (await CreateEntryAsync(incomingRequest).ConfigureAwait(false)).Item1;
 
             // If request contains "x-recording-remove: false", then request is not removed from session after playback.
             // Used by perf tests to play back the same request multiple times.
@@ -470,24 +471,27 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public static async Task<RecordEntry> CreateEntryAsync(HttpRequest request)
+        public static async Task<Tuple<RecordEntry, byte[]>> CreateEntryAsync(HttpRequest request)
         {
             var entry = new RecordEntry();
             entry.RequestUri = GetRequestUri(request).AbsoluteUri;
             entry.RequestMethod = new RequestMethod(request.Method);
 
-            foreach (var header in request.Headers)
+            lock (request.Headers)
             {
-                if (IncludeHeader(header.Key))
+                foreach (var header in request.Headers)
                 {
-                    entry.Request.Headers.Add(header.Key, header.Value.ToArray());
+                    if (IncludeHeader(header.Key))
+                    {
+                        entry.Request.Headers.Add(header.Key, header.Value.ToArray());
+                    }
                 }
             }
 
             byte[] bytes = await ReadAllBytes(request.Body).ConfigureAwait(false);
 
             entry.Request.Body = CompressionUtilities.DecompressBody(bytes, request.Headers);
-            return entry;
+            return new Tuple<RecordEntry, byte[]>(entry, bytes);
         }
 
         #endregion

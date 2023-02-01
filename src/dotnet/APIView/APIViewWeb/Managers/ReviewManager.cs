@@ -8,6 +8,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
@@ -338,26 +339,97 @@ namespace APIViewWeb.Managers
             return await CreateMasterReviewAsync(user, codeFile, originalName, label, memoryStream, compareAllRevisions);
         }
 
-        public async Task UpdateReviewBackground()
+        public async Task UpdateReviewBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount)
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", fetchAllPages: true);
-            foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
+            foreach(var language in LanguageService.SupportedLanguages)
             {
-                var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
-                var operation = _telemetryClient.StartOperation(requestTelemetry);
-                try
+                if (updateDisabledLanguages.Contains(language))
                 {
-                    await Task.Delay(500);
-                    await UpdateReviewAsync(review);
+                    _telemetryClient.TrackTrace("Background task to update API review at startup is disabled for langauge " + language);
+                    continue;
                 }
-                catch (Exception e)
+
+                var languageService = GetLanguageService(language);
+                if (languageService == null)
+                    return;
+
+                // If review is updated using devops pipeline then batch process update review requests
+                if (languageService.IsReviewGenByPipeline)
                 {
-                    _telemetryClient.TrackException(e);
+                    await UpdateReviewsUsingPipeline(language, languageService, backgroundBatchProcessCount);
                 }
-                finally
+                else
                 {
-                    _telemetryClient.StopOperation(operation);
+                    var reviews = await _reviewsRepository.GetReviewsAsync(false, language, fetchAllPages: true);
+                    foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
+                    {
+                        var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
+                        var operation = _telemetryClient.StartOperation(requestTelemetry);
+                        try
+                        {
+                            await Task.Delay(500);
+                            await UpdateReviewAsync(review, languageService);
+                        }
+                        catch (Exception e)
+                        {
+                            _telemetryClient.TrackException(e);
+                        }
+                        finally
+                        {
+                            _telemetryClient.StopOperation(operation);
+                        }
+                    }
+                }                
+            }            
+        }
+
+        // Languages that full ysupport sandboxing updates reviews using Azure devops pipeline
+        // We should batch all eligible reviews to avoid a pipeline run storm
+        private async Task UpdateReviewsUsingPipeline(string language, LanguageService languageService, int backgroundBatchProcessCount)
+        {
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, language, fetchAllPages: true);
+            var paramList = new List<ReviewGenPipelineParamModel>();
+
+            foreach(var review in reviews)
+            {
+                foreach (var revision in review.Revisions.Reverse())
+                {
+                    foreach (var file in revision.Files)
+                    {
+                        //Don't include current revision if file is not required to be updated.
+                        // E.g. json token file is uploaded for a language, specific revision was already upgraded.
+                        if (!file.HasOriginal || file.FileName == null || !languageService.IsSupportedFile(file.FileName) || !languageService.CanUpdate(file.VersionString))
+                        {
+                            continue;
+                        }
+
+                        _telemetryClient.TrackTrace($"Updating review: {review.ReviewId}, revision: {revision.RevisionId}");
+                        paramList.Add(new ReviewGenPipelineParamModel()
+                        {
+                            FileID = file.ReviewFileId,
+                            ReviewID = review.ReviewId,
+                            RevisionID = revision.RevisionId,
+                            FileName = Path.GetFileName(file.FileName)
+                        });
+                    }
                 }
+
+                // This should be changed to configurable batch count
+                if (paramList.Count >= backgroundBatchProcessCount)
+                {
+                    _telemetryClient.TrackTrace($"Running pipeline to update reviews for {language} with batch size {paramList.Count}");
+                    await RunReviewGenPipeline(paramList, languageService.Name);
+                    // Delay of 10 minute before starting next batch
+                    // We should try to increase the number of revisions in the batch than number of runs.
+                    await Task.Delay(600000);
+                    paramList.Clear();
+                }                
+            }
+
+            if (paramList.Count > 0)
+            {
+                _telemetryClient.TrackTrace($"Running pipeline to update reviews for {language} with batch size {paramList.Count}");
+                await RunReviewGenPipeline(paramList, languageService.Name);
             }
         }
 
@@ -627,74 +699,36 @@ namespace APIViewWeb.Managers
             return reviews.Any();
         }
 
-        private async Task UpdateReviewOffline(ReviewModel review)
+
+        private async Task UpdateReviewAsync(ReviewModel review, LanguageService languageService)
         {
-            var paramList = new List<ReviewGenPipelineParamModel>();
-            var languageService = GetLanguageService(review.Language);
             foreach (var revision in review.Revisions.Reverse())
             {
                 foreach (var file in revision.Files)
                 {
-                    //Don't include current revision if file is not required to be updated.
-                    // E.g. json token file is uploaded for a language, specific revision was already upgraded.
-                    if (!file.HasOriginal || file.FileName == null || !languageService.IsSupportedFile(file.FileName) || !languageService.CanUpdate(file.VersionString))
+                    if (!file.HasOriginal || !languageService.CanUpdate(file.VersionString))
                     {
                         continue;
                     }
-                    paramList.Add(new ReviewGenPipelineParamModel()
+
+                    try
                     {
-                        FileID = file.ReviewFileId,
-                        ReviewID = review.ReviewId,
-                        RevisionID = revision.RevisionId,
-                        FileName = Path.GetFileName(file.FileName)
-                    });
-                }
-            }
-            await RunReviewGenPipeline(paramList, languageService.Name);
-        }
-
-        private async Task UpdateReviewAsync(ReviewModel review)
-        {
-            var languageService = GetLanguageService(review.Language);
-            if (languageService == null)
-                return;
-
-            if (languageService.IsReviewGenByPipeline)
-            {
-                // Wait 30 seconds before running next review gen using pipeline to reduce queueing pipeline jobs
-                await Task.Delay(30000);
-                await UpdateReviewOffline(review);
-            }
-            else
-            {
-                foreach (var revision in review.Revisions.Reverse())
-                {
-                    foreach (var file in revision.Files)
+                        var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
+                        // file.Name property has been repurposed to store package name and version string
+                        // This is causing issue when updating review using latest parser since it expects Name field as file name
+                        // We have added a new property FileName which is only set for new reviews
+                        // All older reviews needs to be handled by checking review name field
+                        var fileName = file.FileName ?? (Path.HasExtension(review.Name) ? review.Name : file.Name);
+                        var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
+                        await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
+                        // update only version string
+                        file.VersionString = codeFile.VersionString;
+                        await _reviewsRepository.UpsertReviewAsync(review);
+                    }
+                    catch (Exception ex)
                     {
-                        if (!file.HasOriginal || !languageService.CanUpdate(file.VersionString))
-                        {
-                            continue;
-                        }
-
-                        try
-                        {
-                            var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
-                            // file.Name property has been repurposed to store package name and version string
-                            // This is causing issue when updating review using latest parser since it expects Name field as file name
-                            // We have added a new property FileName which is only set for new reviews
-                            // All older reviews needs to be handled by checking review name field
-                            var fileName = file.FileName ?? (Path.HasExtension(review.Name) ? review.Name : file.Name);
-                            var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
-                            await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
-                            // update only version string
-                            file.VersionString = codeFile.VersionString;
-                            await _reviewsRepository.UpsertReviewAsync(review);
-                        }
-                        catch (Exception ex)
-                        {
-                            _telemetryClient.TrackTrace("Failed to update review " + review.ReviewId);
-                            _telemetryClient.TrackException(ex);
-                        }
+                        _telemetryClient.TrackTrace("Failed to update review " + review.ReviewId);
+                        _telemetryClient.TrackException(ex);
                     }
                 }
             }
@@ -965,9 +999,11 @@ namespace APIViewWeb.Managers
                 throw new Exception($"Failed to run pipeline for review: {param.ReviewID}, file: {param.FileName}");
             }
 
-            var paramList = new List<ReviewGenPipelineParamModel>();
-            paramList.Add(param);
-            
+            var paramList = new List<ReviewGenPipelineParamModel>
+            {
+                param
+            };
+
             await RunReviewGenPipeline(paramList, languageService.Name);
         }
 

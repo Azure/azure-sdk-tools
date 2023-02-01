@@ -194,7 +194,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
-            var entryTuple = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+            (RecordEntry entry, byte[] bytes) = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
             var entry = entryTuple.Item1;
 
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, entryTuple.Item2);

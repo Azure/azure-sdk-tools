@@ -1,12 +1,12 @@
 {
     "name": "@autorest/testmodeler",
-    "version": "2.4.1",
+    "version": "2.5.0",
     "lockfileVersion": 2,
     "requires": true,
     "packages": {
         "": {
             "name": "@autorest/testmodeler",
-            "version": "2.4.1",
+            "version": "2.5.0",
             "license": "MIT",
             "dependencies": {
                 "@autorest/codemodel": "^4.19.2",

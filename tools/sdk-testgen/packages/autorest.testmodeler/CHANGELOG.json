@@ -2,9 +2,9 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
-      "version": "2.4.1",
-      "tag": "@autorest/testmodeler_v2.4.1",
-      "date": "Wed, 25 Jan 2023 20:23:19 GMT",
+      "version": "2.5.0",
+      "tag": "@autorest/testmodeler_v2.5.0",
+      "date": "Wed, 1 Feb 2023 20:23:19 GMT",
       "comments": {
         "patch": [
           {

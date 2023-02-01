@@ -57,6 +57,7 @@ steps:
             -Target "${{ parameters.TargetDirectory }}"
             -ArtifactStagingDirectory "$(Build.ArtifactStagingDirectory)"
             -Framework "${{ target.framework }}"
+            -AssemblyName "${{ target.assembly }}"
           pwsh: true
         displayName: 'Produce Executable for ${{ target.rid }}'
         condition: and(succeeded(), not(eq(variables['Agent.OS'], 'Darwin')))

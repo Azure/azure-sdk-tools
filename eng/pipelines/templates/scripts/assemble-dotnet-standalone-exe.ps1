@@ -89,7 +89,7 @@ else {
 }
 
 # clean up the uncompressed artifact directory
-# Remove-Item -Recurse -Force -Path $outputPath
+Remove-Item -Recurse -Force -Path $outputPath
 
 
 

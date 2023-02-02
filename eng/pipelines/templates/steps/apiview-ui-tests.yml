@@ -15,16 +15,11 @@ parameters:
     type: string
     default: ''
   
-
 steps:
 - task: NodeTool@0
   inputs:
     versionSpec: '${{ parameters.NodeVersion }}'
   displayName: 'Use NodeJS ${{ parameters.NodeVersion }}'
-
-- script: |
-    npm install -g npm@6.14.6
-  displayName: "Install npm 6.14.6"
 
 - script: |
     npm install
@@ -57,6 +52,18 @@ steps:
     AZURE_CLIENT_ID: "$(apiview-appconfig-client-id)"
     AZURE_TENANT_ID: "$(apiview-appconfig-tenant-id)"
     AZURE_CLIENT_SECRET: "$(apiview-appconfig-client-secret)"
+
+- task: Powershell@2
+  inputs:
+    filePath: $(Build.SourcesDirectory)/eng/common/scripts/copy-from-blobstorage.ps1
+    arguments: >
+      -SourceBlobPath '${{ parameters.TestingDataContainer }}'
+      -ApplicationId $(apiviewstorageaccess-application-id)
+      -DestinationDirectory $(Build.BinariesDirectory)
+    pwsh: true
+  displayName: 'Copy from Test Files From Blob'
+  env:
+    AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
 
 - task: Powershell@2
   inputs:

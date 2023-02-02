@@ -57,7 +57,8 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             var codeownersEntries = GetCodeownersEntriesFromFileOrUrl(codeownersFilePathOrUrl);
 
             Dictionary<string, CodeownersEntry> codeownersEntriesByPath = targetPath
-                .ResolveGlob(targetDir, ignoredPathPrefixes).ToDictionary(
+                .ResolveGlob(targetDir, ignoredPathPrefixes)
+                .ToDictionary(
                     path => path,
                     path => GetMatchingCodeownersEntry(
                         path,

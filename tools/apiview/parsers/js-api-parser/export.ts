@@ -16,6 +16,9 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
     builder.lineId(item.canonicalReference.toString());
     builder.indent();
     if (item instanceof ApiDeclaredItem) {
+        if ( item.kind === ApiItemKind.Namespace) {
+            builder.splitAppend(`declare namespace ${item.displayName} `, item.canonicalReference.toString(), item.displayName);
+        }
         for (const token of item.excerptTokens) {
             if (token.kind === ExcerptTokenKind.Reference)
             {
@@ -35,6 +38,7 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
     {
         case ApiItemKind.Interface:
         case ApiItemKind.Class:
+        case ApiItemKind.Namespace:
             typeKind = item.kind.toLowerCase();
             break
         case ApiItemKind.TypeAlias:
@@ -56,7 +60,8 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
     }
 
     if (item.kind === ApiItemKind.Interface ||
-        item.kind === ApiItemKind.Class)
+        item.kind === ApiItemKind.Class ||
+        item.kind === ApiItemKind.Namespace)
     {
         if (item.members.length > 0)
         {

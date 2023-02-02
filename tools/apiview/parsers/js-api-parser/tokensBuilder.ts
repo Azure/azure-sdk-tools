@@ -30,6 +30,7 @@ export class TokensBuilder
         "import",
         "in",
         "instanceof",
+        "namespace",
         "new",
         "null",
         "return",

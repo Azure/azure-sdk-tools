@@ -11,10 +11,13 @@ parameters:
 # A `BuildMatrix` is merely a list of possible targeted platforms. .NET 6+ can build for any target from any other target.
   # - rid: win-x64
   #   framework: net6.0
+  #   assembly: Azure.Sdk.Tools.TestProxy
   # - rid: linux-x64
   #   framework: net6.0
+  #   assembly: Azure.Sdk.Tools.TestProxy
   # - rid: osx-x64
   #   framework: net6.0
+  #   assembly: Azure.Sdk.Tools.TestProxy
 
 steps:
   - ${{ each target in parameters.BuildMatrix }}:
@@ -29,6 +32,7 @@ steps:
             -Target "${{ parameters.TargetDirectory }}"
             -ArtifactStagingDirectory "$(Build.ArtifactStagingDirectory)"
             -Framework "${{ target.framework }}"
+            -AssemblyName "${{ target.assembly }}"
           pwsh: true
         displayName: 'Produce Executable for ${{ target.rid }}'
         condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
@@ -53,6 +57,7 @@ steps:
             -Target "${{ parameters.TargetDirectory }}"
             -ArtifactStagingDirectory "$(Build.ArtifactStagingDirectory)"
             -Framework "${{ target.framework }}"
+            -AssemblyName "${{ target.assembly }}"
           pwsh: true
         displayName: 'Produce Executable for ${{ target.rid }}'
         condition: and(succeeded(), not(eq(variables['Agent.OS'], 'Darwin')))

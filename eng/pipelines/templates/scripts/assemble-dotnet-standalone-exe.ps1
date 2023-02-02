@@ -26,6 +26,8 @@ param(
    [string] $Target,
    [Parameter(mandatory=$true)]
    [string] $ArtifactStagingDirectory,
+   [Parameter(mandatory=$true)]
+   [string] $AssemblyName,
    [Parameter(mandatory=$false)]
    [string] $Framework = "net6.0"
 )
@@ -60,7 +62,8 @@ if ("$($Rid)".Contains("linux")){
    Push-Location "$outputPath"
    # The sum contents within this folder will be: `appSettings.json`, `test-proxy.pdb`, `test-proxy` (the binary), and a certificate.
    # This statement grabs the first extensionless file within the produced binary folder, which will always be the binary we need to set the executable bit on.
-   $binaryFile = (Get-ChildItem -Path . | Where-Object { !([System.IO.Path]::HasExtension($_)) } | Select-Object -First 1).ToString().Replace("`\","/")
+   $binaryFile = (Get-ChildItem -Path . | Where-Object { $_.Name -eq $AssemblyName } | Select-Object -First 1).ToString().Replace("`\","/")
+
    bash -c "chmod +x $binaryFile"
    tar -cvzf "$($destinationPathSegment).tar.gz" .
    Pop-Location
@@ -70,7 +73,7 @@ elseif("$($Rid)".Contains("osx")){
    # a mac system. However, the `codesign` command is only available on a MacOS agent. With that being the case, we simply special case
    # this function here to ensure that the script does not fail outside of a MacOS agent.
    if ($IsMacOS) {
-      $binaryFile = Get-ChildItem -Path $outputPath | Where-Object { !([System.IO.Path]::hasExtension($_)) } | Select-Object -First 1
+      $binaryFile = Get-ChildItem -Path $outputPath | Where-Object { $_.Name -eq $AssemblyName } | Select-Object -First 1
       $binaryFileBash = $binaryFile.ToString().Replace("`\","/")
 
       $entitlements = (Resolve-Path -Path (Join-Path $PSScriptRoot ".." ".." ".." "dotnet-executable-entitlements.plist")).ToString().Replace("`\", "/")

@@ -9,10 +9,7 @@ This script downloads, installs and launches cosmosdb-emulator.
 Uri for downloading the cosmosdb-emulator
 
 .PARAMETER StartParameters
-Parameter with which to launch the cosmosdb-emulator\
-
-.PARAMETER Emulator
-Exact path to Microsoft.Azure.Cosmos.Emulator.exe
+Parameter with which to launch the cosmosdb-emulator
 
 .PARAMETER Stage
 Determines what part of the script to run. Has to be either Install or Launch
@@ -21,7 +18,6 @@ Determines what part of the script to run. Has to be either Install or Launch
 Param (
   [string] $EmulatorMsiUrl = "https://aka.ms/cosmosdb-emulator",
   [string] $StartParameters,
-  [string] $Emulator,
   [Parameter(Mandatory=$True)]
   [ValidateSet('Install', 'Launch')]
   [string] $Stage
@@ -30,11 +26,7 @@ Param (
 $targetDir = Join-Path $Env:Temp AzureCosmosEmulator
 $logFile = Join-Path $Env:Temp log.txt
 $productName = "Azure Cosmos DB Emulator"
-
-if ([string]::IsNullOrEmpty($Emulator))
-{
-  $Emulator = (Join-Path $targetDir (Join-Path $productName "Microsoft.Azure.Cosmos.Emulator.exe"))
-}
+$emulator = (Join-Path $targetDir (Join-Path $productName "Microsoft.Azure.Cosmos.Emulator.exe"))
 
 if ($Stage -eq "Install")
 {
@@ -66,19 +58,19 @@ if ($Stage -eq "Install")
   }
 
   Write-Host "Getting Cosmos DB Emulator Version"
-  $fileVersion = Get-ChildItem $Emulator
-  Write-Host $Emulator $fileVersion.VersionInfo
+  $fileVersion = Get-ChildItem $emulator
+  Write-Host $emulator $fileVersion.VersionInfo
 }
 
 if ($Stage -eq "Launch")
 {
   Write-Host "Launching Cosmos DB Emulator"
-  if (!(Test-Path $Emulator)) {
-    Write-Error "The emulator is not installed where expected at '$Emulator'"
+  if (!(Test-Path $emulator)) {
+    Write-Error "The emulator is not installed where expected at '$emulator'"
     return
   }
 
-  $process = Start-Process $Emulator -ArgumentList "/getstatus" -PassThru -Wait
+  $process = Start-Process $emulator -ArgumentList "/getstatus" -PassThru -Wait
   switch ($process.ExitCode) {
     1 {
       Write-Host "The emulator is already starting"
@@ -105,8 +97,8 @@ if ($Stage -eq "Launch")
     $argumentList = "/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication"
   }
 
-  Write-Host "Starting emulator process: $Emulator $argumentList"
-  $process = Start-Process $Emulator -ArgumentList $argumentList -ErrorAction Stop -PassThru
+  Write-Host "Starting emulator process: $emulator $argumentList"
+  $process = Start-Process $emulator -ArgumentList $argumentList -ErrorAction Stop -PassThru
   Write-Host "Emulator process started: $($process.Name), $($process.FileVersion)"
 
   $Timeout = 600
@@ -125,7 +117,7 @@ if ($Stage -eq "Launch")
   }
 
   do {
-    $process = Start-Process $Emulator -ArgumentList "/getstatus" -PassThru -Wait
+    $process = Start-Process $emulator -ArgumentList "/getstatus" -PassThru -Wait
     switch ($process.ExitCode) {
       1 {
         Write-Host "The emulator is starting"

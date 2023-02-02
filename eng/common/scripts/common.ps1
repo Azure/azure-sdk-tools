@@ -57,6 +57,3 @@ $GetDocsMsTocChildrenForManagementPackagesFn = "Get-${Language}-DocsMsTocChildre
 $UpdateDocsMsTocFn = "Get-${Language}-UpdatedDocsMsToc"
 $GetPackageLevelReadmeFn = "Get-${Language}-PackageLevelReadme"
 $GetRepositoryLinkFn = "Get-${Language}-RepositoryLink"
-$GetEmitterAdditionalOptionsFn = "Get-${Language}-EmitterAdditionalOptions"
-$GetEmitterNameFn = "Get-${Language}-EmitterName"
-$GetEmitterPackageJsonPathFn = "Get-${Language}-EmitterPackageJsonPath"

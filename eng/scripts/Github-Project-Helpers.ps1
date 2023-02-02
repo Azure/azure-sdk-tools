@@ -5,27 +5,23 @@ function Get-GithubProjectId([string] $project)
   # https://github.com/users/<user>/projects/<number>
   # or just a number in which case default to Azure as the org
   $projectId = ""
-  if ($project -match "(((orgs/(?<org>.*))|(users/(?<user>.*)))/projects/)?(?<number>\d+)$")
+  if ($project -match "((orgs/(?<org>.*))|(users/(?<user>.*))/projects/)?(?<number>\d+)$")
   {
     $projectNumber = $matches["number"]
     if ($matches["user"]) {
       $name = $matches["user"]
-      $projectQuery = 'query($name: String!, $number: Int!) { user(login: $name) { projectV2(number: $number) { id } } }'
-      $selectQuery = ".data.user.projectV2.id"
+      $projectQuery = 'query($name: String!, $number: Int!) { user(login: $name) { projectNext(number: $number) { id } } }'
+      $selectQuery = ".data.user.projectNext.id"
     }
     else {
       $name = $matches["org"]
       $name ??= "Azure"
 
-      $projectQuery = 'query($name: String!, $number: Int!) { organization(login: $name) { projectV2(number: $number) { id } } }'
-      $selectQuery = ".data.organization.projectV2.id"
+      $projectQuery = 'query($name: String!, $number: Int!) { organization(login: $name) { projectNext(number: $number) { id } } }'
+      $selectQuery = ".data.organization.projectNext.id"
     }
 
     $projectId = gh api graphql -f query=$projectQuery -F name=$name -F number=$projectNumber --jq $selectQuery
-
-    if ($LASTEXITCODE) {
-      Write-Error "$projectId`nLASTEXITCODE = $LASTEXITCODE"
-    }
   }
   return $projectId
 }
@@ -34,16 +30,13 @@ function Add-GithubIssueToProject([string]$projectId, [string]$issueId)
 {
   $projectItemId = gh api graphql -F projectId=$projectId -F issueId=$issueId -f query='
     mutation($projectId: ID!, $issueId: ID!) {
-      addProjectV2ItemById(input: {projectId: $projectId, contentId: $issueId}) {
-        item {
+      addProjectNextItem(input: {projectId: $projectId, contentId: $issueId}) {
+        projectNextItem {
           id
         }
       }
-    }' --jq ".data.addProjectV2ItemById.item.id"
+    }' --jq ".data.addProjectNextItem.projectNextItem.id"
 
-  if ($LASTEXITCODE) {
-    Write-Error "$projectItemId`nLASTEXITCODE = $LASTEXITCODE"
-  }
   return $projectItemId
 }
 
@@ -51,14 +44,11 @@ function Remove-GithubIssueFromProject([string]$projectId, [string]$projectItemI
 {
   $projectDeletedItemId = gh api graphql -F projectId=$projectId -F itemId=$projectItemId -f query='
     mutation($projectId: ID!, $itemId: ID!)  {
-      deleteProjectV2Item(input: {projectId: $projectId, itemId: $itemId} ) {
+      deleteProjectNextItem(input: {projectId: $projectId, itemId: $itemId} ) {
         deletedItemId
       }
-  }' --jq ".data.deleteProjectV2Item.deletedItemId"
+  }' --jq ".data.deleteProjectNextItem.deletedItemId"
 
-  if ($LASTEXITCODE) {
-    Write-Error "$projectDeletedItemId`nLASTEXITCODE = $LASTEXITCODE"
-  }
   return $projectDeletedItemId
 }
 

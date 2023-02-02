@@ -1,6 +1,5 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -63,7 +62,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     Status = e.StatusCode.ToString()
                 };
 
-                DebugLogger.LogError(e.Message);
+                DebugLogger.LogInformation(e.Message);
 
                 var body = JsonSerializer.Serialize(bodyObj);
                 await context.Response.WriteAsync(body);
@@ -79,8 +78,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 response.Headers.Add("x-request-exception", "true");
                 response.Headers.Add("x-request-exception-error", Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message)));
-
-                DebugLogger.LogError(unexpectedStatusCode, e);
 
                 var bodyObj = new
                 {

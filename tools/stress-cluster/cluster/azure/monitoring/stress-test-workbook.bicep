@@ -1,4 +1,5 @@
 param logAnalyticsResource string
+param location string = resourceGroup().location
 
 @description('The friendly name for the workbook that is used in the Gallery or Saved List.  This name must be unique within a resource group.')
 param workbookDisplayName string
@@ -308,7 +309,7 @@ var workbookContent = {
 
 resource workbookId_resource 'microsoft.insights/workbooks@2021-03-08' = {
   name: workbookId
-  location: resourceGroup().location
+  location: location
   kind: 'shared'
   properties: {
     displayName: workbookDisplayName

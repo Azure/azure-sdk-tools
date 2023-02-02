@@ -194,9 +194,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
-            var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+            (RecordEntry entry, byte[] requestBody) = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
-            var upstreamRequest = CreateUpstreamRequest(incomingRequest, CompressionUtilities.CompressBody(entry.Request.Body, entry.Request.Headers));
+            var upstreamRequest = CreateUpstreamRequest(incomingRequest, requestBody);
 
             HttpResponseMessage upstreamResponse = null;
 
@@ -432,7 +432,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
-            var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+            var entry = (await CreateEntryAsync(incomingRequest).ConfigureAwait(false)).Item1;
 
             // If request contains "x-recording-remove: false", then request is not removed from session after playback.
             // Used by perf tests to play back the same request multiple times.
@@ -470,7 +470,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public static async Task<RecordEntry> CreateEntryAsync(HttpRequest request)
+        public static async Task<(RecordEntry, byte[])> CreateEntryAsync(HttpRequest request)
         {
             var entry = new RecordEntry();
             entry.RequestUri = GetRequestUri(request).AbsoluteUri;
@@ -487,7 +487,7 @@ namespace Azure.Sdk.Tools.TestProxy
             byte[] bytes = await ReadAllBytes(request.Body).ConfigureAwait(false);
 
             entry.Request.Body = CompressionUtilities.DecompressBody(bytes, request.Headers);
-            return entry;
+            return (entry, bytes);
         }
 
         #endregion

@@ -45,7 +45,7 @@
     "dotenv": "^16.0.0",
     "winston": "3.7.2",
     "command-line-args": "~5.2.1",
-    "simple-git": "~3.7.1"
+    "simple-git": "~3.16.0"
   },
   "devDependencies": {
     "@types/node": "^16.11.7",

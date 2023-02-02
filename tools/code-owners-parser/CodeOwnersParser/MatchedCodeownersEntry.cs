@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
     /// https://git-scm.com/docs/gitignore#_pattern_format
     /// </summary>
-    internal class MatchedCodeownersEntry
+    public class MatchedCodeownersEntry
     {
         /// <summary>
         /// Token for temporarily substituting "**" in regex, to avoid it being escaped when
@@ -47,6 +47,10 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// See comment on IsCodeownersPathValid
         /// </summary>
         public bool IsValid => IsCodeownersPathValid(this.Value.PathExpression);
+
+        public static bool ContainsUnsupportedFragments(string codeownersPath)
+            => ContainsUnsupportedCharacters(codeownersPath)
+               || ContainsUnsupportedSequences(codeownersPath);
 
         /// <summary>
         /// Any CODEOWNERS path with these characters will be skipped.
@@ -113,10 +117,6 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         }
 
         private CodeownersEntry NoMatchCodeownersEntry { get; } = new CodeownersEntry();
-
-        private static bool ContainsUnsupportedFragments(string codeownersPath)
-            => ContainsUnsupportedCharacters(codeownersPath)
-               || ContainsUnsupportedSequences(codeownersPath);
 
         /// <summary>
         /// See the comment on unsupportedChars.
@@ -284,7 +284,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// - if the path expression does not end with "/", at least one matching
         /// file exists in the repository.
         /// </summary>
-        private bool IsCodeownersPathValid(string codeownersPathExpression)
+        private static bool IsCodeownersPathValid(string codeownersPathExpression)
             => codeownersPathExpression.StartsWith("/") && !ContainsUnsupportedFragments(codeownersPathExpression);
     }
 }

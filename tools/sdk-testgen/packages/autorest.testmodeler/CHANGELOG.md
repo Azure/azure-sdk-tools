@@ -1,12 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Wed, 1 Feb 2023 20:23:19 GMT and should not be manually modified.
+This log was last generated on Thu, 02 Feb 2023 09:40:48 GMT and should not be manually modified.
 
 ## 2.5.0
-Wed, 1 Feb 2023 20:23:19 GMT
+Thu, 02 Feb 2023 09:40:48 GMT
 
 ### Patches
 
+- Use webpack and remove npm-shrinkwrap.json
 - Update dependency semver ranges
 
 ## 2.4.0

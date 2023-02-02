@@ -4,9 +4,12 @@
     {
       "version": "2.5.0",
       "tag": "@autorest/testmodeler_v2.5.0",
-      "date": "Wed, 1 Feb 2023 20:23:19 GMT",
+      "date": "Thu, 02 Feb 2023 09:40:48 GMT",
       "comments": {
         "patch": [
+          {
+            "comment": "Use webpack and remove npm-shrinkwrap.json"
+          },
           {
             "comment": "Update dependency semver ranges"
           }

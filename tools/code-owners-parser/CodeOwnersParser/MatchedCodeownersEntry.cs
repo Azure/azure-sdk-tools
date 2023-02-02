@@ -173,7 +173,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             {
                 Console.Error.WriteLine(
                     $"CODEOWNERS path \"{codeownersPath}\" ends with " +
-                    "unsupported sequence of \"/**/\". Replace it with \"/**\".");
+                    "unsupported sequence of \"/**/\". Replace it with \"/\".");
                 return true;
             }
 

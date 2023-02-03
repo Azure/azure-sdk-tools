@@ -10,24 +10,32 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// Represents a CODEOWNERS file entry that matched to targetPath from
     /// the list of entries, assumed to have been parsed from CODEOWNERS file.
     ///
-    /// This is a new matcher, compared to the old one, located in:
+    /// To use this class, construct it, passing as input relevant paths.
+    /// Then, to obtain the value of the matched entry, reference "Value" member.
+    ///
+    /// This class uses a regex-based wildcard-supporting (* and **) matcher, compared to the old one, located in:
     ///
     ///   CodeownersFile.GetMatchingCodeownersEntryLegacyImpl()
     /// 
-    /// This new matcher supports matching against wildcards (* and **), while the old one doesn't.
-    /// This new matcher is designed to work with CODEOWNERS file validation:
+    /// The old matcher is prefix-based, strips suffix "/", and doesn't support wildcards.
+    ///
+    /// This matcher aims to reflect the matching behavior of the built-in GitHub CODEOWNERS interpreter,
+    /// but with additional assumptions imposed about the paths present in CODEOWNERS, as guaranteed
+    /// by CODEOWNERS file validation:
     /// https://github.com/Azure/azure-sdk-tools/issues/4859
     ///
     /// The validation spec is given in this comment:
     /// https://github.com/Azure/azure-sdk-tools/issues/4859#issuecomment-1370360622
+    /// See also ProgramGlobPathTests and CodeownersFileTests classes.
     ///
-    /// Besides that, the matcher aims to exactly reflect the matching behavior 
-    /// of the built-in GitHub CODEOWNERS interpreter. See ProgramGlobPathTests
-    /// for examples of its behavior.
-    ///
-    /// To use this class, construct it, passing as input relevant paths.
-    /// Then, to obtain the value of the matched entry, reference "Value" member.
-    ///
+    /// If this matcher is used with CODEOWNERS paths that do not pass the aforementioned file validation,
+    /// the matcher will return no match. Specifically, the matcher will result in no match against
+    /// following CODEOWNERS paths, even though they are valid from the point of view of GitHub matcher:
+    /// - The CODEOWNERS path doesn't start with "/"
+    /// - The CODEOWNERS path matches a directory exactly but doesn't end with "/"
+    /// - The CODEOWNERS path has unsupported characters or sequences.
+    ///   Consult ContainsUnsupportedFragments for details.
+    ///    
     /// Reference:
     /// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
     /// https://git-scm.com/docs/gitignore#_pattern_format
@@ -211,7 +219,6 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         private Regex ConvertToRegex(string codeownersPath)
         {
-            codeownersPath = NormalizePath(codeownersPath);
             Trace.Assert(IsCodeownersPathValid(codeownersPath));
 
             // Special case: path "/**" matches everything.
@@ -269,12 +276,14 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // If a pattern ends with "/*" this means it should match only files
             // in the child directory, but not all descendant directories.
             // Hence we must append "$", to avoid treating the regex pattern
-            // as a prefix match.
+            // as a prefix match and instead treat it as exact match.
             if (pattern.EndsWith($"/{SingleStar}"))
                 return pattern + "$";
 
+            Trace.Assert(pattern != "^/", "Path \"/\" should have been excluded by validation.");
+
             // If the pattern ends with "/" it means it is a path to a directory,
-            // like "/foo". This means "match everything in this directory,
+            // like "/foo/". This means "match everything in this directory,
             // at arbitrary directory nesting depth."
             //
             // If the pattern ends with "*" but not "/*" (as this case was handled above)
@@ -284,31 +293,19 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             if (pattern.EndsWith("/") || pattern.EndsWith(SingleStar))
                 return pattern;
 
-            // If the pattern doesn't end with "/" nor "*", it is a path to a file,
-            // or to a directory with exact match, hence the suffix must be:
-            // - "$", in case it is a file, as it denotes string end.
-            // OR
-            // - "/", in case it is a directory, denoting the leaf dir name has to be
-            // an exact match.
-            // For example, given path of "/foo",
-            // both files "/foo" and "foo/bar/baz.txt" should match, but not
-            // "/foo.txt" nor "/fooa/b.txt".
-            // For the latter two to match, the path should have been "/foo*".
-            return pattern + "($|/)";
-        }
-
-        /// <summary>
-        /// CODEOWNERS paths that do not start with "/" are relative and considered invalid,
-        /// See comment on "IsCodeownersPathValid" for definition of "valid".
-        /// However, here we handle such cases to accomodate for parsing CODEOWNERS file
-        /// paths that somehow slipped through that validation. We do so by instead treating
-        /// such paths as if they were absolute to repository root, i.e. starting with "/".
-        /// </summary>
-        private static string NormalizePath(string codeownersPath)
-        {
-            if (!codeownersPath.StartsWith("/"))
-                codeownersPath = "/" + codeownersPath;
-            return codeownersPath;
+            // If the pattern doesn't end with "/" nor "*", then according to GitHub CODEOWNERS
+            // matcher it is a path to a file, or to a directory with exact match.
+            // However, in this matcher we assume stricter interpretation where 
+            // it has to be a path to a file.
+            //
+            // As a result we append "$", to avoid treating the regex pattern
+            // as a prefix match and instead treat it as exact match.
+            //
+            // If that assumption is violated, i.e. the CODEOWNERS path is actually
+            // a path to a directory, due to appending "$" the result will be no match,
+            // e.g. targetPath of "/foo/bar" is a no match against "/foo$".
+            // This is the desired behavior, as we don't want to match against invalid paths.
+            return pattern + "$";
         }
 
         /// <summary>

@@ -390,7 +390,7 @@ public class CodeownersManualAnalysisTests
             }
             else
             {
-                var trimmedPathExpression = entry.PathExpression.TrimStart('/');
+                string trimmedPathExpression = entry.PathExpression.TrimStart('/');
 
                 bool matchesDirExactly = MatchesDirExactly(targetDir, trimmedPathExpression);
                 bool matchesNamePrefix = MatchesNamePrefix(paths, trimmedPathExpression);

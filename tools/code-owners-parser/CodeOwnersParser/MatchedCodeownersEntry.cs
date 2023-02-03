@@ -163,7 +163,8 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             {
                 Console.Error.WriteLine(
                     $"CODEOWNERS path \"{codeownersPath}\" ends with " +
-                    "unsupported sequence of \"/**\". Replace it with \"/\".");
+                    "unsupported sequence of \"/**\". Replace it with \"/\". " +
+                    "Until then this path will never match.");
                 return true;
             }
 
@@ -173,7 +174,8 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             {
                 Console.Error.WriteLine(
                     $"CODEOWNERS path \"{codeownersPath}\" ends with " +
-                    "unsupported sequence of \"/**/\". Replace it with \"/**\".");
+                    "unsupported sequence of \"/**/\". Replace it with \"/\". " +
+                    "Until then this path will never match.");
                 return true;
             }
 
@@ -184,8 +186,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             {
                 Console.Error.WriteLine(
                     $"CODEOWNERS path \"{codeownersPath}\" contains " +
-                    "unsupported sequence of \"**\" that is not \"/**/\". Replace it with \"*\". " +
-                    "Until then this path will never match.");
+                    "unsupported sequence of \"**\". Double star can be used only within slashes \"/**/\" " +
+                    "or as a top-level catch all path of \"/**\". "  +
+                    "Currently this path will never match.");
                 return true;
             }
 

@@ -21,9 +21,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// The validation spec is given in this comment:
     /// https://github.com/Azure/azure-sdk-tools/issues/4859#issuecomment-1370360622
     ///
-    /// Besides that, the matcher aim to exactly reflect the matching behavior of the
-    /// built-in GitHub CODEOWNERS interpreter. See ProgramGlobPathTests for examples
-    /// of its behavior.
+    /// Besides that, the matcher aims to exactly reflect the matching behavior 
+    /// of the built-in GitHub CODEOWNERS interpreter. See ProgramGlobPathTests
+    /// for examples of its behavior.
     ///
     /// To use this class, construct it, passing as input relevant paths.
     /// Then, to obtain the value of the matched entry, reference "Value" member.
@@ -285,9 +285,16 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 return pattern;
 
             // If the pattern doesn't end with "/" nor "*", it is a path to a file,
-            // hence we must append "$", to avoid treating the regex pattern as a
-            // prefix match.
-            return pattern + "$";
+            // or to a directory with exact match, hence the suffix must be:
+            // - "$", in case it is a file, as it denotes string end.
+            // OR
+            // - "/", in case it is a directory, denoting the leaf dir name has to be
+            // an exact match.
+            // For example, given path of "/foo",
+            // both files "/foo" and "foo/bar/baz.txt" should match, but not
+            // "/foo.txt" nor "/fooa/b.txt".
+            // For the latter two to match, the path should have been "/foo*".
+            return pattern + "($|/)";
         }
 
         /// <summary>

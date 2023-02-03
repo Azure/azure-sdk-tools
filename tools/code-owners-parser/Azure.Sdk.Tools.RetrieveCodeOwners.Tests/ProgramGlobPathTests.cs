@@ -60,6 +60,9 @@ public class ProgramGlobPathTests
             ["baz/cor/c.txt"] = new CodeownersEntry("/baz*",         new List<string> { "baz_star" }),
             ["baz_.txt"]      = new CodeownersEntry("/baz*",         new List<string> { "baz_star" }),
             ["qux/abc/d.txt"] = new CodeownersEntry("/qux/",         new List<string> { "qux" }),
+            ["cor.txt"]       = new CodeownersEntry("/*",            new List<string> { "star" }),
+            ["cor2/a.txt"]    = new CodeownersEntry("/**",           new List<string> { "2star" }),
+            ["cor/gra/a.txt"] = new CodeownersEntry("/cor",          new List<string> { "cor" }),
             // @formatter:on
         };
         

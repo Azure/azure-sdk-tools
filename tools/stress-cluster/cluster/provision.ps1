@@ -254,6 +254,26 @@ function DeployHelmResources()
         $PSScriptRoot/kubernetes/stress-infrastructure
 }
 
+# Steps to install preview features that may not be available in the bicep deployment
+function RegisterAKSFeatures([string]$group, [string]$cluster) {
+    if ($UpdateNodes) {
+        return
+    }
+    RunOrExitOnFailure az extension add --name aks-preview
+    RunOrExitOnFailure az extension update --name aks-preview
+    RunOrExitOnFailure az feature register --namespace Microsoft.ContainerService --name EnableImageCleanerPreview
+    $i = 0
+    do {
+        sleep $i
+        $feature = RunOrExitOnFailure az feature show --namespace Microsoft.ContainerService --name EnableImageCleanerPreview -o json
+        $feature = $feature | ConvertFrom-Json
+        Write-Host "Waiting for 'EnableImageCleanerPreview' feature to register. This may take several minutes."
+        $i = 30
+    } while ($feature.properties.state -eq "Registering")
+    RunOrExitOnFailure az provider register --namespace Microsoft.ContainerService
+    RunOrExitOnFailure az aks update -g $group -n $cluster --enable-image-cleaner --image-cleaner-interval-hours 24
+}
+
 function LoadEnvParams()
 {
     try {
@@ -297,6 +317,7 @@ function main()
         $STRESS_CLUSTER_RESOURCE_GROUP = "rg-stress-cluster-$($params.groupSuffix)"
         DeployStaticResources $params
         DeployClusterResources $params
+        RegisterAKSFeatures $STRESS_CLUSTER_RESOURCE_GROUP $params.clusterName
     }
     DeployHelmResources
 }

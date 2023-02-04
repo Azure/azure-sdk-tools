@@ -1,9 +1,10 @@
-import os, argparse, glob, json, datetime, time
+import os, argparse, glob, json, datetime, re
 
 from subprocess import run
 from typing import List, Dict, Any
 
 import yaml  # pyyaml
+from packaging import version  # from packaging
 from ci_tools.functions import (
     discover_targeted_packages,
 )  # azure-sdk-tools from azure-sdk-for-python
@@ -104,25 +105,21 @@ def generate_python_report() -> ScanResult:
     repo = get_repo(language)
     print(f"Evaluating repo for {language} @ {repo}", end="...")
 
-    try:
-        result = ScanResult(language)
+    result = ScanResult(language)
 
-        results = discover_targeted_packages("azure*", repo)
+    results = discover_targeted_packages("azure*", repo)
 
-        result.packages = [os.path.basename(pkg) for pkg in results]
+    result.packages = sorted([os.path.basename(pkg) for pkg in results])
 
-        for pkg in results:
-            evaluation = evaluate_python_package(pkg)
-            if evaluation == 1:
-                result.packages_using_proxy.append(os.path.basename(pkg))
-            elif evaluation == 2:
-                result.packages_using_proxy.append(os.path.basename(pkg))
-                result.packages_using_external.append(os.path.basename(pkg))
+    for pkg in results:
+        evaluation = evaluate_python_package(pkg)
+        if evaluation == 1:
+            result.packages_using_proxy.append(os.path.basename(pkg))
+        elif evaluation == 2:
+            result.packages_using_proxy.append(os.path.basename(pkg))
+            result.packages_using_external.append(os.path.basename(pkg))
 
-        print(YES)
-    except Exception as e:
-        print(NO)
-
+    print("done.")
     return result
 
 
@@ -145,6 +142,9 @@ def generate_go_report() -> ScanResult:
     language = "Go"
 
     repo_root = get_repo(language)
+
+    print(f"Evaluating repo for {language} @ {repo_root}", end="...")
+
     result = ScanResult(language)
     sdk_path = os.path.join(repo_root, "sdk")
 
@@ -164,15 +164,59 @@ def generate_go_report() -> ScanResult:
             result.packages_using_proxy.append(pkg.replace(sdk_path + os.sep, ""))
             result.packages_using_external.append(pkg.replace(sdk_path + os.sep, ""))
 
+    print("done.")
+
     return result
 
 
-def evaluate_net_package(package_path: str) -> int:
-    pass
+def evaluate_net_package(solution_path: str) -> int:
+    evaluation = 0
+
+    # track 2 indicators within a given sln
+    # Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Core", "..\core\Azure.Core\src\Azure.Core.csproj", "{C04D725B-B025-4B41-BAF0-BEE3F8D087AB}"
+    # Project("") = "Azure.Core.TestFramework", "..\..\core\Azure.Core.TestFramework\src\Azure.Core.TestFramework.csproj", "{EE26B4BC-37DB-4C5C-8519-4B8081012AF8}"
+    core_pattern = r"^\s*Project\(\"[\d\S\-\_]*?\"\)\ \=\ \"Azure\.Core\""
+    framework_pattern = r"^\s*Project\(\"[\d\S\-\_]*?\"\)\ \=\ \"Azure\.Core\.TestFramework\""
+
+    with open(solution_path, "r") as f:
+        content = f.read()
+
+    core_present = re.findall(core_pattern, content, re.MULTILINE)
+    core_test_present = re.findall(framework_pattern, content, re.MULTILINE)
+
+    if core_present or core_test_present:
+        evaluation = 1
+
+    return evaluation
+
+
+def net_trim_path(solution_path: str) -> str:
+    return os.path.splitext(os.path.basename(solution_path))[0]
 
 
 def generate_net_report() -> ScanResult:
-    result = ScanResult(".NET")
+    language = "net"
+    result = ScanResult("." + language.upper())
+    repo = get_repo(language)
+
+    print(f"Evaluating repo for {language} @ {repo}", end="...")
+
+    globby_glob = os.path.join(repo, "sdk", "**", "*.sln")
+    all_solutions = set([sln for sln in glob.glob(globby_glob, recursive=True)])
+
+    result.packages = sorted([net_trim_path(sln) for sln in all_solutions])
+
+    for solution in all_solutions:
+        evaluation = evaluate_net_package(solution)
+
+        if evaluation == 1:
+            result.packages_using_proxy.append(net_trim_path(solution))
+        elif evaluation == 2:
+            result.packages_using_proxy.append(net_trim_path(solution))
+            result.packages_using_external.append(net_trim_path(solution))
+
+    print("done.")
+
     return result
 
 
@@ -195,12 +239,14 @@ def generate_cpp_report() -> ScanResult:
     result = ScanResult(language)
     repo_root = get_repo(language)
 
+    print(f"Evaluating repo for {language} @ {repo_root}", end="...")
+
     exclusions = [os.path.join("vcpkg", "vcpkg.json"), "template"]
 
     packages = glob.glob(os.path.join(repo_root, "sdk", "**", "vcpkg.json"), recursive=True)
     packages = [os.path.dirname(pkg) for pkg in packages if not any([x in pkg for x in exclusions])]
 
-    result.packages = [os.path.basename(pkg) for pkg in packages]
+    result.packages = sorted([os.path.basename(pkg) for pkg in packages])
     for pkg in packages:
         evaluation = evaluate_cpp_package(pkg)
 
@@ -210,6 +256,7 @@ def generate_cpp_report() -> ScanResult:
             result.packages_using_proxy.append(os.path.basename(pkg))
             result.packages_using_external.append(os.path.basename(pkg))
 
+    print("done.")
     return result
 
 
@@ -223,10 +270,77 @@ def evaluate_js_package(package_path: str) -> int:
 
     if "devDependencies" in package_json:
         if "@azure-tools/test-recorder" in package_json["devDependencies"]:
-            if package_json["devDependencies"]["@azure-tools/test-recorder"] == "^2.0.0":
+            version_spec = package_json["devDependencies"]["@azure-tools/test-recorder"]
+            if version_spec[0] == "^":
+                version_spec = version_spec[1:]
+
+            if version.parse(version_spec) >= version.parse("2.0.0"):
                 return 1
 
     return 0
+
+
+def e_startswith(input: str, prefixes: List[str]) -> bool:
+    return any([input.startswith(fix) for fix in prefixes])
+
+
+def e_endswith(input: str, postfixes: List[str]) -> bool:
+    return any([input.endswith(fix) for fix in postfixes])
+
+
+def e_directory_in(input_dir: str, directory_patterns: List[str]) -> bool:
+    return any([input_dir in subdir for subdir in directory_patterns])
+
+
+def js_package_included(package_path: str) -> bool:
+    package_name = os.path.basename(os.path.dirname(package_path))
+
+    excluded_packages = [
+        "samples-react",
+        "sample-react",
+        "mock-hub" "abort-controller",
+        "logger",
+        "samples-express",
+        "samples-browser" "samples-react",
+        "event-hubs-track-1",
+        "opentelemetry-instrumentation-azure-sdk",
+        "monitor-opentelemetry-exporter",
+        "service-bus-v1",
+        "service-bus-v7",
+        "app",
+    ]
+
+    excluded_package_postfixes = ["-track-1", "-common"]
+
+    excluded_package_prefixes = ["@azure/core-"]
+
+    # exclude any packages that have these paths in them
+    excluded_directories = [
+        os.path.join("sdk", "identity", "identity", "test"),
+        os.path.join("sdk", "test-utils"),
+        "samples",
+    ]
+
+    # only include packages with a test folder alongside
+    has_test_folder = os.path.exists(os.path.join(os.path.dirname(package_path), "test"))
+
+    # insure we don't include amqp packages (they cant convert to test-proxy)
+    amqp_package = False
+    with open(package_path, "r", encoding="utf-8") as f:
+        package_json = json.load(f)
+    if "dependencies" in package_json:
+        if "@azure/core-amqp" in package_json["dependencies"]:
+            amqp_package = True
+
+    return (
+        "samples" not in os.path.normpath(package_path).split(os.sep)
+        and package_name not in excluded_packages
+        and not e_startswith(package_name, excluded_package_prefixes)
+        and not e_endswith(package_name, excluded_package_postfixes)
+        and not e_directory_in(package_name, excluded_directories)
+        and not amqp_package
+        and has_test_folder
+    )
 
 
 def generate_js_report() -> ScanResult:
@@ -234,30 +348,24 @@ def generate_js_report() -> ScanResult:
     repo = get_repo(language)
     print(f"Evaluating repo for {language} @ {repo}", end="...")
 
-    try:
-        target_folder = os.path.join(repo, "sdk", "**", "package.json")
-        result = ScanResult(language)
+    target_folder = os.path.join(repo, "sdk", "**", "package.json")
+    result = ScanResult(language)
 
-        results = glob.glob(target_folder, recursive=True)
+    results = glob.glob(target_folder, recursive=True)
 
-        result.packages = [
-            os.path.basename(os.path.dirname(pkg))
-            for pkg in results
-            if "samples" not in os.path.normpath(pkg).split(os.sep)
-            and os.path.basename(os.path.dirname(pkg)) != "samples-react"
-        ]
+    result.packages = sorted([os.path.basename(os.path.dirname(pkg)) for pkg in results if js_package_included(pkg)])
 
-        for pkg in results:
-            evaluation = evaluate_js_package(pkg)
-            if evaluation == 1:
-                result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
-            elif evaluation == 2:
-                result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
-                result.packages_using_external.append(os.path.basename(os.path.dirname(pkg)))
-        print(YES)
-    except Exception as e:
-        print(NO)
+    excluded = set(sorted([os.path.basename(os.path.dirname(pkg)) for pkg in results if not js_package_included(pkg)]))
 
+    for pkg in results:
+        evaluation = evaluate_js_package(pkg)
+        if evaluation == 1:
+            result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
+        elif evaluation == 2:
+            result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
+            result.packages_using_external.append(os.path.basename(os.path.dirname(pkg)))
+
+    print("done.")
     return result
 
 
@@ -282,7 +390,7 @@ def write_output(result: ScanResult) -> None:
         )
 
         if result.packages:
-            # batch by sets of 20
+            # batch two sets
             batch_size = (len(result.packages) // 2) + (len(result.packages) % 2)
 
             table_set_1 = result.packages[0:batch_size]
@@ -311,24 +419,24 @@ if __name__ == "__main__":
     # python = generate_python_report()
     # write_output(python)
 
-    # js = generate_js_report()
-    # write_output(js)
+    js = generate_js_report()
+    write_output(js)
 
-    go = generate_go_report()
-    write_output(go)
+    # go = generate_go_report()
+    # write_output(go)
 
     net = generate_net_report()
-    write_output(go)
+    write_output(net)
 
-    cpp = generate_cpp_report()
-    write_output(cpp)
+    # cpp = generate_cpp_report()
+    # write_output(cpp)
 
     write_summary(
         [
             # python,
-            # js,
-            go,
-            net,
-            cpp,
+            js,
+            # go,
+            # net,
+            # cpp,
         ]
     )

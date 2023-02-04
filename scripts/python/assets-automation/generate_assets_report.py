@@ -308,6 +308,7 @@ def js_package_included(package_path: str) -> bool:
         "service-bus-v1",
         "service-bus-v7",
         "app",
+        "perf"
     ]
 
     excluded_package_postfixes = ["-track-1", "-common"]
@@ -416,27 +417,27 @@ if __name__ == "__main__":
     )
     parser.parse_args()
 
-    # python = generate_python_report()
-    # write_output(python)
+    python = generate_python_report()
+    write_output(python)
 
     js = generate_js_report()
     write_output(js)
 
-    # go = generate_go_report()
-    # write_output(go)
+    go = generate_go_report()
+    write_output(go)
 
     net = generate_net_report()
     write_output(net)
 
-    # cpp = generate_cpp_report()
-    # write_output(cpp)
+    cpp = generate_cpp_report()
+    write_output(cpp)
 
     write_summary(
         [
-            # python,
+            python,
             js,
-            # go,
-            # net,
-            # cpp,
+            go,
+            net,
+            cpp,
         ]
     )

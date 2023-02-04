@@ -2,6 +2,7 @@
 
 import * as path from 'path';
 import {generateMgmt} from "./hlc/generateMgmt";
+import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules';
 import {logger} from "./utils/logger";
 import {generateRLCInPipeline} from "./llc/generateRLCInPipeline/generateRLCInPipeline";
 import {RunningEnvironment} from "./utils/runningEnvironment";
@@ -42,6 +43,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     const cadlProject = isCadlProject? typeof cadlProjectFolder === 'string'? cadlProjectFolder : cadlProjectFolder![0] : undefined;
     const isMgmt = isCadlProject? false : readmeMd!.includes('resource-manager');
     const runningEnvironment = typeof readmeFiles === 'string' || typeof cadlProjectFolder === 'string'? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
+    await backupNodeModules(String(shell.pwd()));
     if (isMgmt) {
         await generateMgmt({
             sdkRepo: String(shell.pwd()),
@@ -69,7 +71,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
             runningEnvironment: runningEnvironment
         })
     }
-
+    await restoreNodeModules(String(shell.pwd()));
     fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, null, '  '), {encoding: 'utf-8'})
 }
 

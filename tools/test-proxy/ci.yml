@@ -53,11 +53,16 @@ extends:
     StandaloneExeMatrix:
     - rid: osx-x64
       framework: net6.0
+      assembly: Azure.Sdk.Tools.TestProxy
     - rid: osx-arm64
       framework: net6.0
+      assembly: Azure.Sdk.Tools.TestProxy
     - rid: win-x64
       framework: net6.0
+      assembly: Azure.Sdk.Tools.TestProxy
     - rid: linux-x64
       framework: net6.0
+      assembly: Azure.Sdk.Tools.TestProxy
     - rid: linux-arm64
       framework: net6.0
+      assembly: Azure.Sdk.Tools.TestProxy

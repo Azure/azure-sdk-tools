@@ -100,6 +100,7 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             if (IsOrImplements(unwrappedType, "Response") ||
+                IsOrImplements(unwrappedType, "NullableResponse") ||
                 IsOrImplements(unwrappedType, "Operation") ||
                 IsOrImplements(originalType, "Pageable") ||
                 IsOrImplements(originalType, "AsyncPageable") ||

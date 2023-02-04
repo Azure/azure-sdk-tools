@@ -3,6 +3,8 @@ param (
     [string]$Environment = 'dev',
     [string]$Namespace = 'stress-infra',
     [switch]$Development = $false,
+    # If provisioning an existing cluster and updating nodes, it must be done exclusively
+    [switch]$UpdateNodes = $false,
 
     [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
@@ -88,19 +90,19 @@ function DeployStaticResources([hashtable]$params)
     $formattedTags = $formattedTags -join ' '
 
     RunOrExitOnFailure az group create `
-        -n $params.staticTestSecretsKeyvaultGroup `
+        -n $params.staticTestKeyvaultGroup `
         -l $params.clusterLocation `
         --subscription $params.subscriptionId `
         --tags $formattedTags
 
     $kv = Run az keyvault show `
-        -n $params.staticTestSecretsKeyvaultName `
-        -g $params.staticTestSecretsKeyvaultGroup `
+        -n $params.staticTestKeyvaultName `
+        -g $params.staticTestKeyvaultGroup `
         --subscription $params.subscriptionId
     if (!$kv) {
         RunOrExitOnFailure az keyvault create `
-            -n $params.staticTestSecretsKeyvaultName `
-            -g $params.staticTestSecretsKeyvaultGroup `
+            -n $params.staticTestKeyvaultName `
+            -g $params.staticTestKeyvaultGroup `
             --subscription $params.subscriptionId
     }
 
@@ -125,7 +127,7 @@ function DeployStaticResources([hashtable]$params)
         --scopes "/subscriptions/$($params.subscriptionId)"
     $spInfo = $sp | ConvertFrom-Json
     # Force check to see if the service principal was succesfully created and propagated
-    $oid = (RunOrExitOnFailure az ad sp show -o json --id $spInfo.appId | ConvertFrom-Json).objectId
+    $oid = (RunOrExitOnFailure az ad sp show -o json --id $spInfo.appId | ConvertFrom-Json).id
 
     $credentials = @{
         AZURE_CLIENT_ID = $spInfo.appId
@@ -141,7 +143,7 @@ function DeployStaticResources([hashtable]$params)
     $envFile = Join-Path ([System.IO.Path]::GetTempPath()) "/static.env"
     $dotenv = $credentials.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)`n" }
     (-join $dotenv) | Out-File $envFile
-    Run az keyvault secret set --vault-name $params.staticTestSecretsKeyvaultName --file $envFile -n $STATIC_TEST_DOTENV_NAME
+    Run az keyvault secret set --vault-name $params.staticTestKeyvaultName --file $envFile -n $STATIC_TEST_DOTENV_NAME
     if (Test-Path $envFile) {
         Remove-Item -Force $envFile
     }
@@ -207,7 +209,8 @@ function DeployClusterResources([hashtable]$params)
         -l $params.clusterLocation `
         -f $PSScriptRoot/azure/main.bicep `
         --parameters $PSScriptRoot/azure/parameters/$Environment.json `
-        --parameters groupName=$STRESS_CLUSTER_RESOURCE_GROUP
+        --parameters groupName=$STRESS_CLUSTER_RESOURCE_GROUP `
+        --parameters updateNodes=$UpdateNodes
 
     SetEnvOutputs $params
 
@@ -249,6 +252,26 @@ function DeployHelmResources()
         --set stress-test-addons.env=$Environment `
         --set deploy.chaosmesh=$deployChaosMesh `
         $PSScriptRoot/kubernetes/stress-infrastructure
+}
+
+# Steps to install preview features that may not be available in the bicep deployment
+function RegisterAKSFeatures([string]$group, [string]$cluster) {
+    if ($UpdateNodes) {
+        return
+    }
+    RunOrExitOnFailure az extension add --name aks-preview
+    RunOrExitOnFailure az extension update --name aks-preview
+    RunOrExitOnFailure az feature register --namespace Microsoft.ContainerService --name EnableImageCleanerPreview
+    $i = 0
+    do {
+        sleep $i
+        $feature = RunOrExitOnFailure az feature show --namespace Microsoft.ContainerService --name EnableImageCleanerPreview -o json
+        $feature = $feature | ConvertFrom-Json
+        Write-Host "Waiting for 'EnableImageCleanerPreview' feature to register. This may take several minutes."
+        $i = 30
+    } while ($feature.properties.state -eq "Registering")
+    RunOrExitOnFailure az provider register --namespace Microsoft.ContainerService
+    RunOrExitOnFailure az aks update -g $group -n $cluster --enable-image-cleaner --image-cleaner-interval-hours 24
 }
 
 function LoadEnvParams()
@@ -294,6 +317,7 @@ function main()
         $STRESS_CLUSTER_RESOURCE_GROUP = "rg-stress-cluster-$($params.groupSuffix)"
         DeployStaticResources $params
         DeployClusterResources $params
+        RegisterAKSFeatures $STRESS_CLUSTER_RESOURCE_GROUP $params.clusterName
     }
     DeployHelmResources
 }

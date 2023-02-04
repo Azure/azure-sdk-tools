@@ -4,11 +4,12 @@ param subscriptionId string = ''
 param groupSuffix string
 param clusterName string
 param clusterLocation string = 'westus3'
-param staticTestSecretsKeyvaultName string
-param staticTestSecretsKeyvaultGroup string
+param staticTestKeyvaultName string
+param staticTestKeyvaultGroup string
 param monitoringLocation string = 'centralus'
 param tags object
-param enableHighMemAgentPool bool = false
+// AKS does not allow agentPool updates via existing managed cluster resources
+param updateNodes bool = false
 
 // Azure Developer Platform Team Group
 // https://ms.portal.azure.com/#blade/Microsoft_AAD_IAM/GroupDetailsMenuBlade/Overview/groupId/56709ad9-8962-418a-ad0d-4b25fa962bae
@@ -52,6 +53,7 @@ module test_dashboard 'monitoring/stress-test-workbook.bicep' = {
     scope: group
     params: {
         workbookDisplayName: 'Azure SDK Stress Testing - ${groupSuffix}'
+        location: clusterLocation
         logAnalyticsResource: logWorkspace.outputs.id
     }
 }
@@ -61,6 +63,7 @@ module status_dashboard 'monitoring/stress-status-workbook.bicep' = {
     scope: group
     params: {
         workbookDisplayName: 'Stress Status - ${groupSuffix}'
+        location: clusterLocation
         logAnalyticsResource: logWorkspace.outputs.id
     }
 }
@@ -69,10 +72,11 @@ module cluster 'cluster/cluster.bicep' = {
     name: 'cluster'
     scope: group
     params: {
+        updateNodes: updateNodes
+        location: clusterLocation
         clusterName: clusterName
         tags: tags
         groupSuffix: groupSuffix
-        enableHighMemAgentPool: enableHighMemAgentPool
         workspaceId: logWorkspace.outputs.id
     }
 }
@@ -88,13 +92,13 @@ module containerRegistry 'cluster/acr.bicep' = {
 }
 
 module storage 'cluster/storage.bicep' = {
-    name: 'storage'
-    scope: group
-    params: {
-        storageName: 'stressdebug${resourceSuffix}'
-        fileShareName: 'stressfiles${resourceSuffix}'
-        location: clusterLocation
-    }
+  name: 'storage'
+  scope: group
+  params: {
+    storageName: 'stressdebug${resourceSuffix}'
+    fileShareName: 'stressfiles${resourceSuffix}'
+    location: clusterLocation
+  }
 }
 
 var appInsightsInstrumentationKeySecretName = 'appInsightsInstrumentationKey-${resourceSuffix}'
@@ -109,9 +113,9 @@ var appInsightsConnectionStringSecretValue = 'APPLICATIONINSIGHTS_CONNECTION_STR
 // See https://docs.microsoft.com/azure/aks/azure-files-volume#create-a-kubernetes-secret
 // See https://docs.microsoft.com/azure/aks/azure-files-csi
 var debugStorageKeySecretName = 'debugStorageKey-${resourceSuffix}'
-var debugStorageKeySecretValue = '${storage.outputs.key}'
+var debugStorageKeySecretValue = storage.outputs.key
 var debugStorageAccountSecretName = 'debugStorageAccount-${resourceSuffix}'
-var debugStorageAccountSecretValue = '${storage.outputs.name}'
+var debugStorageAccountSecretValue = storage.outputs.name
 
 module keyvault 'cluster/keyvault.bicep' = {
     name: 'keyvault'
@@ -146,15 +150,15 @@ module keyvault 'cluster/keyvault.bicep' = {
 
 module accessPolicy 'cluster/static-vault-access-policy.bicep' = {
     name: 'accessPolicy'
-    scope: resourceGroup(staticTestSecretsKeyvaultGroup)
+    scope: resourceGroup(staticTestKeyvaultGroup)
     params: {
-        vaultName: staticTestSecretsKeyvaultName
+        vaultName: staticTestKeyvaultName
         tenantId: subscription().tenantId
         objectId: cluster.outputs.secretProviderObjectId
     }
 }
 
-output STATIC_TEST_SECRETS_KEYVAULT string = staticTestSecretsKeyvaultName
+output STATIC_TEST_SECRETS_KEYVAULT string = staticTestKeyvaultName
 output CLUSTER_TEST_SECRETS_KEYVAULT string = keyvault.outputs.keyvaultName
 output SECRET_PROVIDER_CLIENT_ID string = cluster.outputs.secretProviderClientId
 output CLUSTER_NAME string = cluster.outputs.clusterName

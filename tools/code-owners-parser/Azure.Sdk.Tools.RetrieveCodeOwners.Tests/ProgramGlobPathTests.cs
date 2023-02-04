@@ -11,60 +11,33 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests;
 /// Test class for Azure.Sdk.Tools.RetrieveCodeOwners.Program.Main(),
 /// for scenario in which targetPath is a glob path, i.e.
 /// targetPath.IsGlobPath() returns true.
+///
+/// The tests assertion expectations are set to match GitHub CODEOWNERS interpreter behavior,
+/// as explained here:
+/// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+/// and as observed based on manual tests and verification.
 /// </summary>
 [TestFixture]
 public class ProgramGlobPathTests
 {
     /// <summary>
     /// Given:
-    /// <br/><br/>
-    /// codeownersFilePathOrUrl contents of:
-    /// <code>
-    /// 
-    ///   / @slash
-    ///   /* @star
-    ///   /foo/**/a.txt @foo_2star_a
-    ///   /foo/*/a.txt @foo_star_a_1 @foo_star_a_2
-    /// 
-    /// </code>
-    /// 
-    /// targetDir contents of:
-    /// 
-    /// <code>
-    /// 
-    ///   /a.txt
-    ///   /b.txt
-    ///   /foo/a.txt
-    ///   /foo/b.txt
-    ///   /foo/bar/a.txt
-    ///   /foo/bar/b.txt
-    /// 
-    /// </code>
-    /// 
-    /// targetPath of:
-    /// 
-    /// <code>
-    /// 
-    ///   /**
-    /// 
-    /// </code>
     ///
-    /// excludeNonUserAliases set to false and useRegexMatcher set to true.
-    /// <br/><br/>
+    ///   file system contents as seen in TestData/InputDir
+    /// 
+    ///   codeownersFilePathOrUrl contents as seen in TestData/glob_path_CODEOWNERS
+    ///
+    ///   targetPath of /**
+    ///
+    ///   excludeNonUserAliases set to false and useRegexMatcher set to true.
+    /// 
     /// When:
     ///   The retrieve-codeowners tool is executed on these inputs.
-    /// <br/><br/>
+    ///
     /// Then:
-    ///   The tool should return on STDOUT owners matched in following way:
+    ///   The tool should return on STDOUT owners matched as seen in the
+    ///   "expectedEntries" dictionary.
     /// 
-    /// <code>
-    ///   /a.txt @star
-    ///   /b.txt @star
-    ///   /foo/a.txt @foo_2star_a
-    ///   /foo/b.txt @slash
-    ///   /foo/bar/a.txt @foo_star_a_1 @foo_star_a_2
-    ///   /foo/bar/b.txt @slash
-    /// </code>
     /// </summary>
     [Test]
     public void OutputsCodeownersForGlobPath()
@@ -81,9 +54,12 @@ public class ProgramGlobPathTests
             ["a.txt"]         = new CodeownersEntry("/*",            new List<string> { "star" }),
             ["b.txt"]         = new CodeownersEntry("/*",            new List<string> { "star" }),
             ["foo/a.txt"]     = new CodeownersEntry("/foo/**/a.txt", new List<string> { "foo_2star_a" }),
-            ["foo/b.txt"]     = new CodeownersEntry("/",             new List<string> { "slash" }),
+            ["foo/b.txt"]     = new CodeownersEntry("/**",           new List<string> { "2star" }),
             ["foo/bar/a.txt"] = new CodeownersEntry("/foo/*/a.txt",  new List<string> { "foo_star_a_1", "foo_star_a_2" }),
-            ["foo/bar/b.txt"] = new CodeownersEntry("/",             new List<string> { "slash" }),
+            ["foo/bar/b.txt"] = new CodeownersEntry("/**",           new List<string> { "2star" }),
+            ["baz/cor/c.txt"] = new CodeownersEntry("/baz*",         new List<string> { "baz_star" }),
+            ["baz_.txt"]      = new CodeownersEntry("/baz*",         new List<string> { "baz_star" }),
+            ["qux/abc/d.txt"] = new CodeownersEntry("/qux/",         new List<string> { "qux" }),
             // @formatter:on
         };
         
@@ -142,7 +118,7 @@ public class ProgramGlobPathTests
         {
             string path = kvp.Key;
             CodeownersEntry actualEntry = kvp.Value;
-            Assert.That(expectedEntries[path], Is.EqualTo(actualEntry), $"path: {path}");
+            Assert.That(actualEntry, Is.EqualTo(expectedEntries[path]), $"path: {path}");
         }
 
         Assert.That(actualEntries, Has.Count.EqualTo(expectedEntries.Count));

@@ -36,6 +36,23 @@ DOCUMENT: str = """
 </td>
 </tr>
 </table>
+"""
+
+TABLE_LAYER: str = """|{}|{}|{}|
+"""
+
+SUMMARY_TABLE_HEADER: str = """| Language | Package Count | Using Proxy | External Recordings |
+|---|---|---|---|
+"""
+
+SUMMARY_TABLE_LAYER: str = """|{}|{}|{:.0%}|{:.0%}|
+"""
+
+SUMMARY_NOTES = """
+## A few notes about how this data was generated.
+
+- Markdown for these wiki pages is generated from a [single python script.](https://github.com/Azure/azure-sdk-tools/tree/main/scripts/python/assets-automation)
+- The `Package Count` for each language is NOT the actual total count of packages within each monorepo. It is the count of packages that are slated to transition AT SOME POINT.
 
 """
 
@@ -169,23 +186,47 @@ def generate_go_report() -> ScanResult:
     return result
 
 
-def evaluate_net_package(solution_path: str) -> int:
+def evaluate_net_package(csproj_path: str) -> int:
     evaluation = 0
+    found_recorded_testcase = False
+    possible_test_directory = os.path.join(os.path.dirname(csproj_path), "..", "tests")
+    possible_project_assets_json = os.path.join(os.path.dirname(csproj_path), "..", "assets.json")
+    possible_solution_assets_json = os.path.join(os.path.dirname(csproj_path), "..", "..", "assets.json")
+    session_records = os.path.join(possible_test_directory, "SessionRecords")
+    package_name = os.path.splitext(os.path.basename(csproj_path))[0]
 
-    # track 2 indicators within a given sln
-    # Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Core", "..\core\Azure.Core\src\Azure.Core.csproj", "{C04D725B-B025-4B41-BAF0-BEE3F8D087AB}"
-    # Project("") = "Azure.Core.TestFramework", "..\..\core\Azure.Core.TestFramework\src\Azure.Core.TestFramework.csproj", "{EE26B4BC-37DB-4C5C-8519-4B8081012AF8}"
-    core_pattern = r"^\s*Project\(\"[\d\S\-\_]*?\"\)\ \=\ \"Azure\.Core\""
-    framework_pattern = r"^\s*Project\(\"[\d\S\-\_]*?\"\)\ \=\ \"Azure\.Core\.TestFramework\""
+    if not os.path.exists(possible_test_directory):
+        return 0
 
-    with open(solution_path, "r") as f:
-        content = f.read()
+    # for Azure.*, only examine packages with recorded tests. EG with existing SessionRecords or an existing assets.json
+    if not os.path.exists(session_records) and not (
+        os.path.exists(possible_project_assets_json) or os.path.exists(possible_solution_assets_json)
+    ):
+        return 0
 
-    core_present = re.findall(core_pattern, content, re.MULTILINE)
-    core_test_present = re.findall(framework_pattern, content, re.MULTILINE)
+    # For mgmt, you should find a reference to ManagementRecordedTestBase in projects using test proxy:
+    #  https://grep.app/search?q=managementrecordedtestbase&filter[repo][0]=Azure/azure-sdk-for-net&filter[path][0]=sdk/
+    # For data plane, you should find RecordedTestBase:
+    #  https://grep.app/search?q=recordedtestbase&filter[repo][0]=Azure/azure-sdk-for-net&filter[path][0]=sdk/
 
-    if core_present or core_test_present:
-        evaluation = 1
+    find = "RecordedTestBase"
+    if "ResourceManager" in package_name:
+        find = "ManagementRecordedTestBase"
+
+    test_files = glob.glob(os.path.join(possible_test_directory, "**", "*.cs"), recursive=True)
+
+    for testfile in test_files:
+        try:
+            with open(testfile, "r", encoding="utf-8") as f:
+                content = f.read()
+
+                if find in content:
+                    evaluation = 1
+        except:
+            pass
+
+    if os.path.exists(possible_project_assets_json) or os.path.exists(possible_solution_assets_json):
+        evaluation = 2
 
     return evaluation
 
@@ -201,19 +242,27 @@ def generate_net_report() -> ScanResult:
 
     print(f"Evaluating repo for {language} @ {repo}", end="...")
 
-    globby_glob = os.path.join(repo, "sdk", "**", "*.sln")
-    all_solutions = set([sln for sln in glob.glob(globby_glob, recursive=True)])
+    #                                                     <service>
+    #                                                         |<package>
+    #                                                         |    |
+    all_azure_projects = glob.glob(os.path.join(repo, "sdk", "*", "*", "src", "*Azure.*.csproj"), recursive=True)
 
-    result.packages = sorted([net_trim_path(sln) for sln in all_solutions])
+    to_be_removed = []
+    for csproj in all_azure_projects:
+        evaluation = evaluate_net_package(csproj)
 
-    for solution in all_solutions:
-        evaluation = evaluate_net_package(solution)
-
-        if evaluation == 1:
-            result.packages_using_proxy.append(net_trim_path(solution))
+        if evaluation == 0:
+            to_be_removed.append(csproj)
+        elif evaluation == 1:
+            result.packages_using_proxy.append(net_trim_path(csproj))
         elif evaluation == 2:
-            result.packages_using_proxy.append(net_trim_path(solution))
-            result.packages_using_external.append(net_trim_path(solution))
+            result.packages_using_proxy.append(net_trim_path(csproj))
+            result.packages_using_external.append(net_trim_path(csproj))
+
+    result.packages = sorted(
+        set([net_trim_path(csproj) for csproj in all_azure_projects])
+        - set([net_trim_path(csproj) for csproj in to_be_removed])
+    )
 
     print("done.")
 
@@ -308,7 +357,7 @@ def js_package_included(package_path: str) -> bool:
         "service-bus-v1",
         "service-bus-v7",
         "app",
-        "perf"
+        "perf",
     ]
 
     excluded_package_postfixes = ["-track-1", "-common"]
@@ -370,7 +419,7 @@ def generate_js_report() -> ScanResult:
     return result
 
 
-def generate_detailed_table(origin: ScanResult, package_set: List[str]):
+def generate_detailed_table(origin: ScanResult, package_set: List[str]) -> str:
     result = TABLE_HEADER
     for package in package_set:
         transitioned = YES if package in origin.packages_using_proxy else NO
@@ -382,13 +431,28 @@ def generate_detailed_table(origin: ScanResult, package_set: List[str]):
     return result
 
 
+def generate_summary_table(results: List[ScanResult]) -> str:
+    result = SUMMARY_TABLE_HEADER
+    # Language | Package Count | Using Proxy | External Recordings
+    for language in results:
+        result += SUMMARY_TABLE_LAYER.format(
+            language.language,
+            len(language.packages),
+            (len(language.packages_using_proxy) / float(len(language.packages))),
+            (len(language.packages_using_external) / float(len(language.packages))),
+        )
+
+    return result
+
+
 def write_output(result: ScanResult) -> None:
     with open(result.language.lower() + ".md", "w", encoding="utf-8") as f:
         date = datetime.date.today()
-        time_of_day = datetime.datetime.today().strftime("%I:%M%p")
-        f.writelines(
-            f"# {result.language} Transition Details as of {date}@{time_of_day} {datetime.datetime.today().astimezone().tzname()}"
-        )
+
+        # leaving this commented, as the level of detail doesn't assist the report
+        # time_of_day = datetime.datetime.today().strftime("%I:%M%p")
+        # @{time_of_day} {datetime.datetime.today().astimezone().tzname()}
+        f.writelines(f"# {result.language} Transition Details as of {date}")
 
         if result.packages:
             # batch two sets
@@ -406,7 +470,17 @@ def write_output(result: ScanResult) -> None:
 
 def write_summary(results: List[ScanResult]) -> None:
     with open("summary.md", "w", encoding="utf-8") as f:
-        f.writelines(f"# Test Proxy Transition Summary - {datetime.date.today()}")
+        date = datetime.date.today()
+        # leaving this commented, as the level of detail doesn't assist the report
+        # time_of_day = datetime.datetime.today().strftime("%I:%M%p")
+        # @{time_of_day} {datetime.datetime.today().astimezone().tzname()}
+        f.writelines(f"# Test-Proxy overall progress per language - {date}" + os.linesep)
+
+        summary = generate_summary_table(results)
+
+        f.write(summary)
+
+        f.write(SUMMARY_NOTES)
 
 
 if __name__ == "__main__":

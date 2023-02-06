@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -31,7 +31,9 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
                     services.AddSingleton<TokenCredential, DefaultAzureCredential>();
                     services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
                     services.Configure<PipelineOwnerSettings>(context.Configuration);
-                    services.AddSingleton<IPostConfigureOptions<PipelineOwnerSettings>, PostConfigureKeyVaultSettings<PipelineOwnerSettings>>();
+                    services
+                        .AddSingleton<IPostConfigureOptions<PipelineOwnerSettings>,
+                            PostConfigureKeyVaultSettings<PipelineOwnerSettings>>();
                     services.AddSingleton<GitHubService>();
                     services.AddSingleton(CreateGithubAadConverter);
                     services.AddSingleton(CreateAzureDevOpsService);

@@ -560,7 +560,7 @@ func makeTypeSectionToken(section string, list *[]Token, pkgName string) {
 	switch section {
 	case "interface", "map", "any", "func":
 		makeToken(nil, nil, section, TokenTypeKeyword, list)
-	case "bool", "uint8", "uint16", "uint32", "uint64", "int8", "int16", "int32", "int64", "float32", "float64", "complex64", "complex128", "byte", "rune", "string", "error":
+	case "bool", "uint8", "uint16", "uint32", "uint64", "int8", "int16", "int32", "int64", "float32", "float64", "complex64", "complex128", "byte", "rune", "string", "error", "uintptr", "nil":
 		makeToken(nil, nil, section, TokenTypeTypeName, list)
 	default:
 		splits := strings.Split(section, ".")

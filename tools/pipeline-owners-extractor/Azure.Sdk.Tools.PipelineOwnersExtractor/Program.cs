@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Azure.Core;
+using Azure.Core.Diagnostics;
 using Azure.Identity;
 using Azure.Sdk.Tools.NotificationConfiguration;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
@@ -22,13 +23,23 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
         public static async Task Main(string[] args)
         {
             Console.WriteLine("Initializing PipelineOwnersExtractor");
+            using AzureEventSourceListener listener = AzureEventSourceListener.CreateConsoleLogger();
 
             using var host = Host.CreateDefaultBuilder(args)
                 // This affects config file loading and defaults to Directory.GetCurrentDirectory()
                 .UseContentRoot(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddSingleton<TokenCredential, DefaultAzureCredential>();
+                    services.AddSingleton<TokenCredential, DefaultAzureCredential>(
+                        sp => new DefaultAzureCredential(new DefaultAzureCredentialOptions()
+                        {
+                            Diagnostics =
+                            {
+                                LoggedHeaderNames = { "x-ms-request-id" },
+                                LoggedQueryParameters = { "api-version" },
+                                IsAccountIdentifierLoggingEnabled = true
+                            }
+                        }));
                     services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
                     services.Configure<PipelineOwnerSettings>(context.Configuration);
                     services

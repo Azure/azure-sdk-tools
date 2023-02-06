@@ -23,19 +23,28 @@ stages:
       OutputPath: '$(Agent.BuildDirectory)/pipelineOwners.json'
     steps:
       - task: DotNetCoreCLI@2
-        displayName: 'Install Pipeline Owners Extractor'
+        displayName: 'Build Pipeline Owners Extractor'
         inputs:
-          command: custom
-          custom: 'tool'
-          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(PipelineOwnersExtractorVersion)" "Azure.Sdk.Tools.PipelineOwnersExtractor"'
-          workingDirectory: '$(Agent.BuildDirectory)'
+          command: build
+          arguments: 'tools\pipeline-owners-extractor\Azure.Sdk.Tools.PipelineOwnersExtractor\Azure.Sdk.Tools.PipelineOwnersExtractor.csproj'
+          # workingDirectory: '$(Agent.BuildDirectory)'
+      - pwsh: |
+              Write-Host "Agent.BuildDirectory - ""$(Agent.BuildDirectory)"""
+              Get-ChildItem $(Agent.BuildDirectory) | ForEach-Object { Write-Host $_ }
+              Write-Host "Parent - "
+              Get-ChildItem "$(Agent.BuildDirectory)/.." | ForEach-Object { Write-Host $_ }
+              Write-Host "Curr dir - $(Get-Location)"
+              Get-ChildItem "$(Get-Location)" | ForEach-Object { Write-Host $_ }
+              Write-Host "Debug net 6.0 - "
+              Get-ChildItem "artifacts/bin/Azure.Sdk.Tools.PipelineOwnersExtractor/Debug/net6.0" | ForEach-Object { Write-Host $_ }      
+        displayName: "Display paths"
       - task: AzureCLI@2
         displayName: Run Pipeline Owners Extractor
         inputs:
           azureSubscription: 'Azure SDK Engineering System'
           scriptType: pscore
           scriptLocation: inlineScript
-          inlineScript: pipeline-owners-extractor --output "$(OutputPath)"
+          inlineScript: dotnet artifacts/bin/Azure.Sdk.Tools.PipelineOwnersExtractor/Debug/net6.0/Azure.Sdk.Tools.PipelineOwnersExtractor.dll --output "$(OutputPath)"
       - publish: $(OutputPath)
         displayName: Publish pipelineOwners artifact
         artifact: pipelineOwners

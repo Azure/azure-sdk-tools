@@ -1,9 +1,9 @@
 import * as child_process from 'child_process';
 import * as fs from 'fs';
-import { JSONPath } from 'jsonpath-plus';
 import * as path from 'path';
 import { AutorestExtensionHost, Session } from '@autorest/extension-base';
 import { ChoiceSchema, CodeModel, ComplexSchema, ObjectSchema, Operation, Parameter, Property, codeModelSchema, isVirtualParameter } from '@autorest/codemodel';
+import { JSONPath } from 'jsonpath-plus';
 import { comment, serialize } from '@azure-tools/codegen';
 
 export class Helper {

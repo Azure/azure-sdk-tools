@@ -10,6 +10,7 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"unicode"
@@ -27,6 +28,7 @@ var ErrNoPackages = errors.New("no packages found")
 
 // Pkg represents a Go package.
 type Pkg struct {
+	ModulePath  string
 	c           content
 	diagnostics []Diagnostic
 	files       map[string][]byte
@@ -46,8 +48,9 @@ type Pkg struct {
 
 // NewPkg loads the package in the specified directory.
 // It's required there is only one package in the directory.
-func NewPkg(dir, moduleName string) (*Pkg, error) {
+func NewPkg(dir, moduleName, modulePath string) (*Pkg, error) {
 	pk := &Pkg{
+		ModulePath:  modulePath,
 		c:           newContent(),
 		diagnostics: []Diagnostic{},
 		typeAliases: map[string]string{},
@@ -102,24 +105,21 @@ func (p *Pkg) indexFile(f *ast.File) {
 	// map import aliases to full import paths e.g. "shared" => "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
 	imports := map[string]string{}
 	for _, imp := range f.Imports {
-		// ignore obvious stdlib packages whose definitions we don't want to hoist
-		path := strings.Trim(imp.Path.Value, `"`)
-		if strings.Contains(path, "/") {
-			imports[filepath.Base(path)] = path
-		}
+		p := strings.Trim(imp.Path.Value, `"`)
+		imports[filepath.Base(p)] = p
 	}
 
 	ast.Inspect(f, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.FuncDecl:
-			p.c.addFunc(*p, x)
+			p.c.addFunc(*p, x, imports)
 			// children can't be exported, let's not inspect them
 			return false
 		case *ast.GenDecl:
 			if x.Tok == token.CONST || x.Tok == token.VAR {
 				// const or var declaration
 				for _, s := range x.Specs {
-					p.c.addGenDecl(*p, x.Tok, s.(*ast.ValueSpec))
+					p.c.addGenDecl(*p, x.Tok, s.(*ast.ValueSpec), imports)
 				}
 			}
 		case *ast.TypeSpec:
@@ -128,25 +128,25 @@ func (p *Pkg) indexFile(f *ast.File) {
 				// "type UUID [16]byte"
 				txt := p.getText(t.Pos(), t.End())
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.FuncType:
 				// "type PolicyFunc func(*Request) (*http.Response, error)"
 				txt := p.getText(t.Pos(), t.End())
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.Ident:
 				// "type ETag string"
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name, imports)
 			case *ast.IndexExpr, *ast.IndexListExpr:
 				// "type Client GenericClient[BaseClient]"
 				// "type Client CompositeClient[BaseClient1, BaseClient2]"
 				txt := p.getText(t.Pos(), t.End())
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.InterfaceType:
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t)
+				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t, imports)
 				if in.Sealed {
 					p.diagnostics = append(p.diagnostics, Diagnostic{
 						TargetID: in.ID(),
@@ -157,7 +157,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 			case *ast.MapType:
 				// "type opValues map[reflect.Type]interface{}"
 				txt := p.getText(t.Pos(), t.End())
-				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
 					if impPath, ok := imports[ident.Name]; ok {
@@ -169,12 +169,12 @@ func (p *Pkg) indexFile(f *ast.File) {
 						// Non-SDK underlying type e.g. "type EDMDateTime time.Time". Handle it like a simple type
 						// because we don't want to hoist its definition into this package.
 						expr := p.getText(t.Pos(), t.End())
-						p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr)
+						p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr, imports)
 					}
 				}
 			case *ast.StructType:
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				s := p.c.addStruct(*p, x.Name.Name, p.Name(), x)
+				s := p.c.addStruct(*p, x.Name.Name, p.Name(), x, imports)
 				for _, t := range s.AnonymousFields {
 					// if t contains "." it must be exported
 					if !strings.Contains(t, ".") && unicode.IsLower(rune(t[0])) {
@@ -226,6 +226,56 @@ func (pkg Pkg) translateFieldList(fl []*ast.Field, cb func(*string, string)) {
 			cb(&n, t)
 		}
 	}
+}
+
+// translateTypePackagePrefix change type with package prefix to more clear one:
+// 1. type in the same package, do nothing
+// 2. type in the same module, add prefix of type relative import path, e.g. `azcore/runtime.Pipeline`
+// 3. type in different module, add prefix of type absolute import path, e.g. `github.com/Azure/azure-sdk-for-go/sdk/azidentity.AuthenticationFailedError`
+// 4. system type, add prefix of full import path, e.g. `net/http.Response`
+func (pkg Pkg) translateTypePackagePrefix(oriVal string, imports map[string]string) string {
+	if !strings.Contains(oriVal, ".") {
+		return oriVal
+	}
+	now := ""
+	result := ""
+	for _, ch := range oriVal {
+		switch string(ch) {
+		case "*", "[", "]", " ", "(", ")", "{", "}":
+			if now != "" {
+				result += pkg.translatePackagePrefix(now, imports)
+				now = ""
+			}
+			result += string(ch)
+		case ".":
+			if now == ".." {
+				result += "."
+				now = ""
+			} else {
+				now = now + "."
+			}
+		default:
+			now = now + string(ch)
+		}
+	}
+	if now != "" {
+		result += pkg.translatePackagePrefix(now, imports)
+	}
+	return result
+}
+
+func (pkg Pkg) translatePackagePrefix(oriVal string, imports map[string]string) string {
+	if strings.Contains(oriVal, ".") {
+		splits := strings.Split(oriVal, ".")
+		if impPath, ok := imports[splits[0]]; ok {
+			if _, after, found := strings.Cut(impPath, pkg.ModulePath); found {
+				return path.Base(pkg.ModulePath) + after + "." + splits[1]
+			} else {
+				return impPath + "." + splits[1]
+			}
+		}
+	}
+	return oriVal
 }
 
 // TODO: could be replaced by TokenMaker

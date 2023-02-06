@@ -57,14 +57,14 @@ func (c content) isEmpty() bool {
 }
 
 // adds const and var declaration to the exports list
-func (c *content) addGenDecl(pkg Pkg, tok token.Token, vs *ast.ValueSpec) Declaration {
+func (c *content) addGenDecl(pkg Pkg, tok token.Token, vs *ast.ValueSpec, imports map[string]string) Declaration {
 	if len(vs.Values) > 0 {
 		v := getExprValue(pkg, vs.Values[0])
 		if v == "" {
 			fmt.Println("failed to determine value for " + pkg.getText(vs.Pos(), vs.End()))
 		}
 	}
-	decl := NewDeclaration(pkg, vs)
+	decl := NewDeclaration(pkg, vs, imports)
 	// TODO handle multiple names like "var a, b = 42"
 	switch tok {
 	case token.CONST:
@@ -134,10 +134,10 @@ func (c *content) parseSimpleType(tokenList *[]Token) {
 		t := c.SimpleTypes[name]
 		*tokenList = append(*tokenList, t.MakeTokens()...)
 		c.searchForMethods(t.Name(), tokenList)
-		if consts := c.filterDeclarations(t.Name(), c.Consts, tokenList); len(consts) > 0 {
+		if consts := c.filterDeclarations(t.Name(), c.Consts); len(consts) > 0 {
 			c.parseDeclarations(consts, "const", tokenList)
 		}
-		if vars := c.filterDeclarations(t.Name(), c.Vars, tokenList); len(vars) > 0 {
+		if vars := c.filterDeclarations(t.Name(), c.Vars); len(vars) > 0 {
 			c.parseDeclarations(vars, "var", tokenList)
 		}
 	}
@@ -209,25 +209,29 @@ func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
 }
 
 // adds the specified function declaration to the exports list
-func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl) Func {
-	fn := NewFunc(pkg, f)
+func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl, imports map[string]string) Func {
+	fn := NewFunc(pkg, f, imports)
 	name := fn.Name()
-	if fn.Receiver != "" {
-		name = fmt.Sprintf("(%s) %s", fn.Receiver, name)
+	if fn.ReceiverType != "" {
+		receiverSig := fn.ReceiverType
+		if fn.ReceiverName != "" {
+			receiverSig = fn.ReceiverName + " " + receiverSig
+		}
+		name = fmt.Sprintf("(%s) %s", receiverSig, name)
 	}
 	c.Funcs[name] = fn
 	return fn
 }
 
-func (c *content) addSimpleType(pkg Pkg, name, packageName string, underlyingType string) SimpleType {
-	t := NewSimpleType(pkg, name, packageName, underlyingType)
+func (c *content) addSimpleType(pkg Pkg, name, packageName string, underlyingType string, imports map[string]string) SimpleType {
+	t := NewSimpleType(pkg, name, packageName, pkg.translateTypePackagePrefix(underlyingType, imports))
 	c.SimpleTypes[name] = t
 	return t
 }
 
 // adds the specified interface type to the exports list.
-func (c *content) addInterface(source Pkg, name, packageName string, i *ast.InterfaceType) Interface {
-	in := NewInterface(source, name, packageName, i)
+func (c *content) addInterface(source Pkg, name, packageName string, i *ast.InterfaceType, imports map[string]string) Interface {
+	in := NewInterface(source, name, packageName, i, imports)
 	c.Interfaces[name] = in
 	return in
 }
@@ -247,8 +251,8 @@ func (c *content) parseInterface(tokenList *[]Token) {
 }
 
 // adds the specified struct type to the exports list.
-func (c *content) addStruct(source Pkg, name, packageName string, ts *ast.TypeSpec) Struct {
-	s := NewStruct(source, name, packageName, ts)
+func (c *content) addStruct(source Pkg, name, packageName string, ts *ast.TypeSpec, imports map[string]string) Struct {
+	s := NewStruct(source, name, packageName, ts, imports)
 	c.Structs[name] = s
 	return s
 }
@@ -277,10 +281,10 @@ func (c *content) parseStruct(tokenList *[]Token) {
 			}
 		}
 		c.searchForMethods(typeName, tokenList)
-		if consts := c.filterDeclarations(typeName, c.Consts, tokenList); len(consts) > 0 {
+		if consts := c.filterDeclarations(typeName, c.Consts); len(consts) > 0 {
 			c.parseDeclarations(consts, "const", tokenList)
 		}
-		if vars := c.filterDeclarations(typeName, c.Vars, tokenList); len(vars) > 0 {
+		if vars := c.filterDeclarations(typeName, c.Vars); len(vars) > 0 {
 			c.parseDeclarations(vars, "var", tokenList)
 		}
 	}
@@ -294,7 +298,7 @@ func (c *content) parseStruct(tokenList *[]Token) {
 func (c *content) searchForCtors(s string) map[string]Func {
 	ctors := map[string]Func{}
 	for key, f := range c.Funcs {
-		if f.Receiver != "" || !strings.HasPrefix(f.Name(), "New") {
+		if f.ReceiverType != "" || !strings.HasPrefix(f.Name(), "New") {
 			continue
 		}
 		for _, rt := range f.Returns {
@@ -312,7 +316,7 @@ func (c *content) searchForCtors(s string) map[string]Func {
 }
 
 // filterDeclarations returns a subset of decls containing only items matching the specified type, deleting them from the given map
-func (c *content) filterDeclarations(typ string, decls map[string]Declaration, tokens *[]Token) map[string]Declaration {
+func (c *content) filterDeclarations(typ string, decls map[string]Declaration) map[string]Declaration {
 	results := map[string]Declaration{}
 	for name, decl := range decls {
 		if typ == decl.Type {

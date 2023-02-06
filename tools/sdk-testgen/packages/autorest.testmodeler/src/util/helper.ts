@@ -1,6 +1,6 @@
 import * as child_process from 'child_process';
 import * as fs from 'fs';
-import * as jp from 'jsonpath';
+import { JSONPath } from 'jsonpath-plus';
 import * as path from 'path';
 import { AutorestExtensionHost, Session } from '@autorest/extension-base';
 import { ChoiceSchema, CodeModel, ComplexSchema, ObjectSchema, Operation, Parameter, Property, codeModelSchema, isVirtualParameter } from '@autorest/codemodel';
@@ -202,7 +202,7 @@ export class Helper {
 
     public static queryByPath(obj: any, path: string[]): any[] {
         const jsonPath = '$' + path.map((x) => `['${x}']`).join('');
-        return jp.query(obj, jsonPath);
+        return JSONPath({ path: jsonPath, json: obj });
     }
 
     public static queryBodyParameter(obj: any, path: string[]): any[] {

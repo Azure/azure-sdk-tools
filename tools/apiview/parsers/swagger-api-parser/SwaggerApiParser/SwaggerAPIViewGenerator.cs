@@ -128,11 +128,6 @@ public class SwaggerApiViewGenerator
                         // There are some scenarios that the property of the root level schema is a ref to the root level itself (circular reference).
                         // Like "errorDetail" schema in common types.
                         LinkedList<string> refChain = new LinkedList<string>();
-                        if (schema.Ref != null)
-                        {
-                            refChain.AddFirst(schema.Ref);
-                        }
-                            
                         schema = schemaCache.GetResolvedSchema(schema, currentSwaggerFilePath, refChain);
                     }
 

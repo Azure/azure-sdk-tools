@@ -618,7 +618,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             request.Path = uri.PathAndQuery;
             request.Headers["x-recording-upstream-base-uri"] = uri.AbsoluteUri;
 
-            var entry = await RecordingHandler.CreateEntryAsync(request);
+            var entry = (await RecordingHandler.CreateEntryAsync(request)).Item1;
             Assert.Equal(uri.AbsoluteUri, entry.RequestUri);
         }
 

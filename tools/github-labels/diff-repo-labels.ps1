@@ -56,7 +56,11 @@ Write-Host "  $($RepositoryName)"                                   -ForegroundC
 Write-Host " ==================================================== " -ForegroundColor Green
 
 $commonLabels = (BuildCommonLabelHash $CommonLabelFilePath)
-$repositoryLabels = ((dotnet ./ghcreator/GHCreator.dll List Label $RepositoryName -token $GitHubAccessToken) | Select-Object -Skip 1)
+# GHCreator has been deleted by this PR: https://github.com/Azure/azure-sdk-tools/pull/5042
+# Hence, this script is currently broken and needs updating to use GH CLI, per:
+# https://github.com/Azure/azure-sdk-tools/issues/4888#issuecomment-1369900827
+#$repositoryLabels = ((dotnet ./ghcreator/GHCreator.dll List Label $RepositoryName -token $GitHubAccessToken) | Select-Object -Skip 1)
+$repositoryLabels = ""
 $any = $false
 
 foreach ($line in $repositoryLabels)

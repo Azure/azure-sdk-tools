@@ -188,7 +188,7 @@ struct AstTerminalNode : public AstNode
 {
   AstTerminalNode() : AstNode(nullptr) {}
 
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     dumper->SetNamespace("");
   }
@@ -275,14 +275,14 @@ public:
     //      m_underlyingType = visitTypes.Visit(typePtr);
     //    }
   }
-  void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const;
+  void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const;
 };
 
 class AstStatement {
 
 public:
   AstStatement(Stmt const* statement, ASTContext& context) {}
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const;
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const;
 };
 
 class AstExpr : public AstStatement {
@@ -294,7 +294,7 @@ protected:
   }
 
 public:
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override;
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override;
   static std::unique_ptr<AstExpr> Create(Stmt const* expression, ASTContext& context);
   virtual bool IsEmptyExpression() const { return false; }
 };
@@ -313,7 +313,7 @@ public:
   }
 
 public:
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     dumper->InsertLiteral(std::to_string(m_intValue));
   }
@@ -327,7 +327,7 @@ public:
       : AstExpr(expression, context), m_stringValue{expression->getBytes()}
   {
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     dumper->InsertPunctuation('"');
     dumper->InsertStringLiteral(m_stringValue);
@@ -349,7 +349,7 @@ public:
       m_isFloat = cast<BuiltinType>(typePtr)->getKind() == BuiltinType::Kind::Float;
     }
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     dumper->InsertLiteral(std::to_string(m_doubleValue));
     if (m_isFloat)
@@ -367,7 +367,7 @@ public:
       : AstExpr(expression, context), m_boolValue{expression->getValue()}
   {
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     if (m_boolValue)
     {
@@ -394,7 +394,7 @@ public:
   }
   std::unique_ptr<AstExpr> const& GetCastValue() const { return m_castValue; }
   AstType const& GetCastType() const { return m_underlyingType; }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override {}
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override {}
 };
 
 class AstCastExpr : public AstExpr {
@@ -411,7 +411,7 @@ public:
   }
   std::unique_ptr<AstExpr> const& GetCastValue() const { return m_castValue; }
   AstType const& GetCastType() const { return m_underlyingType; }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     m_underlyingType.Dump(dumper, dumpOptions);
     dumper->InsertPunctuation('(');
@@ -440,7 +440,7 @@ public:
     // Assert that there is a single child of the CXXStaticCastExpr object.
     assert(++expression->child_begin() == expression->child_end());
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     dumper->InsertKeyword(m_castName);
     dumper->InsertPunctuation('<');
@@ -451,6 +451,34 @@ public:
     dumper->InsertPunctuation(')');
   }
 };
+
+template <typename T>
+void DumpList(
+    T start,
+    T end,
+    AstDumper* dumper,
+    DumpNodeOptions const& dumpOptions,
+    std::function<void(AstDumper* dumper, decltype(*start)& item)> dumpItemFunction)
+{
+  bool firstArg{true};
+  for (T& it = start; it != end; ++it)
+  {
+    if (!firstArg)
+    {
+      dumper->InsertPunctuation(',');
+      if (dumpOptions.NeedsLeadingNewline)
+      {
+        dumper->Newline();
+      }
+      else
+      {
+        dumper->InsertWhitespace();
+      }
+    }
+    firstArg = false;
+    dumpItemFunction(dumper, *it);
+  }
+}
 
 class AstCtorExpr : public AstExpr {
   std::vector<std::unique_ptr<AstExpr>> m_args;
@@ -481,7 +509,7 @@ public:
   }
 
 public:
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     if (dumpOptions.DumpListInitializer)
     {
@@ -492,17 +520,14 @@ public:
       m_type.Dump(dumper, dumpOptions);
       dumper->InsertPunctuation('(');
     }
-    bool firstArg = true;
-    for (auto const& arg : m_args)
-    {
-      if (!firstArg)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      firstArg = false;
-      arg->Dump(dumper, dumpOptions);
-    }
+    DumpList(
+        m_args.begin(),
+        m_args.end(),
+        dumper,
+        dumpOptions,
+        [&](AstDumper* dumper, std::unique_ptr<AstExpr> const& expr) {
+          expr->Dump(dumper, dumpOptions);
+        });
     if (dumpOptions.DumpListInitializer)
     {
       dumper->InsertPunctuation('}');
@@ -523,7 +548,7 @@ public:
                                           expression->getFoundDecl()->getNameAsString()}
   {
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     m_type.Dump(dumper, dumpOptions);
     dumper->InsertPunctuation(':');
@@ -540,7 +565,7 @@ public:
       : AstExpr(expression, context), m_referencedName{expression->getDeclName().getAsString()}
   {
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     m_type.Dump(dumper, dumpOptions);
     dumper->InsertPunctuation(':');
@@ -556,7 +581,7 @@ public:
       : AstExpr(expression, context)
   {
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     dumper->InsertKeyword("nullptr");
   }
@@ -577,7 +602,7 @@ public:
     assert(isa<MemberExpr>(*expression->child_begin()));
     m_memberAccessor = AstExpr::Create(*expression->child_begin(), context);
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override;
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override;
 };
 class AstInitializerList : public AstExpr {
   std::vector<std::unique_ptr<AstExpr>> m_initializerValues;
@@ -604,7 +629,7 @@ public:
       m_initializerValues.push_back(AstExpr::Create(initializer, context));
     }
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override;
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override;
 };
 
 class AstMemberExpr : public AstExpr {
@@ -619,7 +644,7 @@ public:
   {
     assert(++expression->child_begin() == expression->child_end());
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override;
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override;
 };
 
 class AstCallExpr : public AstExpr {
@@ -635,7 +660,7 @@ public:
       m_arguments.push_back(AstExpr::Create(arg, context));
     }
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     if (dumpOptions.DumpListInitializer)
     {
@@ -643,17 +668,14 @@ public:
     }
     dumper->InsertMemberName(m_methodToCall);
     dumper->InsertPunctuation('(');
-    bool firstArg = true;
-    for (const auto& arg : m_arguments)
-    {
-      if (!firstArg)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      firstArg = false;
-      arg->Dump(dumper, dumpOptions);
-    }
+    DumpList(
+        m_arguments.begin(),
+        m_arguments.end(),
+        dumper,
+        dumpOptions,
+        [&](AstDumper* dumper, std::unique_ptr<AstExpr> const& expr) {
+          expr->Dump(dumper, dumpOptions);
+        });
 
     dumper->InsertPunctuation(')');
     if (dumpOptions.DumpListInitializer)
@@ -677,7 +699,7 @@ public:
         m_opcode(expression->getOpcode()), m_opcodeString(expression->getOpcodeStr())
   {
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     m_leftOperator->Dump(dumper, dumpOptions);
     for (const auto ch : m_opcodeString)
@@ -702,7 +724,7 @@ public:
         m_isPrefix(expression->isPrefix()), m_isPostfix(expression->isPostfix())
   {
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     if (m_isPrefix)
     {
@@ -739,7 +761,7 @@ public:
 
   {
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     m_underlyingType.Dump(dumper, dumpOptions);
     dumper->InsertPunctuation('(');
@@ -756,7 +778,7 @@ public:
       : AstExpr(expression, context)
   {
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     //    dumper->InsertPunctuation('{');
     //    dumper->InsertPunctuation('}');
@@ -772,7 +794,7 @@ public:
       : AstExpr(expression, context)
   {
   }
-  virtual void Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const override
+  virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     //    dumper->InsertPunctuation('{');
     //    dumper->InsertPunctuation('}');
@@ -852,7 +874,9 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
           return Create(*actualExpr->child_begin(), context);
 
         default:
-          llvm::outs() << "Unknown expression type : " << actualExpr->getStmtClassName() << "\n ";
+          llvm::errs() << raw_ostream::Colors::RED
+                       << "Unknown expression type : " << actualExpr->getStmtClassName()
+                       << raw_ostream::Colors::RESET << "\n ";
           actualExpr->dump(llvm::outs(), context);
           return nullptr;
       }
@@ -868,7 +892,9 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
     else
     {
       assert(isa<Stmt>(statement));
-      llvm::outs() << "Unknown statement type : " << statement->getStmtClassName() << "\n ";
+      llvm::errs() << raw_ostream::Colors::RED
+                   << "Unknown statement type : " << statement->getStmtClassName()
+                   << raw_ostream::Colors::RESET << "\n ";
       statement->dump(llvm::outs(), context);
       return nullptr;
     }
@@ -884,8 +910,8 @@ AstNamedNode::AstNamedNode(
     AzureClassesDatabase* const database,
     std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
     : AstNode(namedDecl),
-      m_classDatabase(database), m_namespace{AstNode::GetNamespaceForDecl(namedDecl)},
-      m_name{namedDecl->getNameAsString()}, m_navigationId{namedDecl->getQualifiedNameAsString()},
+      m_namespace{AstNode::GetNamespaceForDecl(namedDecl)}, m_name{namedDecl->getNameAsString()},
+      m_classDatabase(database), m_navigationId{namedDecl->getQualifiedNameAsString()},
       m_nodeDocumentation{AstNode::GetCommentForNode(namedDecl->getASTContext(), namedDecl)},
       m_nodeAccess{namedDecl->getAccess()}
 {
@@ -899,10 +925,10 @@ public:
   AstBaseClass(CXXBaseSpecifier const& base)
       : m_baseClass{base.getType()}, m_access{base.getAccessSpecifierAsWritten()} {};
 
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions);
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions);
 };
 
-void AstBaseClass::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+void AstBaseClass::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
 {
   if (m_access != AS_none)
   {
@@ -952,7 +978,7 @@ public:
       m_defaultExpression = AstExpr::Create(var->getDefaultArg(), var->getASTContext());
     }
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -965,7 +991,7 @@ public:
     }
     dumper->InsertLiteral(m_typeAsString);
     dumper->InsertWhitespace();
-    dumper->InsertMemberName(m_name);
+    dumper->InsertMemberName(Name());
     if (m_isArray)
     {
       dumper->InsertPunctuation('[');
@@ -1037,7 +1063,7 @@ public:
       database->CreateApiViewMessage(ApiViewMessages::NonConstStaticFields, m_navigationId);
     }
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1055,7 +1081,7 @@ public:
     }
     dumper->InsertLiteral(m_typeAsString);
     dumper->InsertWhitespace();
-    dumper->InsertMemberName(m_name);
+    dumper->InsertMemberName(Name());
     if (m_isArray)
     {
       dumper->InsertPunctuation('[');
@@ -1105,7 +1131,7 @@ public:
       llvm::outs() << "Attribute: " << attr->getSpelling() << "\n";
     }
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     if (m_wasDeclaredWithTypename)
     {
@@ -1121,13 +1147,112 @@ public:
       dumper->InsertPunctuation('.');
       dumper->InsertPunctuation('.');
     }
+    if (!m_paramName.empty())
+    {
+      dumper->InsertWhitespace();
+      dumper->InsertMemberName(m_paramName);
+      if (m_defaultValue)
+      {
+        dumper->InsertWhitespace();
+        dumper->InsertPunctuation('=');
+        m_defaultValue->Dump(dumper, dumpOptions);
+      }
+    }
+  }
+};
+
+// Template parameters which are template declarations. For example:
+//   template <typename T, template <typename> class U = UniqueHandleHelper>
+//   using UniqueHandle = typename U<T>::type;
+// Also "T" in
+//   @code
+//       template <template <typename> class T> class container { };
+//   @endcode
+class AstTemplateTemplateParameter : public AstNamedNode {
+  bool m_isParameterPack{};
+  std::string m_paramName;
+  std::list<std::unique_ptr<AstNode>> m_parameters;
+  std::unique_ptr<AstNode> m_templateBody;
+  std::string m_defaultTypeName;
+
+public:
+  AstTemplateTemplateParameter(
+      TemplateTemplateParmDecl const* templateParam,
+      AzureClassesDatabase* const database,
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
+      : AstNamedNode(templateParam, database, parentNode),
+        m_paramName{templateParam->getNameAsString()}, m_isParameterPack{
+                                                           templateParam->isParameterPack()}
+  {
+    for (auto attr : templateParam->attrs())
+    {
+      llvm::outs() << "Attribute: " << attr->getSpelling() << "\n";
+    }
+
+    for (auto& param : templateParam->getTemplateParameters()->asArray())
+    {
+      m_parameters.push_back(AstNode::Create(param, database, parentNode));
+    }
+
+    if (templateParam->hasDefaultArgument())
+    {
+      auto defaultArg = templateParam->getDefaultArgument().getArgument();
+      switch (defaultArg.getKind())
+      {
+
+        case TemplateArgument::Template: {
+          llvm::raw_string_ostream os(m_defaultTypeName);
+          clang::PrintingPolicy pp{LangOptions{}};
+          pp.adjustForCPlusPlus();
+
+          defaultArg.getAsTemplate().print(os, pp);
+        }
+        break;
+        default:
+          llvm::errs() << "Unknown TemplateTemplate parameter default argument type: "
+                       << defaultArg.getKind() << "\n";
+          break;
+      }
+    }
+  }
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
+  {
+    dumper->InsertKeyword("template");
+    dumper->InsertWhitespace();
+    dumper->InsertPunctuation('<');
+
+    {
+      DumpNodeOptions innerOptions{dumpOptions};
+      innerOptions.NeedsLeftAlign = false;
+      innerOptions.NeedsTrailingNewline = false;
+      innerOptions.NeedsTrailingSemi = false;
+      innerOptions.NeedsLeadingNewline = false;
+      DumpList(
+          m_parameters.begin(),
+          m_parameters.end(),
+          dumper,
+          innerOptions,
+          [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+            param->DumpNode(dumper, innerOptions);
+          });
+    }
+    dumper->InsertPunctuation('>');
+    if (m_isParameterPack)
+    {
+      dumper->InsertPunctuation('.');
+      dumper->InsertPunctuation('.');
+      dumper->InsertPunctuation('.');
+    }
+    dumper->InsertWhitespace();
+    dumper->InsertKeyword("class");
     dumper->InsertWhitespace();
     dumper->InsertMemberName(m_paramName);
-    if (m_defaultValue)
+    if (!m_defaultTypeName.empty())
     {
       dumper->InsertWhitespace();
       dumper->InsertPunctuation('=');
-      m_defaultValue->Dump(dumper, dumpOptions);
+      dumper->InsertWhitespace();
+      dumper->InsertMemberName(m_defaultTypeName);
     }
   }
 };
@@ -1146,7 +1271,7 @@ public:
         m_templateType{param->getType()}
   {
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     m_templateType.Dump(dumper, dumpOptions);
     if (m_defaultArgument)
@@ -1181,11 +1306,11 @@ public:
 
   {
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     if (dumpOptions.NeedsNamespaceAdjustment)
     {
-      dumper->SetNamespace(m_namespace);
+      dumper->SetNamespace(Namespace());
     }
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1193,7 +1318,7 @@ public:
     }
     dumper->InsertKeyword("using");
     dumper->InsertWhitespace();
-    dumper->InsertMemberName(m_name);
+    dumper->InsertMemberName(Name());
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('=');
     dumper->InsertWhitespace();
@@ -1216,7 +1341,7 @@ protected:
   std::string m_parentClass;
 
 protected:
-  void DumpExceptionSpecification(AstDumper* dumper, DumpNodeOptions dumpOptions)
+  void DumpExceptionSpecification(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
   {
     switch (m_exceptionSpecification)
     {
@@ -1307,17 +1432,17 @@ public:
       m_parameters.push_back(AstNode::Create(param, database, parentNode));
     }
 
-    if (m_namespace.empty())
+    if (Namespace().empty())
     {
       database->CreateApiViewMessage(
           ApiViewMessages::TypeDeclaredInGlobalNamespace, m_navigationId);
     }
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     if (dumpOptions.NeedsNamespaceAdjustment)
     {
-      dumper->SetNamespace(m_namespace);
+      dumper->SetNamespace(Namespace());
     }
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1358,25 +1483,24 @@ public:
       dumper->InsertPunctuation(':');
       dumper->InsertPunctuation(':');
     }
-    dumper->InsertTypeName(m_name, m_navigationId);
+    dumper->InsertTypeName(Name(), m_navigationId);
     dumper->InsertPunctuation('(');
-    bool firstParam{true};
-    for (const auto& param : m_parameters)
     {
-      if (!firstParam)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      firstParam = false;
-      {
-        DumpNodeOptions innerOptions{dumpOptions};
+      DumpNodeOptions innerOptions{dumpOptions};
 
-        innerOptions.NeedsLeftAlign = false;
-        innerOptions.NeedsTrailingNewline = false;
-        innerOptions.NeedsTrailingSemi = false;
-        param->DumpNode(dumper, innerOptions);
-      }
+      innerOptions.NeedsLeftAlign = false;
+      innerOptions.NeedsTrailingNewline = false;
+      innerOptions.NeedsTrailingSemi = false;
+      innerOptions.NeedsLeadingNewline = false;
+
+      DumpList(
+          m_parameters.begin(),
+          m_parameters.end(),
+          dumper,
+          innerOptions,
+          [&](AstDumper* dumper, std::unique_ptr<AstNode>& node) {
+            node->DumpNode(dumper, innerOptions);
+          });
     }
     dumper->InsertPunctuation(')');
     if (!m_isMemberOfClass)
@@ -1413,7 +1537,7 @@ public:
     m_refQualifier = typePtr->getRefQualifier();
     m_parentClass = method->getParent()->getNameAsString();
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1490,12 +1614,15 @@ public:
       llvm::outs() << "?? Defaulted deleted constructor?";
     }
     // Noisy diagnostic. Consider making it less noisy in the future.
-    // if (!m_isExplicit)
-    //{
-    //  database->CreateApiViewMessage(ApiViewMessages::ImplicitConstructor, m_navigationId);
-    //}
+    if (!m_isExplicit)
+    {
+      if (!ctor->getParent()->isEffectivelyFinal())
+      {
+        database->CreateApiViewMessage(ApiViewMessages::ImplicitConstructor, m_navigationId);
+      }
+    }
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1553,7 +1680,7 @@ public:
         m_isDeleted{dtor->isDeleted()}, m_isExplicitlyDefaulted{dtor->isExplicitlyDefaulted()}
   {
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1600,10 +1727,10 @@ public:
       : AstNode(accessSpec), m_accessSpecifier{accessSpec->getAccess()}
   {
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override;
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override;
 };
 
-void AstAccessSpec::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+void AstAccessSpec::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
 {
   // We want to left-indent the "public:", "private:" and "protected" items so they stick
   // out from the fields in the class.
@@ -1633,7 +1760,7 @@ class AstClassLike : public AstNamedNode {
   std::vector<std::unique_ptr<AstNode>> m_children;
 
 private:
-  void DumpTag(AstDumper* dumper, DumpNodeOptions options)
+  void DumpTag(AstDumper* dumper, DumpNodeOptions const& options)
   {
     switch (m_tagUsed)
     {
@@ -1661,14 +1788,18 @@ private:
         throw std::runtime_error("Unknown tagKind: " + std::to_string(static_cast<int>(m_tagUsed)));
     }
   }
-  virtual void DumpTemplateSpecializationArguments(AstDumper* dumper, DumpNodeOptions options) {}
+  virtual void DumpTemplateSpecializationArguments(
+      AstDumper* dumper,
+      DumpNodeOptions const& options)
+  {
+  }
 
 public:
   AstClassLike(
       CXXRecordDecl const* decl,
       AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode);
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override;
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override;
 };
 
 class AstClassTemplate : public AstNamedNode {
@@ -1688,14 +1819,13 @@ public:
     }
     m_templateBody
         = AstNode::Create(templateDecl->getTemplatedDecl(), azureClassesDatabase, parentNode);
-    //    m_namespace = static_cast<AstNamedNode*>(m_templateBody.get())->m_namespace;
   }
 
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
-    if (!m_namespace.empty())
+    if (!Namespace().empty())
     {
-      dumper->SetNamespace(m_namespace);
+      dumper->SetNamespace(Namespace());
     }
 
     if (dumpOptions.NeedsLeftAlign)
@@ -1705,17 +1835,20 @@ public:
     dumper->InsertKeyword("template");
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('<');
-    bool isFirstParam = true;
-    for (const auto& param : m_parameters)
     {
-      if (!isFirstParam)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      isFirstParam = false;
-      param->DumpNode(dumper, dumpOptions);
+      DumpNodeOptions innerOptions{dumpOptions};
+      innerOptions.NeedsLeadingNewline = false;
+
+      DumpList(
+          m_parameters.begin(),
+          m_parameters.end(),
+          dumper,
+          innerOptions,
+          [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+            param->DumpNode(dumper, innerOptions);
+          });
     }
+
     dumper->InsertPunctuation('>');
     dumper->Newline();
     {
@@ -1745,13 +1878,13 @@ public:
       m_parameters.push_back(AstNode::Create(param, azureClassesDatabase, parentNode));
     }
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
-    if (!m_namespace.empty())
+    if (!Namespace().empty())
     {
       if (dumpOptions.NeedsNamespaceAdjustment)
       {
-        dumper->SetNamespace(m_namespace);
+        dumper->SetNamespace(Namespace());
       }
     }
 
@@ -1762,17 +1895,14 @@ public:
     dumper->InsertKeyword("template");
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('<');
-    bool isFirstParam = true;
-    for (const auto& param : m_parameters)
-    {
-      if (!isFirstParam)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      isFirstParam = false;
-      param->DumpNode(dumper, dumpOptions);
-    }
+    DumpList(
+        m_parameters.begin(),
+        m_parameters.end(),
+        dumper,
+        dumpOptions,
+        [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+          param->DumpNode(dumper, dumpOptions);
+        });
     dumper->InsertPunctuation('>');
     dumper->Newline();
     m_functionNode->DumpNode(dumper, dumpOptions);
@@ -1797,15 +1927,21 @@ public:
     for (auto param : typeAliasTemplate->getTemplateParameters()->asArray())
     {
       m_parameters.push_back(AstNode::Create(param, azureClassesDatabase, parentNode));
+      if (!m_parameters.back())
+      {
+        llvm::outs() << raw_ostream::Colors::CYAN << "Unknown or unsupported AST node type."
+                     << raw_ostream::Colors::RESET << "\n";
+        param->dump(llvm::outs());
+      }
     }
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
-    if (!m_namespace.empty())
+    if (!Namespace().empty())
     {
       if (dumpOptions.NeedsNamespaceAdjustment)
       {
-        dumper->SetNamespace(m_namespace);
+        dumper->SetNamespace(Namespace());
       }
     }
 
@@ -1816,16 +1952,18 @@ public:
     dumper->InsertKeyword("template");
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('<');
-    bool isFirstParam = true;
-    for (const auto& param : m_parameters)
     {
-      if (!isFirstParam)
-      {
-        dumper->InsertPunctuation(',');
-        dumper->InsertWhitespace();
-      }
-      isFirstParam = false;
-      param->DumpNode(dumper, dumpOptions);
+      DumpNodeOptions innerOptions{dumpOptions};
+      innerOptions.NeedsLeadingNewline = false;
+
+      DumpList(
+          m_parameters.begin(),
+          m_parameters.end(),
+          dumper,
+          innerOptions,
+          [&](AstDumper* dumper, std::unique_ptr<AstNode>& param) {
+            param->DumpNode(dumper, innerOptions);
+          });
     }
     dumper->InsertPunctuation('>');
     dumper->Newline();
@@ -1836,8 +1974,9 @@ public:
 class AstClassTemplateSpecialization : public AstClassLike {
   std::vector<std::unique_ptr<AstType>> m_arguments;
 
-  virtual void DumpTemplateSpecializationArguments(AstDumper* dumper, DumpNodeOptions dumpOptions)
-      override
+  virtual void DumpTemplateSpecializationArguments(
+      AstDumper* dumper,
+      DumpNodeOptions const& dumpOptions) override
   {
     dumper->InsertPunctuation('<');
     for (auto const& arg : m_arguments)
@@ -1861,13 +2000,13 @@ public:
     }
   }
 
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
-    if (!m_namespace.empty())
+    if (!Namespace().empty())
     {
       if (dumpOptions.NeedsNamespaceAdjustment)
       {
-        dumper->SetNamespace(m_namespace);
+        dumper->SetNamespace(Namespace());
       }
     }
 
@@ -1898,7 +2037,7 @@ public:
         m_conversionType{conversion->getConversionType(), conversion->getASTContext()}
   {
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1952,7 +2091,7 @@ public:
         m_isMutable{fieldDecl->isMutable()}, m_isConst{fieldDecl->getType().isConstQualified()}
   {
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override;
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override;
 };
 
 class AstFriend : public AstNode {
@@ -1977,7 +2116,7 @@ public:
           = AstNode::Create(friendDecl->getFriendDecl(), azureClassesDatabase, parentNode);
     }
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -2024,10 +2163,10 @@ public:
       m_initializer = AstExpr::Create(enumerator->getInitExpr(), enumerator->getASTContext());
     }
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
   {
     dumper->LeftAlign();
-    dumper->InsertMemberName(m_name);
+    dumper->InsertMemberName(Name());
     if (m_initializer)
     {
       dumper->InsertWhitespace();
@@ -2065,14 +2204,14 @@ public:
     if (parentNode)
     {
       parentNode = parentNode->InsertChildNode(
-          m_name, m_navigationId, TypeHierarchy::TypeHierarchyClass::Enum);
+          Name(), m_navigationId, TypeHierarchy::TypeHierarchyClass::Enum);
     }
     for (auto enumerator : enumDecl->enumerators())
     {
       m_enumerators.push_back(AstNode::Create(enumerator, azureClassesDatabase, parentNode));
     }
   }
-  void DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions) override;
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override;
 };
 
 AstClassLike::AstClassLike(
@@ -2117,7 +2256,7 @@ AstClassLike::AstClassLike(
   //
   // This is parsed as an anonymous struct containing a single field named "InnerField1"
   // followed by a field declaration referencing the anonymous struct.
-  if (m_name.empty() && decl->isEmbeddedInDeclarator()
+  if (Name().empty() && decl->isEmbeddedInDeclarator()
       && decl->getNextDeclInContext()->getKind() == Decl::Kind::Field)
   {
     m_isAnonymousNamedStruct = true;
@@ -2126,7 +2265,7 @@ AstClassLike::AstClassLike(
   if (parentNode)
   {
     parentNode = parentNode->InsertChildNode(
-        !m_isAnonymousNamedStruct ? m_name : m_anonymousNamedStructName, m_navigationId, classType);
+        !m_isAnonymousNamedStruct ? Name() : m_anonymousNamedStructName, m_navigationId, classType);
   }
 
   for (auto& attr : decl->attrs())
@@ -2248,8 +2387,9 @@ AstClassLike::AstClassLike(
             break;
           }
           default: {
-            llvm::outs() << "Unhandled Decl Type: " << std::string(child->getDeclKindName())
-                         << "\n";
+            llvm::errs() << raw_ostream::Colors::RED
+                         << "Unhandled Decl Type: " << std::string(child->getDeclKindName())
+                         << raw_ostream::Colors::RESET << "\n";
           }
         }
         if (m_isFinal && child->getAccess() == AS_protected)
@@ -2267,13 +2407,13 @@ AstClassLike::AstClassLike(
   }
 }
 
-void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
 {
-  if (!m_namespace.empty())
+  if (!Namespace().empty())
   {
     if (dumpOptions.NeedsNamespaceAdjustment)
     {
-      dumper->SetNamespace(m_namespace);
+      dumper->SetNamespace(Namespace());
     }
   }
 
@@ -2289,7 +2429,7 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   }
   DumpTag(dumper, dumpOptions);
   dumper->InsertWhitespace();
-  dumper->InsertTypeName(m_name, m_navigationId);
+  dumper->InsertTypeName(Name(), m_navigationId);
   DumpTemplateSpecializationArguments(dumper, dumpOptions);
   if (!m_isForwardDeclaration)
   {
@@ -2306,17 +2446,14 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
         dumper->InsertPunctuation(':');
         dumper->InsertWhitespace();
         // Enumerate the base classes, dumping each of them.
-        bool firstType = true;
-        for (auto const& base : m_baseClasses)
-        {
-          if (!firstType)
-          {
-            dumper->InsertPunctuation(',');
-            dumper->InsertWhitespace();
-          }
-          firstType = false;
-          base->DumpNode(dumper, dumpOptions);
-        }
+        DumpList(
+            m_baseClasses.begin(),
+            m_baseClasses.end(),
+            dumper,
+            dumpOptions,
+            [&](AstDumper* dumper, std::unique_ptr<AstBaseClass>& base) {
+              base->DumpNode(dumper, dumpOptions);
+            });
       }
 
       dumper->Newline();
@@ -2351,13 +2488,13 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   }
 }
 
-void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
 {
-  if (!m_namespace.empty())
+  if (!Namespace().empty())
   {
     if (dumpOptions.NeedsNamespaceAdjustment)
     {
-      dumper->SetNamespace(m_namespace);
+      dumper->SetNamespace(Namespace());
     }
   }
   if (dumpOptions.NeedsLeftAlign)
@@ -2378,7 +2515,7 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
     }
   }
   dumper->InsertWhitespace();
-  dumper->InsertTypeName(m_name, m_navigationId);
+  dumper->InsertTypeName(Name(), m_navigationId);
   if (m_isFixed)
   {
     dumper->InsertWhitespace();
@@ -2391,16 +2528,18 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   dumper->InsertPunctuation('{');
   dumper->AdjustIndent(2);
   dumper->Newline();
-  bool firstEnumerator = true;
-  for (auto const& enumerator : m_enumerators)
+
   {
-    if (!firstEnumerator)
-    {
-      dumper->InsertPunctuation(',');
-      dumper->Newline();
-    }
-    firstEnumerator = false;
-    enumerator->DumpNode(dumper, dumpOptions);
+    DumpNodeOptions innerOptions{dumpOptions};
+    innerOptions.NeedsLeadingNewline = true;
+    DumpList(
+        m_enumerators.begin(),
+        m_enumerators.end(),
+        dumper,
+        innerOptions,
+        [&](AstDumper* dumper, std::unique_ptr<AstNode>& enumerator) {
+          enumerator->DumpNode(dumper, dumpOptions);
+        });
   }
   dumper->Newline();
   dumper->AdjustIndent(-2);
@@ -2416,7 +2555,7 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   }
 }
 
-void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
+void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
 {
   if (dumpOptions.NeedsLeftAlign)
   {
@@ -2424,7 +2563,7 @@ void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   }
   m_fieldType.Dump(dumper, dumpOptions);
   dumper->InsertWhitespace();
-  dumper->InsertMemberName(m_name);
+  dumper->InsertMemberName(Name());
   // if (m_initializer)
   //{
   //   DumpNodeOptions innerOptions{dumpOptions};
@@ -2450,25 +2589,25 @@ void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions dumpOptions)
   }
 }
 
-void AstType::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const
+void AstType::Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
 {
   dumper->InsertMemberName(m_internalTypeName);
 }
 
-void AstExpr::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const
+void AstExpr::Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
 {
   dumper->InsertComment("/* UNSUPPORTED EXPRESSION */");
 }
-void AstStatement::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const
+void AstStatement::Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
 {
   dumper->InsertComment("/* UNSUPPORTED STATEMENT */");
 }
-void AstMethodCallExpr::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const
+void AstMethodCallExpr::Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
 {
   // Dump the class and member field to be called.
   m_memberAccessor->Dump(dumper, dumpOptions);
 }
-void AstMemberExpr::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const
+void AstMemberExpr::Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
 {
   if (dumpOptions.DumpListInitializer)
   {
@@ -2485,7 +2624,7 @@ void AstMemberExpr::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const
   }
 }
 
-void AstInitializerList::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) const
+void AstInitializerList::Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
 {
   if (!m_initializerValues.empty())
   {
@@ -2501,20 +2640,17 @@ void AstInitializerList::Dump(AstDumper* dumper, DumpNodeOptions dumpOptions) co
       if (m_initializerValues.size() != 1)
       {
         dumper->InsertPunctuation('{');
-        bool firstInitializer = true;
         dumper->AdjustIndent(4);
-        for (const auto& initializer : m_initializerValues)
-        {
-          if (!firstInitializer)
-          {
-            dumper->InsertPunctuation(',');
-            dumper->InsertWhitespace();
-          }
-          firstInitializer = false;
-          dumper->Newline();
-          dumper->LeftAlign();
-          initializer->Dump(dumper, dumpOptions);
-        }
+        DumpList(
+            m_initializerValues.begin(),
+            m_initializerValues.end(),
+            dumper,
+            dumpOptions,
+            [&](AstDumper* dumper, std::unique_ptr<AstExpr> const& initializer) {
+              dumper->Newline();
+              dumper->LeftAlign();
+              initializer->Dump(dumper, dumpOptions);
+            });
         dumper->AdjustIndent(-4);
         dumper->InsertPunctuation('}');
       }
@@ -2586,6 +2722,10 @@ std::unique_ptr<AstNode> AstNode::Create(
       return std::make_unique<AstTemplateParameter>(
           cast<TemplateTypeParmDecl>(decl), azureClassesDatabase, parentNode);
 
+    case Decl::Kind::TemplateTemplateParm:
+      return std::make_unique<AstTemplateTemplateParameter>(
+          cast<TemplateTemplateParmDecl>(decl), azureClassesDatabase, parentNode);
+
     case Decl::Kind::NonTypeTemplateParm:
       return std::make_unique<AstNonTypeTemplateParam>(
           cast<NonTypeTemplateParmDecl>(decl), azureClassesDatabase, parentNode);
@@ -2615,13 +2755,15 @@ std::unique_ptr<AstNode> AstNode::Create(
 
     case Decl::Kind::Namespace:
       return nullptr;
-      //    return std::make_unique<AstNamespace>(cast<NamespaceDecl>(decl, azureClassesDatabase));
+      //    return std::make_unique<AstNamespace>(cast<NamespaceDecl>(decl,
+      //    azureClassesDatabase));
     case Decl::Kind::Using:
       return nullptr;
       //   return std::make_unique<AstUsing>(cast<UsingDecl>(decl));
     default: {
-      llvm::outs() << "Unknown DECL node " << cast<NamedDecl>(decl)->getNameAsString()
-                   << " type : " << decl->getDeclKindName() << "\n ";
+      llvm::errs() << raw_ostream::Colors::RED << "Unknown DECL node "
+                   << cast<NamedDecl>(decl)->getNameAsString()
+                   << " type : " << decl->getDeclKindName() << raw_ostream::Colors::RESET << "\n ";
       return nullptr;
     }
   }
@@ -2662,7 +2804,8 @@ bool AzureClassesDatabase::IsMemberOfObject(NamedDecl const* decl)
 
   // Method or template parameters or enumerators are by definition members of an object.
   if (decl->getKind() == Decl::ParmVar || decl->getKind() == Decl::EnumConstant
-      || decl->getKind() == Decl::TemplateTypeParm || decl->getKind() == Decl::NonTypeTemplateParm)
+      || decl->getKind() == Decl::TemplateTypeParm || decl->getKind() == Decl::NonTypeTemplateParm
+      || decl->getKind() == Decl::TemplateTemplateParm)
   {
     return true;
   }
@@ -2674,6 +2817,14 @@ bool AzureClassesDatabase::IsMemberOfObject(NamedDecl const* decl)
       return true;
     }
   }
+
+  // If this node has a parent function or method, it's a member of something.
+  auto parent = decl->getParentFunctionOrMethod();
+  if (parent)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -2687,16 +2838,64 @@ void AzureClassesDatabase::CreateAstNode(clang::NamedDecl* namedDecl)
 {
   if (m_processor->IncludePrivate() || namedDecl->getAccess() != AS_private)
   {
-    if (!IsMemberOfObject(namedDecl))
+    // Perform a couple of verification checks that should apply to every type we add to the API
+    // Review, regardless of the type of object:
+    //
+    // 1) If there's a namespace filter specified, flag all types outside the namespace filter.
+    // 2) If the type is in the _internal namespace, flag it if we're not allowed to have _internal
+    // types.
+    //
+    // We don't want to consider namespaces in these checks, since they're not discrete entries in
+    // our resulting output.
+    if (namedDecl->getKind() != Decl::Namespace)
     {
-      auto node = AstNode::Create(
-          namedDecl,
-          this,
-          m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(namedDecl)));
-      if (node)
+      const std::string typeName{namedDecl->getQualifiedNameAsString()};
+      if (!m_processor->FilterNamespaces().empty())
       {
-        m_typeList.push_back(std::move(node));
+        // We have a namespace filter set. Verify that the type name starts with one of the filter
+        // namespaces.
+        if (std::find_if(
+                std::begin(m_processor->FilterNamespaces()),
+                std::end(m_processor->FilterNamespaces()),
+                [&typeName](std::string const& ns) { return typeName.find(ns) == 0; })
+            == std::end(m_processor->FilterNamespaces()))
+        {
+          bool generateError = true;
+          // Don't flag "using" declarations or forward declarations, because they don't introduce
+          // new types.
+          if ((namedDecl->getKind() == Decl::Using) || (namedDecl->getKind() == Decl::TypeAlias)
+              || (namedDecl->getKind() == Decl::CXXRecord
+                  && cast<CXXRecordDecl>(namedDecl)->getDefinition() != namedDecl))
+          {
+            generateError = false;
+          }
+          if (generateError)
+          {
+            m_processor->GetClassesDatabase()->CreateApiViewMessage(
+                ApiViewMessages::TypeDeclaredInNamespaceOutsideFilter, typeName);
+          }
+        }
       }
+
+      // If the type is in the _internal namespace, then we want to flag it unless we are
+      // allowing internal types.
+      if (typeName.find("::_internal") != std::string::npos)
+      {
+        if (!m_processor->AllowInternal())
+        {
+          m_processor->GetClassesDatabase()->CreateApiViewMessage(
+              ApiViewMessages::InternalTypesInNonCorePackage, typeName);
+        }
+      }
+    }
+
+    // Now create the node. Note that for some types AstNode::Create will return null, so we skip
+    // adding them before we add them.
+    auto node = AstNode::Create(
+        namedDecl, this, m_typeHierarchy.GetNamespaceRoot(AstNode::GetNamespaceForDecl(namedDecl)));
+    if (node)
+    {
+      m_typeList.push_back(std::move(node));
     }
   }
 }

@@ -26,7 +26,8 @@ pr:
       - tools/sdk-testgen
 
 pool:
-  vmImage: "ubuntu-latest"
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: MMSUbuntu22.04
 
 variables:
   NugetSecurityAnalysisWarningLevel: "none"
@@ -80,17 +81,6 @@ stages:
           - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/common/temp/artifacts/packages
             artifact: packages
             displayName: Publish packages(.tgz) as pipeline artifacts
-      - job: Testmodeler
-        displayName: "TestModeler"
-        steps:
-          - script: |
-              npm ci
-            displayName: "npm ci"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/autorest.testmodeler
-          - script: |
-              npm run test
-            displayName: "npm run test"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/autorest.testmodeler
 
   - ${{if eq(variables['Build.Reason'], 'Manual')}}:
     - stage: release

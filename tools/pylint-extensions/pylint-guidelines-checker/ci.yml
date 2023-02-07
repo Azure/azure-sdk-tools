@@ -24,7 +24,7 @@ pr:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
   parameters:
-    PythonVersion: '3.10.2'
+    PythonVersion: '3.10.9'
     PackagePath: 'tools/pylint-extensions/pylint-guidelines-checker'
     FeedName: 'public/azure-sdk-for-python'
     ArtifactName: 'azsdkpylintplugin'

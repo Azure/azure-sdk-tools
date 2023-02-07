@@ -3,7 +3,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20221212.1
+      ref: refs/tags/azure-sdk-build-tools_20230206.1
 
 parameters:
   - name: ToolDirectory
@@ -18,9 +18,6 @@ parameters:
   - name: DotNetCoreVersion
     type: string
     default: ''
-  - name: SkipDotNetInstall
-    type: boolean
-    default: false
   - name: NoWarn
     type: boolean
     default: false
@@ -50,28 +47,28 @@ variables:
       value: ''
     ${{ if not(parameters.NoWarn) }}:
       value: -warnaserror
+  # A path to directory to contain the output of "dotnet pack" call,
+  # to be consumed as input by "publish" task.
+  - name: packagesToPublishDir
+    value: $(Build.ArtifactStagingDirectory)/packages
 
 stages:
   - stage: BuildTestAndPackage
 
     pool:
-      name: azsdk-pool-mms-ubuntu-2004-general
-      vmImage: MMSUbuntu20.04
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: MMSUbuntu22.04
 
     jobs:
       - job: BuildAndPackage
         displayName: Build and Package
 
         steps:
-          - script: set
-          displayName: show all env vars
-          - task: UseDotNet@2
-            condition: eq(${{ parameters.SkipDotNetInstall }}, false)
-            displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-            inputs:
-              version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-
-          - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory)/packages $(Warn) -c Release'
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
+              
+          - script: 'dotnet pack /p:ArtifactsPackagesDir=$(packagesToPublishDir) $(Warn) -c Release'
             displayName: 'Build and Package'
             workingDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
             env:
@@ -79,44 +76,76 @@ stages:
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
 
+          # This step creates "$(packagesToPublishDir)" directory if it doesn't exist.
+          # This step is necessary since migration to net6.0. This is because since net6.0, 
+          # in case the "Build and Package" above would not output any packages to this directory, 
+          # the "Publish to packages artifact" step below would fail on missing directory.
+          - pwsh: |
+              if (!(Test-Path -PathType container "$(packagesToPublishDir)")) {
+                New-Item -ItemType Directory -Path "$(packagesToPublishDir)"
+                Write-Host "Created directory ""$(packagesToPublishDir)"""
+              } else {
+                Write-Host "Directory ""$(packagesToPublishDir)"" already exists. Nothing to do."
+                Write-Host "Directory ""$(packagesToPublishDir)"" contents:"
+                Get-ChildItem $(packagesToPublishDir) | ForEach-Object { Write-Host $_ }
+              }
+            displayName: Create dir for packages to publish or list its contents
+
+          - publish: $(packagesToPublishDir)
+            displayName: Publish to packages artifact
+            artifact: packages
+            condition: succeededOrFailed()
+
+      - job: Produce_Executables
+
+        strategy:
+          matrix:
+            linux:
+              imageName: 'ubuntu-22.04'
+              poolName: 'azsdk-pool-mms-ubuntu-2204-general'
+              artifactName: 'linux_windows'
+            mac:
+              imageName: 'macos-11'
+              poolName: 'Azure Pipelines'
+              artifactName: 'mac'
+
+        pool:
+          name: $(poolName)
+          vmImage: $(imageName)
+
+        steps:
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
+
           - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
             parameters:
               StagingDirectory: $(Build.ArtifactStagingDirectory)
               BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
               TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
-          # This step creates "$(Build.ArtifactStagingDirectory)/packages" directory if it doesn't exist.
-          # This step is necessary since migration to net6.0. This is because since net6.0, 
-          # in case the "Build and Package" above would not output any packages to this directory, 
-          # the "Publish to packages artifact" step below would fail on missing directory.
-          - pwsh: |
-              if (!(Test-Path -PathType container "$(Build.ArtifactStagingDirectory)/packages")) {
-                New-Item -ItemType Directory -Path "$(Build.ArtifactStagingDirectory)/packages"
-                Write-Host "Created directory $(Build.ArtifactStagingDirectory)/packages"
-              } else {
-                Write-Host "Directory $(Build.ArtifactStagingDirectory)/packages already exists. Nothing to do."
-              }
-            displayName: Create directory for packages to publish if absent
-
-          - publish: $(Build.ArtifactStagingDirectory)/packages
-            displayName: Publish to packages artifact
-            artifact: packages
-            condition: succeededOrFailed()
-
-          - ${{ if gt(length(parameters.StandaloneExeMatrix), 0) }}:
-              - publish: $(Build.ArtifactStagingDirectory)/binaries
-                displayName: Publish executables to binaries artifact
-                artifact: binaries
-                condition: succeededOrFailed()
-
       - job: Test
 
+        strategy:
+          matrix:
+            Windows:
+              Pool: azsdk-pool-mms-win-2022-general
+              Image: MMS2022
+            Linux:
+              Pool: azsdk-pool-mms-ubuntu-2204-general
+              Image: MMSUbuntu22.04
+            Mac:
+              Pool: Azure Pipelines
+              Image: macos-11
+
+        pool:
+          name: $(Pool)
+          vmImage: $(Image)
+
         steps:
-          - task: UseDotNet@2
-            condition: eq(${{ parameters.SkipDotNetInstall }}, false)
-            displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-            inputs:
-              version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
 
           - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
             displayName: 'Test'
@@ -132,7 +161,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
+              testRunTitle: $(System.JobDisplayName) ${{ parameters.DotNetCoreVersion }}
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 

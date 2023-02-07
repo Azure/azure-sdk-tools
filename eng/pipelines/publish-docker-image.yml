@@ -1,7 +1,7 @@
 # Additional sample inputs can be found in `eng/containers/ci.yml`, but here is an example.
 # - name: test_proxy_linux
-#   pool: 'azsdk-pool-mms-ubuntu-2004-general'
-#   vmImage: 'MMSUbuntu20.04'
+#   pool: azsdk-pool-mms-ubuntu-2204-general
+#   vmImage: MMSUbuntu22.04
 #   dockerRepo: 'engsys/testproxy-lin'
 #   additionalDockerArgs: ''
 #   prepareScript: tools/test-proxy/docker/prepare.ps1
@@ -92,8 +92,8 @@ jobs:
             - ${{ each config in parameters.DockerDeployments }}:
               - container_build_${{ config.name }}
         pool:
-          name: 'azsdk-pool-mms-ubuntu-2004-general'
-          vmImage: 'MMSUbuntu20.04'
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: MMSUbuntu22.04
 
         steps:
           - task: Docker@2

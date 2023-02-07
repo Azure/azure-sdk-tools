@@ -14,7 +14,7 @@ specifiers:
   '@typescript-eslint/parser': ^5.25.0
   ajv: ^6.12.6
   axios: ^0.24.0
-  class-validator: ^0.13.2
+  class-validator: ^0.14.0
   colors: 1.4.0
   command-line-args: ~5.2.1
   convict: ^6.2.3
@@ -33,7 +33,7 @@ specifiers:
   mongodb: ^3.6.10
   node-yaml: ^3.2.0
   rimraf: ^3.0.2
-  simple-git: ~3.7.1
+  simple-git: ~3.16.0
   ts-jest: ~26.5.4
   ts-node: ~10.7.0
   typeorm: ^0.2.37
@@ -54,7 +54,7 @@ dependencies:
   '@typescript-eslint/parser': 5.41.0_eslint@8.26.0+typescript@4.6.4
   ajv: 6.12.6
   axios: 0.24.0
-  class-validator: 0.13.2
+  class-validator: 0.14.0
   colors: 1.4.0
   command-line-args: 5.2.1
   convict: 6.2.3
@@ -73,7 +73,7 @@ dependencies:
   mongodb: 3.7.3
   node-yaml: 3.2.0_eslint@8.26.0
   rimraf: 3.0.2
-  simple-git: 3.7.1
+  simple-git: 3.16.0
   ts-jest: 26.5.6_jest@26.6.3+typescript@4.6.4
   ts-node: 10.7.0_fed3b4cb8104197fd8996158792567a5
   typeorm: 0.2.45_mongodb@3.7.3
@@ -1212,6 +1212,10 @@ packages:
       '@types/node': 16.18.3
     dev: false
 
+  /@types/validator/13.7.11:
+    resolution: {integrity: sha512-WqTos+CnAKN64YwyBMhgUYhb5VsTNKwUY6AuzG5qu9/pFZJar/RJFMZBXwX7VS+uzYi+lIAr3WkvuWqEI9F2eg==}
+    dev: false
+
   /@types/yargs-parser/21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
     dev: false
@@ -1874,9 +1878,10 @@ packages:
       static-extend: 0.1.2
     dev: false
 
-  /class-validator/0.13.2:
-    resolution: {integrity: sha512-yBUcQy07FPlGzUjoLuUfIOXzgynnQPPruyK1Ge2B74k9ROwnle1E+NxLWnUv5OLU8hA/qL5leAE9XnXq3byaBw==}
+  /class-validator/0.14.0:
+    resolution: {integrity: sha512-ct3ltplN8I9fOwUd8GrP8UQixwff129BkEtuWDKL5W45cQuLd19xqmTLu5ge78YDm/fdje6FMt0hGOhl0lii3A==}
     dependencies:
+      '@types/validator': 13.7.11
       libphonenumber-js: 1.10.14
       validator: 13.7.0
     dev: false
@@ -5247,8 +5252,8 @@ packages:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
     dev: false
 
-  /simple-git/3.7.1:
-    resolution: {integrity: sha512-+Osjtsumbtew2y9to0pOYjNzSIr4NkKGBg7Po5SUtjQhaJf2QBmiTX/9E9cv9rmc7oUiSGFIB9e7ys5ibnT9+A==}
+  /simple-git/3.16.0:
+    resolution: {integrity: sha512-zuWYsOLEhbJRWVxpjdiXl6eyAyGo/KzVW+KFhhw9MqEEJttcq+32jTWSGyxTdf9e/YCohxRE+9xpWFj9FdiJNw==}
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
@@ -6280,7 +6285,7 @@ packages:
     dev: false
 
   file:projects/sdk-generation-cli.tgz:
-    resolution: {integrity: sha512-PRzyE/6jeBCK0h+BEL7zznEhcuWzci0xqd8mtalITXomBrDKXZ/1En8vi/TNKhvBAnnM4J8AvWZ1eakQio6hMQ==, tarball: file:projects/sdk-generation-cli.tgz}
+    resolution: {integrity: sha512-yeinN8voHuklUNZz2XB6tH6wFhBpvA9g7ZAQ0X6+CMLsvfyAgaO7IUfFpDQrsVDmHbhm6DXyERfDxwsP3wBhOw==, tarball: file:projects/sdk-generation-cli.tgz}
     name: '@rush-temp/sdk-generation-cli'
     version: 0.0.0
     dependencies:
@@ -6302,7 +6307,7 @@ packages:
       eslint-plugin-simple-import-sort: 7.0.0_eslint@8.26.0
       jest: 26.6.3_ts-node@10.7.0
       rimraf: 3.0.2
-      simple-git: 3.7.1
+      simple-git: 3.16.0
       ts-jest: 26.5.6_jest@26.6.3+typescript@4.6.4
       ts-node: 10.7.0_fed3b4cb8104197fd8996158792567a5
       typescript: 4.6.4
@@ -6319,7 +6324,7 @@ packages:
     dev: false
 
   file:projects/sdk-generation-lib.tgz:
-    resolution: {integrity: sha512-ocggMCM10qUsGQQ30twupu4YSwX1/jIA+xQqpPCegg/QDINs1DDLgR/B1kj5l/w7AaeBAFQXRy32vyu3sV6NVg==, tarball: file:projects/sdk-generation-lib.tgz}
+    resolution: {integrity: sha512-RKVJNmeZC4INueKQtRK94hKaPLQ5ajVHPX+CEn+JeoevVwxc2sSnZJ4XJJzYZmeLsQ4aSJN9xdNpneZoxjwvjg==, tarball: file:projects/sdk-generation-lib.tgz}
     name: '@rush-temp/sdk-generation-lib'
     version: 0.0.0
     dependencies:
@@ -6333,7 +6338,7 @@ packages:
       '@typescript-eslint/eslint-plugin': 5.41.0_2968a1b7ae89fd3117135881925ad05a
       '@typescript-eslint/parser': 5.41.0_eslint@8.26.0+typescript@4.6.4
       ajv: 6.12.6
-      class-validator: 0.13.2
+      class-validator: 0.14.0
       colors: 1.4.0
       convict: 6.2.3
       copyfiles: 2.4.1

@@ -28,7 +28,7 @@ class ApiViewProcessorImpl {
   std::string m_serviceName;
   std::string m_packageName;
 
-  bool m_includeInternal{false};
+  bool m_allowInternal{false};
   bool m_includeDetail{false};
   bool m_includePrivate{false};
   std::vector<std::string> m_filterNamespaces;
@@ -114,7 +114,7 @@ public:
 
   std::unique_ptr<AzureClassesDatabase> const& GetClassesDatabase() { return m_classDatabase; }
 
-  bool IncludeInternal() { return m_includeInternal; }
+  bool AllowInternal() { return m_allowInternal; }
   bool IncludeDetail() { return m_includeDetail; }
   bool IncludePrivate() { return m_includePrivate; }
   std::string_view const ReviewName() { return m_reviewName; };

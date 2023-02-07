@@ -12,13 +12,10 @@ stages:
       jobs:
       - job: BuildPackage
         pool:
-          name: azsdk-pool-mms-ubuntu-2004-general
-          vmImage: MMSUbuntu20.04
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: MMSUbuntu22.04
         steps:
-          - task: UseDotNet@2
-            displayName: Tools
-            inputs:
-              version: '6.x'
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
           - pwsh: |
               dotnet build tools/${{ parameters.ToolName }} --configuration Release
             displayName: Build
@@ -40,7 +37,8 @@ stages:
         - deployment: PublishFunction
           environment: ${{ parameters.StagingEnvironmentName }}
           pool:
-            vmImage: ubuntu-18.04
+            name: azsdk-pool-mms-ubuntu-2204-general
+            vmImage: MMSUbuntu22.04
           strategy:
             runOnce:
               deploy:
@@ -66,7 +64,8 @@ stages:
         - deployment: PublishFunction
           environment: ${{ parameters.ProductionEnvironmentName }}
           pool:
-            vmImage: ubuntu-18.04
+            name: azsdk-pool-mms-ubuntu-2204-general
+            vmImage: MMSUbuntu22.04
           strategy:
             runOnce:
                 deploy:

@@ -347,7 +347,7 @@ def js_package_included(package_path: str) -> bool:
     excluded_packages = [
         "samples-react",
         "sample-react",
-        "mock-hub" "abort-controller",
+        "mock-hub", "abort-controller",
         "logger",
         "samples-express",
         "samples-browser" "samples-react",

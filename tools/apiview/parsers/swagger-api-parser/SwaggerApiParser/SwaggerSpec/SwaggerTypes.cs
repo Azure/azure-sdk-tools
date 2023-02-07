@@ -266,9 +266,14 @@ public class BaseSchema : ITokenSerializable
                 SchemaTableItem arrayItem = new SchemaTableItem();
                 arrayItem.Field = kv.Key;
                 arrayItem.Description = kv.Value.description;
-                var arrayType = (kv.Value.items.originalRef == null && kv.Value.items.Ref == null)
-                    ? $"array<{kv.Value.items.type}>"
-                    : $"array<{Utils.GetDefinitionType(kv.Value.items.originalRef ?? Utils.GetDefinitionType(kv.Value.items.Ref))}>";
+                var arrayType = "array";
+                if (kv.Value.items != null)
+                {
+                    arrayType = (kv.Value.items.originalRef == null && kv.Value.items.Ref == null)
+                        ? $"array<{kv.Value.items.type}>"
+                        : $"array<{Utils.GetDefinitionType(kv.Value.items.originalRef ?? Utils.GetDefinitionType(kv.Value.items.Ref))}>";
+                }
+
                 arrayItem.TypeFormat = arrayType;
                 var keywords = GetPropertyKeywordsFromBaseSchema(schema, kv.Key, kv.Value);
                 arrayItem.Keywords = string.Join(",", keywords);
@@ -289,6 +294,10 @@ public class BaseSchema : ITokenSerializable
     private static void TokenSerializeArray(SerializeContext context, List<CodeFileToken> ret, BaseSchema arraySchema, ref List<SchemaTableItem> flattenedTableItems, Boolean serializeRef)
     {
         ret.Add(new CodeFileToken("array", CodeFileTokenKind.Keyword));
+        if (arraySchema.items == null)
+        {
+            return;
+        }
 
         if (arraySchema.items.type != null && arraySchema.items.type != "object")
         {
@@ -304,7 +313,7 @@ public class BaseSchema : ITokenSerializable
             ret.Add(new CodeFileToken(refName.Split("/").Last(), CodeFileTokenKind.TypeName));
             ret.Add(new CodeFileToken(">", CodeFileTokenKind.Punctuation));
             ret.Add(TokenSerializer.NewLine());
-                
+
             // circular reference
             if (arraySchema.items.Ref != null)
             {

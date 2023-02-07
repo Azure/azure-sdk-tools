@@ -64,12 +64,11 @@ stages:
         displayName: Build and Package
 
         steps:
-          - script: set
-            displayName: show all env vars
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
             parameters:
               DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
-              
+          - script: set
+            displayName: show all env vars
           - script: 'dotnet pack /p:ArtifactsPackagesDir=$(packagesToPublishDir) $(Warn) -c Release'
             displayName: 'Build and Package'
             workingDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'

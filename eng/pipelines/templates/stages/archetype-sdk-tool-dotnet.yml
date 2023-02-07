@@ -63,6 +63,8 @@ stages:
         displayName: Build and Package
 
         steps:
+          - script: set
+          displayName: show all env vars
           - task: UseDotNet@2
             condition: eq(${{ parameters.SkipDotNetInstall }}, false)
             displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'

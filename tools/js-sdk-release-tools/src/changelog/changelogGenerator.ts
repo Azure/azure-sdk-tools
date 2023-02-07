@@ -16,6 +16,7 @@ export class Changelog {
     public addedClass: string[] = [];
     public addedTypeAlias: string[] = [];
     public interfaceAddOptionalParam: string[] = [];
+    public interfaceParamTypeExtended: string[] = [];
     public typeAliasAddInherit: string[] = [];
     public typeAliasAddParam: string[] = [];
     public addedEnum: string[] = [];
@@ -69,6 +70,7 @@ export class Changelog {
             this.addedClass.length > 0 ||
             this.addedTypeAlias.length > 0 ||
             this.interfaceAddOptionalParam.length > 0 ||
+            this.interfaceParamTypeExtended.length > 0 ||
             this.typeAliasAddInherit.length > 0 ||
             this.typeAliasAddParam.length > 0 ||
             this.addedEnum.length > 0 ||
@@ -115,6 +117,7 @@ export class Changelog {
                 .concat(this.addedClass)
                 .concat(this.addedTypeAlias)
                 .concat(this.interfaceAddOptionalParam)
+                .concat(this.interfaceParamTypeExtended)
                 .concat(this.typeAliasAddInherit)
                 .concat(this.typeAliasAddParam)
                 .concat(this.addedEnum)
@@ -242,6 +245,42 @@ const findInterfaceAddOptinalParam = (metaDataOld: TSExportedMetaData, metaDataN
         }
     });
     return interfaceAddedParam;
+};
+
+const findInterfaceParamTypeExtended = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
+    const interfaceParamTypeExtended: string[] = [];
+    Object.keys(metaDataNew.modelInterface).forEach(model => {
+        if (metaDataOld.modelInterface[model]) {
+            const modelFromOld = metaDataOld.modelInterface[model] as InterfaceDeclaration;
+            const modelFromNew = metaDataNew.modelInterface[model] as InterfaceDeclaration;
+            modelFromNew.properties.forEach(pNew => {
+                modelFromOld.properties.forEach(pOld => {
+                    if (pNew.name === pOld.name) {
+                        if (pNew.type !== pOld.type) {
+                            if (pNew.type?.includes('|')) { // is union
+                                const newTypes = pNew.type?.split('|').map(e => e.toString().trim());
+                                const oldTypes = pOld.type?.split('|').map(e => e.toString().trim());
+                                if (!!newTypes && !!oldTypes) {
+                                    let allFind = true;
+                                    for (const t of oldTypes) {
+                                        if (!newTypes.includes(t)) {
+                                            allFind = false;
+                                            break;
+                                        }
+                                    }
+                                    if (allFind) {
+                                        interfaceParamTypeExtended.push(`Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`);
+                                    }
+                                }
+                            }
+                        }
+                        return;
+                    }
+                });
+            });
+        }
+    });
+    return interfaceParamTypeExtended;
 };
 
 const findTypeAliasAddInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
@@ -599,7 +638,20 @@ const findInterfaceParamTypeChanged = (metaDataOld: TSExportedMetaData, metaData
                 modelFromOld.properties.forEach(pOld => {
                     if (pNew.name === pOld.name) {
                         if (pNew.type !== pOld.type) {
-                            interfaceParamTypeChanged.push(`Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`);
+                            if (pNew.type?.includes('|')) { // is union
+                                const newTypes = pNew.type?.split('|').map(e => e.toString().trim());
+                                const oldTypes = pOld.type?.split('|').map(e => e.toString().trim());
+                                if (!!newTypes && !!oldTypes) {
+                                    for (const t of oldTypes) {
+                                        if (!newTypes.includes(t)) {
+                                            interfaceParamTypeChanged.push(`Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`);
+                                            break;
+                                        }
+                                    }
+                                }
+                            } else {
+                                interfaceParamTypeChanged.push(`Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`);
+                            }
                         }
                         return;
                     }
@@ -971,6 +1023,7 @@ export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew:
     changLog.addedClass = findAddedClass(metaDataOld, metadataNew);
     changLog.addedTypeAlias = findAddedTypeAlias(metaDataOld, metadataNew);
     changLog.interfaceAddOptionalParam = findInterfaceAddOptinalParam(metaDataOld, metadataNew);
+    changLog.interfaceParamTypeExtended = findInterfaceParamTypeExtended(metaDataOld, metadataNew);
     changLog.typeAliasAddInherit = findTypeAliasAddInherit(metaDataOld, metadataNew);
     changLog.typeAliasAddParam = findTypeAliasAddParam(metaDataOld, metadataNew);
     changLog.addedEnum = findAddedEnum(metaDataOld, metadataNew);

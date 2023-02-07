@@ -13,6 +13,7 @@
 + Fix expand array reference issues in definition section. Do not expand array reference in definitions.
 + To keep APIView revision consistent. Json serialization use alwaysMultiline option.
 + Remove unused code and comments.
++ Fix don't resolve response issue
 
 ## 1.0.3 (11-17-2022)
 

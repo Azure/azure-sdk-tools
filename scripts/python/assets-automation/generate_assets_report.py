@@ -368,6 +368,7 @@ def js_package_included(package_path: str) -> bool:
     excluded_directories = [
         os.path.join("sdk", "identity", "identity", "test"),
         os.path.join("sdk", "test-utils"),
+        os.path.join("sdk", "core"),
         "samples",
     ]
 

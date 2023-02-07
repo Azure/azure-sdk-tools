@@ -5,16 +5,19 @@
 .btn-primary {
     background-color: var(--link-color);
     border-color: var(--link-color);
+    color: var(--primary-btn-color);
 }
 
 .btn-primary:hover, .btn-primary:active {
     background-color: var(--link-active);
     border-color: var(--link-active);
+    color: var(--primary-btn-color);
 }
 
 .btn-primary:disabled, .btn-primary.disabled {
     background-color: var(--link-color);
     border-color: var(--link-color);
+    color: var(--primary-btn-color);
 }
 
 .btn-check:focus + .btn-primary, .btn-primary:focus {
@@ -30,6 +33,7 @@
 .btn-outline-primary:hover, .btn-outline-primary:active {
     background-color: var(--link-active);
     border-color: var(--link-active);
+    color: var(--primary-btn-color);
 }
 
 .btn-check:checked + .btn-outline-primary:focus, .btn-check:active + .btn-outline-primary:focus, .btn-outline-primary:active:focus, .btn-outline-primary.active:focus, .btn-outline-primary.dropdown-toggle.show:focus {
@@ -40,6 +44,7 @@
 .btn-check:checked + .btn-outline-primary, .btn-check:active + .btn-outline-primary, .btn-outline-primary:active, .btn-outline-primary.active, .btn-outline-primary.dropdown-toggle.show {
     background-color: var(--link-active);
     border-color: var(--link-active);
+    color: var(--primary-btn-color);
 }
 
 .btn-check:focus + .btn-outline-primary, .btn-outline-primary:focus {
@@ -109,6 +114,38 @@
 .form-control:disabled, .form-control[readonly] {
     background-color: var(--base-fg-color);
 }
+
+.form-check-input {
+    background-color: var(--base-bg-color);
+    border: 1px solid var(--border-color);
+}
+
+.form-check-input:checked {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+}
+
+.form-check-input:focus {
+    border-color: var(--link-color);
+    box-shadow: var(--box-shadow-link);
+}
+
+.form-switch .form-check-input {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='grey'/%3e%3c/svg%3e");
+}
+
+.form-switch .form-check-input:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='grey'/%3e%3c/svg%3e");
+}
+
+.form-check-input:checked[type=checkbox] {
+    background-image: var(--svg-check-box);
+}
+
+.form-switch .form-check-input:checked {
+    background-image: var(--svg-switch);
+}
+
 .badge {
     color: var(--base-text-color);
     background-color: var(--base-fg-color);

@@ -1,5 +1,5 @@
 .offcanvas-menu {
-    height: 100%;
+    height: 100vh;
     width: 0;
     position: fixed;
     z-index: 1;
@@ -8,6 +8,7 @@
     color: var(--base-text-color);
     overflow-x: hidden;
     transition: 0.5s;
+    animation-timing-function: linear;
 }
 
 .right-offcanvas {
@@ -21,8 +22,8 @@
         width: auto;
     }
 
-    height: 100%;
     border-left: 1px solid var(--border-color) !important;
+    transform: translate3d(0, 0, 0);
 }
 
 .move-main-content-container-left {

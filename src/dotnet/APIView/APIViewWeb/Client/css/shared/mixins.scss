@@ -27,6 +27,12 @@
     overflow-y: auto;
 }
 
+@mixin fixed-offcanvas-height {
+    min-height: calc(100vh - 40px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+
 @mixin main-content-container {
     transition: margin-right .5s;
     width: auto;

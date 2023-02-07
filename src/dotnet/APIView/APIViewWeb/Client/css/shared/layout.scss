@@ -68,6 +68,7 @@ a:visited {
 
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
     background-color: var(--link-color);
+    color: var(--primary-btn-color);
 }
 
 .nav-link:hover, .nav-link:focus {

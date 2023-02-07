@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
 
@@ -14,6 +14,7 @@ namespace APIViewWeb.Models
         internal bool? _hideLineNumbers;
         internal bool? _hideLeftNavigation;
         internal bool? _showHiddenApis;
+        internal bool? _hideReviewPageOptions;
         internal string _theme;
 
         public string UserName { get; set; }
@@ -71,6 +72,13 @@ namespace APIViewWeb.Models
         public bool? ShowHiddenApis {
             get => _showHiddenApis ?? false;
             set => _showHiddenApis = value;
+        }
+
+        [Name("HideReviewPageOptions")]
+        public bool? HideReviewPageOptions
+        {
+            get => _hideReviewPageOptions ?? false;
+            set => _hideReviewPageOptions = value;
         }
     }
 }

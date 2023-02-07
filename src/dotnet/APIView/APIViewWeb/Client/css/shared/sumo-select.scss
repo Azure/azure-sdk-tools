@@ -6,6 +6,7 @@
 
 .SumoSelect .select-all.partial > span i, .SumoSelect .select-all.selected > span i, .SumoSelect > .optWrapper.multiple > .options li.opt.selected span i {
     background-color: var(--primary-color);
+    background-image: var(--svg-check-box);
 }
 
 
@@ -50,4 +51,9 @@
 
 .SumoSelect > .optWrapper > .options {
     max-height: 180px;
+}
+
+.SumoSelect .select-all > span i, .SumoSelect > .optWrapper.multiple > .options li.opt span i {
+    border: 1px solid var(--border-color);
+    background-color: var(--base-bg-color);
 }

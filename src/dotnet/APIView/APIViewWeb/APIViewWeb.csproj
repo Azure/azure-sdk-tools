@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
     <RootNamespace>APIViewWeb</RootNamespace>
     <AssemblyName>APIViewWeb</AssemblyName>
     <UserSecretsId>79cceff6-d533-4370-a0ee-f3321a343907</UserSecretsId>

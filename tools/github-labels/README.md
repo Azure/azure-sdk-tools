@@ -2,6 +2,12 @@
 
 This area is focused on the management of GitHub labels for the various Azure SDK repositories, containing tools and data used for that purpose.  
 
+## Changelog
+
+As of this PR: https://github.com/Azure/azure-sdk-tools/pull/5042  
+The management of GitHub labels no longer uses GHCreator. It is to be migrated to use GH CLI, per:  
+https://github.com/Azure/azure-sdk-tools/issues/4888#issuecomment-1369900827
+
 ## Prerequisites
 
 - **.NET SDK:** In order to run the GHCreator tool, a version of the .NET Core SDK capable of executing an application targeting `netcoreapp3.1` is needed.  The latest version of the [.NET Core SDK](https://dotnet.microsoft.com/download) is recommended.

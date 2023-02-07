@@ -26,7 +26,7 @@
 
 import Foundation
 
-public class PropertiesTestStruct {
+public class PropertiesTestClass {
 
     public var totalSteps: Int = 0 {
         willSet(newTotalSteps) {

@@ -41,7 +41,7 @@ You will need the following tools to create and run tests:
 1. [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
 1. [Helm](https://helm.sh/docs/intro/install/)
 1. [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)
-1. [Powershell Core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) (if using Linux)
+1. [Powershell Core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1) (if using Linux)
 
 ## Deploying a Stress Test
 
@@ -50,7 +50,7 @@ script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/st
 This script handles: cluster and container registry access, building the stress test helm package, installing helm
 package dependencies, and building and pushing docker images. The script must be run via powershell or powershell core.
 
-If using bash or another linux terminal, a [powershell core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004) shell can be invoked via `pwsh`.
+If using bash or another linux terminal, a [powershell core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1) shell can be invoked via `pwsh`.
 
 The first invocation of the script must be run with the `-Login` flag to set up cluster and container registry access.
 
@@ -484,15 +484,14 @@ The `stress-test-addons` helm library will handle a scenarios matrix automatical
 
 ### Node Size Requirements
 
-The stress test cluster is deployed with several node SKUs (see [agentPoolProfiles declaration and
+The stress test cluster may be deployed with several node SKUs (see [agentPoolProfiles declaration and
 variables](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/azure/cluster/cluster.bicep)), with tests defaulting to the SKU labeled 'default'.
 By adding the `nodeSelector` field to the job spec, you can override which nodes the test container will
 be provisioned to. For support adding a custom or dedicated node SKU, reach out to the EngSys team.
 
 Available common SKUs in stress test clusters:
 
-- 'default' - Standard\_D2\_v3
-- 'highMem' - Standard\_D4ds\_v4
+- 'default' - Standard\_D4ds\_v4
 
 To deploy a stress test to a custom node (see also
 [example](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/network-stress-example/templates/testjob.yaml)):
@@ -500,7 +499,7 @@ To deploy a stress test to a custom node (see also
 ```
 spec:
   nodeSelector:
-    sku: 'highMem'
+    sku: '<nodepool sku label>'
   containers:
     < container spec ... >
 ```

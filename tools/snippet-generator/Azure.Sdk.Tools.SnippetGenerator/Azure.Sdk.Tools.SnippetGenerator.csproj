@@ -7,7 +7,6 @@
     <ToolCommandName>snippet-generator</ToolCommandName>
     <VersionPrefix>1.0.0</VersionPrefix>
     <AssemblyName>Azure.Sdk.Tools.SnippetGenerator</AssemblyName>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

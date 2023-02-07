@@ -112,8 +112,11 @@ steps:
         echo "##vso[task.setvariable variable=packageName;]${packageName}"
         packageFolder=`echo ${package} | jq -r '.packageFolder'`
         re="sdk/([^/]+)"
+        if [ "${{ parameters.sdk }}" = "go" ] && [ "${{ parameters.serviceType }}" = "resource-manager" ]; then
+          re="sdk/resourcemanager/([^/]+)"
+        fi
         serviceDir=`if [[ ${packageFolder} =~ $re ]]; then echo ${BASH_REMATCH[1]}; fi`
-        if [ "${{ parameters.sdk }}" = "js" ] && [ "${{ parameters.serviceType }}" = "resource-manager" ];then
+        if [ "${{ parameters.sdk }}" = "js" -o "${{ parameters.sdk }}" = "net" ] && [ "${{ parameters.serviceType }}" = "resource-manager" ];then
           echo "##vso[task.setvariable variable=releasePipeline;]${{ parameters.sdk }} - ${serviceDir} - mgmt"
         else
           echo "##vso[task.setvariable variable=releasePipeline;]${{ parameters.sdk }} - ${serviceDir}"

@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <UserSecretsId>02d57eb4-c954-413d-8ad3-3534aee82452</UserSecretsId>

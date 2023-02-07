@@ -104,7 +104,7 @@ public:
           m_stream << "Error";
           break;
         case ApiViewMessage::MessageLevel::Warning:
-          m_stream << "Warning" << std::endl;
+          m_stream << "Warning";
           break;
         case ApiViewMessage::MessageLevel::Info:
           m_stream << "Info";

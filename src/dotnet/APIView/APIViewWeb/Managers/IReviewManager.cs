@@ -20,7 +20,7 @@ namespace APIViewWeb.Managers
             IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy);
         public Task DeleteReviewAsync(ClaimsPrincipal user, string id);
         public Task<ReviewModel> GetReviewAsync(ClaimsPrincipal user, string id);
-        public Task AddRevisionAsync(ClaimsPrincipal user, string reviewId, string name, string label, Stream fileStream, bool awaitComputeDiff = false);
+        public Task AddRevisionAsync(ClaimsPrincipal user, string reviewId, string name, string label, Stream fileStream, string language = "", bool awaitComputeDiff = false);
         public Task<CodeFile> CreateCodeFile(string originalName, Stream fileStream, bool runAnalysis, MemoryStream memoryStream, string language = null);
         public Task<ReviewCodeFileModel> CreateReviewCodeFileModel(string revisionId, MemoryStream memoryStream, CodeFile codeFile);
         public Task DeleteRevisionAsync(ClaimsPrincipal user, string id, string revisionId);
@@ -30,7 +30,7 @@ namespace APIViewWeb.Managers
         public Task ApprovePackageNameAsync(ClaimsPrincipal user, string id);
         public Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile);
         public Task<ReviewRevisionModel> CreateMasterReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool compareAllRevisions);
-        public Task UpdateReviewBackground();
+        public Task UpdateReviewBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount);
         public Task<CodeFile> GetCodeFile(string repoName, string buildId, string artifactName, string packageName, string originalFileName, string codeFileName,
             MemoryStream originalFileStream, string baselineCodeFileName = "", MemoryStream baselineStream = null, string project = "public");
         public Task<ReviewRevisionModel> CreateApiReview(ClaimsPrincipal user, string buildId, string artifactName, string originalFileName, string label,

@@ -15,7 +15,7 @@ stages:
             Pool: 'azsdk-pool-mms-win-2022-general'
             OS: 'Windows'
           Linux:
-            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            Pool: azsdk-pool-mms-ubuntu-2204-general
             OS: 'Linux'
           Mac:
             Pool: 'Azure Pipelines'
@@ -25,10 +25,7 @@ stages:
         name: $(Pool)
 
       steps:
-        - task: UseDotNet@2
-          displayName: 'Use .NET Core sdk 6.x'
-          inputs:
-            version: '6.x'
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
         - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) --filter "Category=Integration" --logger trx $(Build.SourcesDirectory)/tools/test-proxy/'
           displayName: 'Test'
@@ -44,7 +41,7 @@ stages:
           condition: succeededOrFailed()
           inputs:
             testResultsFiles: '**/*.trx'
-            testRunTitle: '$(OS) AssetSync Tests against $(DotNetCoreVersion)'
+            testRunTitle: '$(OS) AssetSync tests against .NET'
             testResultsFormat: 'VSTest'
             mergeTestResults: true
 
@@ -56,7 +53,7 @@ stages:
             Pool: 'azsdk-pool-mms-win-2022-general'
             OS: 'Windows'
           Linux:
-            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            Pool: azsdk-pool-mms-ubuntu-2204-general
             OS: 'Linux'
           Mac:
             Pool: 'Azure Pipelines'
@@ -66,17 +63,14 @@ stages:
         name: $(Pool)
 
       steps:
-        - task: UseDotNet@2
-          displayName: 'Use .NET Core sdk 6.x'
-          inputs:
-            version: '6.x'
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
         - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
           parameters:
             runProxy: false
             rootFolder: $(Build.SourcesDirectory)
 
-        - template: /eng/pipelines/templates/steps/run-pester-tests.yml
+        - template: /eng/common/pipelines/templates/steps/run-pester-tests.yml
           parameters:
             TargetTags: "Integration"
             TargetDirectory: tools/test-proxy/scripts/test-scripts/
@@ -88,16 +82,13 @@ stages:
     - job: Docker_CLI_Integration_Test
 
       pool:
-        name: 'azsdk-pool-mms-ubuntu-2004-general'
+        name: azsdk-pool-mms-ubuntu-2204-general
 
       variables:
         CLI_TEST_DOCKER_TAG: localproxyinstance
 
       steps:
-        - task: UseDotNet@2
-          displayName: 'Use .NET Core sdk 6.x'
-          inputs:
-            version: '6.x'
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
         - pwsh: |
             ./prepare.ps1
@@ -106,7 +97,7 @@ stages:
           workingDirectory: tools/test-proxy/docker/
           displayName: "Prepare and Build local docker image"
 
-        - template: /eng/pipelines/templates/steps/run-pester-tests.yml
+        - template: /eng/common/pipelines/templates/steps/run-pester-tests.yml
           parameters:
             TargetTags: "Integration"
             TargetDirectory: tools/test-proxy/scripts/test-scripts/
@@ -130,7 +121,7 @@ stages:
             Pool: 'azsdk-pool-mms-win-2022-general'
             OS: 'Windows'
           Linux:
-            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            Pool: azsdk-pool-mms-ubuntu-2204-general
             OS: 'Linux'
           Mac:
             Pool: 'Azure Pipelines'
@@ -144,10 +135,7 @@ stages:
         CLONE_LOCATION: "$(Agent.BuildDirectory)/js_repo"
 
       steps:
-        - task: UseDotNet@2
-          displayName: 'Use .NET Core sdk 6.x'
-          inputs:
-            version: '6.x'
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
         - task: NodeTool@0
           inputs:
@@ -187,7 +175,7 @@ stages:
             Pool: 'azsdk-pool-mms-win-2022-general'
             OS: 'Windows'
           Linux:
-            Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            Pool: azsdk-pool-mms-ubuntu-2204-general
             OS: 'Linux'
           Mac:
             Pool: 'Azure Pipelines'
@@ -201,10 +189,7 @@ stages:
         CLONE_LOCATION: "$(Agent.BuildDirectory)/python_repo"
 
       steps:
-        - task: UseDotNet@2
-          displayName: 'Use .NET Core sdk 6.x'
-          inputs:
-            version: '6.x'
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
         - template: /eng/pipelines/templates/steps/use-python-version.yml
           parameters:

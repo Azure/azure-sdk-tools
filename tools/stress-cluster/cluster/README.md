@@ -34,7 +34,7 @@ easier to make and roll out config changes to tests across repos by using helm c
 
 # Dependencies
 
-- [Powershell Core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004)
+- [Powershell Core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1)
 - [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
 - [helm](https://helm.sh)
@@ -55,8 +55,12 @@ Cluster buildout and deployment involves three main steps which are automated in
 
 1. Provision static resources (service principal, role assignments, static keyvault).
 1. Provision cluster resources (`main.bicep` entrypoint, standard ARM subscription deployment).
+    - NOTE: if the nodepool configuration for the AKS cluster needs to be updated, it cannot be done
+      alongside a deployment to the cluster itself. In order to update the nodepool configuration only, pass
+      the `-UpdateNodes` parameter to the provision script.
 1. Provision stress infrastructures resources into the Azure Kubernetes Service cluster via helm
    (`./kubernetes/stress-infrastructure` helm chart).
+
 
 ## Dev Cluster
 

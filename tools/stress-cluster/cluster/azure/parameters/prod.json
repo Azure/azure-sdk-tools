@@ -17,10 +17,10 @@
     "monitoringLocation": {
       "value": "centralus"
     },
-    "staticTestSecretsKeyvaultName": {
+    "staticTestKeyvaultName": {
       "value": "stress-secrets-prod"
     },
-    "staticTestSecretsKeyvaultGroup": {
+    "staticTestKeyvaultGroup": {
       "value": "rg-stress-secrets-prod"
     },
     "tags": {

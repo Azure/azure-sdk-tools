@@ -64,6 +64,8 @@ stages:
         displayName: Build and Package
 
         steps:
+          - script: set
+            displayName: show all env vars
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
             parameters:
               DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}

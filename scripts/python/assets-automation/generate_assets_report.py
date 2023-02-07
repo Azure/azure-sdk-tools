@@ -350,7 +350,7 @@ def js_package_included(package_path: str) -> bool:
         "mock-hub", "abort-controller",
         "logger",
         "samples-express",
-        "samples-browser" "samples-react",
+        "samples-browser", "samples-react",
         "event-hubs-track-1",
         "opentelemetry-instrumentation-azure-sdk",
         "monitor-opentelemetry-exporter",

@@ -373,6 +373,13 @@ def js_package_included(package_path: str) -> bool:
         "service-bus-v7",
         "app",
         "perf",
+        "service-bus",
+        "eventhubs-checkpointstore-blob",
+        "eventhubs-checkpointstore-tables",
+        "schema-registry-avro",
+        "api-management-custom-widgets-scaffolder",
+        "storage-internal-avro",
+        "web-pubsub-express",
     ]
 
     excluded_package_postfixes = ["-track-1", "-common"]

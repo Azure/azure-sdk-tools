@@ -9,6 +9,8 @@ from ci_tools.functions import (
     discover_targeted_packages,
 )  # azure-sdk-tools from azure-sdk-for-python
 
+from ci_tools.parsing import ParsedSetup
+
 generated_folder = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "generated"))
 
 TABLE_HEADER: str = """| Package | Using Proxy | External Recordings |
@@ -49,11 +51,12 @@ SUMMARY_TABLE_LAYER: str = """|{}|{}|{:.0%}|{:.0%}|
 """
 
 SUMMARY_NOTES = """
-## A few notes about how this data was generated.
+## A few notes about how this data was generated
 
 - Markdown for these wiki pages is generated from a [single python script.](https://github.com/Azure/azure-sdk-tools/tree/main/scripts/python/assets-automation)
-- The `Package Count` for each language is NOT the actual total count of packages within each monorepo. It is the count of packages that are slated to transition AT SOME POINT.
-
+  - Within the script follow `generate_<language>_report()` definition to understand how the data for that language was obtained.
+- The `Package Count` for each language is NOT the actual total count of packages within each monorepo. It is the count of packages that are slated to transition _at some point_. 
+- Where applicable, counts only include `track 2` packages, upholding the previous point about "intended to transition eventually."
 """
 
 TABLE_HEIGHT: int = 10
@@ -94,27 +97,32 @@ def get_repo(language: str) -> str:
 
 def evaluate_python_package(package_path: str) -> int:
     service_dir, _ = os.path.split(package_path)
-    recordings_path = os.path.join(package_path, "tests", "recordings", "*.json")
+    recordings_folder = os.path.join(package_path, "tests", "recordings")
+    recordings_glob = os.path.join(recordings_folder, "*.json")
     assets_json = os.path.join(package_path, "assets.json")
-    ci_yml = os.path.join(service_dir, "ci.yml")
-    result = 0
 
-    if os.path.exists(ci_yml):
-        with open(ci_yml, "r") as file:
-            ci_config = yaml.safe_load(file)
+    details = ParsedSetup.from_path(package_path)
 
-            # there is no reason to even do further evaluation if the TestProxy parameter isn't set. CI won't use it if it's not.
-            parameters = ci_config["extends"]["parameters"]
-            if "TestProxy" in parameters and parameters["TestProxy"] == True:
-                # if there is an assets.json present at root, we are done. it's transitioned.
-                if os.path.exists(assets_json):
-                    return 2
+    if not (
+        any(["azure-core" in req for req in details.requires])
+        or any(["azure-mgmt-core" in req for req in details.requires])
+    ):
+        return 0
 
-                # otherwise, we have to check the recordings for yml (vcrpy) or json (test-proxy)
-                test_proxy_files = glob.glob(recordings_path)
-                if test_proxy_files:
-                    return 1
-    return result
+    # only examine packages that currently have recordings (and ensure that ones transitioned to external aren't ignored)
+    if not os.path.exists(recordings_folder) and not os.path.exists(assets_json):
+        return 0
+
+    # if there is an assets.json present at root, we are done. it's transitioned.
+    if os.path.exists(assets_json):
+        return 2
+
+    # otherwise, we have to check the recordings for yml (vcrpy) or json (test-proxy)
+    test_proxy_files = glob.glob(recordings_glob)
+    if test_proxy_files:
+        return 1
+
+    return 0
 
 
 def generate_python_report() -> ScanResult:
@@ -124,17 +132,24 @@ def generate_python_report() -> ScanResult:
 
     result = ScanResult(language)
 
-    results = discover_targeted_packages("azure*", repo)
+    results = [pkg for pkg in discover_targeted_packages("azure*", repo) if "-nspkg" not in pkg]
 
-    result.packages = sorted([os.path.basename(pkg) for pkg in results])
+    to_be_removed = []
 
     for pkg in results:
         evaluation = evaluate_python_package(pkg)
-        if evaluation == 1:
+
+        if evaluation == 0:
+            to_be_removed.append(pkg)
+        elif evaluation == 1:
             result.packages_using_proxy.append(os.path.basename(pkg))
         elif evaluation == 2:
             result.packages_using_proxy.append(os.path.basename(pkg))
             result.packages_using_external.append(os.path.basename(pkg))
+
+    result.packages = sorted(
+        set([os.path.basename(pkg) for pkg in results]) - set([os.path.basename(pkg) for pkg in to_be_removed])
+    )
 
     print("done.")
     return result
@@ -170,7 +185,7 @@ def generate_go_report() -> ScanResult:
     packages = glob.glob(os.path.join(repo_root, "sdk", "**", "go.mod"), recursive=True)
     packages = [os.path.dirname(pkg) for pkg in packages if not any([x in pkg for x in exclusions])]
 
-    result.packages = [pkg.replace(sdk_path + os.sep, "") for pkg in packages]
+    result.packages = sorted(set([pkg.replace(sdk_path + os.sep, "") for pkg in packages]))
 
     for pkg in packages:
         evaluation = evaluate_go_package(pkg)
@@ -338,7 +353,7 @@ def e_endswith(input: str, postfixes: List[str]) -> bool:
 
 
 def e_directory_in(input_dir: str, directory_patterns: List[str]) -> bool:
-    return any([input_dir in subdir for subdir in directory_patterns])
+    return any([subdir in input_dir for subdir in directory_patterns])
 
 
 def js_package_included(package_path: str) -> bool:
@@ -362,12 +377,13 @@ def js_package_included(package_path: str) -> bool:
 
     excluded_package_postfixes = ["-track-1", "-common"]
 
-    excluded_package_prefixes = ["@azure/core-"]
+    excluded_package_prefixes = ["@azure/core-", "core-"]
 
     # exclude any packages that have these paths in them
     excluded_directories = [
         os.path.join("sdk", "identity", "identity", "test"),
         os.path.join("sdk", "test-utils"),
+        os.path.join("sdk", "core"),
         "samples",
     ]
 
@@ -387,7 +403,7 @@ def js_package_included(package_path: str) -> bool:
         and package_name not in excluded_packages
         and not e_startswith(package_name, excluded_package_prefixes)
         and not e_endswith(package_name, excluded_package_postfixes)
-        and not e_directory_in(package_name, excluded_directories)
+        and not e_directory_in(package_path, excluded_directories)
         and not amqp_package
         and has_test_folder
     )
@@ -403,7 +419,9 @@ def generate_js_report() -> ScanResult:
 
     results = glob.glob(target_folder, recursive=True)
 
-    result.packages = sorted([os.path.basename(os.path.dirname(pkg)) for pkg in results if js_package_included(pkg)])
+    result.packages = sorted(
+        set([os.path.basename(os.path.dirname(pkg)) for pkg in results if js_package_included(pkg)])
+    )
 
     excluded = set(sorted([os.path.basename(os.path.dirname(pkg)) for pkg in results if not js_package_included(pkg)]))
 

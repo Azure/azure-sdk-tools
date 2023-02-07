@@ -13,8 +13,8 @@ stages:
   - job: Run
     timeoutInMinutes: 120
     pool:
-      name: azsdk-pool-mms-ubuntu-2004-general
-      vmImage: MMSUbuntu20.04
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: MMSUbuntu22.04
 
     variables:
       Organization: azure-sdk
@@ -22,21 +22,17 @@ stages:
       DotNetDevOpsFeed: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
       OutputPath: '$(Agent.BuildDirectory)/pipelineOwners.json'
     steps:
-      - task: DotNetCoreCLI@2
-        displayName: 'Install Pipeline Owners Extractor'
+      - task: UseDotNet@2
+        displayName: 'Use .NET Core sdk 6.x'
         inputs:
-          command: custom
-          custom: 'tool'
-          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(PipelineOwnersExtractorVersion)" "Azure.Sdk.Tools.PipelineOwnersExtractor"'
-          workingDirectory: '$(Agent.BuildDirectory)'
+          version: '6.x'
+              
       - task: AzureCLI@2
         displayName: Run Pipeline Owners Extractor
         inputs:
           azureSubscription: 'Azure SDK Engineering System'
           scriptType: pscore
           scriptLocation: inlineScript
-          inlineScript: pipeline-owners-extractor --output "$(OutputPath)"
-      - publish: $(OutputPath)
-        displayName: Publish pipelineOwners artifact
-        artifact: pipelineOwners
-        condition: succeededOrFailed()
+          inlineScript: dotnet run
+          workingDirectory: $(Build.SourcesDirectory)/tools/pipeline-owners-extractor/Azure.Sdk.Tools.PipelineOwnersExtractor
+

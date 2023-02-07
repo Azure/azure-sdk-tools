@@ -43,11 +43,11 @@ stages:
   - stage: BuildTestAndPackage
 
     pool:
-      name: azsdk-pool-mms-ubuntu-2004-general
-      vmImage: MMSUbuntu20.04
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: MMSUbuntu22.04
 
     jobs:
-      - job: BuildAndPackage
+      - job: Run
 
         steps:
           - task: UseDotNet@2
@@ -56,9 +56,9 @@ stages:
             inputs:
               version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
 
-          - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release'
-            displayName: 'Build and Package'
-            workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
+          - script: 'dotnet run'
+            displayName: 'run'
+            workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}/Azure.Sdk.Tools.PipelineOwnersExtractor
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
@@ -68,54 +68,3 @@ stages:
             displayName: Publish package to run artifacts
             artifact: packages
             condition: succeededOrFailed()
-
-      - job: Test
-
-        steps:
-          - task: UseDotNet@2
-            condition: eq(${{ parameters.SkipDotNetInstall }}, false)
-            displayName: 'Use .NET Core sdk ${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-            inputs:
-              version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
-
-          - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
-            displayName: 'Test'
-            workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
-            env:
-              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              DOTNET_MULTILEVEL_LOOKUP: 0
-          
-          - ${{ parameters.TestPostSteps }}
-          
-          - task: PublishTestResults@2
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFiles: '**/*.trx'
-              testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
-              testResultsFormat: 'VSTest'
-              mergeTestResults: true
-
-      - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
-        - template: /eng/pipelines/publish-docker-image.yml
-          parameters:
-            DockerDeployments: ${{ parameters.DockerDeployments }}
-            Publish: false
-            ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
-
-  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
-      parameters:
-        # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
-        DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
-
-  - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - stage: PublishDockerImages
-      displayName: Publish Docker Images
-      dependsOn: BuildTestAndPackage
-      jobs:
-        - template: /eng/pipelines/publish-docker-image.yml
-          parameters:
-            DockerDeployments: ${{ parameters.DockerDeployments }}
-            ManifestDeployment: ${{ parameters.ManifestDeployment }}
-            ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"

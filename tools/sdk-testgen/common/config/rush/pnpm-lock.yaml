@@ -19,19 +19,17 @@ specifiers:
   eslint-plugin-sort-imports-es6-autofix: 0.6.0
   jest: ^26.6.3
   jest-junit: ^12.2.0
-  js-yaml: ^4.0.0
-  jsonpath: ^1.1.1
+  jsonpath-plus: ^7.2.0
   lodash: ^4.17.21
-  node-yaml: ^3.2.0
   oav: 3.2.4
   prettier: ^2.2.1
   reflect-metadata: 0.1.13
+  source-map-support: ^0.5.19
   ts-jest: ^26.5.5
   ts-loader: ^9.4.2
   typescript: ~4.2.4
   webpack: ^5.75.0
   webpack-cli: ^5.0.1
-  yuml2svg: ^5.0.1
 
 dependencies:
   '@autorest/codemodel': 4.19.2
@@ -52,19 +50,17 @@ dependencies:
   eslint-plugin-sort-imports-es6-autofix: 0.6.0_eslint@7.32.0
   jest: 26.6.3
   jest-junit: 12.3.0
-  js-yaml: 4.1.0
-  jsonpath: 1.1.1
+  jsonpath-plus: 7.2.0
   lodash: 4.17.21
-  node-yaml: 3.2.0_eslint@7.32.0
   oav: 3.2.4
   prettier: 2.6.2
   reflect-metadata: 0.1.13
+  source-map-support: 0.5.21
   ts-jest: 26.5.6_jest@26.6.3+typescript@4.2.4
   ts-loader: 9.4.2_typescript@4.2.4+webpack@5.75.0
   typescript: 4.2.4
   webpack: 5.75.0_webpack-cli@5.0.1
   webpack-cli: 5.0.1_webpack@5.75.0
-  yuml2svg: 5.0.1
 
 packages:
 
@@ -4494,6 +4490,11 @@ packages:
     engines: {node: '>=10.0'}
     dev: false
 
+  /jsonpath-plus/7.2.0:
+    resolution: {integrity: sha512-zBfiUPM5nD0YZSBT/o/fbCUlCcepMIdP0CJZxM1+KgA4f2T206f6VAg9e7mX35+KlMaIc5qXW34f3BnwJ3w+RA==}
+    engines: {node: '>=12.0.0'}
+    dev: false
+
   /jsonpath/1.1.1:
     resolution: {integrity: sha512-l6Cg7jRpixfbgoWgkrl77dgEj8RPvND0wMH6TwQmi9Qs4TFfS9u5cUFnbeKTwj5ga5Y3BTGGNI28k117LJ009w==}
     dependencies:
@@ -7113,7 +7114,7 @@ packages:
     dev: false
 
   file:projects/testmodeler.tgz:
-    resolution: {integrity: sha512-JkabgXfUpPzLtHegDaQZZeKRE9DZmXLsbENxp+fakX3+aQNakFO5Phumkf0JfO8HiH97DIdOlqJvxUu30cYSRA==, tarball: file:projects/testmodeler.tgz}
+    resolution: {integrity: sha512-Y98gcVKLIjZRYy7SJooF+vsxeM916Uc5TwwKKATU5pax1mj0HuWGNg3hlxnmd2D3j1F3y65AAhP4V2ianmDt7w==, tarball: file:projects/testmodeler.tgz}
     name: '@rush-temp/testmodeler'
     version: 0.0.0
     dependencies:
@@ -7136,11 +7137,13 @@ packages:
       jest-junit: 12.3.0
       js-yaml: 4.1.0
       jsonpath: 1.1.1
+      jsonpath-plus: 7.2.0
       lodash: 4.17.21
       node-yaml: 3.2.0_eslint@7.32.0
       oav: 3.2.4
       prettier: 2.6.2
       reflect-metadata: 0.1.13
+      source-map-support: 0.5.21
       ts-jest: 26.5.6_jest@26.6.3+typescript@4.2.4
       ts-loader: 9.4.2_typescript@4.2.4+webpack@5.75.0
       typescript: 4.2.4

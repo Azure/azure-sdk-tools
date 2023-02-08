@@ -103,7 +103,23 @@ public class SwaggerApiViewTest
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
     }
-    
+
+    [Fact]
+    public async Task TestService()
+    {
+        const string deviceUpdatePath = "./fixtures/service.json";
+        var serviceSwagger = await SwaggerDeserializer.Deserialize(deviceUpdatePath);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Service", "Microsoft.Service");
+        root.AddSwaggerSpec(serviceSwagger, Path.GetFullPath(deviceUpdatePath), "Microsoft.Service");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./service_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer); 
+    }
+
     [Fact]
     public async Task TestDeviceUpdateSmall()
     {

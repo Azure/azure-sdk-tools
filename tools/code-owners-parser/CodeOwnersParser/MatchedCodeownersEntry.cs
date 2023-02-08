@@ -10,19 +10,26 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// Represents a CODEOWNERS file entry that matched to targetPath from
     /// the list of entries, assumed to have been parsed from CODEOWNERS file.
     ///
-    /// This is a new matcher, compared to the old one, located in:
+    /// To use this class, construct it, passing as input relevant paths.
+    /// Then, to obtain the value of the matched entry, reference "Value" member.
+    ///
+    /// This class uses a regex-based wildcard-supporting (* and **) matcher, compared to the old one, located in:
     ///
     ///   CodeownersFile.GetMatchingCodeownersEntryLegacyImpl()
     /// 
-    /// This new matcher supports matching against wildcards (* and **), while the old one doesn't.
-    /// This new matcher is designed to work with CODEOWNERS file validation:
+    /// The old matcher is prefix-based, strips suffix "/", and doesn't support wildcards.
+    ///
+    /// This matcher reflects the matching behavior of the built-in GitHub CODEOWNERS interpreter,
+    /// but with additional assumptions imposed about the paths present in CODEOWNERS, as guaranteed
+    /// by CODEOWNERS file validation:
     /// https://github.com/Azure/azure-sdk-tools/issues/4859
+    /// These assumptions are checked by IsCodeownersPathValid() method.
+    /// If violated, given CODEOWNERS path will be always ignored by the matcher, never matching anything.
+    /// As a result, this matcher is effectively a subset of GitHub CODEOWNERS matcher.
     ///
     /// The validation spec is given in this comment:
     /// https://github.com/Azure/azure-sdk-tools/issues/4859#issuecomment-1370360622
-    ///
-    /// To use this class, construct it, passing as input relevant paths.
-    /// Then, to obtain the value of the matched entry, reference "Value" member.
+    /// See also ProgramGlobPathTests and CodeownersFileTests tests.
     ///
     /// Reference:
     /// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
@@ -48,9 +55,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// </summary>
         public bool IsValid => IsCodeownersPathValid(this.Value.PathExpression);
 
-        public static bool ContainsUnsupportedFragments(string codeownersPath)
-            => ContainsUnsupportedCharacters(codeownersPath)
-               || ContainsUnsupportedSequences(codeownersPath);
+        /// <summary>
+        /// See the class comment to understand this method purpose.
+        /// </summary>
+        public static bool IsCodeownersPathValid(string codeownersPathExpression)
+            => !ContainsUnsupportedCharacters(codeownersPathExpression) 
+               && !ContainsUnsupportedSequences(codeownersPathExpression);
 
         /// <summary>
         /// Any CODEOWNERS path with these characters will be skipped.
@@ -100,7 +110,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // by the virtue of not ending with "/".
             
             CodeownersEntry matchedEntry = codeownersEntries
-                .Where(entry => !ContainsUnsupportedFragments(entry.PathExpression))
+                .Where(entry => IsCodeownersPathValid(entry.PathExpression))
                 // Entries listed in CODEOWNERS file below take precedence, hence we read the file from the bottom up.
                 // By convention, entries in CODEOWNERS should be sorted top-down in the order of:
                 // - 'RepoPath',
@@ -136,21 +146,52 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         private static bool ContainsUnsupportedSequences(string codeownersPath)
         {
-            // We do not support suffix of "/**" because it is equivalent to "/".
-            // We do not support suffix of "/**/" because it is equivalent to
-            // "/**/**" which is equivalent to "/".
-            string[] unsupportedSuffixSentences = { "/**", "/**/" };
-
-            foreach (var sequence in unsupportedSuffixSentences)
+            if (codeownersPath == "/")
             {
-                if (codeownersPath.EndsWith(sequence))
-                {
-                    Console.Error.WriteLine(
-                        $"CODEOWNERS path \"{codeownersPath}\" ends with " +
-                        $"unsupported sequence of \"{sequence}\". Replace it with \"/\". " +
-                        "Until then this path will never match.");
-                    return true;
-                }                
+                // This behavior matches GitHub CODEOWNERS interpreter behavior.
+                // I.e. a path of just "/" is unsupported.
+                Console.Error.WriteLine(
+                    $"CODEOWNERS path \"{codeownersPath}\" will never match. " +
+                    "Use \"/**\" instead.");
+                return true;
+            }
+
+            // See the comment below on why we support this path.
+            if (codeownersPath == "/**")
+                return false;
+
+            if (!codeownersPath.StartsWith("/"))
+            {
+                Console.Error.WriteLine(
+                    $"CODEOWNERS path \"{codeownersPath}\" does not start with " +
+                    "\"/\". Prefix it with \"/\". " +
+                    "Until then this path will never match.");
+                return true;
+            }
+
+            // We do not support suffix of "/**" because it is equivalent to "/".
+            // For example, "/foo/**" is equivalent to "/foo/"
+            // One exception to this rule is if the entire path is "/**":
+            // GitHub doesn't match "/" to anything if it is the entire path,
+            // and instead expects "/**".
+            if (codeownersPath != "/**" && codeownersPath.EndsWith("/**"))
+            {
+                Console.Error.WriteLine(
+                    $"CODEOWNERS path \"{codeownersPath}\" ends with " +
+                    "unsupported sequence of \"/**\". Replace it with \"/\". " +
+                    "Until then this path will never match.");
+                return true;
+            }
+
+            // We do not support suffix of "/**/" because it is equivalent to
+            // suffix "/**" which is equivalent to suffix "/".
+            if (codeownersPath.EndsWith("/**/"))
+            {
+                Console.Error.WriteLine(
+                    $"CODEOWNERS path \"{codeownersPath}\" ends with " +
+                    "unsupported sequence of \"/**/\". Replace it with \"/\". " +
+                    "Until then this path will never match.");
+                return true;
             }
 
             // We do not support inline "**", i.e. if it is not within slashes, i.e. "/**/".
@@ -160,8 +201,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             {
                 Console.Error.WriteLine(
                     $"CODEOWNERS path \"{codeownersPath}\" contains " +
-                    "unsupported sequence of \"**\" that is not \"/**/\". Replace it with \"*\". " +
-                    "Until then this path will never match.");
+                    "unsupported sequence of \"**\". Double star can be used only within slashes \"/**/\" " +
+                    "or as a top-level catch all path of \"/**\". "  +
+                    "Currently this path will never match.");
                 return true;
             }
 
@@ -184,8 +226,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         private Regex ConvertToRegex(string codeownersPath)
         {
-            codeownersPath = NormalizePath(codeownersPath);
             Trace.Assert(IsCodeownersPathValid(codeownersPath));
+
+            // Special case: path "/**" matches everything.
+            // We do not allow "/**" in any other context except when it is the entire path.
+            if (codeownersPath == "/**")
+                return new Regex(".*");
 
             string pattern = codeownersPath;
 
@@ -218,73 +264,55 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             return new Regex(pattern);
         }
 
+        /// <summary>
+        /// Sets the regex pattern suffix, which can be either "$" (end of string)
+        /// or nothing.
+        ///
+        /// GitHub's CODEOWNERS matching logic is a bit inconsistent when it comes to handling suffixes.
+        ///
+        /// In a nutshell:
+        /// - For top level dir, `/` doesn't work. One has to use `/**`.
+        /// - But for nested dirs, `/` works. I.e. one can write `/foo/` and it is equivalent to `/foo/**`.
+        /// - `*` has different interpretations. If used with preceding slash, like `/*` or `/foo/*`
+        /// it means "things only in this dir". But when used as a suffix, it means "anything".
+        /// So `/foo*` is effectively `/foo*/** OR /foo*`.  Where `*` in the OR clause
+        /// should be interpreted as "any character except `/`".
+        /// </summary>
         private static string SetPatternSuffix(string pattern)
         {
-            // Lack of slash at the end denotes the path is a path to a file,
-            // per our validation logic.
+            // If a pattern ends with "/*" this means it should match only files
+            // in the child directory, but not all descendant directories.
+            // Hence we must append "$", to avoid treating the regex pattern
+            // as a prefix match and instead treat it as an exact match.
+            if (pattern.EndsWith($"/{SingleStar}"))
+                return pattern + "$";
+
+            Trace.Assert(pattern != "^/", "Path \"/\" should have been excluded by validation.");
+
+            // If the pattern ends with "/" it means it is a path to a directory,
+            // like "/foo/". This means "match everything in this directory,
+            // at arbitrary directory nesting depth."
             //
-            // Note we assume this is path to a file even if the path is invalid,
-            // even though in such case the path might be a path to a directory.
-            if (!pattern.EndsWith("/"))
-            {
-                // Append "end of string" symbol, denoting the match has to be exact,
-                // not a substring, as we are dealing with a file.
-                pattern += "$";
-            }
-            else // The pattern ends with "/", denoting it is a directory.
-            {
-                // We do not append the end-of-string symbol, "$",
-                // because we want to allow matching to any string suffix,
-                // which semantically means matching to anything (including nothing)
-                // in the directory represented by the path.
+            // If the pattern ends with "*" but not "/*" (as this case was handled above)
+            // then it is a suffix *, e.g. "/foo*". This means "match everything
+            // with a prefix string of "/foo". Notably, it matches not only
+            // everything in "/foo/" dir, but also files like "/foobar.txt"
+            if (pattern.EndsWith("/") || pattern.EndsWith(SingleStar))
+                return pattern;
 
-                // Note that if the targetPath is exactly the same as pattern,
-                // except that it is missing the trailing "/", then we assume
-                // no match. This is because The pattern is matching
-                // against a directory, which, due to our validation,
-                // should exist. The targetPath, because it doesn't have trailing "/",
-                // matches to a file with the same name, hence it cannot exist.
-                //
-                // For example:
-                // pattern:    /a/
-                // targetPath: /a
-                // result:     no match
-                //
-                // There is no match because "/a" is not a substring of "/a/".
-            }
-
-            return pattern;
+            // If the pattern doesn't end with "/" nor "*", then according to GitHub CODEOWNERS
+            // matcher it is a path to a file, or to a directory with exact match.
+            // However, in this matcher we assume stricter interpretation where 
+            // it has to be a path to a file.
+            //
+            // As a result we append "$", to avoid treating the regex pattern
+            // as a prefix match and instead treat it as an exact match.
+            //
+            // If that assumption is violated, i.e. the CODEOWNERS path is actually
+            // a path to a directory, due to appending "$" the result will be no match,
+            // e.g. targetPath of "/foo/bar" is a no match against "/foo$".
+            // This is the desired behavior, as we don't want to match against invalid paths.
+            return pattern + "$";
         }
-
-        /// <summary>
-        /// CODEOWNERS paths that do not start with "/" are relative and considered invalid,
-        /// See comment on "IsCodeownersPathValid" for definition of "valid".
-        /// However, here we handle such cases to accomodate for parsing CODEOWNERS file
-        /// paths that somehow slipped through that validation. We do so by instead treating
-        /// such paths as if they were absolute to repository root, i.e. starting with "/".
-        /// </summary>
-        private static string NormalizePath(string codeownersPath)
-        {
-            if (!codeownersPath.StartsWith("/"))
-                codeownersPath = "/" + codeownersPath;
-            return codeownersPath;
-        }
-
-        /// <summary>
-        /// The codeownersPathExpression is valid if it obeys following conditions:
-        /// - It starts with "/".
-        /// - It doesn't contain unsupported fragments, including unsupported
-        /// characters, character sequences and character sequence suffixes.
-        ///
-        /// Once the validation described in the following issue is implemented:
-        /// https://github.com/Azure/azure-sdk-tools/issues/4859
-        /// to be valid, the entry will also have to obey following conditions:
-        /// - if the path expression ends with "/" at least one matching
-        /// directory exists in the repository.
-        /// - if the path expression does not end with "/", at least one matching
-        /// file exists in the repository.
-        /// </summary>
-        private static bool IsCodeownersPathValid(string codeownersPathExpression)
-            => codeownersPathExpression.StartsWith("/") && !ContainsUnsupportedFragments(codeownersPathExpression);
     }
 }

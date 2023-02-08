@@ -9,7 +9,7 @@ module.exports = {
   target: "node",
   devtool: "source-map",
   entry: {
-    main: "./src/index.ts",
+    index: "./src/index.ts",
   },
   output: {
     path: path.resolve(__dirname, "dist", "src"),
@@ -27,5 +27,8 @@ module.exports = {
   plugins: [],
   optimization: {
     minimize: false,
+    moduleIds: "named",
+    chunkIds: "named",
+    mangleExports: false,
   },
 };

@@ -63,7 +63,6 @@ public class SchemaCacheTest
         Assert.Equal("#/definitions/ErrorDetail", details?.items.Ref);
         Assert.Null(details?.items.properties);
         
-        
-        
     }
+    
 }

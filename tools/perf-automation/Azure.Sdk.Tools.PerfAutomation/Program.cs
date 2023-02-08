@@ -238,6 +238,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         string profileDirectory = Path.Combine(Program.Config.WorkingDirectories[language], language + "-profile");
                         Console.WriteLine("profileDirectory start ");
                         Console.WriteLine(profileDirectory);
+                        Console.WriteLine(serviceLanguageInfo.Project);
                         Console.WriteLine("profileDirectory end ");
                         if (!Directory.Exists(profileDirectory))
                         {

@@ -141,7 +141,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
             if(profile){
-                arguments = arguments + "--profile true";
+                arguments = arguments + " --profile true";
             }
             var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",
                 projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);

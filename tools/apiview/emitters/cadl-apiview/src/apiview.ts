@@ -312,14 +312,19 @@ export class ApiView {
     this.navigationItems.push(item);
   }
 
-  shouldEmitNamespace(ns: Namespace): boolean {
-    if (ns.name === "" && this.includeGlobalNamespace) {
+  shouldEmitNamespace(name: string): boolean {
+    if (name === "" && this.includeGlobalNamespace) {
       return true;
     }
-    if (!ns.name.startsWith(this.packageName)) {
+    if (name === this.packageName) {
+      return true;
+    }
+    // FIXME: This should actually ensure that it is a proper subnamespace
+    if (!name.startsWith(this.packageName)) {
       return false;
     }
-    return true;
+    const suffix = name.substring(this.packageName.length);
+    return suffix.startsWith(".");
   }
 
   emit(program: Program) {
@@ -335,7 +340,7 @@ export class ApiView {
     allNamespaces = new Map([...allNamespaces].sort());
 
     for (const [name, ns] of allNamespaces.entries()) {
-      if (!this.shouldEmitNamespace(ns)) {
+      if (!this.shouldEmitNamespace(name)) {
         continue;
       }
       const nsModel = new NamespaceModel(name, ns, program);
@@ -845,7 +850,7 @@ export class ApiView {
         this.blankLines(1);
     }  
     this.endGroup();
-    this.newline();
+    this.blankLines(1);
     this.namespaceStack.pop();
   }
 

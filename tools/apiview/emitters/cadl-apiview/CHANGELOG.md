@@ -1,10 +1,13 @@
 # Release History
 
 ## Version 0.3.5 (Unreleased)
-BREAKING CHANGE: Removed the `--namespace` emitter option.
+Support latest release of Cadl compiler.
+**BREAKING CHANGE**: Removed the `--namespace` emitter option.
 Added the `--service` emitter option to support filtering output for multi-service specs.
 Emitter options `--output-file` and `--version` cannot be used with multi-service specs unless the
   `--service` option is provided.
+Added the `--include-global-namespace` option to permit including the global namespace in the token file.
+Fixed issue where namespaces that are not proper subnamespaces may be included in the token file.
 
 ## Version 0.3.4 (01-13-2023)
 Support latest release of Cadl compiler.

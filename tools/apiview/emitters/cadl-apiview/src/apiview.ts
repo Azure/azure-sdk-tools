@@ -319,7 +319,6 @@ export class ApiView {
     if (name === this.packageName) {
       return true;
     }
-    // FIXME: This should actually ensure that it is a proper subnamespace
     if (!name.startsWith(this.packageName)) {
       return false;
     }
@@ -343,7 +342,9 @@ export class ApiView {
       if (!this.shouldEmitNamespace(name)) {
         continue;
       }
-      const nsModel = new NamespaceModel(name, ns, program);
+      // use a fake name to make the global namespace clear
+      const namespaceName = name == "" ? "::GLOBAL::" : name;
+      const nsModel = new NamespaceModel(namespaceName, ns, program);
       if (nsModel.shouldEmit()) {
         this.tokenizeNamespaceModel(nsModel);
         this.buildNavigation(nsModel);  

@@ -6,7 +6,7 @@ import { ApiViewTestLibrary } from "../src/testing/index.js";
 import "@azure-tools/cadl-apiview";
 import { ApiViewEmitterOptions } from "../src/lib.js";
 import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
-import { resolvePath } from "@cadl-lang/compiler";
+import { Diagnostic, resolvePath } from "@cadl-lang/compiler";
 import { strictEqual } from "assert";
 
 export async function createApiViewTestHost() {
@@ -32,6 +32,17 @@ export async function createApiViewTestRunner({
       emit: ["@azure-tools/cadl-apiview"],
     }
   });
+}
+
+export async function diagnosticsFor(code: string, options: ApiViewEmitterOptions): Promise<readonly Diagnostic[]> {
+  const runner = await createApiViewTestRunner({withVersioning: true});
+  const outPath = resolvePath("/apiview.json");
+  const diagnostics = await runner.diagnose(code, {
+    noEmit: false,
+    emitters: { "@azure-tools/cadl-apiview": { ...options, "output-file": outPath } },
+    miscOptions: { "disable-linter": true },
+  });
+  return diagnostics;
 }
 
 export async function apiViewFor(code: string, options: ApiViewEmitterOptions): Promise<ApiViewDocument> {

@@ -1,7 +1,7 @@
 import { Diagnostic, logDiagnostics, resolvePath } from "@cadl-lang/compiler";
-import { expectDiagnosticEmpty } from "@cadl-lang/compiler/testing";
+import { expectDiagnosticEmpty, expectDiagnostics } from "@cadl-lang/compiler/testing";
 import { strictEqual } from "assert";
-import { apiViewFor, apiViewText, compare } from "./test-host.js";
+import { apiViewFor, apiViewText, compare, createApiViewTestRunner, diagnosticsFor } from "./test-host.js";
 
 describe("apiview-options: tests", () => {
 
@@ -44,8 +44,16 @@ describe("apiview-options: tests", () => {
     }
     `;
     const expect = `
-    model SomeGlobal {};
+    namespace ::GLOBAL:: {
+      model SomeGlobal {}
+    }
 
+    @Cadl.service(
+      {
+        title: "Test";
+        version: "1";
+      }
+    )
     namespace Azure.Test {
       model Foo {}
     }
@@ -54,7 +62,53 @@ describe("apiview-options: tests", () => {
       "include-global-namespace": true
     });
     const actual = apiViewText(apiview);
-    compare(expect, actual, 9);
+    compare(expect, actual, 1);
   });
 
+  it("emits error if multi-service package tries to specify version", async () => {
+    const input = `
+    @Cadl.service( { title: "Test", version: "1" } )
+    namespace Azure.Test {
+      model Foo {};
+    }
+
+    @Cadl.service( { title: "OtherTest", version: "1" } )
+    namespace Azure.OtherTest {
+      model Foo {};
+    }
+    `
+    const diagnostics = await diagnosticsFor(input, {"version": "1"});
+    expectDiagnostics(diagnostics, [
+      {
+        code: "@azure-tools/cadl-apiview/invalid-option",
+        message: `Option "--output-file" cannot be used with multi-service specs unless "--service" is also supplied.`
+      },
+      {
+        code: "@azure-tools/cadl-apiview/invalid-option",
+        message: `Option "--version" cannot be used with multi-service specs unless "--service" is also supplied.`
+      }
+    ]);
+  });
+
+  it("allows options if multi-service package specifies --service", async () => {
+    const input = `
+    @Cadl.service( { title: "Test", version: "1" } )
+    namespace Azure.Test {
+      model Foo {};
+    }
+
+    @Cadl.service( { title: "OtherTest", version: "1" } )
+    namespace Azure.OtherTest {
+      model Foo {};
+    }
+    `;
+    const expect = `
+    namespace Azure.OtherTest {
+      model Foo {}
+    }
+    `;
+    const apiview = await apiViewFor(input, {"version": "1", "service": "OtherTest"});
+    const actual = apiViewText(apiview);
+    compare(expect, actual, 9);
+  });
 });

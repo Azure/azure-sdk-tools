@@ -305,12 +305,13 @@ def generate_cpp_report() -> ScanResult:
 
     print(f"Evaluating repo for {language} @ {repo_root}", end="...")
 
-    exclusions = [os.path.join("vcpkg", "vcpkg.json"), "template"]
+    exclusions = [os.path.join("vcpkg", "vcpkg.json"), "template", os.path.join("sdk", "core")]
 
     packages = glob.glob(os.path.join(repo_root, "sdk", "**", "vcpkg.json"), recursive=True)
     packages = [os.path.dirname(pkg) for pkg in packages if not any([x in pkg for x in exclusions])]
 
     result.packages = sorted([os.path.basename(pkg) for pkg in packages])
+
     for pkg in packages:
         evaluation = evaluate_cpp_package(pkg)
 

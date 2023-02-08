@@ -1,5 +1,11 @@
 # Release History
 
+## Version 0.3.5 (Unreleased)
+BREAKING CHANGE: Removed the `--namespace` emitter option.
+Added the `--service` emitter option to support filtering output for multi-service specs.
+Emitter options `--output-file` and `--version` cannot be used with multi-service specs unless the
+  `--service` option is provided.
+
 ## Version 0.3.4 (01-13-2023)
 Support latest release of Cadl compiler.
 

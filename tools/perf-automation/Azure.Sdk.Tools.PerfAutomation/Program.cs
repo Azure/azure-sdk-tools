@@ -240,7 +240,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         Console.WriteLine(profileDirectory);
                         Console.WriteLine(profileDirectory.FullName);
                         Console.WriteLine(profileDirectory.Name);
-                        Console.WriteLine(Path.Combine(profileDirectory.Parent.FullName, profileDirectory.Name + ".zip")
+                        Console.WriteLine(Path.Combine(profileDirectory.Parent.FullName, profileDirectory.Name + ".zip"));
                         Console.WriteLine("profileDirectory end ");
                         if (!Directory.Exists(profileDirectory))
                         {

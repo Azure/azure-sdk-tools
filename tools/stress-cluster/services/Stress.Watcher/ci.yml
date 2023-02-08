@@ -25,4 +25,5 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/stress-cluster/services/Stress.Watcher
+    DotNetCoreVersion: "7.0.x"
     NoWarn: true

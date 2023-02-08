@@ -236,6 +236,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         // all profiling data for a performance run by that language.
                         // Later this directory will be zipped to create ZIP file that can be retained with the name "{language name}-profile.zip".
                         string profileDirectory = Path.Combine(Program.Config.WorkingDirectories[language], language + "-profile");
+                        Console.WriteLine("profileDirectory = ",profileDirectory);
                         if (!Directory.Exists(profileDirectory))
                         {
                             profileDirectories.Add(Directory.CreateDirectory(profileDirectory));

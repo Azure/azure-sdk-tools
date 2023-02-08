@@ -59,8 +59,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// See the class comment to understand this method purpose.
         /// </summary>
         public static bool IsCodeownersPathValid(string codeownersPathExpression)
-            => !ContainsUnsupportedCharacters(codeownersPathExpression) 
+            => !IsCommentedOutPath(codeownersPathExpression)
+               && !ContainsUnsupportedCharacters(codeownersPathExpression) 
                && !ContainsUnsupportedSequences(codeownersPathExpression);
+
+        private static bool IsCommentedOutPath(string codeownersPathExpression)
+            => codeownersPathExpression.Trim().StartsWith("#");
 
         /// <summary>
         /// Any CODEOWNERS path with these characters will be skipped.

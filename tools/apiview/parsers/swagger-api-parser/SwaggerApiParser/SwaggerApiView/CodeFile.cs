@@ -11,20 +11,10 @@ public class CodeFile
 {
     private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions() {AllowTrailingCommas = true, ReadCommentHandling = JsonCommentHandling.Skip};
 
-    private string _versionString;
-
     private static HashSet<string> _collapsibleLanguages = new HashSet<string>(new string[] {"Swagger"});
 
-    [Obsolete("This is only for back compat, VersionString should be used")]
-    public int Version { get; set; }
 
-    public string VersionString
-    {
-#pragma warning disable 618
-        get => _versionString ?? Version.ToString();
-#pragma warning restore 618
-        set => _versionString = value;
-    }
+    public string VersionString { get; set; }
 
     public string Name { get; set; }
 

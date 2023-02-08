@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
 namespace SwaggerApiParser;
-
 
 public class SecurityDefinitions : Dictionary<string, JsonElement>
 {

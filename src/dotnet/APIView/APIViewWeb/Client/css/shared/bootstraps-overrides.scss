@@ -23,6 +23,7 @@
 .btn-check:focus + .btn-primary, .btn-primary:focus {
     background-color: var(--link-active);
     border-color: var(--link-active);
+    color: var(--primary-btn-color);
 }
 
 .btn-outline-primary {

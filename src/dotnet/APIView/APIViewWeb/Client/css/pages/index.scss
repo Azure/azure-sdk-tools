@@ -54,6 +54,10 @@
     @include fixed-offcanvas-height;
 }
 
+#index-offcanvas-menu-content > .input-group {
+    flex-wrap: unset;
+}
+
 .nav-cst-theme {
     background-color: var(--base-bg-color);
     box-shadow: var(--box-shadow-sm);

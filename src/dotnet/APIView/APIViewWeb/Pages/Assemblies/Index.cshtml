@@ -7,7 +7,8 @@
 @using APIViewWeb.Models
 @{
     ViewData["Title"] = "Reviews";
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    TempData["UserPreference"] = userPreference;
 }
 <div class="container-fluid sticky-top nav-cst-theme">
     <div class="row mx-5 py-2">
@@ -18,13 +19,25 @@
             </div>
         </div>
         <div class="col-md-2 px-0 d-sm-flex flex-row justify-content-sm-end">
-            <input type="checkbox" class="btn-check" id="right-nav-offcanvas-toggle" autocomplete="off">
-            <label class="btn btn-outline-primary" accesskey="m" for="right-nav-offcanvas-toggle"><i class="fa fa-bars"></i>&nbsp;&nbsp;Options</label>
+            @if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
+            {
+            <input type="checkbox" class="btn-check" id="index-right-offcanvas-toggle" autocomplete="off">
+            }
+            else
+            {
+            <input type="checkbox" checked class="btn-check" id="index-right-offcanvas-toggle" autocomplete="off">
+            }
+            <label class="btn btn-outline-primary" accesskey="m" for="index-right-offcanvas-toggle"><i class="fa fa-bars"></i>&nbsp;&nbsp;Options</label>
         </div>
     </div>
 </div>
 
-<div id="right-offcanvas-menu" class="right-offcanvas">
+@{
+    var offCanvasClass = " show-offcanvas";
+    if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
+        offCanvasClass = String.Empty;
+}
+<div id="right-offcanvas-menu" class="right-offcanvas@(offCanvasClass)">
     <div class="offcanvas-menu-content" id="index-offcanvas-menu-content">
         <p class="h6">Filters</p>
         <div class="input-group input-group-sm mb-2">
@@ -57,8 +70,12 @@
         <hr class="border">
     </div>
 </div>
-
-<div class="container-fluid mb-5" id="index-main-container">
+@{
+    var mainContainerClass = " move-main-content-container-left";
+    if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
+        mainContainerClass = String.Empty;
+}
+<div class="container-fluid mb-5@(mainContainerClass)" id="index-main-container">
     <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">

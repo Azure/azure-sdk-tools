@@ -15,6 +15,7 @@ namespace APIViewWeb.Models
         internal bool? _hideLeftNavigation;
         internal bool? _showHiddenApis;
         internal bool? _hideReviewPageOptions;
+        internal bool? _hideIndexPageOptions;
         internal string _theme;
 
         public string UserName { get; set; }
@@ -79,6 +80,13 @@ namespace APIViewWeb.Models
         {
             get => _hideReviewPageOptions ?? false;
             set => _hideReviewPageOptions = value;
+        }
+
+        [Name("HideIndexPageOptions")]
+        public bool? HideIndexPageOptions
+        {
+            get => _hideIndexPageOptions ?? false;
+            set => _hideIndexPageOptions = value;
         }
     }
 }

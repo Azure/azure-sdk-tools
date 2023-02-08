@@ -5,10 +5,10 @@ import { rightOffCanvasNavToggle } from "../shared/off-canvas";
 $(() => {  
   const SEL_DOC_CLASS = ".documentation";
   const SHOW_DOC_CHECK_COMPONENT = "#show-documentation-component";
-  const SHOW_DOC_CHECKBOX = ".show-doc-checkbox";
-  const SHOW_DOC_HREF = ".show-document";
+  const SHOW_DOC_CHECKBOX = ".show-documentation-checkbox";
+  const SHOW_DOC_HREF = ".show-documentation-switch";
   const SHOW_DIFFONLY_CHECKBOX = ".show-diffonly-checkbox";
-  const SHOW_DIFFONLY_HREF = ".show-diffonly";
+  const SHOW_DIFFONLY_HREF = ".show-diffonly-switch";
   const TOGGLE_DOCUMENTATION = ".line-toggle-documentation-button";
   const SEL_HIDDEN_CLASS = ".hidden-api-toggleable";
   const SHOW_HIDDEN_CHECK_COMPONENT = "#show-hidden-api-component";
@@ -466,14 +466,12 @@ $(() => {
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   addToggleEventHandlers();
 
-  /* ENABLE TOOLTIP AND POPOVER
-  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  (<any>$('[data-toggle="tooltip"]')).tooltip();
-  (<any>$('[data-toggle="popover"]')).popover();
-
-
-  // Open / Close right Offcanvas Menu
-  $("#right-nav-offcanvas-toggle").on('click', function () {
-    rightOffCanvasNavToggle("review-main-container");
+  // Toggle Subscribe Switch
+  $("#reviewSubscribeSwitch").on('change', function () {
+    $("#reviewSubscribeForm").submit();
+  });
+  // Toggle Close Switch
+  $("#reviewCloseSwitch").on('change', function () {
+    $("#reviewCloseForm").submit();
   });
 });

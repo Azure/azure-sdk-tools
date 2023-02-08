@@ -10,8 +10,12 @@
     TempData["LanguageCssSafeName"] = Model.Review.GetLanguageCssSafeName();
     ViewBag.HasSections = (Model.CodeFile.LeafSections?.Count > 0) ? true : false;
 }
-
-<div id="right-offcanvas-menu" class="right-offcanvas">
+@{
+    var offCanvasClass = " show-offcanvas";
+    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
+        offCanvasClass = String.Empty;
+}
+<div id="right-offcanvas-menu" class="right-offcanvas@(offCanvasClass)">
     <div class="offcanvas-menu-content" id="review-offcanvas-menu-content">
         <p class="h6">
             <a data-bs-toggle="collapse" href="#approveCollapse" aria-expanded="true" aria-controls="approveCollapse">Approve&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
@@ -207,16 +211,44 @@
         <ul class="list-group collapse show mb-3" id="reviewOptionsCollapse">
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
-                    <label class="form-check-label" for="flexSwitchCheckDefault">Subscribe</label>
+                    <form asp-resource="@Model.Review" class="form-inline" id="reviewSubscribeForm" method="post" asp-page-handler="ToggleSubscribed">
+                        @if (Model.Review.GetUserEmail(User) != null)
+                        {
+                            if (Model.Review.IsUserSubscribed(User))
+                            {
+                                <input class="form-check-input" checked type="checkbox" role="switch" id="reviewSubscribeSwitch">
+                            }
+                            else
+                            {
+                                <input class="form-check-input" type="checkbox" role="switch" id="reviewSubscribeSwitch">
+                            }
+                        }
+                        else
+                        {
+                            <input class="form-check-input" type="checkbox" role="switch" disabled id="reviewSubscribeSwitch" data-bs-placement="bottom" data-bs-toggle="tooltip" title="Link a microsoft.com email to your Github account to subscribe">
+                        }
+                        <label class="form-check-label" for="reviewSubscribeSwitch">Subscribe</label>
+                    </form>
                 </div>
             </li>
-            <li class="list-group-item">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
-                    <label class="form-check-label" for="flexSwitchCheckChecked">Close</label>
-                </div>
-            </li>
+            @if (Model.Review.FilterType != ReviewType.Automatic)
+            {
+                <li class="list-group-item">
+                    <div class="form-check form-switch">
+                        <form asp-resource="@Model.Review" class="form-inline" id="reviewCloseForm" method="post" asp-page-handler="ToggleClosed">
+                            @if (Model.Review.IsClosed)
+                            {
+                                <input class="form-check-input" checked type="checkbox" role="switch" id="reviewCloseSwitch">
+                            }
+                            else
+                            {
+                                <input class="form-check-input" type="checkbox" role="switch" id="reviewCloseSwitch">
+                            }
+                            <label class="form-check-label" for="reviewCloseSwitch">Close Review</label>
+                        </form>
+                    </div>
+                </li>
+            }
         </ul>
         <p class="h6">
             <a data-bs-toggle="collapse" href="#pageSettingsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Page Settings&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
@@ -236,22 +268,74 @@
             </li>
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
-                    <label class="form-check-label" for="flexSwitchCheckChecked">Show Documentation</label>
+                    @if (Model.ShowDocumentation)
+                    {
+                        <input class="form-check-input show-documentation-checkbox" checked type="checkbox" role="switch" asp-for="@Model.ShowDocumentation" id="showDocumentationSwitch">
+                    }
+                    else
+                    {
+                        <input class="form-check-input show-documentation-checkbox" type="checkbox" role="switch" asp-for="@Model.ShowDocumentation" id="showDocumentationSwitch">                  
+                    }
+                    <a class="show-documentation-switch" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly, revisionId: Model.Revision.RevisionId)>
+                        <label class="form-check-label" for="showDocumentationSwitch">Show Documentation</label>
+                    </a>
                 </div>
             </li>
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDisabled" disabled>
-                    <label class="form-check-label" for="flexSwitchCheckDisabled">Show Line Number</label>
+                    @if (userPreference.ShowHiddenApis == true)
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-hidden-api-checkbok">
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-hidden-api-checkbok" checked>
+                    }
+                    <label class="form-check-label" for="show-hidden-api-checkbok">Show Hidden APIs</label>
                 </div>
             </li>
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckCheckedDisabled2" checked disabled>
-                    <label class="form-check-label" for="flexSwitchCheckCheckedDisabled2">Show Left Navigation</label>
+                    @if (userPreference.HideLineNumbers == true)
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="hide-line-numbers">
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="hide-line-numbers" checked>
+                    }
+                    <label class="form-check-label" for="hide-line-numbers">Show Line Number</label>
                 </div>
             </li>
+            <li class="list-group-item">
+                <div class="form-check form-switch">
+                    @if (userPreference.HideLeftNavigation == true)
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="hide-left-navigation">
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="hide-left-navigation" checked>
+                    }
+                    <label class="form-check-label" for="hide-left-navigation">Show Left Navigation</label>
+                </div>
+            </li>
+            @if (!String.IsNullOrEmpty(Model.DiffRevisionId))
+            {
+                <li class="list-group-item">
+                    <div class="form-check form-switch">
+                        @if (Model.ShowDiffOnly)
+                        {
+                            <input class="form-check-input show-diffonly-checkbox" checked type="checkbox" role="switch" asp-for="@Model.ShowDiffOnly" id="showDiffOnlySwitch">                        }
+                        else
+                        {
+                            <input class="form-check-input show-diffonly-checkbox" type="checkbox" role="switch" asp-for="@Model.ShowDiffOnly" id="showDiffOnlySwitch">                        }
+                        <a class="show-diffonly-switch" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDiffOnly: !Model.ShowDiffOnly, revisionId: Model.Revision.RevisionId)>
+                            <label class="form-check-label" for="showDiffOnlySwitch">Show Only Diff</label>
+                        </a>
+                    </div>
+                </li>
+            }
         </ul>
                    
     </div>
@@ -360,7 +444,7 @@
                     <button type="button" class="btn btn-outline-secondary" id="jump-to-first-comment">
                         <i class="far fa-comment-alt"></i>
                     </button>
-                    <button type="button" class="btn btn-info" data-bs-placement="bottom" data-bs-trigger="focus" data-bs-toggle="popover" data-bs-html="true" data-bs-title="Page Info" data-bs-content="@popOverContent">
+                    <button type="button" class="btn btn-info" data-bs-placement="bottom" data-bs-trigger="focus" data-bs-toggle="popover" data-bs-html="true" data-bs-title="Page Info" data-bs-content="@popOverContent" data-bs-custom-class="custom-popover">
                         <span class="badge">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
                     </button>
                 }
@@ -374,7 +458,12 @@
 
     <partial name="Shared/_ReviewNavBar" />
 </div>
-<div class="container-fluid pt-3" id="review-main-container">
+@{
+    var mainContainerClass = " move-main-content-container-left";
+    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
+        mainContainerClass = String.Empty;
+}
+<div class="container-fluid pt-3@(mainContainerClass)" id="review-main-container">
     <div class="row mx-3 g-2" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId" data-language="@Model.Review.Language">
         @{
             var reviewLeftDisplay = String.Empty;

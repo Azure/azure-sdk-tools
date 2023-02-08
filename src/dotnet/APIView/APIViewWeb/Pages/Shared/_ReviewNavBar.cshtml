@@ -1,5 +1,7 @@
+@using APIViewWeb.Models
 @{
     var id = ViewContext.RouteData.Values["id"];
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel;
 }
 
 <div class="row mx-1 p-0 mt-0 border-bottom">
@@ -20,8 +22,15 @@
         </ul>
         @if (TempData["page"].Equals("api"))
         {
-            <input type="checkbox" class="btn-check" id="right-nav-offcanvas-toggle" autocomplete="off">
-            <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="right-nav-offcanvas-toggle"><i class="fa fa-bars"></i>&nbsp;&nbsp;Options</label>
+            if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
+            {
+                <input type="checkbox" class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
+            }
+            else
+            {
+                <input type="checkbox" checked class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
+            }
+            <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="review-right-offcanvas-toggle"><i class="fa fa-bars"></i>&nbsp;&nbsp;Options</label>
         }
     </nav>
 </div>

@@ -9,10 +9,14 @@
     background-image: var(--svg-check-box);
 }
 
-
 .SumoSelect > .CaptionCont {
     border: 1px solid var(--border-color);
     background-color: var(--base-fg-color);
+}
+
+
+.SumoSelect > .CaptionCont > label > i {
+    background-image: url(/icons/down.png);
 }
 
 .SumoSelect.open > .CaptionCont, .SumoSelect:focus > .CaptionCont, .SumoSelect:hover > .CaptionCont {

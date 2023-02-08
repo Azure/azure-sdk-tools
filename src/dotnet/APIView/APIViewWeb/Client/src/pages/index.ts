@@ -1,4 +1,5 @@
 import { rightOffCanvasNavToggle } from "../shared/off-canvas";
+import { updatePageSettings } from "../shared/helpers";
 
 $(() => {
   const defaultPageSize = 50;
@@ -14,9 +15,6 @@ $(() => {
 
   // Import underscorejs
   var _ = require('underscore');
-
-  // Enable tooltip
-  (<any>$('[data-toggle="tooltip"]')).tooltip();
 
   // Computes the uri string using the values of search, pagination and various filters
   // Invokes partial page update to list of reviews using ajax
@@ -162,7 +160,9 @@ $(() => {
   });
 
   // Open / Close right Offcanvas Menu
-  $("#right-nav-offcanvas-toggle").on('click', function () {
-    rightOffCanvasNavToggle("index-main-container");
+  $("#index-right-offcanvas-toggle").on('click', function () {
+    updatePageSettings(function () {
+      rightOffCanvasNavToggle("index-main-container");
+    });
   });
 });

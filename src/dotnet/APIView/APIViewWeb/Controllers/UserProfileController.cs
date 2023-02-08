@@ -19,13 +19,16 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPut]
-        public ActionResult UpdateReviewPageSettings(bool? hideLineNumbers = null, bool? hideLeftNavigation = null, bool? showHiddenApis = null)
+        public ActionResult UpdateReviewPageSettings(bool? hideLineNumbers = null, bool? hideLeftNavigation = null, 
+            bool? showHiddenApis = null, bool? hideReviewPageOptions = null, bool? hideIndexPageOptions = null)
         {
             _userPreferenceCache.UpdateUserPreference(new UserPreferenceModel()
             {
                 HideLeftNavigation = hideLeftNavigation,
                 HideLineNumbers = hideLineNumbers,
-                ShowHiddenApis = showHiddenApis
+                ShowHiddenApis = showHiddenApis,
+                HideReviewPageOptions = hideReviewPageOptions,
+                HideIndexPageOptions = hideIndexPageOptions
             }, User);
             return Ok();
         }

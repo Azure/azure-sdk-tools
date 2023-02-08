@@ -286,6 +286,7 @@ stages:
         }
       workingDirectory: $(Pipeline.Workspace)
       displayName: All
+      condition: succeededOrFailed()
 
     - ${{ if parameters.IncludeNet }}:
       - pwsh: |
@@ -293,6 +294,7 @@ stages:
           get-content results-Net-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Net
+        condition: succeededOrFailed()
 
     - ${{ if parameters.IncludeJava }}:
       - pwsh: |
@@ -300,6 +302,7 @@ stages:
           get-content results-Java-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Java
+        condition: succeededOrFailed()
 
     - ${{ if parameters.IncludeJS }}:
       - pwsh: |
@@ -307,6 +310,7 @@ stages:
           get-content results-JS-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: JS
+        condition: succeededOrFailed()
 
     - ${{ if parameters.IncludePython }}:
       - pwsh: |
@@ -314,6 +318,7 @@ stages:
           get-content results-Python-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Python
+        condition: succeededOrFailed()
 
     - ${{ if parameters.IncludeCpp }}:
       - pwsh: |
@@ -321,3 +326,4 @@ stages:
           get-content results-Cpp-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Cpp
+        condition: succeededOrFailed()

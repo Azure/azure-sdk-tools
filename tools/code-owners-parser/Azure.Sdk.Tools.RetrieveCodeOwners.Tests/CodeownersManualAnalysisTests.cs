@@ -351,7 +351,7 @@ public class CodeownersManualAnalysisTests
 
         outputLines.AddRange(PathsWithMissingPrefixSlash(entries));
         outputLines.AddRange(PathsWithMissingSuffixSlash(targetDir, entries, paths));
-        outputLines.AddRange(PathsWithUnsupportedFragments(entries));
+        outputLines.AddRange(InvalidPaths(entries));
 
         return outputLines;
     }
@@ -390,7 +390,7 @@ public class CodeownersManualAnalysisTests
             }
             else
             {
-                var trimmedPathExpression = entry.PathExpression.TrimStart('/');
+                string trimmedPathExpression = entry.PathExpression.TrimStart('/');
 
                 bool matchesDirExactly = MatchesDirExactly(targetDir, trimmedPathExpression);
                 bool matchesNamePrefix = MatchesNamePrefix(paths, trimmedPathExpression);
@@ -426,15 +426,15 @@ public class CodeownersManualAnalysisTests
         return Directory.Exists(pathToDir);
     }
 
-    private static List<string> PathsWithUnsupportedFragments(List<CodeownersEntry> entries)
+    private static List<string> InvalidPaths(List<CodeownersEntry> entries)
         => entries
-            .Where(entry => MatchedCodeownersEntry.ContainsUnsupportedFragments(entry.PathExpression))
+            .Where(entry => !MatchedCodeownersEntry.IsCodeownersPathValid(entry.PathExpression))
             .Select(
                 entry =>
                     "|" +
                     $"{entry.PathExpression} " +
                     $"| {string.Join(",", entry.Owners)}" +
-                    "| INVALID_PATH_CONTAINS_UNSUPPORTED_FRAGMENTS")
+                    "| INVALID_PATH")
             .ToList();
 
     /// <summary>

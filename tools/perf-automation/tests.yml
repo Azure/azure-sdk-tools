@@ -1,6 +1,6 @@
 parameters:
 - name: IncludeNet
-  displayName: Include .NET?
+  displayName: Include .NET
   type: boolean
   default: true
 - name: NetRepoCommitish
@@ -10,7 +10,7 @@ parameters:
   type: string
   default: 'storage/Azure.Storage.Blobs'
 - name: IncludeJava
-  displayName: Include Java?
+  displayName: Include Java
   type: boolean
   default: true
 - name: JavaRepoCommitish
@@ -20,7 +20,7 @@ parameters:
   type: string
   default: 'storage/azure-storage-blob'
 - name: IncludeJS
-  displayName: Include JS?
+  displayName: Include JS
   type: boolean
   default: true
 - name: JSRepoCommitish
@@ -30,7 +30,7 @@ parameters:
   type: string
   default: 'storage/storage-blob'
 - name: IncludePython
-  displayName: Include Python?
+  displayName: Include Python
   type: boolean
   default: true
 - name: PythonRepoCommitish
@@ -40,7 +40,7 @@ parameters:
   type: string
   default: 'storage/azure-storage-blob'
 - name: IncludeCpp
-  displayName: Include Cpp?
+  displayName: Include Cpp
   type: boolean
   default: true
 - name: CppRepoCommitish

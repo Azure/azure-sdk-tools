@@ -36,9 +36,7 @@
 }
 
 #reviews-table-search-container {
-    min-width: 100px;
-    max-width: 90vw;
-    width: 40vw;
+    width: 90%;
 }
 
 #reviews-table-search-box {
@@ -50,7 +48,7 @@
 }
 
 #index-offcanvas-menu-content {
-    padding: 130px 20px 10px 20px;
+    padding: 130px 60px 10px 20px;
     min-height: calc(100vh - 40px);
     max-height: calc(100vh - 40px);
     overflow-y: auto;

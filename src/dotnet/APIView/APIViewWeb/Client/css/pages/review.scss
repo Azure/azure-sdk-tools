@@ -55,10 +55,6 @@
     margin-top: 150px;
 }
 
-.gutter.gutter-horizontal {
-    cursor: col-resize;
-}
-
 .review-approved {
     border: solid 2px var(--success-color);
     box-shadow: var(--box-shadow-success);
@@ -67,4 +63,14 @@
 
 .show-diffonly-switch, .show-documentation-switch {
     color: var(--base-text-color) !important;
+}
+
+.gutter {
+    &:hover {
+        background-color: var(--base-fg-color);
+    }
+
+    &.gutter-horizontal {
+        cursor: col-resize;
+    }
 }

@@ -97,9 +97,9 @@
                                         }
                                     </select>
                                 </div>
-                                <div class="form-group package-selector mb-3">
-                                    <label asp-for="Upload.Files" class="form-label small mb-0">Select File to Include in API Review</label>
-                                    <input asp-for="Upload.Files" type="file" class="form-control">
+                                <div class="input-group package-selector mb-3 custom-file-label">
+                                    <label for="uploadReviewFile" class="input-group-text small mb-0">Select File to Include in API Review</label>
+                                    <input asp-for="Upload.Files" type="file" class="form-control" id="uploadReviewFile">
                                 </div>
                                 <div class="form-group package-selector d-none mb-3">
                                     <input asp-for="Upload.FilePath" class="form-control" type="text" placeholder="Enter URL to package root source. For e.g. URL to CADL file">

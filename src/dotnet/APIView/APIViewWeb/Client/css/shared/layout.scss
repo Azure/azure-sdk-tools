@@ -68,43 +68,6 @@ html {
     }
 }
 
-/* Enable clear button in search input
-----------------------------------------------------------------------*/
-input[type="search"]::-webkit-search-cancel-button {
-    -webkit-appearance: none;
-    height: 24px;
-    width: 24px;
-    margin-left: .4em;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
-    cursor: pointer;
-}
-
-.sub-header-content {
-    z-index: 2;
-    position: relative;
-    background-color: var(--base-bg-color);
-}
-
-.main-nav-cst-theme {
-    background-color: var(--navbar-bg);
-    color: var(--navbar-text);
-
-    a:hover {
-        text-decoration: none;
-    }
-
-    a:link, a:visited {
-        color: var(--navbar-text);
-    }
-
-    a:hover, a:active {
-        color: var(--navbar-link-active);
-    }
-
-    border-bottom: 1px solid var(--border-color);
-    z-index: 2;
-}
-
 .footer {
     position: fixed;
     bottom: 0;
@@ -142,6 +105,60 @@ input[type="search"]::-webkit-search-cancel-button {
     overflow: hidden;
 }
 
+.clickable {
+    cursor: pointer;
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+.login-button {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+}
+
+/* Enable clear button in search input
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    margin-left: .4em;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
+    cursor: pointer;
+}
+
+/* Navbar Areas
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.sub-header-content {
+    z-index: 2;
+    position: relative;
+    background-color: var(--base-bg-color);
+}
+
+.main-nav-cst-theme {
+    background-color: var(--navbar-bg);
+    color: var(--navbar-text);
+
+    a:hover {
+        text-decoration: none;
+    }
+
+    a:link, a:visited {
+        color: var(--navbar-text);
+    }
+
+    a:hover, a:active {
+        color: var(--navbar-link-active);
+    }
+
+    border-bottom: 1px solid var(--border-color);
+    z-index: 2;
+}
+
+/* PopOver
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .popover {
     border: 1px solid var(--border-color);
 }
@@ -154,7 +171,8 @@ input[type="search"]::-webkit-search-cancel-button {
 
 .popover-header {
     background-color: var(--primary-color);
-    color: var(--base-bg-color);
+    color: var(--primary-btn-color);
+    border-color: var(--primary-color);
 }
 
 .popover-body {
@@ -163,6 +181,8 @@ input[type="search"]::-webkit-search-cancel-button {
     border-color: var(--border-color);
 }
 
+/* Tooltips
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 .tooltip-inner {
     background-color: var(--primary-color);
     box-shadow: 0px 0px 4px var(--shadow-color);
@@ -185,6 +205,8 @@ input[type="search"]::-webkit-search-cancel-button {
     border-top-color: var(--primary-color) !important;
 }
 
+/* Scroll Bar
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 ::-webkit-scrollbar {
     width: 10px;
 }
@@ -206,4 +228,23 @@ input[type="search"]::-webkit-search-cancel-button {
 
 ::-webkit-scrollbar-corner {
     background-color: var(--base-fg-color)
+}
+
+/* File Select/Upload Input
+------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+.custom-file-label input[type=file] {
+    margin-left: -2px !important;
+}
+
+.custom-file-label input[type=file]::-webkit-file-upload-button {
+    display: none;
+}
+
+.custom-file-label input[type=file]::file-selector-button {
+    display: none;
+}
+
+.custom-file-label:hover label {
+    background-color: var(--base-bg-color);
+    cursor: pointer;
 }

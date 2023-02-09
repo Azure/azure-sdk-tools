@@ -48,6 +48,7 @@
 }
 
 .code-inner {
+    height: 100%;
     word-wrap: normal;
     white-space: pre;
     width: 80%
@@ -94,6 +95,14 @@
     font-style: italic;
 }
 
+.hidden-row {
+    display: none;
+}
+
+.hidden-row-via-filter {
+    display: none;
+}
+
 .file-code-icon {
     filter: var(--icon-color-filter);
 }
@@ -129,6 +138,15 @@
     transform: scale(.8);
     user-select: none;
     text-decoration: none;
+}
+
+.btn-link.line-comment-button {
+    border: 0;
+    opacity: 0;
+    padding: 0;
+    text-decoration: none;
+    user-select: none;
+    white-space: nowrap;
 }
 
 .line-toggle-documentation-button {
@@ -231,15 +249,15 @@ code {
 }
 
 .code-added {
-    background-color: rgba(46,160,67,0.3) !important;
+    background-color: rgba(46,160,67,0.3);
 }
 
 .code-removed {
-    background-color: rgba(248,81,73,0.3) !important;
+    background-color: rgba(248,81,73,0.3);
 }
 
 .code-delta {
-    background-color: rgba(248,201,67,0.3) !important;
+    background-color: rgba(248,201,67,0.3);
 }
 
 .enum {

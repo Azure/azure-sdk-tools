@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             if (!string.IsNullOrWhiteSpace(recordingId)){
                 List<RecordedTestSanitizer> additionalSanitizers = new List<RecordedTestSanitizer>();
 
-                if(!handler.RecordingSessions.TryGetValue(recordingId, out var recordSession))
+                if(handler.RecordingSessions.TryGetValue(recordingId, out var recordSession))
                 {
                     sanitizers = sanitizers.Concat(recordSession.AdditionalSanitizers);
                     transforms = transforms.Concat(recordSession.AdditionalTransforms);
@@ -52,14 +52,14 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                         matcher = recordSession.CustomMatcher;
                     }
                 }
-                else if (!handler.PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
+                else if (handler.PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
                 {
                     sanitizers = sanitizers.Concat(playbackSession.AdditionalSanitizers);
                     transforms = transforms.Concat(playbackSession.AdditionalTransforms);
 
-                    if (recordSession.CustomMatcher != null)
+                    if (playbackSession.CustomMatcher != null)
                     {
-                        matcher = recordSession.CustomMatcher;
+                        matcher = playbackSession.CustomMatcher;
                     }
                 }
             }

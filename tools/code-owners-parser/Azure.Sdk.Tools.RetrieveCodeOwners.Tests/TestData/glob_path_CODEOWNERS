@@ -12,3 +12,5 @@
 /baz* @baz_star
 
 /qux/ @qux
+
+/cor @cor

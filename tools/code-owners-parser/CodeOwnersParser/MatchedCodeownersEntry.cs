@@ -10,23 +10,26 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// Represents a CODEOWNERS file entry that matched to targetPath from
     /// the list of entries, assumed to have been parsed from CODEOWNERS file.
     ///
-    /// This is a new matcher, compared to the old one, located in:
+    /// To use this class, construct it, passing as input relevant paths.
+    /// Then, to obtain the value of the matched entry, reference "Value" member.
+    ///
+    /// This class uses a regex-based wildcard-supporting (* and **) matcher, compared to the old one, located in:
     ///
     ///   CodeownersFile.GetMatchingCodeownersEntryLegacyImpl()
     /// 
-    /// This new matcher supports matching against wildcards (* and **), while the old one doesn't.
-    /// This new matcher is designed to work with CODEOWNERS file validation:
+    /// The old matcher is prefix-based, strips suffix "/", and doesn't support wildcards.
+    ///
+    /// This matcher reflects the matching behavior of the built-in GitHub CODEOWNERS interpreter,
+    /// but with additional assumptions imposed about the paths present in CODEOWNERS, as guaranteed
+    /// by CODEOWNERS file validation:
     /// https://github.com/Azure/azure-sdk-tools/issues/4859
+    /// These assumptions are checked by IsCodeownersPathValid() method.
+    /// If violated, given CODEOWNERS path will be always ignored by the matcher, never matching anything.
+    /// As a result, this matcher is effectively a subset of GitHub CODEOWNERS matcher.
     ///
     /// The validation spec is given in this comment:
     /// https://github.com/Azure/azure-sdk-tools/issues/4859#issuecomment-1370360622
-    ///
-    /// Besides that, the matcher aim to exactly reflect the matching behavior of the
-    /// built-in GitHub CODEOWNERS interpreter. See ProgramGlobPathTests for examples
-    /// of its behavior.
-    ///
-    /// To use this class, construct it, passing as input relevant paths.
-    /// Then, to obtain the value of the matched entry, reference "Value" member.
+    /// See also ProgramGlobPathTests and CodeownersFileTests tests.
     ///
     /// Reference:
     /// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
@@ -52,9 +55,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// </summary>
         public bool IsValid => IsCodeownersPathValid(this.Value.PathExpression);
 
-        public static bool ContainsUnsupportedFragments(string codeownersPath)
-            => ContainsUnsupportedCharacters(codeownersPath)
-               || ContainsUnsupportedSequences(codeownersPath);
+        /// <summary>
+        /// See the class comment to understand this method purpose.
+        /// </summary>
+        public static bool IsCodeownersPathValid(string codeownersPathExpression)
+            => !ContainsUnsupportedCharacters(codeownersPathExpression) 
+               && !ContainsUnsupportedSequences(codeownersPathExpression);
 
         /// <summary>
         /// Any CODEOWNERS path with these characters will be skipped.
@@ -104,7 +110,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // by the virtue of not ending with "/".
             
             CodeownersEntry matchedEntry = codeownersEntries
-                .Where(entry => !ContainsUnsupportedFragments(entry.PathExpression))
+                .Where(entry => IsCodeownersPathValid(entry.PathExpression))
                 // Entries listed in CODEOWNERS file below take precedence, hence we read the file from the bottom up.
                 // By convention, entries in CODEOWNERS should be sorted top-down in the order of:
                 // - 'RepoPath',
@@ -150,9 +156,18 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 return true;
             }
 
-            // See comment below why we support this path.
+            // See the comment below on why we support this path.
             if (codeownersPath == "/**")
                 return false;
+
+            if (!codeownersPath.StartsWith("/"))
+            {
+                Console.Error.WriteLine(
+                    $"CODEOWNERS path \"{codeownersPath}\" does not start with " +
+                    "\"/\". Prefix it with \"/\". " +
+                    "Until then this path will never match.");
+                return true;
+            }
 
             // We do not support suffix of "/**" because it is equivalent to "/".
             // For example, "/foo/**" is equivalent to "/foo/"
@@ -211,7 +226,6 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         private Regex ConvertToRegex(string codeownersPath)
         {
-            codeownersPath = NormalizePath(codeownersPath);
             Trace.Assert(IsCodeownersPathValid(codeownersPath));
 
             // Special case: path "/**" matches everything.
@@ -269,12 +283,14 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // If a pattern ends with "/*" this means it should match only files
             // in the child directory, but not all descendant directories.
             // Hence we must append "$", to avoid treating the regex pattern
-            // as a prefix match.
+            // as a prefix match and instead treat it as an exact match.
             if (pattern.EndsWith($"/{SingleStar}"))
                 return pattern + "$";
 
+            Trace.Assert(pattern != "^/", "Path \"/\" should have been excluded by validation.");
+
             // If the pattern ends with "/" it means it is a path to a directory,
-            // like "/foo". This means "match everything in this directory,
+            // like "/foo/". This means "match everything in this directory,
             // at arbitrary directory nesting depth."
             //
             // If the pattern ends with "*" but not "/*" (as this case was handled above)
@@ -284,41 +300,19 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             if (pattern.EndsWith("/") || pattern.EndsWith(SingleStar))
                 return pattern;
 
-            // If the pattern doesn't end with "/" nor "*", it is a path to a file,
-            // hence we must append "$", to avoid treating the regex pattern as a
-            // prefix match.
+            // If the pattern doesn't end with "/" nor "*", then according to GitHub CODEOWNERS
+            // matcher it is a path to a file, or to a directory with exact match.
+            // However, in this matcher we assume stricter interpretation where 
+            // it has to be a path to a file.
+            //
+            // As a result we append "$", to avoid treating the regex pattern
+            // as a prefix match and instead treat it as an exact match.
+            //
+            // If that assumption is violated, i.e. the CODEOWNERS path is actually
+            // a path to a directory, due to appending "$" the result will be no match,
+            // e.g. targetPath of "/foo/bar" is a no match against "/foo$".
+            // This is the desired behavior, as we don't want to match against invalid paths.
             return pattern + "$";
         }
-
-        /// <summary>
-        /// CODEOWNERS paths that do not start with "/" are relative and considered invalid,
-        /// See comment on "IsCodeownersPathValid" for definition of "valid".
-        /// However, here we handle such cases to accomodate for parsing CODEOWNERS file
-        /// paths that somehow slipped through that validation. We do so by instead treating
-        /// such paths as if they were absolute to repository root, i.e. starting with "/".
-        /// </summary>
-        private static string NormalizePath(string codeownersPath)
-        {
-            if (!codeownersPath.StartsWith("/"))
-                codeownersPath = "/" + codeownersPath;
-            return codeownersPath;
-        }
-
-        /// <summary>
-        /// The codeownersPathExpression is valid if it obeys following conditions:
-        /// - It starts with "/".
-        /// - It doesn't contain unsupported fragments, including unsupported
-        /// characters, character sequences and character sequence suffixes.
-        ///
-        /// Once the validation described in the following issue is implemented:
-        /// https://github.com/Azure/azure-sdk-tools/issues/4859
-        /// to be valid, the entry will also have to obey following conditions:
-        /// - if the path expression ends with "/" at least one matching
-        /// directory exists in the repository.
-        /// - if the path expression does not end with "/", at least one matching
-        /// file exists in the repository.
-        /// </summary>
-        private static bool IsCodeownersPathValid(string codeownersPathExpression)
-            => codeownersPathExpression.StartsWith("/") && !ContainsUnsupportedFragments(codeownersPathExpression);
     }
 }

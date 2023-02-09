@@ -59,9 +59,9 @@ Services:
       Project: sdk/core/azure-core-perf
       PrimaryPackage: 'com.azure:azure-core'
       PackageVersions:
-      - 'com.azure:azure-core': 1.34.0
-        'com.azure:azure-core-http-netty': 1.12.7
-        'com.azure:azure-core-http-okhttp': 1.11.4
+      - 'com.azure:azure-core': 1.36.0
+        'com.azure:azure-core-http-netty': 1.13.0
+        'com.azure:azure-core-http-okhttp': 1.11.6
       - 'com.azure:azure-core': source
         'com.azure:azure-core-http-netty': source
         'com.azure:azure-core-http-okhttp': source

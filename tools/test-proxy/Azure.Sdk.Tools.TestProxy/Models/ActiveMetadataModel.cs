@@ -51,6 +51,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                         {
                             matcher = session.CustomMatcher;
                         }
+                        break;
                     }
                 }
             }

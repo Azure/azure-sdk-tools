@@ -253,4 +253,28 @@ public class SwaggerApiViewTest
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
     }
+    
+
+    [Fact]
+    public async Task TestCommunicationEmailWithHeaderParameters()
+    {   
+        const string swaggerFilePath = "./fixtures/communicationEmail/spec/communicationEmail.json";
+        var swaggerSpec = await SwaggerDeserializer.Deserialize(swaggerFilePath);
+        
+        const string commonTypeFilePath = "./fixtures/communicationEmail/common/stable/common.json";
+
+        var commonSpec = await SwaggerDeserializer.Deserialize(commonTypeFilePath);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Communication", "Microsoft.Communication");
+        root.AddDefinitionToCache(commonSpec, commonTypeFilePath);
+        root.AddSwaggerSpec(commonSpec, commonTypeFilePath);
+        root.AddSwaggerSpec(swaggerSpec, Path.GetFullPath(swaggerFilePath), "Microsoft.Communication");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./communication_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+        
+    }
 }

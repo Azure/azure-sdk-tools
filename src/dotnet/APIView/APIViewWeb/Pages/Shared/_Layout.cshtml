@@ -31,7 +31,8 @@
     var pageName = ViewContext.RouteData.Values["page"]?.ToString();
     if (pageName.Equals("/Assemblies/Review") || pageName.Equals("/Assemblies/Conversation") || pageName.Equals("/Assemblies/Revisions") || pageName.Equals("/Assemblies/Samples"))
     {
-        fixedPageHeightClass = " fixed-page-height";    }
+        fixedPageHeightClass = " fixed-page-height";
+    }
 }
 <body class="@theme@fixedPageHeightClass">
     <header>
@@ -123,10 +124,6 @@
     <script src="https://cdn.jsdelivr.net/npm/underscore@stable/underscore-umd-min.js"
             crossorigin="anonymous">
     </script>
-    <!--JQuery UI-->
-    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"
-            integrity="sha256-eTyxS0rkjpLEo16uXTS0uVCS4815lc40K2iVpWDvdSY="
-            crossorigin="anonymous">
     </script>
     <script src="~/main.js" asp-append-version="true"></script>
 

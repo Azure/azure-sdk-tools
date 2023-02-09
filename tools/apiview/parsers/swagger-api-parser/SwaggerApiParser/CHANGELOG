@@ -1,5 +1,11 @@
 # Release History
 
+# 1.0.6 (2-2-2023)
+
++ Remove APIView and APIViewWeb dependency 
++ Fix don't resolve response issue
++ Add null check for array item
+
 # 1.0.5 (1-18-2023)
 
 + Fix root schema circular reference issue by adding root schema ref in refChain.
@@ -9,6 +15,7 @@
 + Fix expand array reference issues in definition section. Do not expand array reference in definitions.
 + To keep APIView revision consistent. Json serialization use alwaysMultiline option.
 + Remove unused code and comments.
+
 
 ## 1.0.3 (11-17-2022)
 

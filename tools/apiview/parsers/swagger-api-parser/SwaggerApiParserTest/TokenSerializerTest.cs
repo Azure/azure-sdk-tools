@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using APIView;
 using SwaggerApiParser;
 using Xunit;
 using Xunit.Abstractions;

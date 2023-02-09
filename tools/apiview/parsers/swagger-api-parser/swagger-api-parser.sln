@@ -5,10 +5,6 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SwaggerApiParser", "SwaggerApiParser\SwaggerApiParser.csproj", "{0444F9A1-1230-49B0-B280-D2B887F14EFD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewWeb", "..\..\..\..\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj", "{04A2E9C9-C5D4-4D5C-92CE-66B4BCFCD79A}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIView", "..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj", "{33DFC38B-8A02-48C4-8BCB-334B0D0F5BEE}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SwaggerApiParserTest", "SwaggerApiParserTest\SwaggerApiParserTest.csproj", "{26CFF247-A6EE-41D8-9405-254A05B6150A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{28C36B96-D86C-4126-BD67-7B508C6668D1}"

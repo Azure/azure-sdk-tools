@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Models;
@@ -33,9 +33,9 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpGet]
-        public async Task<ContentResult> Active()
+        public async Task<ContentResult> Active(string id="")
         {
-            var dataModel = new ActiveMetadataModel(_recordingHandler);
+            var dataModel = new ActiveMetadataModel(_recordingHandler, recordingId: id);
             var viewHtml = await RenderViewAsync(this, "ActiveExtensions", dataModel);
 
             return new ContentResult

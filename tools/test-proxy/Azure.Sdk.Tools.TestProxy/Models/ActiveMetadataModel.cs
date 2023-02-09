@@ -7,6 +7,7 @@ using System.Xml;
 using System.IO;
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Concurrent;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace Azure.Sdk.Tools.TestProxy.Models
 {
@@ -31,35 +32,25 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             var transforms = (IEnumerable<ResponseTransform>) handler.Transforms;
             var matcher = handler.Matcher;
 
-            //List<ConcurrentDictionary<string, ModifiableRecordSession>> searchCollections = new List<ConcurrentDictionary<string, ModifiableRecordSession>>()
-            //{
-            //    handler.PlaybackSessions,
-            //    handler.RecordingSessions,
-            //    handler.InMemorySessions
-            //}; 
-            // TODO: convert this guy
+            List<ConcurrentDictionary<string, ModifiableRecordSession>> searchCollections = new List<ConcurrentDictionary<string, ModifiableRecordSession>>()
+            {
+                handler.PlaybackSessions,
+                handler.RecordingSessions,
+                handler.InMemorySessions
+            };
 
             if (!string.IsNullOrWhiteSpace(recordingId)){
-                List<RecordedTestSanitizer> additionalSanitizers = new List<RecordedTestSanitizer>();
-
-                if(handler.RecordingSessions.TryGetValue(recordingId, out var recordSession))
-                {
-                    sanitizers = sanitizers.Concat(recordSession.AdditionalSanitizers);
-                    transforms = transforms.Concat(recordSession.AdditionalTransforms);
-
-                    if (recordSession.CustomMatcher != null)
+                foreach (var sessionDict in searchCollections)
+                { 
+                    if (sessionDict.TryGetValue(recordingId, out var session))
                     {
-                        matcher = recordSession.CustomMatcher;
-                    }
-                }
-                else if (handler.PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
-                {
-                    sanitizers = sanitizers.Concat(playbackSession.AdditionalSanitizers);
-                    transforms = transforms.Concat(playbackSession.AdditionalTransforms);
+                        sanitizers = sanitizers.Concat(session.AdditionalSanitizers);
+                        transforms = transforms.Concat(session.AdditionalTransforms);
 
-                    if (playbackSession.CustomMatcher != null)
-                    {
-                        matcher = playbackSession.CustomMatcher;
+                        if (session.CustomMatcher != null)
+                        {
+                            matcher = session.CustomMatcher;
+                        }
                     }
                 }
             }

@@ -9,6 +9,9 @@ parameters:
 - name: NetLanguageVersion
   type: string
   default: '7'
+  values:
+  - 7
+  - 6
 - name: NetServiceDirectory
   type: string
   default: 'storage/Azure.Storage.Blobs'

@@ -466,6 +466,15 @@ $(() => {
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   addToggleEventHandlers();
 
+  /* RIGHT OFFCANVAS OPERATIONS
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
+   // Open / Close right Offcanvas Menu
+  $("#review-right-offcanvas-toggle").on('click', function () {
+    updatePageSettings(function () {
+      rightOffCanvasNavToggle("review-main-container");
+    });
+  });
+
   // Toggle Subscribe Switch
   $("#reviewSubscribeSwitch").on('change', function () {
     $("#reviewSubscribeForm").submit();
@@ -473,5 +482,18 @@ $(() => {
   // Toggle Close Switch
   $("#reviewCloseSwitch").on('change', function () {
     $("#reviewCloseForm").submit();
+  });
+
+  // Manage Expand / Collapse State of options
+  [$("#approveCollapse"), $("#requestReviewersCollapse"), $("#reviewOptionsCollapse"), $("#pageSettingsCollapse")].forEach(function (value, index) {
+    const id = value.attr("id");
+    value.on('hidden.bs.collapse', function () {
+      console.log(id);
+      document.cookie = `${id}=hidden; max-age=${7 * 24 * 60 * 60}`;
+    });
+    value.on('shown.bs.collapse', function () {
+      console.log(id);
+      document.cookie = `${id}=shown; max-age=${7 * 24 * 60 * 60}`;
+    });
   });
 });

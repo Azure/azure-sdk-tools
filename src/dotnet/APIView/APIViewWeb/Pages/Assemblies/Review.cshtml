@@ -20,7 +20,15 @@
         <p class="h6">
             <a data-bs-toggle="collapse" href="#approveCollapse" aria-expanded="true" aria-controls="approveCollapse">Approve&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
-        <ul class="list-group collapse show mb-3" id="approveCollapse">
+        @{
+            var approvalCollapseState = " show";
+            if (Request.Cookies.ContainsKey("approveCollapse"))
+            {
+                if (!Request.Cookies["approveCollapse"].Equals("shown"))
+                    approvalCollapseState = String.Empty;
+            }
+        }
+        <ul class="list-group collapse mb-3@(approvalCollapseState)" id="approveCollapse">
             <li class="list-group-item">
                 <small>Approves the current revision of the API</small>
                 <form asp-resource="@Model.Review" class="form-inline pt-1" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
@@ -157,7 +165,15 @@
         <p class="h6">
             <a data-bs-toggle="collapse" href="#requestReviewersCollapse" aria-expanded="true" aria-controls="requestReviewersCollapse">Request Reviewers&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
-        <ul class="list-group collapse mb-3" id="requestReviewersCollapse">
+        @{
+            var requestReviewersCollapseState = String.Empty;
+            if (Request.Cookies.ContainsKey("requestReviewersCollapse"))
+            {
+                if (Request.Cookies["requestReviewersCollapse"].Equals("shown"))
+                    requestReviewersCollapseState = " show";
+            }
+        }
+        <ul class="list-group collapse mb-3@(requestReviewersCollapseState)" id="requestReviewersCollapse">
             @{
                 var anyChecked = false;
             }
@@ -208,7 +224,15 @@
         <p class="h6">
             <a data-bs-toggle="collapse" href="#reviewOptionsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Review Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
-        <ul class="list-group collapse show mb-3" id="reviewOptionsCollapse">
+        @{
+            var reviewOptionsCollapseState = " show";
+            if (Request.Cookies.ContainsKey("reviewOptionsCollapse"))
+            {
+                if (Request.Cookies["reviewOptionsCollapse"].Equals("shown"))
+                    reviewOptionsCollapseState = String.Empty;
+            }
+        }
+        <ul class="list-group collapse mb-3@(reviewOptionsCollapseState)" id="reviewOptionsCollapse">
             <li class="list-group-item">
                 <div class="form-check form-switch">
                     <form asp-resource="@Model.Review" class="form-inline" id="reviewSubscribeForm" method="post" asp-page-handler="ToggleSubscribed">
@@ -253,17 +277,39 @@
         <p class="h6">
             <a data-bs-toggle="collapse" href="#pageSettingsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Page Settings&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
-        <ul class="list-group collapse mb-3" id="pageSettingsCollapse">
+        @{
+            var pageSettingsCollapseState = String.Empty;
+            if (Request.Cookies.ContainsKey("pageSettingsCollapse"))
+            {
+                if (Request.Cookies["pageSettingsCollapse"].Equals("shown"))
+                    pageSettingsCollapseState = " show";
+            }
+        }
+        <ul class="list-group collapse mb-3@(pageSettingsCollapseState)" id="pageSettingsCollapse">
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
-                    <label class="form-check-label" for="flexSwitchCheckDefault">Show Comments</label>
+                    @if (userPreference.ShowComments == true)
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-comments-checkbox" checked>
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-comments-checkbox">
+                    }
+                    <label class="form-check-label" for="show-comments-checkbox">Show Comments</label>
                 </div>
             </li>
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
-                    <label class="form-check-label" for="flexSwitchCheckChecked">Show Comments</label>
+                    @if (userPreference.ShowSystemComments == true)
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-system-comments-checkbox" checked>
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-system-comments-checkbox">
+                    }
+                    <label class="form-check-label" for="show-system-comments-checkbox">Show System Comments</label>
                 </div>
             </li>
             <li class="list-group-item">
@@ -336,8 +382,7 @@
                     </div>
                 </li>
             }
-        </ul>
-                   
+        </ul>             
     </div>
 </div>
 
@@ -441,9 +486,11 @@
                     {
                         popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
                     }
-                    <button type="button" class="btn btn-outline-secondary" id="jump-to-first-comment">
-                        <i class="far fa-comment-alt"></i>
-                    </button>
+                    @if (Model.ActiveConversations > 0)
+                    {
+                        <button type="button" class="btn btn-outline-secondary" id="jump-to-first-comment">
+                            <i class="far fa-comment-alt"></i>
+                        </button>                    }
                     <button type="button" class="btn btn-info" data-bs-placement="bottom" data-bs-trigger="focus" data-bs-toggle="popover" data-bs-html="true" data-bs-title="Page Info" data-bs-content="@popOverContent" data-bs-custom-class="custom-popover">
                         <span class="badge">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
                     </button>

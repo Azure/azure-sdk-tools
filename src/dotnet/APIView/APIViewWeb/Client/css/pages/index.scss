@@ -51,7 +51,9 @@
 
 #index-offcanvas-menu-content {
     padding: 130px 20px 10px 20px;
-    @include fixed-offcanvas-height;
+    min-height: calc(100vh - 40px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
 }
 
 #index-offcanvas-menu-content > .input-group {

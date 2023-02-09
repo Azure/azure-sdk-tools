@@ -1,3 +1,5 @@
+import { updatePageSettings } from "../shared/helpers";
+
 $(() => {
   const INVISIBLE = "invisible";
   const SEL_CODE_DIAG = ".code-diagnostics";
@@ -49,13 +51,19 @@ $(() => {
   });
 
   $(document).on("click", "#show-comments-checkbox", e => {
-    ensureMessageIconInDOM();
-    toggleAllCommentsVisibility(e.target.checked);
+    updatePageSettings(function () {
+      const checked = $("#show-comments-checkbox").prop("checked");
+      ensureMessageIconInDOM();
+      toggleAllCommentsVisibility(checked);
+    });
   });
 
   $(document).on("click", "#show-system-comments-checkbox", e => {
-    ensureMessageIconInDOM();
-    toggleAllDiagnosticsVisibility(e.target.checked);
+    updatePageSettings(function () {
+      const checked = $("#show-system-comments-checkbox").prop("checked");
+      ensureMessageIconInDOM();
+      toggleAllDiagnosticsVisibility(checked);
+    });
   });
 
   $(document).on("click", SEL_COMMENT_ICON, e => {

@@ -1,5 +1,25 @@
+@import "../shared/mixins.scss";
+
 #apiview-logo {
     width: 30px;
+}
+
+@include placeholder {
+    font-style: italic;
+}
+
+@keyframes glow {
+    0% {
+        background-color: rgba(0,0,0,0)
+    }
+
+    25% {
+        background-color: #fff6b3
+    }
+
+    100% {
+        background-color: rgba(0,0,0,0)
+    }
 }
 
 body {
@@ -27,6 +47,36 @@ a:hover {
 
 a:visited {
     color: var(--link-visited);
+}
+
+button.accept-policy {
+    font-size: 1rem;
+    line-height: inherit;
+}
+
+form.comment {
+    padding: 12px;
+}
+
+html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+/* Enable clear button in search input
+----------------------------------------------------------------------*/
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    margin-left: .4em;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
+    cursor: pointer;
 }
 
 .sub-header-content {
@@ -92,6 +142,10 @@ a:visited {
     overflow: hidden;
 }
 
+.popover {
+    border: 1px solid var(--border-color);
+}
+
 .popover .popover-arrow::before, .popover .popover-arrow::after {
     border-color: transparent !important;
     border-top-color: var(--primary-color) !important;
@@ -129,4 +183,27 @@ a:visited {
 
 .tooltip.bs-tooltip-top .tooltip-arrow::before {
     border-top-color: var(--primary-color) !important;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar:horizontal {
+    height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    border: solid 3px var(--base-bg-color);
+    background-color: var(--text-muted-color);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-track-piece {
+    background: transparent;
+    background-color: var(--base-fg-color)
+}
+
+::-webkit-scrollbar-corner {
+    background-color: var(--base-fg-color)
 }

@@ -16,6 +16,8 @@ namespace APIViewWeb.Models
         internal bool? _showHiddenApis;
         internal bool? _hideReviewPageOptions;
         internal bool? _hideIndexPageOptions;
+        internal bool? _showComments;
+        internal bool? _showSystemComments;
         internal string _theme;
 
         public string UserName { get; set; }
@@ -87,6 +89,20 @@ namespace APIViewWeb.Models
         {
             get => _hideIndexPageOptions ?? false;
             set => _hideIndexPageOptions = value;
+        }
+
+        [Name("ShowComments")]
+        public bool? ShowComments
+        {
+            get => _showComments ?? true;
+            set => _showComments = value;
+        }
+
+        [Name("ShowSystemComments")]
+        public bool? ShowSystemComments
+        {
+            get => _showSystemComments ?? true;
+            set => _showSystemComments = value;
         }
     }
 }

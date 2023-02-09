@@ -64,8 +64,7 @@
     --primary-color: #{$primary-color};
     $secondary-color: #6F8594;
     --secondary-color: #{$secondary-color};
-    $success-color: #078C03;
-    --success-color: #{$success-color};
+    --success-color: #{$success};
     $info-color: #05DBF2;
     --info-color: #{$info-color};
     --warning-color: #{$orange};
@@ -83,7 +82,7 @@
     --box-shadow-sm: 0 .125rem .25rem #{rgba($white, .075)};
     --box-shadow-lg: 0 1rem 3rem #{rgba($white, .175)};
     --box-shadow-inset: inset 0 1px 2px #{rgba($white, .075)};
-    --box-shadow-success: 0 0 0 0.1rem #{rgba($success-color, 10%)};
+    --box-shadow-success: 0 0 0 0.1rem #{rgba($success, 10%)};
     --box-shadow-link: 0 0 0 0.2rem #{rgba($primary-color, 50%)};
     /*----Nav--------------------------------------------------------*/
     --navbar-bg: #{tint-color($base-bg-color, 20%)};
@@ -119,8 +118,7 @@
     --primary-color: #{$primary-color};
     $secondary-color: #B7B6B7;
     --secondary-color: #{$secondary-color};
-    $success-color: #16A69C;
-    --success-color: #{$success-color};
+    --success-color: #{$success};
     $info-color: #87B0E6;
     --info-color: #{$info-color};
     $warning-color: #D97904;
@@ -140,7 +138,7 @@
     --box-shadow-sm: 0 .125rem .25rem #{rgba($gray-100, .075)};
     --box-shadow-lg: 0 1rem 3rem #{rgba($gray-100, .175)};
     --box-shadow-inset: inset 0 1px 2px #{rgba($gray-100, .075)};
-    --box-shadow-success: 0 0 0 0.1rem #{rgba($success-color, 10%)};
+    --box-shadow-success: 0 0 0 0.1rem #{rgba($success, 10%)};
     --box-shadow-link: 0 0 0 0.2rem #{rgba($primary-color, 50%)};
     /*----Nav--------------------------------------------------------*/
     --navbar-bg: #{tint-color($base-bg-color, 20%)};

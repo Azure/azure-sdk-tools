@@ -48,8 +48,11 @@
 }
 
 #review-offcanvas-menu-content {
-    padding: 180px 20px 10px 20px;
-    @include fixed-offcanvas-height;
+    padding: 10px 20px 10px 20px;
+    min-height: calc(100vh - 190px);
+    max-height: calc(100vh - 190px);
+    overflow-y: auto;
+    margin-top: 150px;
 }
 
 .gutter.gutter-horizontal {

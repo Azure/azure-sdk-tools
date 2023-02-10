@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests;
 /// Enable the new, regex-based, wildcard-supporting CODEOWNERS matcher
 /// https://github.com/Azure/azure-sdk-tools/pull/5088
 /// </summary>
-[TestFixture]//(Ignore = "Tools to be used manually")]
+[TestFixture(Ignore = "Tools to be used manually")]
 public class CodeownersManualAnalysisTests
 {
     private const string OwnersDiffOutputPathSuffix = "_owners_diff.csv";

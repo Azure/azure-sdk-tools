@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests;
 /// Enable the new, regex-based, wildcard-supporting CODEOWNERS matcher
 /// https://github.com/Azure/azure-sdk-tools/pull/5088
 /// </summary>
-[TestFixture(Ignore = "Tools to be used manually")]
+[TestFixture]//(Ignore = "Tools to be used manually")]
 public class CodeownersManualAnalysisTests
 {
     private const string OwnersDiffOutputPathSuffix = "_owners_diff.csv";
@@ -331,7 +331,7 @@ public class CodeownersManualAnalysisTests
     }
 
     // Possible future work:
-    // instead of returning lines with issues, consider returning the  modified & fixed CODEOWNERS file. 
+    // instead of returning lines with issues, consider returning the modified & fixed CODEOWNERS file. 
     // It could work by reading all the lines, then replacing the wrong
     // lines by using dict replacement. Need to be careful about retaining spaces to not misalign,
     // e.g.
@@ -352,6 +352,7 @@ public class CodeownersManualAnalysisTests
         outputLines.AddRange(PathsWithMissingPrefixSlash(entries));
         outputLines.AddRange(PathsWithMissingSuffixSlash(targetDir, entries, paths));
         outputLines.AddRange(InvalidPaths(entries));
+        // TODO: add a check here for CODEOWNERS paths that do not match any dir or file.
 
         return outputLines;
     }
@@ -414,9 +415,13 @@ public class CodeownersManualAnalysisTests
     private static bool MatchesNamePrefix(string[] paths, string trimmedPathExpression)
         => paths.Any(
             path =>
-                path.TrimStart('/').StartsWith(trimmedPathExpression)
-                && path.TrimStart('/').Length != trimmedPathExpression.Length
-                && !path.TrimStart('/').Substring(trimmedPathExpression.Length).StartsWith('/'));
+            {
+                string trimmedPath = path.TrimStart('/');
+                bool pathIsChildDir = trimmedPath.Substring(trimmedPathExpression.Length).StartsWith('/');
+                return trimmedPath.StartsWith(trimmedPathExpression)
+                       && trimmedPath.Length != trimmedPathExpression.Length
+                       && !pathIsChildDir;
+            });
 
     private static bool MatchesDirExactly(string targetDir, string trimmedPathExpression)
     {

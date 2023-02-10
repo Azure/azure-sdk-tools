@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
+using static Azure.Sdk.Tools.PerfAutomation.Program;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
@@ -209,7 +210,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             if (options.Profile)
             {
-                profileDirectory = Directory.CreateDirectory(Path.Combine(options.RepoRoot, "profile"));
+                profileDirectory = Directory.CreateDirectory(Util.GetProfileDirectory(options.RepoRoot));
             }
 
             foreach (var packageVersions in selectedPackageVersions)

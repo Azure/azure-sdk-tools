@@ -231,7 +231,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             if (options.Profile)
             {
-                ZipFile.CreateFromDirectory(profileDirectory.FullName, Path.Combine(profileDirectory.Parent.FullName, profileDirectory.Name + ".zip"));
+                ZipFile.CreateFromDirectory(profileDirectory.FullName, Path.Combine(profileDirectory.Parent.FullName, $"{options.Language}-{profileDirectory.Name}.zip"));
             }
         }
 

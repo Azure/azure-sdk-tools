@@ -97,6 +97,9 @@ The tests marked with trait `Integration` are gated on access to a private githu
 
 When opening the project in VS2022, you may see the following:
 
+![image](https://user-images.githubusercontent.com/45376673/218187142-040881c7-2dfa-4f9f-84c6-c2058d7c878c.png)
+
+
 This is due to the fact that the `test-proxy` is part of a greater tooling repo, and must align with a pinned .NET version. To resolve this issue easily, please do the following.
 
 ```bash

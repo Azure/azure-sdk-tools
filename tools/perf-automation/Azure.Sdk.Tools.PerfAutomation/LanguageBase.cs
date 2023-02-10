@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         protected string ProfileDirectory => Path.GetFullPath(Path.Combine(WorkingDirectory, Language + "-profile"));
 
-        protected string WorkingDirectory => Program.Config.WorkingDirectories[Language];
+        public string WorkingDirectory { get; set; }
 
         public abstract Task CleanupAsync(string project);
 

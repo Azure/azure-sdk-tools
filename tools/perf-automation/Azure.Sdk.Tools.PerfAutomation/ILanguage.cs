@@ -6,6 +6,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 {
     public interface ILanguage
     {
+        string WorkingDirectory { get; set; }
+
         Task CleanupAsync(string project);
 
         IDictionary<string, string> FilterRuntimePackageVersions(IDictionary<string, string> runtimePackageVersions);

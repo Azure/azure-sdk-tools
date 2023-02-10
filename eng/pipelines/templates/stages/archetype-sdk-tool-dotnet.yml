@@ -15,6 +15,9 @@ parameters:
   - name: TestDirectory
     type: string
     default: ''
+  - name: DotNetCoreVersion
+    type: string
+    default: ''
   - name: NoWarn
     type: boolean
     default: false
@@ -62,6 +65,8 @@ stages:
 
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
               
           - script: 'dotnet pack /p:ArtifactsPackagesDir=$(packagesToPublishDir) $(Warn) -c Release'
             displayName: 'Build and Package'
@@ -110,6 +115,8 @@ stages:
 
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
 
           - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
             parameters:
@@ -137,6 +144,8 @@ stages:
 
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            parameters:
+              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
 
           - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
             displayName: 'Test'
@@ -152,7 +161,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: $(System.JobDisplayName)
+              testRunTitle: $(System.JobDisplayName) ${{ parameters.DotNetCoreVersion }}
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 

@@ -209,7 +209,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             if (options.Profile)
             {
-                profileDirectory = Directory.CreateDirectory(Path.Combine(options.RepoRoot, "profile"));
+                profileDirectory = Directory.CreateDirectory(Util.GetProfileDirectory(options.RepoRoot));
             }
 
             foreach (var packageVersions in selectedPackageVersions)
@@ -230,7 +230,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             if (options.Profile)
             {
-                ZipFile.CreateFromDirectory(profileDirectory.FullName, Path.Combine(profileDirectory.Parent.FullName, profileDirectory.Name + ".zip"));
+                ZipFile.CreateFromDirectory(profileDirectory.FullName, Path.Combine(profileDirectory.Parent.FullName, $"{options.Language}-{profileDirectory.Name}.zip"));
             }
         }
 

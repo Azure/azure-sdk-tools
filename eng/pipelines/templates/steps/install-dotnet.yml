@@ -9,12 +9,14 @@ steps:
     inputs:
       useGlobalJson: true
 
-  # We install .NET 6.0.x runtime in addition to .NET coming from global.json because most of our tools target 6.0.x.
+  # We install .NET 6.0.x SDK in addition to .NET coming from global.json because most of our tools target 6.0.x.
   # Once we migrate all tools to a newer .NET version, we should update this to install that version instead.
   - task: UseDotNet@2
     displayName: "Use .NET SDK 6.0.x"
     retryCountOnTaskFailure: 3
     inputs:
+      # We must install sdk, not just runtime, as it is required by some of our tools, like test-proxy.
+      # For context, see PR: TODO
       packageType: sdk
       version: 6.0.x
       # performMultiLevelLookup comes into play when given .NET executable target runtime is different

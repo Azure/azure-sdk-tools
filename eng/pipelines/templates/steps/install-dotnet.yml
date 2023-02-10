@@ -12,14 +12,14 @@ steps:
   # We install .NET 6.0.x runtime in addition to .NET coming from global.json because most of our tools target 6.0.x.
   # Once we migrate all tools to a newer .NET version, we should update this to install that version instead.
   - task: UseDotNet@2
-    displayName: "Use .NET runtime 6.0.x"
+    displayName: "Use .NET SDK 6.0.x"
     retryCountOnTaskFailure: 3
     inputs:
-      packageType: runtime
+      packageType: sdk
       version: 6.0.x
       # performMultiLevelLookup comes into play when given .NET executable target runtime is different
       # than the installed .NET SDK. Without this, such runtime would not be found.
       performMultiLevelLookup: true
 
 # Future work: add NuGet packages caching. See:
-# https://github.com/Azure/azure-sdk-tools/issues/5086
+# https://github.com/Azure/azure-sdk-tools/issues/5086  

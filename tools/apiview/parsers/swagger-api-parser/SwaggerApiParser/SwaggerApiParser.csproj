@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>swaggerAPIParser</ToolCommandName>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>swagger_api_parser</RootNamespace>
     <VersionPrefix>1.0.7</VersionPrefix>
     <AssemblyName>Azure.Sdk.Tools.SwaggerApiParser</AssemblyName>

@@ -1,4 +1,6 @@
-﻿using CsvHelper.Configuration.Attributes;
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+using CsvHelper.Configuration.Attributes;
 
 namespace APIViewWeb.Models
 {

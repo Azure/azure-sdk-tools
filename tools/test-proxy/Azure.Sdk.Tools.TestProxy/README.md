@@ -301,7 +301,7 @@ A [custom transport](https://github.com/Azure/azure-sdk-tools/blob/main/tools/te
 
 ### When finished running test
 
-After your test has finished and there are no additional requests to be recorded.
+After your test has finished and there are no additional requests to be recorded. In test frameworks integrating with the test-proxy, this function should be invoked in the `teardown` function or the language equivalent.
 
 POST to the proxy server:
 

@@ -417,7 +417,9 @@ public class CodeownersManualAnalysisTests
             path =>
             {
                 string trimmedPath = path.TrimStart('/');
-                bool pathIsChildDir = trimmedPath.Substring(trimmedPathExpression.Length).StartsWith('/');
+                bool pathIsChildDir = trimmedPath.Contains("/")
+                                      && trimmedPath.Length > trimmedPathExpression.Length
+                                      && trimmedPath.Substring(trimmedPathExpression.Length).StartsWith('/');
                 return trimmedPath.StartsWith(trimmedPathExpression)
                        && trimmedPath.Length != trimmedPathExpression.Length
                        && !pathIsChildDir;

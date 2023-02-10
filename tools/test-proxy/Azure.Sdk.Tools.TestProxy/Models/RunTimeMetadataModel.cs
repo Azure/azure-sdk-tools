@@ -100,8 +100,10 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                         propValue = "\"" + prop.ToString() + "\"";
                     }
                 }
-                
-                arguments.Add(new Tuple<string, string>(field.Name, propValue));
+                if (!field.Name.Contains("BackingField"))
+                {
+                    arguments.Add(new Tuple<string, string>(field.Name, propValue));
+                }
             }
 
             return new CtorDescription()

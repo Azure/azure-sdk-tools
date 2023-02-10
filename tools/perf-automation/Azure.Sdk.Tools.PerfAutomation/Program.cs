@@ -13,7 +13,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
-using static Azure.Sdk.Tools.PerfAutomation.Program;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {

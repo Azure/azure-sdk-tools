@@ -5,12 +5,22 @@ parameters:
     default: ''
 
 steps:
+  # We set DOTNET_ROLL_FORWARD so that .NET assemblies targeting older versions of .NET can run on newer ones.
+  # See also:
+  # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet#options-for-running-an-application
+  # https://learn.microsoft.com/en-us/dotnet/core/runtime-discovery/troubleshoot-app-launch?pivots=os-windows#required-framework-not-found
+  # https://aka.ms/dotnet/app-launch-failed
+  # https://learn.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=powershell
+  # https://learn.microsoft.com/en-us/azure/devops/pipelines/process/set-variables-scripts?view=azure-devops&tabs=powershell
+  - pwsh: |
+      echo "##vso[task.setvariable variable=DOTNET_ROLL_FORWARD;]Major"
+    displayName: "Set DOTNET_ROLL_FORWARD to Major"
   # https://learn.microsoft.com/azure/devops/pipelines/tasks/reference/use-dotnet-v2?view=azure-pipelines
   - task: UseDotNet@2
     displayName: "Use .NET SDK ${{ coalesce( parameters.DotNetCoreVersion, 'from global.json') }}"
     retryCountOnTaskFailure: 3
     inputs:
-      ${{ if eq( 'parameters.DotNetCoreVersion', '') }}:
+      ${{ if eq( parameters.DotNetCoreVersion, '') }}:
         useGlobalJson: true
       ${{ else }}:
         version: ${{ parameters.DotNetCoreVersion }}

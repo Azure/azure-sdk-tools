@@ -30,7 +30,7 @@ public class SwaggerApiViewGenerator
         AddDefinitionsToCache(swaggerSpec, swaggerFilePath, schemaCache);
         ret.SwaggerApiViewGeneral.xMsParameterizedHost?.ResolveParameters(schemaCache, swaggerFilePath);
 
-            
+
         // If swagger doesn't have any path, it's common definition swagger. 
         if (swaggerSpec.paths.Count == 0)
         {
@@ -64,10 +64,11 @@ public class SwaggerApiViewGenerator
                     PathParameters = new SwaggerApiViewOperationParameters("PathParameters"),
                     QueryParameters = new SwaggerApiViewOperationParameters("QueryParameters"),
                     BodyParameters = new SwaggerApiViewOperationParameters("BodyParameters"),
+                    HeaderParameters = new SwaggerApiViewOperationParameters("HeaderParameters"),
                     Responses = new List<SwaggerApiViewResponse>(),
                     xMsLongRunningOperation = value.xMsLongRunningOperaion
                 };
-                    
+
                 if (value.parameters != null)
                     foreach (var parameter in value.parameters)
                     {
@@ -83,7 +84,7 @@ public class SwaggerApiViewGenerator
                         {
                             continue;
                         }
-                            
+
                         var swaggerApiViewOperationParameter = new SwaggerApiViewParameter
                         {
                             description = param.description,
@@ -108,6 +109,9 @@ public class SwaggerApiViewGenerator
                             case "body":
                                 op.BodyParameters.Add(swaggerApiViewOperationParameter);
                                 break;
+                            case "header":
+                                op.HeaderParameters.Add(swaggerApiViewOperationParameter);
+                                break;
                         }
                     }
 
@@ -121,7 +125,7 @@ public class SwaggerApiViewGenerator
                     var currentSwaggerFilePath = swaggerFilePath;
 
                     //Resolve ref obj for response schema.
-                        
+
                     if (response.schema != null)
                     {
                         // The initial refChain is the root level schema.
@@ -131,7 +135,9 @@ public class SwaggerApiViewGenerator
                         schema = schemaCache.GetResolvedSchema(schema, currentSwaggerFilePath, refChain);
                     }
 
-                    op.Responses.Add(new SwaggerApiViewResponse() {description = response.description, statusCode = statusCode, schema = schema});
+                    var headers = response.headers ?? new Dictionary<string, Header>();
+
+                    op.Responses.Add(new SwaggerApiViewResponse() {description = response.description, statusCode = statusCode, schema = schema, headers = headers});
                 }
 
                 ret.Paths.AddSwaggerApiViewOperation(op);
@@ -172,13 +178,14 @@ public class SwaggerApiViewGenerator
 
     public static void AddDefinitionsToCache(SwaggerSpec swaggerSpec, string swaggerFilePath, SchemaCache schemaCache)
     {
+        var fullPath = Path.GetFullPath(swaggerFilePath);
         if (swaggerSpec.definitions != null)
         {
             foreach (var definition in swaggerSpec.definitions)
             {
                 if (!schemaCache.Cache.ContainsKey(definition.Key))
                 {
-                    schemaCache.AddSchema(swaggerFilePath, definition.Key, definition.Value);
+                    schemaCache.AddSchema(fullPath, definition.Key, definition.Value);
                 }
             }
         }
@@ -190,7 +197,7 @@ public class SwaggerApiViewGenerator
             {
                 if (!schemaCache.ParametersCache.ContainsKey(parameter.Key))
                 {
-                    schemaCache.AddParameter(swaggerFilePath, parameter.Key, parameter.Value);
+                    schemaCache.AddParameter(fullPath, parameter.Key, parameter.Value);
                 }
             }
         }

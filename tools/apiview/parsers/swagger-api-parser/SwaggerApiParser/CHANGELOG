@@ -1,5 +1,11 @@
 # Release History
 
+# 1.0.7 (2-9-2023)
+
++ Support header parameter in operation parameters
++ Support header response in operation responses
++ For schemaCache, use absolute path as key
+
 # 1.0.6 (2-2-2023)
 
 + Remove APIView and APIViewWeb dependency 

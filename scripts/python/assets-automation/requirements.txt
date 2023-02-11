@@ -1,0 +1,3 @@
+requests
+pyyaml
+azure-sdk-tools@git+https://github.com/Azure/azure-sdk-for-python#subdirectory=tools/azure-sdk-tools

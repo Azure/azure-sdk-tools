@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             object context,
             int iteration)
         {
-            var runtimePackageVersions = (Dictionary<string, string>) context;
+            var runtimePackageVersions = (Dictionary<string, string>)context;
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();

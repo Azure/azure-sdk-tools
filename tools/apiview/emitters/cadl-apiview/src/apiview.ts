@@ -8,6 +8,7 @@ import {
   EnumMemberNode,
   EnumSpreadMemberNode,
   EnumStatementNode,
+  getNamespaceFullName,
   IdentifierNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
@@ -90,11 +91,13 @@ export class ApiView {
   indentSize: number = 2;
   namespaceStack = new NamespaceStack();
   typeDeclarations = new Set<string>();
+  includeGlobalNamespace: boolean;
 
-  constructor(name: string, packageName: string, versionString?: string) {
+  constructor(name: string, packageName: string, versionString?: string, includeGlobalNamespace?: boolean) {
     this.name = name;
     this.packageName = packageName;
     this.versionString = versionString ?? "";
+    this.includeGlobalNamespace = includeGlobalNamespace ?? false;
 
     this.emitHeader();
   }
@@ -309,24 +312,39 @@ export class ApiView {
     this.navigationItems.push(item);
   }
 
+  shouldEmitNamespace(name: string): boolean {
+    if (name === "" && this.includeGlobalNamespace) {
+      return true;
+    }
+    if (name === this.packageName) {
+      return true;
+    }
+    if (!name.startsWith(this.packageName)) {
+      return false;
+    }
+    const suffix = name.substring(this.packageName.length);
+    return suffix.startsWith(".");
+  }
+
   emit(program: Program) {
     let allNamespaces = new Map<string, Namespace>();
 
     // collect namespaces in program
     navigateProgram(program, {
       namespace(obj) {
-        const name = program.checker.getNamespaceString(obj);
+        const name = getNamespaceFullName(obj);
         allNamespaces.set(name, obj);
       },
     });
     allNamespaces = new Map([...allNamespaces].sort());
 
-    // Skip namespaces which are outside the root namespace.
     for (const [name, ns] of allNamespaces.entries()) {
-      if (!name.startsWith(this.packageName)) {
+      if (!this.shouldEmitNamespace(name)) {
         continue;
       }
-      const nsModel = new NamespaceModel(name, ns, program);
+      // use a fake name to make the global namespace clear
+      const namespaceName = name == "" ? "::GLOBAL::" : name;
+      const nsModel = new NamespaceModel(namespaceName, ns, program);
       if (nsModel.shouldEmit()) {
         this.tokenizeNamespaceModel(nsModel);
         this.buildNavigation(nsModel);  
@@ -833,7 +851,7 @@ export class ApiView {
         this.blankLines(1);
     }  
     this.endGroup();
-    this.newline();
+    this.blankLines(1);
     this.namespaceStack.pop();
   }
 

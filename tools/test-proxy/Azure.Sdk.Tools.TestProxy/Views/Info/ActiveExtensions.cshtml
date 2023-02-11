@@ -14,9 +14,19 @@
     @await Html.PartialAsync("css.cshtml")
 </head>
 <body>
-    <h1>
-        Test-Proxy - Active Extensions
-    </h1>
+    @if (!string.IsNullOrWhiteSpace(Model.RecordingId))
+    {
+        <h1>
+            Active Extensions for @Model.RecordingId
+        </h1>
+    }
+    else
+    {
+        <h1>
+            Active Extensions for All Sessions
+        </h1>
+    }
+
 
     @if (!string.IsNullOrWhiteSpace(Model.RecordingId))
     {

@@ -8,11 +8,17 @@ using System.IO;
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Concurrent;
 using Microsoft.CodeAnalysis.Operations;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 
 namespace Azure.Sdk.Tools.TestProxy.Models
 {
     public class ActiveMetadataModel : RunTimeMetaDataModel
     {
+        public ActiveMetadataModel(string recordingId)
+        {
+            RecordingId = recordingId;
+        }
+
         public ActiveMetadataModel(RecordingHandler pageRecordingHandler)
         {
             Descriptions = _populateFromHandler(pageRecordingHandler, "");
@@ -39,6 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                 handler.InMemorySessions
             };
 
+            var recordingFound = false;
             if (!string.IsNullOrWhiteSpace(recordingId)){
                 foreach (var sessionDict in searchCollections)
                 { 
@@ -51,8 +58,15 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                         {
                             matcher = session.CustomMatcher;
                         }
+
+                        recordingFound = true;
                         break;
                     }
+                }
+
+                if (!recordingFound)
+                {
+                    throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"{recordingId} is not found in any Playback, Recording, or In-Memory sessions.");
                 }
             }
 

@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Text.Json.JsonSerializer;
+using System.Linq;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
@@ -145,7 +147,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 Console.WriteLine("-- profile start --");
                 Console.WriteLine(primaryPackage);
                 Console.WriteLine(Serialize(packageVersions.ToList()));
-                var profileOutputPath = Path.GetFullPath(Path.Combine(ProfileDirectory, primaryPackage, $"{testName}_{iteration}.cpuprofile"));
+                var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory),primaryPackage, $"{testName}_{iteration}.cpuprofile"));
                 arguments = arguments + $" --profile true --profile-filepath {testName}_{iteration}.cpuprofile";
                 Console.WriteLine(profileOutputPath);
                 Console.WriteLine(arguments);

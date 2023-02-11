@@ -146,7 +146,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 Console.WriteLine("-- profile start --");
                 Console.WriteLine(primaryPackage);
                 Console.WriteLine(Serialize(packageVersions.ToList()));
-                var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory),primaryPackage, $"{testName}_{iteration}.cpuprofile"));
+                var stripPackageName = primaryPackage.Split(new char[] { '/' })[1];
+                var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory),stripPackageName, $"{packageVersions[primaryPackage]}_{testName}_{iteration}.cpuprofile"));
+                
                 arguments = arguments + $" --profile true --profile-filepath {testName}_{iteration}.cpuprofile";
                 Console.WriteLine(profileOutputPath);
                 Console.WriteLine(arguments);

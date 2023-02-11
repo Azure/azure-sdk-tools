@@ -1,3 +1,5 @@
+import { updatePageSettings } from "../shared/helpers";
+
 $(() => {
   const INVISIBLE = "invisible";
   const SEL_CODE_DIAG = ".code-diagnostics";
@@ -49,13 +51,19 @@ $(() => {
   });
 
   $(document).on("click", "#show-comments-checkbox", e => {
-    ensureMessageIconInDOM();
-    toggleAllCommentsVisibility(e.target.checked);
+    updatePageSettings(function () {
+      const checked = $("#show-comments-checkbox").prop("checked");
+      ensureMessageIconInDOM();
+      toggleAllCommentsVisibility(checked);
+    });
   });
 
   $(document).on("click", "#show-system-comments-checkbox", e => {
-    ensureMessageIconInDOM();
-    toggleAllDiagnosticsVisibility(e.target.checked);
+    updatePageSettings(function () {
+      const checked = $("#show-system-comments-checkbox").prop("checked");
+      ensureMessageIconInDOM();
+      toggleAllDiagnosticsVisibility(checked);
+    });
   });
 
   $(document).on("click", SEL_COMMENT_ICON, e => {
@@ -633,14 +641,14 @@ $(() => {
         var previousCommentThreadAnchor = "comment-thread-" + (index - 1);
 
         if (index == 0) {
-          commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+          commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
         }
         else if (index == displayedCommentRows.length - 1) {
-          commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+          commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
         }
         else {
-          commentNavigationButtons.append(`<a class="btn btn-outline-dark" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
-          commentNavigationButtons.append(`<a class="btn btn-outline-dark ml-1" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+          commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+          commentNavigationButtons.append(`<a class="btn btn-outline-secondary ml-1" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
         }
       });
     }

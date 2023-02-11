@@ -1,13 +1,14 @@
 import Split from "split.js";
-import { updatePageSettings } from "./helpers";
+import { updatePageSettings } from "../shared/helpers";
+import { rightOffCanvasNavToggle } from "../shared/off-canvas";
 
 $(() => {  
   const SEL_DOC_CLASS = ".documentation";
   const SHOW_DOC_CHECK_COMPONENT = "#show-documentation-component";
-  const SHOW_DOC_CHECKBOX = ".show-doc-checkbox";
-  const SHOW_DOC_HREF = ".show-document";
+  const SHOW_DOC_CHECKBOX = ".show-documentation-checkbox";
+  const SHOW_DOC_HREF = ".show-documentation-switch";
   const SHOW_DIFFONLY_CHECKBOX = ".show-diffonly-checkbox";
-  const SHOW_DIFFONLY_HREF = ".show-diffonly";
+  const SHOW_DIFFONLY_HREF = ".show-diffonly-switch";
   const TOGGLE_DOCUMENTATION = ".line-toggle-documentation-button";
   const SEL_HIDDEN_CLASS = ".hidden-api-toggleable";
   const SHOW_HIDDEN_CHECK_COMPONENT = "#show-hidden-api-component";
@@ -219,7 +220,7 @@ $(() => {
             if (sectionKeyB)
               uri = uri + '&sectionKeyB=' + sectionKeyB;
 
-            const loadingMarkUp = "<td class='spinner-border spinner-border-sm ml-4' role='status'><span class='sr-only'>Loading...</span></td>";
+            const loadingMarkUp = "<td class='spinner-border spinner-border-sm ms-4' role='status'><span class='sr-only'>Loading...</span></td>";
             const failedToLoadMarkUp = "<div class='alert alert-warning alert-dismissible fade show' role='alert'>Failed to load section. Refresh page and try again.</div>";
             if (sectionContent.children(".spinner-border").length == 0) {
               sectionContent.children("td").after(loadingMarkUp);
@@ -277,6 +278,12 @@ $(() => {
       }
     }
   }
+
+  // Enable SumoSelect
+  $(document).ready(function () {
+    (<any>$("#revision-select")).SumoSelect({ search: true, searchText: 'Search Revisions...' });
+    (<any>$("#diff-select")).SumoSelect({ search: true, searchText: 'Search Revisons for Diff...' });
+  });
 
   /* ADD FUNCTIONS TO LEFT NAVIGATION
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -411,7 +418,7 @@ $(() => {
 
   /* DROPDOWN FILTER FOR REVIEW, REVISIONS AND DIFF (UPDATES REVIEW PAGE ON CHANGE)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  $('#revisions-bootstraps-select, #review-bootstraps-select, #diff-bootstraps-select').each(function(index, value) {
+  $('#revision-select, #diff-select').each(function(index, value) {
     $(this).on('change', function() {
       var url = $(this).find(":selected").val();
       if (url)
@@ -459,8 +466,34 @@ $(() => {
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   addToggleEventHandlers();
 
-  /* ENABLE TOOLTIP AND POPOVER
+  /* RIGHT OFFCANVAS OPERATIONS
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  (<any>$('[data-toggle="tooltip"]')).tooltip();
-  (<any>$('[data-toggle="popover"]')).popover();
+   // Open / Close right Offcanvas Menu
+  $("#review-right-offcanvas-toggle").on('click', function () {
+    updatePageSettings(function () {
+      rightOffCanvasNavToggle("review-main-container");
+    });
+  });
+
+  // Toggle Subscribe Switch
+  $("#reviewSubscribeSwitch").on('change', function () {
+    $("#reviewSubscribeForm").submit();
+  });
+  // Toggle Close Switch
+  $("#reviewCloseSwitch").on('change', function () {
+    $("#reviewCloseForm").submit();
+  });
+
+  // Manage Expand / Collapse State of options
+  [$("#approveCollapse"), $("#requestReviewersCollapse"), $("#reviewOptionsCollapse"), $("#pageSettingsCollapse")].forEach(function (value, index) {
+    const id = value.attr("id");
+    value.on('hidden.bs.collapse', function () {
+      console.log(id);
+      document.cookie = `${id}=hidden; max-age=${7 * 24 * 60 * 60}`;
+    });
+    value.on('shown.bs.collapse', function () {
+      console.log(id);
+      document.cookie = `${id}=shown; max-age=${7 * 24 * 60 * 60}`;
+    });
+  });
 });

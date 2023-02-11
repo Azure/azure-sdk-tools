@@ -1,0 +1,13 @@
+@import "../shared/mixins.scss";
+
+#add-revision-button {
+    @include bottom-right-floating;
+    @include btn-circle;
+    @include btn-circle-xl;
+}
+
+#revisions-main-container {
+    @include fixed-page-heights;
+    padding-right: 0px;
+    padding-left: 0px;
+}

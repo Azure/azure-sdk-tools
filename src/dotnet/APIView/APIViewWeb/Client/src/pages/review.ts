@@ -485,14 +485,12 @@ $(() => {
   });
 
   // Manage Expand / Collapse State of options
-  [$("#approveCollapse"), $("#requestReviewersCollapse"), $("#reviewOptionsCollapse"), $("#pageSettingsCollapse")].forEach(function (value, index) {
+  [$("#approveCollapse"), $("#requestReviewersCollapse"), $("#reviewOptionsCollapse"), $("#pageSettingsCollapse"), $("#associatedPRCollapse"), $("#associatedReviewsCollapse")].forEach(function (value, index) {
     const id = value.attr("id");
     value.on('hidden.bs.collapse', function () {
-      console.log(id);
       document.cookie = `${id}=hidden; max-age=${7 * 24 * 60 * 60}`;
     });
     value.on('shown.bs.collapse', function () {
-      console.log(id);
       document.cookie = `${id}=shown; max-age=${7 * 24 * 60 * 60}`;
     });
   });

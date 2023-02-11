@@ -204,6 +204,63 @@
                 </span>
             </li>
         </ul>
+        @if (Model.Review.FilterType == ReviewType.PullRequest)
+        {
+            var associatedPRs = await Model.GetAssociatedPullRequest();
+            @if (associatedPRs != null && associatedPRs.Count() > 0)
+            {
+                var associatedPRState = String.Empty;
+                if (Request.Cookies.ContainsKey("associatedPRCollapse"))
+                {
+                    if (Request.Cookies["associatedPRCollapse"].Equals("shown"))
+                        associatedPRState = " show";
+                }
+                <p class="h6">
+                    <a data-bs-toggle="collapse" href="#associatedPRCollapse" aria-expanded="true" aria-controls="associatedPRCollapse">Associated Pull Requests&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+                </p>
+                <ul class="list-group collapse mb-3@(associatedPRState)" id="associatedPRCollapse">
+                    @foreach (var prModel in associatedPRs)
+                    {
+                        var url = $"https://github.com/{prModel.RepoName}/pull/{prModel.PullRequestNumber}";
+                        var txt = $"{prModel.RepoName}/{prModel.PullRequestNumber}";
+                        <li class="list-group-item">
+                            <a href="@url" target="_blank">@txt</a>
+                        </li>                    }
+                </ul>
+            } 
+        }
+        @if ((Model.Review.Language == "Swagger" || Model.Review.Language == "Cadl") && 
+            Model.Review.FilterType == ReviewType.PullRequest)
+        {
+            var prsOfAssociatedReviews = await Model.GetPRsOfAssoicatedReviews();
+            @if (prsOfAssociatedReviews != null && prsOfAssociatedReviews.Count() > 1)
+            {
+                var associatedReviewsState = String.Empty;
+                if (Request.Cookies.ContainsKey("associatedReviewsCollapse"))
+                {
+                    if (Request.Cookies["associatedReviewsCollapse"].Equals("shown"))
+                        associatedReviewsState = " show";
+                }
+                <p class="h6">
+                    <a data-bs-toggle="collapse" href="#associatedReviewsCollapse" aria-expanded="true" aria-controls="associatedReviewsCollapse">Associated Reviews&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+                </p>
+                <ul class="list-group collapse mb-3@(associatedReviewsState)" id="associatedReviewsCollapse">
+                    @foreach (var pr in prsOfAssociatedReviews)
+                    {
+                        if (pr.ReviewId != Model.Review.ReviewId)
+                        {
+                            var url = @Url.ActionLink("Review", "Assemblies", new
+                            {
+                                id = pr.ReviewId,
+                            });
+                            <li class="list-group-item">
+                                <a href="@url" target="_blank">@(pr.Language ?? pr.ReviewId)</a>
+                            </li>
+                        }
+                    }
+                </ul>
+            }
+        }
         <p class="h6">
             <a data-bs-toggle="collapse" href="#reviewOptionsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Review Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>

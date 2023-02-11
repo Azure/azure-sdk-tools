@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static System.Text.Json.JsonSerializer;
-using System.Linq;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {

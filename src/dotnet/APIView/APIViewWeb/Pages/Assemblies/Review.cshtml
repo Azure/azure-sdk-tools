@@ -18,7 +18,7 @@
 <div id="right-offcanvas-menu" class="right-offcanvas@(offCanvasClass)">
     <div class="offcanvas-menu-content" id="review-offcanvas-menu-content">
         <p class="h6">
-            <a data-bs-toggle="collapse" href="#approveCollapse" aria-expanded="true" aria-controls="approveCollapse">Approve&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+            <a data-bs-toggle="collapse" href="#approveCollapse" aria-expanded="true" aria-controls="approveCollapse">Approval&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
         @{
             var approvalCollapseState = " show";
@@ -29,9 +29,8 @@
             }
         }
         <ul class="list-group collapse mb-3@(approvalCollapseState)" id="approveCollapse">
-            <li class="list-group-item">
-                <small>Approves the current revision of the API</small>
-                <form asp-resource="@Model.Review" class="form-inline pt-1" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+            <li class="list-group-item text-center">
+                <form asp-resource="@Model.Review" class="form-inline" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
                     <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
                     @if (Model.DiffRevision == null || Model.DiffRevision.Approvers.Count > 0)
                     {
@@ -45,46 +44,26 @@
                         {
                             @if (Model.ActiveConversations > 0 && Model.PreferredApprovers.Contains(User.GetGitHubLogin()))
                             {
+                                <span class="small text-muted">Approves the current revision of the API</span>
                                 <div class="d-grid gap-2">
                                     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModel">
-                                        Approve for GA
+                                        Approve With Modal
                                     </button>
-                                </div>
-
-                                <div class="modal fade" id="approveModel" tabindex="-1" role="dialog">
-                                    <div class="modal-dialog" role="document">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Approve Review</h5>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p> There are still active conversations. <br /> Would you like to review these first? </p>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <a asp-page="Conversation" asp-route-id="@Model.Review.ReviewId">
-                                                    <div class="btn btn-outline-secondary">Check Conversations</div>
-                                                </a>
-                                                <button type="submit" class="btn btn-success">
-                                                    Approve API Anyway
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             }
                             else
                             {
                                 @if (Model.PreferredApprovers.Contains(User.GetGitHubLogin()))
                                 {
+                                    <span class="small text-muted">Approves the current revision of the API</span>
                                     <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-success">Approve for GA</button>
+                                        <button type="submit" class="btn btn-success">Approve</button>
                                     </div>
                                 }
                                 else
                                 {
                                     <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-outline-secondary" disabled>Cannot Approve for GA</button>
+                                        <button type="submit" class="btn btn-outline-secondary" disabled>Cannot Approve</button>
                                     </div>
                                 }
                             }
@@ -104,7 +83,7 @@
                         {
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-outline-secondary" disabled data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
-                                    <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve API
+                                    Approve API
                                 </button>
                             </div>
                         }
@@ -112,7 +91,7 @@
                 </form>
                 @if (Model.Revision.Approvers.Count > 0)
                 {
-                    <span class="small">
+                    <span class="small text-muted">
                         Approvers:
                         @{
                             int i = 0;
@@ -129,38 +108,42 @@
                         }
                     </span>
                 }
-            </li>
-            <li class="list-group-item">
-                @if (Model.Review.Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName != null)
+                else
                 {
-                    var approver = Model.Review.ApprovedForFirstReleaseBy ?? Model.Review.Revisions.LastOrDefault(r => r.IsApproved)?.Approvers?.FirstOrDefault();
-                    var nameApprovalTip = approver != null ? "Package has been approved for first release by " + approver : "Package has been approved for first release";
-
-                    <form asp-resource="@Model" class="form-inline py-1" asp-controller="Review" asp-action="ApprovePackageName" asp-route-id="@Model.Review.ReviewId" method="post" asp-requirement="@ApproverRequirement.Instance">
-                        @if (!Model.Review.IsApprovedForFirstRelease)
-                        {
-                            <small class="my-1">Approval for First Release.</small>
+                    <span class="small text-muted">Current Revision Approval Pending</span>                }
+            </li>
+            @if (Model.Review.Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName != null && 
+                 Model.Review.Language != "Swagger" && Model.Review.Language != "Cadl")
+            {
+                var approver = Model.Review.ApprovedForFirstReleaseBy ?? Model.Review.Revisions.LastOrDefault(r => r.IsApproved)?.Approvers?.FirstOrDefault();
+                @if (!Model.Review.IsApprovedForFirstRelease)
+                {
+                    <li class="list-group-item text-center">
+                        <form asp-resource="@Model" class="form-inline" asp-controller="Review" asp-action="ApprovePackageName" asp-route-id="@Model.Review.ReviewId" method="post" asp-requirement="@ApproverRequirement.Instance">
+                            <span class="small mb-2 text-muted">Approves First Release of the package</span>
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-success" title="Package name must be approved before first preview release of a new package.">
                                     Approve First Release
                                 </button>
                             </div>
-
+                        </form>
+                        <span class="small mt-2 text-muted">First Revision Approval Pending</span>
+                    </li>
+                }
+                else
+                {
+                    <li class="list-group-item text-center">
+                        @if (approver != null)
+                        {
+                            <span class="small my-1 text-muted">Package has been approved for first release by <a username="@approver">@approver</a></span>
                         }
                         else
                         {
-                            @if (approver != null)
-                            {
-                                <span class="small my-1">Package has been approved for first release by <a username="@approver">@approver</a></span>
-                            }
-                            else
-                            {
-                                <span class="small my-1">Package has been approved for first release</span>
-                            }
+                            <span class="small my-1 text-muted">Package has been approved for first release</span>
                         }
-                    </form>
+                    </li>
                 }
-            </li>
+            }
         </ul>
         <p class="h6">
             <a data-bs-toggle="collapse" href="#requestReviewersCollapse" aria-expanded="true" aria-controls="requestReviewersCollapse">Request Reviewers&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
@@ -312,7 +295,7 @@
                     <label class="form-check-label" for="show-system-comments-checkbox">Show System Comments</label>
                 </div>
             </li>
-            <li class="list-group-item">
+            <li class="list-group-item" id="show-documentation-component">
                 <div class="form-check form-switch">
                     @if (Model.ShowDocumentation)
                     {
@@ -327,7 +310,7 @@
                     </a>
                 </div>
             </li>
-            <li class="list-group-item">
+            <li class="list-group-item" id="show-hidden-api-component">
                 <div class="form-check form-switch">
                     @if (userPreference.ShowHiddenApis == true)
                     {
@@ -397,7 +380,7 @@
                 <select id="revision-select" aria-label="Revision Select">
                     @foreach (var revision in Model.Review.Revisions.Reverse())
                     {
-                        var optionName = revision.IsApproved ? $"{@revision.DisplayNameShort} ✔" : @revision.DisplayNameShort;
+                        var optionClass = revision.IsApproved ? "option-approved" : "option-pending";
                         var urlValue = @Url.ActionLink("Review", "Assemblies", new
                         {
                             id = @Model.Review.ReviewId,
@@ -406,11 +389,11 @@
                         });
                         if (@revision.DisplayName == @Model.Revision.DisplayName)
                         {
-                            <option selected value="@urlValue">@optionName</option>
+                            <option selected value="@urlValue" class="@optionClass">@revision.DisplayName</option>
                         }
                         else
                         {
-                            <option value="@urlValue">@optionName</option>
+                            <option value="@urlValue" class="@optionClass">@revision.DisplayName</option>
                         }
                     }
                 </select>
@@ -449,7 +432,7 @@
                         }
                         @foreach (var revision in Model.PreviousRevisions.Reverse())
                         {
-                            var optionName = revision.IsApproved ? $"{@revision.DisplayNameShort} ✔" : @revision.DisplayNameShort;
+                            var optionClass = revision.IsApproved ? "option-approved" : "option-pending";
                             var urlValue = @Url.ActionLink("Review", "Assemblies", new
                             {
                                 id = @Model.Review.ReviewId,
@@ -462,18 +445,18 @@
                             {
                                 if (@Model.DiffRevisionId == @revision.RevisionId)
                                 {
-                                    <option value="@urlValue" selected>@optionName</option>
+                                    <option value="@urlValue" selected class="@optionClass">@revision.DisplayName</option>
                                 }
                                 else
                                 {
-                                    <option value="@urlValue">@optionName</option>
+                                    <option value="@urlValue" class="@optionClass">@revision.DisplayName</option>
                                 }
                             }
                             else
                             {
                                 if (@Model.DiffRevisionId != @revision.RevisionId)
                                 {
-                                    <option value="@urlValue">@optionName</option>
+                                    <option value="@urlValue" class="@optionClass">@revision.DisplayName</option>
                                 }
                             }
                         }
@@ -545,5 +528,30 @@
             </table>
         </div>
     </div>
+
+    <form asp-resource="@Model.Review" class="form-inline" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+        <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
+        <div class="modal fade" id="approveModel" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Approve Review</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p> There are still active conversations. <br /> Would you like to review these first? </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <a asp-page="Conversation" asp-route-id="@Model.Review.ReviewId">
+                            <div class="btn btn-outline-secondary">Check Conversations</div>
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            Approve API Anyway
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
     <partial name="_CommentFormPartial" model="@Model.TaggableUsers" /> 
 </div>

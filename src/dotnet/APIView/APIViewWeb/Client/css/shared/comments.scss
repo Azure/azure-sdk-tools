@@ -36,7 +36,7 @@
 .comment-contents {
     margin-bottom: 3px;
     overflow-wrap: anywhere;
-    overflow-x: auto;
+    display: inline-grid;
 }
 
 .comment-contents .fw-bold {

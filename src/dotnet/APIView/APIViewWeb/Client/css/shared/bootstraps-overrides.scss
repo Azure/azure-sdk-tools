@@ -172,6 +172,15 @@ select {
     border: 1px solid var(--border-color);
 }
 
+.dropdown-header {
+    color: var(--base-text-color);
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+    color: var(--base-text-color);
+    background-color: var(--base-bg-color);
+}
+
 .table {
     color: var(--base-text-color);
 }

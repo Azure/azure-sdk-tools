@@ -45,17 +45,6 @@ namespace APIViewWeb
         }
 
         [JsonIgnore]
-        public string DisplayNameShort
-        {
-            get
-            {
-                return Label != null ?
-                    $"rev {RevisionNumber} - {Label}" :
-                    $"rev {RevisionNumber}";
-            }
-        }
-
-        [JsonIgnore]
         public string DisplayName
         {
             get
@@ -72,7 +61,9 @@ namespace APIViewWeb
                     // the feature to allow for editing revision names cleaner.
                     name = Name;
                 }
-                return $"{DisplayNameShort} - {name}";
+                return Label != null ?
+                    $"rev {RevisionNumber} - {Label} - {name}" :
+                    $"rev {RevisionNumber} - {name}";
             }
         }
 

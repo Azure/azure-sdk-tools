@@ -74,3 +74,15 @@
         cursor: col-resize;
     }
 }
+
+.option-approved > label, .option-pending > label {
+    font-size: small;
+}
+
+.option-approved > label::after {
+    content: "";
+    font-family: "FontAwesome";
+    margin-left: 10px;
+    color: var(--success-color);
+    font-size: medium;
+}

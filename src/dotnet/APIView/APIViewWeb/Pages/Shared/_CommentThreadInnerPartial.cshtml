@@ -12,20 +12,6 @@
             <span>
                 <a username="@Model.Username" class="fw-bold mt-0">@Model.Username</a>
                 <a date="@Model.TimeStamp.ToLocalTime()" href="#@Model.CommentId" class="small"></a>
-            </span>
-            <span class="float-end me-1">
-                <form class="float-start me-1" data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
-                    <input type="hidden" name="commentId" value="@Model.CommentId" />
-                    <button type="submit" class="btn btn-xs btn-upvote border" title="@string.Join(", ", Model.Upvotes)" active-if="@Model.Upvotes.Contains(User.GetGitHubLogin())">
-                        @{
-                             <span active-if="@Model.Upvotes.Any()">👍</span>
-                            if (Model.Upvotes.Any())
-                            {
-                                <small class="me-1">@Model.Upvotes.Count</small>
-                            }
-                        }
-                    </button>
-                </form>
 
                 <div class="dropup float-end">
                     <a class="btn btn-xs p-1 border" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Dropdown Menu Button">
@@ -44,16 +30,29 @@
                         }
                         <li><h4 class="dropdown-header">Create GitHub Issue</h4></li>
                         <div class="px-4">
-                            <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-net" data-repo-language="c#">.NET</a>
-                            <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-java" data-repo-language="java">Java</a>
-                            <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-python" data-repo-language="python">Python</a>
-                            <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-c" data-repo-language="c">C</a>
-                            <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-js" data-repo-language="javascript">JavaScript</a>
-                            <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-go" data-repo-language="go">Go</a>
-                            <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-cpp" data-repo-language="c++">C++</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-net" data-repo-language="c#">.NET</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-java" data-repo-language="java">Java</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-python" data-repo-language="python">Python</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-c" data-repo-language="c">C</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-js" data-repo-language="javascript">JavaScript</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-go" data-repo-language="go">Go</a>
+                            <a href="#" class="badge border js-github" data-repo="azure-sdk-for-cpp" data-repo-language="c++">C++</a>
                         </div>
                     </div>
                 </div>
+
+                <form class="float-end me-1" data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
+                    <input type="hidden" name="commentId" value="@Model.CommentId" />
+                    <button type="submit" class="btn btn-xs btn-upvote border" title="@string.Join(", ", Model.Upvotes)" active-if="@Model.Upvotes.Contains(User.GetGitHubLogin())">
+                        @{
+                             <span active-if="@Model.Upvotes.Any()">👍</span>
+                            if (Model.Upvotes.Any())
+                            {
+                                <small class="me-1">@Model.Upvotes.Count</small>
+                            }
+                        }
+                    </button>
+                </form>
             </span>
             <textarea class="js-comment-raw d-none">@Model.Comment</textarea>
             @if (Model.Comment.Contains("\r\n"))

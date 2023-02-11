@@ -27,8 +27,8 @@
 {
     @if (Model.IsApprovedForFirstRelease)
     {
-        <span class="input-group-text">
-            <i class="fa-regular fa-circle-check"></i>
+        <span class="input-group-text" data-bs-toggle="tooltip" title="Approved for First Release">
+            <i class="fa-regular fa-circle-check text-success"></i>
         </span>
     }
 }

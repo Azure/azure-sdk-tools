@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using APIView;
 
 namespace SwaggerApiParser;
 
@@ -86,10 +85,8 @@ public class SwaggerApiViewPaths : SortedDictionary<string, List<SwaggerApiViewO
         ret.Add(TokenSerializer.FoldableContentStart());
         foreach (var (key, value) in this)
         {
-            // ret.Add(TokenSerializer.Intent(context.intent));
             context.IteratorPath.Add(key);
             ret.Add(TokenSerializer.NavigableToken(key, CodeFileTokenKind.FoldableSectionHeading, context.IteratorPath.CurrentPath()));
-            ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
             
             ret.Add(TokenSerializer.FoldableContentStart());
@@ -98,7 +95,6 @@ public class SwaggerApiViewPaths : SortedDictionary<string, List<SwaggerApiViewO
             {
                 context.IteratorPath.AddRange(new List<string>{idx.ToString(), "operationId", operation.operationId});
                 
-                // ret.Add(TokenSerializer.Intent(context.intent + 1));
                 ret.Add(TokenSerializer.NavigableToken($"{operation.method.ToUpper()}", CodeFileTokenKind.FoldableSectionHeading, context.IteratorPath.CurrentPath()));
                 ret.Add(TokenSerializer.NewLine());
 

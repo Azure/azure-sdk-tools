@@ -26,7 +26,6 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/code-owners-parser
-    DotNetCoreVersion: 5.0.301
     TestPostSteps:
       - task: PowerShell@2
         displayName: Test on code owner script

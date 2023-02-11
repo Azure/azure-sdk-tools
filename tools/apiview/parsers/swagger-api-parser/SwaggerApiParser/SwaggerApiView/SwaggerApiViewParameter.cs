@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using APIView;
-using Microsoft.VisualBasic;
 
 namespace SwaggerApiParser;
 
@@ -63,7 +61,6 @@ public class SwaggerApiViewParameter : ITokenSerializable
             return ret.ToArray();
         }
 
-        // ret.Add(TokenSerializer.Intent(context.intent));
 
         string[] columns = new[] {"name", "Type/Format", "In", "Keywords", "Description"};
 
@@ -107,7 +104,6 @@ public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, 
             return ret.ToArray();
         }
 
-        // ret.Add(TokenSerializer.Intent(context.intent));
         ret.Add(TokenSerializer.NavigableToken(this.type, CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath(this.type)));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());

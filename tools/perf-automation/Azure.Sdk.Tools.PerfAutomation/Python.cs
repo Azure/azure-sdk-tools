@@ -17,7 +17,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
         protected override Language Language => Language.Python;
 
         public override async Task<(string output, string error, object context)> SetupAsync(
-            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var env = Path.Combine(projectDirectory, _env);
@@ -28,7 +31,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var errorBuilder = new StringBuilder();
 
             // On Windows, always use "python".  On Unix-like systems, specify the major and minor versions, e.g "python3.7".
-            var systemPython = Util.IsWindows ? "python" : "python" + Regex.Match(languageVersion, @"^\d+\.\d+").Value;
+            var systemPython = Util.IsWindows ? "python" : "python" + languageVersion;
 
             // Create venv
             await Util.RunAsync(systemPython, $"-m venv {_env}", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
@@ -65,8 +68,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (outputBuilder.ToString(), errorBuilder.ToString(), null);
         }
 
-        public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context)
+        public override async Task<IterationResult> RunAsync(
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            string testName,
+            string arguments,
+            bool profile,
+            object context)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 

@@ -8,6 +8,7 @@ import {
   EnumMemberNode,
   EnumSpreadMemberNode,
   EnumStatementNode,
+  getNamespaceFullName,
   IdentifierNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
@@ -23,6 +24,7 @@ import {
   OperationSignatureReferenceNode,
   OperationStatementNode,
   Program,
+  ScalarStatementNode,
   StringLiteralNode,
   SyntaxKind,
   TemplateParameterDeclarationNode,
@@ -89,11 +91,13 @@ export class ApiView {
   indentSize: number = 2;
   namespaceStack = new NamespaceStack();
   typeDeclarations = new Set<string>();
+  includeGlobalNamespace: boolean;
 
-  constructor(name: string, packageName: string, versionString?: string) {
+  constructor(name: string, packageName: string, versionString?: string, includeGlobalNamespace?: boolean) {
     this.name = name;
     this.packageName = packageName;
     this.versionString = versionString ?? "";
+    this.includeGlobalNamespace = includeGlobalNamespace ?? false;
 
     this.emitHeader();
   }
@@ -308,24 +312,39 @@ export class ApiView {
     this.navigationItems.push(item);
   }
 
+  shouldEmitNamespace(name: string): boolean {
+    if (name === "" && this.includeGlobalNamespace) {
+      return true;
+    }
+    if (name === this.packageName) {
+      return true;
+    }
+    if (!name.startsWith(this.packageName)) {
+      return false;
+    }
+    const suffix = name.substring(this.packageName.length);
+    return suffix.startsWith(".");
+  }
+
   emit(program: Program) {
     let allNamespaces = new Map<string, Namespace>();
 
     // collect namespaces in program
     navigateProgram(program, {
       namespace(obj) {
-        const name = program.checker.getNamespaceString(obj);
+        const name = getNamespaceFullName(obj);
         allNamespaces.set(name, obj);
       },
     });
     allNamespaces = new Map([...allNamespaces].sort());
 
-    // Skip namespaces which are outside the root namespace.
     for (const [name, ns] of allNamespaces.entries()) {
-      if (!name.startsWith(this.packageName)) {
+      if (!this.shouldEmitNamespace(name)) {
         continue;
       }
-      const nsModel = new NamespaceModel(name, ns, program);
+      // use a fake name to make the global namespace clear
+      const namespaceName = name == "" ? "::GLOBAL::" : name;
+      const nsModel = new NamespaceModel(namespaceName, ns, program);
       if (nsModel.shouldEmit()) {
         this.tokenizeNamespaceModel(nsModel);
         this.buildNavigation(nsModel);  
@@ -514,6 +533,9 @@ export class ApiView {
         obj = node as StringLiteralNode;
         this.stringLiteral(obj.value);
         break;
+      case SyntaxKind.ScalarStatement:
+        this.tokenizeScalarStatement(node as ScalarStatementNode);
+        break;
       case SyntaxKind.TemplateParameterDeclaration:
         obj = node as TemplateParameterDeclarationNode;
         this.tokenize(obj.id);
@@ -611,6 +633,20 @@ export class ApiView {
     } else {
       this.punctuation("{}", true, false);
     }
+    this.namespaceStack.pop();
+  }
+
+  private tokenizeScalarStatement(node: ScalarStatementNode) {
+    this.namespaceStack.push(node.id.sv);
+    this.tokenizeDecorators(node.decorators, false);
+    this.keyword("scalar", false, true);
+    this.tokenizeIdentifier(node.id, "declaration");
+    if (node.extends != undefined) {
+      this.keyword("extends", true, true);
+      this.tokenize(node.extends);
+    }
+    this.tokenizeTemplateParameters(node.templateParameters);
+    this.blankLines(0);
     this.namespaceStack.pop();
   }
 
@@ -810,8 +846,12 @@ export class ApiView {
       this.tokenize(node);
       this.blankLines(1);
     }
+    for (const node of model.aliases.values()) {
+        this.tokenize(node);
+        this.blankLines(1);
+    }  
     this.endGroup();
-    this.newline();
+    this.blankLines(1);
     this.namespaceStack.pop();
   }
 
@@ -901,7 +941,7 @@ export class ApiView {
             this.typeDeclaration(node.sv, this.namespaceStack.value());
             break;
           case "reference":
-            const defId = this.definitionIdFor(node.sv);
+            const defId = this.definitionIdFor(node.sv, this.packageName);
             this.typeReference(node.sv, defId);
             break;
           case "member":
@@ -971,7 +1011,7 @@ export class ApiView {
   resolveMissingTypeReferences() {
     for (const token of this.tokens) {
       if (token.Kind == ApiViewTokenKind.TypeName && token.NavigateToId == "__MISSING__") {
-        token.NavigateToId = this.definitionIdFor(token.Value!);
+        token.NavigateToId = this.definitionIdFor(token.Value!, this.packageName);
       }
     }
   }
@@ -988,9 +1028,10 @@ export class ApiView {
     };
   }
 
-  definitionIdFor(value: string): string | undefined {
+  definitionIdFor(value: string, prefix: string): string | undefined {
     if (value.includes(".")) {
-      return this.typeDeclarations.has(value) ? value : undefined;
+      const fullName = `${prefix}.${value}`;
+      return this.typeDeclarations.has(fullName) ? fullName : undefined;
     }
     for (const item of this.typeDeclarations) {
       if (item.split(".").splice(-1)[0] == value) {

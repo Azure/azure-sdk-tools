@@ -7,11 +7,12 @@ import {
   ModelStatementNode,
   OperationStatementNode,
   ProjectionModelExpressionNode,
+  ScalarStatementNode,
   SyntaxKind,
   UnionExpressionNode,
   UnionStatementNode,
 } from "@cadl-lang/compiler";
-import { NamespaceStack } from "./apiview.js";
+import { ApiView, NamespaceStack } from "./apiview.js";
 import { NamespaceModel } from "./namespace-model.js";
 
 export class ApiViewNavigation {
@@ -31,6 +32,7 @@ export class ApiViewNavigation {
       | ModelExpressionNode
       | IntersectionExpressionNode
       | ProjectionModelExpressionNode
+      | ScalarStatementNode
       | UnionStatementNode
       | UnionExpressionNode,
       stack: NamespaceStack
@@ -53,6 +55,10 @@ export class ApiViewNavigation {
         for (const node of objNode.models.values()) {
           modelItems.push(new ApiViewNavigation(node, stack));
         }
+        const aliasItems = new Array<ApiViewNavigation>();
+        for (const node of objNode.aliases.values()) {
+            aliasItems.push(new ApiViewNavigation(node, stack));
+        }
         this.ChildItems = [];
         if (operationItems.length) {
           this.ChildItems.push({ Text: "Operations", ChildItems: operationItems, Tags: { TypeKind: ApiViewNavigationKind.Method }, NavigationId: "" });
@@ -62,6 +68,9 @@ export class ApiViewNavigation {
         }
         if (modelItems.length) {
           this.ChildItems.push({ Text: "Models", ChildItems: modelItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" });
+        }
+        if (aliasItems.length) {
+            this.ChildItems.push({ Text: "Aliases", ChildItems: aliasItems, Tags: { TypeKind: ApiViewNavigationKind.Class }, NavigationId: "" });
         }
         break;
       case SyntaxKind.ModelStatement:
@@ -115,6 +124,13 @@ export class ApiViewNavigation {
         throw new Error(`Navigation unsupported for "IntersectionExpression".`);
       case SyntaxKind.ProjectionModelExpression:
         throw new Error(`Navigation unsupported for "ProjectionModelExpression".`);
+      case SyntaxKind.ScalarStatement:
+        obj = objNode as ScalarStatementNode;
+        stack.push(obj.id.sv);
+        this.Text = obj.id.sv;
+        this.Tags = { TypeKind: ApiViewNavigationKind.Class };
+        this.ChildItems = [];
+        break;
       default:
         throw new Error(`Navigation unsupported for "${objNode.kind.toString()}".`);
     }

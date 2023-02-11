@@ -1,9 +1,10 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using APIViewWeb.Repositories;
+using APIViewWeb.Managers;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
@@ -14,12 +15,14 @@ namespace APIViewWeb.HostedServices
     public class ReviewBackgroundHostedService : BackgroundService
     {
         private readonly bool _isDisabled;
-        private readonly ReviewManager _reviewManager;
+        private readonly IReviewManager _reviewManager;
         private readonly int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
+        private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
+        private readonly int _backgroundBatchProcessCount;
 
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
-        public ReviewBackgroundHostedService(ReviewManager reviewManager, IConfiguration configuration)
+        public ReviewBackgroundHostedService(IReviewManager reviewManager, IConfiguration configuration)
         {
             _reviewManager = reviewManager;
             // We can disable background task using app settings if required
@@ -33,6 +36,18 @@ namespace APIViewWeb.HostedServices
             {
                 _autoArchiveInactiveGracePeriodMonths = 4;
             }
+            var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
+            if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
+            {
+                _upgradeDisabledLangs.UnionWith(backgroundTaskDisabledLangs.Split(','));
+            }
+
+            // Number of review revisions to be passed to pipeline when updating review with a new parser version
+            var batchCount = configuration["ReviewUpdateBatchCount"];
+            if (String.IsNullOrEmpty(batchCount) || !int.TryParse(batchCount, out _backgroundBatchProcessCount))
+            {
+                _backgroundBatchProcessCount = 20;
+            }
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -41,7 +56,7 @@ namespace APIViewWeb.HostedServices
             {
                 try
                 {
-                    await _reviewManager.UpdateReviewBackground();
+                    await _reviewManager.UpdateReviewBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount);
                     await ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
                 }
                 catch (Exception ex)

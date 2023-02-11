@@ -14,11 +14,15 @@
                 <partial name="Shared/_ReviewBadge" model=" Model.Review" />
             </div>
         </div>
-        <div class="row" asp-resource="@Model.Review" asp-requirement="@AutoReviewModifierRequirement.Instance">
-            <div class="bottom-right-floating">
-                <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>ADD</small></br><i class="fas fa-sm fa-plus"></i></br><small>REVISION</small></button>
-            </div>
-        </div>
+        @if (Model.Review.FilterType == ReviewType.Manual)
+        {
+            <div class="row" asp-resource="@Model.Review" asp-requirement="@AutoReviewModifierRequirement.Instance">
+                <div class="bottom-right-floating">
+                         <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>REVISION</small></button>
+                </div>
+             </div>
+        }
+        
 
         <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
@@ -31,12 +35,35 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <div class="form-group">
-                                <div class="custom-file">
-                                    <input name="upload" type="file" class="custom-file-input">
-                                    <label for="upload" class="custom-file-label">Select file to add</label>
+                            @if (Model.Review.Language != "Cadl")
+                            {
+                                <div class="form-group">
+                                    <div class="custom-file">
+                                        <input name="upload" type="file" class="custom-file-input">
+                                        <label for="upload" class="custom-file-label">Select file to add</label>
+                                    </div>
                                 </div>
-                            </div>
+                            }
+                            else
+                            {
+                                <div class="form-group">
+                                    <span>
+                                        <select asp-for="Language" class="selectpicker show-menu-arrow shadow-sm mr-20 ml-20" data-style="btn-light btn-sm border" data-selected-text-format="value" id="revision-language-select">
+                                            <option selected value="Cadl">Cadl</option>
+                                            <option value="Json" data-content="Json">Json</option>
+                                        </select>
+                                    </span>
+                                </div>
+                                <div class="form-group package-file-selector hidden-row">
+                                    <div class="custom-file">
+                                        <input name="upload" type="file" class="custom-file-input">
+                                        <label for="upload" class="custom-file-label">Select file to add</label>
+                                    </div>
+                                </div>
+                                <div class="form-group package-file-selector">
+                                    <input asp-for="FilePath" class="form-control" type="text" placeholder="Enter URL to package root source. For e.g. URL to CADL file">
+                                </div>
+                            }
                             <div>
                                 <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional revision label">
                             </div>

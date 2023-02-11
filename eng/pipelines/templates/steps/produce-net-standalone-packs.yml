@@ -1,0 +1,74 @@
+parameters:
+  - name: TargetDirectory
+    type: string
+  - name: StagingDirectory
+    type: string
+    default: $(Build.ArtifactStagingDirectory)
+  - name: BuildMatrix
+    type: object
+    default: []
+
+# A `BuildMatrix` is merely a list of possible targeted platforms. .NET 6+ can build for any target from any other target.
+  # - rid: win-x64
+  #   framework: net6.0
+  #   assembly: Azure.Sdk.Tools.TestProxy
+  # - rid: linux-x64
+  #   framework: net6.0
+  #   assembly: Azure.Sdk.Tools.TestProxy
+  # - rid: osx-x64
+  #   framework: net6.0
+  #   assembly: Azure.Sdk.Tools.TestProxy
+
+steps:
+  - ${{ each target in parameters.BuildMatrix }}:
+    # ensure that we only build the mac standalone executables on a mac agent, everything else on not mac
+    - ${{ if startsWith(target.rid, 'osx') }}:
+      - task: Powershell@2
+        inputs:
+          workingDirectory: "$(Build.SourcesDirectory)"
+          filePath: $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/assemble-dotnet-standalone-exe.ps1
+          arguments: >
+            -Rid "${{ target.rid }}"
+            -Target "${{ parameters.TargetDirectory }}"
+            -ArtifactStagingDirectory "$(Build.ArtifactStagingDirectory)"
+            -Framework "${{ target.framework }}"
+            -AssemblyName "${{ target.assembly }}"
+          pwsh: true
+        displayName: 'Produce Executable for ${{ target.rid }}'
+        condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          DOTNET_MULTILEVEL_LOOKUP: 0
+
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          ArtifactName: "standalone-${{ target.rid }}"
+          ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
+          customCondition: eq(variables['Agent.OS'], 'Darwin')
+
+    - ${{ if not(startswith(target.rid, 'osx')) }}:
+      - task: Powershell@2
+        inputs:
+          workingDirectory: "$(Build.SourcesDirectory)"
+          filePath: $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/assemble-dotnet-standalone-exe.ps1
+          arguments: >
+            -Rid "${{ target.rid }}"
+            -Target "${{ parameters.TargetDirectory }}"
+            -ArtifactStagingDirectory "$(Build.ArtifactStagingDirectory)"
+            -Framework "${{ target.framework }}"
+            -AssemblyName "${{ target.assembly }}"
+          pwsh: true
+        displayName: 'Produce Executable for ${{ target.rid }}'
+        condition: and(succeeded(), not(eq(variables['Agent.OS'], 'Darwin')))
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          DOTNET_MULTILEVEL_LOOKUP: 0
+      
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          ArtifactName: "standalone-${{ target.rid }}"
+          ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
+          CustomCondition: not(eq(variables['Agent.OS'], 'Darwin'))
+

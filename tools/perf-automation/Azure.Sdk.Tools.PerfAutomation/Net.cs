@@ -16,7 +16,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private string PublishDirectory => Path.Join(WorkingDirectory, "artifacts", "perf");
 
         public override async Task<(string output, string error, object context)> SetupAsync(
-            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions)
         {
             var projectFile = Path.Combine(WorkingDirectory, project);
 
@@ -76,15 +79,22 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Util.DeleteIfExists(PublishDirectory);
 
             // Disable source link, since it's not needed for perf runs, and also fails in sparse checkout repos
-            var processArguments = $"publish -c release -f {languageVersion} -o {PublishDirectory} -p:EnableSourceLink=false {additionalBuildArguments} {project}";
+            var processArguments = $"publish -c release -f net{languageVersion}.0 -o {PublishDirectory} -p:EnableSourceLink=false {additionalBuildArguments} {project}";
 
             var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: WorkingDirectory);
 
             return (result.StandardOutput, result.StandardError, null);
         }
 
-        public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context)
+        public override async Task<IterationResult> RunAsync(
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            string testName,
+            string arguments,
+            bool profile,
+            object context)
         {
             var dllName = Path.GetFileNameWithoutExtension(project) + ".dll";
             var dllPath = Path.Combine(PublishDirectory, dllName);

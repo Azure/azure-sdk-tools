@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using APIView;
 
 namespace SwaggerApiParser;
 
@@ -9,24 +8,34 @@ public class SwaggerApiViewResponse : ITokenSerializable
     public string description { get; set; }
     public BaseSchema schema { get; set; }
 
+    public Dictionary<string, Header> headers { get; set; }
+
     public CodeFileToken[] TokenSerialize(SerializeContext context)
     {
         List<CodeFileToken> ret = new List<CodeFileToken>();
-        // ret.Add(TokenSerializer.Intent(context.intent));
         context.IteratorPath.Add(this.statusCode);
         ret.Add(TokenSerializer.NavigableToken(this.statusCode, CodeFileTokenKind.Keyword, context.IteratorPath.CurrentPath()));
         ret.Add(TokenSerializer.Colon());
         ret.Add(TokenSerializer.NewLine());
 
-        // ret.AddRange(TokenSerializer.TokenSerialize(this, context.intent + 1, new string[] {"description"}));
+        if (headers.Count > 0)
+        {
+            ret.Add(TokenSerializer.NavigableToken("headers", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentPath()));
+            ret.Add(TokenSerializer.Colon());
+            ret.Add(TokenSerializer.NewLine());
+            foreach (var header in headers)
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens(header.Key, ""));
+                ret.AddRange(header.Value.TokenSerialize(context));
+            }
+            ret.Add(TokenSerializer.NewLine());
+            
+        }
+
+
         ret.AddRange(TokenSerializer.KeyValueTokens("description", this.description, true, context.IteratorPath.CurrentNextPath("description")));
         if (this.schema != null)
         {
-            // ret.Add(TokenSerializer.Intent(context.intent + 1));
-            // ret.Add(new CodeFileToken("Schema", CodeFileTokenKind.Keyword));
-            // ret.Add(TokenSerializer.Colon());
-            // ret.Add(TokenSerializer.NewLine());
-            
             ret.AddRange(this.schema.TokenSerialize(new SerializeContext(context.intent + 2, context.IteratorPath)));
         }
 

@@ -558,5 +558,42 @@
         }
       ]
     }
+  },
+  {
+    "taskType": "trigger",
+    "capabilityId": "IssueResponder",
+    "subCapability": "IssuesOnlyResponder",
+    "version": "1.0",
+    "config": {
+      "conditions": {
+        "operator": "and",
+        "operands": [
+          {
+            "name": "labelAdded",
+            "parameters": {
+              "label": "Test-Proxy"
+            }
+          }
+        ]
+      },
+      "eventType": "issue",
+      "eventNames": [
+        "issues",
+        "project_card"
+      ],
+      "taskName": "Assign issue on use of Test-Proxy label",
+      "actions": [
+        {
+          "name": "assignToUser",
+          "parameters": {
+            "groupId": "",
+            "user": "mario-guerra"
+          }
+        }
+      ],
+      "dangerZone": {
+        "respondToBotActions": false
+      }
+    }
   }
 ]

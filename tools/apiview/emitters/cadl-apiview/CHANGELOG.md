@@ -1,6 +1,28 @@
 # Release History
 
-## Verison 0.3.0 (Unreleased)
+## Version 0.3.5 (Unreleased)
+Support latest release of Cadl compiler.
+**BREAKING CHANGE**: Removed the `--namespace` emitter option.
+Added the `--service` emitter option to support filtering output for multi-service specs.
+Emitter options `--output-file` and `--version` cannot be used with multi-service specs unless the
+  `--service` option is provided.
+Added the `--include-global-namespace` option to permit including the global namespace in the token file.
+Fixed issue where namespaces that are not proper subnamespaces may be included in the token file.
+
+## Version 0.3.4 (01-13-2023)
+Support latest release of Cadl compiler.
+
+## Version 0.3.3 (01-03-2023)
+Fixed issue where some type references were not navigable.
+
+## Version 0.3.2 (12-20-2022)
+Changed structure of APIView navigation so that aliases appear under a separate "Alias" section, instead of
+  within the existing "Models" section. Will likely result in a non-API-related diff with prior APIView versions.
+
+## Version 0.3.1 (12-9-2022)
+Support Cadl scalars.
+
+## Version 0.3.0 (11-15-2022)
 Add support for aliases and augment decorators.
 
 ## Version 0.2.1 (10-27-2022)

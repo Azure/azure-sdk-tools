@@ -53,6 +53,18 @@ Run `dotnet pack` for the required package to generate Nuget file. Upload the re
 1. Generate wheel for the package. python setup.py bdist_wheel -d [dest_folder]
 2. Upload generated whl file
 
+### Swagger
+Swagger API review can be generated manually by uploading swagger file to APIView if you are trying to generate API review for a single swagger file. Swagger API review is automatically generated when swagger files are modified in a pull request and pull request comment shows a link to generated API review. Automatically generated API review from pull request creates a diff using existing swagger files in the target branch as baseline to show API level changes in pull request. 
+
+You can rename a swagger file as mentioned below and upload it to APIView in case if you need to generate an API review manually from swagger.
+1. Rename swagger json to replace file extension to .swagger `Rename-Item PetSwagger.json -NewName PetSwagger.swagger`
+2. Upload renamed `.swagger` file
+
+### CADL
+CADL API review is generated automatically from a pull request and this should be good enough in most scenarios. You can also generate API review manually for a CADL package by providing URL path to CADL package specification root path.
+1. Click and `Create Review` and select CADL from language dropdown.
+2. Provide URL to cadl project root path.
+
 
 ## How does it retrieve public API information
 

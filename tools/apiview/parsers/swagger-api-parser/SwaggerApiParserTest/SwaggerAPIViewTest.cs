@@ -103,7 +103,23 @@ public class SwaggerApiViewTest
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
     }
-    
+
+    [Fact]
+    public async Task TestService()
+    {
+        const string deviceUpdatePath = "./fixtures/service.json";
+        var serviceSwagger = await SwaggerDeserializer.Deserialize(deviceUpdatePath);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Service", "Microsoft.Service");
+        root.AddSwaggerSpec(serviceSwagger, Path.GetFullPath(deviceUpdatePath), "Microsoft.Service");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./service_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer); 
+    }
+
     [Fact]
     public async Task TestDeviceUpdateSmall()
     {
@@ -131,6 +147,38 @@ public class SwaggerApiViewTest
 
         var codeFile = root.GenerateCodeFile();
         var outputFilePath = Path.GetFullPath("./contentModerator_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
+    
+    [Fact]
+    public async Task TestAzureOpenai()
+    {
+        const string openai = "./fixtures/azureopenai.json";
+        var openaiSwagger = await SwaggerDeserializer.Deserialize(openai);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.OpenAI", "Microsoft.OpenAI");
+        root.AddSwaggerSpec(openaiSwagger, Path.GetFullPath(openai), "Microsoft.OpenAI");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./openai_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+    }
+    
+    [Fact]
+    public async Task TestPersonalize()
+    {
+        const string personal = "./fixtures/personalizer.json";
+        var personalizeSwagger = await SwaggerDeserializer.Deserialize(personal);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Personalize", "Microsoft.Personalize");
+        root.AddSwaggerSpec(personalizeSwagger, Path.GetFullPath(personal), "Microsoft.Personalize");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./personal_codefile.json");
         this.output.WriteLine($"Write output to: {outputFilePath}");
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
@@ -169,6 +217,23 @@ public class SwaggerApiViewTest
     }
 
     [Fact]
+    public async Task TestDevCenterEnvironment()
+    {
+        const string devCenterSwaggerFile = "./fixtures/environment.json";
+        var devCenter = await SwaggerDeserializer.Deserialize(devCenterSwaggerFile);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.DevCenter", "Microsoft.DevCenter");
+        root.AddSwaggerSpec(devCenter, Path.GetFullPath(devCenterSwaggerFile), "Microsoft.DevCenter");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./devCenter_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+        
+    }
+
+    [Fact]
     public async Task TestSignalRCrossFileReferenceCommonTypes()
     {
         const string signalRFilePath = "./fixtures/signalr/resource-manager/Microsoft.SignalRService/stable/2022-02-01/signalr.json";
@@ -187,5 +252,29 @@ public class SwaggerApiViewTest
         this.output.WriteLine($"Write output to: {outputFilePath}");
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);
+    }
+    
+
+    [Fact]
+    public async Task TestCommunicationEmailWithHeaderParameters()
+    {   
+        const string swaggerFilePath = "./fixtures/communicationEmail/spec/communicationEmail.json";
+        var swaggerSpec = await SwaggerDeserializer.Deserialize(swaggerFilePath);
+        
+        const string commonTypeFilePath = "./fixtures/communicationEmail/common/stable/common.json";
+
+        var commonSpec = await SwaggerDeserializer.Deserialize(commonTypeFilePath);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Communication", "Microsoft.Communication");
+        root.AddDefinitionToCache(commonSpec, commonTypeFilePath);
+        root.AddSwaggerSpec(commonSpec, commonTypeFilePath);
+        root.AddSwaggerSpec(swaggerSpec, Path.GetFullPath(swaggerFilePath), "Microsoft.Communication");
+
+        var codeFile = root.GenerateCodeFile();
+        var outputFilePath = Path.GetFullPath("./communication_codefile.json");
+        this.output.WriteLine($"Write output to: {outputFilePath}");
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        await codeFile.SerializeAsync(writer);
+        
     }
 }

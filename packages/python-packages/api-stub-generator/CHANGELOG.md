@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.7 (Unreleased)
+Fix incorrect type annotation.
+
 ## Version 0.3.6 (2022-10-27)
 Suppressed unwanted base class methods in DPG libraries.
 

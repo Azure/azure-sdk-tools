@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
-using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,11 +10,11 @@ namespace APIViewWeb.Controllers
     [Authorize("RequireOrganization")]
     public class CommentsController: Controller
     {
-        private readonly CommentsManager _commentsManager;
-        private readonly ReviewManager _reviewManager;
-        private readonly NotificationManager _notificationManager;
+        private readonly ICommentsManager _commentsManager;
+        private readonly IReviewManager _reviewManager;
+        private readonly INotificationManager _notificationManager;
 
-        public CommentsController(CommentsManager commentsManager, ReviewManager reviewManager, NotificationManager notificationManager)
+        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager)
         {
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;

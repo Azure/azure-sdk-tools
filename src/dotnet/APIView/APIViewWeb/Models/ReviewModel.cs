@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
-using APIViewWeb.Repositories;
 using Newtonsoft.Json;
 
 namespace APIViewWeb

@@ -28,6 +28,8 @@ var sdkDirName = "sdk"
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
 	Name string
+	// PackageName is the name of the APIView review for this module
+	PackageName string
 
 	// packages maps import paths to packages
 	packages map[string]*Pkg
@@ -42,10 +44,31 @@ func NewModule(dir string) (*Module, error) {
 	// sdkRoot is the path on disk to the sdk folder e.g. /home/user/me/azure-sdk-for-go/sdk.
 	// Used to find definitions of types imported from other Azure SDK modules.
 	sdkRoot := ""
-	if before, _, found := strings.Cut(dir, fmt.Sprintf("%s%c", sdkDirName, filepath.Separator)); found {
+	packageName := ""
+	if before, after, found := strings.Cut(dir, fmt.Sprintf("%s%c", sdkDirName, filepath.Separator)); found {
 		sdkRoot = filepath.Join(before, sdkDirName)
+		if filepath.Base(after) == "internal" {
+			packageName = after
+		} else {
+			packageName = filepath.Base(after)
+		}
+		fmt.Printf("Package Name: %s\n", packageName)
 	}
-	m := Module{Name: filepath.Base(dir), packages: map[string]*Pkg{}}
+
+	//Package name can still be empty when generating API review using uploaded zip folder of a specific package in which case parent directory will not be sdk
+	if packageName == "" {
+		modulePath := mf.Module.Mod.Path
+		packageName = path.Base(modulePath)
+		fmt.Printf("Module path: %s\n", modulePath)
+		// Set relative path as package name for internal package to avoid collision
+		if packageName == "internal" {
+			if _, after, found := strings.Cut(modulePath, fmt.Sprintf("/%s/", sdkDirName)); found {
+				packageName = after
+			}
+		}
+		fmt.Printf("Package Name: %s\n", packageName)
+	}
+	m := Module{Name: filepath.Base(dir), PackageName: packageName, packages: map[string]*Pkg{}}
 
 	baseImportPath := path.Dir(mf.Module.Mod.Path) + "/"
 	if baseImportPath == "./" {

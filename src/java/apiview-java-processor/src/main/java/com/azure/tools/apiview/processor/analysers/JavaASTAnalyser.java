@@ -515,6 +515,10 @@ public class JavaASTAnalyser implements Analyser {
                 moduleDirective.ifModuleRequiresStmt(d -> {
                     addToken(new Token(KEYWORD, "requires"), SPACE);
 
+                    if (d.hasModifier(Modifier.Keyword.STATIC)) {
+                        addToken(new Token(KEYWORD, "static"), SPACE);
+                    }
+
                     if (d.isTransitive()) {
                         addToken(new Token(KEYWORD, "transitive"), SPACE);
                     }

@@ -9,18 +9,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Azure;
 using System.Security.Claims;
+using APIViewWeb.Managers;
+using Octokit;
+using Microsoft.TeamFoundation.Common;
 
 namespace APIViewWeb.Pages.Assemblies
 {
     public class IndexPageModel : PageModel
     {
-        private readonly ReviewManager _manager;
+        private readonly IReviewManager _manager;
         public readonly UserPreferenceCache _preferenceCache;
-        public readonly UserProfileManager _userProfileManager;
+        public readonly IUserProfileManager _userProfileManager;
         public const int _defaultPageSize = 50;
         public const string _defaultSortField = "LastUpdated";
 
-        public IndexPageModel(ReviewManager manager, UserProfileManager userProfileManager, UserPreferenceCache preferenceCache)
+        public IndexPageModel(IReviewManager manager, IUserProfileManager userProfileManager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _preferenceCache = preferenceCache;
@@ -81,15 +84,20 @@ namespace APIViewWeb.Pages.Assemblies
                 return RedirectToPage();
             }
 
-            var file = Upload.Files.SingleOrDefault();
+            var file = Upload.Files?.SingleOrDefault();
 
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    var reviewModel = await _manager.CreateReviewAsync(User, file.FileName, Label, openReadStream, Upload.RunAnalysis);
+                    var reviewModel = await _manager.CreateReviewAsync(User, file.FileName, Label, openReadStream, Upload.RunAnalysis, langauge: Upload.Language);
                     return RedirectToPage("Review", new { id = reviewModel.ReviewId });
                 }
+            }
+            else if (!Upload.FilePath.IsNullOrEmpty())
+            {
+                var reviewModel = await _manager.CreateReviewAsync(User, Upload.FilePath, Label, null, Upload.RunAnalysis, langauge: Upload.Language);
+                return RedirectToPage("Review", new { id = reviewModel.ReviewId });
             }
 
             return RedirectToPage();

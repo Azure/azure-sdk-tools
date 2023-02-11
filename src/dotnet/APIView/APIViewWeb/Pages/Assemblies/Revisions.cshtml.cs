@@ -1,5 +1,6 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
@@ -10,11 +11,11 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class RevisionsPageModel : PageModel
     {
-        private readonly ReviewManager _manager;
+        private readonly IReviewManager _manager;
         public readonly UserPreferenceCache _preferenceCache;
 
         public RevisionsPageModel(
-            ReviewManager manager, UserPreferenceCache preferenceCache)
+            IReviewManager manager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _preferenceCache = preferenceCache;
@@ -24,6 +25,12 @@ namespace APIViewWeb.Pages.Assemblies
 
         [FromForm]
         public string Label { get; set; }
+
+        [FromForm]
+        public string FilePath { get; set; }
+
+        [FromForm]
+        public string Language { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
@@ -44,7 +51,11 @@ namespace APIViewWeb.Pages.Assemblies
             if (upload != null)
             {
                 var openReadStream = upload.OpenReadStream();
-                await _manager.AddRevisionAsync(User, id, upload.FileName, Label, openReadStream);
+                await _manager.AddRevisionAsync(User, id, upload.FileName, Label, openReadStream, language: Language);
+            }
+            else
+            {
+                await _manager.AddRevisionAsync(User, id, FilePath, Label, null);
             }
 
             return RedirectToPage();

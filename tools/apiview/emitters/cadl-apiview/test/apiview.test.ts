@@ -1,64 +1,8 @@
-import { resolvePath } from "@cadl-lang/compiler";
-import { expectDiagnosticEmpty } from "@cadl-lang/compiler/testing";
 import assert, { fail, strictEqual } from "assert";
 import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
-import { ApiViewEmitterOptions } from "../src/lib.js";
-import { createApiViewTestRunner } from "./test-host.js";
+import { apiViewFor, apiViewText, compare } from "./test-host.js";
 
 describe("apiview: tests", () => {
-  async function apiViewFor(code: string, options: ApiViewEmitterOptions): Promise<ApiViewDocument> {
-    const runner = await createApiViewTestRunner({withVersioning: true});
-    const outPath = resolvePath("/apiview.json");
-    const diagnostics = await runner.diagnose(code, {
-      noEmit: false,
-      emitters: { "@azure-tools/cadl-apiview": { ...options, "output-file": outPath } },
-    });
-    expectDiagnosticEmpty(diagnostics);
-
-    const jsonText = runner.fs.get(outPath)!;
-    const apiview = JSON.parse(jsonText) as ApiViewDocument;
-    return apiview;
-  }
-
-  function apiViewText(apiview: ApiViewDocument): string[] {
-    const vals = new Array<string>;
-    for (const token of apiview.Tokens) {
-      switch (token.Kind) {
-        case ApiViewTokenKind.Newline:
-          vals.push("\n");
-          break;
-        default:
-          if (token.Value != undefined) {
-            vals.push(token.Value);
-          }
-          break;
-      }
-    }
-    return vals.join("").split("\n");
-  }
-
-  /** Compares an expected string to a subset of the actual output. */
-  function compare(expect: string, lines: string[], offset: number) {
-    // split the input into lines and ignore leading or trailing empty lines.
-    let expectedLines = expect.split("\n");
-    if (expectedLines[0].trim() == '') {
-      expectedLines = expectedLines.slice(1);
-    }
-    if (expectedLines[expectedLines.length - 1].trim() == '') {
-      expectedLines = expectedLines.slice(0, -1);
-    }
-    // remove any leading indentation
-    const indent = expectedLines[0].length - expectedLines[0].trimStart().length;
-    for (let x = 0; x < expectedLines.length; x++) {
-      expectedLines[x] = expectedLines[x].substring(indent);
-    }
-    const checkLines = lines.slice(offset, offset + expectedLines.length);
-    strictEqual(expectedLines.length, checkLines.length);
-    for (let x = 0; x < checkLines.length; x++) {
-      strictEqual(expectedLines[x], checkLines[x], `Actual differed from expected at line #${x + 1}\nACTUAL: '${checkLines[x]}'\nEXPECTED: '${expectedLines[x]}'`);
-    }
-  }
-
   /** Validates that there are no repeat defintion IDs and that each line has only one definition ID. */
   function validateDefinitionIds(apiview: ApiViewDocument) {
     const definitionIds = new Set<string>();
@@ -143,6 +87,33 @@ describe("apiview: tests", () => {
     validateDefinitionIds(apiview);
   });
 
+  it("describes scalar", async () => {
+    const input = `
+    @Cadl.service( { title: "Test", version: "1" } )
+    namespace Azure.Test {
+      scalar Password extends string;
+
+      scalar ternary;
+
+      @doc(T)
+      scalar Unreal<T extends string>;
+    }
+    `;
+    const expect = `
+    namespace Azure.Test {
+      scalar Password extends string
+
+      scalar ternary
+      @doc(T)
+      scalar Unreal<T extends string>
+    }
+    `;
+    const apiview = await apiViewFor(input, {});
+    const actual = apiViewText(apiview);
+    compare(expect, actual, 9);
+    validateDefinitionIds(apiview);
+  });
+
   it("describes alias", async () => {
     const input = `
     @Cadl.service( { title: "Test", version: "1" } )
@@ -161,6 +132,7 @@ describe("apiview: tests", () => {
       }
 
       alias Creature = Animal
+    }
     `;
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);

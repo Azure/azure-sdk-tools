@@ -14,10 +14,10 @@
     "clusterLocation": {
       "value": "westus2"
     },
-    "staticTestSecretsKeyvaultName": {
+    "staticTestKeyvaultName": {
       "value": // add me, e.g. stress-secrets-<your alias>
     },
-    "staticTestSecretsKeyvaultGroup": {
+    "staticTestKeyvaultGroup": {
       "value": // add me, e.g. rg-stress-secrets-<your alias>
     },
     "tags": {

@@ -54,7 +54,8 @@ namespace Stress.Watcher
             {
                 try
                 {
-                    var listTask = Client.ListJobForAllNamespacesWithHttpMessagesAsync(
+                    Logger.Information("Starting job watch");
+                    var listTask = Client.BatchV1.ListJobForAllNamespacesWithHttpMessagesAsync(
                         allowWatchBookmarks: true,
                         watch: true,
                         resourceVersion: resourceVersion,
@@ -62,9 +63,9 @@ namespace Stress.Watcher
                     );
                     var tcs = new TaskCompletionSource();
                     using var watcher = listTask.Watch<V1Job, V1JobList>(
-                        (type, pod) => {
-                            resourceVersion = pod.ResourceVersion();
-                            HandleJobEvent(type, pod);
+                        (type, job) => {
+                            resourceVersion = job.ResourceVersion();
+                            HandleJobEvent(type, job);
                         },
                         (err) =>
                         {
@@ -96,12 +97,12 @@ namespace Stress.Watcher
             }
         }
 
-        public void HandleJobEvent(WatchEventType type, V1Job job)
+        public void HandleJobEvent(WatchEventType eventType, V1Job job)
         {
             using (LogContext.PushProperty("namespace", job.Namespace()))
             using (LogContext.PushProperty("job", job.Name()))
             {
-                DeleteResources(job).ContinueWith(t =>
+                DeleteResources(job, eventType).ContinueWith(t =>
                 {
                     if (t.Exception != null)
                     {
@@ -111,9 +112,9 @@ namespace Stress.Watcher
             }
         }
 
-        public async Task DeleteResources(V1Job job)
+        public async Task DeleteResources(V1Job job, WatchEventType eventType)
         {
-            if (!ShouldDeleteResources(job))
+            if (!ShouldDeleteResources(job, eventType))
             {
                 return;
             }
@@ -140,7 +141,7 @@ namespace Stress.Watcher
             Logger.Information($"Deleted resources for group {rgName}");
         }
 
-        public bool ShouldDeleteResources(V1Job job)
+        public bool ShouldDeleteResources(V1Job job, WatchEventType eventType)
         {
             if (!string.IsNullOrEmpty(Namespace) && Namespace != job.Namespace())
             {
@@ -159,6 +160,12 @@ namespace Stress.Watcher
             {
                 Logger.Debug($"No deploy init container found, skipping resource deletion.");
                 return false;
+            }
+
+            // Handle helm uninstall, helm upgrade, namespace deletion, job deletion, etc.
+            if (eventType == WatchEventType.Deleted)
+            {
+                return true;
             }
 
             /*

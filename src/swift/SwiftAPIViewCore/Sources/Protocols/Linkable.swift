@@ -34,5 +34,5 @@ protocol Linkable {
     var definitionId: String? { get }
     var parent: Linkable? { get }
 
-    func navigationTokenize(apiview: APIViewModel)
+    func navigationTokenize(apiview: APIViewModel, parent: Linkable?)
 }

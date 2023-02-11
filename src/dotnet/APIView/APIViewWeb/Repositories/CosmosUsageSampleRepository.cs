@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -15,7 +15,7 @@ using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace APIViewWeb
 {
-    public class CosmosUsageSampleRepository
+    public class CosmosUsageSampleRepository : ICosmosUsageSampleRepository
     {
         private readonly Container _samplesContainer;
 

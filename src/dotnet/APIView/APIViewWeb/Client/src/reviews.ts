@@ -1,4 +1,4 @@
-﻿$(() => {
+$(() => {
   const defaultPageSize = 50;
   const reviewsFilterPartial = $( '#reviews-filter-partial' );
   const languageFilter = $( '#language-filter-bootstraps-select' );
@@ -7,7 +7,8 @@
   const typeFilter = $( '#type-filter-bootstraps-select' );
   const searchBox = $( '#reviews-table-search-box' );
   const searchButton = $( '#reviews-search-button' );
-  const resetButton = $( '#reset-filter-button' );
+  const resetButton = $('#reset-filter-button');
+  const languageSelect = $('#review-language-select');
 
   // Import underscorejs
   var _ = require('underscore');
@@ -126,4 +127,21 @@
     searchBox.val('');
     updateListedReviews();
   });
+
+  var prevLanguageValue = languageSelect.val();
+  languageSelect.on('change', function (e) {
+    var val = $(this).val();
+    if (val == "C++" || val == "C#") {
+      val = val.replace("C++", "Cpp").replace("C#", "Csharp");
+    }
+    var helpName = "#help-" + val;
+    $(helpName).click();
+    if (val == 'Cadl' || prevLanguageValue == 'Cadl') {
+      const fileSelectors = $(".package-selector");
+      for (var i = 0; i < fileSelectors.length; i++) {
+        $(fileSelectors[i]).toggleClass("hidden-row");
+      }
+    }
+    prevLanguageValue = val;
+   });
 });

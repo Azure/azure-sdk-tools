@@ -1,20 +1,20 @@
 import { createCadlLibrary, JSONSchemaType, paramMessage } from "@cadl-lang/compiler";
 
 export interface ApiViewEmitterOptions {
-  "output-dir"?: string;
   "output-file"?: string;
-  "namespace"?: string;
+  "service"?: string;
   "version"?: string;
+  "include-global-namespace"?: boolean
 }
 
 const ApiViewEmitterOptionsSchema: JSONSchemaType<ApiViewEmitterOptions> = {
   type: "object",
   additionalProperties: false,
   properties: {
-    "output-dir": { type: "string", nullable: true },
     "output-file": { type: "string", nullable: true },
-    "namespace": { type: "string", nullable: true },
+    "service": { type: "string", nullable: true },
     "version": {type: "string", nullable: true },
+    "include-global-namespace": {type: "boolean", nullable: true}
   },
   required: [],
 };
@@ -23,16 +23,28 @@ const ApiViewEmitterOptionsSchema: JSONSchemaType<ApiViewEmitterOptions> = {
 export const $lib = createCadlLibrary({
   name: "@azure-tools/cadl-apiview",
   diagnostics: {
-    "use-namespace-option": {
+    "no-services-found": {
       severity: "error",
       messages: {
-        default: "Unable to resolve namespace. Please supply `--option \"@azure-tools/cadl-apiview.namespace={value}\"`.",
+        default: "No services found. Ensure there is a namespace in the spec annotated with the `@service` decorator."
+      }
+    },
+    "invalid-service": {
+      severity: "error",
+      messages: {
+        default: paramMessage`Service "${"value"}" was not found. Please check for typos.`,
+      }
+    },
+    "invalid-option": {
+      severity: "error",
+      messages: {
+        default: paramMessage`Option "--${"name"}" cannot be used with multi-service specs unless "--service" is also supplied.`,
       }
     },
     "version-not-found": {
       severity: "error",
       messages: {
-        default: paramMessage`Version "${"version"}" not found. Allowed values: ${"allowed"}.`,
+        default: paramMessage`Version "${"version"}" not found for service "${"serviceName"}". Allowed values: ${"allowed"}.`,
       }
     },
   },

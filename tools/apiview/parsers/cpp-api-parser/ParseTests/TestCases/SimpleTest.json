@@ -1,0 +1,12 @@
+{
+  "sourceFilesToProcess": [
+    "SimpleTest.cpp"
+  ],
+  "additionalIncludeDirectories": [
+  ],
+  "additionalCompilerSwitches": [],
+  "allowInternal": false,
+  "includeDetail": false,
+  "includePrivate": false,
+  "filterNamespace": null
+}

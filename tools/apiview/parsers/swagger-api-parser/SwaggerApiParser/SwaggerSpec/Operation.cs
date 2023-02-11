@@ -35,4 +35,3 @@ public class XMsPageable
     public string nextLinkName { get; set; }
     public string operationName { get; set; }
 }
-

@@ -6,8 +6,7 @@
     <ToolCommandName>swaggerAPIParser</ToolCommandName>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>swagger_api_parser</RootNamespace>
-    <LangVersion>Latest</LangVersion>
-    <VersionPrefix>1.0.2</VersionPrefix>
+    <VersionPrefix>1.0.7</VersionPrefix>
     <AssemblyName>Azure.Sdk.Tools.SwaggerApiParser</AssemblyName>
     <SignAssembly>True</SignAssembly>
     <InformationalVersion>$(OfficialBuildId)</InformationalVersion>
@@ -20,10 +19,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <NoWarn>$(NoWarn);NU5105;NU5119</NoWarn>
   </PropertyGroup>
-
-  <ItemGroup>
-      <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj" />    
-  </ItemGroup>
   
   <ItemGroup>
     <Compile Remove="SwaggerApiParserTest\**" />
@@ -40,6 +35,11 @@
     </PackageReference>
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta2.21617.1" />
     <PackageReference Include="YamlDotNet" Version="12.0.1" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Folder Include="fixtures\" />
   </ItemGroup>
 
 </Project>

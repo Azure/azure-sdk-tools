@@ -81,8 +81,9 @@ parameters:
   type: boolean
   default: false
 - name: AdditionalArguments
+  displayName: AdditionalArguments (passed to PerfAutomation)
   type: string
-  default: ''
+  default: ' '
 - name: OperatingSystems
   type: string
   default: 'Linux'

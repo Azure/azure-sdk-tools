@@ -131,7 +131,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context)
+            object context,
+            int iteration)
         {
             var runtimePackageVersions = (Dictionary<string, string>) context;
 
@@ -141,7 +142,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
             if(profile){
-                arguments = arguments + " --profile true";
+                Console.WriteLine("-- profile start --");
+                Console.WriteLine(primaryPackage);
+                Console.WriteLine(Serialize(packageVersions.ToList()));
+                var profileOutputPath = Path.GetFullPath(Path.Combine(ProfileDirectory, primaryPackage, $"{testName}_{iteration}.cpuprofile"));
+                arguments = arguments + $" --profile true --profile-filepath {testName}_{iteration}.cpuprofile";
+                Console.WriteLine(profileOutputPath);
+                Console.WriteLine(arguments);
+                Console.WriteLine("-- profile end --");
             }
             var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",
                 projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);

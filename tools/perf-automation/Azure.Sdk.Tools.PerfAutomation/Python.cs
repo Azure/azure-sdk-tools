@@ -76,7 +76,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context)
+            object context,
+            int iteration)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 

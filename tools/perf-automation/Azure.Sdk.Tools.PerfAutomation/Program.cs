@@ -386,7 +386,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         test.TestNames[language],
                                         allArguments,
                                         options.Profile,
-                                        context
+                                        context,
+                                        i // iteration number
                                     );
                                 }
                                 catch (Exception e)

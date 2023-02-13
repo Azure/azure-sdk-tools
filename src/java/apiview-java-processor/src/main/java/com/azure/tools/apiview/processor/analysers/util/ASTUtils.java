@@ -203,9 +203,12 @@ public final class ASTUtils {
     public static String makeId(AnnotationExpr annotation, NodeWithAnnotations<?> nodeWithAnnotations) {
         String annotationContext = getAnnotationContext(nodeWithAnnotations);
 
-        String idSuffix = "-" + annotationContext;
+        String idSuffix;
+
         if (annotationContext == null || annotationContext.isEmpty()) {
             idSuffix = "-L" + annotation.getBegin().orElseThrow(RuntimeException::new).line;
+        } else {
+            idSuffix = "-" + annotationContext;
         }
         return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + idSuffix);
     }
@@ -216,6 +219,7 @@ public final class ASTUtils {
         }
         if (nodeWithAnnotations instanceof MethodDeclaration) {
             MethodDeclaration methodDeclaration = (MethodDeclaration) nodeWithAnnotations;
+            // use the method declaration string instead of method name as there can be overloads
             return methodDeclaration.getDeclarationAsString(true, true, true);
         } else if (nodeWithAnnotations instanceof ClassOrInterfaceDeclaration) {
             ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) nodeWithAnnotations;
@@ -228,6 +232,7 @@ public final class ASTUtils {
             return enumValueDeclaration.getNameAsString();
         } else if (nodeWithAnnotations instanceof ConstructorDeclaration) {
             ConstructorDeclaration constructorDeclaration = (ConstructorDeclaration) nodeWithAnnotations;
+            // use the constructor declaration string instead of the name as there can be overloads
             return constructorDeclaration.getDeclarationAsString(true, true, true);
         } else {
             return "";

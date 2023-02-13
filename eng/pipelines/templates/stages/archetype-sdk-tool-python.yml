@@ -40,6 +40,10 @@ stages:
               pip install virtualenv aiohttp chardet trio setuptools wheel packaging
             displayName: 'Setup Python Environment'
           
+          - script: |
+              find /usr/lib -name "libffi.so*"
+            condition: and(succeeded(), eq(variables['Agent.OS'],'Linux'))
+
           - pwsh: |
               Write-Host "Bundling stable version of python api-stub-generator"
               python setup.py bdist_wheel --universal --dist-dir $(Build.ArtifactStagingDirectory)

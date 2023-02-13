@@ -39,10 +39,12 @@ stages:
               python --version
               pip install virtualenv aiohttp chardet trio setuptools wheel packaging
             displayName: 'Setup Python Environment'
-          
+              
+          # tried to link 8 to 7, but got permission denied.
+          # find /usr/lib -name "libffi.so*"
+          # ln -s /usr/lib/x86_64-linux-gnu/libffi.so.8 /usr/lib/x86_64-linux-gnu/libffi.so.7
           - script: |
-              find /usr/lib -name "libffi.so*"
-              ln -s /usr/lib/x86_64-linux-gnu/libffi.so.8 /usr/lib/x86_64-linux-gnu/libffi.so.7
+              apt install libffi-devel
             condition: and(succeeded(), eq(variables['Agent.OS'],'Linux'))
 
           - pwsh: |

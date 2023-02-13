@@ -52,6 +52,11 @@ namespace APIViewWeb
             return await GetPullRequestFromQueryAsync(query);
         }
 
+        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsAsync(string reviewId) {
+            var query = $"SELECT * FROM PullRequests c WHERE c.ReviewId = '{reviewId}'";
+            return await GetPullRequestFromQueryAsync(query);
+        }
+
         private async Task<List<PullRequestModel>> GetPullRequestFromQueryAsync(string query)
         {
             var allRequests = new List<PullRequestModel>();

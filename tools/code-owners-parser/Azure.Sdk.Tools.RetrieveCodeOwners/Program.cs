@@ -37,10 +37,6 @@ public static class Program
     /// Defaults to ".git".
     /// Example usage: ".git|foo|bar"
     /// </param>
-    /// <param name="useRegexMatcher">
-    /// Whether to use the new matcher for CODEOWNERS file paths, that supports matching
-    /// entries with * and **, instead of silently ignoring them.
-    /// </param>
     /// <returns>
     /// On STDOUT: The JSON representation of the matched CodeownersEntry.
     /// "new CodeownersEntry()" if no path in the CODEOWNERS data matches.
@@ -52,8 +48,7 @@ public static class Program
         string codeownersFilePathOrUrl,
         bool excludeNonUserAliases = false,
         string? targetDir = null,
-        string ignoredPathPrefixes = DefaultIgnoredPrefixes,
-        bool useRegexMatcher = CodeownersFile.UseRegexMatcherDefault)
+        string ignoredPathPrefixes = DefaultIgnoredPrefixes)
     {
         try 
         {
@@ -76,13 +71,11 @@ public static class Program
                     targetDir!,
                     codeownersFilePathOrUrl,
                     excludeNonUserAliases,
-                    SplitIgnoredPathPrefixes(),
-                    useRegexMatcher)
+                    SplitIgnoredPathPrefixes())
                 : GetCodeownersForSimplePath(
                     targetPath,
                     codeownersFilePathOrUrl,
-                    excludeNonUserAliases,
-                    useRegexMatcher);
+                    excludeNonUserAliases);
 
             string codeownersJson = JsonSerializer.Serialize(
                 codeownersData,
@@ -108,8 +101,7 @@ public static class Program
         string targetDir,
         string codeownersFilePathOrUrl,
         bool excludeNonUserAliases,
-        string[]? ignoredPathPrefixes = null,
-        bool useRegexMatcher = CodeownersFile.UseRegexMatcherDefault)
+        string[]? ignoredPathPrefixes = null)
     {
         ignoredPathPrefixes ??= Array.Empty<string>();
 
@@ -118,8 +110,7 @@ public static class Program
                 targetPath,
                 targetDir,
                 codeownersFilePathOrUrl,
-                ignoredPathPrefixes,
-                useRegexMatcher);
+                ignoredPathPrefixes);
 
         if (excludeNonUserAliases)
             codeownersEntries.Values.ToList().ForEach(entry => entry.ExcludeNonUserAliases());
@@ -130,14 +121,12 @@ public static class Program
     private static CodeownersEntry GetCodeownersForSimplePath(
         string targetPath,
         string codeownersFilePathOrUrl,
-        bool excludeNonUserAliases,
-        bool useRegexMatcher = CodeownersFile.UseRegexMatcherDefault)
+        bool excludeNonUserAliases)
     {
         CodeownersEntry codeownersEntry =
             CodeownersFile.GetMatchingCodeownersEntry(
                 targetPath,
-                codeownersFilePathOrUrl,
-                useRegexMatcher);
+                codeownersFilePathOrUrl);
 
         if (excludeNonUserAliases)
             codeownersEntry.ExcludeNonUserAliases();

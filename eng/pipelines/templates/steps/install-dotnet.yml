@@ -1,29 +1,27 @@
-parameters:
-  # Use this parameter if you want to override the .NET SDK set by global.json
-  - name: DotNetCoreVersion
-    type: string
-    default: ''
-
 steps:
-  # We set DOTNET_ROLL_FORWARD so that .NET assemblies targeting older versions of .NET can run on newer ones.
-  # See also:
-  # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet#options-for-running-an-application
-  # https://learn.microsoft.com/en-us/dotnet/core/runtime-discovery/troubleshoot-app-launch?pivots=os-windows#required-framework-not-found
-  # https://aka.ms/dotnet/app-launch-failed
-  # https://learn.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=powershell
-  # https://learn.microsoft.com/en-us/azure/devops/pipelines/process/set-variables-scripts?view=azure-devops&tabs=powershell
-  - pwsh: |
-      echo "##vso[task.setvariable variable=DOTNET_ROLL_FORWARD;]Major"
-    displayName: "Set DOTNET_ROLL_FORWARD to Major"
-  # https://learn.microsoft.com/azure/devops/pipelines/tasks/reference/use-dotnet-v2?view=azure-pipelines
-  - task: UseDotNet@2
-    displayName: "Use .NET SDK ${{ coalesce( parameters.DotNetCoreVersion, 'from global.json') }}"
+
+  # We aim to keep .NET SDK coming from global.json to bethe newest, to enable us to use the latest & greatest,
+  # and allow us to gradually migrate our .NET sources to such version.
+  # About global.json: https://learn.microsoft.com/en-us/dotnet/core/tools/global-json
+  - task: UseDotNet@2 # About UseDotNet@2 task: https://learn.microsoft.com/azure/devops/pipelines/tasks/reference/use-dotnet-v2?view=azure-pipelines
+    displayName: "Use .NET SDK from global.json"
     retryCountOnTaskFailure: 3
     inputs:
-      ${{ if eq( parameters.DotNetCoreVersion, '') }}:
-        useGlobalJson: true
-      ${{ else }}:
-        version: ${{ parameters.DotNetCoreVersion }}
+      useGlobalJson: true
+
+  # We install .NET 6.0.x SDK in addition to .NET coming from global.json because most of our tools target 6.0.x.
+  # Once we migrate all tools to a newer .NET version, we should update this to install that version instead.
+  - task: UseDotNet@2
+    displayName: "Use .NET SDK 6.0.x"
+    retryCountOnTaskFailure: 3
+    inputs:
+      # We must install sdk, not just runtime, as it is required by some of our tools, like test-proxy.
+      # For additional context, see PR: https://github.com/Azure/azure-sdk-tools/pull/5405
+      packageType: sdk
+      version: 6.0.x
+      # performMultiLevelLookup comes into play when given .NET executable target runtime is different
+      # than the installed .NET SDK. Without this, such runtime would not be found.
+      performMultiLevelLookup: true
 
 # Future work: add NuGet packages caching. See:
-# https://github.com/Azure/azure-sdk-tools/issues/5086
+# https://github.com/Azure/azure-sdk-tools/issues/5086  

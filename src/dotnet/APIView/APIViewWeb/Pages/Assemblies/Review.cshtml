@@ -3,356 +3,384 @@
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
 @{
-    Layout = "ReviewLayout";
+    Layout = "Shared/_Layout";
     ViewData["Title"] = Model.Review.DisplayName;
     var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
     TempData["UserPreference"] = userPreference;
+    TempData["LanguageCssSafeName"] = Model.Review.GetLanguageCssSafeName();
     ViewBag.HasSections = (Model.CodeFile.LeafSections?.Count > 0) ? true : false;
 }
-
-<div class="container-fluid">
-    <div class="row mx-1 px-0 py-2 border-bottom">
-        <div class="col-lg-12 d-flex px-0">
-            <partial name="Shared/_ReviewBadge" model=" Model.Review" />
-            <div class="btn-group btn-group-sm my-1">
-                @if (Model.Revision.Approvers.Count > 0)
-                {
-                    var approvers = String.Join(", ", Model.Revision.Approvers);
-                    <button type="button" class="btn border btn-sm shadow-sm btn-light" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-title="Approvers" data-content="@approvers">
-                        <i class="fas fa-check-circle text-success"></i>
-                        <span class="badge badge-light">@Model.Revision.Approvers.Count</span>
-                    </button>
-                }
-                else
-                {
-                    <button type="button" class="btn border btn-sm shadow-sm btn-light">
-                        <i class="fa-solid fa-circle-minus"></i>
-                    </button>
-                }
-                <button class="btn btn-light btn-sm border shadow-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                    Approval
-                </button>
-                
-                <div class="dropdown-menu dropdown-menu-right ">
-                    @{
-                        bool itemRendered = false;
-                    }
-                    <form asp-resource="@Model.Review" class="form-inline px-4 py-1" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
-                        <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
-                        @if (Model.DiffRevision == null || Model.DiffRevision.Approvers.Count > 0)
+@{
+    var offCanvasClass = " show-offcanvas";
+    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
+        offCanvasClass = String.Empty;
+}
+<div id="right-offcanvas-menu" class="right-offcanvas@(offCanvasClass)">
+    <div class="offcanvas-menu-content" id="review-offcanvas-menu-content">
+        <p class="h6">
+            <a data-bs-toggle="collapse" href="#approveCollapse" aria-expanded="true" aria-controls="approveCollapse">Approval&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+        </p>
+        @{
+            var approvalCollapseState = " show";
+            if (Request.Cookies.ContainsKey("approveCollapse"))
+            {
+                if (!Request.Cookies["approveCollapse"].Equals("shown"))
+                    approvalCollapseState = String.Empty;
+            }
+        }
+        <ul class="list-group collapse mb-3@(approvalCollapseState)" id="approveCollapse">
+            <li class="list-group-item text-center">
+                <form asp-resource="@Model.Review" class="form-inline" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+                    <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
+                    @if (Model.DiffRevision == null || Model.DiffRevision.Approvers.Count > 0)
+                    {
+                        @if (Model.Revision.Approvers.Contains(User.GetGitHubLogin()))
                         {
-                            @if (Model.Revision.Approvers.Contains(User.GetGitHubLogin()))
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-outline-secondary">Revert API Approval</button>
+                            </div>
+                        }
+                        else
+                        {
+                            @if (Model.ActiveConversations > 0 && Model.PreferredApprovers.Contains(User.GetGitHubLogin()))
                             {
-                                <button type="submit" class="btn btn-sm border shadow-sm btn-light">
-                                    <i class="fa fa-sm fa-undo" aria-hidden="true"></i>&nbsp;&nbsp;Revert API Approval
-                                </button>
-                                itemRendered = true;
+                                <span class="small text-muted">Approves the current revision of the API</span>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModel">
+                                        Approve With Modal
+                                    </button>
+                                </div>
                             }
                             else
                             {
-                                @if (Model.ActiveConversations > 0 && Model.PreferredApprovers.Contains(User.GetGitHubLogin()))
+                                @if (Model.PreferredApprovers.Contains(User.GetGitHubLogin()))
                                 {
-                                    <button type="button" class="btn btn-sm border shadow-sm btn-success" data-toggle="modal" data-target="#approveModel">
-                                        <i class="fa-solid fa-circle-check"></i>&nbsp;&nbsp;Approve API
-                                    </button>
-                                    itemRendered = true;
-
-                                    <div class="modal fade" id="approveModel" tabindex="-1" role="dialog">
-                                        <div class="modal-dialog" role="document">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Approve Review</h5>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p> There are still active conversations. <br /> Would you like to review these first? </p>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-sm border shadow-sm btn-outline-dark" data-dismiss="modal">Cancel</button>
-                                                    <a asp-page="Conversation" asp-route-id="@Model.Review.ReviewId">
-                                                        <div class="btn btn-sm border shadow-sm btn-outline-dark">Check Conversations</div>
-                                                    </a>
-                                                    <button type="submit" class="btn btn-sm border shadow-sm btn-success">
-                                                        <i class="fa-solid fa-circle-check"></i>&nbsp;&nbsp;Approve API Anyway
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <span class="small text-muted">Approves the current revision of the API</span>
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-success">Approve</button>
                                     </div>
                                 }
                                 else
                                 {
-                                    @if (Model.PreferredApprovers.Contains(User.GetGitHubLogin()))
-                                    {
-                                        <button type="submit" class="btn btn-sm border shadow-sm btn-success">
-                                            <i class="fa-solid fa-circle-check"></i>&nbsp;&nbsp;Approve for GA
-                                        </button>
-                                        itemRendered = true;
-                                    }
-                                    else
-                                    {
-                                        <button type="submit" class="btn btn-sm border shadow-sm btn-success" disabled>
-                                            <i class="fa-solid fa-circle-check"></i>&nbsp;&nbsp;Cannot Approve for GA
-                                        </button>
-                                    }
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-outline-secondary" disabled>Cannot Approve</button>
+                                    </div>
                                 }
                             }
-                        }
-                        else
-                        {
-                            @if (Model.Revision.Approvers.Contains(User.GetGitHubLogin()))
-                            {
-                                <button type="submit" class="btn btn-sm shadow-sm btn-light" disabled data-placement="bottom" data-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
-                                    <i class="fa fa-sm fa-undo" aria-hidden="true"></i>&nbsp;&nbsp;Revert API Approval
-                                </button>
-                            }
-                            else
-                            {
-                                <button type="submit" class="btn btn-sm shadow-sm btn-light" disabled data-placement="bottom" data-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
-                                    <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve API
-                                </button>
-                            }
-                            itemRendered = true;
-                        }
-                    </form>
-                    @if (itemRendered)
-                    {
-                        <small class="form-text text-muted mx-4 my-1">Approval for Current Revision of the API.</small>
-                        <div class="dropdown-divider"></div>
-                        itemRendered = false;
-                    }
-                    @if (Model.Review.Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName != null)
-                    {
-                        var approver = Model.Review.ApprovedForFirstReleaseBy ?? Model.Review.Revisions.LastOrDefault(r => r.IsApproved)?.Approvers?.FirstOrDefault();
-                        var nameApprovalTip = approver != null ? "Package has been approved for first release by " + approver : "Package has been approved for first release";
-
-                        <form asp-resource="@Model" class="form-inline px-4 py-1" asp-controller="Review" asp-action="ApprovePackageName" asp-route-id="@Model.Review.ReviewId" method="post" asp-requirement="@ApproverRequirement.Instance">
-                            @if (!Model.Review.IsApprovedForFirstRelease)
-                            {
-                                <button type="submit" class="btn btn-sm shadow-sm btn-success" title="Package name must be approved before first preview release of a new package.">
-                                    <i class="fa-solid fa-circle-check"></i>&nbsp;&nbsp;Approve First Release
-                                </button>
-                                <small class="form-text text-muted my-1">Approval for First Release.</small>
-                            }
-                            else
-                            {
-                                <small class="form-text text-muted my-1">@nameApprovalTip</small>
-                            }
-                        </form>
-                        itemRendered = true;
-                    }
-                    @if (itemRendered)
-                    {
-                        <div class="dropdown-divider"></div>
-                    }
-                    <h6 class="dropdown-header">Request Reviewers</h6>
-                    <span class="dropdown modal-dialog-scrollable">
-                        <form asp-resource="@Model.Review" asp-page-handler="RequestReviewers" method="post"
-                              class="px-4 py-1">
-                            @{
-                                var anyChecked = false;
-                            }
-                            <div style="max-height:400px;width:max-content;overflow-y:auto;padding-bottom:5px;">
-                                @foreach (var approver in Model.PreferredApprovers)
-                                {
-                                    <span class="checkbox dropdown-item">
-                                        <label class="mb-0">
-                                            @if (Model.Review.RequestedReviewers != null && Model.Review.RequestedReviewers.Contains(approver))
-                                            {
-                                                <input type="checkbox" class="selectDropdownForRequest" name="reviewers" value="@approver" checked>
-                                                anyChecked = true;
-                                            }
-                                            else 
-                                            {
-                                                <input type="checkbox" class="selectDropdownForRequest"  name="reviewers" value="@approver">
-                                            }
-                                            &nbsp;&nbsp;<img username="@approver" size="28" class="comment-icon align-self-start mr-2" height="28" width="28" />
-                                            @approver
-                                        </label>
-                                    </span>
-                                }
-                            </div>
-                            <span>
-                                @if (anyChecked)
-                                {
-                                    <button class="btn btn-sm btn-light border shadow-sm" id="submitReviewRequest" onclick="document.getElementById('submitRequestForReview').click()" disabled>Request Selected</button>
-                                }
-                                else 
-                                {
-                                    <button class="btn btn-sm btn-light border shadow-sm" id="submitReviewRequest" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitRequestForReview').click();">Request All</button>
-                                }                                
-                                <button type="submit" id="submitRequestForReview" hidden></button>
-                            </span>
-                        </form>
-                    </span>
-                </div>
-            </div>
-            <div class="my-1 ml-2">
-                @{
-                    var popOverContent = $"<b>{Model.ActiveConversations}</b> active revision threads.<br><b>{Model.UsageSampleConversations}</b> active usage sample threads.<br><b>{Model.TotalActiveConversations}</b> total active threads.<br>"
-                    + $"<b>Current Revision:</b> <em>{@Model.Revision.DisplayName}</em>";
-                        @if (Model.DiffRevisionId != null)
-                    {
-                        popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
-                    }
-                    <div class="btn-group btn-group-sm" aria-label="Page Information">
-                        <button type="button" class="btn btn-info shadow-sm" id="jump-to-first-comment">
-                            <i class="far fa-comment-alt"></i>
-                        </button>
-                        <button type="button" class="btn btn-info shadow-sm" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
-                            <span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
-                        </button>
-                    </div>
-                }
-            </div>
-            <div class="dropdown d-inline-block my-1 ml-2">
-                <a class="btn btn-light btn-sm border shadow-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                    <i class="fas fa-sm fa-sliders-h"></i>&nbsp;&nbsp;Options
-                </a>
-                <div class="dropdown-menu dropdown-menu-right">
-                    <span class="dropdown-item checkbox">
-                        <label>
-                            <input type="checkbox" checked="checked" id="show-comments-checkbox">
-                            &nbsp;Show Comments
-                        </label>
-                    </span>
-                    <span class="dropdown-item checkbox">
-                        <label>
-                            <input type="checkbox" checked="checked" id="show-system-comments-checkbox">
-                            &nbsp;Show System Comments
-                        </label>
-                    </span>
-                    <span class="dropdown-item" id="show-documentation-component">
-                        <input asp-for="@Model.ShowDocumentation" class="show-doc-checkbox">
-                        <a class="text-dark show-document" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly, revisionId: Model.Revision.RevisionId)>
-                            <label>&nbsp;Show Documentation</label>
-                        </a>
-                    </span>
-                    <span class="dropdown-item checkbox" id="show-hidden-api-component">
-                        <label>
-                            @if (userPreference.ShowHiddenApis == true)
-                            {
-                                <input type="checkbox" id="show-hidden-api-checkbox" checked>
-                            }
-                            else
-                            {
-                                <input type="checkbox" id="show-hidden-api-checkbox" >
-                            }
-                            &nbsp;Show Hidden APIs
-                        </label>
-                    </span>
-                    <span class="dropdown-item checkbox">
-                        <label>
-                            @if (userPreference.HideLineNumbers == true)
-                            {
-                                <input type="checkbox" id="hide-line-numbers" checked>
-                            }
-                            else
-                            {
-                                <input type="checkbox" id="hide-line-numbers" >
-                            }
-                            &nbsp;Hide Line Number
-                        </label>
-                    </span>
-                    <span class="dropdown-item checkbox">
-                        <label>
-                            @if (userPreference.HideLeftNavigation == true)
-                            {
-                                <input type="checkbox" id="hide-left-navigation" checked>
-                            }
-                            else
-                            {
-                                <input type="checkbox" id="hide-left-navigation">  
-                            }
-                            &nbsp;Hide Left Navigation
-                        </label>
-                    </span>
-                    @if (!String.IsNullOrEmpty(Model.DiffRevisionId))
-                    {
-                        <span class="dropdown-item">
-                            <input asp-for="@Model.ShowDiffOnly" class="show-diffonly-checkbox">
-                            <a class="text-dark show-diffonly" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDiffOnly: !Model.ShowDiffOnly, revisionId: Model.Revision.RevisionId)>
-                                <label>&nbsp;Show Only Diff</label>
-                            </a>
-                        </span>
-                    }
-                </div>
-            </div>
-            <div class="my-1 ml-2">
-                <form asp-resource="@Model.Review" class="form-inline" method="post" asp-page-handler="ToggleSubscribed">
-                    @if (Model.Review.GetUserEmail(User) != null)
-                    {
-                        if (Model.Review.IsUserSubscribed(User))
-                        {
-                            <button type="submit" class="btn border btn-sm shadow-sm btn-light">
-                                <i class="far fa-minus-square" aria-hidden="true"></i>&nbsp;&nbsp;Unsubscribe
-                            </button>
-                        }
-                        else
-                        {
-                            <button type="submit" class="btn border btn-sm shadow-sm btn-light">
-                                <i class="far fa-plus-square" aria-hidden="true"></i>&nbsp;&nbsp;Subscribe
-                            </button>
                         }
                     }
                     else
                     {
-                        <button type="submit" class="btn btn-sm shadow-sm btn-light" disabled data-placement="bottom" data-toggle="tooltip" title="Link a microsoft.com email to your Github account to subscribe">
-                            <i class="fa fa-plus-square" aria-hidden="true"></i>&nbsp;&nbsp;Subscribe
-                        </button>
+                        @if (Model.Revision.Approvers.Contains(User.GetGitHubLogin()))
+                        {
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-outline-secondary" disabled data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
+                                    Revert API Approval
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-outline-secondary" disabled data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
+                                    Approve API
+                                </button>
+                            </div>
+                        }
                     }
                 </form>
-            </div>
-            @if (Model.Review.FilterType != ReviewType.Automatic)
-            {
-                <div class="my-1 ml-2">
-                    <form asp-resource="@Model.Review" class="form-inline" method="post" asp-page-handler="ToggleClosed">
-                        @if (Model.Review.IsClosed)
+                @if (Model.Revision.Approvers.Count > 0)
+                {
+                    <span class="small text-muted">
+                        Approvers:
+                        @{
+                            int i = 0;
+                        }
+                        @foreach (var approver in Model.Revision.Approvers)
                         {
-                            <button type="submit" class="btn btn-sm border shadow-sm btn-light">
-                                <i class="fa fa-sm fa-undo" aria-hidden="true"></i>&nbsp;&nbsp;Reopen
-                            </button>
+                            <a username="@approver">@approver</a>
+                            @if (i < (@Model.Revision.Approvers.Count - 1))
+                            {
+                                @Html.Raw(",&nbsp;")
+                                ;
+                            }
+                            i++;
+                        }
+                    </span>
+                }
+                else
+                {
+                    <span class="small text-muted">Current Revision Approval Pending</span>                }
+            </li>
+            @if (Model.Review.Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName != null && 
+                 Model.Review.Language != "Swagger" && Model.Review.Language != "Cadl")
+            {
+                var approver = Model.Review.ApprovedForFirstReleaseBy ?? Model.Review.Revisions.LastOrDefault(r => r.IsApproved)?.Approvers?.FirstOrDefault();
+                @if (!Model.Review.IsApprovedForFirstRelease)
+                {
+                    <li class="list-group-item text-center">
+                        <form asp-resource="@Model" class="form-inline" asp-controller="Review" asp-action="ApprovePackageName" asp-route-id="@Model.Review.ReviewId" method="post" asp-requirement="@ApproverRequirement.Instance">
+                            <span class="small mb-2 text-muted">Approves First Release of the package</span>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success" title="Package name must be approved before first preview release of a new package.">
+                                    Approve First Release
+                                </button>
+                            </div>
+                        </form>
+                        <span class="small mt-2 text-muted">First Revision Approval Pending</span>
+                    </li>
+                }
+                else
+                {
+                    <li class="list-group-item text-center">
+                        @if (approver != null)
+                        {
+                            <span class="small my-1 text-muted">Package has been approved for first release by <a username="@approver">@approver</a></span>
                         }
                         else
                         {
-                            <button type="submit" class="btn btn-sm border shadow-sm btn-light">
-                                <i class="far fa-window-close" aria-hidden="true"></i>&nbsp;&nbsp;Close
-                            </button>
+                            <span class="small my-1 text-muted">Package has been approved for first release</span>
                         }
+                    </li>
+                }
+            }
+        </ul>
+        <p class="h6">
+            <a data-bs-toggle="collapse" href="#requestReviewersCollapse" aria-expanded="true" aria-controls="requestReviewersCollapse">Request Reviewers&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+        </p>
+        @{
+            var requestReviewersCollapseState = String.Empty;
+            if (Request.Cookies.ContainsKey("requestReviewersCollapse"))
+            {
+                if (Request.Cookies["requestReviewersCollapse"].Equals("shown"))
+                    requestReviewersCollapseState = " show";
+            }
+        }
+        <ul class="list-group collapse mb-3@(requestReviewersCollapseState)" id="requestReviewersCollapse">
+            @{
+                var anyChecked = false;
+            }
+            <li class="list-group-item">
+                <form asp-resource="@Model.Review" asp-page-handler="RequestReviewers" method="post">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var approver in Model.PreferredApprovers)
+                        {
+                            <li class="list-group-item">
+                                <div class="form-check">
+                                    @if (Model.Review.RequestedReviewers != null && Model.Review.RequestedReviewers.Contains(approver))
+                                    {
+                                        <input class="form-check-input selectDropdownForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox" checked>
+                                        <label class="form-check-label" for="@(approver)CheckBox">
+                                            <img username="@approver" size="28" class="comment-icon align-self-start mr-2" />
+                                            @approver
+                                        </label>
+                                        anyChecked = true;
+                                    }
+                                    else
+                                    {
+                                        <input class="form-check-input selectDropdownForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox">
+                                        <label class="form-check-label" for="@(approver)CheckBox">
+                                            <img username="@approver" size="28" class="comment-icon align-self-start mr-2" />
+                                            @approver
+                                        </label>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </form>
+            </li>
+            <li class="list-group-item">
+                <span>
+                    @if (anyChecked)
+                    {
+                        <button class="btn btn-sm btn-outline-primary" id="submitReviewRequest" onclick="document.getElementById('submitRequestForReview').click()" disabled>Request Selected</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-sm btn-outline-primary" id="submitReviewRequest" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitRequestForReview').click();">Request All</button>
+                    }
+                    <button type="submit" id="submitRequestForReview" hidden></button>
+                </span>
+            </li>
+        </ul>
+        <p class="h6">
+            <a data-bs-toggle="collapse" href="#reviewOptionsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Review Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+        </p>
+        @{
+            var reviewOptionsCollapseState = " show";
+            if (Request.Cookies.ContainsKey("reviewOptionsCollapse"))
+            {
+                if (Request.Cookies["reviewOptionsCollapse"].Equals("shown"))
+                    reviewOptionsCollapseState = String.Empty;
+            }
+        }
+        <ul class="list-group collapse mb-3@(reviewOptionsCollapseState)" id="reviewOptionsCollapse">
+            <li class="list-group-item">
+                <div class="form-check form-switch">
+                    <form asp-resource="@Model.Review" class="form-inline" id="reviewSubscribeForm" method="post" asp-page-handler="ToggleSubscribed">
+                        @if (Model.Review.GetUserEmail(User) != null)
+                        {
+                            if (Model.Review.IsUserSubscribed(User))
+                            {
+                                <input class="form-check-input" checked type="checkbox" role="switch" id="reviewSubscribeSwitch">
+                            }
+                            else
+                            {
+                                <input class="form-check-input" type="checkbox" role="switch" id="reviewSubscribeSwitch">
+                            }
+                        }
+                        else
+                        {
+                            <input class="form-check-input" type="checkbox" role="switch" disabled id="reviewSubscribeSwitch" data-bs-placement="bottom" data-bs-toggle="tooltip" title="Link a microsoft.com email to your Github account to subscribe">
+                        }
+                        <label class="form-check-label" for="reviewSubscribeSwitch">Subscribe</label>
                     </form>
                 </div>
+            </li>
+            @if (Model.Review.FilterType != ReviewType.Automatic)
+            {
+                <li class="list-group-item">
+                    <div class="form-check form-switch">
+                        <form asp-resource="@Model.Review" class="form-inline" id="reviewCloseForm" method="post" asp-page-handler="ToggleClosed">
+                            @if (Model.Review.IsClosed)
+                            {
+                                <input class="form-check-input" checked type="checkbox" role="switch" id="reviewCloseSwitch">
+                            }
+                            else
+                            {
+                                <input class="form-check-input" type="checkbox" role="switch" id="reviewCloseSwitch">
+                            }
+                            <label class="form-check-label" for="reviewCloseSwitch">Close Review</label>
+                        </form>
+                    </div>
+                </li>
             }
-        </div>
-    </div>
-    <div class="row mx-1 px-0 pt-0 pb-2">
-        <form>
-          <div class="form-row">
-            @* Hide until tags is implemented
-            <div class="form-group col-md-4 mb-0">
-                <label class="mb-0 ml-1"><small>REVIEW:</small></label>
-                <select class="selectpicker show-tick show-menu-arrow shadow-sm" data-style="btn-light btn-sm border" data-selected-text-format="value" data-live-search="true" data-size="10" data-width="100%" data-container="body" id="review-bootstraps-select" data-tick-icon="fa-solid fa-check">
-                    @foreach(var review in Model.ReviewsForPackage)
+        </ul>
+        <p class="h6">
+            <a data-bs-toggle="collapse" href="#pageSettingsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Page Settings&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+        </p>
+        @{
+            var pageSettingsCollapseState = String.Empty;
+            if (Request.Cookies.ContainsKey("pageSettingsCollapse"))
+            {
+                if (Request.Cookies["pageSettingsCollapse"].Equals("shown"))
+                    pageSettingsCollapseState = " show";
+            }
+        }
+        <ul class="list-group collapse mb-3@(pageSettingsCollapseState)" id="pageSettingsCollapse">
+            <li class="list-group-item">
+                <div class="form-check form-switch">
+                    @if (userPreference.ShowComments == true)
                     {
-                        var urlValue = @Url.ActionLink("Review", "Assemblies", new {
-                            id = review.ReviewId
-                        });
-                        if (review.ReviewId == Model.Review.ReviewId)
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-comments-checkbox" checked>
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-comments-checkbox">
+                    }
+                    <label class="form-check-label" for="show-comments-checkbox">Show Comments</label>
+                </div>
+            </li>
+            <li class="list-group-item">
+                <div class="form-check form-switch">
+                    @if (userPreference.ShowSystemComments == true)
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-system-comments-checkbox" checked>
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-system-comments-checkbox">
+                    }
+                    <label class="form-check-label" for="show-system-comments-checkbox">Show System Comments</label>
+                </div>
+            </li>
+            <li class="list-group-item" id="show-documentation-component">
+                <div class="form-check form-switch">
+                    @if (Model.ShowDocumentation)
+                    {
+                        <input class="form-check-input show-documentation-checkbox" checked type="checkbox" role="switch" asp-for="@Model.ShowDocumentation" id="showDocumentationSwitch">
+                    }
+                    else
+                    {
+                        <input class="form-check-input show-documentation-checkbox" type="checkbox" role="switch" asp-for="@Model.ShowDocumentation" id="showDocumentationSwitch">                  
+                    }
+                    <a class="show-documentation-switch" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly, revisionId: Model.Revision.RevisionId)>
+                        <label class="form-check-label" for="showDocumentationSwitch">Show Documentation</label>
+                    </a>
+                </div>
+            </li>
+            <li class="list-group-item" id="show-hidden-api-component">
+                <div class="form-check form-switch">
+                    @if (userPreference.ShowHiddenApis == true)
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-hidden-api-checkbok">
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="show-hidden-api-checkbok" checked>
+                    }
+                    <label class="form-check-label" for="show-hidden-api-checkbok">Show Hidden APIs</label>
+                </div>
+            </li>
+            <li class="list-group-item">
+                <div class="form-check form-switch">
+                    @if (userPreference.HideLineNumbers == true)
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="hide-line-numbers">
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="hide-line-numbers" checked>
+                    }
+                    <label class="form-check-label" for="hide-line-numbers">Show Line Number</label>
+                </div>
+            </li>
+            <li class="list-group-item">
+                <div class="form-check form-switch">
+                    @if (userPreference.HideLeftNavigation == true)
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="hide-left-navigation">
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" id="hide-left-navigation" checked>
+                    }
+                    <label class="form-check-label" for="hide-left-navigation">Show Left Navigation</label>
+                </div>
+            </li>
+            @if (!String.IsNullOrEmpty(Model.DiffRevisionId))
+            {
+                <li class="list-group-item">
+                    <div class="form-check form-switch">
+                        @if (Model.ShowDiffOnly)
                         {
-                            <option selected style="font-size: 0.8em;" value="@urlValue" data-subtext="Type: @review.FilterType | Language: @review.Language | Author: @review.Author">@review.DisplayName</option>
-                        }
+                            <input class="form-check-input show-diffonly-checkbox" checked type="checkbox" role="switch" asp-for="@Model.ShowDiffOnly" id="showDiffOnlySwitch">                        }
                         else
                         {
-                            <option style="font-size: 0.8em;" value="@urlValue" data-subtext="Type: @review.FilterType | Language: @review.Language | Author: @review.Author">@review.DisplayName</option>
-                        }
-                    }
-                </select>
-            </div>
-            *@
-            <div class="form-group col-md-6 mb-0">
-                <label class="mb-0 ml-1"><small>Revision:</small></label>
-                <select class="custom-select shadow-sm custom-select-sm" id="revisions-bootstraps-select">
+                            <input class="form-check-input show-diffonly-checkbox" type="checkbox" role="switch" asp-for="@Model.ShowDiffOnly" id="showDiffOnlySwitch">                        }
+                        <a class="show-diffonly-switch" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDiffOnly: !Model.ShowDiffOnly, revisionId: Model.Revision.RevisionId)>
+                            <label class="form-check-label" for="showDiffOnlySwitch">Show Only Diff</label>
+                        </a>
+                    </div>
+                </li>
+            }
+        </ul>             
+    </div>
+</div>
+
+<div class="container-fluid mx-0 px-0 sub-header-content">
+    <div class="row mx-1 px-0 py-2">
+        <div class="col-md-8">
+            <div class="input-group input-group-sm" id="review-info-bar">
+                <partial name="Shared/_ReviewBadge" model="Model.Review" />
+
+                <span class="input-group-text">Revision:</span>
+
+                <select id="revision-select" aria-label="Revision Select">
                     @foreach (var revision in Model.Review.Revisions.Reverse())
                     {
-                        var optionName = revision.IsApproved ? $"{@revision.DisplayName} ✔" : @revision.DisplayName;
+                        var optionClass = revision.IsApproved ? "option-approved" : "option-pending";
                         var urlValue = @Url.ActionLink("Review", "Assemblies", new
                         {
                             id = @Model.Review.ReviewId,
@@ -361,50 +389,52 @@
                         });
                         if (@revision.DisplayName == @Model.Revision.DisplayName)
                         {
-                            <option selected value="@urlValue">@optionName</option>
+                            <option selected value="@urlValue" class="@optionClass">@revision.DisplayName</option>
                         }
                         else
                         {
-                            <option value="@urlValue">@optionName</option>
+                            <option value="@urlValue" class="@optionClass">@revision.DisplayName</option>
                         }
                     }
                 </select>
-            </div>
-            <div class="form-group col-md-6 mb-0">
+
                 @if (@Model.PreviousRevisions.Any())
                 {
                     @if (Model.DiffRevisionId != null)
                     {
 
-                        var urlValue = @Url.ActionLink("Review", "Assemblies", new {
+                        var urlValue = @Url.ActionLink("Review", "Assemblies", new
+                        {
                             id = @Model.Review.ReviewId,
                             revisionId = @Model.Revision.RevisionId,
                             diffRevisionId = @Model.DiffRevisionId,
                             doc = @Model.ShowDocumentation,
                             diffOnly = @Model.ShowDiffOnly
                         });
-                        <label class="mb-0 ml-1"><a href="@urlValue"><small>Diff With:</small></a></label>
+                        <a class="input-group-text" href="@urlValue">Diff With:</a>
                     }
                     else
                     {
-                        var urlValue = @Url.ActionLink("Review", "Assemblies", new {
+                        var urlValue = @Url.ActionLink("Review", "Assemblies", new
+                        {
                             id = @Model.Review.ReviewId,
                             revisionId = @Model.Revision.RevisionId,
                             diffRevisionId = @Model.PreviousRevisions.Last().RevisionId,
                             doc = @Model.ShowDocumentation,
                             diffOnly = @Model.ShowDiffOnly
                         });
-                        <label class="mb-0 ml-1"><a href="@urlValue"><small>Diff:</small></a></label>
+                        <a class="input-group-text" href="@urlValue">Diff:</a>
                     }
-                        <select class="custom-select shadow-sm custom-select-sm" id="diff-bootstraps-select">
+                    <select id="diff-select" aria-label="Diff Select">
                         if (@Model.DiffRevisionId == null)
                         {
-                            <option value="" selected></option>
+                        <option value="" selected></option>
                         }
                         @foreach (var revision in Model.PreviousRevisions.Reverse())
                         {
-                            var optionName = revision.IsApproved ? $"{@revision.DisplayName} ✔" : @revision.DisplayName;
-                            var urlValue = @Url.ActionLink("Review", "Assemblies", new {
+                            var optionClass = revision.IsApproved ? "option-approved" : "option-pending";
+                            var urlValue = @Url.ActionLink("Review", "Assemblies", new
+                            {
                                 id = @Model.Review.ReviewId,
                                 diffRevisionId = @revision.RevisionId,
                                 diffOnly = @Model.ShowDiffOnly,
@@ -415,28 +445,56 @@
                             {
                                 if (@Model.DiffRevisionId == @revision.RevisionId)
                                 {
-                                    <option value="@urlValue" selected>@optionName</option>
+                                    <option value="@urlValue" selected class="@optionClass">@revision.DisplayName</option>
                                 }
                                 else
                                 {
-                                    <option value="@urlValue">@optionName</option>
+                                    <option value="@urlValue" class="@optionClass">@revision.DisplayName</option>
                                 }
                             }
                             else
                             {
                                 if (@Model.DiffRevisionId != @revision.RevisionId)
                                 {
-                                    <option value="@urlValue">@optionName</option>
+                                    <option value="@urlValue" class="@optionClass">@revision.DisplayName</option>
                                 }
                             }
                         }
                     </select>
                 }
+                @{
+                    var popOverContent = $"<b>{Model.ActiveConversations}</b> active revision threads.<br><b>{Model.UsageSampleConversations}</b> active usage sample threads.<br><b>{Model.TotalActiveConversations}</b> total active threads.<br>"
+                    + $"<b>Current Revision:</b> <em>{@Model.Revision.DisplayName}</em>";
+                    @if (Model.DiffRevisionId != null)
+                    {
+                        popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
+                    }
+                    @if (Model.ActiveConversations > 0)
+                    {
+                        <button type="button" class="btn btn-outline-secondary" id="jump-to-first-comment">
+                            <i class="far fa-comment-alt"></i>
+                        </button>                    }
+                    <button type="button" class="btn btn-info" data-bs-placement="bottom" data-bs-trigger="focus" data-bs-toggle="popover" data-bs-html="true" data-bs-title="Page Info" data-bs-content="@popOverContent" data-bs-custom-class="custom-popover">
+                        <span class="badge">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
+                    </button>
+                }
             </div>
-          </div>
-        </form>
+        </div>
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-3">
+        </div>
     </div>
-    <div class="row px-3" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId" data-language="@Model.Review.Language">
+
+    <partial name="Shared/_ReviewNavBar" />
+</div>
+@{
+    var mainContainerClass = " move-main-content-container-left";
+    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
+        mainContainerClass = String.Empty;
+}
+<div class="container-fluid pt-3@(mainContainerClass)" id="review-main-container">
+    <div class="row mx-3 g-2" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId" data-language="@Model.Review.Language">
         @{
             var reviewLeftDisplay = String.Empty;
             var reviewRightSize = "10";
@@ -448,12 +506,12 @@
 
             var reviewApprovedClass = (Model.Revision.Approvers.Count > 0) ? "review-approved" : "border rounded-1";
         }
-        <div id="review-left" class="col-2 sticky-top @reviewApprovedClass @reviewLeftDisplay">
+        <div id="review-left" class="col-2 @reviewApprovedClass @reviewLeftDisplay">
             <div>
                 <div class="namespace-view">
                     @if (Model.CodeFile != null)
                     {
-                        <partial name="Shared/Navigation" model=" Model.CodeFile.Navigation" />
+                        <partial name="Shared/Navigation" model="Model.CodeFile.Navigation" />
                     }
                 </div>
             </div>
@@ -470,5 +528,30 @@
             </table>
         </div>
     </div>
+
+    <form asp-resource="@Model.Review" class="form-inline" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+        <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
+        <div class="modal fade" id="approveModel" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Approve Review</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p> There are still active conversations. <br /> Would you like to review these first? </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <a asp-page="Conversation" asp-route-id="@Model.Review.ReviewId">
+                            <div class="btn btn-outline-secondary">Check Conversations</div>
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            Approve API Anyway
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
     <partial name="_CommentFormPartial" model="@Model.TaggableUsers" /> 
 </div>

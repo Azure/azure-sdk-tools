@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/cadl-apiview",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "author": "Microsoft Corporation",
   "description": "Cadl library for emitting APIView token files from Cadl specifications",
   "homepage": "https://github.com/Azure/azure-sdk-tools",
@@ -54,16 +54,17 @@
     "!dist/test/**"
   ],
   "dependencies": {
-    "@azure-tools/cadl-azure-core": "~0.25.0",
-    "@azure-tools/cadl-dpg": "~0.25.0",
-    "@cadl-lang/compiler": "~0.39.0",
-    "@cadl-lang/rest": "~0.39.0",
-    "@cadl-lang/versioning": "~0.39.0"
+    "@azure-tools/cadl-azure-core": "0.26.0",
+    "@azure-tools/cadl-autorest": "0.26.0",
+    "@azure-tools/cadl-dpg": "latest",
+    "@cadl-lang/compiler": "0.40.0",
+    "@cadl-lang/rest": "latest",
+    "@cadl-lang/versioning": "latest"
   },
   "devDependencies": {
-    "@cadl-lang/eslint-plugin": "~0.39.0",
-    "@cadl-lang/library-linter": "~0.39.0",
-    "@cadl-lang/prettier-plugin-cadl": "^0.39.0",
+    "@cadl-lang/eslint-plugin": "~0.40.0",
+    "@cadl-lang/library-linter": "~0.40.0",
+    "@cadl-lang/prettier-plugin-cadl": "^0.40.0",
     "@cadl-lang/eslint-config-cadl": "~0.4.1",
     "@types/mocha": "~9.1.0",
     "@types/node": "~16.0.3",

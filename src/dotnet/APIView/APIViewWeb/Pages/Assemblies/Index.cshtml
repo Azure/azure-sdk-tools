@@ -7,257 +7,122 @@
 @using APIViewWeb.Models
 @{
     ViewData["Title"] = "Reviews";
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    TempData["UserPreference"] = userPreference;
 }
-@section Scripts
-{
-    <script type="text/javascript" src="@Url.Content("~/reviews.js")" asp-append-version="true"></script>
-    <script type="text/javascript" src="@Url.Content("~/fileInput.js")" asp-append-version="true"></script>
-}
-<nav class="navbar-light shadow-sm bg-light sticky-top">
-    <div class="container-fluid">
-        <div class="row mx-5">
-            <div class="col-md-10 px-0 d-sm-flex flex-row justify-content-sm-start">
-                <div class="input-group py-2 mr-2" id="reviews-table-search-container">
-                    <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search.."/>
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" id="reviews-search-button" aria-labelledby="reviews-table-search-box" type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
-                    </div>
-                </div>
-                <select class="selectpicker show-tick show-menu-arrow py-2 mr-2" multiple data-selected-text-format="static" title="Language" data-style="btn-light border" data-width="120px" data-container="body" id="language-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Languages" />
-                </select>
-                <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="State" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="85px" data-container="body" id="state-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
-                </select>
-                <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="Status" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="90px" data-container="body" id="status-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
-                </select>
-                <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="Type" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="80px" data-container="body" id="type-filter-bootstraps-select" data-actions-box="true" data-select-all-text="&#10003;" data-deselect-all-text="&#10005;" data-tick-icon="fa-solid fa-check">
-                    <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
-                </select>
-            </div>
-            <div class="col-md-2 px-0 py-2 d-sm-flex flex-row justify-content-sm-end">
-                <button type="button" class="btn btn-outline-primary btn-sm" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset</button>
+<div class="container-fluid sticky-top nav-cst-theme">
+    <div class="row mx-5 py-2">
+        <div class="col-md-10 px-0 d-sm-flex flex-row justify-content-sm-start">
+            <div class="input-group" id="reviews-table-search-container">
+                <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search.." />
+                <button class="btn btn-outline-primary" id="reviews-search-button" aria-labelledby="reviews-table-search-box" type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
         </div>
+        <div class="col-md-2 px-0 d-sm-flex flex-row justify-content-sm-end">
+            @if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
+            {
+            <input type="checkbox" class="btn-check" id="index-right-offcanvas-toggle" autocomplete="off">
+            }
+            else
+            {
+            <input type="checkbox" checked class="btn-check" id="index-right-offcanvas-toggle" autocomplete="off">
+            }
+            <label class="btn btn-outline-primary" accesskey="m" for="index-right-offcanvas-toggle"><i class="fa fa-bars"></i>&nbsp;&nbsp;Options</label>
+        </div>
     </div>
-</nav>
+</div>
 
-<div class="container-fluid">
+@{
+    var offCanvasClass = " show-offcanvas";
+    if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
+        offCanvasClass = String.Empty;
+}
+<div id="right-offcanvas-menu" class="right-offcanvas@(offCanvasClass)">
+    <div class="offcanvas-menu-content" id="index-offcanvas-menu-content">
+        <p class="h6">Filters</p>
+        <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text">Languages</span>
+            <select multiple id="language-filter-select" aria-label="Language Filter">
+                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Languages" />
+            </select>
+        </div>
+        <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text">State</span>
+            <select multiple id="state-filter-select" aria-label="State Filter">
+                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
+            </select>
+        </div>
+        <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text">Status</span>
+            <select multiple id="status-filter-select" aria-label="Status Filter">
+                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
+            </select>
+        </div>
+        <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text">Type</span>
+            <select multiple id="type-filter-select" aria-label="Type Filter">
+                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
+            </select>
+        </div>
+
+ 
+        <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset Filters</button>
+        <hr class="border">
+    </div>
+</div>
+@{
+    var mainContainerClass = " move-main-content-container-left";
+    if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
+        mainContainerClass = String.Empty;
+}
+<div class="container-fluid mb-5@(mainContainerClass)" id="index-main-container">
     <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
                     <div class="modal-header">
                         <h5 class="modal-title">Create Review</h5>
-                        <button type="button" class="close" data-dismiss="modal">
-                            <span aria-hidden="true"><i class="fa-solid fa-xmark"></i></span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-group">
-                            <span>
-                                    <select asp-for="Upload.Language" class="selectpicker show-menu-arrow shadow-sm mr-20 ml-20" data-style="btn-light btn-sm border" data-selected-text-format="value" id="review-language-select">
-                                    <option selected disabled value="">Select Language</option>
-                                    @foreach(string lang in UploadModel.SupportedLanguages)
-                                    {
-                                        <option value=@lang data-content=@lang>@lang</option>
-                                    }
-                                </select>                                
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <div class="custom-file package-selector">
-                                <input asp-for="Upload.Files" type="file" class="custom-file-input">
-                                <label asp-for="Upload.Files" class="custom-file-label">Select file to include in API review</label>
-                            </div>
-                        </div>
-                        <div class="form-group package-selector hidden-row">
-                            <input asp-for="Upload.FilePath" class="form-control"  type="text" placeholder="Enter URL to package root source. For e.g. URL to CADL file">
-                        </div>
-
-                        <div class="form-group">
-                            <div class="form-check" >
-                                <input class="form-check-input" hidden asp-for="Upload.RunAnalysis" checked>
-                                <label class="form-check-label" hidden>
-                                    Run static analysis
-                                </label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional review label">
-                        </div>
-                        <div class="form-group" id="help">
-                            <a href="#help-content" data-toggle="collapse">What to upload</a>
-
-                            <ul class="nav nav-pills nav-fill mb-3" hidden>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-C" data-toggle="tab" href="#c-help">C</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link active" id="help-Csharp" data-toggle="tab" href="#csharp-help">C#</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-Cpp" data-toggle="tab" href="#cpp-help">C++</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-Go" data-toggle="tab" href="#go-help">Go</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-Java" data-toggle="tab" href="#java-help">Java</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-Kotlin" data-toggle="tab" href="#java-help">Kotlin</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-JavaScript" data-toggle="tab" href="#js-help">JS/TS</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-Python" data-toggle="tab" href="#python-help">Python</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-Swift" data-toggle="tab" href="#swift-help">Swift</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-Swagger" data-toggle="tab" href="#swagger-help">Swagger</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-Cadl" data-toggle="tab" href="#cadl-help">Cadl</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="help-Json" data-toggle="tab" href="#json-help">Json</a>
-                                </li>
-                            </ul>
-
-                            <!-- Tab panes -->
-                            <div class="tab-content border rounded p-3 panel-collapse collapse hidden" id="help-content">
-                                <div class="tab-pane active" id="csharp-help">
-                                    <ol>
-                                        <li>
-                                            Run
-                                            <code>dotnet pack</code>
-                                        </li>
-                                        Upload the resulting .nupkg file.
-                                    </ol>
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="form-group mb-3">
+                                    <p class="small mb-0">Select Language</p>
+                                    <select asp-for="Upload.Language" id="review-language-select">
+                                        <option selected disabled value="">None Selected</option>
+                                        @foreach (string lang in UploadModel.SupportedLanguages)
+                                        {
+                                            <option value=@lang data-content=@lang>@lang</option>
+                                        }
+                                    </select>
                                 </div>
-                                <div class="tab-pane" id="java-help">Run a <code>mvn package</code> build on your project, which will generate a number of build artifacts in the <code>/target</code> directory. In there, find the file ending <code>sources.jar</code>, and select it.</div>
-                                <div class="tab-pane" id="c-help">
-                                    <ol>
-                                        <li>
-                                            Install clang 10 or later.
-                                        </li>
-                                        <li>
-                                            Run
-                                            <code>clang [inputs like az_*.h] -Xclang -ast-dump=json -I ..\..\..\core\core\inc -I "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\VC\Tools\MSVC\14.26.28801\include\" > az_core.ast</code>
-                                        </li>
-                                        <li>
-                                            Archive the file <code>Compress-Archive az_core.ast -DestinationPath az_core.zip</code>
-                                        </li>
-                                        <li>
-                                            Upload the resulting archive.
-                                        </li>
-                                    </ol>
+                                <div class="input-group package-selector mb-3 custom-file-label">
+                                    <label for="uploadReviewFile" class="input-group-text small mb-0">Select File to Include in API Review</label>
+                                    <input asp-for="Upload.Files" type="file" class="form-control" id="uploadReviewFile">
                                 </div>
-                                <div class="tab-pane" id="python-help">
-                                    <ol>
-                                        <li>
-                                            Generate wheel for the package.
-                                            <code>python setup.py bdist_wheel -d [dest_folder]</code>
-                                        </li>
-                                        <li>
-                                            Upload generated whl file
-                                        </li>
-                                    </ol>
+                                <div class="form-group package-selector d-none mb-3">
+                                    <input asp-for="Upload.FilePath" class="form-control" type="text" placeholder="Enter URL to package root source. For e.g. URL to CADL file">
                                 </div>
-                                <div class="tab-pane" id="js-help">
-                                    <ol>
-                                        <li>
-                                            Use <code>api-extractor</code> to generate a <a href="https://api-extractor.com/pages/setup/generating_docs/">docModel file</a>
-                                        </li>
-                                        <li>
-                                            Upload generated api.json file
-                                        </li>
-                                    </ol>
+                                <div class="form-group mb-3 d-none">
+                                    <div class="form-check">
+                                        <input class="form-check-input" hidden asp-for="Upload.RunAnalysis" checked>
+                                        <label class="form-check-label" hidden>
+                                            Run static analysis
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="tab-pane" id="cpp-help">
-                                    <ol>
-                                        <li>
-                                            Install clang 10 or later. Your environment may require additional include directories.
-                                        </li>
-                                        <li>
-                                            Run
-                                            <code>clang++ [input like .\sdk\storage\azure-storage-files-datalake\inc\azure\storage\files\datalake\datalake.hpp] -I .\sdk\storage\azure-storage-files-datalake\inc -I .\sdk\core\azure-core\inc -Xclang  -ast-dump -I .\sdk\storage\azure-storage-common\inc  -I .\sdk\storage\azure-storage-blobs\inc > Azure_Storage_Files_Datalake.ast</code>
-                                        </li>
-                                        <li>
-                                            Archive the file <code>Compress-Archive Azure_Storage_Files_Datalake.ast -DestinationPath Azure_Storage_Files_Datalake.zip</code>
-                                        </li>
-                                        <li>
-                                            Rename the file <code>Rename-Item Azure_Storage_Files_Datalake.zip -NewName  Azure_Storage_Files_Datalake.cppast</code>
-                                        </li>
-                                        <li>
-                                            Upload the resulting archive.
-                                        </li>
-                                    </ol>
+                                <div class="form-group mb-3">
+                                    <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional review label">
                                 </div>
-                                <div class="tab-pane" id="go-help">
-                                    <ol>
-                                        <li>
-                                            Archive source module directory in which go.mod is present. <code>Compress-Archive ./sdk/azcore -DestinationPath azcore.zip</code>
-                                        </li>
-                                        <li>
-                                            Rename the file <code>Rename-Item azcore.zip -NewName  azcore.gosource</code>
-                                        </li>
-                                        <li>
-                                            Upload the resulting archive.
-                                        </li>
-                                    </ol>
+                                <div class="form-group">
+                                    <partial name="_ReviewUploadHelp" />
                                 </div>
-                                <div class="tab-pane" id="protocol-help">
-                                    <ol>
-                                        <li>
-                                            Upload generated yml file from autorest 
-                                        </li>
-                                    </ol>
-                                </div>
-                                <div class="tab-pane" id="swift-help">
-                                    <ol>
-                                        <li>
-                                            Generate JSON file for the source by running Swift APIView parser in XCode.
-                                            More information is available here on <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/swift/README.md">Swift API parser</a> 
-                                        </li>
-                                        <li>
-                                            Upload generated JSON
-                                        </li>
-                                    </ol>
-                                </div>
-                                <div class="tab-pane" id="swagger-help">
-                                    <ol>
-                                        <li>
-                                            Rename swagger json to replace file extension to .swagger  <code>Rename-Item PetSwagger.json -NewName PetSwagger.swagger</code>
-                                        </li>
-                                        <li>
-                                            Upload renamed swagger file
-                                        </li>
-                                    </ol>
-                                </div>
-                                <div class="tab-pane" id="cadl-help">
-                                    <ol>
-                                        
-                                       Provide URL to cadl project root path.
-                                                                              
-                                    </ol>
-                                </div>
-                                <div class="tab-pane" id="json-help">
-                                    <ol>
-                                       Upload JSON API review token file.                                    
-                                    </ol>
-                                </div>
-                            </div>
+                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
                     </div>
                 </form>
@@ -265,9 +130,7 @@
         </div>
     </div>
 
-    <div class="bottom-right-floating">
-        <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
-    </div>
+    <button type="button" class="btn btn-primary" id="create-review-button" data-bs-toggle="modal" data-bs-target="#uploadModel"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
 
     <div class="mx-5 row">
         <div class="col-md-12" id="reviews-filter-partial">

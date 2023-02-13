@@ -133,7 +133,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             bool profile,
             object context)
         {
-            var runtimePackageVersions = (Dictionary<string, string>) context;
+            var runtimePackageVersions = (Dictionary<string, string>)context;
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();

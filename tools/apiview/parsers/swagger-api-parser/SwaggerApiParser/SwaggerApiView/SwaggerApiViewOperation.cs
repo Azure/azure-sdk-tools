@@ -28,6 +28,8 @@ public class SwaggerApiViewOperation : ITokenSerializable
     public SwaggerApiViewOperationParameters PathParameters { get; set; }
     public SwaggerApiViewOperationParameters QueryParameters { get; set; }
     public SwaggerApiViewOperationParameters BodyParameters { get; set; }
+    
+    public SwaggerApiViewOperationParameters HeaderParameters { get; set; }
 
     public List<SwaggerApiViewResponse> Responses { get; set; }
 
@@ -100,6 +102,7 @@ public class SwaggerApiViewOperation : ITokenSerializable
         ret.AddRange(PathParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         ret.AddRange(QueryParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         ret.AddRange(BodyParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
+        ret.AddRange(HeaderParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
         
         // new line for `Response` section.
         ret.Add(TokenSerializer.NewLine());

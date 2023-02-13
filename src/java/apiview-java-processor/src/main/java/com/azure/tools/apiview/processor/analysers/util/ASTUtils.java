@@ -204,7 +204,7 @@ public final class ASTUtils {
         String annotationContext = getAnnotationContext(nodeWithAnnotations);
 
         String idSuffix = "-" + annotationContext;
-        if (annotationContext.isEmpty()) {
+        if (annotationContext == null || annotationContext.isEmpty()) {
             idSuffix = "-L" + annotation.getBegin().orElseThrow(RuntimeException::new).line;
         }
         return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + idSuffix);

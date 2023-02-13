@@ -42,6 +42,7 @@ stages:
           
           - script: |
               find /usr/lib -name "libffi.so*"
+              ln -s /usr/lib/x86_64-linux-gnu/libffi.so.8 /usr/lib/x86_64-linux-gnu/libffi.so.7
             condition: and(succeeded(), eq(variables['Agent.OS'],'Linux'))
 
           - pwsh: |

@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.TestProxy.Transforms;
 using Azure.Sdk.Tools.TestProxy.Vendored;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Features;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
@@ -466,8 +467,13 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 outgoingResponse.ContentLength = bodyData.Length;
 
-                await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
+                await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
             }
+        }
+
+        public async Task WriteBodyBytes(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
+        {
+            await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
         }
 
         public static async Task<(RecordEntry, byte[])> CreateEntryAsync(HttpRequest request)
@@ -710,10 +716,29 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 var customizedClientHandler = GetTransport(customizations.AllowAutoRedirect, customizations);
 
-                RecordingSessions[sessionId].Client = new HttpClient(customizedClientHandler)
+                if (RecordingSessions.TryGetValue(sessionId, out var recordingSession))
                 {
-                    Timeout = timeoutSpan
-                };
+                    recordingSession.Client = new HttpClient(customizedClientHandler)
+                    {
+                        Timeout = timeoutSpan
+                    };
+                }
+                else
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, $"Unable to set a transport customization on a recording session that is not active. Id: \"{sessionId}\"");
+                }
+
+                if (customizations.PlaybackResponseTime > 0)
+                {
+                    if (PlaybackSessions.TryGetValue(sessionId, out var playbackSession))
+                    {
+                        playbackSession.PlaybackResponseTime = customizations.PlaybackResponseTime;
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Unable to set a transport customization on a recording session that is not active. Id: \"{sessionId}\"");
+                    }
+                }
             }
             else
             {

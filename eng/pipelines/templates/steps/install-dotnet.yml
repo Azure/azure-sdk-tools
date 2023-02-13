@@ -19,9 +19,6 @@ steps:
       # Specifically, test-proxy requires asp.net core runtime, which is installed only when sdk option
       # is selected, per: https://github.com/microsoft/azure-pipelines-tasks/issues/14405
       #
-      # Build showing the lack of asp.net core runtime when 'runtime' is used instead of 'sdk':
-      #    https://dev.azure.com/azure-sdk/public/_build/results?buildId=2177474&view=logs&j=f285c022-fd09-5cd2-85b4-c0252bc68dbc&t=1e6dcdea-6b31-5539-122f-c6b9e4b7da81
-      #
       # For additional context, see:
       # https://github.com/Azure/azure-sdk-tools/pull/5405#discussion_r1105006774
       # https://github.com/Azure/azure-sdk-tools/pull/5405

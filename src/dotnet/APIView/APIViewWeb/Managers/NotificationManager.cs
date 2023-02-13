@@ -183,11 +183,14 @@ namespace APIViewWeb.Managers
             var initiatingUserEmail = GetUserEmail(user);
             // Find email address of already tagged users in comment
             HashSet<string> notifiedEmails = new HashSet<string>();
-            foreach(var usename in notifiedUsers)
+            if (notifiedUsers != null)
             {
-                var email = await GetEmailAddress(usename);
-                notifiedEmails.Add(email);
-            }
+                foreach (var usename in notifiedUsers)
+                {
+                    var email = await GetEmailAddress(usename);
+                    notifiedEmails.Add(email);
+                }
+            }           
             var subscribers = review.Subscribers.ToList()
                     .Where(e => e != initiatingUserEmail && !notifiedEmails.Contains(e)) // don't include the initiating user and tagged users in the comment
                     .ToList();

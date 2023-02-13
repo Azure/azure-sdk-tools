@@ -48,8 +48,6 @@
       - [Windows IIS](#windows-iis)
   - [Asset Sync (Retrieve External Test Recordings)](#asset-sync-retrieve-external-test-recordings)
 
-For a detailed explanation and more-or-less spec, check the [README.md](../README.md) one level up from this one.
-
 This test proxy is intended to provide out-of-process record/playback capabilities compatible with any language. It offers session and recording level customization during both `record` and `playback` of a test.
 
 All that is required to start recording is to make minor updates to the requests made within a given test. A standard request looks something like this:

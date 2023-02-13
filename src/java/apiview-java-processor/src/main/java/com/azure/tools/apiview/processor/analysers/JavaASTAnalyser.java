@@ -1031,7 +1031,7 @@ public class JavaASTAnalyser implements Analyser {
                     addToken(makeWhitespace());
                 }
 
-                addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString(), makeId(annotation)));
+                addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString(), makeId(annotation, nodeWithAnnotations)));
                 if (showAnnotationProperties) {
                     if (annotation instanceof NormalAnnotationExpr) {
                         addToken(new Token(PUNCTUATION, "("));

@@ -1275,40 +1275,57 @@ public class JavaASTAnalyser implements Analyser {
              * node one = "Map", node two = "String", and node three = "Map<Integer, Double>"
              * node three, "Map<Integer, Double>", has two type arguments: Integer and Double.
              *
-             * But a type with full package name will be treated as two nodes and has no type arguments:
+             * But a type with full package name will be treated as two nodes:
              *
-             * E.x., "com.azure.example.TypeA", it has two node,
+             * E.x., "com.azure.example.TypeA", it has two nodes:
              * node one = "com.azure.example", node two = "TypeA"
              * Furthermore, node one has two children: "com.azure" and "example".
+             *
+             * A type with full package name and type arguments will have (2 + number of type arguments) nodes:
+             *
+             * E.x., "java.util.List<String>" has three nodes:
+             * node one = "java.util"
+             * node two = List
+             * node three = String
+             *
+             * "java.util.Map<String, Integer>" has four nodes:
+             * node one = java.util
+             * node two = Map
+             * node three = String
+             * node four = Integer
              */
-            for (int i = 0; i < childrenSize; i++) {
-                final Node childNode = nodes.get(i);
-                // Opening punctuation character:
-                // Second node, need to add a punctuation character right after first node such as 'Set<String>' where
-                // '<' is the punctuation character that is required.
-                if (i == 1) {
-                    // If a node has children, it implies it is a class or interface type. so it is safe to cast.
-                    Optional<NodeList<Type>> nodeList = ((ClassOrInterfaceType) node).getTypeArguments();
-                    if (nodeList.isPresent()) {
-                        // type arguments
-                        addToken(new Token(PUNCTUATION, "<"));
-                    } else {
-                        // full-package type name
+
+            Optional<NodeList<Type>> typeArguments = ((ClassOrInterfaceType) node).getTypeArguments();
+            List<Node> childNodes = node.getChildNodes();
+
+            if (typeArguments.isPresent()) {
+                NodeList<Type> types = typeArguments.get();
+                int genericTypeArgsCount = types.size();
+                for (int i = 0; i < childNodes.size() - genericTypeArgsCount; i++) {
+                    // for each child node that is not a type arg, use "." separator
+                    if (i > 0) {
                         addToken(new Token(PUNCTUATION, "."));
                     }
+                    getTypeDFS(childNodes.get(i));
                 }
-
-                // Recursion
-                getTypeDFS(childNode);
-
-                // Closing punctuation character
-                if (i == 0) {
-                    continue;
-                } else if (i == childrenSize - 1) {
-                    ((ClassOrInterfaceType) node).getTypeArguments().ifPresent(
-                        (NodeList<Type> values) -> addToken(new Token(PUNCTUATION, ">")));
-                } else {
-                    addToken(new Token(PUNCTUATION, ","), SPACE);
+                // Now, add "<" before adding the type arg nodes
+                addToken(new Token(PUNCTUATION, "<"));
+                for (int i = childNodes.size() - genericTypeArgsCount; i < childNodes.size(); i++) {
+                    if (i > childNodes.size() - genericTypeArgsCount) {
+                        // Add a "," separator if there are more two or more type args
+                        addToken(new Token(PUNCTUATION, ","), SPACE);
+                    }
+                    getTypeDFS(childNodes.get(i));
+                }
+                // Close the type args with ">"
+                addToken(new Token(PUNCTUATION, ">"));
+            } else {
+                // No type args, all child nodes are just part of the fully qualified class name
+                for (int i = 0; i < childNodes.size(); i++) {
+                    if (i > 0) {
+                        addToken(new Token(PUNCTUATION, "."));
+                    }
+                    getTypeDFS(childNodes.get(i));
                 }
             }
         }

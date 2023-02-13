@@ -1,4 +1,4 @@
-﻿@using APIViewWeb.Models
+@using APIViewWeb.Models
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @using APIViewWeb.Helpers
 @model IEnumerable<APIView.NavigationItem>
@@ -7,6 +7,8 @@
     bool isChildNavigation = ViewBag.IsChildNavigation ?? false;
     string navListGroupClass = (hasSections && isChildNavigation) ? "nav-list-group nav-list-collapsed" : "nav-list-group";
     var userPreference = TempData["UserPreference"] as UserPreferenceModel;
+    var languageCssSafename = TempData["LanguageCssSafeName"] as string;
+
 }
 
 <ul class="nav-list-children">
@@ -22,11 +24,11 @@
 
                 @if (item.Tags != null && item.Tags.ContainsKey("TypeKind"))
                 {
-                    <span class="icon icon-@item.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span>
+                <span class="@languageCssSafename-variant icon-@item.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span>
                 }
                 else
                 {
-                    <span class="icon icon-unknown">&nbsp;&nbsp;</span>
+                <span class="@languageCssSafename-variant icon-unknown">&nbsp;&nbsp;</span>
                 }
 
                 <a href="#@item.NavigationId" title="@item.Text">@item.Text</a>

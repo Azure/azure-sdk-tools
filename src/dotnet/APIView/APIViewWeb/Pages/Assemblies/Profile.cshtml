@@ -23,11 +23,7 @@
     var userPreference = (TempData["UserPreference"] as UserPreferenceModel) ?? new UserPreferenceModel();
     var theme = userPreference.Theme ?? "light-theme";
 }
-@section Scripts
-{
-    <script type="text/javascript" src="@Url.Content("~/userProfile.js")" asp-append-version="true"></script>
-}
-<div class="container-fluid py-2">
+<div class="container py-2 mb-5">
     @if(Model.userProfile == null) 
     {
         <h1> User profile does not exist. </h1>
@@ -60,30 +56,34 @@
                     </div>
                     <div class="form-group form-row" asp-requirement="@ApproverRequirement.Instance" asp-resource="@Model">
                         <p class="text-muted">Not everyone in APIView is allowed to approve reviews - but you are! To limit the number of people who can approve for a given language, we ask that all approvers self-identify the languages that they want approval abilities for. You can do this by selecting the appropriate languages in the dropdown list below.</p>
-                        <label for="Languages" class="col-sm-2 font-weight-bold" style="line-height: 38px"> Review Languages </label>
-                        <select name="Languages" class="selectpicker col-sm-10 px-0" multiple>
-                            @foreach (string language in Languages)
-                            {
-                                <option value="@language" selected="@(Model.userProfile.Languages.Contains(language) ? true : false)">@language</option>
-                            }
-                        </select>
+                        <label for="Languages" class="font-weight-bold" style="line-height: 38px"> Review Languages </label>
+                        <div class="px-0">
+                            <select multiple name="Languages" id="approvable-language-select" aria-label="Approvable Language Select">
+                                @foreach (string language in Languages)
+                                {
+                                    <option value="@language" selected="@(Model.userProfile.Languages.Contains(language) ? true : false)">@language</option>
+                                }
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group form-row">
-                        <label for="Theme" class="col-sm-2 font-weight-bold" style="line-height: 38px"> Theme </label>
-                        <select name="Theme" class="selectpicker show-tick col-sm-10 px-0" id="theme-selector" data-tick-icon="fa-solid fa-check">
-                            @foreach (var item in themes)
-                            {
-                                var displayName = item.Replace("-theme", "");
-                                if (item.Equals(theme))
+                        <label for="Theme" class="font-weight-bold" style="line-height: 38px"> Theme </label>
+                        <div class="px-0">
+                            <select name="Theme" id="theme-selector" aria-label="Theme Selector">
+                                @foreach (var item in themes)
                                 {
-                                    <option value="@item" selected>@displayName</option>
+                                    var displayName = item.Replace("-theme", "");
+                                    if (item.Equals(theme))
+                                    {
+                                        <option value="@item" selected>@displayName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item">@displayName</option>
+                                    }
                                 }
-                                else
-                                {
-                                    <option value="@item">@displayName</option>
-                                }
-                            }
-                        </select>
+                            </select>
+                        </div>
                     </div>
                     <hr />
                     <div class="d-flex justify-content-end align-items-center">
@@ -103,7 +103,7 @@
             <div class="p-2 w-50">
                 <div class="d-flex flex-column align-items-center">
                     <img username="@Model.userProfile.UserName" size="160" class="w-25 rounded-circle my-3" style="min-width:80px; max-width:160px" aria-label="GitHub User Avatar" />
-                    <h4 class="w-100 text-center"><a style="text-decoration: none;" class="text-dark" href="https://github.com/@(Model.userProfile.UserName)">@Model.userProfile.UserName</a></h4>
+                    <h4 class="w-100 text-center"><a style="text-decoration: none;" href="https://github.com/@(Model.userProfile.UserName)">@Model.userProfile.UserName</a></h4>
                 </div>
                 <hr />
 

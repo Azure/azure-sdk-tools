@@ -12,20 +12,27 @@
     {
         iconClassName += "-" + @Model.LanguageVariant.ToLower();
     }
-    <span role="img" class="mr-2 mt-1 p-1 border rounded icon-language @iconClassName" aria-label="@Model.Language @Model.LanguageVariant"></span>
+    <span role="img" class="input-group-text icon-language @iconClassName" aria-label="@Model.Language @Model.LanguageVariant"></span>
+
+}
+@{
+    var packageFieldWidth = 3;
+    if (packageName != null)
+    {
+        packageFieldWidth += packageName.Length;
+    }
+}
+<input type="text" class="form-control fw-bold" style="max-width: @(packageFieldWidth)ch; font-family: monospace;" value="@(packageName ?? "")" aria-label="Package Name of Review" readonly>
+@if (packageName != null)
+{
+    @if (Model.IsApprovedForFirstRelease)
+    {
+        <span class="input-group-text" data-bs-toggle="tooltip" title="Approved for First Release">
+            <i class="fa-regular fa-circle-check text-success"></i>
+        </span>
+    }
 }
 
-<span class="h6 mr-2 mt-auto">
-    @(packageName ?? "")
-</span>
-<span class="mr-auto mt-2">
-    @if (packageName != null)
-    {
-        @if (Model.IsApprovedForFirstRelease)
-        {
-            <i class="fa-regular fa-circle-check"></i>
-        }
-    }
-</span>
+
 
 

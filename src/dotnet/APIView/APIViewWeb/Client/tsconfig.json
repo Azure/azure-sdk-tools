@@ -14,9 +14,7 @@
     "noImplicitAny": false,
     "types": [
       "webpack-env",
-      "jquery",
-      "jqueryui",
-      "node"
+      "jquery"
     ],
     "paths": {
       "@/*": [

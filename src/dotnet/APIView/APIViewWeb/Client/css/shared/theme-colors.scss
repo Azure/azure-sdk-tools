@@ -1,0 +1,163 @@
+@import "../../node_modules/bootstrap/scss/functions";
+@import "../../node_modules/bootstrap/scss/variables";
+
+.light-theme {
+    /*----Base Colors-------------------------------------------------*/
+    $base-bg-color: #fbfaff;
+    --base-bg-color: #{$base-bg-color};
+    --base-fg-color: #{tint-color($base-bg-color, 100%)};
+    $base-text-color: #212529;
+    --base-text-color: #{$base-text-color};
+    --text-muted-color: #{tint-color($base-text-color, 30%)};
+    --primary-color: #{$primary};
+    --secondary-color: #{$secondary};
+    --success-color: #{$success};
+    --info-color: #{$info};
+    --warning-color: #{$warning};
+    --danger-color: #{$danger};
+    --border-color: #{shade-color($base-bg-color, 20%)};
+    --primary-btn-color: #fff;
+    /*----Links------------------------------------------------------*/
+    --link-color: #{$primary};
+    --link-active: #{shade-color($primary, 20%)};
+    --link-visited: #{shade-color($primary, 40%)};
+    /*----Shadows and Glows------------------------------------------*/
+    --outer-glow: #{tint-color($primary, 80%)};
+    --shadow-color: rgba(#{$black}, .15);
+    --box-shadow: 0 .5rem 1rem #{rgba($black, .15)};
+    --box-shadow-sm: 0 .125rem .25rem #{rgba($black, .075)};
+    --box-shadow-lg: 0 1rem 3rem #{rgba($black, .175)};
+    --box-shadow-inset: inset 0 1px 2px #{rgba($black, .075)};
+    --box-shadow-success: 0 0 0 0.1rem #{rgba($success, 10%)};
+    --box-shadow-link: 0 0 0 0.2rem #{rgba($primary, 50%)};
+    /*----Nav--------------------------------------------------------*/
+    --navbar-bg: #{tint-color($base-bg-color, 100%)};
+    --navbar-text: #{$base-text-color};
+    --navbar-link-active: #{shade-color($primary, 20%)};
+    --icon-color-filter: invert(0.0);
+    /*----Code Lines-------------------------------------------------*/
+    --keyword-color: blue;
+    --class-color: #007e79;
+    --name-color: #{$base-text-color};
+    --code-color: #d1377e;
+    --code-comment: green;
+    --code-diagnostics-error-color: lightpink;
+    --code-diagnostics-warn-color: lightyellow;
+    --code-diagnostics-info-color: lightblue;
+    --code-added: #cee9d3;
+    --code-removed: #fdcfce;
+    --code-delta: #fdefc6;
+    /*----SVG-------------------------------------------------*/
+    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+.dark-theme {
+    /*----Base Colors-------------------------------------------------*/
+    $base-bg-color: #010409;
+    --base-bg-color: #{$base-bg-color};
+    --base-fg-color: #{tint-color($base-bg-color, 5%)};
+    $base-text-color: #c9d1d9;
+    --base-text-color: #{$base-text-color};
+    --text-muted-color: #{shade-color($base-text-color, 30%)};
+    $primary-color: #0084ff;
+    --primary-color: #{$primary-color};
+    $secondary-color: #6F8594;
+    --secondary-color: #{$secondary-color};
+    --success-color: #{$success};
+    $info-color: #05DBF2;
+    --info-color: #{$info-color};
+    --warning-color: #{$orange};
+    --danger-color: #{$danger};
+    --border-color: #{tint-color($base-bg-color, 30%)};
+    --primary-btn-color: #fff;
+    /*----Links------------------------------------------------------*/
+    --link-color: #{$primary-color};
+    --link-active: #{tint-color($primary-color, 20%)};
+    --link-visited: #{tint-color($primary-color, 40%)};
+    /*----Shadows and Glows------------------------------------------*/
+    --outer-glow: #{tint-color($primary-color, 80%)};
+    --shadow-color: rgba(#{$white}, .15);
+    --box-shadow: 0 .5rem 1rem #{rgba($white, .15)};
+    --box-shadow-sm: 0 .125rem .25rem #{rgba($white, .075)};
+    --box-shadow-lg: 0 1rem 3rem #{rgba($white, .175)};
+    --box-shadow-inset: inset 0 1px 2px #{rgba($white, .075)};
+    --box-shadow-success: 0 0 0 0.1rem #{rgba($success, 10%)};
+    --box-shadow-link: 0 0 0 0.2rem #{rgba($primary-color, 50%)};
+    /*----Nav--------------------------------------------------------*/
+    --navbar-bg: #{tint-color($base-bg-color, 20%)};
+    --navbar-text: #{tint-color($base-text-color, 40%)};
+    --navbar-link-active: #{shade-color($base-text-color, 20%)};
+    --icon-color-filter: invert(0.5);
+    /*----Code Lines-------------------------------------------------*/
+    --keyword-color: #ff7b72;
+    --class-color: #d2a8ff;
+    --name-color: #{$base-text-color};
+    --code-color: #db3984;
+    --code-comment: green;
+    --code-diagnostics-error-color: darkmagenta;
+    --code-diagnostics-warn-color: #846007;
+    --code-diagnostics-info-color: darkblue;
+    --code-added: #14432d;
+    --code-removed: #491d24;
+    --code-delta: #4c401a;
+    /*----SVG-------------------------------------------------*/
+    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+.dark-solarized-theme {
+    /*----Base Colors-------------------------------------------------*/
+    $base-bg-color: #2b2b2b;
+    --base-bg-color: #{$base-bg-color};
+    --base-fg-color: #{tint-color($base-bg-color, 5%)};
+    $base-text-color: white;
+    --base-text-color: #{$base-text-color};
+    --text-muted-color: #{shade-color($base-text-color, 30%)};
+    $primary-color: #FFBD00;
+    --primary-color: #{$primary-color};
+    $secondary-color: #B7B6B7;
+    --secondary-color: #{$secondary-color};
+    --success-color: #{$success};
+    $info-color: #87B0E6;
+    --info-color: #{$info-color};
+    $warning-color: #D97904;
+    --warning-color: #{$warning-color};
+    $danger-color: #C80C07;
+    --danger-color: #{$danger-color};
+    --border-color: #{tint-color($base-bg-color, 30%)};
+    --primary-btn-color: #{$base-bg-color};
+    /*----Links------------------------------------------------------*/
+    --link-color: #{$primary-color};
+    --link-active: #{tint-color($primary-color, 10%)};
+    --link-visited: #{tint-color($primary-color, 20%)};
+    /*----Shadows and Glows------------------------------------------*/
+    --outer-glow: #{tint-color($primary-color, 80%)};
+    --shadow-color: rgba(#{$gray-100}, .15);
+    --box-shadow: 0 .5rem 1rem #{rgba($gray-100, .15)};
+    --box-shadow-sm: 0 .125rem .25rem #{rgba($gray-100, .075)};
+    --box-shadow-lg: 0 1rem 3rem #{rgba($gray-100, .175)};
+    --box-shadow-inset: inset 0 1px 2px #{rgba($gray-100, .075)};
+    --box-shadow-success: 0 0 0 0.1rem #{rgba($success, 10%)};
+    --box-shadow-link: 0 0 0 0.2rem #{rgba($primary-color, 50%)};
+    /*----Nav--------------------------------------------------------*/
+    --navbar-bg: #{tint-color($base-bg-color, 20%)};
+    --navbar-text: #{tint-color($base-text-color, 40%)};
+    --navbar-link-active: #{shade-color($base-text-color, 20%)};
+    --icon-color-filter: invert(0.5);
+    /*----Code Lines-------------------------------------------------*/
+    --keyword-color: #d57c32;
+    --class-color: #ffc66d;
+    --name-color: #{$base-text-color};
+    --code-color: #db3984;
+    --code-comment: #8a9898;
+    --code-diagnostics-error-color: #ff4c59;
+    --code-diagnostics-warn-color: #e3a710;
+    --code-diagnostics-info-color: #5197f0;
+    --code-added: #345039;
+    --code-removed: #5d3837;
+    --code-delta: #695b32;
+    /*----SVG-------------------------------------------------*/
+    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='dimgray' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='dimgray'/%3e%3c/svg%3e");
+}

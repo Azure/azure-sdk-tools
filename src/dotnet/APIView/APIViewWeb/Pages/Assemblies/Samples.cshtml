@@ -3,16 +3,29 @@
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
 @{
-    Layout = "ReviewLayout";
+    Layout = "Shared/_Layout";
     ViewData["Title"] = "Usage Samples";
     var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
     TempData["UserPreference"] = userPreference;
 }
-
 @if (Model.Samples == null || Model.Sample.FileId == "Bad Deployment" || Model.Sample.FileId == "File Content Missing") // If the samples container does not exist
 {
-    <div class="container-fluid">
-        <div class="mx-5 mt-2">
+    <div class="container-fluid mx-0 px-0 sub-header-content">
+        <div class="row mx-1 px-0 py-2">
+            <div class="col-md-6">
+                <div class="input-group-sm input-group">
+                    <partial name="Shared/_ReviewBadge" model="Model.Review" />
+                </div>
+            </div>
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+            </div>
+        </div>
+        <partial name="Shared/_ReviewNavBar" />
+    </div>
+    <div class="container">
+        <div class="row mx-1 px-0 py-3">
             <div class="text-muted">
                 <p> <strong> Usage Samples are not available for this APIView deployment. </strong></p>
                 <p> Please check <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/CONTRIBUTING.md">CONTRIBUTING.md</a> to see how to enable them. </p>
@@ -22,81 +35,81 @@
 }
 else
 {
-    <div class="container-fluid">
-        <div class="mx-5">
-            <div class="row py-2 border-bottom">
-                <div class="col-lg-12 d-flex px-0">
-                    <partial name="Shared/_ReviewBadge" model=" Model.Review" />
-                    <div class="my-1">
-                        @if (Model.SampleContent.Length > 0)
-                        {
-                            <button type="button" class="btn btn-sm border shadow-sm btn-light" data-toggle="modal" data-target="#updateModel"><i class="fa-solid fa-pen-to-square"></i>&nbsp;&nbsp;Edit</button>
-                            @if (Model.Sample.CreatedBy == User.GetGitHubLogin())
+    <div class="container-fluid mx-0 px-0 sub-header-content">
+        <div class="row mx-1 px-0 py-2">
+            <div class="col-md-4">
+                <div class="input-group-sm input-group">
+                    <partial name="Shared/_ReviewBadge" model="Model.Review" />
+                    @if (Model.SampleContent.Length > 0)
+                    {
+                        <span class="input-group-text">Revision:</span>
+                        <select id="revision-select" aria-label="Revision Select">
+                            @foreach (var revision in Model.SampleRevisions)
                             {
-                                <button type="button" class="btn btn-sm shadow-sm btn-outline-danger" data-toggle="modal" data-target="#deleteModel"><i class="fas fa-times-circle"></i>&nbsp;&nbsp;Delete</button>
+                                var urlValue = @Url.ActionLink("Samples", "Assemblies", new
+                                {
+                                    id = @Model.Review.ReviewId,
+                                    revisionId = @revision.FileId,
+                                });
+    
+                                string revTitle = revision.RevisionTitle == null ? "Rev " + revision.RevisionNumber : "Rev " + revision.RevisionNumber + " - " + revision.RevisionTitle;
+
+                                if (revision.FileId == Model.Sample.FileId)
+                                {
+                                    <option selected value="@urlValue">@revTitle</option>
+                                }
+                                else 
+                                {
+                                    <option value="@urlValue">@revTitle</option>
+                                }
                             }
-                        }
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-lg-12 px-0" data-review-id=@Model.Review.ReviewId>
-                    <div class="bottom-right-floating">
-                        <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>SAMPLE</small></button>
-                    </div>
-                    @if (Model.SampleContent.Length == 0) 
-                    {
-                        <div class="text-muted">
-                            <p> This review does not currently have any usage samples to display.</p>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="usage-sample">
-                            <form>
-                                <div class="form-row pb-2">
-                                    <div class="form-group col-md-6 mb-0">
-                                        <label class="mb-0 ml-1"><small>Revision:</small></label>
-                                        <select class="selectpicker show-tick show-menu-arrow shadow-sm" data-style="btn-light btn-sm border" data-selected-text-format="value" data-live-search="true" data-size="10" data-width="100%" data-container="body" id="revisions-bootstraps-select" data-tick-icon="fa-solid fa-check">
-                                            @foreach (var revision in Model.SampleRevisions)
-                                            {
-                                                var urlValue = @Url.ActionLink("Samples", "Assemblies", new
-                                                {
-                                                    id = @Model.Review.ReviewId,
-                                                    revisionId = @revision.FileId,
-                                                });
-
-                                                string revTitle = revision.RevisionTitle == null ? "Rev " + revision.RevisionNumber : "Rev " + revision.RevisionNumber + " - " + revision.RevisionTitle;
-
-                                                if (revision.FileId == Model.Sample.FileId)
-                                                {
-                                                    <option selected style="font-size: 0.8em;" value="@urlValue" data-content="@revTitle"></option>
-                                                }
-                                                else 
-                                                {
-                                                    <option style="font-size: 0.8em;" value="@urlValue" data-content="@revTitle"></option>
-                                                }
-                                            }
-                                        </select>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="usage-sample border rounded">
-                            <table class="code-window">
-                                <tbody>
-                                    @foreach (var line in Model.SampleContent)
-                                    {
-                                        <partial name="_codeline" model="@line" />
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                        <i> Sample uploaded by <strong> <a username="@Model.Sample.CreatedBy"> @Model.Sample.CreatedBy </a></strong></i>
+                        </select>
                     }
                 </div>
-                <partial name="_SampleCommentFormPartial" />
             </div>
+            <div class="col-md-4">
+            </div>
+            <div class="col-md-4">
+                @if (Model.SampleContent.Length > 0)
+                {
+                    <button type="button" class="btn btn-sm border shadow-sm btn-light" data-bs-toggle="modal" data-bs-target="#updateModel"><i class="fa-solid fa-pen-to-square"></i>&nbsp;&nbsp;Edit</button>
+                    @if (Model.Sample.CreatedBy == User.GetGitHubLogin())
+                    {
+                        <button type="button" class="btn btn-sm shadow-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModel"><i class="fas fa-times-circle"></i>&nbsp;&nbsp;Delete</button>
+                    }
+                }
+            </div>
+        </div>
+        <partial name="Shared/_ReviewNavBar" />
+    </div>
+    <div class="container-fluid" id="samples-main-container">
+        <div class="row mx-0 px-0 py-2">
+            <div class="col-lg-12 mx-0" data-review-id=@Model.Review.ReviewId>
+                <div id="add-sample-button">
+                    <button type="button" class="btn btn-primary" id="add-sample-button" data-bs-toggle="modal" data-bs-target="#uploadModel"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>SAMPLE</small></button>
+                </div>
+                @if (Model.SampleContent.Length == 0) 
+                {
+                    <div class="text-muted">
+                        <p> This review does not currently have any usage samples to display.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="border rounded samples-center">
+                        <table class="code-window">
+                            <tbody>
+                                @foreach (var line in Model.SampleContent)
+                                {
+                                    <partial name="_codeline" model="@line" />
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <i> Sample uploaded by <strong> <a username="@Model.Sample.CreatedBy"> @Model.Sample.CreatedBy </a></strong></i>
+                }
+            </div>
+            <partial name="_SampleCommentFormPartial" />
         </div>
     </div>
 
@@ -107,9 +120,7 @@ else
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Add Usage Sample</h5>
-                        <button type="button" class="close" data-dismiss="modal">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
 
@@ -118,10 +129,10 @@ else
 
                             <ul class="nav nav-pills nav-fill mb-3">
                                 <li class="nav-item">
-                                    <a class="nav-link active" id="home-tab" data-toggle="tab" href="#md-text">Markdown Text</a>
+                                    <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#md-text">Markdown Text</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#md-file">Markdown File</a>
+                                    <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#md-file">Markdown File</a>
                                 </li>
                             </ul>
 
@@ -142,10 +153,9 @@ else
                                             {
                                                 <input asp-for="Upload.RevisionNumber" hidden value="@Model.SampleRevisions.Count()" />
                                             }
-                                            <div class="d-flex flex-row-reverse pt-3">
+                                            <div class="d-flex flex-row-reverse pt-3 mb-3">
                                                 <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fa-solid fa-floppy-disk"></i>&nbsp;&nbsp;Save</button>
-                                                <button type="button" class="btn btn-outline-dark mr-1" data-dismiss="modal">Close</button>
-
+                                                <button type="button" class="btn btn-outline-secondary me-1" data-bs-dismiss="modal">Close</button>
                                             </div>
                                         </div>
                                     </form>
@@ -156,15 +166,13 @@ else
                                         <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
                                         <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
                                         <input asp-for="Upload.RevisionNumber" hidden value="@Model.SampleRevisions.Count()" />
-                                        <div class="form-group">
-                                            <div class="custom-file">
-                                                <input asp-for="Upload.File" type="file" class="custom-file-input">
-                                                <label asp-for="Upload.File" class="custom-file-label">Select usage sample for this review</label>
-                                            </div>
+                                        <div class="form-group mb-3">
+                                            <label asp-for="Upload.File" class="form-label small">Select usage sample for this review</label>
+                                            <input asp-for="Upload.File" type="file" class="form-control">
                                         </div>
-                                        <div class="d-flex flex-row-reverse pb-3">
+                                        <div class="d-flex flex-row-reverse pt-3 mb-3">
                                             <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i>&nbsp;&nbsp;Upload</button>
-                                            <button type="button" class="btn btn-outline-dark mr-1" data-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-outline-secondary me-1" data-bs-dismiss="modal">Close</button>
                                         </div>
                                     </form>
                                 </div>

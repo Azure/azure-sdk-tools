@@ -1,0 +1,36 @@
+@import "../shared/mixins.scss";
+
+#add-sample-button {
+    @include bottom-right-floating;
+    @include btn-circle;
+    @include btn-circle-xl;
+}
+
+#samples-main-container {
+    @include fixed-page-heights;
+    padding-right: 0px;
+    padding-left: 0px;
+}
+
+.samples-center {
+    overflow: auto;
+}
+
+.usage-sample + .border + .rounded {
+    margin-top: 15px !important;
+}
+
+.usage-sample .code-line {
+    padding: 0px;
+    margin: 0px;
+    font-size: 85%;
+    line-height: 10px;
+}
+
+.usage-sample .line-number {
+    font-size: 125%;
+}
+
+.usage-sample .internal {
+    display: inline-block;
+}

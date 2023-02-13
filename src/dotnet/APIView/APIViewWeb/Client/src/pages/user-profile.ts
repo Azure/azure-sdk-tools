@@ -1,7 +1,11 @@
-import { updatePageSettings } from "./helpers";
+import { updatePageSettings } from "../shared/helpers";
 
 $(() => {
-  const themeSelector = $( '#theme-selector' );
+  const themeSelector = $('#theme-selector');
+  const approvableLangSelect = $('#approvable-language-select');
+
+  (<any>themeSelector).SumoSelect();
+  (<any>approvableLangSelect).SumoSelect({selectAll: true});
 
   $(document).on("submit", "form[data-post-update='userProfile']", e => {
     const form = <HTMLFormElement><any>$(e.target);

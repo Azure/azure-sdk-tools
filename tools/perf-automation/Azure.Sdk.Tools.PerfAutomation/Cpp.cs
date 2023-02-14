@@ -29,7 +29,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string project,
             string languageVersion,
             string primaryPackage,
-            IDictionary<string, string> packageVersions)
+            IDictionary<string, string> packageVersions, 
+            bool debug = false)
         {
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
 
@@ -42,8 +43,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             await UpdatePackageVersions(packageVersions);
 
             // Windows and Linux require different arguments to build Release config
-            var additionalGenerateArguments = Util.IsWindows ? "-DDISABLE_AZURE_CORE_OPENTELEMETRY=ON" : "-DCMAKE_BUILD_TYPE=Release";
-            var additionalBuildArguments = Util.IsWindows ? "--config MinSizeRel" : String.Empty;
+            var additionalGenerateArguments = Util.IsWindows ? "-DDISABLE_AZURE_CORE_OPENTELEMETRY=ON" : (debug ? "-DCMAKE_BUILD_TYPE=Debug" : "-DCMAKE_BUILD_TYPE=Release");
+            var additionalBuildArguments = Util.IsWindows ? (debug ? "--config Debug" : "--config MinSizeRel") : String.Empty;
 
             await Util.RunAsync(
                 "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
@@ -68,11 +69,46 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context)
+            object context
+            )
         {
-            var perfExe = (string)context;
+            var profiling = profile;
+            string perfExe;
+            string profileOptions = "";
+            if (context is string)
+            {
+                perfExe = (string)context;
+            }
+            else
+            {
+                perfExe = (context as Dictionary<string, object>)["context"] as string;
+                profileOptions = (context as Dictionary<string, object>)["profileOptions"] as string;
+            }
 
-            var result = await Util.RunAsync(perfExe, $"{testName} {arguments}", WorkingDirectory);
+            var profiledExe = perfExe;
+
+            if (profile)
+            {
+                if (Util.IsWindows)
+                {
+                    Console.WriteLine("Profiling available on linux alone at the moment");
+                    profiling = false;
+                }
+                else
+                {
+                    profiledExe = perfExe;
+                    perfExe = "valgrind";
+                    profiling = true;
+                }
+            }
+
+            string finalParams = $"{testName} {arguments}";
+            if (profiling)
+            {
+                finalParams = $"{profileOptions} {profiledExe} {finalParams}";
+            }
+
+            var result = await Util.RunAsync(perfExe, finalParams, WorkingDirectory);
 
             IDictionary<string, string> reportedVersions = new Dictionary<string, string>();
 

@@ -31,7 +31,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string project,
             string languageVersion,
             string primaryPackage,
-            IDictionary<string, string> packageVersions)
+            IDictionary<string, string> packageVersions, 
+            bool debug = false)
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 

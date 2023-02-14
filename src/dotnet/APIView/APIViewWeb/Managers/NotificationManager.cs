@@ -187,7 +187,7 @@ namespace APIViewWeb.Managers
             {
                 foreach (var username in notifiedUsers)
                 {
-                    var email = await GetEmailAddress(usename);
+                    var email = await GetEmailAddress(username);
                     notifiedEmails.Add(email);
                 }
             }           

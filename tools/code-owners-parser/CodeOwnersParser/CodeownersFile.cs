@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 {
     public static class CodeownersFile
     {
-        private const bool UseRegexMatcherDefault = true;
+        public const bool UseRegexMatcherDefault = true;
 
         public static List<CodeownersEntry> GetCodeownersEntriesFromFileOrUrl(
             string codeownersFilePathOrUrl)

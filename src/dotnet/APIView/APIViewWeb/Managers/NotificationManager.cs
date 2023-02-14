@@ -185,7 +185,7 @@ namespace APIViewWeb.Managers
             HashSet<string> notifiedEmails = new HashSet<string>();
             if (notifiedUsers != null)
             {
-                foreach (var usename in notifiedUsers)
+                foreach (var username in notifiedUsers)
                 {
                     var email = await GetEmailAddress(usename);
                     notifiedEmails.Add(email);

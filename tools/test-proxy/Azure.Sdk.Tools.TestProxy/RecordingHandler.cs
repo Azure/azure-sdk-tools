@@ -484,13 +484,12 @@ namespace Azure.Sdk.Tools.TestProxy
 
             int chunkLength = bodyData.Length / batchCount;
             int remainder = (bodyData.Length % batchCount);
-            var batches = new byte[batchCount + remainder > 0 ? 1 : 0][];
+            var batches = new byte[batchCount + (remainder > 0 ? 1 : 0)][];
 
             for(int i = 0; i < batches.Length; i++)
             {
                 var batch = new byte[chunkLength];
-
-                Array.Copy(bodyData, i * chunkLength, batch, 0, chunkLength);
+                Array.Copy(bodyData, i * chunkLength, batch, 0, i == batches.Length - 1 && batches.Length > 1 && remainder > 0 ? remainder : chunkLength);
 
                 batches[i] = batch;
             }

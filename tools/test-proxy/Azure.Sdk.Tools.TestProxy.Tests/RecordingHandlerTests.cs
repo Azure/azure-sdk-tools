@@ -789,7 +789,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         [Theory]
         [InlineData("", 1)]
-        [InlineData("small body", 10)]
+        [InlineData("small body", 5)]
         [InlineData("this is a body", 3)]
         [InlineData("This is a little bit longer of a body that we are dividing in 2", 2)]
         [InlineData(longBody, 5)]
@@ -803,16 +803,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var chunks = testRecordingHandler.GetBatches(bodyData, batchCount);
 
             int bodyPosition = 0;
+            int byteCount = 0;
 
             // ensure that all bytes are accounted for across the batches
             foreach(var chunk in chunks)
             {
-                for (int j = 0; j < chunk.Length; j++)
+                for (int j = 0; j < chunk.Length && bodyPosition < bodyData.Length; j++)
                 {
                     Assert.Equal(chunk[j], bodyData[bodyPosition]);
                     bodyPosition++;
+                    byteCount++;
                 }
             }
+
+            Assert.Equal(byteCount, bodyData.Length);
         }
 
         #endregion

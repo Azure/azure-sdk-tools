@@ -79,7 +79,7 @@ parameters:
   default: 1
 - name: Profile
   type: boolean
-  default: false
+  default: true
 - name: AdditionalArguments
   displayName: AdditionalArguments (passed to PerfAutomation)
   type: string

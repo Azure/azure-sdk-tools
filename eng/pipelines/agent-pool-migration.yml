@@ -85,7 +85,7 @@ parameters:
 - name: ShortForMigrateTo
   type: string
   default: ''
-# The value here is github alias: e.g. sima-zhu
+# The value here is github alias: e.g. konrad-jamrozik
 # Users to assign to the PR after opening. Users should be a comma-separated list. e.g. "user1,usertwo,user3"
 - name: GithubAssignessAlias
   type: string

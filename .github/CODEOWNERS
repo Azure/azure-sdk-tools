@@ -24,7 +24,7 @@
 # Eng Sys
 ###########
 /eng/                            @azure/azure-sdk-eng
-/eng/common/                     @sima-zhu @weshaggard @benbp
+/eng/common/                     @konrad-jamrozik @weshaggard @benbp
 /eng/common/TestResources/       @benbp @weshaggard @heaths
 
 ###########

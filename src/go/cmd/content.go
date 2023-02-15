@@ -224,7 +224,7 @@ func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl, imports map[string]string) F
 }
 
 func (c *content) addSimpleType(pkg Pkg, name, packageName string, underlyingType string, imports map[string]string) SimpleType {
-	t := NewSimpleType(pkg, name, packageName, pkg.translateTypePackagePrefix(underlyingType, imports))
+	t := NewSimpleType(pkg, name, packageName, pkg.translateType(underlyingType, imports))
 	c.SimpleTypes[name] = t
 	return t
 }
@@ -306,6 +306,9 @@ func (c *content) searchForCtors(s string) map[string]Func {
 				// ignore type parameters when matching
 				rt = before
 			}
+			if i := strings.Index(rt, ">"); i > 0 {
+				rt = rt[i+1:]
+			}
 			if rt == s || rt == "*"+s {
 				ctors[key] = f
 				delete(c.Funcs, key)
@@ -319,7 +322,11 @@ func (c *content) searchForCtors(s string) map[string]Func {
 func (c *content) filterDeclarations(typ string, decls map[string]Declaration) map[string]Declaration {
 	results := map[string]Declaration{}
 	for name, decl := range decls {
-		if typ == decl.Type {
+		t := decl.Type
+		if i := strings.Index(t, ">"); i > 0 {
+			t = t[i+1:]
+		}
+		if typ == t {
 			results[name] = decl
 			delete(decls, name)
 		}
@@ -339,6 +346,9 @@ func (c *content) findMethods(s string) map[string]Func {
 		if before, _, found := strings.Cut(n, "["); found {
 			// ignore type parameters when matching receivers to types
 			n = before
+		}
+		if i := strings.Index(n, ">"); i > 0 {
+			n = n[i+1:]
 		}
 		if s == n || "*"+s == n {
 			methods[key] = fn

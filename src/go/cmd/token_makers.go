@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"go/ast"
+	"golang.org/x/exp/slices"
 	"regexp"
 	"sort"
 	"strings"
@@ -26,10 +27,9 @@ type TokenMaker interface {
 type Declaration struct {
 	Type string
 
-	id      string
-	name    string
-	value   string
-	pkgName string
+	id    string
+	name  string
+	value string
 }
 
 func NewDeclaration(pkg Pkg, vs *ast.ValueSpec, imports map[string]string) Declaration {
@@ -37,23 +37,23 @@ func NewDeclaration(pkg Pkg, vs *ast.ValueSpec, imports map[string]string) Decla
 	if len(vs.Values) > 0 {
 		v = getExprValue(pkg, vs.Values[0])
 	}
-	decl := Declaration{id: pkg.Name() + "." + vs.Names[0].Name, name: vs.Names[0].Name, value: v, pkgName: pkg.Name()}
+	decl := Declaration{id: pkg.Name() + "." + vs.Names[0].Name, name: vs.Names[0].Name, value: v}
 	// Type is nil for untyped consts
 	if vs.Type != nil {
 		switch x := vs.Type.(type) {
 		case *ast.Ident:
 			// const ETagAny ETag = "*"
 			// const PeekLock ReceiveMode = internal.PeekLock
-			decl.Type = pkg.translateTypePackagePrefix(x.Name, imports)
+			decl.Type = pkg.translateType(x.Name, imports)
 		case *ast.MapType:
 			// var nullables map[reflect.Type]interface{} = map[reflect.Type]interface{}{}
-			decl.Type = pkg.translateTypePackagePrefix(pkg.getText(vs.Type.Pos(), vs.Type.End()), imports)
+			decl.Type = pkg.translateType(pkg.getText(vs.Type.Pos(), vs.Type.End()), imports)
 		case *ast.SelectorExpr:
 			// const LogCredential log.Classification = "Credential"
-			decl.Type = pkg.translateTypePackagePrefix(x.Sel.Name, imports)
+			decl.Type = pkg.translateType(x.Sel.Name, imports)
 		case *ast.StarExpr:
 			// var defaultHTTPClient *http.Client
-			decl.Type = pkg.translateTypePackagePrefix(x.X.(*ast.SelectorExpr).Sel.Name, imports)
+			decl.Type = pkg.translateType(x.X.(*ast.SelectorExpr).Sel.Name, imports)
 		default:
 			fmt.Println("unhandled constant type " + pkg.getText(vs.Type.Pos(), vs.Type.End()))
 		}
@@ -67,7 +67,7 @@ func NewDeclaration(pkg Pkg, vs *ast.ValueSpec, imports map[string]string) Decla
 			// traversing the entire AST.
 		case *ast.CompositeLit:
 			// var AzureChina = Configuration{ ... }
-			decl.Type = pkg.translateTypePackagePrefix(pkg.getText(t.Type.Pos(), t.Type.End()), imports)
+			decl.Type = pkg.translateType(pkg.getText(t.Type.Pos(), t.Type.End()), imports)
 		}
 	} else {
 		// implicitly typed const
@@ -90,7 +90,7 @@ func (d Declaration) MakeTokens() []Token {
 	makeToken(&ID, nil, d.Name(), TokenTypeTypeName, list)
 	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
 	if d.Type != skip {
-		parseAndMakeTypeToken(d.Type, list, d.pkgName)
+		parseAndMakeTypeToken(d.Type, list)
 	}
 	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
 	makeToken(nil, nil, "=", TokenTypePunctuation, list)
@@ -123,7 +123,6 @@ type Func struct {
 	typeParamNames []string
 	// typeParamConstraints lists the func's type parameters constraint
 	typeParamConstraints []string
-	pkgName              string
 }
 
 func NewFunc(pkg Pkg, f *ast.FuncDecl, imports map[string]string) Func {
@@ -131,7 +130,6 @@ func NewFunc(pkg Pkg, f *ast.FuncDecl, imports map[string]string) Func {
 	fn.name = f.Name.Name
 	sig := ""
 	if f.Recv != nil {
-		// function receiver type should be in the same package, so no need to add or change any prefix
 		fn.ReceiverType = pkg.getText(f.Recv.List[0].Type.Pos(), f.Recv.List[0].Type.End())
 		if len(f.Recv.List[0].Names) != 0 {
 			fn.ReceiverName = f.Recv.List[0].Names[0].Name
@@ -158,13 +156,13 @@ func NewFuncForInterfaceMethod(pkg Pkg, interfaceName string, f *ast.Field, impo
 }
 
 func newFunc(pkg Pkg, f *ast.FuncType, imports map[string]string) Func {
-	fn := Func{pkgName: pkg.Name()}
+	fn := Func{}
 	if f.TypeParams != nil {
 		fn.typeParamNames = make([]string, 0, len(f.TypeParams.List))
 		fn.typeParamConstraints = make([]string, 0, len(f.TypeParams.List))
 		pkg.translateFieldList(f.TypeParams.List, func(param *string, constraint string) {
 			fn.typeParamNames = append(fn.typeParamNames, *param)
-			fn.typeParamConstraints = append(fn.typeParamConstraints, pkg.translateTypePackagePrefix(strings.TrimRight(constraint, " "), imports))
+			fn.typeParamConstraints = append(fn.typeParamConstraints, pkg.translateType(strings.TrimRight(constraint, " "), imports))
 		})
 	}
 	if f.Params.List != nil {
@@ -176,13 +174,13 @@ func newFunc(pkg Pkg, f *ast.FuncType, imports map[string]string) Func {
 			} else {
 				fn.paramNames = append(fn.paramNames, "")
 			}
-			fn.paramTypes = append(fn.paramTypes, pkg.translateTypePackagePrefix(t, imports))
+			fn.paramTypes = append(fn.paramTypes, pkg.translateType(t, imports))
 		})
 	}
 	if f.Results != nil {
 		fn.Returns = make([]string, 0, len(f.Results.List))
 		pkg.translateFieldList(f.Results.List, func(n *string, t string) {
-			fn.Returns = append(fn.Returns, pkg.translateTypePackagePrefix(t, imports))
+			fn.Returns = append(fn.Returns, pkg.translateType(t, imports))
 		})
 	}
 	return fn
@@ -221,7 +219,7 @@ func (f Func) MakeTokens() []Token {
 			makeToken(nil, nil, f.ReceiverName, TokenTypeMemberName, list)
 			makeToken(nil, nil, " ", TokenTypeWhitespace, list)
 		}
-		parseAndMakeTypeToken(f.ReceiverType, list, f.pkgName)
+		parseAndMakeTypeToken(f.ReceiverType, list)
 		makeToken(nil, nil, ")", TokenTypePunctuation, list)
 		makeToken(nil, nil, " ", TokenTypeWhitespace, list)
 	}
@@ -235,7 +233,8 @@ func (f Func) MakeTokens() []Token {
 				makeToken(nil, nil, " ", TokenTypeWhitespace, list)
 			}
 			makeToken(nil, nil, p, TokenTypeMemberName, list)
-			parseAndMakeTypeToken(f.typeParamConstraints[i], list, f.pkgName)
+			makeToken(nil, nil, " ", TokenTypeWhitespace, list)
+			parseAndMakeTypeToken(f.typeParamConstraints[i], list)
 		}
 		makeToken(nil, nil, "]", TokenTypePunctuation, list)
 	}
@@ -244,10 +243,10 @@ func (f Func) MakeTokens() []Token {
 		if p != "" {
 			makeToken(nil, nil, p, TokenTypeMemberName, list)
 			makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-			parseAndMakeTypeToken(f.paramTypes[i], list, f.pkgName)
+			parseAndMakeTypeToken(f.paramTypes[i], list)
 		} else {
 			// parameter names are optional
-			parseAndMakeTypeToken(f.paramTypes[i], list, f.pkgName)
+			parseAndMakeTypeToken(f.paramTypes[i], list)
 		}
 		if i < len(f.paramNames)-1 {
 			makeToken(nil, nil, ",", TokenTypePunctuation, list)
@@ -261,7 +260,7 @@ func (f Func) MakeTokens() []Token {
 			makeToken(nil, nil, "(", TokenTypePunctuation, list)
 		}
 		for i, t := range f.Returns {
-			parseAndMakeTypeToken(t, list, f.pkgName)
+			parseAndMakeTypeToken(t, list)
 			if i < len(f.Returns)-1 {
 				makeToken(nil, nil, ",", TokenTypePunctuation, list)
 				makeToken(nil, nil, " ", TokenTypeWhitespace, list)
@@ -292,7 +291,6 @@ type Interface struct {
 	id                 string
 	methods            map[string]Func
 	name               string
-	pkgName            string
 }
 
 func NewInterface(source Pkg, name, packageName string, n *ast.InterfaceType, imports map[string]string) Interface {
@@ -301,7 +299,6 @@ func NewInterface(source Pkg, name, packageName string, n *ast.InterfaceType, im
 		embeddedInterfaces: []string{},
 		methods:            map[string]Func{},
 		id:                 packageName + "." + name,
-		pkgName:            source.Name(),
 	}
 	if n.Methods != nil {
 		for _, m := range n.Methods.List {
@@ -314,7 +311,7 @@ func NewInterface(source Pkg, name, packageName string, n *ast.InterfaceType, im
 				in.methods[n] = f
 			} else {
 				n := source.getText(m.Type.Pos(), m.Type.End())
-				in.embeddedInterfaces = append(in.embeddedInterfaces, source.translateTypePackagePrefix(n, imports))
+				in.embeddedInterfaces = append(in.embeddedInterfaces, source.translateType(n, imports))
 			}
 		}
 	}
@@ -345,7 +342,7 @@ func (i Interface) MakeTokens() []Token {
 			// defID := ID + "-" + name
 			makeToken(nil, nil, "", TokenTypeNewline, list)
 			makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
-			parseAndMakeTypeToken(name, list, i.pkgName)
+			parseAndMakeTypeToken(name, list)
 			// makeToken(&defID, nil, name, TokenTypeTypeName, list)
 		}
 	}
@@ -378,11 +375,10 @@ type SimpleType struct {
 	id             string
 	name           string
 	underlyingType string
-	pkgName        string
 }
 
 func NewSimpleType(source Pkg, name, packageName, underlyingType string) SimpleType {
-	return SimpleType{id: packageName + "." + name, name: name, underlyingType: underlyingType, pkgName: source.Name()}
+	return SimpleType{id: packageName + "." + name, name: name, underlyingType: underlyingType}
 }
 
 func (s SimpleType) Exported() bool {
@@ -400,7 +396,7 @@ func (s SimpleType) MakeTokens() []Token {
 	makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)
 	makeToken(&ID, nil, s.name, TokenTypeTypeName, tokenList)
 	makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)
-	parseAndMakeTypeToken(s.underlyingType, tokenList, s.pkgName)
+	parseAndMakeTypeToken(s.underlyingType, tokenList)
 	// makeToken(nil, nil, s.underlyingType, TokenTypeText, tokenList)
 	makeToken(nil, nil, "", TokenTypeNewline, tokenList)
 	makeToken(nil, nil, "", TokenTypeNewline, tokenList)
@@ -429,17 +425,17 @@ func NewStruct(source Pkg, name, packageName string, ts *ast.TypeSpec, imports m
 	if ts.TypeParams != nil {
 		s.typeParams = make([]string, 0, len(ts.TypeParams.List))
 		source.translateFieldList(ts.TypeParams.List, func(param *string, constraint string) {
-			s.typeParams = append(s.typeParams, strings.TrimRight(*param+" "+source.translateTypePackagePrefix(constraint, imports), " "))
+			s.typeParams = append(s.typeParams, strings.TrimRight(*param+" "+source.translateType(constraint, imports), " "))
 		})
 	}
 	source.translateFieldList(ts.Type.(*ast.StructType).Fields.List, func(n *string, t string) {
 		if n == nil {
-			s.AnonymousFields = append(s.AnonymousFields, source.translateTypePackagePrefix(t, imports))
+			s.AnonymousFields = append(s.AnonymousFields, source.translateType(t, imports))
 		} else {
 			if s.fields == nil {
 				s.fields = map[string]string{}
 			}
-			s.fields[*n] = source.translateTypePackagePrefix(t, imports)
+			s.fields[*n] = source.translateType(t, imports)
 		}
 	})
 	sort.Strings(s.AnonymousFields)
@@ -475,7 +471,7 @@ func (s Struct) MakeTokens() []Token {
 			// defID := name + "-" + s.id
 			makeToken(nil, nil, "", TokenTypeNewline, list)
 			makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
-			parseAndMakeTypeToken(name, list, s.pkgName)
+			parseAndMakeTypeToken(name, list)
 			// makeToken(&defID, nil, name, TokenTypeTypeName, list)
 			exportedFields = true
 		}
@@ -494,7 +490,7 @@ func (s Struct) MakeTokens() []Token {
 		makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
 		makeToken(&defID, nil, field, TokenTypeTypeName, list)
 		makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-		parseAndMakeTypeToken(typ, list, s.pkgName)
+		parseAndMakeTypeToken(typ, list)
 		// makeToken(nil, nil, typ, TokenTypeMemberName, list)
 		exportedFields = true
 	}
@@ -526,13 +522,13 @@ func makeToken(defID, navID *string, val string, kind TokenType, list *[]Token) 
 	*list = append(*list, tok)
 }
 
-func parseAndMakeTypeToken(val string, list *[]Token, pkgName string) {
+func parseAndMakeTypeToken(val string, list *[]Token) {
 	now := ""
 	for _, ch := range val {
 		switch string(ch) {
-		case "*", "[", "]", " ", "(", ")", "{", "}":
+		case "*", "[", "]", " ", "(", ")", "{", "}", ",":
 			if now != "" {
-				makeTypeSectionToken(now, list, pkgName)
+				makeTypeSectionToken(now, list)
 				now = ""
 			}
 			if string(ch) == " " {
@@ -552,24 +548,25 @@ func parseAndMakeTypeToken(val string, list *[]Token, pkgName string) {
 		}
 	}
 	if now != "" {
-		makeTypeSectionToken(now, list, pkgName)
+		makeTypeSectionToken(now, list)
 	}
 }
 
-func makeTypeSectionToken(section string, list *[]Token, pkgName string) {
-	switch section {
-	case "interface", "map", "any", "func":
+var keywords = []string{"interface", "map", "any", "func"}
+var internalTypes = []string{"bool", "uint8", "uint16", "uint32", "uint64", "uint", "int8", "int16", "int32", "int64", "int", "float32", "float64", "float", "complex64", "complex128", "complex", "byte", "rune", "string", "error", "uintptr", "nil"}
+
+func makeTypeSectionToken(section string, list *[]Token) {
+	switch {
+	case slices.Contains(keywords, section):
 		makeToken(nil, nil, section, TokenTypeKeyword, list)
-	case "bool", "uint8", "uint16", "uint32", "uint64", "int8", "int16", "int32", "int64", "float32", "float64", "complex64", "complex128", "byte", "rune", "string", "error", "uintptr", "nil":
+	case slices.Contains(internalTypes, section):
 		makeToken(nil, nil, section, TokenTypeTypeName, list)
 	default:
-		splits := strings.Split(section, ".")
-		var navID string
-		if len(splits) == 1 {
-			navID = fmt.Sprintf("%s.%s", pkgName, section)
+		if strings.HasPrefix(section, "<") {
+			splits := strings.Split(section[1:], ">")
+			makeToken(nil, &splits[0], splits[1], TokenTypeTypeName, list)
 		} else {
-			navID = section
+			makeToken(nil, nil, section, TokenTypeTypeName, list)
 		}
-		makeToken(nil, &navID, section, TokenTypeTypeName, list)
 	}
 }

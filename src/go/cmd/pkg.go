@@ -9,6 +9,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"golang.org/x/exp/slices"
 	"os"
 	"path"
 	"path/filepath"
@@ -106,7 +107,11 @@ func (p *Pkg) indexFile(f *ast.File) {
 	imports := map[string]string{}
 	for _, imp := range f.Imports {
 		p := strings.Trim(imp.Path.Value, `"`)
-		imports[filepath.Base(p)] = p
+		if imp.Name != nil {
+			imports[imp.Name.String()] = p
+		} else {
+			imports[filepath.Base(p)] = p
+		}
 	}
 
 	ast.Inspect(f, func(n ast.Node) bool {
@@ -228,28 +233,23 @@ func (pkg Pkg) translateFieldList(fl []*ast.Field, cb func(*string, string)) {
 	}
 }
 
-// translateTypePackagePrefix change type with package prefix to more clear one:
-// 1. type in the same package, do nothing
-// 2. type in the same module, add prefix of type relative import path, e.g. `azcore/runtime.Pipeline`
-// 3. type in different module, add prefix of type absolute import path, e.g. `github.com/Azure/azure-sdk-for-go/sdk/azidentity.AuthenticationFailedError`
-// 4. system type, add prefix of full import path, e.g. `net/http.Response`
-func (pkg Pkg) translateTypePackagePrefix(oriVal string, imports map[string]string) string {
-	if !strings.Contains(oriVal, ".") {
-		return oriVal
-	}
+// translateType change type string and add navigator mark:
+// 1. type in the same package or module, add navigator prefix <navigator> to the type string
+// 2. type in different module or system type, do nothing
+func (pkg Pkg) translateType(oriVal string, imports map[string]string) string {
 	now := ""
 	result := ""
 	for _, ch := range oriVal {
 		switch string(ch) {
-		case "*", "[", "]", " ", "(", ")", "{", "}":
+		case "*", "[", "]", " ", "(", ")", "{", "}", ",":
 			if now != "" {
-				result += pkg.translatePackagePrefix(now, imports)
+				result += pkg.addTypeNavigator(now, imports)
 				now = ""
 			}
 			result += string(ch)
 		case ".":
 			if now == ".." {
-				result += "."
+				result += "..."
 				now = ""
 			} else {
 				now = now + "."
@@ -259,23 +259,30 @@ func (pkg Pkg) translateTypePackagePrefix(oriVal string, imports map[string]stri
 		}
 	}
 	if now != "" {
-		result += pkg.translatePackagePrefix(now, imports)
+		result += pkg.addTypeNavigator(now, imports)
 	}
 	return result
 }
 
-func (pkg Pkg) translatePackagePrefix(oriVal string, imports map[string]string) string {
-	if strings.Contains(oriVal, ".") {
+func (pkg Pkg) addTypeNavigator(oriVal string, imports map[string]string) string {
+	switch {
+	case slices.Contains(keywords, oriVal) || slices.Contains(internalTypes, oriVal):
+		return oriVal
+	default:
 		splits := strings.Split(oriVal, ".")
-		if impPath, ok := imports[splits[0]]; ok {
-			if _, after, found := strings.Cut(impPath, pkg.ModulePath); found {
-				return path.Base(pkg.ModulePath) + after + "." + splits[1]
-			} else {
-				return impPath + "." + splits[1]
+		if len(splits) == 1 {
+			return fmt.Sprintf("<%s.%s>%s", pkg.Name(), oriVal, oriVal)
+		} else {
+			// find exact import path of a type
+			if impPath, ok := imports[splits[0]]; ok {
+				// judge if import path is in the module
+				if _, after, found := strings.Cut(impPath, pkg.ModulePath); found {
+					return fmt.Sprintf("<%s.%s>%s", path.Base(pkg.ModulePath)+after, splits[1], oriVal)
+				}
 			}
+			return oriVal
 		}
 	}
-	return oriVal
 }
 
 // TODO: could be replaced by TokenMaker

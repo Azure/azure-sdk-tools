@@ -94,6 +94,9 @@ parameters:
 - name: WindowsPool
   type: string
   default: 'azsdk-pool-mms-win-2022-general'
+- name: TimeoutInMinutes
+  type: number
+  default: '360'
 
 resources:
   repositories:
@@ -124,8 +127,6 @@ resources:
     ref: main
 
 variables:
-  LinuxVmImage: MMSUbuntu22.04
-  WindowsVmImage: 'MMS2022'
   ToolsRepoCommitish: $(Build.SourceVersion)
 
 stages:
@@ -136,10 +137,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Net'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Net'
         LanguageVersion: ${{ parameters.NetLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-net'
@@ -164,10 +164,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Java'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Java'
         LanguageVersion: ${{ parameters.JavaLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-java'
@@ -199,10 +198,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_JS'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'JS'
         LanguageVersion: ${{ parameters.JSLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-js'
@@ -227,10 +225,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Python'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Python'
         LanguageVersion: ${{ parameters.PythonLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-python'
@@ -258,10 +255,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Cpp'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Cpp'
         LanguageVersion: 'N/A'
         LanguageRepoName: 'Azure/azure-sdk-for-cpp'
@@ -286,7 +282,6 @@ stages:
   displayName: Print Results
   pool:
     name: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: MMSUbuntu22.04
   condition: succeededOrFailed()
   variables:
   - template: /eng/pipelines/templates/variables/globals.yml

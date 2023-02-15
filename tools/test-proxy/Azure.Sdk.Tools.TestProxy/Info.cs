@@ -43,9 +43,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 var dataModel = new ActiveMetadataModel(_recordingHandler, recordingId: id);
                 content = await RenderViewAsync(this, "ActiveExtensions", dataModel);
             }
-            // if an httpException is thrown, we have passed in an invalid recordingId, otherwise it'll be an unhandled
+            // if a SessionNotActiveException is thrown, we have passed in an invalid recordingId, otherwise it'll be an unhandled
             // exception, which the exception middleware should surface just fine.
-            catch (HttpException)
+            catch (SessionNotActiveException)
             {
                 content = await RenderViewAsync(this, "Error", new ActiveMetadataModel(id));
             }

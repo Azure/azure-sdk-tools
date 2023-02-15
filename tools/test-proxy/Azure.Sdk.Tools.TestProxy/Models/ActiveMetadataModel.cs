@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
 
                 if (!recordingFound)
                 {
-                    throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"{recordingId} is not found in any Playback, Recording, or In-Memory sessions.");
+                    throw new SessionNotActiveException($"{recordingId} is not found in any Playback, Recording, or In-Memory sessions.");
                 }
             }
 

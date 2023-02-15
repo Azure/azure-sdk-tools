@@ -149,7 +149,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var fullVcpkgPath = Path.Combine(WorkingDirectory, _vcpkgFile);
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
             Util.DeleteIfExists(buildDirectory);
-            //cleanup the vcpkg file
+            //cleanup the vcpkg file by restoring from git
             await Util.RunAsync("git", $"checkout -- {fullVcpkgPath}", WorkingDirectory);
             return;
         }

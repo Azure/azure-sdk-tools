@@ -94,6 +94,9 @@ parameters:
 - name: WindowsPool
   type: string
   default: 'azsdk-pool-mms-win-2022-general'
+- name: TimeoutInMinutes
+  type: number
+  default: '360'
 
 resources:
   repositories:
@@ -136,6 +139,7 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Net'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
@@ -164,6 +168,7 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Java'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
@@ -199,6 +204,7 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_JS'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
@@ -227,6 +233,7 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Python'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
@@ -258,6 +265,7 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Cpp'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
         LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}

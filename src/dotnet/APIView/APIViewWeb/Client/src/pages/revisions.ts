@@ -1,4 +1,6 @@
 $(() => {
+  const revisionlanguageSelect = $('#revision-language-select');
+
   $(document).on("click", ".revision-rename-icon", e => {
     toggleNameField($(e.target));
   });
@@ -17,11 +19,16 @@ $(() => {
     renameIcon.siblings(".revision-name-input").toggle();
   }
 
-  const languageSelect = $('#revision-language-select');
-  languageSelect.on('change', function (e) {
+  revisionlanguageSelect.on('change', function (e) {
     const fileSelectors = $(".package-file-selector");
     for (var i = 0; i < fileSelectors.length; i++) {
       $(fileSelectors[i]).toggleClass("hidden-row");
     }
+  });
+
+  $("#uploadModel").on("show.bs.modal", function () {
+    (<any>revisionlanguageSelect).SumoSelect({
+      placeholder: 'Language'
+    });
   });
 });

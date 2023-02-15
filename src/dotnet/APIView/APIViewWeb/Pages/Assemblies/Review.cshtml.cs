@@ -25,6 +25,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         private readonly IReviewManager _manager;
 
+        private readonly IPullRequestManager _pullRequestManager;
+
         private readonly IBlobCodeFileRepository _codeFileRepository;
 
         private readonly ICommentsManager _commentsManager;
@@ -39,6 +41,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public ReviewPageModel(
             IReviewManager manager,
+            IPullRequestManager pullRequestManager,
             IBlobCodeFileRepository codeFileRepository,
             ICommentsManager commentsManager,
             INotificationManager notificationManager,
@@ -47,6 +50,7 @@ namespace APIViewWeb.Pages.Assemblies
             IConfiguration configuration)
         {
             _manager = manager;
+            _pullRequestManager = pullRequestManager;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
@@ -275,6 +279,17 @@ namespace APIViewWeb.Pages.Assemblies
         public UserPreferenceModel GetUserPreference()
         {
             return _preferenceCache.GetUserPreferences(User).Result;
+        }
+
+        public async Task<IEnumerable<PullRequestModel>> GetAssociatedPullRequest()
+        {
+            return await _pullRequestManager.GetPullRequestsModel(Review.ReviewId);
+        }
+
+        public async Task<IEnumerable<PullRequestModel>> GetPRsOfAssoicatedReviews()
+        {
+            var creatingPR = (await _pullRequestManager.GetPullRequestsModel(Review.ReviewId)).FirstOrDefault();
+            return await _pullRequestManager.GetPullRequestsModel(creatingPR.PullRequestNumber, creatingPR.RepoName);;
         }
 
         private async Task GetReviewPageModelPropertiesAsync(string id, string revisionId = null, string diffRevisionId = null, bool diffOnly = false)

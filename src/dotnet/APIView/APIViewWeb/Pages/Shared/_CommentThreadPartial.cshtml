@@ -1,4 +1,4 @@
-﻿@*
+@*
     For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @using APIViewWeb.Models
@@ -46,7 +46,7 @@
 
                             if (i == 0 || (Convert.ToInt16(comment.GroupNo) > Convert.ToInt16(comments[i - 1].GroupNo)))
                             {
-                                <a class="pl-2 comment-group-anchor-link" href="#@rowAnchor">
+                                <a class="ps-2 comment-group-anchor-link" href="#@rowAnchor">
                                     <span class="badge badge-pill badge-light">
                                         <small>ROW-@comment.GroupNo</small>
                                     </span>
@@ -67,19 +67,19 @@
                             {
                                 <span asp-resource="@Model" asp-requirement="@ResolverRequirement.Instance">
                                     <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
-                                        <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Unresolve</button>
+                                        <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Unresolve</button>
                                     </form>
                                 </span>
                                 <p>
                                     &nbsp;&nbsp;Please ask
-                                    <a username="@Model.Comments.First().Username" class="font-weight-bolder text-dark mt-0">@Model.Comments.First().Username</a>
+                                    <a username="@Model.Comments.First().Username" class="font-weight-bolder mt-0">@Model.Comments.First().Username</a>
                                     (or an APIView approver) to unresolve this conversation.
                                 </p>
                             } 
                             else 
                             {
                                 <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
-                                    <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Unresolve</button>
+                                    <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Unresolve</button>
                                 </form>
                             }
                         }
@@ -89,12 +89,12 @@
                             {
                                 <span asp-resource="@Model" asp-requirement="@ResolverRequirement.Instance">
                                     <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve" asp-route-reviewId="@Model.ReviewId">
-                                        <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Resolve</button>
+                                        <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
                                     </form>
                                 </span>
                                 <p>
                                     &nbsp;&nbsp;Please ask
-                                    <a username="@Model.Comments.First().Username" class="font-weight-bolder text-dark mt-0">@Model.Comments.First().Username</a>
+                                    <a username="@Model.Comments.First().Username" class="font-weight-bolder mt-0">@Model.Comments.First().Username</a>
                                     (or an APIView approver) to resolve this conversation.
                                 </p>
 
@@ -102,11 +102,11 @@
                             else
                             {
                                 <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve" asp-route-reviewId="@Model.ReviewId">
-                                    <button type="submit" name="submit" value="Submit" class="btn btn-outline-dark">Resolve</button>
+                                    <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
                                 </form>
                             }
                         }
-                        <div class="comment-navigation-buttons">
+                        <div class="comment-navigation-buttons btn-group" role="group" aria-label="Navigation Between Comments">
                             <!-- Navigation button are added via JavaScript-->
                         </div>
                     </div>

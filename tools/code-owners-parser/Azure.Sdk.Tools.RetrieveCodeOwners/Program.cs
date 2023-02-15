@@ -53,7 +53,7 @@ public static class Program
         bool excludeNonUserAliases = false,
         string? targetDir = null,
         string ignoredPathPrefixes = DefaultIgnoredPrefixes,
-        bool useRegexMatcher = false)
+        bool useRegexMatcher = CodeownersFile.UseRegexMatcherDefault)
     {
         try 
         {
@@ -109,7 +109,7 @@ public static class Program
         string codeownersFilePathOrUrl,
         bool excludeNonUserAliases,
         string[]? ignoredPathPrefixes = null,
-        bool useRegexMatcher = false)
+        bool useRegexMatcher = CodeownersFile.UseRegexMatcherDefault)
     {
         ignoredPathPrefixes ??= Array.Empty<string>();
 
@@ -131,7 +131,7 @@ public static class Program
         string targetPath,
         string codeownersFilePathOrUrl,
         bool excludeNonUserAliases,
-        bool useRegexMatcher = false)
+        bool useRegexMatcher = CodeownersFile.UseRegexMatcherDefault)
     {
         CodeownersEntry codeownersEntry =
             CodeownersFile.GetMatchingCodeownersEntry(

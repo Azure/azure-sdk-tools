@@ -178,6 +178,15 @@ namespace APIViewWeb.Managers
             }
         }
 
+        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModel(string reviewId) {
+            return await _pullRequestsRepository.GetPullRequestsAsync(reviewId);
+        }
+
+        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModel(int pullRequestNumber, string repoName)
+        {
+            return await _pullRequestsRepository.GetPullRequestsAsync(pullRequestNumber, repoName);
+        }
+
         private async Task CreateOrUpdateComment(List<PullRequestModel> prReviews, string repoOwner, string repoName, int prNumber, string hostName)
         {
             var existingComment = await GetExistingCommentForPackage(repoOwner, repoName, prNumber);

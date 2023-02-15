@@ -1,0 +1,36 @@
+@using APIViewWeb.Models
+@{
+    var id = ViewContext.RouteData.Values["id"];
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel;
+}
+
+<div class="row mx-1 p-0 mt-0 border-bottom">
+    <nav class="navbar pt-0">
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link" active-if="@TempData["page"].Equals("api")" asp-page="Review" asp-route-id="@id">API</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" active-if="@TempData["page"].Equals("conversation")" asp-page="Conversation" asp-route-id="@id">Conversations</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" active-if="@TempData["page"].Equals("revisions")" asp-page="Revisions" asp-route-id="@id">Revisions</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" active-if="@TempData["page"].Equals("samples")" asp-page="Samples" asp-route-id="@id">Usage Samples</a>
+            </li>
+        </ul>
+        @if (TempData["page"].Equals("api"))
+        {
+            if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
+            {
+                <input type="checkbox" class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
+            }
+            else
+            {
+                <input type="checkbox" checked class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
+            }
+            <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="review-right-offcanvas-toggle"><i class="fa fa-bars"></i>&nbsp;&nbsp;Options</label>
+        }
+    </nav>
+</div>

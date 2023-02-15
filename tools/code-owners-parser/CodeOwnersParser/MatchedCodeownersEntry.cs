@@ -59,7 +59,8 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// See the class comment to understand this method purpose.
         /// </summary>
         public static bool IsCodeownersPathValid(string codeownersPathExpression)
-            => !ContainsUnsupportedCharacters(codeownersPathExpression) 
+            => !IsCommentedOutPath(codeownersPathExpression)
+               && !ContainsUnsupportedCharacters(codeownersPathExpression) 
                && !ContainsUnsupportedSequences(codeownersPathExpression);
 
         /// <summary>
@@ -127,6 +128,16 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         }
 
         private CodeownersEntry NoMatchCodeownersEntry { get; } = new CodeownersEntry();
+
+        /// <summary>
+        /// We do not output any error message in case the path is commented out,
+        /// as a) such paths are expected to be processed and discarded by this logic
+        /// and b) outputting error messages would possibly result in output
+        /// truncation, truncating the resulting json, and thus making the output of the
+        /// calling tool malformed.
+        /// </summary>
+        private static bool IsCommentedOutPath(string codeownersPathExpression)
+            => codeownersPathExpression.Trim().StartsWith("#");
 
         /// <summary>
         /// See the comment on unsupportedChars.

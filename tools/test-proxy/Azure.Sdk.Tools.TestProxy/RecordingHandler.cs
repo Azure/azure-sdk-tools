@@ -473,9 +473,30 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        public byte[][] GetBatches(byte[] bodyData, int playbackResponseTime, int batchCount)
+        public byte[][] GetBatches(byte[] bodyData, int batchCount)
         {
-            return null;
+            if (bodyData.Length == 0 || bodyData.Length < batchCount)
+            {
+                var result = new byte[1][];
+                result[0] = bodyData;
+
+                return result;
+            }
+
+            int chunkLength = bodyData.Length / batchCount;
+            int remainder = (bodyData.Length % batchCount);
+            var batches = new byte[batchCount + remainder > 0 ? 1 : 0][];
+
+            for(int i = 0; i < batches.Length; i++)
+            {
+                var batch = new byte[chunkLength];
+
+                Array.Copy(bodyData, i * chunkLength, batch, 0, chunkLength);
+
+                batches[i] = batch;
+            }
+
+            return batches;
         }
 
         public async Task WriteBodyBytes(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
@@ -485,7 +506,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 int batchCount = 10;
                 int sleepLength = playbackResponseTime / batchCount;
 
-                byte[][] chunks = GetBatches(bodyData, playbackResponseTime, batchCount);
+                byte[][] chunks = GetBatches(bodyData, batchCount);
 
                 for(int i = 0; i < chunks.Length; i++)
                 {

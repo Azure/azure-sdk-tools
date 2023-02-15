@@ -263,12 +263,13 @@ namespace Azure.Sdk.Tools.TestProxy
                 entry.Response.Headers.Add(header.Key, values);
             }
 
-            outgoingResponse.Headers.Remove("Transfer-Encoding");
-
             if (entry.Response.Body?.Length > 0)
             {
                 var bodyData = CompressionUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
-                outgoingResponse.ContentLength = bodyData.Length;
+
+                if (entry.Response.Headers.ContainsKey("Content-Length")){
+                    outgoingResponse.ContentLength = bodyData.Length;
+                }
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
         }
@@ -458,13 +459,14 @@ namespace Azure.Sdk.Tools.TestProxy
                 outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
             }
 
-            outgoingResponse.Headers.Remove("Transfer-Encoding");
-
             if (match.Response.Body?.Length > 0)
             {
                 var bodyData = CompressionUtilities.CompressBody(match.Response.Body, match.Response.Headers);
 
-                outgoingResponse.ContentLength = bodyData.Length;
+                if (match.Response.Headers.ContainsKey("Content-Length"))
+                {
+                    outgoingResponse.ContentLength = bodyData.Length;
+                }
 
                 await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
             }
@@ -768,10 +770,6 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         Timeout = timeoutSpan
                     };
-                }
-                else
-                {
-                    throw new HttpException(HttpStatusCode.BadRequest, $"Unable to set a transport customization on a recording session that is not active. Id: \"{sessionId}\"");
                 }
 
                 if (customizations.PlaybackResponseTime > 0)

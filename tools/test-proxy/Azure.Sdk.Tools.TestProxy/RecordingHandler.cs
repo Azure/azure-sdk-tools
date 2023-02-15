@@ -12,12 +12,14 @@ using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -471,9 +473,35 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
+        public byte[][] GetBatches(byte[] bodyData, int playbackResponseTime, int batchCount)
+        {
+            return null;
+        }
+
         public async Task WriteBodyBytes(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
         {
-            await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
+            if (playbackResponseTime > 0)
+            {
+                int batchCount = 10;
+                int sleepLength = playbackResponseTime / batchCount;
+
+                byte[][] chunks = GetBatches(bodyData, playbackResponseTime, batchCount);
+
+                for(int i = 0; i < chunks.Length; i++)
+                {
+                    var chunk = chunks[i];
+                    await outgoingResponse.Body.WriteAsync(chunk).ConfigureAwait(false);
+
+                    if (i != chunks.Length - 1)
+                    {
+                        Thread.Sleep(sleepLength);
+                    }
+                }
+            }
+            else
+            {
+                await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
+            }
         }
 
         public static async Task<(RecordEntry, byte[])> CreateEntryAsync(HttpRequest request)

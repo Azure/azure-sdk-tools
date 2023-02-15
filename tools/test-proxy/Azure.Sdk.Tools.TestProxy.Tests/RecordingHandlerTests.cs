@@ -779,6 +779,32 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(requestCount, session.Session.Entries.Count);
         }
 
+        #region ByteManipulation
+        [Theory]
+        [InlineData("", 100, 1)]
+        public void TestGetBatches(string input, int playbackResponseTime, int batchCount)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var bodyData = Encoding.UTF8.GetBytes(input);
+
+            var chunks = testRecordingHandler.GetBatches(bodyData, playbackResponseTime, batchCount);
+
+            int bodyPosition = 0;
+
+            // ensure that all bytes are accounted for across the batches
+            foreach(var chunk in chunks)
+            {
+                for (int j = 0; j < chunk.Length; j++)
+                {
+                    Assert.Equal(chunk[j], bodyData[bodyPosition]);
+                }
+
+                bodyPosition++;
+            }
+        }
+
+        #endregion
+
         #region SetRecordingOptions
         [Theory]
         [InlineData("{ \"HandleRedirects\": \"true\"}", true)]

@@ -808,7 +808,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             // ensure that all bytes are accounted for across the batches
             foreach(var chunk in chunks)
             {
-                for (int j = 0; j < chunk.Length && bodyPosition < bodyData.Length; j++)
+                for (int j = 0; j < chunk.Length; j++)
                 {
                     Assert.Equal(chunk[j], bodyData[bodyPosition]);
                     bodyPosition++;

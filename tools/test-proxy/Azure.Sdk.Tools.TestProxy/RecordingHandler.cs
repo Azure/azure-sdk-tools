@@ -459,6 +459,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
             }
 
+            outgoingResponse.Headers.Remove("Transfer-Encoding");
+
             if (match.Response.Body?.Length > 0)
             {
                 var bodyData = CompressionUtilities.CompressBody(match.Response.Body, match.Response.Headers);
@@ -506,11 +508,15 @@ namespace Azure.Sdk.Tools.TestProxy
                 int sleepLength = playbackResponseTime / batchCount;
 
                 byte[][] chunks = GetBatches(bodyData, batchCount);
+                int byteCountSent = 0;
 
                 for(int i = 0; i < chunks.Length; i++)
                 {
                     var chunk = chunks[i];
+
+                    byteCountSent+= chunk.Length;
                     await outgoingResponse.Body.WriteAsync(chunk).ConfigureAwait(false);
+                    //await outgoingResponse.WriteAsync(Encoding.UTF8.GetString(chunk)).ConfigureAwait(false);
 
                     if (i != chunks.Length - 1)
                     {
@@ -518,9 +524,11 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                     else
                     {
+                        //await outgoingResponse.WriteAsync(Encoding.UTF8.GetString(chunk)).ConfigureAwait(false);
                         await outgoingResponse.Body.FlushAsync().ConfigureAwait(false);
                     }
                 }
+
             }
             else
             {

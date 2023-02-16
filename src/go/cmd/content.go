@@ -200,7 +200,7 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string, t
 
 func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
 	for i, f := range c.Funcs {
-		if f.Name() == fmt.Sprintf("Possible%sValues", t) {
+		if f.Name() == fmt.Sprintf("Possible%sValues", removeNavigatorString(t)) {
 			*tokenList = append(*tokenList, f.MakeTokens()...)
 			delete(c.Funcs, i)
 			return
@@ -306,9 +306,7 @@ func (c *content) searchForCtors(s string) map[string]Func {
 				// ignore type parameters when matching
 				rt = before
 			}
-			if i := strings.Index(rt, ">"); i > 0 {
-				rt = rt[i+1:]
-			}
+			rt = removeNavigatorString(rt)
 			if rt == s || rt == "*"+s {
 				ctors[key] = f
 				delete(c.Funcs, key)
@@ -322,10 +320,7 @@ func (c *content) searchForCtors(s string) map[string]Func {
 func (c *content) filterDeclarations(typ string, decls map[string]Declaration) map[string]Declaration {
 	results := map[string]Declaration{}
 	for name, decl := range decls {
-		t := decl.Type
-		if i := strings.Index(t, ">"); i > 0 {
-			t = t[i+1:]
-		}
+		t := removeNavigatorString(decl.Type)
 		if typ == t {
 			results[name] = decl
 			delete(decls, name)
@@ -347,9 +342,7 @@ func (c *content) findMethods(s string) map[string]Func {
 			// ignore type parameters when matching receivers to types
 			n = before
 		}
-		if i := strings.Index(n, ">"); i > 0 {
-			n = n[i+1:]
-		}
+		n = removeNavigatorString(n)
 		if s == n || "*"+s == n {
 			methods[key] = fn
 		}
@@ -503,4 +496,12 @@ func (c *content) generateNavChildItems() []Navigation {
 		return items[i].Text < items[j].Text
 	})
 	return items
+}
+
+// removeNavigatorString help to remove any navigator ("<xxx>") in types for easy comparison
+func removeNavigatorString(str string) string {
+	if i := strings.Index(str, ">"); i > 0 {
+		str = str[i+1:]
+	}
+	return str
 }

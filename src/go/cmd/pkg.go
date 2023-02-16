@@ -166,10 +166,16 @@ func (p *Pkg) indexFile(f *ast.File) {
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
 					if impPath, ok := imports[ident.Name]; ok {
-						// This is a re-exported type e.g. "type TokenCredential = shared.TokenCredential".
-						// Track it as an alias so we can later hoist its definition into this package.
-						qn := impPath + "." + t.Sel.Name
-						p.typeAliases[x.Name.Name] = qn
+						// alias in the same module could use type navigator directly
+						if _, _, found := strings.Cut(impPath, p.ModulePath); found && !strings.Contains(impPath, "internal") {
+							expr := p.getText(t.Pos(), t.End())
+							p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr, imports)
+						} else {
+							// This is a re-exported type e.g. "type TokenCredential = shared.TokenCredential".
+							// Track it as an alias so we can later hoist its definition into this package.
+							qn := impPath + "." + t.Sel.Name
+							p.typeAliases[x.Name.Name] = qn
+						}
 					} else {
 						// Non-SDK underlying type e.g. "type EDMDateTime time.Time". Handle it like a simple type
 						// because we don't want to hoist its definition into this package.

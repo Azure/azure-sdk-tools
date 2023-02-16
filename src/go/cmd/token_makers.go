@@ -430,7 +430,7 @@ func NewStruct(source Pkg, name, packageName string, ts *ast.TypeSpec, imports m
 	}
 	source.translateFieldList(ts.Type.(*ast.StructType).Fields.List, func(n *string, t string) {
 		if n == nil {
-			s.AnonymousFields = append(s.AnonymousFields, source.translateType(t, imports))
+			s.AnonymousFields = append(s.AnonymousFields, t)
 		} else {
 			if s.fields == nil {
 				s.fields = map[string]string{}

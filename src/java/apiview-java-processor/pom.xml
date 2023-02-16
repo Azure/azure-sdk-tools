@@ -59,6 +59,7 @@
       <artifactId>commons-lang</artifactId>
       <version>2.6</version>
     </dependency>
+    <!-- Kotlin support dependencies -->
     <dependency>
       <groupId>org.jetbrains.dokka</groupId>
       <artifactId>dokka-core</artifactId>
@@ -127,6 +128,7 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Kotlin support Plugin -->
       <plugin>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-maven-plugin</artifactId>

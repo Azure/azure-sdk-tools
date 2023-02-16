@@ -803,7 +803,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var chunks = testRecordingHandler.GetBatches(bodyData, batchCount);
 
             int bodyPosition = 0;
-            int byteCount = 0;
 
             // ensure that all bytes are accounted for across the batches
             foreach(var chunk in chunks)
@@ -812,11 +811,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 {
                     Assert.Equal(chunk[j], bodyData[bodyPosition]);
                     bodyPosition++;
-                    byteCount++;
                 }
             }
 
-            Assert.Equal(byteCount, bodyData.Length);
+            Assert.Equal(bodyPosition, bodyData.Length);
         }
 
         #endregion

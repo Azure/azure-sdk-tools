@@ -13,6 +13,7 @@ using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Options;
+using Microsoft.TeamFoundation.Common;
 
 namespace APIViewWeb.Managers
 {
@@ -91,6 +92,7 @@ namespace APIViewWeb.Managers
             await _commentsRepository.UpsertCommentAsync(comment);
             if (!comment.IsResolve)
             {
+                await _notificationManager.NotifyUserOnCommentTag(comment);
                 await _notificationManager.NotifySubscribersOnComment(user, comment);
             }
         }
@@ -103,18 +105,16 @@ namespace APIViewWeb.Managers
             comment.Comment = commentText;
             comment.Username = user.GetGitHubLogin();
 
-            var newTaggedUsers = new HashSet<string>();
             foreach (var taggedUser in taggedUsers)
             {
-                if (!comment.TaggedUsers.Contains(taggedUser))
+                if (!string.IsNullOrEmpty(taggedUser))
                 {
-                    await _notificationManager.NotifyUserOnCommentTag(taggedUser, comment);
+                    comment.TaggedUsers.Add(taggedUser);
                 }
-                newTaggedUsers.Add(taggedUser);
             }
-            comment.TaggedUsers = newTaggedUsers;
 
             await _commentsRepository.UpsertCommentAsync(comment);
+            await _notificationManager.NotifyUserOnCommentTag(comment);
             await _notificationManager.NotifySubscribersOnComment(user, comment);
             return comment;
         }

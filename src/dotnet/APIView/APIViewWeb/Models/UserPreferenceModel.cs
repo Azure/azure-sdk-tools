@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 using System.Collections.Generic;
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;

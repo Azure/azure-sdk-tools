@@ -1,0 +1,22 @@
+# Mirror the default branch for each repo folder to all subscribed langauge repos.
+
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: SyncRepos
+    displayName: Sync source repos to target repos
+
+    steps:
+    - template: /eng/pipelines/templates/steps/sync-repo.yml
+      parameters:
+        Repos:
+          Jacktn/TestRepo-one:
+            Branch: main
+            TargetRepos:
+              Jacktn/TestRepo-two:
+                Rebase: true
+                Path: [1,23]

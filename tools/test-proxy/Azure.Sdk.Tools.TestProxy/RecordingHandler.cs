@@ -488,8 +488,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
             for(int i = 0; i < batches.Length; i++)
             {
-                var batch = new byte[chunkLength];
-                Array.Copy(bodyData, i * chunkLength, batch, 0, i == batches.Length - 1 && batches.Length > 1 && remainder > 0 ? remainder : chunkLength);
+                var calculatedChunkLength = i == batches.Length - 1 && batches.Length > 1 && remainder > 0 ? remainder : chunkLength;
+                var batch = new byte[calculatedChunkLength];
+                Array.Copy(bodyData, i * chunkLength, batch, 0, calculatedChunkLength);
 
                 batches[i] = batch;
             }
@@ -514,6 +515,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     if (i != chunks.Length - 1)
                     {
                         Thread.Sleep(sleepLength);
+                    }
+                    else
+                    {
+                        await outgoingResponse.Body.FlushAsync().ConfigureAwait(false);
                     }
                 }
             }

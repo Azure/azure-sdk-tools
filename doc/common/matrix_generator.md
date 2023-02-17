@@ -671,7 +671,7 @@ Given a matrix like below with `JavaTestVersion` marked as a non-sparse paramete
 {
   "matrix": {
     "Agent": {
-      "windows-2022": { "OSVmImage": "MMS2022", "Pool": "azsdk-pool-mms-win-2022-general" },
+      "windows-2022": { "OSVmImage": "windows-2022", "Pool": "azsdk-pool-mms-win-2022-general" },
       "ubuntu-2204": { "OSVmImage": "MMSUbuntu22.04", "Pool": "azsdk-pool-mms-ubuntu-2204-general" },
       "macos-11": { "OSVmImage": "macos-11", "Pool": "Azure Pipelines" }
     },

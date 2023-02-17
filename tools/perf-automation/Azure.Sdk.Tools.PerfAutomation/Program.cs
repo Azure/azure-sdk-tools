@@ -355,7 +355,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         allArguments,
                                         options.Profile,
                                         context,
-                                        i // iteration number
                                     );
                                 }
                                 catch (Exception e)

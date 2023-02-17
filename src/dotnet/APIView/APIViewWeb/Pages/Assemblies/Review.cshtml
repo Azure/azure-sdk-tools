@@ -47,7 +47,7 @@
                                 <span class="small text-muted">Approves the current revision of the API</span>
                                 <div class="d-grid gap-2">
                                     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModel">
-                                        Approve With Modal
+                                        Approve
                                     </button>
                                 </div>
                             }
@@ -171,7 +171,7 @@
                                     {
                                         <input class="form-check-input selectDropdownForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox" checked>
                                         <label class="form-check-label" for="@(approver)CheckBox">
-                                            <img username="@approver" size="28" class="comment-icon align-self-start mr-2" />
+                                            <img username="@approver" size="28" width="28" class="comment-icon align-self-start mr-2" />
                                             @approver
                                         </label>
                                         anyChecked = true;
@@ -180,7 +180,7 @@
                                     {
                                         <input class="form-check-input selectDropdownForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox">
                                         <label class="form-check-label" for="@(approver)CheckBox">
-                                            <img username="@approver" size="28" class="comment-icon align-self-start mr-2" />
+                                            <img username="@approver" size="28" width="28" class="comment-icon align-self-start mr-2" />
                                             @approver
                                         </label>
                                     }

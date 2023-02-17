@@ -39,7 +39,6 @@ namespace APIViewWeb.Controllers
             foreach(string user in taggedUsers)
             {
                 comment.TaggedUsers.Add(user);
-                await _notificationManager.NotifyUserOnCommentTag(user, comment);
             }
 
             await _commentsManager.AddCommentAsync(User, comment);

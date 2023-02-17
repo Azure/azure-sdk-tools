@@ -1,6 +1,7 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -33,15 +34,26 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpGet]
-        public async Task<ContentResult> Active()
+        public async Task<ContentResult> Active(string id="")
         {
-            var dataModel = new ActiveMetadataModel(_recordingHandler);
-            var viewHtml = await RenderViewAsync(this, "ActiveExtensions", dataModel);
+            string content = string.Empty;
+
+            try
+            {
+                var dataModel = new ActiveMetadataModel(_recordingHandler, recordingId: id);
+                content = await RenderViewAsync(this, "ActiveExtensions", dataModel);
+            }
+            // if a SessionNotActiveException is thrown, we have passed in an invalid recordingId, otherwise it'll be an unhandled
+            // exception, which the exception middleware should surface just fine.
+            catch (SessionNotActiveException)
+            {
+                content = await RenderViewAsync(this, "Error", new ActiveMetadataModel(id));
+            }
 
             return new ContentResult
             {
                 ContentType = "text/html",
-                Content = viewHtml
+                Content = content
             };
         }
 

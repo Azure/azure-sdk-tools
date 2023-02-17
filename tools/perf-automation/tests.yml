@@ -79,7 +79,11 @@ parameters:
   default: 1
 - name: Profile
   type: boolean
-  default: false
+  default: true
+- name: AdditionalArguments
+  displayName: AdditionalArguments (passed to PerfAutomation)
+  type: string
+  default: ' '
 - name: OperatingSystems
   type: string
   default: 'Linux'
@@ -90,6 +94,9 @@ parameters:
 - name: WindowsPool
   type: string
   default: 'azsdk-pool-mms-win-2022-general'
+- name: TimeoutInMinutes
+  type: number
+  default: '360'
 
 resources:
   repositories:
@@ -120,8 +127,6 @@ resources:
     ref: main
 
 variables:
-  LinuxVmImage: MMSUbuntu22.04
-  WindowsVmImage: 'MMS2022'
   ToolsRepoCommitish: $(Build.SourceVersion)
 
 stages:
@@ -132,10 +137,9 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Net'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Net'
         LanguageVersion: ${{ parameters.NetLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-net'
@@ -154,15 +158,15 @@ stages:
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
   - ${{ if parameters.IncludeJava }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Java'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Java'
         LanguageVersion: ${{ parameters.JavaLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-java'
@@ -188,15 +192,15 @@ stages:
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
   - ${{ if parameters.IncludeJS }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_JS'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'JS'
         LanguageVersion: ${{ parameters.JSLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-js'
@@ -215,15 +219,15 @@ stages:
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
   - ${{ if parameters.IncludePython }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Python'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Python'
         LanguageVersion: ${{ parameters.PythonLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-python'
@@ -245,15 +249,15 @@ stages:
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
   - ${{ if parameters.IncludeCpp }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Cpp'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Cpp'
         LanguageVersion: 'N/A'
         LanguageRepoName: 'Azure/azure-sdk-for-cpp'
@@ -272,12 +276,12 @@ stages:
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
 - stage: Print_Results
   displayName: Print Results
   pool:
     name: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: MMSUbuntu22.04
   condition: succeededOrFailed()
   variables:
   - template: /eng/pipelines/templates/variables/globals.yml

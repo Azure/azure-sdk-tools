@@ -30,6 +30,7 @@
       - [A note about where sanitizers apply](#a-note-about-where-sanitizers-apply)
     - [For Sanitizers, Matchers, or Transforms in general](#for-sanitizers-matchers-or-transforms-in-general)
     - [Viewing available/active Sanitizers, Matchers, and Transforms](#viewing-availableactive-sanitizers-matchers-and-transforms)
+      - [To see customizations on a specific recording](#to-see-customizations-on-a-specific-recording)
     - [Resetting active Sanitizers, Matchers, and Transforms](#resetting-active-sanitizers-matchers-and-transforms)
       - [Reset the session](#reset-the-session)
       - [Reset for a specific recordingId](#reset-for-a-specific-recordingid)
@@ -454,9 +455,20 @@ Currently, the configured set of transforms/playback/sanitizers are NOT propogat
 Launch the test-proxy through your chosen method, then visit:
 
 - `<proxyUrl>/Info/Available` to see all available
-- `<proxyUrl>/Info/Active` to see all currently active.
+- `<proxyUrl>/Info/Active` to see all currently active for all sessions.
 
 Note that the `constructor arguments` that are documented must be present (where documented as such) in the body of the POST sent to the Admin Interface.
+
+#### To see customizations on a specific recording
+
+This only works **while a session is available**. A specific session is only available _before_ it has been stopped. Once that happens it has been written to disk or evacuated from server memory.
+
+Example flow
+
+- Start playback for "hello_world.json"
+- Receive a recordingId back
+- Place a breakpoint **before** the part of your code that calls `/Record/Stop` or `Playback/Stop`.
+- Visit the url `<proxyUrl>/Info/Active?id=<your-recording-id>`
 
 ### Resetting active Sanitizers, Matchers, and Transforms
 

@@ -68,8 +68,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context,
-            int iteration)
+            object context)
         {
             var perfExe = (string)context;
 

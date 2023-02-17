@@ -16,6 +16,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private const string _rush = "common/scripts/install-run-rush.js";
 
         protected override Language Language => Language.JS;
+        private static int profileCount = 0;
 
         public override async Task<(string output, string error, object context)> SetupAsync(
             string project,
@@ -132,8 +133,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context,
-            int iteration)
+            object context)
         {
             var runtimePackageVersions = (Dictionary<string, string>)context;
 
@@ -144,7 +144,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             if(profile){
                 var stripPackageName = primaryPackage.Split(new char[] { '/' })[1];
-                var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory),stripPackageName, $"{packageVersions[primaryPackage]}_{testName}_{iteration}.cpuprofile"));
+                var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory),stripPackageName, $"{packageVersions[primaryPackage]}_{testName}_{profileCount++}.cpuprofile"));
                 arguments = arguments + $" --profile true --profile-filepath {profileOutputPath}";
             }
             var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",

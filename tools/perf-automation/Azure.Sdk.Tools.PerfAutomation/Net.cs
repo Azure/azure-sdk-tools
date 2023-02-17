@@ -94,8 +94,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context,
-            int iteration)
+            object context)
         {
             var dllName = Path.GetFileNameWithoutExtension(project) + ".dll";
             var dllPath = Path.Combine(PublishDirectory, dllName);

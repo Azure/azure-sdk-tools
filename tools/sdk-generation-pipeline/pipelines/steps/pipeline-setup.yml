@@ -20,7 +20,7 @@ steps:
   - bash: |
       #install tools
       cd tools/sdk-generation-pipeline
-      npm install -g @microsoft/rush
+      npm install -g @microsoft/rush@5.92.0
       rush update
       rush build
       cd packages/sdk-generation-cli

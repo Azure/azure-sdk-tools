@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string languageVersion,
             string primaryPackage,
             IDictionary<string, string> packageVersions,
-            bool debug = false)
+            bool debug)
         {
             var projectFile = Path.Combine(WorkingDirectory, project);
 
@@ -95,7 +95,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context)
+            object context,
+            string profilerOptions)
         {
             var dllName = Path.GetFileNameWithoutExtension(project) + ".dll";
             var dllPath = Path.Combine(PublishDirectory, dllName);

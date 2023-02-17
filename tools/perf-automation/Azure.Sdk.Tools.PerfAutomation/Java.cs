@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string languageVersion,
             string primaryPackage,
             IDictionary<string, string> packageVersions, 
-            bool debug = false)
+            bool debug )
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
@@ -114,7 +114,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context)
+            object context,
+            string profilerOptions)
         {
             var jarFile = (string)context;
 

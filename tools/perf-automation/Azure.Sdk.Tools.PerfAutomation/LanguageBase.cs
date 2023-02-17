@@ -9,8 +9,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         protected abstract Language Language { get; }
 
-        protected string ProfileDirectory => Path.GetFullPath(Path.Combine(WorkingDirectory, Language + "-profile"));
-
         public string WorkingDirectory { get; set; }
 
         public abstract Task CleanupAsync(string project);
@@ -26,13 +24,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context);
+            object context,
+            string profilerOptions);
 
         public abstract Task<(string output, string error, object context)> SetupAsync(
             string project,
             string languageVersion,
             string primaryPackage,
             IDictionary<string, string> packageVersions,
-            bool debug = false);
+            bool debug);
     }
 }

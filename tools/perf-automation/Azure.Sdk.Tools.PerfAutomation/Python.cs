@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string languageVersion,
             string primaryPackage,
             IDictionary<string, string> packageVersions,
-            bool debug = false)
+            bool debug)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var env = Path.Combine(projectDirectory, _env);
@@ -77,7 +77,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context)
+            object context,
+            string profilerOptions)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 

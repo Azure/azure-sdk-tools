@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string languageVersion,
             string primaryPackage,
             IDictionary<string, string> packageVersions,
-            bool debug = false);
+            bool debug);
 
         Task<IterationResult> RunAsync(
             string project,
@@ -27,6 +27,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context);
+            object context,
+            string profilerOptions);
     }
 }

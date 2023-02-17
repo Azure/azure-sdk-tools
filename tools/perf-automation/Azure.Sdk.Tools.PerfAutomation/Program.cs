@@ -346,14 +346,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 IterationResult iterationResult;
                                 try
                                 {
-                                    Dictionary<string, object> contextWrapper = new Dictionary<string, object>();
-                                    if (!String.IsNullOrWhiteSpace(options.ProfilerOptions))
-                                    {
-                                        contextWrapper.Add("context", context);
-                                        contextWrapper.Add("profileOptions", options.ProfilerOptions);
-                                    }
                                     Console.WriteLine($"RunAsync({project}, {languageVersion}, " +
-                                        $"{test.Class}, {allArguments}, {context}, {options.Profile})");
+                                        $"{test.Class}, {allArguments}, {context}, {options.Profile}, {options.ProfilerOptions})");
                                     Console.WriteLine();
 
                                     iterationResult = await _languages[language].RunAsync(
@@ -364,8 +358,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         test.Class,
                                         allArguments,
                                         options.Profile,
-                                        contextWrapper.Count() != 0 ? contextWrapper : context
-                                    );
+                                        context,
+                                        options.ProfilerOptions);
                                 }
                                 catch (Exception e)
                                 {

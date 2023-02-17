@@ -39,7 +39,7 @@ jobs:
   - job: AzurePartnerDropsToNuget
     pool:
       name: azsdk-pool-mms-win-2022-general
-      vmImage: MMS2022
+      vmImage: windows-2022
 
     steps:
       - checkout: self

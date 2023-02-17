@@ -78,7 +78,7 @@ parameters:
     - MigrateFrom: windows2019
       MigrateTo: windows2022
     - MigrateFrom: MMS2019
-      MigrateTo: MMS2022
+      MigrateTo: windows-2022
 - name: ShortForMigrateFrom
   type: string
   default: ''

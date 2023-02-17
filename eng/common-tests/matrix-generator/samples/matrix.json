@@ -21,7 +21,7 @@
   ],
   "exclude": [
     {
-      "OSVmImage": "MMS2022",
+      "OSVmImage": "windows-2022",
       "framework": "netcoreapp2.1"
     }
   ]

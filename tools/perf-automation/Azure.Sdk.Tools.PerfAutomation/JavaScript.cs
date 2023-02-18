@@ -150,7 +150,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var profileFilename = $"{packageVersions[primaryPackage]}_{testName}_{formattedArgs}_{profileCount++}.cpuprofile";
                 var profileDir = Util.GetProfileDirectory(WorkingDirectory);
                 var profileOutputPath = Path.GetFullPath(Path.Combine(profileDir, stripPackageName, profileFilename));
-                
+
                 arguments += $" --profile --profile-path {profileOutputPath}";
             }
             var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",

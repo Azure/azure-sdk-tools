@@ -146,7 +146,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 var stripPackageName = primaryPackage.Substring(primaryPackage.LastIndexOf('/') + 1); 
                 // "@azure/storage-blob" -> "storage-blob"
-                var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory),stripPackageName, $"{packageVersions[primaryPackage]}_{testName}_{profileCount++}.cpuprofile"));
+                var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory),stripPackageName, $"{packageVersions[primaryPackage]}_{testName}_{arguments.Replace("--","_").Replace(" ","-")}_{profileCount++}.cpuprofile"));
                 arguments = arguments + $" --profile --profile-path {profileOutputPath}";
             }
             var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",

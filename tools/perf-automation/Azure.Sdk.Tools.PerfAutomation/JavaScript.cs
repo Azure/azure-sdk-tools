@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
             if(profile){
-                var stripPackageName = primaryPackage.Split(new char[] { '/' })[1];  
+                var stripPackageName = primaryPackage.Substring(primaryPackage.LastIndexOf('/') + 1); 
                 // "@azure/storage-blob" -> "storage-blob"
                 var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory),stripPackageName, $"{packageVersions[primaryPackage]}_{testName}_{profileCount++}.cpuprofile"));
                 arguments = arguments + $" --profile --profile-path {profileOutputPath}";

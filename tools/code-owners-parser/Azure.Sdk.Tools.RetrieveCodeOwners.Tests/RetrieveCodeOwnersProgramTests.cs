@@ -40,7 +40,7 @@ public class RetrieveCodeOwnersProgramTests
     /// 
     /// </summary>
     [Test]
-    public void OutputsCodeowners()
+    public void OutputsCorrectCodeownersOnGlobTargetPath()
     {
         const string targetDir = "./TestData/InputDir";
         const string targetPath = "/**";
@@ -64,7 +64,30 @@ public class RetrieveCodeOwnersProgramTests
             ["cor/gra/a.txt"] = new CodeownersEntry("/**",           new List<string> { "2star" }),
             // @formatter:on
         };
-        
+
+        // Act
+        (string actualOutput, string actualErr, int returnCode) = RunProgramMain(
+            targetPath,
+            codeownersFilePathOrUrl,
+            excludeNonUserAliases,
+            targetDir);
+
+        Dictionary<string, CodeownersEntry> actualEntries = TryDeserializeActualEntries(actualOutput, actualErr);
+
+        Assert.Multiple(() =>
+        {
+            AssertEntries(actualEntries, expectedEntries);
+            Assert.That(returnCode, Is.EqualTo(0));
+            Assert.That(actualErr, Is.EqualTo(string.Empty));
+        });
+    }
+
+    private static (string actualOutput, string actualErr, int returnCode) RunProgramMain(
+        string targetPath,
+        string codeownersFilePathOrUrl,
+        bool excludeNonUserAliases,
+        string targetDir)
+    {
         string actualOutput, actualErr;
         int returnCode;
         using (var consoleOutput = new ConsoleOutput())
@@ -80,14 +103,7 @@ public class RetrieveCodeOwnersProgramTests
             actualErr = consoleOutput.GetStderr();
         }
 
-        var actualEntries = TryDeserializeActualEntries(actualOutput, actualErr);
-
-        Assert.Multiple(() =>
-        {
-            AssertEntries(actualEntries, expectedEntries);
-            Assert.That(returnCode, Is.EqualTo(0));
-            Assert.That(actualErr, Is.EqualTo(string.Empty));
-        });
+        return (actualOutput, actualErr, returnCode);
     }
 
     private static Dictionary<string, CodeownersEntry> TryDeserializeActualEntries(

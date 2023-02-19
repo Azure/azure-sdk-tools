@@ -20,53 +20,53 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests;
 [TestFixture]
 public class RetrieveCodeOwnersProgramTests
 {
-    [Test]
-    public void OutputsCorrectCodeownersOnSimpleTargetPaths()
+    private static readonly TestCase[] testCases =
+    {
+        // @formatter:off
+        new ("a.txt"         , new CodeownersEntry("/*",            new List<string> { "star" })),
+        new ("b.txt"         , new CodeownersEntry("/*",            new List<string> { "star" })),
+        new ("foo/a.txt"     , new CodeownersEntry("/foo/**/a.txt", new List<string> { "foo_2star_a" })),
+        new ("foo/b.txt"     , new CodeownersEntry("/**",           new List<string> { "2star" })),
+        new ("foo/bar/a.txt" , new CodeownersEntry("/foo/*/a.txt",  new List<string> { "foo_star_a_1", "foo_star_a_2" })),
+        new ("foo/bar/b.txt" , new CodeownersEntry("/**",           new List<string> { "2star" })),
+        new ("baz/cor/c.txt" , new CodeownersEntry("/baz*",         new List<string> { "baz_star" })),
+        new ("baz_.txt"      , new CodeownersEntry("/baz*",         new List<string> { "baz_star" })),
+        new ("qux/abc/d.txt" , new CodeownersEntry("/qux/",         new List<string> { "qux" })),
+        new ("cor.txt"       , new CodeownersEntry("/*",            new List<string> { "star" })),
+        new ("cor2/a.txt"    , new CodeownersEntry("/**",           new List<string> { "2star" })),
+        new ("cor/gra/a.txt" , new CodeownersEntry("/**",           new List<string> { "2star" }))
+        // @formatter:on
+    };
+
+    public record TestCase(
+        string TargetPath,
+        CodeownersEntry ExpectedCodeownersEntry);
+
+    [TestCaseSource(nameof(testCases))]
+    public void OutputsCorrectCodeownersOnSimpleTargetPath(TestCase testCase)
     {
         const string targetDir = "./TestData/InputDir";
         const string codeownersFilePathOrUrl = "./TestData/test_CODEOWNERS";
         const bool excludeNonUserAliases = false;
 
-        var expectedEntries = new Dictionary<string, CodeownersEntry>
+        var targetPath = testCase.TargetPath;
+        var expectedEntry = testCase.ExpectedCodeownersEntry;
+
+        // Act
+        (string actualOutput, string actualErr, int returnCode) = RunProgramMain(
+            targetPath,
+            codeownersFilePathOrUrl,
+            excludeNonUserAliases,
+            targetDir);
+
+        CodeownersEntry actualEntry = TryDeserializeActualEntryFromSimpleTargetPath(actualOutput, actualErr);
+
+        Assert.Multiple(() =>
         {
-            // @formatter:off
-            ["a.txt"]         = new CodeownersEntry("/*",            new List<string> { "star" }),
-            ["b.txt"]         = new CodeownersEntry("/*",            new List<string> { "star" }),
-            ["foo/a.txt"]     = new CodeownersEntry("/foo/**/a.txt", new List<string> { "foo_2star_a" }),
-            ["foo/b.txt"]     = new CodeownersEntry("/**",           new List<string> { "2star" }),
-            ["foo/bar/a.txt"] = new CodeownersEntry("/foo/*/a.txt",  new List<string> { "foo_star_a_1", "foo_star_a_2" }),
-            ["foo/bar/b.txt"] = new CodeownersEntry("/**",           new List<string> { "2star" }),
-            ["baz/cor/c.txt"] = new CodeownersEntry("/baz*",         new List<string> { "baz_star" }),
-            ["baz_.txt"]      = new CodeownersEntry("/baz*",         new List<string> { "baz_star" }),
-            ["qux/abc/d.txt"] = new CodeownersEntry("/qux/",         new List<string> { "qux" }),
-            ["cor.txt"]       = new CodeownersEntry("/*",            new List<string> { "star" }),
-            ["cor2/a.txt"]    = new CodeownersEntry("/**",           new List<string> { "2star" }),
-            ["cor/gra/a.txt"] = new CodeownersEntry("/**",           new List<string> { "2star" }),
-            // @formatter:on
-        };
-
-        // kja convert to parameterized UT
-        foreach (var testData in expectedEntries)
-        {
-            var targetPath = testData.Key;
-            var expectedEntry = testData.Value;
-
-            // Act
-            (string actualOutput, string actualErr, int returnCode) = RunProgramMain(
-                targetPath,
-                codeownersFilePathOrUrl,
-                excludeNonUserAliases,
-                targetDir);
-
-            CodeownersEntry actualEntry = TryDeserializeActualEntryFromSimpleTargetPath(actualOutput, actualErr);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(actualEntry, Is.EqualTo(expectedEntry), $"path: {targetPath}");
-                Assert.That(returnCode, Is.EqualTo(0));
-                Assert.That(actualErr, Is.EqualTo(string.Empty));
-            });
-        }
+            Assert.That(actualEntry, Is.EqualTo(expectedEntry), $"path: {targetPath}");
+            Assert.That(returnCode, Is.EqualTo(0));
+            Assert.That(actualErr, Is.EqualTo(string.Empty));
+        });
     }
 
     /// <summary>

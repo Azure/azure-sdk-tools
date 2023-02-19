@@ -20,6 +20,55 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests;
 [TestFixture]
 public class RetrieveCodeOwnersProgramTests
 {
+    [Test]
+    public void OutputsCorrectCodeownersOnSimpleTargetPaths()
+    {
+        const string targetDir = "./TestData/InputDir";
+        const string codeownersFilePathOrUrl = "./TestData/test_CODEOWNERS";
+        const bool excludeNonUserAliases = false;
+
+        var expectedEntries = new Dictionary<string, CodeownersEntry>
+        {
+            // @formatter:off
+            ["a.txt"]         = new CodeownersEntry("/*",            new List<string> { "star" }),
+            ["b.txt"]         = new CodeownersEntry("/*",            new List<string> { "star" }),
+            ["foo/a.txt"]     = new CodeownersEntry("/foo/**/a.txt", new List<string> { "foo_2star_a" }),
+            ["foo/b.txt"]     = new CodeownersEntry("/**",           new List<string> { "2star" }),
+            ["foo/bar/a.txt"] = new CodeownersEntry("/foo/*/a.txt",  new List<string> { "foo_star_a_1", "foo_star_a_2" }),
+            ["foo/bar/b.txt"] = new CodeownersEntry("/**",           new List<string> { "2star" }),
+            ["baz/cor/c.txt"] = new CodeownersEntry("/baz*",         new List<string> { "baz_star" }),
+            ["baz_.txt"]      = new CodeownersEntry("/baz*",         new List<string> { "baz_star" }),
+            ["qux/abc/d.txt"] = new CodeownersEntry("/qux/",         new List<string> { "qux" }),
+            ["cor.txt"]       = new CodeownersEntry("/*",            new List<string> { "star" }),
+            ["cor2/a.txt"]    = new CodeownersEntry("/**",           new List<string> { "2star" }),
+            ["cor/gra/a.txt"] = new CodeownersEntry("/**",           new List<string> { "2star" }),
+            // @formatter:on
+        };
+
+        // kja convert to parameterized UT
+        foreach (var testData in expectedEntries)
+        {
+            var targetPath = testData.Key;
+            var expectedEntry = testData.Value;
+
+            // Act
+            (string actualOutput, string actualErr, int returnCode) = RunProgramMain(
+                targetPath,
+                codeownersFilePathOrUrl,
+                excludeNonUserAliases,
+                targetDir);
+
+            CodeownersEntry actualEntry = TryDeserializeActualEntryFromSimpleTargetPath(actualOutput, actualErr);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(actualEntry, Is.EqualTo(expectedEntry), $"path: {targetPath}");
+                Assert.That(returnCode, Is.EqualTo(0));
+                Assert.That(actualErr, Is.EqualTo(string.Empty));
+            });
+        }
+    }
+
     /// <summary>
     /// Given:
     ///
@@ -72,7 +121,7 @@ public class RetrieveCodeOwnersProgramTests
             excludeNonUserAliases,
             targetDir);
 
-        Dictionary<string, CodeownersEntry> actualEntries = TryDeserializeActualEntries(actualOutput, actualErr);
+        Dictionary<string, CodeownersEntry> actualEntries = TryDeserializeActualEntriesFromGlobTargetPath(actualOutput, actualErr);
 
         Assert.Multiple(() =>
         {
@@ -106,7 +155,28 @@ public class RetrieveCodeOwnersProgramTests
         return (actualOutput, actualErr, returnCode);
     }
 
-    private static Dictionary<string, CodeownersEntry> TryDeserializeActualEntries(
+    private static CodeownersEntry TryDeserializeActualEntryFromSimpleTargetPath(
+        string actualOutput,
+        string actualErr)
+    {
+        CodeownersEntry actualEntry;
+        try
+        {
+            actualEntry =
+                JsonSerializer.Deserialize<CodeownersEntry>(actualOutput)!;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            Console.WriteLine("actualOutput: " + actualOutput);
+            Console.WriteLine("actualErr: " + actualErr);
+            throw;
+        }
+
+        return actualEntry;
+    }
+
+    private static Dictionary<string, CodeownersEntry> TryDeserializeActualEntriesFromGlobTargetPath(
         string actualOutput,
         string actualErr)
     {

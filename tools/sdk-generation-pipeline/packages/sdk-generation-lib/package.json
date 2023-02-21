@@ -32,7 +32,7 @@
     "@octokit/auth-app": "^2.4.5",
     "@octokit/rest": "^18.0.3",
     "ajv": "^6.12.6",
-    "class-validator": "^0.13.2",
+    "class-validator": "^0.14.0",
     "colors": "1.4.0",
     "convict": "^6.2.3",
     "jsonc-parser": "^3.0.0",

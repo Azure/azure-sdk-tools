@@ -18,7 +18,7 @@ spec:
         app: stress-watcher
     spec:
       nodeSelector:
-        sku: 'default'
+        sku: 'system'
       initContainers:
         # Init container template for injecting secrets
         # (e.g. app insights instrumentation key, azure client credentials)

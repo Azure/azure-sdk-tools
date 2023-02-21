@@ -1,5 +1,3 @@
-using APIView;
-
 namespace SwaggerApiParser;
 
 public interface ITokenSerializable

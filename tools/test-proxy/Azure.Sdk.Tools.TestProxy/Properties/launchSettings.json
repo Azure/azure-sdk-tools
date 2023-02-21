@@ -1,12 +1,4 @@
 {
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:5001/",
-      "sslPort": 44362
-    }
-  },
   "profiles": {
     "Azure.Sdk.Tools.TestProxy": {
       "commandName": "Project",
@@ -15,6 +7,14 @@
         "Logging__LogLevel__Microsoft": "Information"
       },
       "applicationUrl": "https://localhost:5001;http://localhost:5000"
+    }
+  },
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:5001/",
+      "sslPort": 44362
     }
   }
 }

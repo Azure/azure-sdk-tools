@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using ApiView;
-using APIView;
 
 namespace SwaggerApiParser;
 

@@ -1,46 +1,62 @@
 parameters:
 - name: IncludeNet
-  displayName: Include .NET?
+  displayName: Include .NET
   type: boolean
   default: true
 - name: NetRepoCommitish
   type: string
   default: 'main'
+- name: NetLanguageVersion
+  displayName: NetLanguageVersion (6, 7)
+  type: string
+  default: '7'
 - name: NetServiceDirectory
   type: string
   default: 'storage/Azure.Storage.Blobs'
 - name: IncludeJava
-  displayName: Include Java?
+  displayName: Include Java
   type: boolean
   default: true
 - name: JavaRepoCommitish
   type: string
   default: 'main'
+- name: JavaLanguageVersion
+  displayName: JavaLanguageVersion (8, 11, 17)
+  type: string
+  default: '17'
 - name: JavaServiceDirectory
   type: string
   default: 'storage/azure-storage-blob'
 - name: IncludeJS
-  displayName: Include JS?
+  displayName: Include JS
   type: boolean
   default: true
 - name: JSRepoCommitish
   type: string
   default: 'main'
+- name: JSLanguageVersion
+  displayName: JSLanguageVersion (14, 16, 18)
+  type: string
+  default: '18'
 - name: JSServiceDirectory
   type: string
   default: 'storage/storage-blob'
 - name: IncludePython
-  displayName: Include Python?
+  displayName: Include Python
   type: boolean
   default: true
 - name: PythonRepoCommitish
   type: string
   default: 'main'
+- name: PythonLanguageVersion
+  displayName: PythonLanguageVersion (3.7, 3.8, 3.9, 3.10, 3.11)
+  type: string
+  default: '3.11'
 - name: PythonServiceDirectory
   type: string
   default: 'storage/azure-storage-blob'
 - name: IncludeCpp
-  displayName: Include Cpp?
+  displayName: Include Cpp
   type: boolean
   default: true
 - name: CppRepoCommitish
@@ -48,10 +64,7 @@ parameters:
   default: 'main'
 - name: CppServiceDirectory
   type: string
-  default: 'storage'
-- name: Services
-  type: string
-  default: '^storage-blob$'
+  default: 'storage/azure-storage-blobs'
 - name: PackageVersions
   type: string
   default: '12|source'
@@ -66,7 +79,11 @@ parameters:
   default: 1
 - name: Profile
   type: boolean
-  default: false
+  default: true
+- name: AdditionalArguments
+  displayName: AdditionalArguments (passed to PerfAutomation)
+  type: string
+  default: ' '
 - name: OperatingSystems
   type: string
   default: 'Linux'
@@ -77,6 +94,9 @@ parameters:
 - name: WindowsPool
   type: string
   default: 'azsdk-pool-mms-win-2022-general'
+- name: TimeoutInMinutes
+  type: number
+  default: '360'
 
 resources:
   repositories:
@@ -107,8 +127,6 @@ resources:
     ref: main
 
 variables:
-  LinuxVmImage: MMSUbuntu22.04
-  WindowsVmImage: 'MMS2022'
   ToolsRepoCommitish: $(Build.SourceVersion)
 
 stages:
@@ -119,11 +137,11 @@ stages:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Net'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Net'
+        LanguageVersion: ${{ parameters.NetLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-net'
         LanguageRepoCommitish: ${{ parameters.NetRepoCommitish }}
         ToolsRepoCommitish: $(ToolsRepoCommitish)
@@ -135,22 +153,22 @@ stages:
           parameters:
             EnableNuGetCache: false
         ServiceDirectory: ${{ parameters.NetServiceDirectory }}
-        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
   - ${{ if parameters.IncludeJava }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Java'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Java'
+        LanguageVersion: ${{ parameters.JavaLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-java'
         LanguageRepoCommitish: ${{ parameters.JavaRepoCommitish }}
         ToolsRepoCommitish: $(ToolsRepoCommitish)
@@ -160,31 +178,31 @@ stages:
         InstallLanguageSteps:
         - task: JavaToolInstaller@0
           inputs:
-            versionSpec: '17'
+            versionSpec: ${{ parameters.JavaLanguageVersion }}
             jdkArchitectureOption: 'x64'
             jdkSourceOption: 'PreInstalled'
-          displayName: Install Java 17
+          displayName: Install Java ${{ parameters.JavaLanguageVersion }}
         - script: |
             java -version
             mvn --version
           displayName: Print Java Versions
         ServiceDirectory: ${{ parameters.JavaServiceDirectory }}
-        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
   - ${{ if parameters.IncludeJS }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_JS'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'JS'
+        LanguageVersion: ${{ parameters.JSLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-js'
         LanguageRepoCommitish: ${{ parameters.JSRepoCommitish }}
         ToolsRepoCommitish: $(ToolsRepoCommitish)
@@ -194,31 +212,31 @@ stages:
         InstallLanguageSteps:
         - template: /eng/pipelines/templates/steps/use-node-version.yml@azure-sdk-for-js
           parameters:
-            NodeVersion: 18.x
+            NodeVersion: ${{ parameters.JSLanguageVersion }}.x
         ServiceDirectory: ${{ parameters.JSServiceDirectory }}
-        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
   - ${{ if parameters.IncludePython }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Python'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Python'
+        LanguageVersion: ${{ parameters.PythonLanguageVersion }}
         LanguageRepoName: 'Azure/azure-sdk-for-python'
         LanguageRepoCommitish: ${{ parameters.PythonRepoCommitish }}
         ToolsRepoCommitish: $(ToolsRepoCommitish)
         Variables:
         - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-python
         - name: PythonVersion
-          value: '3.11'
+          value: ${{ parameters.PythonLanguageVersion }}
         OperatingSystems: ${{ parameters.OperatingSystems }}
         InstallLanguageSteps:
         - task: UsePythonVersion@0
@@ -226,22 +244,22 @@ stages:
           inputs:
             versionSpec: $(PythonVersion)
         ServiceDirectory: ${{ parameters.PythonServiceDirectory }}
-        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
   - ${{ if parameters.IncludeCpp }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Cpp'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
         LinuxPool: ${{ parameters.LinuxPool }}
-        LinuxVmImage: $(LinuxVmImage)
         WindowsPool: ${{ parameters.WindowsPool }}
-        WindowsVmImage: $(WindowsVmImage)
         Language: 'Cpp'
+        LanguageVersion: 'N/A'
         LanguageRepoName: 'Azure/azure-sdk-for-cpp'
         LanguageRepoCommitish: ${{ parameters.CppRepoCommitish }}
         ToolsRepoCommitish: $(ToolsRepoCommitish)
@@ -253,18 +271,17 @@ stages:
           parameters:
             RepoOwner: Microsoft
         ServiceDirectory: ${{ parameters.CppServiceDirectory }}
-        Services: ${{ parameters.Services }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
         Arguments: ${{ parameters.Arguments }}
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
 - stage: Print_Results
   displayName: Print Results
   pool:
     name: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: MMSUbuntu22.04
   condition: succeededOrFailed()
   variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -286,6 +303,7 @@ stages:
         }
       workingDirectory: $(Pipeline.Workspace)
       displayName: All
+      condition: succeededOrFailed()
 
     - ${{ if parameters.IncludeNet }}:
       - pwsh: |
@@ -293,6 +311,7 @@ stages:
           get-content results-Net-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Net
+        condition: succeededOrFailed()
 
     - ${{ if parameters.IncludeJava }}:
       - pwsh: |
@@ -300,6 +319,7 @@ stages:
           get-content results-Java-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Java
+        condition: succeededOrFailed()
 
     - ${{ if parameters.IncludeJS }}:
       - pwsh: |
@@ -307,6 +327,7 @@ stages:
           get-content results-JS-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: JS
+        condition: succeededOrFailed()
 
     - ${{ if parameters.IncludePython }}:
       - pwsh: |
@@ -314,6 +335,7 @@ stages:
           get-content results-Python-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Python
+        condition: succeededOrFailed()
 
     - ${{ if parameters.IncludeCpp }}:
       - pwsh: |
@@ -321,3 +343,4 @@ stages:
           get-content results-Cpp-Linux/results.txt
         workingDirectory: $(Pipeline.Workspace)
         displayName: Cpp
+        condition: succeededOrFailed()

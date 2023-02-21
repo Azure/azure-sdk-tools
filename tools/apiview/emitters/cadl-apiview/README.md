@@ -68,26 +68,35 @@ or via the command line with
 --option "@azure-tools/cadl-apiview.output-file=my-custom-apiview.json"
 ```
 
+### `emitter-output-dir`
+
+Configure the name of the output directory. Default is `cadl-output/@azure-tools/cadl-apiview`.
+
+### `include-global-namespace`
+
+Normally, APIView will filter all namespaces and only output those in the service namespace and any
+subnamespaces. This is to filter out types that come from the Cadl compiler and supporting libraries.
+This setting, if `true`, tells APIView to output the contents of the global (empty) namespace, which
+would normally be excluded.
+
+### `service`
+
+Filter output to a single service definition. If omitted, all service defintions will be
+output as separate APIView token files.
+
 ### `output-file`
 
-Configure the name of the output JSON token file relative to the `output-dir`.
-
-### `output-dir`
-
-Configure the name of the output directory. Default is `cadl-output/cadl-apiview`.
-
-### `namespace`
-
-For Cadl specs, the namespace should be automatically resolved as the service namespace. If
-that doesn't work, or for libraries (which have no service namespace) this option should be
-specified to filter the global namespace. Any subnamespaces of the provided namespace will
-also be emitted.
+Configure the name of the output JSON token file relative to the `output-dir`. For multi-service
+specs, this option cannot be supplied unless the `service` option is also set. If outputting
+all services in a multi-service spec, the output filename will be the service root namespace with the
+`-apiview.json` suffix. Otherwise, the default is `apiview.json`.
 
 ### `version`
 
 For multi-versioned Cadl specs, this parameter is used to control which version to emit. This
 is not required for single-version specs. For multi-versioned specs, the unprojected Cadl will
-be rendered if this is not supplied.
+be rendered if this is not supplied. For multi-service specs, this option cannot be supplied
+unless the `service` option is also set.
 
 ## See also
 

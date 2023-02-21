@@ -1,31 +1,13 @@
 const path = require('path');
-
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { DuplicatesPlugin } = require("inspectpack/plugin");
 
 module.exports = {
   mode: "production",
-  entry: {
-    comments: './src/comments.ts',
-    revisions: './src/revisions.ts',
-    fileInput: './src/file-input.ts',
-    review: './src/review.ts',
-    reviews: './src/reviews.ts',
-    userProfile: './src/user-profile.ts',
-    site: './css/site.scss',
-    c: './css/c.scss',
-    cplusplus: './css/cplusplus.scss',
-    csharp: './css/csharp.scss',
-    go: './css/go.scss',
-    java: './css/java.scss',
-    javascript: './css/javascript.scss',
-    json: './css/json.scss',
-    kotlin: './css/kotlin.scss',
-    python: './css/python.scss',
-    swagger: './css/swagger.scss',
-    swift: './css/swift.scss',
-    xml: './css/xml.scss',
-    usagesample: './css/usageSample.scss'
-  },
+  entry: [
+    './src/main.ts',
+    './css/main.scss'
+  ],
   devtool: 'source-map',
   module: {
     rules: [
@@ -58,14 +40,18 @@ module.exports = {
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: '[name].css'
+      filename: 'main.css'
     }),
+    new DuplicatesPlugin({
+      emitErrors: false,
+      verbose: false
+    })
   ],
   resolve: {
     extensions: [ '.tsx', '.ts', '.js' ],
   },
   output: {
-    filename: '[name].js',
+    filename: 'main.js',
     path: path.resolve(__dirname, '../wwwroot'),
   },
 }

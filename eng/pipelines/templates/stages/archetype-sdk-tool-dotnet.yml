@@ -3,7 +3,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20230126.1
+      ref: refs/tags/azure-sdk-build-tools_20230221.1
 
 parameters:
   - name: ToolDirectory
@@ -13,9 +13,6 @@ parameters:
     type: string
     default: ''
   - name: TestDirectory
-    type: string
-    default: ''
-  - name: DotNetCoreVersion
     type: string
     default: ''
   - name: NoWarn
@@ -65,9 +62,7 @@ stages:
 
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
-            parameters:
-              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
-              
+
           - script: 'dotnet pack /p:ArtifactsPackagesDir=$(packagesToPublishDir) $(Warn) -c Release'
             displayName: 'Build and Package'
             workingDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
@@ -115,8 +110,6 @@ stages:
 
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
-            parameters:
-              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
 
           - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
             parameters:
@@ -130,7 +123,7 @@ stages:
           matrix:
             Windows:
               Pool: azsdk-pool-mms-win-2022-general
-              Image: MMS2022
+              Image: windows-2022
             Linux:
               Pool: azsdk-pool-mms-ubuntu-2204-general
               Image: MMSUbuntu22.04
@@ -144,8 +137,6 @@ stages:
 
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
-            parameters:
-              DotNetCoreVersion: ${{ parameters.DotNetCoreVersion }}
 
           - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
             displayName: 'Test'
@@ -161,7 +152,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/*.trx'
-              testRunTitle: $(System.JobDisplayName) ${{ parameters.DotNetCoreVersion }}
+              testRunTitle: $(System.JobDisplayName)
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 

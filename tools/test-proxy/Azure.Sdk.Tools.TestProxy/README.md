@@ -62,6 +62,10 @@ Modified to be recordable by the test proxy, it should look like this:
 
 There is a walkthrough through the process below in the [how do I use the test proxy to get a recording.](#how-do-i-use-the-test-proxy-to-get-a-recording)
 
+For a more detailed explanation of how the test proxy works, along with links to demo projects for various languages, refer to the following post on the Azure SDK blog:
+
+[Level up your cloud testing game with the Azure SDK test proxy](http://aka.ms/azsdk/test-proxy)
+
 ## Installation
 
 ### Via Local Compile or .NET

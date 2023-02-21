@@ -12,6 +12,7 @@
       - [Input arguments](#input-arguments)
   - [Environment Variables](#environment-variables)
   - [How do I use the test-proxy to get a recording?](#how-do-i-use-the-test-proxy-to-get-a-recording)
+    - [Installation and initial run](#installation-and-initial-run)
     - [Where will my recordings end up?](#where-will-my-recordings-end-up)
     - [Start the test run](#start-the-test-run)
     - [Run your tests](#run-your-tests)
@@ -204,16 +205,33 @@ Both of the above variables can be set in the `docker` runtime by providing addi
 
 ## How do I use the test-proxy to get a recording?
 
-Use either local or docker image to start the tool. Reference the [Installation](#installation) section of this readme. SSL Configuration is discussed below in [SSL Support](#ssl-support).
+Before we begin a technical explanation, lets first discuss the general use of the test-proxy.
+
+1. User starts test-proxy, default url the proxy will be available on is `http://localhost:5000`.
+2. User initiates a POST to the proxy url `http://localhost:5000/Record/Start` with a body (which we will describe later) describing what we are recording.
+3. User sends requests through the test-proxy by modifying their actual test requests as described below.
+4. User initates a POST to the proxy url `http://localhost:5000/Record/Stop`.
+5. Repeat steps 2 through 4 as necessary for each test.
+
+There is a lot of detail omitted from the above, but this is the general process.
+
+The test-proxy is really meant to be integrated with a test framework. One that allows steps 2 and 4 to be handled by `setup` and `teardown` of individual record/playback sessions as well as updating the test requests so that they flow to the test-proxy instead of their actual target.
+
+Please reference the clients under `sample-clients/` folder for examples of what the process of modifying the requests actually looks like.
+
+### Installation and initial run
+
+Reference the [Installation](#installation) section of this readme. SSL Configuration is discussed below in [SSL Support](#ssl-support).
 
 A couple notes before running the test-proxy:
 
-- If running the test-proxy directly, ensure that the working directory is set. The default should probably be the root of your sdk-for-X repo. Reference [command line arguments](#command-line-arguments) for options here.
-- If running the proxy out of docker, ensure you **map** `etc/testproxy/` to a local folder on your drive. The docker image itself takes advantage of the command-line arguments mentioned in the above bullet.
+- Reference [command line arguments](#command-line-arguments) and understand the options.
+- The test-proxy runs in a "context" which is just a directory on your disk. When initializing a recording, all paths should be relative to this context directory.
+- If running the proxy as a docker image, ensure you **map** `etc/testproxy/` to a target context directory on your drive. In the example `docker run` invocations above, look for the `-v` argument.
 
 ### Where will my recordings end up?
 
-In the next step, you will be asked to provide a JSON body within your POST to `/record/start/`. This body should be a JSON object with a top-level key `x-recording-file` present. The value of this key will be consumed by the test-proxy and **used to write your recording to disk**.
+Recall in the previous section that the test-proxy started in a `context`. Again, this is just a directory on your disk. For the azure-sdk repositories, the test-proxy is normally started in the root of the repo. All recording files are then referenced relative from the root of that repo.
 
 For example, let's invoke the test-proxy:
 
@@ -221,31 +239,41 @@ For example, let's invoke the test-proxy:
 test-proxy --storage-location "C:/repo/sdk-for-net/"
 ```
 
-When we **start** a test run (method outlined in next section), we have to provide a file location within JSON body key `x-recording-file`.
+We start a test run by POST-ing to either `/Record/Start` or `/Playback/Start`. Within the body of the post request we provide a file location within JSON body key `x-recording-file`.
 
-When your recording is finalized, it will be stored following the below logic.
+This key is used in combination with the `context` directory to either **store** or **load** an existing recording.
 
-```script
-root = C:/repo/sdk-for-net/
-recording = sdk/tools/test-proxy/tests/testFile.testFunction.cs
+For example, lets say that:
 
-final_output_location = C:/repo/sdk-for-net/sdk/tools/test-proxy/tests/testFile.testFunction.cs.json
+- The test-proxy has been started in directory `C:/repo/sdk-for-net/`.
+- The user POSTS to `/Record/Start`
+- The key passed in `x-recording-file` is a valid path: `sdk/anomalydetector/Azure.AI.AnomalyDetector/tests/SessionRecords/GetresultForChangePoint.json`
+
+The test-proxy effectively _joins_ the context directory and the incoming path to come up with a final location on disk.
+
+```text
+context = C:/repo/sdk-for-net/
+key = sdk/anomalydetector/Azure.AI.AnomalyDetector/tests/SessionRecords/GetresultForChangePoint.json
+final path = C:/repo/sdk-for-net/sdk/anomalydetector/Azure.AI.AnomalyDetector/tests/SessionRecords/GetresultForChangePoint.json
 ```
 
-During a `playback` start, the **same** value for `x-recording-file` should be provided within the POST body. This allows the test-proxy to load a previous recording into memory.
+When the user POSTS to `/Record/Stop` the recording will be written to the file as described directly above.
 
-Please note that if a **absolute** path is presented in header `x-recording-file`. The test-proxy will write directly to that file. If the parent folders do not exist, they will be created at run-time during the write operation.
+During a `playback` start, the value for `x-recording-file` is used to _load an existing recording into memory_ and serve requests from it!
+
+Please note that if a **absolute** path is presented in header `x-recording-file`. The test-proxy will write directly to that file, wherever it is. If the parent folders do not exist, they will be created at run-time during the write operation.
 
 ### Start the test run
 
-Before each individual test runs, a `recordingId` must be retrieved from the test-proxy by POST-ing to the Proxy Server.
+To start an individual test recording or playback, users will POST to a route on the running test-proxy. In real-world cases, this initial POST should be taken care of by the `setup` function of an individual test.
 
 ```jsonc
 // Targeted URI: https://localhost:5001/record/start
 // request body
 {
-    "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
+    "x-recording-file": "<path-to-test>/<testfile>.<testname>"
 }
+// if the x-recording-file doesn't end with ".json", that will be appended prior to writing.
 ```
 
 You will receive a recordingId in the reponse under header `x-recording-id`. This value should be included under header `x-recording-id` in all further requests.
@@ -272,7 +300,7 @@ A [custom transport](https://github.com/Azure/azure-sdk-tools/blob/main/tools/te
 
 ### When finished running test
 
-After your test has finished and there are no additional requests to be recorded.
+After your test has finished and there are no additional requests to be recorded, a test must be stopped to save the recording to disk.
 
 POST to the proxy server:
 
@@ -299,6 +327,8 @@ This will **finalize** your recording by:
 - Removing from active sessions.
 - Applying session/recording sanitizers.
 - Saving to disk.
+
+In test frameworks integrating with the test-proxy, this function should be invoked in the `teardown` function or the language equivalent.
 
 #### Storing `variables`
 

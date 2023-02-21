@@ -4723,7 +4723,7 @@ operationGroups:
           - *ref_191
           - *ref_192
         responses:
-          - language: &ref_468
+          - language: &ref_469
               default:
                 name: ''
                 description: Success. The response indicates the resource is already deleted.
@@ -5339,7 +5339,7 @@ operationGroups:
           - *ref_205
           - *ref_206
         responses:
-          - language: &ref_465
+          - language: &ref_466
               default:
                 name: ''
                 description: Accepted. The response indicates the restart operation is performed in the background.
@@ -11061,10 +11061,14 @@ testModel:
         operation: *ref_460
         operationGroup: *ref_442
   scenarioTests:
-    - &ref_471
+    - &ref_472
+      name: signalR
       _filePath: Microsoft.SignalRService\preview\2021-06-01-preview\scenarios\signalR.yaml
       _swaggerFilePaths:
         - Microsoft.SignalRService/preview/2021-06-01-preview/signalr.json
+      authentication: &ref_461
+        type: AADToken
+        scope: $(armEndpoint)/.default
       cleanUpSteps: []
       prepareSteps: []
       requiredVariables:
@@ -11076,7 +11080,8 @@ testModel:
         subscriptionId: 00000000-00000000-00000000-00000000
       scenarios:
         - description: Microsoft.SignalRService/Basic_CRUD
-          _scenarioDef: *ref_471
+          _scenarioDef: *ref_472
+          authentication: *ref_461
           requiredVariables:
             - subscriptionId
             - location
@@ -11085,7 +11090,6 @@ testModel:
             subscriptionId: 00000000-00000000-00000000-00000000
           scenario: SignalR
           secretVariables: []
-          shareScope: true
           steps:
             - type: armTemplateDeployment
               armTemplate: ./peArmTemplate/Generate_Unique_name_template.json
@@ -11133,6 +11137,7 @@ testModel:
             - type: restCall
               operationId: SignalR_CheckNameAvailability
               description: SignalR_CheckNameAvailability
+              authentication: *ref_461
               exampleFile: ../examples/SignalR_CheckNameAvailability.json
               exampleModel:
                 name: ../examples/SignalR_CheckNameAvailability.json
@@ -11192,6 +11197,7 @@ testModel:
                           rawValue: AlreadyExists
                           language: *ref_262
                       language: *ref_260
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -11217,6 +11223,7 @@ testModel:
             - type: restCall
               operationId: SignalR_CreateOrUpdate
               description: SignalR_CreateOrUpdate
+              authentication: *ref_461
               exampleFile: ../examples/SignalR_CreateOrUpdate.json
               exampleModel:
                 name: ../examples/SignalR_CreateOrUpdate.json
@@ -12259,13 +12266,14 @@ testModel:
                               language: *ref_286
                           language: *ref_326
                       language: *ref_349
-                    headers: &ref_461
-                      Azure-AsyncOperation: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationStatus...
-                      Location: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationResult...
-                  '202':
                     headers: &ref_462
                       Azure-AsyncOperation: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationStatus...
                       Location: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationResult...
+                  '202':
+                    headers: &ref_463
+                      Azure-AsyncOperation: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationStatus...
+                      Location: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationResult...
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -12501,12 +12509,13 @@ testModel:
                       lastModifiedByType: User
                     tags:
                       key1: value1
-                  headers: *ref_461
-                '202':
                   headers: *ref_462
+                '202':
+                  headers: *ref_463
             - type: restCall
               operationId: SignalR_Get
               description: SignalR_Get
+              authentication: *ref_461
               exampleFile: ../examples/SignalR_Get.json
               exampleModel:
                 name: ../examples/SignalR_Get.json
@@ -12921,6 +12930,7 @@ testModel:
                               language: *ref_286
                           language: *ref_326
                       language: *ref_336
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -13021,6 +13031,7 @@ testModel:
             - type: restCall
               operationId: SignalR_Update
               description: SignalR_Update
+              authentication: *ref_461
               exampleFile: ../examples/SignalR_Update.json
               exampleModel:
                 name: ../examples/SignalR_Update.json
@@ -13679,9 +13690,10 @@ testModel:
                           language: *ref_326
                       language: *ref_360
                   '202':
-                    headers: &ref_463
+                    headers: &ref_464
                       Azure-AsyncOperation: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationStatus...
                       Location: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationResult...
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -13833,10 +13845,11 @@ testModel:
                     tags:
                       key1: value1
                 '202':
-                  headers: *ref_463
+                  headers: *ref_464
             - type: restCall
               operationId: SignalR_ListKeys
               description: SignalR_ListKeys
+              authentication: *ref_461
               exampleFile: ../examples/SignalR_ListKeys.json
               exampleModel:
                 name: ../examples/SignalR_ListKeys.json
@@ -13872,6 +13885,7 @@ testModel:
                       parentsValue: {}
                       properties: {}
                       language: *ref_365
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -13890,6 +13904,7 @@ testModel:
             - type: restCall
               operationId: SignalR_RegenerateKey
               description: SignalR_RegenerateKey
+              authentication: *ref_461
               exampleFile: ../examples/SignalR_RegenerateKey.json
               exampleModel:
                 name: ../examples/SignalR_RegenerateKey.json
@@ -13935,9 +13950,10 @@ testModel:
                       parentsValue: {}
                       properties: {}
                       language: *ref_371
-                    headers: &ref_464
+                    headers: &ref_465
                       Azure-AsyncOperation: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationStatus...
                       Location: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationResult...
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -13955,10 +13971,11 @@ testModel:
               responses:
                 '202':
                   body: {}
-                  headers: *ref_464
+                  headers: *ref_465
             - type: restCall
               operationId: SignalR_Restart
               description: SignalR_Restart
+              authentication: *ref_461
               exampleFile: ../examples/SignalR_Restart.json
               exampleModel:
                 name: ../examples/SignalR_Restart.json
@@ -13990,12 +14007,13 @@ testModel:
                 responses:
                   '202':
                     body:
-                      rawValue: &ref_466 {}
-                      language: *ref_465
-                    headers: &ref_467
+                      rawValue: &ref_467 {}
+                      language: *ref_466
+                    headers: &ref_468
                       Azure-AsyncOperation: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationStatus...
                       Location: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationResult...
                   '204': {}
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -14010,12 +14028,13 @@ testModel:
               variables: {}
               responses:
                 '202':
-                  body: *ref_466
-                  headers: *ref_467
+                  body: *ref_467
+                  headers: *ref_468
                 '204': {}
             - type: restCall
               operationId: Usages_List
               description: Usages_List
+              authentication: *ref_461
               exampleFile: ../examples/Usages_List.json
               exampleModel:
                 name: ../examples/Usages_List.json
@@ -14118,6 +14137,7 @@ testModel:
                                   language: *ref_387
                           language: *ref_380
                       language: *ref_379
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -14151,6 +14171,7 @@ testModel:
             - type: restCall
               operationId: SignalR_ListByResourceGroup
               description: SignalR_ListByResourceGroup
+              authentication: *ref_461
               exampleFile: ../examples/SignalR_ListByResourceGroup.json
               exampleModel:
                 name: ../examples/SignalR_ListByResourceGroup.json
@@ -14567,6 +14588,7 @@ testModel:
                                   language: *ref_326
                           language: *ref_267
                       language: *ref_332
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -14668,6 +14690,7 @@ testModel:
             - type: restCall
               operationId: SignalR_ListBySubscription
               description: SignalR_ListBySubscription
+              authentication: *ref_461
               exampleFile: ../examples/SignalR_ListBySubscription.json
               exampleModel:
                 name: ../examples/SignalR_ListBySubscription.json
@@ -15079,6 +15102,7 @@ testModel:
                                   language: *ref_326
                           language: *ref_267
                       language: *ref_266
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -15178,6 +15202,7 @@ testModel:
             - type: restCall
               operationId: Operations_List
               description: Operations_List
+              authentication: *ref_461
               exampleFile: ../examples/Operations_List.json
               exampleModel:
                 name: ../examples/Operations_List.json
@@ -15243,6 +15268,7 @@ testModel:
                                   language: *ref_250
                           language: *ref_242
                       language: *ref_241
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -15268,6 +15294,7 @@ testModel:
             - type: restCall
               operationId: SignalR_Delete
               description: SignalR_Delete
+              authentication: *ref_461
               exampleFile: ../examples/SignalR_Delete.json
               exampleModel:
                 name: ../examples/SignalR_Delete.json
@@ -15299,13 +15326,14 @@ testModel:
                 responses:
                   '200':
                     body:
-                      rawValue: &ref_469 {}
-                      language: *ref_468
+                      rawValue: &ref_470 {}
+                      language: *ref_469
                   '202':
-                    headers: &ref_470
+                    headers: &ref_471
                       Azure-AsyncOperation: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationStatus...
                       Location: https://management.azure.com/subscriptions/subid/providers/Microsoft.SignalRService/...pathToOperationResult...
                   '204': {}
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -15320,9 +15348,9 @@ testModel:
               variables: {}
               responses:
                 '200':
-                  body: *ref_469
+                  body: *ref_470
                 '202':
-                  headers: *ref_470
+                  headers: *ref_471
                 '204': {}
           variables:
             resourceName:
@@ -15330,7 +15358,10 @@ testModel:
       scope: ResourceGroup
       secretVariables: []
       useArmTemplate: true
-      variables: {}
+      variables:
+        armEndpoint:
+          type: string
+          value: https://management.azure.com
 language:
   default:
     name: SignalRManagementClient

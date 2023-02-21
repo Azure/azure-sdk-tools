@@ -24,6 +24,7 @@ RUN rm maven.tgz
 # install node
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt -y install nodejs
+RUN npm install -g npm@9.5.0
 
 # install python
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wget apt-transport-https software-properties-common

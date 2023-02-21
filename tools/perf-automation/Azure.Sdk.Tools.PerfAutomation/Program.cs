@@ -354,8 +354,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         test.Class,
                                         allArguments,
                                         options.Profile,
-                                        context
-                                    );
+                                        context);
                                 }
                                 catch (Exception e)
                                 {

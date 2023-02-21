@@ -301,7 +301,7 @@ A [custom transport](https://github.com/Azure/azure-sdk-tools/blob/main/tools/te
 
 ### When finished running test
 
-After your test has finished and there are no additional requests to be recorded. In test frameworks integrating with the test-proxy, this function should be invoked in the `teardown` function or the language equivalent.
+After your test has finished and there are no additional requests to be recorded, a test must be stopped to save the recording to disk.
 
 POST to the proxy server:
 
@@ -328,6 +328,8 @@ This will **finalize** your recording by:
 - Removing from active sessions.
 - Applying session/recording sanitizers.
 - Saving to disk.
+
+In test frameworks integrating with the test-proxy, this function should be invoked in the `teardown` function or the language equivalent.
 
 #### Storing `variables`
 

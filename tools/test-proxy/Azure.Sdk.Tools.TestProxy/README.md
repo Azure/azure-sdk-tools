@@ -208,17 +208,17 @@ Both of the above variables can be set in the `docker` runtime by providing addi
 
 Before we begin a technical explanation, lets first discuss the general use of the test-proxy.
 
-1. User starts test-proxy, default url the proxy will be available on is `http://localhost:5000`
+1. User starts test-proxy, default url the proxy will be available on is `http://localhost:5000`.
 2. User initiates a POST to the proxy url `http://localhost:5000/Record/Start` with a body (which we will describe later) describing what we are recording.
 3. User sends requests through the test-proxy by modifying their actual test requests as described below.
 4. User initates a POST to the proxy url `http://localhost:5000/Record/Stop`.
 5. Repeat steps 2 through 4 as necessary for each test.
 
-There is a lot of detail omitted from the above process, but this is the general process.
+There is a lot of detail omitted from the above, but this is the general process.
 
 The test-proxy is really meant to be integrated with a test framework. One that allows steps 2 and 4 to be handled by `setup` and `teardown` of individual record/playback sessions as well as updating the test requests so that they flow to the test-proxy instead of their actual target.
 
-Please reference the clients under `sample-clients/` folder for examples of what the process of modifying the requests actually look like.
+Please reference the clients under `sample-clients/` folder for examples of what the process of modifying the requests actually looks like.
 
 ### Installation and initial run
 
@@ -228,7 +228,7 @@ A couple notes before running the test-proxy:
 
 - Reference [command line arguments](#command-line-arguments) and understand the options.
 - The test-proxy runs in a "context" which is just a directory on your disk. When initializing a recording, all paths should be relative to this context directory.
-- If running the proxy out of docker, ensure you **map** `etc/testproxy/` to a target context directory on your drive.
+- If running the proxy as a docker image, ensure you **map** `etc/testproxy/` to a target context directory on your drive. In the example `docker run` invocations above, look for the `-v` argument.
 
 ### Where will my recordings end up?
 

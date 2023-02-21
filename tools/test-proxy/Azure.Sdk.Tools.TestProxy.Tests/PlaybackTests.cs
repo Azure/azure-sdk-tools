@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Xunit;
 using System.Text.Json;
 using Azure.Sdk.Tools.TestProxy.Store;
+using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -123,6 +124,30 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             );
 
             Assert.Equal($"There is no in-memory session with id {recordingId} available for playback retrieval.", assertion.Message);
+        }
+
+        [Fact]
+        public async void LoadRecordingNormalizesBody()
+        {
+            //RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            //var httpContext = new DefaultHttpContext();
+            //var body = "{\"x-recording-file\":\"Test.RecordEntries/multipart_encoded.json\"}";
+            //httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            //httpContext.Request.ContentLength = body.Length;
+
+            //var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
+            //{
+            //    ControllerContext = new ControllerContext()
+            //    {
+            //        HttpContext = httpContext
+            //    }
+            //};
+            //await controller.Start();
+
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_encoded.json");
+
+            var body = Encoding.UTF8.GetString(session.Session.Entries[0].Request.Body);
+
         }
 
         [Fact]

@@ -326,11 +326,16 @@ namespace APIViewWeb.Managers
             {
                 // Check if API surface level matches with any revisions
                 var renderedCodeFile = new RenderedCodeFile(codeFile);
-                if (await IsReviewSame(review, renderedCodeFile))
+                // pullRequestModel.ReviewId == null means: First time getting a request to check for API changes in the given package for a PR 
+                if (pullRequestModel.ReviewId == null)
                 {
-                    return;
-                }
-
+                    //No API changes detected from baseline
+                    if (await IsReviewSame(review, renderedCodeFile))
+                    {
+                        return;
+                    }
+                }                
+                // Below steps will remove last revision from previously created API review from the pull request and recreate new revision using latest token code file
                 if (pullRequestModel.ReviewId != null)
                 {
                     //Refresh baseline using latest from automatic review

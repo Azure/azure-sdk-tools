@@ -237,7 +237,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             cpp.IsWindows = true;
             cpp.ProcessorCount = 16;
             
-            var result = cpp.RunAsync(
+            var result = await cpp.RunAsync(
                 "project", 
                 "languageVersion", 
                 "primaryPackage", 
@@ -261,7 +261,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             cpp.IsWindows = true;
             cpp.ProcessorCount = 16;
 
-            var result = cpp.RunAsync(
+            var result = await cpp.RunAsync(
                 "project",
                 "languageVersion",
                 "primaryPackage",
@@ -298,7 +298,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             cpp.IsWindows = false;
             cpp.ProcessorCount = 16;
 
-            var result = cpp.RunAsync(
+            var result = await cpp.RunAsync(
                 "project",
                 "languageVersion",
                 "primaryPackage",
@@ -335,7 +335,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             cpp.IsWindows = false;
             cpp.ProcessorCount = 16;
 
-            var result = cpp.RunAsync(
+            var result = await cpp.RunAsync(
                 "project",
                 "languageVersion",
                 "primaryPackage",

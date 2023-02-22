@@ -86,10 +86,6 @@ jobs:
             TargetRepos:
               azure-sdk/azure-docs-sdk-java:
 
-          Azure/azure-powershell:
-            TargetRepo:
-              azure-sdk/azure-powershell:
-
           Azure/azure-resource-manager-schemas:
             TargetRepos:
               azure-sdk/azure-resource-manager-schemas:

@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             {
                 Assert.AreEqual(e.Params[0], "cmake");
                 Assert.AreEqual(e.Params[1], "-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON -DDISABLE_AZURE_CORE_OPENTELEMETRY=ON ..");
-                Assert.AreEqual(e.Params[2], "workingFolder\\build");
+                Assert.AreEqual(e.Params[2], Path.Combine("workingFolder", "build"));
                 Assert.AreEqual(e.Params[3], "output");
                 Assert.AreEqual(e.Params[4], "error");
             }
@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             {
                 Assert.AreEqual(e.Params[0], "cmake");
                 Assert.AreEqual(e.Params[1], "--build . --parallel 16 --config Debug --target project");
-                Assert.AreEqual(e.Params[2], "workingFolder\\build");
+                Assert.AreEqual(e.Params[2], Path.Combine("workingFolder", "build"));
                 Assert.AreEqual(e.Params[3], "output");
                 Assert.AreEqual(e.Params[4], "error");
             }
@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             {
                 Assert.AreEqual(e.Params[0], "cmake");
                 Assert.AreEqual(e.Params[1], "-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON -DDISABLE_AZURE_CORE_OPENTELEMETRY=ON ..");
-                Assert.AreEqual(e.Params[2], "workingFolder\\build");
+                Assert.AreEqual(e.Params[2], Path.Combine("workingFolder", "build"));
                 Assert.AreEqual(e.Params[3], "output");
                 Assert.AreEqual(e.Params[4], "error");
             }
@@ -108,7 +108,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             {
                 Assert.AreEqual(e.Params[0], "cmake");
                 Assert.AreEqual(e.Params[1], "--build . --parallel 16 --config MinSizeRel --target project");
-                Assert.AreEqual(e.Params[2], "workingFolder\\build");
+                Assert.AreEqual(e.Params[2], Path.Combine("workingFolder", "build"));
                 Assert.AreEqual(e.Params[3], "output");
                 Assert.AreEqual(e.Params[4], "error");
             }
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             {
                 Assert.AreEqual(e.Params[0], "cmake");
                 Assert.AreEqual(e.Params[1], "-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug ..");
-                Assert.AreEqual(e.Params[2], "workingFolder\\build");
+                Assert.AreEqual(e.Params[2], Path.Combine("workingFolder", "build"));
                 Assert.AreEqual(e.Params[3], "output");
                 Assert.AreEqual(e.Params[4], "error");
             }
@@ -163,7 +163,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             {
                 Assert.AreEqual(e.Params[0], "cmake");
                 Assert.AreEqual(e.Params[1], "--build . --parallel 16  --target project");
-                Assert.AreEqual(e.Params[2], "workingFolder\\build");
+                Assert.AreEqual(e.Params[2], Path.Combine("workingFolder", "build"));
                 Assert.AreEqual(e.Params[3], "output");
                 Assert.AreEqual(e.Params[4], "error");
             }
@@ -210,7 +210,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             {
                 Assert.AreEqual(e.Params[0], "cmake");
                 Assert.AreEqual(e.Params[1], "-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON -DCMAKE_BUILD_TYPE=Release ..");
-                Assert.AreEqual(e.Params[2], "workingFolder\\build");
+                Assert.AreEqual(e.Params[2], Path.Combine("workingFolder", "build"));
                 Assert.AreEqual(e.Params[3], "output");
                 Assert.AreEqual(e.Params[4], "error");
             }
@@ -218,7 +218,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             {
                 Assert.AreEqual(e.Params[0], "cmake");
                 Assert.AreEqual(e.Params[1], "--build . --parallel 16  --target project");
-                Assert.AreEqual(e.Params[2], "workingFolder\\build");
+                Assert.AreEqual(e.Params[2], Path.Combine("workingFolder", "build"));
                 Assert.AreEqual(e.Params[3], "output");
                 Assert.AreEqual(e.Params[4], "error");
             }

@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Http;
@@ -720,6 +720,37 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void BodyStringSanitizerIgnoresNonTextualBodies()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_binary_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var content = Encoding.UTF8.GetString(targetEntry.Request.Body);
+
+            var bodyStringSanitizer = new BodyStringSanitizer("content");
+            session.Session.Sanitize(bodyStringSanitizer);
+
+            Assert.Equal(content, Encoding.UTF8.GetString(targetEntry.Request.Body));
+        }
+
+        [Theory]
+        [InlineData("Test.RecordEntries/post_delete_get_content_lineendings.json")]
+        public void BodyLineEndingSanitizerSanitizesLineEndings(string recordingFile)
+        {
+            var session = TestHelpers.LoadRecordSession(recordingFile);
+            var targetEntry = session.Session.Entries[0];
+            var originalBodyValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var sanitizer = new BodyLineEndingSanitizer();
+            session.Session.Sanitize(sanitizer);
+
+            var resultBodyValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
+
+            Assert.NotEqual(originalBodyValue, resultBodyValue);
+            Assert.DoesNotContain("\r\n", resultBodyValue);
+        }
+
+        [Theory]
+        [InlineData("Test.RecordEntries/oauth_request.json")]
+        [InlineData("Test.RecordEntries/post_delete_get_content.json")]
+        public void BodyLineEndingSanitizerQuietlyExits(string recordingFile)
+        {
+            var session = TestHelpers.LoadRecordSession(recordingFile);
             var targetEntry = session.Session.Entries[0];
             var content = Encoding.UTF8.GetString(targetEntry.Request.Body);
 

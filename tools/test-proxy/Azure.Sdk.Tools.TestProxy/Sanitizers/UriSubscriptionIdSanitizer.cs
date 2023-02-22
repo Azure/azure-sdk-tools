@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains configuration keys. 
         /// Currently, that only includes the key "uriRegex". This translates to an object that looks like '{ "uriRegex": "when this regex matches, apply the sanitizer" }'. Defaults to "apply always."
         /// </param>
-        public UriSubscriptionIdSanitizer(string value = "00000000-0000-0000-0000-000000000000", ApplyCondition condition = null): base(value: value, regex: _regex, groupForReplace: _groupForReplace)
+        public UriSubscriptionIdSanitizer(string value = "00000000-0000-0000-0000-000000000000", ApplyCondition condition = null): base(value: value, regex: _regex, groupForReplace: _groupForReplace, condition: condition)
         {
             Condition = condition;
 

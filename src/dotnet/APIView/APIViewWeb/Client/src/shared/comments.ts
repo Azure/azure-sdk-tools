@@ -5,6 +5,8 @@ $(() => {
   const SEL_CODE_DIAG = ".code-diagnostics";
   const SEL_COMMENT_ICON = ".icon-comments";
   const SEL_COMMENT_CELL = ".comment-cell";
+  const SHOW_COMMENTS_CHECK = "#show-comments-checkbox";
+  const SHOW_SYS_COMMENTS_CHECK = "#show-system-comments-checkbox";
   const COMMENT_CONTENT_BOX = ".new-comment-content";	
   const COMMENT_TEXTBOX = ".new-thread-comment-text";
 
@@ -12,8 +14,6 @@ $(() => {
   let CurrentUserSuggestionIndex = -1;	
   // simple github username match	
   const githubLoginTagMatch = /(\s|^)@([a-zA-Z\d-]+)/g;
-
-  let MessageIconAddedToDom = false;
 
   $(document).on("click", ".commentable", e => {
     var rowSectionClasses = getCodeRowSectionClasses(e.target.id);
@@ -50,18 +50,16 @@ $(() => {
     e.preventDefault();
   });
 
-  $(document).on("click", "#show-comments-checkbox", e => {
+  $(document).on("click", SHOW_COMMENTS_CHECK, e => {
     updatePageSettings(function () {
-      const checked = $("#show-comments-checkbox").prop("checked");
-      ensureMessageIconInDOM();
+      const checked = $(SHOW_COMMENTS_CHECK).prop("checked");
       toggleAllCommentsVisibility(checked);
     });
   });
 
-  $(document).on("click", "#show-system-comments-checkbox", e => {
+  $(document).on("click", SHOW_SYS_COMMENTS_CHECK, e => {
     updatePageSettings(function () {
-      const checked = $("#show-system-comments-checkbox").prop("checked");
-      ensureMessageIconInDOM();
+      const checked = $(SHOW_SYS_COMMENTS_CHECK).prop("checked");
       toggleAllDiagnosticsVisibility(checked);
     });
   });
@@ -327,6 +325,16 @@ $(() => {
   $(document).ready(function() {
     highlightCurrentRow();
     addCommentThreadNavigation();
+    $(SEL_COMMENT_CELL).each(function () {
+      const id = getElementId(this);
+      const checked = $(SHOW_COMMENTS_CHECK).prop("checked");
+      toggleCommentIcon(id, !checked);
+    });
+    $(SEL_CODE_DIAG).each(function () {
+      const id = getElementId(this);
+      const checked = $(SHOW_SYS_COMMENTS_CHECK).prop("checked");
+      toggleCommentIcon(id, !checked);
+    });
   });
 
   $(document).on("click", ".comment-group-anchor-link", e => {
@@ -351,8 +359,6 @@ $(() => {
         row.removeClass("active");
     });
   }
-
-  
 
   function getReviewId(element: HTMLElement) {
     return getParentData(element, "data-review-id");
@@ -552,34 +558,27 @@ $(() => {
 
   function toggleAllCommentsVisibility(showComments: boolean) {
     $(SEL_COMMENT_CELL).each(function () {
-      var id = getElementId(this);
+      const id = getElementId(this);
       if (id) {
-          getCommentsRow(id).toggle(showComments);
-          toggleCommentIcon(id, !showComments);
+        (showComments) ? getCommentsRow(id).removeClass("d-none") : getCommentsRow(id).addClass("d-none");
+        toggleCommentIcon(id, !showComments);
       }
     });
   }
 
   function toggleAllDiagnosticsVisibility(showComments: boolean) {
     $(SEL_CODE_DIAG).each(function () {
-      var id = getElementId(this);
+      const id = getElementId(this);
       if (id) {
-          getDiagnosticsRow(id).toggle(showComments);
-          toggleCommentIcon(id, !showComments);
+        (showComments) ? getDiagnosticsRow(id).removeClass("d-none") : getDiagnosticsRow(id).addClass("d-none");
+        toggleCommentIcon(id, !showComments);
       }
     });
   }
 
   function toggleSingleCommentAndDiagnostics(id: string) {
-    getCommentsRow(id).toggle();
-    getDiagnosticsRow(id).toggle();
-  }
-
-  function ensureMessageIconInDOM() {
-    if (!MessageIconAddedToDom) {
-      $(".comment-icon-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `"><i class="far fa-comment-alt pt-1 pl-1"></i></span>`);
-      MessageIconAddedToDom = true;
-    }
+    getCommentsRow(id).toggleClass("d-none");
+    getDiagnosticsRow(id).toggleClass("d-none");
   }
 
   function toggleCommentIcon(id, show: boolean) {

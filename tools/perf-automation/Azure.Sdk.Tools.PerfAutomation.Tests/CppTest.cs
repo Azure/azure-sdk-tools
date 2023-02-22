@@ -236,19 +236,25 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             cpp.WorkingDirectory = "workingFolder";
             cpp.IsWindows = true;
             cpp.ProcessorCount = 16;
-            
-            var result = await cpp.RunAsync(
-                "project", 
-                "languageVersion", 
-                "primaryPackage", 
-                null, 
-                "testName", 
-                "arguments",
-                true,
-                "exe",
-                "profilerOptions");
 
-            Assert.AreEqual(result.Status, TaskStatus.Faulted);
+            try
+            {
+                await cpp.RunAsync(
+                    "project",
+                    "languageVersion",
+                    "primaryPackage",
+                    null,
+                    "testName",
+                    "arguments",
+                    true,
+                    "exe",
+                    "profilerOptions");
+                Assert.Fail();
+            }
+            catch (InvalidOperationException)
+            {
+                Assert.Pass();
+            }
         }
 
         [Test]
@@ -275,7 +281,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         }
         private void Cpp_RunUtilMethodCallNoProfileWindows(object sender, Cpp.UtilEventArgs e)
         {
-            if (e.MethodName == "RunAsync") 
+            if (e.MethodName == "RunAsync")
             {
                 Assert.AreEqual(e.Params[0], "exe");
                 Assert.AreEqual(e.Params[1], "testName arguments");

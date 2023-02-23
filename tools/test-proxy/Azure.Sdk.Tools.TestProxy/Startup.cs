@@ -29,6 +29,7 @@ using Azure.Sdk.Tools.TestProxy.CommandParserOptions;
 using Azure.Sdk.Tools.TestProxy.CommandParserOptions.ConfigVerbs;
 using CommandLine.Text;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -69,26 +70,29 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (verb == "config")
             {
+                StringBuilder helpTextBuilder = new StringBuilder();
+                StringWriter helpTextWriter = new StringWriter(helpTextBuilder);
+
                 var subParser = new Parser(settings =>
                 {
                     settings.CaseSensitive = false;
-                    settings.HelpWriter = null;
+                    settings.HelpWriter = helpTextWriter;
                     settings.EnableDashDash = true;
                 });
 
                 var parseResult = subParser.ParseArguments<ShowOptions, LocateOptions>(args.Skip(1));
-                parseResult.WithNotParsed(errs => SubVerbExitWithError(parseResult, errs));
+                parseResult.WithNotParsed(errs => SubVerbExitWithError(parseResult, errs, helpTextBuilder.ToString()));
                 await parseResult.WithParsedAsync(Run);
             }
             else
             {
-                await parser.ParseArguments<StartOptions, PushOptions, ResetOptions, RestoreOptions>(args)
+                await parser.ParseArguments<StartOptions, PushOptions, ResetOptions, RestoreOptions, ConfigOptions>(args)
                     .WithNotParsed(ExitWithError)
                     .WithParsedAsync(Run);
             }
         }
 
-        static void SubVerbExitWithError<T>(ParserResult<T> result, IEnumerable<Error> errors)
+        static void SubVerbExitWithError<T>(ParserResult<T> result, IEnumerable<Error> errors, string defaultHelpText)
         {
             var builder = SentenceBuilder.Create();
 
@@ -118,7 +122,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         var helpTextLines = helpText.Split(Environment.NewLine).ToList();
                         helpTextLines.Insert(2, "The following sub-verbs are available for verb \"config\": ['locate', 'show']");
 
-                        System.Console.WriteLine(helpText);
+                        System.Console.WriteLine(string.Join(Environment.NewLine, helpTextLines));
                         Environment.Exit(0);
                     }
                     else

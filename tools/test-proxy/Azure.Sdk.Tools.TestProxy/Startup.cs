@@ -27,6 +27,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Azure.Sdk.Tools.TestProxy.CommandParserOptions;
 using Azure.Sdk.Tools.TestProxy.CommandParserOptions.ConfigVerbs;
+using CommandLine.Text;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -67,10 +69,16 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (verb == "config")
             {
-                // attempt parsing by skipping the first verb
-                await parser.ParseArguments<ShowOptions>(args.Skip(1))
-                    .WithNotParsed(ExitWithError)
-                    .WithParsedAsync(Run);
+                var subParser = new Parser(settings =>
+                {
+                    settings.CaseSensitive = false;
+                    settings.HelpWriter = null;
+                    settings.EnableDashDash = true;
+                });
+
+                var parseResult = subParser.ParseArguments<ShowOptions, LocateOptions>(args.Skip(1));
+                parseResult.WithNotParsed(errs => SubVerbExitWithError(parseResult, errs));
+                await parseResult.WithParsedAsync(Run);
             }
             else
             {
@@ -80,9 +88,51 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
+        static void SubVerbExitWithError<T>(ParserResult<T> result, IEnumerable<Error> errors)
+        {
+            var builder = SentenceBuilder.Create();
+
+            foreach(var error in errors)
+            {
+                if (error.Tag == ErrorType.BadVerbSelectedError)
+                {
+                    var errorCast = (BadVerbSelectedError)error;
+                    // The odd looking formatting is to make this look like the same error
+                    // CommandLineParser would output if the verb wasn't recognized.
+                    string errorString = @$"ERROR(S):
+  sub-verb '{errorCast.Token}' is not recognized. Please select from list ['locate', 'show']
+
+  --help       Display this help screen.
+
+  --version    Display version information.
+";
+                    System.Console.WriteLine(errorString);
+                    Environment.Exit(1);
+                }
+                else
+                {
+                    if ((error.Tag == ErrorType.HelpVerbRequestedError || error.Tag == ErrorType.HelpRequestedError))
+                    {
+                        var helpText = HelpText.AutoBuild(result, null, null).ToString();
+
+                        var helpTextLines = helpText.Split(Environment.NewLine).ToList();
+                        helpTextLines.Insert(2, "The following sub-verbs are available for verb \"config\": ['locate', 'show']");
+
+                        System.Console.WriteLine(helpText);
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        var errorMessages = HelpText.RenderParsingErrorsTextAsLines(result, builder.FormatError, builder.FormatMutuallyExclusiveSetErrors, 1);
+                        System.Console.WriteLine(errorMessages);
+                        Environment.Exit(1);
+                    }
+                }
+            }
+        }
+
         static void ExitWithError(IEnumerable<Error> errors)
         {
-
             // ParseArguments lumps help/--help and version/--version into WithNotParsed
             // but their type is VersionRequestedError and HelpRequestedError/HelpVerbRequestedError.
             // If the user is requesting help or version, don't exit 1, just exit 0
@@ -168,6 +218,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     break;
                 case ShowOptions showOptions:
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(showOptions.AssetsJsonPath, TargetLocation);
+                    
+                    break;
+                case LocateOptions locateOptions:
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(locateOptions.AssetsJsonPath, TargetLocation);
 
                     break;
                 default:

@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 
 namespace Azure.Sdk.Tools.TestProxy.CommandParserOptions
 {
@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.TestProxy.CommandParserOptions
     /// </summary>
     class CLICommandOptions : DefaultOptions
     {
-        [Option('a', "assets-json-path", Required = true, HelpText = "Required for Push/Reset/Restore. This should be a path to a valid assets.json within a language repository.")]
+        [Option('a', "assets-json-path", Required = true, HelpText = "Required for any operation that requires an assets.json path. Currently Push/Reset/Restore. This should be a path to a valid assets.json within a language repository.")]
         public string AssetsJsonPath { get; set; }
     }
 }

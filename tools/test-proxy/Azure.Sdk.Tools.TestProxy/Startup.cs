@@ -26,6 +26,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 using System.Linq;
 using Azure.Sdk.Tools.TestProxy.CommandParserOptions;
+using Azure.Sdk.Tools.TestProxy.CommandParserOptions.ConfigVerbs;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -56,7 +57,7 @@ namespace Azure.Sdk.Tools.TestProxy
         /// <param name="args">CommandLineParser arguments. In server mode use double dash '--' and everything after that becomes additional arguments to Host.CreateDefaultBuilder. Ex. -- arg1 value1 arg2 value2 </param>
         public static async Task Main(string[] args = null)
         {
-            VerifyVerb(args);
+            var verb = VerifyVerb(args);
             var parser = new Parser(settings =>
             {
                 settings.CaseSensitive = false;
@@ -64,9 +65,19 @@ namespace Azure.Sdk.Tools.TestProxy
                 settings.EnableDashDash = true;
             });
 
-            await parser.ParseArguments<StartOptions, PushOptions, ResetOptions, RestoreOptions>(args)
-                .WithNotParsed(ExitWithError)
-                .WithParsedAsync(Run);
+            if (verb == "config")
+            {
+                // attempt parsing by skipping the first verb
+                await parser.ParseArguments<ShowOptions>(args.Skip(1))
+                    .WithNotParsed(ExitWithError)
+                    .WithParsedAsync(Run);
+            }
+            else
+            {
+                await parser.ParseArguments<StartOptions, PushOptions, ResetOptions, RestoreOptions>(args)
+                    .WithNotParsed(ExitWithError)
+                    .WithParsedAsync(Run);
+            }
         }
 
         static void ExitWithError(IEnumerable<Error> errors)
@@ -93,24 +104,24 @@ namespace Azure.Sdk.Tools.TestProxy
         /// https://github.com/commandlineparser/commandline/issues/849
         /// </summary>
         /// <param name="args"></param>
-        static void VerifyVerb(string[] args)
+        static string VerifyVerb(string[] args)
         {
             // no arguments means the server is starting with all the default options
             if (args.Length == 0)
             {
-                return;
+                return "start";
             }
 
             // if the first argument starts with a dash then they're options and the
             // default verb is being used.
             if (args[0].StartsWith("-"))
             {
-                return;
+                return "start";
             }
 
             // last but not least, the first argument is a verb, verify it's our verb
             // version and help are default verbs and need to be in here
-            string[] array = { "start", "reset", "restore", "push", "version", "help" };
+            string[] array = { "start", "reset", "restore", "push", "version", "help", "config" };
             if (!array.Contains(args[0]))
             {
                 // The odd looking formatting is to make this look like the same error
@@ -125,6 +136,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 System.Console.WriteLine(error);
                 Environment.Exit(1);
             }
+
+            return args[0];
         }
 
         private static async Task Run(object commandObj)
@@ -152,6 +165,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 case RestoreOptions restoreOptions:
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(restoreOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Restore(assetsJson);
+                    break;
+                case ShowOptions showOptions:
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(showOptions.AssetsJsonPath, TargetLocation);
+
                     break;
                 default:
                     throw new ArgumentException("Invalid verb. The only supported verbs are start, push, reset and restore.");

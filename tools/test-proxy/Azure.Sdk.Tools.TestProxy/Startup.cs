@@ -192,7 +192,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private static async Task Run(object commandObj)
         {
-            new GitProcessHandler().VerifyGitMinVersion();
             DefaultOptions defaultOptions = (DefaultOptions)commandObj;
 
             TargetLocation = resolveRepoLocation(defaultOptions.StorageLocation);
@@ -202,17 +201,21 @@ namespace Azure.Sdk.Tools.TestProxy
             switch (commandObj)
             {
                 case StartOptions startOptions:
+                    new GitProcessHandler().VerifyGitMinVersion();
                     StartServer(startOptions);
                     break;
                 case PushOptions pushOptions:
+                    new GitProcessHandler().VerifyGitMinVersion();
                     var assetsJson = RecordingHandler.GetAssetsJsonLocation(pushOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Push(assetsJson);
                     break;
                 case ResetOptions resetOptions:
+                    new GitProcessHandler().VerifyGitMinVersion();
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(resetOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Reset(assetsJson);
                     break;
                 case RestoreOptions restoreOptions:
+                    new GitProcessHandler().VerifyGitMinVersion();
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(restoreOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Restore(assetsJson);
                     break;

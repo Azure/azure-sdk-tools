@@ -68,12 +68,6 @@ jobs:
               Azure/azure-sdk-for-c-pr:
               azure-sdk/azure-sdk-for-c:
 
-          Azure/azure-cli-extensions:
-            TargetRepos:
-              Azure/azure-cli-extensions-pr:
-              azure-sdk/azure-cli-extensions:
-              azure-sdk/azure-cli-extensions-pr:
-
           Azure/azure-libraries-for-java:
             TargetRepos:
               Azure/azure-libraries-for-java-pr:

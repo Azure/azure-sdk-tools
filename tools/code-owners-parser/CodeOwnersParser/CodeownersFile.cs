@@ -8,8 +8,6 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 {
     public static class CodeownersFile
     {
-        public const bool UseRegexMatcherDefault = true;
-
         public static List<CodeownersEntry> GetCodeownersEntriesFromFileOrUrl(
             string codeownersFilePathOrUrl)
         {
@@ -38,19 +36,17 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         public static CodeownersEntry GetMatchingCodeownersEntry(
             string targetPath,
-            string codeownersFilePathOrUrl,
-            bool useRegexMatcher = UseRegexMatcherDefault)
+            string codeownersFilePathOrUrl)
         {
             var codeownersEntries = GetCodeownersEntriesFromFileOrUrl(codeownersFilePathOrUrl);
-            return GetMatchingCodeownersEntry(targetPath, codeownersEntries, useRegexMatcher);
+            return GetMatchingCodeownersEntry(targetPath, codeownersEntries);
         }
 
         public static Dictionary<string, CodeownersEntry> GetMatchingCodeownersEntries(
             GlobFilePath targetPath,
             string targetDir,
             string codeownersFilePathOrUrl,
-            string[]? ignoredPathPrefixes = null,
-            bool useRegexMatcher = UseRegexMatcherDefault)
+            string[]? ignoredPathPrefixes = null)
         {
             ignoredPathPrefixes ??= Array.Empty<string>();
 
@@ -62,21 +58,17 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                     path => path,
                     path => GetMatchingCodeownersEntry(
                         path,
-                        codeownersEntries,
-                        useRegexMatcher));
+                        codeownersEntries));
 
             return codeownersEntriesByPath;
         }
 
         public static CodeownersEntry GetMatchingCodeownersEntry(
             string targetPath,
-            List<CodeownersEntry> codeownersEntries,
-            bool useRegexMatcher = UseRegexMatcherDefault)
+            List<CodeownersEntry> codeownersEntries)
         {
             Debug.Assert(targetPath != null);
-            return useRegexMatcher
-                ? new MatchedCodeownersEntry(targetPath, codeownersEntries).Value
-                : GetMatchingCodeownersEntryLegacyImpl(targetPath, codeownersEntries);
+            return new MatchedCodeownersEntry(targetPath, codeownersEntries).Value;
         }
 
         private static CodeownersEntry ProcessCodeownersLine(
@@ -124,28 +116,5 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 // Remove tabs and trim extra whitespace
                 ? line.Replace('\t', ' ').Trim()
                 : line;
-
-        private static CodeownersEntry GetMatchingCodeownersEntryLegacyImpl(
-            string targetPath,
-            List<CodeownersEntry> codeownersEntries)
-        {
-            // Normalize the start and end of the paths by trimming slash
-            targetPath = targetPath.Trim('/');
-
-            // We want to find the match closest to the bottom of the codeowners file.
-            // CODEOWNERS sorts the paths in order of 'RepoPath', 'ServicePath' and then 'PackagePath'.
-            for (int i = codeownersEntries.Count - 1; i >= 0; i--)
-            {
-                string codeownersPath = codeownersEntries[i].PathExpression.Trim('/');
-                // Note that this only matches on paths without glob patterns which is good enough
-                // for our current scenarios but in the future might need to support globs
-                if (targetPath.StartsWith(codeownersPath, StringComparison.OrdinalIgnoreCase))
-                {
-                    return codeownersEntries[i];
-                }
-            }
-
-            return new CodeownersEntry();
-        }
     }
 }

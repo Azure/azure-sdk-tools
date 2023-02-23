@@ -8,16 +8,17 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests;
 
 /// <summary>
 /// Test class for Azure.Sdk.Tools.RetrieveCodeOwners.Program.Main(),
-/// for scenario in which targetPath is a glob path, i.e.
-/// targetPath.IsGlobPath() returns true.
 ///
 /// The tests assertion expectations are set to match GitHub CODEOWNERS interpreter behavior,
 /// as explained here:
 /// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 /// and as observed based on manual tests and verification.
+///
+/// For additional related tests, please see:
+/// - Azure.Sdk.Tools.CodeOwnersParser.Tests.CodeownersFileTests
 /// </summary>
 [TestFixture]
-public class ProgramGlobPathTests
+public class RetrieveCodeOwnersProgramTests
 {
     /// <summary>
     /// Given:
@@ -28,7 +29,7 @@ public class ProgramGlobPathTests
     ///
     ///   targetPath of /**
     ///
-    ///   excludeNonUserAliases set to false and useRegexMatcher set to true.
+    ///   excludeNonUserAliases set to false
     /// 
     /// When:
     ///   The retrieve-codeowners tool is executed on these inputs.
@@ -39,13 +40,12 @@ public class ProgramGlobPathTests
     /// 
     /// </summary>
     [Test]
-    public void OutputsCodeownersForGlobPath()
+    public void OutputsCodeowners()
     {
         const string targetDir = "./TestData/InputDir";
         const string targetPath = "/**";
-        const string codeownersFilePathOrUrl = "./TestData/glob_path_CODEOWNERS";
+        const string codeownersFilePathOrUrl = "./TestData/test_CODEOWNERS";
         const bool excludeNonUserAliases = false;
-        const bool useRegexMatcher = true;
 
         var expectedEntries = new Dictionary<string, CodeownersEntry>
         {
@@ -74,8 +74,7 @@ public class ProgramGlobPathTests
                 targetPath,
                 codeownersFilePathOrUrl,
                 excludeNonUserAliases,
-                targetDir,
-                useRegexMatcher: useRegexMatcher);
+                targetDir);
 
             actualOutput = consoleOutput.GetStdout();
             actualErr = consoleOutput.GetStderr();

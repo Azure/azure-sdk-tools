@@ -218,11 +218,11 @@ namespace Azure.Sdk.Tools.TestProxy
                     break;
                 case ShowOptions showOptions:
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(showOptions.AssetsJsonPath, TargetLocation);
-                    
+                    System.Console.WriteLine("Showing the detailed info about this assets.json");
                     break;
                 case LocateOptions locateOptions:
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(locateOptions.AssetsJsonPath, TargetLocation);
-
+                    System.Console.WriteLine(await DefaultStore.GetPath(assetsJson));
                     break;
                 default:
                     throw new ArgumentException("Invalid verb. The only supported verbs are start, push, reset and restore.");

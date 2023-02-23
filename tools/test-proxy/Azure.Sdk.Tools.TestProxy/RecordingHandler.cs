@@ -507,7 +507,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 path = Path.Join(contextDirectory, pathToAssetsJson.Replace("\\", "/"));
             }
 
-            return path;
+            return path.Replace("\\", "/");
         }
 
         public async Task Restore(string pathToAssetsJson)

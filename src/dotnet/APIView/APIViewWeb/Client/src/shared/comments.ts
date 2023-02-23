@@ -1,4 +1,7 @@
-import { updatePageSettings } from "../shared/helpers";
+import {
+  updatePageSettings, getCodeRow, getCodeRowSectionClasses,
+  getRowSectionClasses, toggleCommentIcon
+} from "../shared/helpers";
 
 $(() => {
   const INVISIBLE = "invisible";
@@ -391,25 +394,6 @@ $(() => {
     return $(sibling).prevAll("a").first().find("small");
   }
 
-  function getCodeRowSectionClasses(id: string) {
-    var codeRow = getCodeRow(id);
-    var rowSectionClasses = "";
-    if (codeRow) {
-      rowSectionClasses = getRowSectionClasses(codeRow[0].classList);
-    }
-    return rowSectionClasses;
-  }
-
-  function getRowSectionClasses(classList: DOMTokenList) {
-    const rowSectionClasses: string[] = [];
-    for (const value of classList.values()) {
-      if (value == "section-loaded" || value.startsWith("code-line-section-content") || value.match(/lvl_[0-9]+_(parent|child)_[0-9]+/)) {
-        rowSectionClasses.push(value);
-      }
-    }
-    return rowSectionClasses.join(' ');
-  }
-
   function getCommentId(element: HTMLElement) {
     return getParentData(element, "data-comment-id");
   }
@@ -435,10 +419,6 @@ $(() => {
 
   function getCommentsRow(id: string) {
     return $(`.comment-row[data-line-id='${id}']`);
-  }
-
-  function getCodeRow(id: string) {
-    return $(`.code-line[data-line-id='${id}']`);
   }
 
   function getDiagnosticsRow(id: string) {
@@ -560,7 +540,13 @@ $(() => {
     $(SEL_COMMENT_CELL).each(function () {
       const id = getElementId(this);
       if (id) {
-        (showComments) ? getCommentsRow(id).removeClass("d-none") : getCommentsRow(id).addClass("d-none");
+        const tbRow = getCommentsRow(id);
+        const prevRow = tbRow.prev(".code-line");
+        const nextRow = tbRow.next(".code-line");
+        if ((prevRow != undefined && prevRow.hasClass("d-none")) && (nextRow != undefined && nextRow.hasClass("d-none")))
+          return;
+
+        (showComments) ? tbRow.removeClass("d-none") : tbRow.addClass("d-none");
         toggleCommentIcon(id, !showComments);
       }
     });
@@ -570,7 +556,13 @@ $(() => {
     $(SEL_CODE_DIAG).each(function () {
       const id = getElementId(this);
       if (id) {
-        (showComments) ? getDiagnosticsRow(id).removeClass("d-none") : getDiagnosticsRow(id).addClass("d-none");
+        const tbRow = getDiagnosticsRow(id);
+        const prevRow = tbRow.prev(".code-line");
+        const nextRow = tbRow.next(".code-line");
+        if ((prevRow != undefined && prevRow.hasClass("d-none")) && (nextRow != undefined && nextRow.hasClass("d-none")))
+          return;
+
+        (showComments) ? tbRow.removeClass("d-none") : tbRow.addClass("d-none");
         toggleCommentIcon(id, !showComments);
       }
     });
@@ -579,10 +571,6 @@ $(() => {
   function toggleSingleCommentAndDiagnostics(id: string) {
     getCommentsRow(id).toggleClass("d-none");
     getDiagnosticsRow(id).toggleClass("d-none");
-  }
-
-  function toggleCommentIcon(id, show: boolean) {
-    getCodeRow(id).find(SEL_COMMENT_ICON).toggleClass(INVISIBLE, !show);
   }
 
   function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearCommentAnchors = false, returnFirst = false) {

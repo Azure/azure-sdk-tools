@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public List<PemPair> Certificates { get; set; }
 
         /// <summary>
-        /// During playack, a response is normally returned all at once. By offering this response time, we can
+        /// During playback, a response is normally returned all at once. By offering this response time, we can
         /// "stretch" the writing of the response bytes over a time range of milliseconds.
         /// </summary>
         public int PlaybackResponseTime { get; set; } = 0;

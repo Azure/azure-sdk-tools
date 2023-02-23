@@ -1,4 +1,5 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using Microsoft.Crank.Agent;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             public string MethodName { get; set; }
             public string[] Params { get; set; } = null;
-            public bool IsWindows { get; set; } 
+            public bool IsWindows { get; set; }
         }
 
         private const string _buildDirectory = "build";
@@ -51,11 +52,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             bool debug)
         {
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
-            
+
             if (IsTest)
             {
-                UtilMethodCall(this, new UtilEventArgs("DeleteIfExists", new string[] { buildDirectory },false));
-                UtilMethodCall(this, new UtilEventArgs("CreateDirectory", new string[] { buildDirectory },false));
+                UtilMethodCall(this, new UtilEventArgs("DeleteIfExists", new string[] { buildDirectory }, false));
+                UtilMethodCall(this, new UtilEventArgs("CreateDirectory", new string[] { buildDirectory }, false));
             }
             else
             {
@@ -65,7 +66,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
-            if (IsTest) {
+            if (IsTest)
+            {
                 UtilMethodCall(this, new UtilEventArgs("UpdatePackageVersions", new string[] { "packageVersions" }, false));
             }
             else
@@ -97,14 +99,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     "RunAsync2",
                     new string[]
                     {
-                        "cmake", 
+                        "cmake",
                         $"--build . --parallel {this.ProcessorCount} {additionalBuildArguments} --target {project}",
                         buildDirectory,
-                        outputBuilder.ToString(), 
-                        errorBuilder.ToString() 
+                        outputBuilder.ToString(),
+                        errorBuilder.ToString()
                     },
                     IsWindows));
-                return (outputBuilder.ToString(),errorBuilder.ToString(),"exe");
+                return (outputBuilder.ToString(), errorBuilder.ToString(), "exe");
             }
             else
             {
@@ -115,12 +117,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var result = await Util.RunAsync(
                     "cmake", $"--build . --parallel {Environment.ProcessorCount} {additionalBuildArguments} --target {project}",
                     buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
-            
-            // Find path to perf test executable
-            var exeFileName = Util.IsWindows ? $"{project}.exe" : project;
-            var exe = Directory.GetFiles(buildDirectory, exeFileName, SearchOption.AllDirectories).Single();
 
-            return (result.StandardOutput, result.StandardError, exe);
+                // Find path to perf test executable
+                var exeFileName = Util.IsWindows ? $"{project}.exe" : project;
+                var exe = Directory.GetFiles(buildDirectory, exeFileName, SearchOption.AllDirectories).Single();
+
+                return (result.StandardOutput, result.StandardError, exe);
             }
         }
 
@@ -155,57 +157,54 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 finalParams = $"{profilerOptions} {profiledExe} {finalParams}";
             }
-
+            ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
             if (IsTest)
             {
                 UtilMethodCall(this, new UtilEventArgs(
-                    "RunAsync", 
+                    "RunAsync",
                     new string[] {
                         perfExe,
                         finalParams,
                         WorkingDirectory},
                     IsWindows));
-
-                return new IterationResult();
+                result = new ProcessResult(0, "output (2.0 ops/s, 1.0 s/op)", "error");
             }
             else
             {
-                var result = await Util.RunAsync(perfExe, finalParams, WorkingDirectory);
+                result = await Util.RunAsync(perfExe, finalParams, WorkingDirectory);
+            }
+            IDictionary<string, string> reportedVersions = new Dictionary<string, string>();
 
+            // Completed 54 operations in a weighted-average of 1s (52.766473 ops/s, 0.0189514 s/op)
+            var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
 
-                IDictionary<string, string> reportedVersions = new Dictionary<string, string>();
+            var opsPerSecond = -1d;
+            if (match.Success)
+            {
+                opsPerSecond = double.Parse(match.Groups[1].Value);
+            }
 
-                // Completed 54 operations in a weighted-average of 1s (52.766473 ops/s, 0.0189514 s/op)
-                var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
-
-                var opsPerSecond = -1d;
-                if (match.Success)
+            foreach (var key in packageVersions.Keys)
+            {
+                var packageMatch = Regex.Match(result.StandardOutput, @$"{key.ToUpper()} VERSION ?.*");
+                if (packageMatch.Success)
                 {
-                    opsPerSecond = double.Parse(match.Groups[1].Value);
-                }
+                    var version = packageMatch.Captures[0].Value.Split(' ');
 
-                foreach (var key in packageVersions.Keys)
-                {
-                    var packageMatch = Regex.Match(result.StandardOutput, @$"{key.ToUpper()} VERSION ?.*");
-                    if (packageMatch.Success)
+                    if (version.Length > 0)
                     {
-                        var version = packageMatch.Captures[0].Value.Split(' ');
-
-                        if (version.Length > 0)
-                        {
-                            reportedVersions.Add(key, version[version.Length - 1]);
-                        }
+                        reportedVersions.Add(key, version[version.Length - 1]);
                     }
                 }
-
-                return new IterationResult
-                {
-                    OperationsPerSecond = opsPerSecond,
-                    StandardOutput = result.StandardOutput,
-                    StandardError = result.StandardError,
-                    PackageVersions = reportedVersions
-                };
             }
+
+            return new IterationResult
+            {
+                OperationsPerSecond = opsPerSecond,
+                StandardOutput = result.StandardOutput,
+                StandardError = result.StandardError,
+                PackageVersions = reportedVersions
+            };
         }
 
         public override async Task CleanupAsync(string project)

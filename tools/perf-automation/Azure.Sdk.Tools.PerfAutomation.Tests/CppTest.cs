@@ -243,7 +243,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                     "project",
                     "languageVersion",
                     "primaryPackage",
-                    null,
+                new Dictionary<string, string>(),
                     "testName",
                     "arguments",
                     true,
@@ -271,13 +271,16 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                 "project",
                 "languageVersion",
                 "primaryPackage",
-                null,
+                new Dictionary<string,string>(),
                 "testName",
                 "arguments",
                 false,
                 "exe",
                 "profilerOptions");
 
+            Assert.AreEqual(result.StandardOutput, "output (2.0 ops/s, 1.0 s/op)");
+            Assert.AreEqual(result.StandardError, "error");
+            Assert.AreEqual(result.OperationsPerSecond, 2);
         }
         private void Cpp_RunUtilMethodCallNoProfileWindows(object sender, Cpp.UtilEventArgs e)
         {
@@ -291,7 +294,6 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             {
                 Assert.Fail("Unknown method");
             }
-
         }
 
         [Test]
@@ -308,13 +310,16 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                 "project",
                 "languageVersion",
                 "primaryPackage",
-                null,
+                new Dictionary<string, string>(),
                 "testName",
                 "arguments",
                 true,
                 "exe",
                 "profilerOptions");
 
+            Assert.AreEqual(result.StandardOutput, "output (2.0 ops/s, 1.0 s/op)");
+            Assert.AreEqual(result.StandardError, "error");
+            Assert.AreEqual(result.OperationsPerSecond, 2);
         }
         private void Cpp_RunUtilMethodCallProfileLinux(object sender, Cpp.UtilEventArgs e)
         {
@@ -345,13 +350,16 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                 "project",
                 "languageVersion",
                 "primaryPackage",
-                null,
+                new Dictionary<string, string>(),
                 "testName",
                 "arguments",
                 false,
                 "exe",
                 "profilerOptions");
 
+            Assert.AreEqual(result.StandardOutput, "output (2.0 ops/s, 1.0 s/op)");
+            Assert.AreEqual(result.StandardError, "error");
+            Assert.AreEqual(result.OperationsPerSecond, 2);
         }
         private void Cpp_RunUtilMethodCallNoProfileLinux(object sender, Cpp.UtilEventArgs e)
         {
@@ -367,9 +375,6 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
             }
 
         }
-
-
-
     }
 }
 

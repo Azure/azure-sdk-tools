@@ -25,6 +25,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         private readonly IReviewManager _manager;
 
+        private readonly IPullRequestManager _pullRequestManager;
+
         private readonly IBlobCodeFileRepository _codeFileRepository;
 
         private readonly ICommentsManager _commentsManager;
@@ -39,6 +41,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public ReviewPageModel(
             IReviewManager manager,
+            IPullRequestManager pullRequestManager,
             IBlobCodeFileRepository codeFileRepository,
             ICommentsManager commentsManager,
             INotificationManager notificationManager,
@@ -47,6 +50,7 @@ namespace APIViewWeb.Pages.Assemblies
             IConfiguration configuration)
         {
             _manager = manager;
+            _pullRequestManager = pullRequestManager;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
@@ -177,6 +181,7 @@ namespace APIViewWeb.Pages.Assemblies
             var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
             var fileDiagnostics = renderedCodeFile.CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
             CodeLine[] currentHtmlLines;
+            var userPrefernce = await _preferenceCache.GetUserPreferences(User) ?? new UserPreferenceModel();
 
             if (DiffRevision != null)
             {
@@ -222,7 +227,7 @@ namespace APIViewWeb.Pages.Assemblies
                 Lines = CreateLines(fileDiagnostics, currentHtmlLines, Comments, true);
             }
             TempData["CodeLineSection"] = Lines;
-            TempData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User) ?? new UserPreferenceModel();
+            TempData["UserPreference"] = userPrefernce;
             return Partial("_CodeLinePartial", sectionKey);
         }
 
@@ -252,16 +257,6 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage(new { id = id });
         }
 
-        public IActionResult OnGetUpdatePageSettings(bool hideLineNumbers = false, bool hideLeftNavigation = false)
-        {
-            _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
-            {
-                HideLeftNavigation = hideLeftNavigation,
-                HideLineNumbers = hideLineNumbers
-            }, User);
-            return new EmptyResult();
-        }
-
         public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, bool? showDocumentation = null, string revisionId = null)
         {
             var routingData = new Dictionary<string, string>();
@@ -272,9 +267,15 @@ namespace APIViewWeb.Pages.Assemblies
             return routingData;
         }
 
-        public UserPreferenceModel GetUserPreference()
+        public async Task<IEnumerable<PullRequestModel>> GetAssociatedPullRequest()
         {
-            return _preferenceCache.GetUserPreferences(User).Result;
+            return await _pullRequestManager.GetPullRequestsModel(Review.ReviewId);
+        }
+
+        public async Task<IEnumerable<PullRequestModel>> GetPRsOfAssoicatedReviews()
+        {
+            var creatingPR = (await _pullRequestManager.GetPullRequestsModel(Review.ReviewId)).FirstOrDefault();
+            return await _pullRequestManager.GetPullRequestsModel(creatingPR.PullRequestNumber, creatingPR.RepoName);;
         }
 
         private async Task GetReviewPageModelPropertiesAsync(string id, string revisionId = null, string diffRevisionId = null, bool diffOnly = false)

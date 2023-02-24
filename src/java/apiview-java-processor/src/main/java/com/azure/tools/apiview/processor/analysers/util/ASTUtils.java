@@ -10,6 +10,8 @@ import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
+import com.github.javaparser.ast.body.EnumConstantDeclaration;
+import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
@@ -17,6 +19,7 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 
 import java.util.Collections;
@@ -197,9 +200,43 @@ public final class ASTUtils {
         return MAKE_ID.matcher(fullPath).replaceAll("-");
     }
 
-    public static String makeId(AnnotationExpr annotation) {
-        int line = annotation.getBegin().orElseThrow(RuntimeException::new).line;
-        return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + "-L" + line);
+    public static String makeId(AnnotationExpr annotation, NodeWithAnnotations<?> nodeWithAnnotations) {
+        String annotationContext = getAnnotationContext(nodeWithAnnotations);
+
+        String idSuffix;
+
+        if (annotationContext == null || annotationContext.isEmpty()) {
+            idSuffix = "-L" + annotation.getBegin().orElseThrow(RuntimeException::new).line;
+        } else {
+            idSuffix = "-" + annotationContext;
+        }
+        return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + idSuffix);
+    }
+
+    private static String getAnnotationContext(NodeWithAnnotations<?> nodeWithAnnotations) {
+        if (nodeWithAnnotations == null) {
+            return "";
+        }
+        if (nodeWithAnnotations instanceof MethodDeclaration) {
+            MethodDeclaration methodDeclaration = (MethodDeclaration) nodeWithAnnotations;
+            // use the method declaration string instead of method name as there can be overloads
+            return methodDeclaration.getDeclarationAsString(true, true, true);
+        } else if (nodeWithAnnotations instanceof ClassOrInterfaceDeclaration) {
+            ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) nodeWithAnnotations;
+            return classOrInterfaceDeclaration.getNameAsString();
+        } else if (nodeWithAnnotations instanceof EnumDeclaration) {
+            EnumDeclaration enumDeclaration = (EnumDeclaration) nodeWithAnnotations;
+            return enumDeclaration.getNameAsString();
+        } else if (nodeWithAnnotations instanceof EnumConstantDeclaration) {
+            EnumConstantDeclaration enumValueDeclaration = (EnumConstantDeclaration) nodeWithAnnotations;
+            return enumValueDeclaration.getNameAsString();
+        } else if (nodeWithAnnotations instanceof ConstructorDeclaration) {
+            ConstructorDeclaration constructorDeclaration = (ConstructorDeclaration) nodeWithAnnotations;
+            // use the constructor declaration string instead of the name as there can be overloads
+            return constructorDeclaration.getDeclarationAsString(true, true, true);
+        } else {
+            return "";
+        }
     }
 
     /**

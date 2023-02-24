@@ -6097,7 +6097,7 @@ operationGroups:
           - *ref_289
           - *ref_290
         responses:
-          - language: &ref_975
+          - language: &ref_976
               default:
                 name: ''
                 description: Accepted. The response indicates the delete operation is performed in the background.
@@ -6662,7 +6662,7 @@ operationGroups:
           - *ref_303
           - *ref_304
         responses:
-          - language: &ref_946
+          - language: &ref_947
               default:
                 name: ''
                 description: Success
@@ -8694,7 +8694,7 @@ operationGroups:
           - *ref_349
           - *ref_350
         responses:
-          - language: &ref_971
+          - language: &ref_972
               default:
                 name: ''
                 description: Success. The response indicates the resource is deleted.
@@ -9833,7 +9833,7 @@ operationGroups:
           - *ref_382
           - *ref_383
         responses:
-          - language: &ref_954
+          - language: &ref_955
               default:
                 name: ''
                 description: Success. The response indicates the resource is deleted.
@@ -10673,7 +10673,7 @@ operationGroups:
           - *ref_403
           - *ref_404
         responses:
-          - language: &ref_973
+          - language: &ref_974
               default:
                 name: ''
                 description: Success. The response indicates the certificate deleted.
@@ -11289,7 +11289,7 @@ operationGroups:
           - *ref_420
           - *ref_421
         responses:
-          - language: &ref_969
+          - language: &ref_970
               default:
                 name: ''
                 description: Success. The response indicates the custom domain deleted.
@@ -12201,7 +12201,7 @@ operationGroups:
           - *ref_444
           - *ref_445
         responses:
-          - language: &ref_967
+          - language: &ref_968
               default:
                 name: ''
                 description: Success. The response indicates the resource is deleted.
@@ -12895,7 +12895,7 @@ operationGroups:
           - *ref_464
           - *ref_465
         responses:
-          - language: &ref_964
+          - language: &ref_965
               default:
                 name: ''
                 description: Success.
@@ -13033,7 +13033,7 @@ operationGroups:
           - *ref_468
           - *ref_469
         responses:
-          - language: &ref_961
+          - language: &ref_962
               default:
                 name: ''
                 description: Success.
@@ -13171,7 +13171,7 @@ operationGroups:
           - *ref_472
           - *ref_473
         responses:
-          - language: &ref_958
+          - language: &ref_959
               default:
                 name: ''
                 description: Success.
@@ -22076,10 +22076,14 @@ testModel:
         operation: *ref_943
         operationGroup: *ref_944
   scenarioTests:
-    - &ref_978
+    - &ref_979
+      name: Spring
       _filePath: Microsoft.AppPlatform\preview\2020-11-01-preview\scenarios\Spring.yaml
       _swaggerFilePaths:
         - Microsoft.AppPlatform/preview/2020-11-01-preview/appplatform.json
+      authentication: &ref_945
+        type: AADToken
+        scope: $(armEndpoint)/.default
       cleanUpSteps:
         - type: armTemplateDeployment
           armTemplate: ''
@@ -22280,7 +22284,8 @@ testModel:
         userAssignedIdentity: ''
       scenarios:
         - description: Microsoft.AppPlatform/Spring
-          _scenarioDef: *ref_978
+          _scenarioDef: *ref_979
+          authentication: *ref_945
           requiredVariables:
             - customDomainName
             - mysqlKey
@@ -22302,11 +22307,11 @@ testModel:
           scenario: Spring
           secretVariables:
             - uploadUrl
-          shareScope: true
           steps:
             - type: restCall
               operationId: Services_CheckNameAvailability
               description: Services_CheckNameAvailability
+              authentication: *ref_945
               exampleFile: ../examples/Services_CheckNameAvailability.json
               exampleModel:
                 name: ../examples/Services_CheckNameAvailability.json
@@ -22363,6 +22368,7 @@ testModel:
                           rawValue: AlreadyExists
                           language: *ref_561
                       language: *ref_559
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -22386,6 +22392,7 @@ testModel:
             - type: restCall
               operationId: Services_CreateOrUpdate
               description: Services_CreateOrUpdate
+              authentication: *ref_945
               exampleFile: ../examples/Services_CreateOrUpdate.json
               exampleModel:
                 name: ../examples/Services_CreateOrUpdate.json
@@ -22923,6 +22930,7 @@ testModel:
                               language: *ref_500
                           language: *ref_498
                       language: *ref_515
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -23061,6 +23069,7 @@ testModel:
             - type: restCall
               operationId: Services_Get
               description: Services_Get
+              authentication: *ref_945
               exampleFile: ../examples/Services_Get.json
               exampleModel:
                 name: ../examples/Services_Get.json
@@ -23246,6 +23255,7 @@ testModel:
                               language: *ref_500
                           language: *ref_498
                       language: *ref_486
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -23300,6 +23310,7 @@ testModel:
             - type: restCall
               operationId: Services_Update
               description: Services_Update
+              authentication: *ref_945
               exampleFile: ../examples/Services_Update.json
               exampleModel:
                 name: ../examples/Services_Update.json
@@ -23690,11 +23701,12 @@ testModel:
                               language: *ref_500
                           language: *ref_498
                       language: *ref_530
-                    headers: &ref_945
+                    headers: &ref_946
                       Azure-AsyncOperation: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
                       Location: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -23795,10 +23807,11 @@ testModel:
                     tags:
                       created-by: api-test
                       hello: world
-                  headers: *ref_945
+                  headers: *ref_946
             - type: restCall
               operationId: Services_DisableTestEndpoint
               description: Services_DisableTestEndpoint
+              authentication: *ref_945
               exampleFile: ../examples/Services_DisableTestEndpoint.json
               exampleModel:
                 name: ../examples/Services_DisableTestEndpoint.json
@@ -23830,8 +23843,9 @@ testModel:
                 responses:
                   '200':
                     body:
-                      rawValue: &ref_947 {}
-                      language: *ref_946
+                      rawValue: &ref_948 {}
+                      language: *ref_947
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -23846,10 +23860,11 @@ testModel:
               variables: {}
               responses:
                 '200':
-                  body: *ref_947
+                  body: *ref_948
             - type: restCall
               operationId: Services_EnableTestEndpoint
               description: Services_EnableTestEndpoint
+              authentication: *ref_945
               exampleFile: ../examples/Services_EnableTestEndpoint.json
               exampleModel:
                 name: ../examples/Services_EnableTestEndpoint.json
@@ -23905,6 +23920,7 @@ testModel:
                           rawValue: <secondaryTestEndpoint>
                           language: *ref_539
                       language: *ref_553
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -23928,6 +23944,7 @@ testModel:
             - type: restCall
               operationId: Services_RegenerateTestKey
               description: Services_RegenerateTestKey
+              authentication: *ref_945
               exampleFile: ../examples/Services_RegenerateTestKey.json
               exampleModel:
                 name: ../examples/Services_RegenerateTestKey.json
@@ -23993,6 +24010,7 @@ testModel:
                           rawValue: <secondaryTestEndpoint>
                           language: *ref_539
                       language: *ref_546
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -24018,6 +24036,7 @@ testModel:
             - type: restCall
               operationId: Services_ListTestKeys
               description: Services_ListTestKeys
+              authentication: *ref_945
               exampleFile: ../examples/Services_ListTestKeys.json
               exampleModel:
                 name: ../examples/Services_ListTestKeys.json
@@ -24073,6 +24092,7 @@ testModel:
                           rawValue: <secondaryTestEndpoint>
                           language: *ref_539
                       language: *ref_535
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -24096,6 +24116,7 @@ testModel:
             - type: restCall
               operationId: Certificates_CreateOrUpdate
               description: Certificates_CreateOrUpdate
+              authentication: *ref_945
               exampleFile: ../examples/Certificates_CreateOrUpdate.json
               exampleModel:
                 name: ../examples/Certificates_CreateOrUpdate.json
@@ -24374,6 +24395,7 @@ testModel:
                               language: *ref_747
                           language: *ref_745
                       language: *ref_764
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -24452,6 +24474,7 @@ testModel:
             - type: restCall
               operationId: Certificates_Get
               description: Certificates_Get
+              authentication: *ref_945
               exampleFile: ../examples/Certificates_Get.json
               exampleModel:
                 name: ../examples/Certificates_Get.json
@@ -24565,6 +24588,7 @@ testModel:
                               language: *ref_747
                           language: *ref_745
                       language: *ref_744
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -24604,6 +24628,7 @@ testModel:
             - type: restCall
               operationId: Certificates_List
               description: Certificates_List
+              authentication: *ref_945
               exampleFile: ../examples/Certificates_List.json
               exampleModel:
                 name: ../examples/Certificates_List.json
@@ -24723,6 +24748,7 @@ testModel:
                                   language: *ref_745
                           language: *ref_773
                       language: *ref_772
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -24760,6 +24786,7 @@ testModel:
             - type: restCall
               operationId: ConfigServers_Validate
               description: ConfigServers_Validate
+              authentication: *ref_945
               exampleFile: ../examples/ConfigServers_Validate.json
               exampleModel:
                 name: ../examples/ConfigServers_Validate.json
@@ -24830,11 +24857,12 @@ testModel:
                       parentsValue: {}
                       properties: {}
                       language: *ref_601
-                    headers: &ref_948
+                    headers: &ref_949
                       Azure-AsyncOperation: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
                       Location: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -24859,10 +24887,11 @@ testModel:
                     isValid: true
                 '202':
                   body: {}
-                  headers: *ref_948
+                  headers: *ref_949
             - type: restCall
               operationId: ConfigServers_UpdatePut
               description: ConfigServers_UpdatePut
+              authentication: *ref_945
               exampleFile: ../examples/ConfigServers_UpdatePut.json
               exampleModel:
                 name: ../examples/ConfigServers_UpdatePut.json
@@ -25049,6 +25078,7 @@ testModel:
                               language: *ref_574
                           language: *ref_573
                       language: *ref_587
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -25099,6 +25129,7 @@ testModel:
             - type: restCall
               operationId: ConfigServers_UpdatePatch
               description: ConfigServers_UpdatePatch
+              authentication: *ref_945
               exampleFile: ../examples/ConfigServers_UpdatePatch.json
               exampleModel:
                 name: ../examples/ConfigServers_UpdatePatch.json
@@ -25255,11 +25286,12 @@ testModel:
                               language: *ref_574
                           language: *ref_573
                       language: *ref_593
-                    headers: &ref_949
+                    headers: &ref_950
                       Azure-AsyncOperation: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
                       Location: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -25298,10 +25330,11 @@ testModel:
                         gitProperty:
                           uri: https://github.com/azure-samples/spring-petclinic-microservices-config
                       provisioningState: Updating
-                  headers: *ref_949
+                  headers: *ref_950
             - type: restCall
               operationId: ConfigServers_Get
               description: ConfigServers_Get
+              authentication: *ref_945
               exampleFile: ../examples/ConfigServers_Get.json
               exampleModel:
                 name: ../examples/ConfigServers_Get.json
@@ -25392,6 +25425,7 @@ testModel:
                               language: *ref_574
                           language: *ref_573
                       language: *ref_572
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -25421,6 +25455,7 @@ testModel:
             - type: restCall
               operationId: MonitoringSettings_UpdatePut
               description: MonitoringSettings_UpdatePut
+              authentication: *ref_945
               exampleFile: ../examples/MonitoringSettings_UpdatePut.json
               exampleModel:
                 name: ../examples/MonitoringSettings_UpdatePut.json
@@ -25589,6 +25624,7 @@ testModel:
                               language: *ref_609
                           language: *ref_607
                       language: *ref_620
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -25634,6 +25670,7 @@ testModel:
             - type: restCall
               operationId: MonitoringSettings_Get
               description: MonitoringSettings_Get
+              authentication: *ref_945
               exampleFile: ../examples/MonitoringSettings_Get.json
               exampleModel:
                 name: ../examples/MonitoringSettings_Get.json
@@ -25721,6 +25758,7 @@ testModel:
                               language: *ref_609
                           language: *ref_607
                       language: *ref_606
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -25749,6 +25787,7 @@ testModel:
             - type: restCall
               operationId: MonitoringSettings_UpdatePatch
               description: MonitoringSettings_UpdatePatch
+              authentication: *ref_945
               exampleFile: ../examples/MonitoringSettings_UpdatePatch.json
               exampleModel:
                 name: ../examples/MonitoringSettings_UpdatePatch.json
@@ -25917,11 +25956,12 @@ testModel:
                               language: *ref_609
                           language: *ref_607
                       language: *ref_626
-                    headers: &ref_950
+                    headers: &ref_951
                       Azure-AsyncOperation: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
                       Location: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -25964,10 +26004,11 @@ testModel:
                       appInsightsSamplingRate: 100
                       provisioningState: Updating
                       traceEnabled: true
-                  headers: *ref_950
+                  headers: *ref_951
             - type: restCall
               operationId: Apps_CreateOrUpdate
               description: Apps_CreateOrUpdate
+              authentication: *ref_945
               exampleFile: ../examples/Apps_CreateOrUpdate.json
               exampleModel:
                 name: ../examples/Apps_CreateOrUpdate.json
@@ -26287,6 +26328,7 @@ testModel:
                               language: *ref_635
                           language: *ref_633
                       language: *ref_661
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -26367,6 +26409,7 @@ testModel:
             - type: restCall
               operationId: Apps_Get
               description: Apps_Get
+              authentication: *ref_945
               exampleFile: ../examples/Apps_Get.json
               exampleModel:
                 name: ../examples/Apps_Get.json
@@ -26513,6 +26556,7 @@ testModel:
                               language: *ref_635
                           language: *ref_633
                       language: *ref_632
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -26555,6 +26599,7 @@ testModel:
             - type: restCall
               operationId: Deployments_CreateOrUpdate
               description: Deployments_CreateOrUpdate
+              authentication: *ref_945
               exampleFile: ../examples/Deployments_CreateOrUpdate.json
               exampleModel:
                 name: ../examples/Deployments_CreateOrUpdate.json
@@ -27089,6 +27134,7 @@ testModel:
                               language: *ref_500
                           language: *ref_843
                       language: *ref_854
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -27222,6 +27268,7 @@ testModel:
             - type: restCall
               operationId: Deployments_Get
               description: Deployments_Get
+              authentication: *ref_945
               exampleFile: ../examples/Deployments_Get.json
               exampleModel:
                 name: ../examples/Deployments_Get.json
@@ -27399,6 +27446,7 @@ testModel:
                               language: *ref_500
                           language: *ref_843
                       language: *ref_821
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -27451,6 +27499,7 @@ testModel:
             - type: restCall
               operationId: Apps_Update
               description: Apps_Update
+              authentication: *ref_945
               exampleFile: ../examples/Apps_Update.json
               exampleModel:
                 name: ../examples/Apps_Update.json
@@ -27787,11 +27836,12 @@ testModel:
                               language: *ref_635
                           language: *ref_633
                       language: *ref_672
-                    headers: &ref_951
+                    headers: &ref_952
                       Azure-AsyncOperation: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
                       Location: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -27874,10 +27924,11 @@ testModel:
                         mountPath: /mytemporarydisk
                         sizeInGB: 2
                       url: myapp.myservice.azuremicroservices.io
-                  headers: *ref_951
+                  headers: *ref_952
             - type: restCall
               operationId: Apps_Update
               description: Apps_Update
+              authentication: *ref_945
               exampleFile: ../examples/Apps_Update.json
               exampleModel:
                 name: ../examples/Apps_Update.json
@@ -28214,11 +28265,12 @@ testModel:
                               language: *ref_635
                           language: *ref_633
                       language: *ref_672
-                    headers: &ref_952
+                    headers: &ref_953
                       Azure-AsyncOperation: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
                       Location: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -28301,10 +28353,11 @@ testModel:
                         mountPath: /tmpdisk
                         sizeInGB: 3
                       url: myapp.myservice.azuremicroservices.io
-                  headers: *ref_952
+                  headers: *ref_953
             - type: restCall
               operationId: Apps_List
               description: Apps_List
+              authentication: *ref_945
               exampleFile: ../examples/Apps_List.json
               exampleModel:
                 name: ../examples/Apps_List.json
@@ -28453,6 +28506,7 @@ testModel:
                                   language: *ref_633
                           language: *ref_678
                       language: *ref_677
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -28495,6 +28549,7 @@ testModel:
             - type: restCall
               operationId: Bindings_CreateOrUpdate
               description: Bindings_CreateOrUpdate
+              authentication: *ref_945
               exampleFile: ../examples/Bindings_CreateOrUpdate.json
               exampleModel:
                 name: ../examples/Bindings_CreateOrUpdate.json
@@ -28797,6 +28852,7 @@ testModel:
                               language: *ref_708
                           language: *ref_701
                       language: *ref_719
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -28885,6 +28941,7 @@ testModel:
             - type: restCall
               operationId: Bindings_Update
               description: Bindings_Update
+              authentication: *ref_945
               exampleFile: ../examples/Bindings_Update.json
               exampleModel:
                 name: ../examples/Bindings_Update.json
@@ -29109,11 +29166,12 @@ testModel:
                               language: *ref_708
                           language: *ref_701
                       language: *ref_732
-                    headers: &ref_953
+                    headers: &ref_954
                       Azure-AsyncOperation: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
                       Location: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -29179,10 +29237,11 @@ testModel:
                       resourceName: my-cosmosdb-1
                       resourceType: Microsoft.DocumentDB
                       updatedAt: '2019-01-01T12:34:56.000Z'
-                  headers: *ref_953
+                  headers: *ref_954
             - type: restCall
               operationId: Bindings_Get
               description: Bindings_Get
+              authentication: *ref_945
               exampleFile: ../examples/Bindings_Get.json
               exampleModel:
                 name: ../examples/Bindings_Get.json
@@ -29292,6 +29351,7 @@ testModel:
                               language: *ref_708
                           language: *ref_701
                       language: *ref_700
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -29331,6 +29391,7 @@ testModel:
             - type: restCall
               operationId: Bindings_List
               description: Bindings_List
+              authentication: *ref_945
               exampleFile: ../examples/Bindings_List.json
               exampleModel:
                 name: ../examples/Bindings_List.json
@@ -29442,6 +29503,7 @@ testModel:
                                   language: *ref_701
                           language: *ref_739
                       language: *ref_738
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -29478,6 +29540,7 @@ testModel:
             - type: restCall
               operationId: Bindings_Delete
               description: Bindings_Delete
+              authentication: *ref_945
               exampleFile: ../examples/Bindings_Delete.json
               exampleModel:
                 name: ../examples/Bindings_Delete.json
@@ -29519,10 +29582,11 @@ testModel:
                 responses:
                   '200':
                     body:
-                      rawValue: &ref_955 {}
-                      language: *ref_954
+                      rawValue: &ref_956 {}
+                      language: *ref_955
                   '202': {}
                   '204': {}
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -29542,12 +29606,13 @@ testModel:
                   value: mysql-binding
               responses:
                 '200':
-                  body: *ref_955
+                  body: *ref_956
                 '202': {}
                 '204': {}
             - type: restCall
               operationId: Apps_ValidateDomain
               description: Apps_ValidateDomain
+              authentication: *ref_945
               exampleFile: ../examples/Apps_ValidateDomain.json
               exampleModel:
                 name: ../examples/Apps_ValidateDomain.json
@@ -29606,6 +29671,7 @@ testModel:
                           rawValue: Certificate is invalid, please check if it is a self signed cert or if it contains a suitable dns name
                           language: *ref_694
                       language: *ref_692
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -29629,6 +29695,7 @@ testModel:
             - type: restCall
               operationId: CustomDomains_CreateOrUpdate
               description: CustomDomains_CreateOrUpdate
+              authentication: *ref_945
               exampleFile: ../examples/CustomDomains_CreateOrUpdate.json
               exampleModel:
                 name: ../examples/CustomDomains_CreateOrUpdate.json
@@ -29806,6 +29873,7 @@ testModel:
                               language: *ref_784
                           language: *ref_781
                       language: *ref_794
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -29854,6 +29922,7 @@ testModel:
             - type: restCall
               operationId: CustomDomains_Update
               description: CustomDomains_Update
+              authentication: *ref_945
               exampleFile: ../examples/CustomDomains_Update.json
               exampleModel:
                 name: ../examples/CustomDomains_Update.json
@@ -29990,11 +30059,12 @@ testModel:
                               language: *ref_784
                           language: *ref_781
                       language: *ref_807
-                    headers: &ref_956
+                    headers: &ref_957
                       Azure-AsyncOperation: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
                       Location: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -30032,10 +30102,11 @@ testModel:
                     properties:
                       appName: myapp
                       certName: asc-certificate
-                  headers: *ref_956
+                  headers: *ref_957
             - type: restCall
               operationId: CustomDomains_Get
               description: CustomDomains_Get
+              authentication: *ref_945
               exampleFile: ../examples/CustomDomains_Get.json
               exampleModel:
                 name: ../examples/CustomDomains_Get.json
@@ -30120,6 +30191,7 @@ testModel:
                               language: *ref_782
                           language: *ref_781
                       language: *ref_780
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -30150,6 +30222,7 @@ testModel:
             - type: restCall
               operationId: CustomDomains_List
               description: CustomDomains_List
+              authentication: *ref_945
               exampleFile: ../examples/CustomDomains_List.json
               exampleModel:
                 name: ../examples/CustomDomains_List.json
@@ -30240,6 +30313,7 @@ testModel:
                                   language: *ref_781
                           language: *ref_814
                       language: *ref_813
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -30268,6 +30342,7 @@ testModel:
             - type: restCall
               operationId: Apps_GetResourceUploadUrl
               description: Apps_GetResourceUploadUrl
+              authentication: *ref_945
               exampleFile: ../examples/Apps_GetResourceUploadUrl.json
               exampleModel:
                 name: ../examples/Apps_GetResourceUploadUrl.json
@@ -30317,6 +30392,7 @@ testModel:
                             https://springcloudstorageaccount.file.core.windows.net/bd172614181f42e2853f6fd90029cda8/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855-20190801-3ed9f4a2-986b-4bbd-b833-a42dccb2f777?sv=2018-03-28&sr=f&sig=SampleSignature&se=2019-08-01T10%3A42%3A21Z&sp=w
                           language: *ref_685
                       language: *ref_683
+              isManagementPlane: true
               outputVariables:
                 relativePath:
                   fromResponse: /relativePath
@@ -30390,6 +30466,7 @@ testModel:
             - type: restCall
               operationId: Deployments_CreateOrUpdate
               description: Deployments_CreateOrUpdate
+              authentication: *ref_945
               exampleFile: ../examples/Deployments_CreateOrUpdate.json
               exampleModel:
                 name: ../examples/Deployments_CreateOrUpdate.json
@@ -30924,6 +31001,7 @@ testModel:
                               language: *ref_500
                           language: *ref_843
                       language: *ref_854
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -31057,6 +31135,7 @@ testModel:
             - type: restCall
               operationId: Apps_Update
               description: Apps_Update
+              authentication: *ref_945
               exampleFile: ../examples/Apps_Update.json
               exampleModel:
                 name: ../examples/Apps_Update.json
@@ -31393,11 +31472,12 @@ testModel:
                               language: *ref_635
                           language: *ref_633
                       language: *ref_672
-                    headers: &ref_957
+                    headers: &ref_958
                       Azure-AsyncOperation: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
                       Location: >-
                         https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -31480,10 +31560,11 @@ testModel:
                         mountPath: /mytemporarydisk
                         sizeInGB: 2
                       url: myapp.myservice.azuremicroservices.io
-                  headers: *ref_957
+                  headers: *ref_958
             - type: restCall
               operationId: Deployments_Restart
               description: Deployments_Restart
+              authentication: *ref_945
               exampleFile: ../examples/Deployments_Restart.json
               exampleModel:
                 name: ../examples/Deployments_Restart.json
@@ -31525,11 +31606,12 @@ testModel:
                 responses:
                   '200':
                     body:
-                      rawValue: &ref_959 {}
-                      language: *ref_958
+                      rawValue: &ref_960 {}
+                      language: *ref_959
                   '202':
-                    headers: &ref_960
+                    headers: &ref_961
                       location: https://management.azure.com/subscriptions/subid/providers/Microsoft.AppPlatform/...pathToOperationResult...
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -31549,12 +31631,13 @@ testModel:
                   value: blue
               responses:
                 '200':
-                  body: *ref_959
+                  body: *ref_960
                 '202':
-                  headers: *ref_960
+                  headers: *ref_961
             - type: restCall
               operationId: Deployments_Stop
               description: Deployments_Stop
+              authentication: *ref_945
               exampleFile: ../examples/Deployments_Stop.json
               exampleModel:
                 name: ../examples/Deployments_Stop.json
@@ -31596,11 +31679,12 @@ testModel:
                 responses:
                   '200':
                     body:
-                      rawValue: &ref_962 {}
-                      language: *ref_961
+                      rawValue: &ref_963 {}
+                      language: *ref_962
                   '202':
-                    headers: &ref_963
+                    headers: &ref_964
                       location: https://management.azure.com/subscriptions/subid/providers/Microsoft.AppPlatform/...pathToOperationResult...
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -31620,12 +31704,13 @@ testModel:
                   value: blue
               responses:
                 '200':
-                  body: *ref_962
+                  body: *ref_963
                 '202':
-                  headers: *ref_963
+                  headers: *ref_964
             - type: restCall
               operationId: Deployments_Start
               description: Deployments_Start
+              authentication: *ref_945
               exampleFile: ../examples/Deployments_Start.json
               exampleModel:
                 name: ../examples/Deployments_Start.json
@@ -31667,11 +31752,12 @@ testModel:
                 responses:
                   '200':
                     body:
-                      rawValue: &ref_965 {}
-                      language: *ref_964
+                      rawValue: &ref_966 {}
+                      language: *ref_965
                   '202':
-                    headers: &ref_966
+                    headers: &ref_967
                       location: https://management.azure.com/subscriptions/subid/providers/Microsoft.AppPlatform/...pathToOperationResult...
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -31691,12 +31777,13 @@ testModel:
                   value: blue
               responses:
                 '200':
-                  body: *ref_965
+                  body: *ref_966
                 '202':
-                  headers: *ref_966
+                  headers: *ref_967
             - type: restCall
               operationId: Deployments_GetLogFileUrl
               description: Deployments_GetLogFileUrl
+              authentication: *ref_945
               exampleFile: ../examples/Deployments_GetLogFileUrl.json
               exampleModel:
                 name: ../examples/Deployments_GetLogFileUrl.json
@@ -31748,6 +31835,7 @@ testModel:
                           language: *ref_903
                       language: *ref_902
                   '204': {}
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -31774,6 +31862,7 @@ testModel:
             - type: restCall
               operationId: Deployments_List
               description: Deployments_List
+              authentication: *ref_945
               exampleFile: ../examples/Deployments_List.json
               exampleModel:
                 name: ../examples/Deployments_List.json
@@ -31953,6 +32042,7 @@ testModel:
                                   language: *ref_843
                           language: *ref_874
                       language: *ref_873
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -32002,6 +32092,7 @@ testModel:
             - type: restCall
               operationId: Deployments_ListForCluster
               description: Deployments_ListForCluster
+              authentication: *ref_945
               exampleFile: ../examples/Deployments_ListForCluster.json
               exampleModel:
                 name: ../examples/Deployments_ListForCluster.json
@@ -32176,6 +32267,7 @@ testModel:
                                   language: *ref_843
                           language: *ref_874
                       language: *ref_878
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -32225,6 +32317,7 @@ testModel:
             - type: restCall
               operationId: Services_List
               description: Services_List
+              authentication: *ref_945
               exampleFile: ../examples/Services_List.json
               exampleModel:
                 name: ../examples/Services_List.json
@@ -32412,6 +32505,7 @@ testModel:
                                   language: *ref_498
                           language: *ref_565
                       language: *ref_568
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -32466,6 +32560,7 @@ testModel:
             - type: restCall
               operationId: Services_ListBySubscription
               description: Services_ListBySubscription
+              authentication: *ref_945
               exampleFile: ../examples/Services_ListBySubscription.json
               exampleModel:
                 name: ../examples/Services_ListBySubscription.json
@@ -32648,6 +32743,7 @@ testModel:
                                   language: *ref_498
                           language: *ref_565
                       language: *ref_564
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -32701,6 +32797,7 @@ testModel:
             - type: restCall
               operationId: Deployments_Delete
               description: Deployments_Delete
+              authentication: *ref_945
               exampleFile: ../examples/Deployments_Delete.json
               exampleModel:
                 name: ../examples/Deployments_Delete.json
@@ -32742,10 +32839,11 @@ testModel:
                 responses:
                   '200':
                     body:
-                      rawValue: &ref_968 {}
-                      language: *ref_967
+                      rawValue: &ref_969 {}
+                      language: *ref_968
                   '202': {}
                   '204': {}
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -32765,12 +32863,13 @@ testModel:
                   value: blue
               responses:
                 '200':
-                  body: *ref_968
+                  body: *ref_969
                 '202': {}
                 '204': {}
             - type: restCall
               operationId: CustomDomains_Delete
               description: CustomDomains_Delete
+              authentication: *ref_945
               exampleFile: ../examples/CustomDomains_Delete.json
               exampleModel:
                 name: ../examples/CustomDomains_Delete.json
@@ -32812,10 +32911,11 @@ testModel:
                 responses:
                   '200':
                     body:
-                      rawValue: &ref_970 {}
-                      language: *ref_969
+                      rawValue: &ref_971 {}
+                      language: *ref_970
                   '202': {}
                   '204': {}
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -32835,12 +32935,13 @@ testModel:
                   value: $(dnsCname).$(customDomainName)
               responses:
                 '200':
-                  body: *ref_970
+                  body: *ref_971
                 '202': {}
                 '204': {}
             - type: restCall
               operationId: Apps_Delete
               description: Apps_Delete
+              authentication: *ref_945
               exampleFile: ../examples/Apps_Delete.json
               exampleModel:
                 name: ../examples/Apps_Delete.json
@@ -32877,10 +32978,11 @@ testModel:
                 responses:
                   '200':
                     body:
-                      rawValue: &ref_972 {}
-                      language: *ref_971
+                      rawValue: &ref_973 {}
+                      language: *ref_972
                   '202': {}
                   '204': {}
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -32899,12 +33001,13 @@ testModel:
                   value: app01
               responses:
                 '200':
-                  body: *ref_972
+                  body: *ref_973
                 '202': {}
                 '204': {}
             - type: restCall
               operationId: Certificates_Delete
               description: Certificates_Delete
+              authentication: *ref_945
               exampleFile: ../examples/Certificates_Delete.json
               exampleModel:
                 name: ../examples/Certificates_Delete.json
@@ -32941,10 +33044,11 @@ testModel:
                 responses:
                   '200':
                     body:
-                      rawValue: &ref_974 {}
-                      language: *ref_973
+                      rawValue: &ref_975 {}
+                      language: *ref_974
                   '202': {}
                   '204': {}
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -32963,12 +33067,13 @@ testModel:
                   value: asc-certificate
               responses:
                 '200':
-                  body: *ref_974
+                  body: *ref_975
                 '202': {}
                 '204': {}
             - type: restCall
               operationId: Services_Delete
               description: Services_Delete
+              authentication: *ref_945
               exampleFile: ../examples/Services_Delete.json
               exampleModel:
                 name: ../examples/Services_Delete.json
@@ -33000,11 +33105,12 @@ testModel:
                 responses:
                   '202':
                     body:
-                      rawValue: &ref_976 {}
-                      language: *ref_975
-                    headers: &ref_977
+                      rawValue: &ref_977 {}
+                      language: *ref_976
+                    headers: &ref_978
                       location: https://management.azure.com/subscriptions/subid/providers/Microsoft.AppPlatform/...pathToOperationResult...
                   '204': {}
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -33019,12 +33125,13 @@ testModel:
               variables: {}
               responses:
                 '202':
-                  body: *ref_976
-                  headers: *ref_977
+                  body: *ref_977
+                  headers: *ref_978
                 '204': {}
             - type: restCall
               operationId: Skus_List
               description: Skus_List
+              authentication: *ref_945
               exampleFile: ../examples/Skus_List.json
               exampleModel:
                 name: ../examples/Skus_List.json
@@ -33119,6 +33226,7 @@ testModel:
                                   language: *ref_931
                           language: *ref_928
                       language: *ref_927
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -33151,6 +33259,7 @@ testModel:
             - type: restCall
               operationId: Operations_List
               description: Operations_List
+              authentication: *ref_945
               exampleFile: ../examples/Operations_List.json
               exampleModel:
                 name: ../examples/Operations_List.json
@@ -33224,6 +33333,7 @@ testModel:
                                   language: *ref_915
                           language: *ref_906
                       language: *ref_905
+              isManagementPlane: true
               outputVariables: {}
               outputVariablesModel: {}
               parameters:
@@ -33262,6 +33372,9 @@ testModel:
         appName:
           type: string
           value: app01
+        armEndpoint:
+          type: string
+          value: https://management.azure.com
         ascDomainName:
           type: string
           value: .azuremicroservices.io

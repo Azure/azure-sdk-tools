@@ -100,9 +100,9 @@ namespace APIViewUITests
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(WaitTime);
                 driver.Navigate().GoToUrl(_fixture._endpoint);
                
-                var createReviewBtn = driver.FindElement(By.XPath("//button[@data-target='#uploadModel']"));
+                var createReviewBtn = driver.FindElement(By.XPath("//button[@data-bs-target='#uploadModel']"));
                 createReviewBtn.Click();
-                var fileSelector = driver.FindElement(By.Id("Upload_Files"));
+                var fileSelector = driver.FindElement(By.Id("uploadReviewFile"));
                 fileSelector.SendKeys(fileAPath);
                 var uploadBtn = driver.FindElement(By.XPath("//div[@class='modal-footer']/button[@type='submit']"));
                 uploadBtn.Click();
@@ -120,7 +120,7 @@ namespace APIViewUITests
                 Assert.Equal("Reviews - apiview.dev", driver.Title);
 
                 // Select C# language
-                var languageSelector = driver.FindElement(By.Id("language-filter-bootstraps-select"));
+                var languageSelector = driver.FindElement(By.Id("language-filter-select"));
                 var languageSelectElement = new SelectElement(languageSelector);
                 languageSelectElement.SelectByText("C#");
                 var reviewNames = driver.FindElements(By.ClassName("review-name"));

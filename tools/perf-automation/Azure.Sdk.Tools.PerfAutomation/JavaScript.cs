@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private const string _rush = "common/scripts/install-run-rush.js";
 
         protected override Language Language => Language.JS;
+        private static int profileCount = 0;
 
         public override async Task<(string output, string error, object context)> SetupAsync(
             string project,
@@ -140,6 +141,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
+            if (profile)
+            {
+                // "@azure/storage-blob" -> "storage-blob"
+                var stripPackageName = primaryPackage.Substring(primaryPackage.LastIndexOf('/') + 1);
+
+                var formattedArgs = arguments.Replace(" --", "_").Replace("--", "_").Replace(" ", "-");
+                var profileFilename = $"{packageVersions[primaryPackage]}_{testName}_{formattedArgs}_{profileCount++}.cpuprofile";
+                var profileDir = Util.GetProfileDirectory(WorkingDirectory);
+                var profileOutputPath = Path.GetFullPath(Path.Combine(profileDir, stripPackageName, profileFilename));
+
+                arguments += $" --profile --profile-path {profileOutputPath}";
+            }
             var testResult = await Util.RunAsync("npm", $"run perf-test:node -- {testName} {arguments}",
                 projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder, throwOnError: false);
 

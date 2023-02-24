@@ -1,0 +1,64 @@
+@import "../shared/mixins.scss";
+
+#create-review-button {
+    @include bottom-right-floating;
+    @include btn-circle;
+    @include btn-circle-xl;
+}
+
+#reviews-table {
+    td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    thead th {
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:hover {
+        color: var(--base-text-color);
+    }
+
+    .cst-bdr-left {
+        border-left: 1px solid var(--border-color);
+    }
+
+    color: var(--base-text-color);
+}
+
+#reviews-table-container {
+    border: 1px solid var(--border-color);
+    box-shadow: var(--box-shadow-sm);
+    background-color: var(--base-fg-color);
+}
+
+#reviews-table-search-container {
+    width: 90%;
+}
+
+#reviews-table-search-box {
+    border: 1px solid var(--primary-color);
+}
+
+#index-main-container {
+    @include main-content-container;
+}
+
+#index-offcanvas-menu-content {
+    padding: 130px 60px 10px 20px;
+    min-height: calc(100vh - 40px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+
+#index-offcanvas-menu-content > .input-group {
+    flex-wrap: unset;
+}
+
+.nav-cst-theme {
+    background-color: var(--base-bg-color);
+    box-shadow: var(--box-shadow-sm);
+}

@@ -1,0 +1,30 @@
+.offcanvas-menu {
+    height: 100vh;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    background-color: var(--base-bg-color);
+    color: var(--base-text-color);
+    overflow-x: hidden;
+    transition: 0.5s;
+    animation-timing-function: linear;
+}
+
+.right-offcanvas {
+    @extend .offcanvas-menu;
+    right: 0;
+}
+
+.offcanvas-menu-content {
+    border-left: 1px solid var(--border-color) !important;
+    transform: translate3d(0, 0, 0);
+}
+
+.move-main-content-container-left {
+    margin-right: 340px;
+}
+
+.show-offcanvas {
+    width: 340px;
+}

@@ -178,6 +178,15 @@ namespace APIViewWeb.Managers
             }
         }
 
+        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModel(string reviewId) {
+            return await _pullRequestsRepository.GetPullRequestsAsync(reviewId);
+        }
+
+        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModel(int pullRequestNumber, string repoName)
+        {
+            return await _pullRequestsRepository.GetPullRequestsAsync(pullRequestNumber, repoName);
+        }
+
         private async Task CreateOrUpdateComment(List<PullRequestModel> prReviews, string repoOwner, string repoName, int prNumber, string hostName)
         {
             var existingComment = await GetExistingCommentForPackage(repoOwner, repoName, prNumber);
@@ -317,11 +326,16 @@ namespace APIViewWeb.Managers
             {
                 // Check if API surface level matches with any revisions
                 var renderedCodeFile = new RenderedCodeFile(codeFile);
-                if (await IsReviewSame(review, renderedCodeFile))
+                // pullRequestModel.ReviewId == null means: First time getting a request to check for API changes in the given package for a PR 
+                if (pullRequestModel.ReviewId == null)
                 {
-                    return;
-                }
-
+                    //No API changes detected from baseline
+                    if (await IsReviewSame(review, renderedCodeFile))
+                    {
+                        return;
+                    }
+                }                
+                // Below steps will remove last revision from previously created API review from the pull request and recreate new revision using latest token code file
                 if (pullRequestModel.ReviewId != null)
                 {
                     //Refresh baseline using latest from automatic review

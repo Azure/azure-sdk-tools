@@ -40,13 +40,13 @@ stages:
               pip install virtualenv aiohttp chardet trio setuptools wheel packaging
             displayName: 'Setup Python Environment'
               
-          # tried to link 8 to 7, but got permission denied.
-          # find /usr/lib -name "libffi.so*"
-          # ln -s /usr/lib/x86_64-linux-gnu/libffi.so.8 /usr/lib/x86_64-linux-gnu/libffi.so.7 (needs sudo)
-          # apt install libffi-devel (needs sudo)
-          - script: |
-              ln -s /usr/lib/x86_64-linux-gnu/libffi.so.8 /usr/lib/x86_64-linux-gnu/libffi.so.7
-            condition: and(succeeded(), eq(variables['Agent.OS'],'Linux'))
+          # # tried to link 8 to 7, but got permission denied.
+          # # find /usr/lib -name "libffi.so*"
+          # # ln -s /usr/lib/x86_64-linux-gnu/libffi.so.8 /usr/lib/x86_64-linux-gnu/libffi.so.7 (needs sudo)
+          # # apt install libffi-devel (needs sudo)
+          # - script: |
+          #     ln -s /usr/lib/x86_64-linux-gnu/libffi.so.8 /usr/lib/x86_64-linux-gnu/libffi.so.7
+          #   condition: and(succeeded(), eq(variables['Agent.OS'],'Linux'))
 
           - pwsh: |
               Write-Host "Bundling stable version of python api-stub-generator"

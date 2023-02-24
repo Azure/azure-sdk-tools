@@ -47,7 +47,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetReviewStatus(string language, string packageName, string reviewId = null)
+        public async Task<ActionResult> GetReviewStatus(string language, string packageName, string reviewId = null, bool? firstReleaseStatusOnly = null)
         {
             // This API is used by prepare release script to check if API review for a package is approved or not.
             // This caller script doesn't have artifact to submit and so it can't check using create review API
@@ -55,10 +55,12 @@ namespace APIViewWeb.Controllers
             // With new restriction of creating automatic review only from master branch or GA version, this should ensure latest revision
             // is infact the version intended to be released.
 
+            ReviewType filtertype = (firstReleaseStatusOnly == true) ? ReviewType.All : ReviewType.Automatic;
+
             ReviewModel review;
             if (String.IsNullOrEmpty(reviewId))
             {
-                IEnumerable<ReviewModel> reviews = await _reviewManager.GetReviewsAsync(false, language, packageName: packageName, ReviewType.Automatic);
+                IEnumerable<ReviewModel> reviews = await _reviewManager.GetReviewsAsync(false, language, packageName: packageName, filtertype);
                 review = reviews.FirstOrDefault();
             }
             else
@@ -69,8 +71,9 @@ namespace APIViewWeb.Controllers
             if (review != null)
             {
                 _logger.LogInformation("Found review ID " + review.ReviewId + " for package " + packageName);
+
                 // Return 200 OK for approved review and 201 for review in pending status
-                if (review.Revisions.LastOrDefault().IsApproved)
+                if (firstReleaseStatusOnly != true && review.Revisions.LastOrDefault().IsApproved)
                 {
                     return Ok();
                 }

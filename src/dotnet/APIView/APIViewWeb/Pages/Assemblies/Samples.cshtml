@@ -166,9 +166,9 @@ else
                                         <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
                                         <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
                                         <input asp-for="Upload.RevisionNumber" hidden value="@Model.SampleRevisions.Count()" />
-                                        <div class="form-group mb-3">
-                                            <label asp-for="Upload.File" class="form-label small">Select usage sample for this review</label>
-                                            <input asp-for="Upload.File" type="file" class="form-control">
+                                        <div class="input-group mb-3 custom-file-label">
+                                            <label for="uploadMarkdownSample" class="input-group-text small mb-0">Select usage sample for this review</label>
+                                            <input asp-for="Upload.File" type="file" class="form-control" id="uploadMarkdownSample">
                                         </div>
                                         <div class="d-flex flex-row-reverse pt-3 mb-3">
                                             <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i>&nbsp;&nbsp;Upload</button>

@@ -78,14 +78,14 @@ parameters:
     - MigrateFrom: windows2019
       MigrateTo: windows2022
     - MigrateFrom: MMS2019
-      MigrateTo: MMS2022
+      MigrateTo: windows-2022
 - name: ShortForMigrateFrom
   type: string
   default: ''
 - name: ShortForMigrateTo
   type: string
   default: ''
-# The value here is github alias: e.g. sima-zhu
+# The value here is github alias: e.g. konrad-jamrozik
 # Users to assign to the PR after opening. Users should be a comma-separated list. e.g. "user1,usertwo,user3"
 - name: GithubAssignessAlias
   type: string

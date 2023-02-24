@@ -613,8 +613,9 @@ export class TestCodeModeler {
         for (const testResource of this.testConfig.getValue(Config.testResources)) {
             const testFile = typeof testResource === 'string' ? testResource : testResource[Config.test];
             try {
-                const loader = ApiScenarioLoader.create(this.createApiScenarioLoaderOption(fileRoot));
-                const testDef = (await loader.load(testFile)) as TestDefinitionModel;
+                const opts = this.createApiScenarioLoaderOption(fileRoot);
+                const loader = ApiScenarioLoader.create(opts);
+                const testDef = (await loader.load(testFile, opts.swaggerFilePaths)) as TestDefinitionModel;
                 this.initiateTestDefinition(session, testDef, codemodelRestCallOnly);
                 this.codeModel.testModel.scenarioTests.push(testDef);
             } catch (error) {
@@ -637,9 +638,10 @@ export class TestCodeModeler {
                         }
                         let scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
                         try {
-                            const loader = ApiScenarioLoader.create(this.createApiScenarioLoaderOption(fileRoot));
+                            const opts = this.createApiScenarioLoaderOption(fileRoot);
+                            const loader = ApiScenarioLoader.create(opts);
                             scenarioPathName = scenarioPathName.split('\\').join('/');
-                            const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
+                            const testDef = (await loader.load(scenarioPathName, opts.swaggerFilePaths)) as TestDefinitionModel;
 
                             this.initiateTestDefinition(session, testDef, codemodelRestCallOnly);
                             this.codeModel.testModel.scenarioTests.push(testDef);

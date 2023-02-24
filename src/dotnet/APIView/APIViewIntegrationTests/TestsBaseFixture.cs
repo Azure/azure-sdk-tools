@@ -11,12 +11,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Authorization;
 using Moq;
 using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 using System.Security.Claims;
-using SendGrid;
-using SendGrid.Helpers.Mail;
-using System.Threading;
 using Azure.Storage.Blobs.Models;
 using APIView.Identity;
 using APIViewWeb.Managers;
@@ -83,11 +79,7 @@ namespace APIViewIntegrationTests
             authorizationServiceMoq.Setup(_ => _.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<Object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
                 .ReturnsAsync(AuthorizationResult.Success);
 
-            var sendGridClientMock = new Mock<ISendGridClient>();
-            sendGridClientMock.Setup(_ => _.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Response(HttpStatusCode.OK, null, null));
-
-            var notificationManager = new NotificationManager(config, cosmosReviewRepository, cosmosUserProfileRepository, sendGridClientMock.Object);
+            var notificationManager = new NotificationManager(config, cosmosReviewRepository, cosmosUserProfileRepository);
 
             var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))

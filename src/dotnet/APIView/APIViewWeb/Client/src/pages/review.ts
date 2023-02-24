@@ -1,5 +1,5 @@
 import Split from "split.js";
-import { updatePageSettings } from "../shared/helpers";
+import { updatePageSettings, toggleCommentIcon } from "../shared/helpers";
 import { rightOffCanvasNavToggle } from "../shared/off-canvas";
 
 $(() => {  
@@ -71,14 +71,20 @@ $(() => {
     if (caretDirection.endsWith("right")) {
       // In case the section passed has already been replaced with more rows
       if (sectionContent.length == 1) {
-        var sectionContentClass = sectionContent[0].className.replace(/\s/g, '.');
+        const sectionContentClass = sectionContent[0].className.replace(/\s/g, '.');
+        const sectionCommentClass = sectionContentClass.replace("code-line.", "comment-row.");
         sectionContent = $(`.${sectionContentClass}`);
+        sectionContent.push(...$(`.${sectionCommentClass}`));
       }
 
       $.each(sectionContent, function (index, value) {
         let rowClasses = $(value).attr("class");
         if (rowClasses) {
-          if (rowClasses.match(/lvl_1_/)) { // Only show first level rows of the section
+          if (rowClasses.match(/lvl_1_/)) {
+            if (rowClasses.match(/comment-row/) && !$("#show-comments-checkbox").prop("checked")) {
+              toggleCommentIcon($(value).attr("data-line-id"), true);
+              return; // Dont show comment row if show comments setting is unchecked
+            }
             disableCommentsOnInRowTables($(value));
             $(value).removeClass("d-none");
             $(value).find("svg").attr("height", `${$(value).height()}`);
@@ -88,7 +94,6 @@ $(() => {
 
       // Update section heading icons to open state
       updateSectionHeadingIcons("OPEN", caretIcon, headingRow);
-
     }
     else {
       $.each(sectionContent, function (index, value) {
@@ -130,6 +135,11 @@ $(() => {
           // Show only immediate descendants
           if (startShowing) {
             if (rowClasses.match(new RegExp(`lvl_${Number(subSectionLevel) + 1}_`))) {
+              if (rowClasses.match(/comment-row/) && !$("#show-comments-checkbox").prop("checked")) {
+                toggleCommentIcon($(value).attr("data-line-id"), true);
+                return; // Dont show comment row if show comments setting is unchecked
+              }
+
               disableCommentsOnInRowTables($(value));
               $(value).removeClass("d-none");
               let rowHeight = $(value).height() ?? 0;

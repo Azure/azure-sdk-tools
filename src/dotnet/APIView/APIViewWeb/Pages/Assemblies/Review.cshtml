@@ -229,8 +229,7 @@
                 </ul>
             } 
         }
-        @if ((Model.Review.Language == "Swagger" || Model.Review.Language == "Cadl") && 
-            Model.Review.FilterType == ReviewType.PullRequest)
+        @if (Model.Review.FilterType == ReviewType.PullRequest)
         {
             var prsOfAssociatedReviews = await Model.GetPRsOfAssoicatedReviews();
             @if (prsOfAssociatedReviews != null && prsOfAssociatedReviews.Count() > 1)
@@ -254,7 +253,7 @@
                                 id = pr.ReviewId,
                             });
                             <li class="list-group-item">
-                                <a href="@url" target="_blank">@(pr.Language ?? pr.ReviewId)</a>
+                                <a href="@url" target="_blank">@pr.Language/@pr.PackageName</a>
                             </li>
                         }
                     }
@@ -268,7 +267,7 @@
             var reviewOptionsCollapseState = " show";
             if (Request.Cookies.ContainsKey("reviewOptionsCollapse"))
             {
-                if (Request.Cookies["reviewOptionsCollapse"].Equals("shown"))
+                if (!Request.Cookies["reviewOptionsCollapse"].Equals("shown"))
                     reviewOptionsCollapseState = String.Empty;
             }
         }

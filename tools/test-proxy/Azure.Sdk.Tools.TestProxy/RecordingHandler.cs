@@ -521,7 +521,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     if (i != chunks.Length - 1)
                     {
-                        Thread.Sleep(sleepLength);
+                        await Task.Delay(sleepLength);
                     }
                 }
 

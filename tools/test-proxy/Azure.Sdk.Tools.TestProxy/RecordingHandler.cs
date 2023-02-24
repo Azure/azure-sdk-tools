@@ -510,7 +510,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 int sleepLength = playbackResponseTime / batchCount;
 
                 byte[][] chunks = GetBatches(bodyData, batchCount);
-                int byteCountSent = 0;
 
                 for(int i = 0; i < chunks.Length; i++)
                 {

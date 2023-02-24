@@ -515,7 +515,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     var chunk = chunks[i];
 
-                    byteCountSent+= chunk.Length;
                     await outgoingResponse.Body.WriteAsync(chunk).ConfigureAwait(false);
 
                     if (i != chunks.Length - 1)

@@ -31,5 +31,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// Each certificate pair contained within this list should be added to the clientHandler for the server or an individual recording.
         /// </summary>
         public List<PemPair> Certificates { get; set; }
+
+        /// <summary>
+        /// During playback, a response is normally returned all at once. By offering this response time, we can
+        /// "stretch" the writing of the response bytes over a time range of milliseconds.
+        /// </summary>
+        public int PlaybackResponseTime { get; set; } = 0;
     }
 }

@@ -268,7 +268,10 @@ namespace Azure.Sdk.Tools.TestProxy
             if (entry.Response.Body?.Length > 0)
             {
                 var bodyData = CompressionUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
-                outgoingResponse.ContentLength = bodyData.Length;
+
+                if (entry.Response.Headers.ContainsKey("Content-Length")){
+                    outgoingResponse.ContentLength = bodyData.Length;
+                }
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
         }
@@ -464,8 +467,65 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 var bodyData = CompressionUtilities.CompressBody(match.Response.Body, match.Response.Headers);
 
-                outgoingResponse.ContentLength = bodyData.Length;
+                if (match.Response.Headers.ContainsKey("Content-Length"))
+                {
+                    outgoingResponse.ContentLength = bodyData.Length;
+                }
 
+                await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
+            }
+        }
+
+        public byte[][] GetBatches(byte[] bodyData, int batchCount)
+        {
+            if (bodyData.Length == 0 || bodyData.Length < batchCount)
+            {
+                var result = new byte[1][];
+                result[0] = bodyData;
+
+                return result;
+            }
+
+            int chunkLength = bodyData.Length / batchCount;
+            int remainder = (bodyData.Length % batchCount);
+            var batches = new byte[batchCount + (remainder > 0 ? 1 : 0)][];
+
+            for(int i = 0; i < batches.Length; i++)
+            {
+                var calculatedChunkLength = ((i == batches.Length - 1) && (batches.Length > 1) && (remainder > 0)) ? remainder : chunkLength;
+                var batch = new byte[calculatedChunkLength];
+                Array.Copy(bodyData, i * chunkLength, batch, 0, calculatedChunkLength);
+
+                batches[i] = batch;
+            }
+
+            return batches;
+        }
+
+        public async Task WriteBodyBytes(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
+        {
+            if (playbackResponseTime > 0)
+            {
+                int batchCount = 10;
+                int sleepLength = playbackResponseTime / batchCount;
+
+                byte[][] chunks = GetBatches(bodyData, batchCount);
+
+                for(int i = 0; i < chunks.Length; i++)
+                {
+                    var chunk = chunks[i];
+
+                    await outgoingResponse.Body.WriteAsync(chunk).ConfigureAwait(false);
+
+                    if (i != chunks.Length - 1)
+                    {
+                        await Task.Delay(sleepLength);
+                    }
+                }
+
+            }
+            else
+            {
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
         }
@@ -710,10 +770,25 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 var customizedClientHandler = GetTransport(customizations.AllowAutoRedirect, customizations);
 
-                RecordingSessions[sessionId].Client = new HttpClient(customizedClientHandler)
+                if (RecordingSessions.TryGetValue(sessionId, out var recordingSession))
                 {
-                    Timeout = timeoutSpan
-                };
+                    recordingSession.Client = new HttpClient(customizedClientHandler)
+                    {
+                        Timeout = timeoutSpan
+                    };
+                }
+
+                if (customizations.PlaybackResponseTime > 0)
+                {
+                    if (PlaybackSessions.TryGetValue(sessionId, out var playbackSession))
+                    {
+                        playbackSession.PlaybackResponseTime = customizations.PlaybackResponseTime;
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Unable to set a transport customization on a recording session that is not active. Id: \"{sessionId}\"");
+                    }
+                }
             }
             else
             {

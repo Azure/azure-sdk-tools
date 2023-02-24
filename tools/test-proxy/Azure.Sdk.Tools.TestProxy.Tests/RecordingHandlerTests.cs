@@ -779,6 +779,46 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(requestCount, session.Session.Entries.Count);
         }
 
+        #region ByteManipulation
+
+        private const string longBody = @"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
+            ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+            aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
+            eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
+            mollit anim id est laborum.";
+
+        [Theory]
+        [InlineData("", 1)]
+        [InlineData("small body", 5)]
+        [InlineData("this is a body", 3)]
+        [InlineData("This is a little bit longer of a body that we are dividing in 2", 2)]
+        [InlineData(longBody, 5)]
+        [InlineData(longBody, 1)]
+        [InlineData(longBody, 10)]
+        public void TestGetBatches(string input, int batchCount)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var bodyData = Encoding.UTF8.GetBytes(input);
+
+            var chunks = testRecordingHandler.GetBatches(bodyData, batchCount);
+
+            int bodyPosition = 0;
+
+            // ensure that all bytes are accounted for across the batches
+            foreach(var chunk in chunks)
+            {
+                for (int j = 0; j < chunk.Length; j++)
+                {
+                    Assert.Equal(chunk[j], bodyData[bodyPosition]);
+                    bodyPosition++;
+                }
+            }
+
+            Assert.Equal(bodyPosition, bodyData.Length);
+        }
+
+        #endregion
+
         #region SetRecordingOptions
         [Theory]
         [InlineData("{ \"HandleRedirects\": \"true\"}", true)]

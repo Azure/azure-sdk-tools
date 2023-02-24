@@ -17,7 +17,7 @@ from packaging.version import Version, InvalidVersion
 MANIFEST_LOCATION = "https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json"
 
 MAX_INSTALLER_RETRY = 3
-CURRENT_UBUNTU_VERSION = "20.04"  # full title is ubuntu-20.04
+CURRENT_UBUNTU_VERSION = "22.04"  # full title is ubuntu-20.04
 MAX_PRECACHED_VERSION = (
     "3.11.1"  # reference: https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2004-Readme.md#python
 )

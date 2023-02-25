@@ -99,9 +99,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var dllName = Path.GetFileNameWithoutExtension(project) + ".dll";
             var dllPath = Path.Combine(PublishDirectory, dllName);
 
-            var processArguments = $"{dllPath} {testName} {arguments}";
-
-            var result = await Util.RunAsync("dotnet", processArguments, WorkingDirectory, throwOnError: false);
+            var result = profile
+                ? await Util.RunAsync("dotnet-trace", $"collect --format NetTrace --show-child-io --output {GetProfileOutputFile(testName)} -- dotnet {dllPath} {testName} {arguments}", WorkingDirectory, throwOnError: false)
+                : await Util.RunAsync("dotnet", $"{dllPath} {testName} {arguments}", WorkingDirectory, throwOnError: false);
 
             // Completed 693,696 operations in a weighted-average of 1.00s (692,328.31 ops/s, 0.000 s/op)
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
@@ -120,6 +120,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 StandardOutput = result.StandardOutput,
             };
         }
+
+        private string GetProfileOutputFile(string testName)
+            => Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory), $"{testName}_{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.nettrace"));
 
         // === Versions ===
         // Runtime:         3.1.27

@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"golang.org/x/mod/modfile"
@@ -24,6 +25,9 @@ var indexTestdata bool
 // directory of all Azure SDK modules, which enables tests to
 // pass without the code below having to compute this directory
 var sdkDirName = "sdk"
+
+// versionReg is the regex for version part in import
+var versionReg = regexp.MustCompile(`/v\d+$|/v\d+/`)
 
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
@@ -81,7 +85,7 @@ func NewModule(dir string) (*Module, error) {
 			if !indexTestdata && strings.Contains(path, "testdata") {
 				return filepath.SkipDir
 			}
-			p, err := NewPkg(path, m.Name, mf.Module.Mod.Path)
+			p, err := NewPkg(path, mf.Module.Mod.Path)
 			if err == nil {
 				m.packages[baseImportPath+p.Name()] = p
 			} else if !errors.Is(err, ErrNoPackages) {
@@ -116,8 +120,8 @@ func NewModule(dir string) (*Module, error) {
 				if source, ok = externalPackages[impPath]; !ok && sdkRoot != "" {
 					// figure out a path to the package, index it
 					if _, after, found := strings.Cut(impPath, "azure-sdk-for-go/sdk/"); found {
-						p := filepath.Join(sdkRoot, after)
-						pkg, err := NewPkg(p, after, "github.com/Azure/azure-sdk-for-go/sdk/"+after)
+						p := filepath.Join(sdkRoot, strings.TrimSuffix(versionReg.ReplaceAllString(after, "/"), "/"))
+						pkg, err := NewPkg(p, "github.com/Azure/azure-sdk-for-go/sdk/"+after)
 						if err == nil {
 							pkg.Index()
 							externalPackages[impPath] = pkg

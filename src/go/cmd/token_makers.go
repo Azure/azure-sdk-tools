@@ -377,7 +377,7 @@ type SimpleType struct {
 	underlyingType string
 }
 
-func NewSimpleType(source Pkg, name, packageName, underlyingType string) SimpleType {
+func NewSimpleType(name, packageName, underlyingType string) SimpleType {
 	return SimpleType{id: packageName + "." + name, name: name, underlyingType: underlyingType}
 }
 
@@ -553,7 +553,7 @@ func parseAndMakeTypeToken(val string, list *[]Token) {
 }
 
 var keywords = []string{"interface", "map", "any", "func"}
-var internalTypes = []string{"bool", "uint8", "uint16", "uint32", "uint64", "uint", "int8", "int16", "int32", "int64", "int", "float32", "float64", "float", "complex64", "complex128", "complex", "byte", "rune", "string", "error", "uintptr", "nil"}
+var internalTypes = []string{"bool", "uint8", "uint16", "uint32", "uint64", "uint", "int8", "int16", "int32", "int64", "int", "float32", "float64", "complex64", "complex128", "byte", "rune", "string", "error", "uintptr", "nil"}
 
 func makeTypeSectionToken(section string, list *[]Token) {
 	switch {

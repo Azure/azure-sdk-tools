@@ -29,7 +29,7 @@ var ErrNoPackages = errors.New("no packages found")
 
 // Pkg represents a Go package.
 type Pkg struct {
-	ModulePath  string
+	modulePath  string
 	c           content
 	diagnostics []Diagnostic
 	files       map[string][]byte
@@ -49,22 +49,27 @@ type Pkg struct {
 
 // NewPkg loads the package in the specified directory.
 // It's required there is only one package in the directory.
-func NewPkg(dir, moduleName, modulePath string) (*Pkg, error) {
+func NewPkg(dir, modulePath string) (*Pkg, error) {
 	pk := &Pkg{
-		ModulePath:  modulePath,
+		modulePath:  modulePath,
 		c:           newContent(),
 		diagnostics: []Diagnostic{},
 		typeAliases: map[string]string{},
 		types:       map[string]typeDef{},
 	}
-	if _, after, found := strings.Cut(dir, filepath.Clean(moduleName)); found {
-		pk.relName = moduleName
-		if after != "" {
-			pk.relName += after
+	modulePathWithoutVersion := strings.TrimSuffix(versionReg.ReplaceAllString(modulePath, "/"), "/")
+	if _, after, found := strings.Cut(modulePathWithoutVersion, "azure-sdk-for-go/sdk/"); found {
+		if _, after, found := strings.Cut(dir, filepath.Clean(after)); found {
+			pk.relName = path.Base(modulePathWithoutVersion)
+			if after != "" {
+				pk.relName += after
+			}
+			pk.relName = strings.ReplaceAll(pk.relName, "\\", "/")
+		} else {
+			return nil, errors.New(dir + " isn't part of module " + modulePath)
 		}
-		pk.relName = strings.ReplaceAll(pk.relName, "\\", "/")
 	} else {
-		return nil, errors.New(dir + " isn't part of module " + moduleName)
+		return nil, errors.New(dir + " isn't part of module " + modulePath)
 	}
 	pk.files = map[string][]byte{}
 	pk.fs = token.NewFileSet()
@@ -167,7 +172,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 				if ident, ok := t.X.(*ast.Ident); ok {
 					if impPath, ok := imports[ident.Name]; ok {
 						// alias in the same module could use type navigator directly
-						if _, _, found := strings.Cut(impPath, p.ModulePath); found && !strings.Contains(impPath, "internal") {
+						if _, _, found := strings.Cut(impPath, p.modulePath); found && !strings.Contains(impPath, "internal") {
 							expr := p.getText(t.Pos(), t.End())
 							p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr, imports)
 						} else {
@@ -282,8 +287,8 @@ func (pkg Pkg) addTypeNavigator(oriVal string, imports map[string]string) string
 			// find exact import path of a type
 			if impPath, ok := imports[splits[0]]; ok {
 				// judge if import path is in the module
-				if _, after, found := strings.Cut(impPath, pkg.ModulePath); found {
-					return fmt.Sprintf("<%s.%s>%s", path.Base(pkg.ModulePath)+after, splits[1], oriVal)
+				if _, after, found := strings.Cut(impPath, pkg.modulePath); found {
+					return fmt.Sprintf("<%s.%s>%s", path.Base(pkg.modulePath)+after, splits[1], oriVal)
 				}
 			}
 			return oriVal

@@ -56,7 +56,8 @@ func (c content) isEmpty() bool {
 	return len(c.Consts)+len(c.Funcs)+len(c.Interfaces)+len(c.SimpleTypes)+len(c.Structs)+len(c.Vars) == 0
 }
 
-// adds const and var declaration to the exports list
+// addGenDecl adds const and var declaration to the exports list
+// The imports map stores the key value pair for package imports which will be used to identify types.
 func (c *content) addGenDecl(pkg Pkg, tok token.Token, vs *ast.ValueSpec, imports map[string]string) Declaration {
 	if len(vs.Values) > 0 {
 		v := getExprValue(pkg, vs.Values[0])
@@ -208,7 +209,8 @@ func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
 	}
 }
 
-// adds the specified function declaration to the exports list
+// addFunc adds the specified function declaration to the exports list
+// The imports map stores the key value pair for package imports which will be used to identify types.
 func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl, imports map[string]string) Func {
 	fn := NewFunc(pkg, f, imports)
 	name := fn.Name()
@@ -223,13 +225,16 @@ func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl, imports map[string]string) F
 	return fn
 }
 
+// addSimpleType adds the specified simple type declaration to the exports list
+// The imports map stores the key value pair for package imports which will be used to identify types.
 func (c *content) addSimpleType(pkg Pkg, name, packageName string, underlyingType string, imports map[string]string) SimpleType {
-	t := NewSimpleType(pkg, name, packageName, pkg.translateType(underlyingType, imports))
+	t := NewSimpleType(name, packageName, pkg.translateType(underlyingType, imports))
 	c.SimpleTypes[name] = t
 	return t
 }
 
-// adds the specified interface type to the exports list.
+// addInterface adds the specified interface type to the exports list.
+// The imports map stores the key value pair for package imports which will be used to identify types.
 func (c *content) addInterface(source Pkg, name, packageName string, i *ast.InterfaceType, imports map[string]string) Interface {
 	in := NewInterface(source, name, packageName, i, imports)
 	c.Interfaces[name] = in
@@ -250,7 +255,8 @@ func (c *content) parseInterface(tokenList *[]Token) {
 	}
 }
 
-// adds the specified struct type to the exports list.
+// addStruct adds the specified struct type to the exports list.
+// The imports map stores the key value pair for package imports which will be used to identify types.
 func (c *content) addStruct(source Pkg, name, packageName string, ts *ast.TypeSpec, imports map[string]string) Struct {
 	s := NewStruct(source, name, packageName, ts, imports)
 	c.Structs[name] = s

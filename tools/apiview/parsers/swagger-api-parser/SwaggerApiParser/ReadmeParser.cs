@@ -54,8 +54,8 @@ public class ReadmeParser
             readmeTag = parser.basicConfig.tag;
         }
 
-        parser.inputSwaggerFilesMap.TryGetValue(readmeTag, out InputSwaggerFiles ret);
-        return ret != null ? ret.input : new List<string>();
+        parser.inputSwaggerFilesMap.TryGetValue(readmeTag, out InputSwaggerFiles inputFiles);
+        return inputFiles?.input ?? Enumerable.Empty<string>();
     }
     private void ParseReadmeConfig()
     {
@@ -93,6 +93,8 @@ public class ReadmeParser
                 }
 
                 var tag = ReadmeParser.GetTagFromYamlArguments(argument);
+
+                inputSwaggerFiles.input?.Sort(StringComparer.InvariantCultureIgnoreCase);
                 inputSwaggerFilesMap.Add(tag, inputSwaggerFiles);
             }
         }

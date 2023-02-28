@@ -7,6 +7,7 @@ using APIView;
 using APIViewWeb.Models;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb
 {
@@ -29,7 +30,7 @@ namespace APIViewWeb
             Navigation = new NavigationItem[] { new NavigationItem() { Text = fileName } }
         };
 
-        public static string[] SupportedLanguages = new string[] { "C", "C++", "C#", "Cadl", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Swagger", "Swift", "Xml" };
+        public static string[] SupportedLanguages = LanguageServiceHelpers.SupportedLanguages;
 
         public virtual bool GeneratePipelineRunParams(ReviewGenPipelineParamModel param) => true;
 

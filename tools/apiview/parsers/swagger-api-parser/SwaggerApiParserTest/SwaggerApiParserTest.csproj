@@ -25,5 +25,8 @@
     <ItemGroup>
       <Content Include="fixtures/**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
+    <ItemGroup>
+      <None Remove="fixtures\unordered.md" />
+    </ItemGroup>
 
 </Project>

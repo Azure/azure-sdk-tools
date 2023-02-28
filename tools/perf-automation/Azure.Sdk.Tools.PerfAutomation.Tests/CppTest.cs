@@ -247,8 +247,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                     "testName",
                     "arguments",
                     true,
-                    "exe",
-                    "profilerOptions");
+                    "profilerOptions",
+                    "exe");
                 Assert.Fail();
             }
             catch (InvalidOperationException)
@@ -271,12 +271,12 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                 "project",
                 "languageVersion",
                 "primaryPackage",
-                new Dictionary<string,string>(),
+                new Dictionary<string, string>(),
                 "testName",
                 "arguments",
                 false,
-                "exe",
-                "profilerOptions");
+                "profilerOptions",
+                "exe");
 
             Assert.AreEqual(result.StandardOutput, "output (2.0 ops/s, 1.0 s/op)");
             Assert.AreEqual(result.StandardError, "error");
@@ -314,8 +314,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                 "testName",
                 "arguments",
                 true,
-                "exe",
-                "profilerOptions");
+                "profilerOptions",
+                "exe");
 
             Assert.AreEqual(result.StandardOutput, "output (2.0 ops/s, 1.0 s/op)");
             Assert.AreEqual(result.StandardError, "error");
@@ -354,8 +354,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                 "testName",
                 "arguments",
                 false,
-                "exe",
-                "profilerOptions");
+                "profilerOptions",
+                "exe");
 
             Assert.AreEqual(result.StandardOutput, "output (2.0 ops/s, 1.0 s/op)");
             Assert.AreEqual(result.StandardError, "error");

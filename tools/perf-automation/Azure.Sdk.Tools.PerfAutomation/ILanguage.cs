@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
-            object context,
-            string profilerOptions);
+            string profilerOptions,
+            object context);
     }
 }

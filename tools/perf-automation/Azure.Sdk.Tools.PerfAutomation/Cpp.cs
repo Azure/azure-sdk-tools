@@ -310,7 +310,5 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             return updated;
         }
-
-
     }
 }

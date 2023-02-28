@@ -60,6 +60,27 @@ namespace APIViewUITests
             _ = _blobOriginalContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
             _ = _blobUsageSampleRepository.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
             _ = _blobCommentsRepository.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
+
+            // Upload Reviews Automatically
+            var cSharpFileName = $"azure.identity.1.9.0-beta.1.nupkg";
+            var cSharpFilePath = Path.Combine(_testPkgsPath, cSharpFileName);
+            Task.Run(() => SubmitAPIReview(cSharpFileName, cSharpFilePath, this._uri, "Auto Review - Test")).Wait();
+        }
+
+        private async Task SubmitAPIReview(string packageName, string filePath, string uri, string apiLabel)
+        {
+            using (var multiPartFormData = new MultipartFormDataContent())
+            {
+                var fileInfo = new FileInfo(filePath);
+                var fileStreamContent = new StreamContent(File.OpenRead(filePath));
+                fileStreamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                multiPartFormData.Add(fileStreamContent, name: "file", fileName: packageName);
+                var stringContent = new StringContent(apiLabel);
+                multiPartFormData.Add(stringContent, name: "label");
+
+                var response = await _httpClient.PostAsync(uri, multiPartFormData);
+                response.EnsureSuccessStatusCode();
+            }
         }
 
         public void Dispose()
@@ -73,6 +94,7 @@ namespace APIViewUITests
             _blobCommentsRepository.DeleteIfExists();
         }
     }
+
     public class SmokeTests : IClassFixture<SmokeTestsFixture>
     {
         SmokeTestsFixture _fixture;
@@ -89,8 +111,6 @@ namespace APIViewUITests
             var pkgName = "azure.identity";
             var fileAName = $"{pkgName}.1.8.0.nupkg";
             var fileAPath = Path.Combine(_fixture._testPkgsPath, fileAName);
-            var fileBName = $"{pkgName}.1.9.0-beta.1.nupkg";
-            var fileBPath = Path.Combine(_fixture._testPkgsPath, fileBName);
 
             // Test Manual Upload
             using (IWebDriver driver = new ChromeDriver())
@@ -110,7 +130,6 @@ namespace APIViewUITests
             }
 
             // Test Auto Upload
-            await SubmitAPIReview(fileBName, fileBPath, _fixture._uri, "Auto Review - Test");
             using (IWebDriver driver = new ChromeDriver())
             {
                 driver.Manage().Window.Maximize();
@@ -144,26 +163,57 @@ namespace APIViewUITests
             }
         }
 
+        [Fact]
+        public async Task SmokeTest_Request_Reviewers()
+        {
+            using (IWebDriver driver = new ChromeDriver())
+            {
+                driver.Manage().Window.Maximize();
+                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(WaitTime);
+                driver.Navigate().GoToUrl(_fixture._endpoint);
+
+                // Select C# language
+                var languageSelector = driver.FindElement(By.Id("language-filter-select"));
+                var languageSelectElement = new SelectElement(languageSelector);
+                languageSelectElement.SelectByText("C#");
+                var reviewNames = driver.FindElements(By.ClassName("review-name"));
+                Assert.Equal("Reviews - apiview.dev", driver.Title);
+
+                reviewNames[0].Click();
+                PageErrorAssertion(driver);
+
+                var requestReviewersCollapse = driver.FindElement(By.Id("requestReviewersCollapse"));
+                if (!requestReviewersCollapse.GetAttribute("class").Contains(" show"))
+                {
+                    var requestReviewersCollapseTrigger = driver.FindElement(By.XPath("//a[@href='#requestReviewersCollapse']"));
+                    requestReviewersCollapseTrigger.Click();
+                }
+
+                var possibleReviwers = driver.FindElements(By.XPath("//ul[@id='requestReviewersCollapse']/form/li/ul/li[@class='list-group-item']/div/input"));
+
+                foreach(var reviewer in possibleReviwers)
+                {
+                    Assert.False(reviewer.Selected);
+                    reviewer.Click();
+                    Assert.True(reviewer.Selected);
+                }
+
+                driver.FindElement(By.Id("submitReviewRequest")).Click();
+                driver.Navigate().Refresh();
+
+                possibleReviwers = driver.FindElements(By.XPath("//ul[@id='requestReviewersCollapse']/form/li/ul/li[@class='list-group-item']/div/input"));
+                foreach (var reviewer in possibleReviwers)
+                {
+                    Assert.True(reviewer.Selected);
+                }
+            }
+        }
+
         private void PageErrorAssertion(IWebDriver driver)
         {
             Assert.NotEqual("Error - apiview.dev", driver.Title);
             Assert.NotEqual("Internal Server Error", driver.Title);
-        }
-
-        private async Task SubmitAPIReview(string packageName, string filePath, string uri, string apiLabel)
-        {
-            using (var multiPartFormData = new MultipartFormDataContent())
-            {
-                var fileInfo = new FileInfo(filePath);
-                var fileStreamContent = new StreamContent(File.OpenRead(filePath));
-                fileStreamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                multiPartFormData.Add(fileStreamContent, name: "file", fileName: packageName);
-                var stringContent = new StringContent(apiLabel);
-                multiPartFormData.Add(stringContent, name: "label");
-
-                var response = await _fixture._httpClient.PostAsync(uri, multiPartFormData);
-                response.EnsureSuccessStatusCode();
-            }
         }
 
         [Fact(Skip = "Test is too Flaky")]

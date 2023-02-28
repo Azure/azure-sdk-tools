@@ -160,49 +160,49 @@
             @{
                 var anyChecked = false;
             }
-            <li class="list-group-item">
-                <form asp-resource="@Model.Review" asp-page-handler="RequestReviewers" method="post">
-                    <ul class="list-group list-group-flush">
-                        @foreach (var approver in Model.PreferredApprovers)
+            <form asp-resource="@Model.Review" asp-page-handler="RequestReviewers" method="post">
+                <li class="list-group-item">
+                
+                        <ul class="list-group list-group-flush">
+                            @foreach (var approver in Model.PreferredApprovers)
+                            {
+                                <li class="list-group-item">
+                                    <div class="form-check">
+                                        @if (Model.Review.RequestedReviewers != null && Model.Review.RequestedReviewers.Contains(approver))
+                                        {
+                                            <input class="form-check-input selectReviewerForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox" checked>
+                                            <label class="form-check-label" for="@(approver)CheckBox">
+                                                <img username="@approver" size="28" width="28" class="comment-icon align-self-start mr-2" />
+                                                @approver
+                                            </label>
+                                            anyChecked = true;
+                                        }
+                                        else
+                                        {
+                                    <input class="form-check-input selectReviewerForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox">
+                                            <label class="form-check-label" for="@(approver)CheckBox">
+                                                <img username="@approver" size="28" width="28" class="comment-icon align-self-start mr-2" />
+                                                @approver
+                                            </label>
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                <li class="list-group-item">
+                    <span>
+                        @if (anyChecked)
                         {
-                            <li class="list-group-item">
-                                <div class="form-check">
-                                    @if (Model.Review.RequestedReviewers != null && Model.Review.RequestedReviewers.Contains(approver))
-                                    {
-                                        <input class="form-check-input selectDropdownForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox" checked>
-                                        <label class="form-check-label" for="@(approver)CheckBox">
-                                            <img username="@approver" size="28" width="28" class="comment-icon align-self-start mr-2" />
-                                            @approver
-                                        </label>
-                                        anyChecked = true;
-                                    }
-                                    else
-                                    {
-                                        <input class="form-check-input selectDropdownForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox">
-                                        <label class="form-check-label" for="@(approver)CheckBox">
-                                            <img username="@approver" size="28" width="28" class="comment-icon align-self-start mr-2" />
-                                            @approver
-                                        </label>
-                                    }
-                                </div>
-                            </li>
+                            <button class="btn btn-sm btn-outline-primary" id="submitReviewRequest" onclick="document.getElementById('submitRequestForReview').click()" disabled>Request Selected</button>
                         }
-                    </ul>
-                </form>
-            </li>
-            <li class="list-group-item">
-                <span>
-                    @if (anyChecked)
-                    {
-                        <button class="btn btn-sm btn-outline-primary" id="submitReviewRequest" onclick="document.getElementById('submitRequestForReview').click()" disabled>Request Selected</button>
-                    }
-                    else
-                    {
-                        <button class="btn btn-sm btn-outline-primary" id="submitReviewRequest" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitRequestForReview').click();">Request All</button>
-                    }
-                    <button type="submit" id="submitRequestForReview" hidden></button>
-                </span>
-            </li>
+                        else
+                        {
+                            <button class="btn btn-sm btn-outline-primary" id="submitReviewRequest" onclick="var r = document.getElementsByName('reviewers'); r.forEach((e) => e.checked = true); document.getElementById('submitRequestForReview').click();">Request All</button>
+                        }
+                        <button type="submit" id="submitRequestForReview" hidden></button>
+                    </span>
+                </li>
+            </form>
         </ul>
         @if (Model.Review.FilterType == ReviewType.PullRequest)
         {

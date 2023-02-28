@@ -440,7 +440,7 @@ $(() => {
   
   /* BUTTON FOR REQUEST REVIEW (CHANGES BETWEEN REQUEST ALL AND REQUEST SELECTED IN THE REQUEST APPROVAL SECTION)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  $('.selectDropdownForRequest').on("click", function () {
+  $('.selectReviewerForRequest').on("click", function () {
     var reviewers = document.getElementsByName('reviewers');
     var button = document.getElementById('submitReviewRequest') as HTMLInputElement | null;
     var anyChecked = false;

@@ -27,7 +27,7 @@ jobs:
   - script: >
       dotnet tool install
       Azure.Sdk.Tools.SwaggerApiParser
-      --version 1.0.7-dev.20230211.1
+      --version 1.0.7-dev.20230227.3
       --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
       --tool-path $(SwaggerParserInstallPath)
     workingDirectory: $(SwaggerParserInstallPath)

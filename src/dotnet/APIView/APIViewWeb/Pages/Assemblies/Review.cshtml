@@ -73,16 +73,16 @@
                     {
                         @if (Model.Revision.Approvers.Contains(User.GetGitHubLogin()))
                         {
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-outline-secondary" disabled data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
+                            <div class="d-grid gap-2" data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
+                                <button type="submit" class="btn btn-outline-secondary" disabled >
                                     Revert API Approval
                                 </button>
                             </div>
                         }
                         else
                         {
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-outline-secondary" disabled data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
+                            <div class="d-grid gap-2" data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
+                                <button type="submit" class="btn btn-outline-secondary" disabled>
                                     Approve API
                                 </button>
                             </div>

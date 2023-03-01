@@ -287,8 +287,10 @@ stages:
           parameters:
             RepoOwner: Microsoft
         - ${{ if and( parameters.IncludeCpp, parameters.Profile ) }}:
-            displayName: Install profiler tools for cpp
-            script: "sudo apt install valgrind -y"
+          - task: bash
+            displayName: 'Install cpp profiler'
+            inputs:
+              script: 'sudo apt install valgrind -y'
         ServiceDirectory: ${{ parameters.CppServiceDirectory }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}

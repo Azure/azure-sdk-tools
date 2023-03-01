@@ -15,7 +15,7 @@ pool:
   vmImage: MMSUbuntu22.04
 
 variables:
-  NodeVersion: '16.x'
+  NodeVersion: '18.x'
 
 jobs:
 - job: CreateSwaggerReviewCodeFile

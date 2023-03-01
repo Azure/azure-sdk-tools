@@ -77,31 +77,9 @@ $(() => {
     });
   }
 
-  // Fetches data for populating dropdown options
-  function updateFilterDropDown(filter, query)
-  {
-    var uri = `?handler=reviews${query}`;
-    var urlParams = new URLSearchParams(location.search);
-    if (urlParams.has(query))
-    {
-      urlParams.getAll(query).forEach(function(value, index) {
-        uri = uri + `&selected${query}=` + encodeURIComponent(value);
-      });
-    }
-    $.ajax({
-      url: uri
-    }).done(function(partialViewResult) {
-      filter.html(partialViewResult);
-      (<any>filter).SumoSelect({
-        selectAll: true,
-        captionFormat: '{0} languages Selected'
-      });
-    });
-  }
-
   // Fetch content of dropdown on page load
   $(document).ready(function() {
-    updateFilterDropDown(languageFilter, "languages"); // Pulls languages data from DB
+    (<any>languageFilter).SumoSelect({ selectAll: true });
     (<any>stateFilter).SumoSelect({ selectAll: true });
     (<any>statusFilter).SumoSelect({ selectAll: true });
     (<any>typeFilter).SumoSelect({ selectAll: true });

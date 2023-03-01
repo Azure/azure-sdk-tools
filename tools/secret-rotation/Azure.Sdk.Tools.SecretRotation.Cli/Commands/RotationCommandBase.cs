@@ -1,9 +1,11 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using Azure.Identity;
+using Azure.Sdk.Tools.SecretRotation.Azure;
 using Azure.Sdk.Tools.SecretRotation.Configuration;
 using Azure.Sdk.Tools.SecretRotation.Core;
 using Azure.Sdk.Tools.SecretRotation.Stores.AzureActiveDirectory;
+using Azure.Sdk.Tools.SecretRotation.Stores.AzureAppService;
 using Azure.Sdk.Tools.SecretRotation.Stores.AzureDevOps;
 using Azure.Sdk.Tools.SecretRotation.Stores.Generic;
 using Azure.Sdk.Tools.SecretRotation.Stores.KeyVault;
@@ -68,8 +70,11 @@ public abstract class RotationCommandBase : Command
             [KeyVaultSecretStore.MappingKey] = KeyVaultSecretStore.GetSecretStoreFactory(tokenCredential, logger),
             [KeyVaultCertificateStore.MappingKey] = KeyVaultCertificateStore.GetSecretStoreFactory(tokenCredential, logger),
             [ManualActionStore.MappingKey] = ManualActionStore.GetSecretStoreFactory(logger, new ConsoleValueProvider()),
+            [ServiceAccountPersonalAccessTokenStore.MappingKey] = ServiceAccountPersonalAccessTokenStore.GetSecretStoreFactory(tokenCredential, new SecretProvider(logger), logger),
             [ServiceConnectionParameterStore.MappingKey] = ServiceConnectionParameterStore.GetSecretStoreFactory(tokenCredential, logger),
-            [AadApplicationSecretStore.MappingKey] = AadApplicationSecretStore.GetSecretStoreFactory(tokenCredential, logger)
+            [AadApplicationSecretStore.MappingKey] = AadApplicationSecretStore.GetSecretStoreFactory(tokenCredential, logger),
+            [AzureWebsiteStore.MappingKey] = AzureWebsiteStore.GetSecretStoreFactory(tokenCredential, logger),
+            [AadApplicationSecretStore.MappingKey] = AadApplicationSecretStore.GetSecretStoreFactory(tokenCredential, logger),
         };
     }
 }

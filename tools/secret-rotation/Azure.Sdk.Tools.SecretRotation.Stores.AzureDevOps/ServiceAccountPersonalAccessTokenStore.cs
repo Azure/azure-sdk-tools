@@ -180,22 +180,22 @@ public class ServiceAccountPersonalAccessTokenStore : SecretStore
                     "WHAT IF: Remove PAT with authorization id '{AuthorizationId}' from '{OrganizationUrl}'",
                     authorizationId,
                     $"https://dev.azure.com/{this.organization}");
+
+                return;
             }
-            else
+
+            try
             {
-                try
-                {
-                    this.logger.LogInformation(
-                        "Removing PAT with authorization id '{AuthorizationId}' from '{OrganizationUrl}'",
-                        authorizationId,
-                        $"https://dev.azure.com/{this.organization}");
-                    
-                    await client.RevokeAsync(authorizationId);
-                }
-                catch (SessionTokenNotFoundException)
-                {
-                    // ignore "not found" exception on delete
-                }
+                this.logger.LogInformation(
+                    "Removing PAT with authorization id '{AuthorizationId}' from '{OrganizationUrl}'",
+                    authorizationId,
+                    $"https://dev.azure.com/{this.organization}");
+
+                await client.RevokeAsync(authorizationId);
+            }
+            catch (SessionTokenNotFoundException)
+            {
+                // ignore "not found" exception on delete
             }
         };
     }

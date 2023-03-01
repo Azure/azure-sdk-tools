@@ -59,7 +59,7 @@ stages:
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
         - script: |
-            docker login -u $(DockerUserName) -p $(DockerPassWord)
+            docker login -u $(DockerUserName) -p $(DockerPassword)
             docker push ${{ parameters.dockerImage }}
           displayName: 'Publish docker image'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline

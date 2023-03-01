@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.SecretRotation.Core;
+namespace Azure.Sdk.Tools.SecretRotation.Core;
 
 public abstract class SecretStore
 {
@@ -12,7 +12,15 @@ public abstract class SecretStore
 
     public virtual bool CanRevoke => false;
 
-    public string? Name { get; set; }
+    public virtual string? Name { get; set; }
+
+    public virtual bool UpdateAfterPrimary { get; set; }
+
+    public virtual bool IsPrimary { get; set; }
+
+    public virtual bool IsOrigin { get; set; }
+
+
 
     // Read
 

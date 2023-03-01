@@ -27,7 +27,7 @@ public class RotationConfigurationTests
     [Test]
     public void LoadFrom_ValidPath_ReturnConfiguration()
     {
-        string validPath = TestFiles.ResolvePath("TestConfigurations/valid/random-string.json");
+        string validPath = TestFiles.ResolvePath("TestConfigurations/Valid/random-string.json");
         var storeFactories = new Dictionary<string, Func<StoreConfiguration, SecretStore>>();
 
         // Act
@@ -39,7 +39,7 @@ public class RotationConfigurationTests
     [Test]
     public void GetPlan_ValidConfiguration_ReturnsPlan()
     {
-        string configurationPath = TestFiles.ResolvePath("TestConfigurations/valid/random-string.json");
+        string configurationPath = TestFiles.ResolvePath("TestConfigurations/Valid/random-string.json");
 
         var storeFactories = new Dictionary<string, Func<StoreConfiguration, SecretStore>>
         {

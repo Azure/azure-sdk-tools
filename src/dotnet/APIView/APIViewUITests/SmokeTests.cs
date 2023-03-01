@@ -64,10 +64,10 @@ namespace APIViewUITests
             // Upload Reviews Automatically
             var cSharpFileName = $"azure.identity.1.9.0-beta.1.nupkg";
             var cSharpFilePath = Path.Combine(_testPkgsPath, cSharpFileName);
-            Task.Run(() => SubmitAPIReview(cSharpFileName, cSharpFilePath, this._uri, "Auto Review - Test")).Wait();
+            SubmitAPIReview(cSharpFileName, cSharpFilePath, this._uri, "Auto Review - Test");
         }
 
-        private async Task SubmitAPIReview(string packageName, string filePath, string uri, string apiLabel)
+        private void SubmitAPIReview(string packageName, string filePath, string uri, string apiLabel)
         {
             using (var multiPartFormData = new MultipartFormDataContent())
             {
@@ -78,8 +78,8 @@ namespace APIViewUITests
                 var stringContent = new StringContent(apiLabel);
                 multiPartFormData.Add(stringContent, name: "label");
 
-                var response = await _httpClient.PostAsync(uri, multiPartFormData);
-                response.EnsureSuccessStatusCode();
+                var response = _httpClient.PostAsync(uri, multiPartFormData);
+                response.Result.EnsureSuccessStatusCode();
             }
         }
 
@@ -106,7 +106,7 @@ namespace APIViewUITests
         }
 
         [Fact]
-        public async Task SmokeTest_CSharp()
+        public void SmokeTest_CSharp()
         {
             var pkgName = "azure.identity";
             var fileAName = $"{pkgName}.1.8.0.nupkg";
@@ -163,8 +163,13 @@ namespace APIViewUITests
             }
         }
 
+<<<<<<< HEAD
         [Fact(Skip = "Test is too Flaky")]
         public async Task SmokeTest_Request_Reviewers()
+=======
+        [Fact]
+        public void SmokeTest_Request_Reviewers()
+>>>>>>> de0f9c93 (Resolve error in UI Test)
         {
             using (IWebDriver driver = new ChromeDriver())
             {

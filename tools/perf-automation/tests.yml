@@ -286,6 +286,9 @@ stages:
         - template: /eng/pipelines/templates/steps/vcpkg-clone.yml@azure-sdk-for-cpp
           parameters:
             RepoOwner: Microsoft
+        - ${{ if and( parameters.IncludeCpp, parameters.Profile ) }}:
+            displayName: Install profiler tools for cpp
+            script: "sudo apt install valgrind -y"
         ServiceDirectory: ${{ parameters.CppServiceDirectory }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}
@@ -293,10 +296,7 @@ stages:
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
         AdditionalArguments: ${{ parameters.AdditionalArguments }}
-        InstallProfiler:
-        - ${{ if and( parameters.IncludeCpp, parameters.Profile ) }}:
-            displayName: Install profiler tools for cpp
-            script: "sudo apt install valgrind -y"
+        
 
 
 - stage: Print_Results

@@ -20,6 +20,9 @@ public class StoreConfiguration
     [JsonPropertyName("name")] 
     public string? Name { get; set; }
 
+    [JsonPropertyName("updateAfterPrimary")]
+    public bool UpdateAfterPrimary { get; set; }
+
     public string ResolveStoreName(string configurationKey)
     {
         return Name ?? $"{configurationKey} ({Type})";

@@ -219,7 +219,7 @@ public class ServiceAccountPersonalAccessTokenStore : SecretStore
 
         VssCredentials vssCredentials = await GetVssCredentials(serviceAccountCredential);
 
-        var connection = new VssConnection(new Uri($"https://vssps.dev.azure.com/{organization}"), vssCredentials);
+        var connection = new VssConnection(new Uri($"https://vssps.dev.azure.com/{this.organization}"), vssCredentials);
 
         await connection.ConnectAsync();
 

@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using Azure.Sdk.Tools.SecretRotation.Core;
 using Microsoft.Extensions.Logging;
 
@@ -219,21 +219,18 @@ public class RotationConfiguration
             AddCapabilityError(validationErrors, store, nameof(store.CanRead), "Primary");
         }
 
-        if (storeConfiguration.IsOrigin)
+        bool mustAnnotateCompletion = storeConfiguration.IsOrigin ||
+            planConfiguration.StoreConfigurations.Any(x => x.UpdateAfterPrimary);
+
+        if (mustAnnotateCompletion && !store.CanAnnotate)
         {
-            // An origin primary must support post-rotation annotation
-            if (!store.CanAnnotate)
-            {
-                AddCapabilityError(validationErrors, store, nameof(store.CanAnnotate), "Primary + Origin");
-            }
+            AddCapabilityError(validationErrors, store, nameof(store.CanAnnotate), "Primary");
         }
-        else
+
+        if (!storeConfiguration.IsOrigin && !store.CanWrite)
         {
             // A non origin primary has to support Write because it doesn't originate values
-            if (!store.CanWrite)
-            {
-                AddCapabilityError(validationErrors, store, nameof(store.CanWrite), "Primary");
-            }
+            AddCapabilityError(validationErrors, store, nameof(store.CanWrite), "Primary");
         }
 
         return store;
@@ -271,6 +268,9 @@ public class RotationConfiguration
             SecretStore store = factory.Invoke(storeConfiguration);
 
             store.Name = storeName;
+            store.UpdateAfterPrimary = storeConfiguration.UpdateAfterPrimary;
+            store.IsOrigin = storeConfiguration.IsOrigin;
+            store.IsPrimary = storeConfiguration.IsPrimary;
 
             return store;
         }

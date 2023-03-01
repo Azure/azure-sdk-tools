@@ -89,7 +89,7 @@ internal class Program
             if (!File.Exists(swaggerFilePath))
             {
                 // Suppressing this error when swagger file is missing or path is incorrect
-                // Ideally any incorrect path to swagger file reference in README should be caught by validation tool
+                // Ideally any incorrect swagger file path reference in README should be caught by validation tool
                 Console.WriteLine($"Invalid file path to swagger file. Skipping {swaggerFilePath}.");
                 continue;
             }

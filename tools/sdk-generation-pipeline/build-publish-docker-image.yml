@@ -7,6 +7,10 @@ parameters:
     displayName: Docker Image
     type: string
     default: sdkgeneration.azurecr.io/sdk-generation:beta-1.0
+  - name: dockerContainerRegistry
+    displayName: Docker Container Registry
+    type: string
+    default: sdkgeneration.azurecr.io
 
 variables:
   - template: ../../eng/pipelines/templates/variables/globals.yml
@@ -59,7 +63,7 @@ stages:
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
         - script: |
-            docker login -u $(DockerUserName) -p $(DockerPassword)
+            docker login -u $(DockerUserName) -p $(DockerPassword) ${{ parameters.dockerContainerRegistry }}
             docker push ${{ parameters.dockerImage }}
           displayName: 'Publish docker image'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline

@@ -293,9 +293,9 @@ stages:
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
         InstallValgrind:
-        - ${{ if parameters.Profile }}:
-          - bash: | 
-              sudo apt install valgrind -y
+          - ${{ if parameters.Profile }}:
+            - bash: | 
+                sudo apt install valgrind -y
             displayName: 'Install valgrind'
             workingDirectory: '$(Build.SourcesDirectory)/sdk'
         AdditionalArguments: ${{ parameters.AdditionalArguments }}

@@ -265,14 +265,15 @@ stages:
         Profile: ${{ parameters.Profile }}
         AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
+  #- ${{ if parameters.IncludeCpp }}:
+  #  - ${{ if parameters.Profile }}:      
+      
+
   - ${{ if parameters.IncludeCpp }}:
-    - ${{ if parameters.Profile }}:      
-      - bash: | 
+    - bash: | 
           sudo apt install valgrind -y
       displayName: 'Install valgrind'
       workingDirectory: '$(Build.SourcesDirectory)/sdk'
-
-  - ${{ if parameters.IncludeCpp }}:
     - template: /eng/common/pipelines/templates/jobs/perf.yml
       parameters:
         JobName: 'Perf_Cpp'

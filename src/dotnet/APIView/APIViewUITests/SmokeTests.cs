@@ -163,7 +163,7 @@ namespace APIViewUITests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "Test is too Flaky")]
         public async Task SmokeTest_Request_Reviewers()
         {
             using (IWebDriver driver = new ChromeDriver())

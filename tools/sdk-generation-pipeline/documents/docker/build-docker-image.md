@@ -1,4 +1,5 @@
-If you want to rebuild the docker image, you only can do it in your local. It's suggested to create a release pipeline to build it. (We don't do it because sometimes it will be timeout because the pipeline costs much time in building docker image, but now the agent pool should be very quick and can build the docker image quickly.)
+If you want to rebuild the docker image, you only can do it in your local. It's suggested to create a release pipeline to build it. (Previously we find that sometimes it will be timeout because the pipeline costs much time in building and pushing docker image, but now the agent pool should be very fast.)
+
 Steps to rebuild the docker image:
 1. `cd tools/sdk-generation-pipeline`
 2. `rush update`

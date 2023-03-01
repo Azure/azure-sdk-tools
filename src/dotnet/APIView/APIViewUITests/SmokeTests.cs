@@ -23,6 +23,7 @@ namespace APIViewUITests
         internal readonly string _uri;
         internal readonly string _testPkgsPath;
         internal readonly string _endpoint;
+        internal readonly ChromeOptions _chromeOptions;
         private readonly CosmosClient _cosmosClient;
         private readonly BlobContainerClient _blobCodeFileContainerClient;
         private readonly BlobContainerClient _blobOriginalContainerClient;
@@ -60,6 +61,9 @@ namespace APIViewUITests
             _ = _blobOriginalContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
             _ = _blobUsageSampleRepository.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
             _ = _blobCommentsRepository.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
+
+            _chromeOptions = new ChromeOptions();
+            _chromeOptions.AddArgument("no-sandbox");
 
             // Upload Reviews Automatically
             var cSharpFileName = $"azure.identity.1.9.0-beta.1.nupkg";
@@ -113,7 +117,7 @@ namespace APIViewUITests
             var fileAPath = Path.Combine(_fixture._testPkgsPath, fileAName);
 
             // Test Manual Upload
-            using (IWebDriver driver = new ChromeDriver())
+            using (IWebDriver driver = new ChromeDriver(_fixture._chromeOptions))
             {
                 driver.Manage().Window.Maximize();
                 driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
@@ -130,7 +134,7 @@ namespace APIViewUITests
             }
 
             // Test Auto Upload
-            using (IWebDriver driver = new ChromeDriver())
+            using (IWebDriver driver = new ChromeDriver(_fixture._chromeOptions))
             {
                 driver.Manage().Window.Maximize();
                 driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
@@ -171,7 +175,7 @@ namespace APIViewUITests
         public void SmokeTest_Request_Reviewers()
 >>>>>>> de0f9c93 (Resolve error in UI Test)
         {
-            using (IWebDriver driver = new ChromeDriver())
+            using (IWebDriver driver = new ChromeDriver(_fixture._chromeOptions))
             {
                 driver.Manage().Window.Maximize();
                 driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);

@@ -266,6 +266,9 @@ stages:
         AdditionalArguments: ${{ parameters.AdditionalArguments }}
 
   - ${{ if and( parameters.IncludeCpp, parameters.Profile ) }}:
+    - job: Install_valgrind
+      displayName: Install profiler tools for cpp
+      steps :
       - script: "sudo apt install valgrind -y"
         displayName: 'Install valgrind'
         workingDirectory: '$(Build.SourcesDirectory)/sdk'

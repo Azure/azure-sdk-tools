@@ -29,7 +29,7 @@ pr:
       - tools/apiview/parsers/js-api-parser
 
 variables:
-  PythonVersion: '3.10.9'
+  PythonVersion: '3.10'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   NodeVersion: '18.x'

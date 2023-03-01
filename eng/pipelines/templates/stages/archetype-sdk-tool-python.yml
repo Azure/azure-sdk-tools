@@ -1,7 +1,7 @@
 parameters:
 - name: PythonVersion
   type: string
-  default: '3.10.9'
+  default: '3.10'
 - name: PackagePath
   type: string
   default: ''
@@ -39,7 +39,7 @@ stages:
               python --version
               pip install virtualenv aiohttp chardet trio setuptools wheel packaging
             displayName: 'Setup Python Environment'
-          
+
           - pwsh: |
               Write-Host "Bundling stable version of python api-stub-generator"
               python setup.py bdist_wheel --universal --dist-dir $(Build.ArtifactStagingDirectory)

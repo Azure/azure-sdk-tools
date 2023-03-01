@@ -12,6 +12,7 @@ using System.Security.Claims;
 using APIViewWeb.Managers;
 using Octokit;
 using Microsoft.TeamFoundation.Common;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -52,8 +53,12 @@ namespace APIViewWeb.Pages.Assemblies
                 state = userPreference.State;
                 status = userPreference.Status;
                 type = userPreference.FilterType.Select(x => x.ToString());
+                await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField, false);
             }
-            await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
+            else 
+            {
+                await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
+            }
         }
 
         public async Task<PartialViewResult> OnGetReviewsPartialAsync(
@@ -62,19 +67,6 @@ namespace APIViewWeb.Pages.Assemblies
         {
             await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
             return Partial("_ReviewsPartial", PagedResults);
-        }
-
-        public async Task<PartialViewResult> OnGetReviewsLanguagesAsync(IEnumerable<string> selectedLanguages)
-        {
-            if (!selectedLanguages.Any())
-            {
-                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User);
-                selectedLanguages = userPreference.Language.ToList();
-            }
-            ReviewsProperties.Languages.All = await _manager.GetReviewPropertiesAsync("Revisions[0].Files[0].Language");
-            selectedLanguages = selectedLanguages.Select(x => HttpUtility.UrlDecode(x));
-            ReviewsProperties.Languages.Selected = selectedLanguages;
-            return Partial("_SelectPickerPartial", ReviewsProperties.Languages);
         }
 
         public async Task<IActionResult> OnPostUploadAsync()
@@ -104,15 +96,20 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         private async Task RunGetRequest(IEnumerable<string> search, IEnumerable<string> languages,
-            IEnumerable<string> state, IEnumerable<string> status, IEnumerable<string> type, int pageNo, int pageSize, string sortField)
+            IEnumerable<string> state, IEnumerable<string> status, IEnumerable<string> type, int pageNo, int pageSize, string sortField, bool fromUrl = true)
         {
             search = search.Select(x => HttpUtility.UrlDecode(x));
-            languages = languages.Select(x => HttpUtility.UrlDecode(x));
+            languages = (fromUrl)? languages.Select(x => HttpUtility.UrlDecode(x)) : languages;
             state = state.Select(x => HttpUtility.UrlDecode(x));
             status = status.Select(x => HttpUtility.UrlDecode(x));
             type = type.Select(x => HttpUtility.UrlDecode(x));
 
             // Update selected properties
+            if (languages.Any())
+            {
+                ReviewsProperties.Languages.Selected = languages;
+            }
+
             if (state.Any())
             {
                 ReviewsProperties.State.Selected = state;
@@ -180,7 +177,7 @@ namespace APIViewWeb.Pages.Assemblies
 
     public class ReviewsProperties 
     {
-        public (IEnumerable<string> All, IEnumerable<string> Selected) Languages = (All: new List<string>(), Selected: new List<string>());
+        public (IEnumerable<string> All, IEnumerable<string> Selected) Languages = (All: LanguageServiceHelpers.SupportedLanguages, Selected: new List<string>());
         public (IEnumerable<string> All, IEnumerable<string> Selected) State = (All: new List<string> { "Closed", "Open" }, Selected: new List<string> { "Open" });
         public (IEnumerable<string> All, IEnumerable<string> Selected) Status = (All: new List<string> { "Approved", "Pending" }, Selected: new List<string>());
         public (IEnumerable<string> All, IEnumerable<string> Selected) Type = (All: new List<string> { "Automatic", "Manual", "PullRequest" }, Selected: new List<string>());

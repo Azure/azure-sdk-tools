@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
@@ -14,6 +14,7 @@ public class Program
     public static async Task<int> Main(string[] args)
     {
         var rootCommand = new RootCommand("Secrets rotation tool");
+        rootCommand.AddCommand(new ListCommand());
         rootCommand.AddCommand(new StatusCommand());
         rootCommand.AddCommand(new RotateCommand());
 
@@ -29,6 +30,7 @@ public class Program
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine(BuildErrorMessage(exception).TrimEnd());
         Console.ResetColor();
+        invocationContext.ExitCode = 1;
     }
 
     private static string BuildErrorMessage(Exception exception)

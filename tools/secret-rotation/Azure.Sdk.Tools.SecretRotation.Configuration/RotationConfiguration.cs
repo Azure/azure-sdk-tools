@@ -18,60 +18,52 @@ public class RotationConfiguration
 
     public ReadOnlyCollection<PlanConfiguration> PlanConfigurations { get; }
 
-    public static RotationConfiguration From(string path,
+    public static RotationConfiguration From(IList<string> names,
+        IList<string> tags,
+        string directoryPath,
         IDictionary<string, Func<StoreConfiguration, SecretStore>> storeFactories)
     {
-        List<PlanConfiguration> planConfigurations = new();
+        IEnumerable<string> jsonFiles;
 
-        if (Directory.Exists(path))
+        try
         {
-            planConfigurations.AddRange(Directory.EnumerateFiles(path, "*.json", SearchOption.TopDirectoryOnly)
-                .Select(PlanConfiguration.FromFile));
+            jsonFiles = Directory
+                .EnumerateFiles(directoryPath, "*.json", SearchOption.AllDirectories);
         }
-        else
+        catch (Exception ex)
         {
-            planConfigurations.Add(PlanConfiguration.FromFile(path));
+            throw new RotationConfigurationException(
+                $"Error loading files in directory '{directoryPath}'.",
+                ex);
+        }
+
+        IEnumerable<PlanConfiguration> planConfigurations = jsonFiles
+            .Select(file => PlanConfiguration.TryLoadFromFile(file, out var plan) ? plan : null)
+            .Where(x => x != null)
+            .Select(x => x!);
+
+        if (names.Any())
+        {
+            planConfigurations = planConfigurations
+                .Where(plan => names.Contains(plan.Name, StringComparer.OrdinalIgnoreCase));
+        }
+
+        if (tags.Any())
+        {
+            planConfigurations = planConfigurations
+                .Where(plan => tags.All(tag => plan.Tags.Contains(tag, StringComparer.OrdinalIgnoreCase)));
+        }
+
+        planConfigurations = planConfigurations.ToArray();
+
+        if (!planConfigurations.Any())
+        {
+            throw new RotationConfigurationException("Unable to locate any configuration files matching the provided names and tags");
         }
 
         var configuration = new RotationConfiguration(storeFactories, planConfigurations);
 
         return configuration;
-    }
-
-    public RotationPlan? GetRotationPlan(string name, ILogger logger, TimeProvider timeProvider)
-    {
-        PlanConfiguration? planConfiguration =
-            PlanConfigurations.FirstOrDefault(configuration => configuration.Name == name);
-
-        return planConfiguration != null
-            ? ResolveRotationPlan(planConfiguration, logger, timeProvider)
-            : null;
-    }
-
-    public IEnumerable<RotationPlan> GetRotationPlans(ILogger logger, IEnumerable<string> secretNames,
-        TimeProvider timeProvider)
-    {
-        var namedPlans = secretNames
-            .Select(secretName => new
-            {
-                SecretName = secretName,
-                RotationPlan = GetRotationPlan(secretName, logger, timeProvider),
-            })
-            .ToArray();
-
-        string[] invalidNames = namedPlans
-            .Where(x => x.RotationPlan == null)
-            .Select(x => x.SecretName)
-            .ToArray();
-
-        if (invalidNames.Any())
-        {
-            throw new RotationConfigurationException($"Unknown rotation plan names: '{string.Join("', '", invalidNames)}'");
-        }
-              
-        return namedPlans
-            .Select(x => x.RotationPlan!)
-            .ToArray();
     }
 
     public IEnumerable<RotationPlan> GetAllRotationPlans(ILogger logger, TimeProvider timeProvider)
@@ -143,7 +135,7 @@ public class RotationConfiguration
         (StoreConfiguration Configuration, int Index)[] secondaryStoreConfigurations = planConfiguration
             .StoreConfigurations
             .Select((configuration, index) => (Configuration: configuration, Index: index))
-            .Where(x => !x.Configuration.IsPrimary && !x.Configuration.IsOrigin)
+            .Where(x => x.Configuration is { IsPrimary: false, IsOrigin: false })
             .ToArray();
 
         foreach ((StoreConfiguration storeConfiguration, int index) in secondaryStoreConfigurations)

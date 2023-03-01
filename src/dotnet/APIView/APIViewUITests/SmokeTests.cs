@@ -63,7 +63,11 @@ namespace APIViewUITests
             _ = _blobCommentsRepository.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
 
             _chromeOptions = new ChromeOptions();
-            _chromeOptions.AddArgument("no-sandbox");
+            _chromeOptions.AddArgument("--start-maximized");
+            _chromeOptions.AddArgument("--enable-automation");
+            _chromeOptions.AddArgument("--ignore-certificate-errors");
+            _chromeOptions.AddArgument("--headless");
+            _chromeOptions.AddArgument("--no-sandbox");
 
             // Upload Reviews Automatically
             var cSharpFileName = $"azure.identity.1.9.0-beta.1.nupkg";
@@ -102,7 +106,7 @@ namespace APIViewUITests
     public class SmokeTests : IClassFixture<SmokeTestsFixture>
     {
         SmokeTestsFixture _fixture;
-        const int WaitTime = 300;
+        const int WaitTime = 120;
 
         public SmokeTests(SmokeTestsFixture fixture)
         {
@@ -117,9 +121,8 @@ namespace APIViewUITests
             var fileAPath = Path.Combine(_fixture._testPkgsPath, fileAName);
 
             // Test Manual Upload
-            using (IWebDriver driver = new ChromeDriver(_fixture._chromeOptions))
+            using (IWebDriver driver = new ChromeDriver(ChromeDriverService.CreateDefaultService(), _fixture._chromeOptions, TimeSpan.FromSeconds(WaitTime)))
             {
-                driver.Manage().Window.Maximize();
                 driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(WaitTime);
                 driver.Navigate().GoToUrl(_fixture._endpoint);
@@ -134,9 +137,8 @@ namespace APIViewUITests
             }
 
             // Test Auto Upload
-            using (IWebDriver driver = new ChromeDriver(_fixture._chromeOptions))
+            using (IWebDriver driver = new ChromeDriver(ChromeDriverService.CreateDefaultService(), _fixture._chromeOptions, TimeSpan.FromSeconds(WaitTime)))
             {
-                driver.Manage().Window.Maximize();
                 driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(WaitTime);
                 driver.Navigate().GoToUrl(_fixture._endpoint);
@@ -175,9 +177,8 @@ namespace APIViewUITests
         public void SmokeTest_Request_Reviewers()
 >>>>>>> de0f9c93 (Resolve error in UI Test)
         {
-            using (IWebDriver driver = new ChromeDriver(_fixture._chromeOptions))
+            using (IWebDriver driver = new ChromeDriver(ChromeDriverService.CreateDefaultService(), _fixture._chromeOptions, TimeSpan.FromSeconds(WaitTime)))
             {
-                driver.Manage().Window.Maximize();
                 driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(WaitTime);
                 driver.Navigate().GoToUrl(_fixture._endpoint);

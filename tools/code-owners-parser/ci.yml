@@ -23,14 +23,7 @@ pr:
       - eng/common/scripts/get-codeowners.ps1
 
 extends:
-  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
   parameters:
-    ToolDirectory: tools/code-owners-parser
-    TestPostSteps:
-      - task: PowerShell@2
-        displayName: Test on code owner script
-        inputs:
-          pwsh: true
-          filePath: eng/common/scripts/get-codeowners.ps1
-          arguments: >
-            -Test
+    TargetDirectory: eng/common-tests/
+    TargetTags: 'UnitTest'

@@ -106,7 +106,7 @@ namespace APIViewUITests
     public class SmokeTests : IClassFixture<SmokeTestsFixture>
     {
         SmokeTestsFixture _fixture;
-        const int WaitTime = 120;
+        const int WaitTime = 60;
 
         public SmokeTests(SmokeTestsFixture fixture)
         {
@@ -169,13 +169,8 @@ namespace APIViewUITests
             }
         }
 
-<<<<<<< HEAD
-        [Fact(Skip = "Test is too Flaky")]
-        public async Task SmokeTest_Request_Reviewers()
-=======
         [Fact]
         public void SmokeTest_Request_Reviewers()
->>>>>>> de0f9c93 (Resolve error in UI Test)
         {
             using (IWebDriver driver = new ChromeDriver(ChromeDriverService.CreateDefaultService(), _fixture._chromeOptions, TimeSpan.FromSeconds(WaitTime)))
             {

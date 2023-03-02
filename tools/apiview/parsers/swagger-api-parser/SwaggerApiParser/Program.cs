@@ -88,7 +88,10 @@ internal class Program
         {
             if (!File.Exists(swaggerFilePath))
             {
-                throw new FileNotFoundException(swaggerFilePath);
+                // Suppressing this error when swagger file is missing or path is incorrect
+                // Ideally any incorrect swagger file path reference in README should be caught by validation tool
+                Console.WriteLine($"Invalid file path to swagger file. Skipping {swaggerFilePath}.");
+                continue;
             }
 
             var swaggerLink = idx < swaggerLinks.Count ? swaggerLinks[idx] : "";
@@ -100,8 +103,7 @@ internal class Program
             swaggerSpec.swaggerFilePath = Path.GetFullPath(swaggerFilePath);
             swaggerSpec.swaggerLink = swaggerLink;
             swaggerSpecs.Add(swaggerSpec);
-            root.AddDefinitionToCache(swaggerSpec, swaggerSpec.swaggerFilePath);
-                
+            root.AddDefinitionToCache(swaggerSpec, swaggerSpec.swaggerFilePath);                
         }
 
         foreach (var swaggerSpec in swaggerSpecs)

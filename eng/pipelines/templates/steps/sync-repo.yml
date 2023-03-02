@@ -1,42 +1,12 @@
 parameters:
-  # Provde a list of repos
-  # Example:
-  #   Azure/azure-rest-api-specs:
-  #     Branch: main
-  #     TargetRepos:
-  #       Azure/azure-rest-api-specs-pr:
-  #       azure-sdk/azure-rest-api-specs:
-  #         Branch: dev
-  #         Rebase: true
-  #   Azure/azure-sdk-for-go:
-  #     Branch: main
-  #     TargetRepos:
-  #       Azure/azure-sdk-for-go-pr:
-  # BaseBranchName: $(Build.SourceBranch)
-  # PRBranchName: not-specified
-  # PROwner: azure-sdk
-  # CommitMsg: not-specified
-  # RepoOwner: Azure
-  # RepoName: $(Build.Repository.Name)
-  # PushArgs:
   - name: Repos
     type: object
-  # PRTitle: not-specified
-  # PRBody: ''
   - name: ScriptDirectory
     type: string
     default: eng/common/scripts
   - name: WorkingDirectory
     type: string
     default: $(System.DefaultWorkingDirectory)
-  # GHReviewersVariable: ''
-  # GHTeamReviewersVariable: ''
-  # GHAssignessVariable: ''
-  # # Multiple labels seperated by comma, e.g. 'bug, APIView'
-  # PRLabels: ''
-  # SkipCheckingForChanges: false
-  # CloseAfterOpenForTesting: false
-  # OpenAsDraft: false
 
 steps:
 
@@ -44,24 +14,16 @@ steps:
 
   - ${{ each target in repo.value.TargetRepos }}:
 
-    - ${{ if not(target.value.path) }}:
-      # - task: PowerShell@2
-      #   displayName: Sync Repo from ${{ repo.key }} to ${{ target.key }}
-      #   inputs:
-      #     pwsh: true
-      #     workingDirectory: ${{ parameters.WorkingDirectory }}
-      #     filePath: ${{ parameters.ScriptDirectory }}/Git-Repo-Sync.ps1
-      #     arguments: >
-      #       -SourceRepo '${{ repo.key }}'
-      #       -SourceBranch '${{ repo.value.Branch }}'
-      #       -TargetRepo '${{ target.key }}'
-      #       -TargetBranch '${{ coalesce(target.value.Branch, repo.value.Branch) }}'
-      #       -Rebase '${{ target.value.Rebase }}'
-      #       -AuthToken '$(azuresdk-github-pat)'
-      - script: |
-          echo 1
-    - ${{ else }}:
-      - script: |
-          echo 2
-    
-
+    - task: PowerShell@2
+      displayName: Sync Repo from ${{ repo.key }} to ${{ target.key }}
+      inputs:
+        pwsh: true
+        workingDirectory: ${{ parameters.WorkingDirectory }}
+        filePath: ${{ parameters.ScriptDirectory }}/Git-Repo-Sync.ps1
+        arguments: >
+          -SourceRepo '${{ repo.key }}'
+          -SourceBranch '${{ repo.value.Branch }}'
+          -TargetRepo '${{ target.key }}'
+          -TargetBranch '${{ coalesce(target.value.Branch, repo.value.Branch) }}'
+          -Rebase '${{ target.value.Rebase }}'
+          -AuthToken '$(azuresdk-github-pat)'

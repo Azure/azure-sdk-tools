@@ -68,8 +68,6 @@ try {
     $TargetBranch = $defaultBranch
   }
 
-  Write-Host $($Rebase)
-  
   if (-not $($Rebase)) {
     git checkout -B target_branch $($SourceBranch)
     git push --force Target "target_branch:refs/heads/$($TargetBranch)"

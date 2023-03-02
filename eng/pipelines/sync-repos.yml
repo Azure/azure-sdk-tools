@@ -1,5 +1,19 @@
 # Mirror the default branch for each repo folder to all subscribed langauge repos.
 
+# Provde a list of repos
+# Example:
+#   Azure/azure-rest-api-specs:
+#     Branch: main
+#     TargetRepos:
+#       Azure/azure-rest-api-specs-pr:
+#       azure-sdk/azure-rest-api-specs:
+#         Branch: dev
+#         Rebase: true
+#   Azure/azure-sdk-for-go:
+#     Branch: main
+#     TargetRepos:
+#       Azure/azure-sdk-for-go-pr:
+
 trigger: none
 pr: none
 
@@ -19,4 +33,3 @@ jobs:
             TargetRepos:
               Jacktn/TestRepo-two:
                 Rebase: true
-                Path: [1,23]

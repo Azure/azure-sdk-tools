@@ -23,6 +23,7 @@ namespace APIViewUITests
         internal readonly string _uri;
         internal readonly string _testPkgsPath;
         internal readonly string _endpoint;
+        internal readonly ChromeOptions _chromeOptions;
         private readonly CosmosClient _cosmosClient;
         private readonly BlobContainerClient _blobCodeFileContainerClient;
         private readonly BlobContainerClient _blobOriginalContainerClient;
@@ -61,13 +62,20 @@ namespace APIViewUITests
             _ = _blobUsageSampleRepository.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
             _ = _blobCommentsRepository.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
 
+            _chromeOptions = new ChromeOptions();
+            _chromeOptions.AddArgument("--start-maximized");
+            _chromeOptions.AddArgument("--enable-automation");
+            _chromeOptions.AddArgument("--ignore-certificate-errors");
+            _chromeOptions.AddArgument("--headless");
+            _chromeOptions.AddArgument("--no-sandbox");
+
             // Upload Reviews Automatically
             var cSharpFileName = $"azure.identity.1.9.0-beta.1.nupkg";
             var cSharpFilePath = Path.Combine(_testPkgsPath, cSharpFileName);
-            Task.Run(() => SubmitAPIReview(cSharpFileName, cSharpFilePath, this._uri, "Auto Review - Test")).Wait();
+            SubmitAPIReview(cSharpFileName, cSharpFilePath, this._uri, "Auto Review - Test");
         }
 
-        private async Task SubmitAPIReview(string packageName, string filePath, string uri, string apiLabel)
+        private void SubmitAPIReview(string packageName, string filePath, string uri, string apiLabel)
         {
             using (var multiPartFormData = new MultipartFormDataContent())
             {
@@ -78,8 +86,8 @@ namespace APIViewUITests
                 var stringContent = new StringContent(apiLabel);
                 multiPartFormData.Add(stringContent, name: "label");
 
-                var response = await _httpClient.PostAsync(uri, multiPartFormData);
-                response.EnsureSuccessStatusCode();
+                var response = _httpClient.PostAsync(uri, multiPartFormData);
+                response.Result.EnsureSuccessStatusCode();
             }
         }
 
@@ -106,16 +114,15 @@ namespace APIViewUITests
         }
 
         [Fact]
-        public async Task SmokeTest_CSharp()
+        public void SmokeTest_CSharp()
         {
             var pkgName = "azure.identity";
             var fileAName = $"{pkgName}.1.8.0.nupkg";
             var fileAPath = Path.Combine(_fixture._testPkgsPath, fileAName);
 
             // Test Manual Upload
-            using (IWebDriver driver = new ChromeDriver())
+            using (IWebDriver driver = new ChromeDriver(ChromeDriverService.CreateDefaultService(), _fixture._chromeOptions, TimeSpan.FromSeconds(WaitTime)))
             {
-                driver.Manage().Window.Maximize();
                 driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(WaitTime);
                 driver.Navigate().GoToUrl(_fixture._endpoint);
@@ -130,9 +137,8 @@ namespace APIViewUITests
             }
 
             // Test Auto Upload
-            using (IWebDriver driver = new ChromeDriver())
+            using (IWebDriver driver = new ChromeDriver(ChromeDriverService.CreateDefaultService(), _fixture._chromeOptions, TimeSpan.FromSeconds(WaitTime)))
             {
-                driver.Manage().Window.Maximize();
                 driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(WaitTime);
                 driver.Navigate().GoToUrl(_fixture._endpoint);
@@ -163,12 +169,11 @@ namespace APIViewUITests
             }
         }
 
-        [Fact(Skip = "Test is too Flaky")]
-        public async Task SmokeTest_Request_Reviewers()
+        [Fact]
+        public void SmokeTest_Request_Reviewers()
         {
-            using (IWebDriver driver = new ChromeDriver())
+            using (IWebDriver driver = new ChromeDriver(ChromeDriverService.CreateDefaultService(), _fixture._chromeOptions, TimeSpan.FromSeconds(WaitTime)))
             {
-                driver.Manage().Window.Maximize();
                 driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(WaitTime);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(WaitTime);
                 driver.Navigate().GoToUrl(_fixture._endpoint);

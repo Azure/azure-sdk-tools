@@ -9,7 +9,7 @@ trigger:
   paths:
     include:
       - tools/github-event-processor
-      - tools/github-event-proce/CodeOwnersParser
+      - tools/code-owners-parser/CodeOwnersParser
 
 pr:
   branches:

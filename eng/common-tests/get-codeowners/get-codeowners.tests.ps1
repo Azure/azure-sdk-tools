@@ -20,15 +20,9 @@ BeforeAll {
         -codeownersFileLocation $codeownersFileLocation `
         -includeNonUserAliases $IncludeNonUserAliases
     
-      if ($actualOwners.Count -ne $expectedOwners.Count) {
-        Write-Error "The length of actual result is not as expected. Expected length: $($expectedOwners.Count), Actual length: $($actualOwners.Count)."
-        exit 1
-      }
+      $actualOwners.Count | Should -Be $expectedOwners.Count
       for ($i = 0; $i -lt $expectedOwners.Count; $i++) {
-        if ($expectedOwners[$i] -ne $actualOwners[$i]) {
-          Write-Error "Expect result $expectedOwners[$i] is different than actual result $actualOwners[$i]."
-          exit 1
-        }
+        $expectedOwners[$i] | Should -Be $actualOwners[$i]
       }
     }
 }
@@ -48,6 +42,5 @@ Describe "Get Codeowners" -Tag "UnitTest" {
     ) {
       $azSdkToolsCodeowners = (Resolve-Path $codeownersPath)
       TestGetCodeowners -targetPath $targetPath -codeownersFileLocation $azSdkToolsCodeowners -includeNonUserAliases $true -expectedOwners $expectedOwners
-      $LASTEXITCODE | Should -Be 0
     }
 }

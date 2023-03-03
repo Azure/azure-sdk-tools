@@ -112,6 +112,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     Directory.Delete(sdkOriginalFolder.FullName, true);
                     // move the code from the target package to the source location
                     Directory.Move(sdkReplacementFolder.FullName, sdkOriginalFolder.FullName);
+
+                    Console.WriteLine("Restored  package {0} to {1}", packageVersion.Key, packageVersion.Value);
+
                     returnValue = true;
                 }
                 catch (Exception ex)

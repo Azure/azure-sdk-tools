@@ -8,7 +8,8 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - eng/common-tests/*
+      - eng/common/scripts
+      - eng/common-tests
 
 pr:
   branches:
